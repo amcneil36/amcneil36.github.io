@@ -4,11 +4,11 @@ We learned previously that scrum teams should be able to do both front-end and b
 
 Lets discuss 3 options for software engineers on a scrum team: generalist, specialist, and generalizing-specialist.
 
-**Generalist:** Each individual software engineer is equally comfortable in front-end as back-end  
+**Generalist:** each individual software engineer is equally comfortable in front-end as back-end  
 
-**Specialist:** Some software engineers specialize in front-end, not worrying about back-end. Remaining software engineers specialize in back-end, not worrying about front-end  
+**Specialist:** some software engineers specialize in front-end, not worrying about back-end. Remaining software engineers specialize in back-end, not worrying about front-end  
 
-**Generalizing-Specialist:** Some software engineers aim to have in-depth knowledge in front-end and broad knowledge in back-end. Remaining software engineers aim to have broad knowledge in front-end and in-depth knowledge in back-end
+**Generalizing-Specialist:** some software engineers aim to have in-depth knowledge in front-end and broad knowledge in back-end. Remaining software engineers aim to have broad knowledge in front-end and in-depth knowledge in back-end
 
 ## Option # 1
 ### pros
