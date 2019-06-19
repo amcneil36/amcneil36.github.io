@@ -39,6 +39,17 @@ Imagine a component team that exists to make software for other teams. Now imagi
 
 ### The downsides of Feature teams are manageable
 A feature team has to have a lot more knowledge since it will be working on many more components than a component team
-- this is partially offset by the fact that each individual member on the feature team does not need to know the whole system. The team as a whole, not each individual member needs to have the skills to implement the feature
+- this is partially offset by the fact that each individual member on the feature team does not need to know the whole system. 
+The team as a whole, not each individual member needs to have the skills to implement the feature
+
 A feature team is not going to be as specialized at the work it is doing as the component team is
 - while this is true, members within a feature team can still specialize in different areas which will offset some of these concerns
+
+### Conclusion
+We should favor feature teams over component teams. Feature teams make planning easy. We can easily coordinate work such that we end up with a potentially shippable product increment at the end of the sprint that can be demo'd to customers. We can let our requirements and design emerge. We can have our components frequently integrated together, allowing us to get valuable feedback from our tests to let us know where we stand.
+
+So what about for situations in which we have many teams, say 10 teams working on the same product at the same time? Would this be a scenario in which we want to use component teams instead of feature teams? Craig Larman says no. Craig says to take a large feature, break it down into smaller features, and assign each small feature to a feature team.
+
+So should a software organization have zero component teams? Every book that I read that talked about feature teams vs component teams had a strong preference for feature teams. However, none of them made a blanket statement indicating that there should be zero component teams in a software organization. But they did indicate that component teams should be rare. I guess a component has to be super re-usable and important to warrant a component team.
+
+##### Sources
