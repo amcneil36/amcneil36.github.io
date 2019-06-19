@@ -13,12 +13,20 @@ For feature teams, we do not have to coordinate much with other teams so plannin
 
 ### There are quite a few drawbacks of component teams
 
+##### Increases number of failure points from one (in a feature team scenario) to the number of component teams
+Imagine 4 component teams working together to complete a feature. Now imagine one of the component teams 3 of those 4 teams finish their work right away. It only takes one component team to slip a date to delay a release.
 
-up-front freezing the design between interfaces
+##### Communication between teams is much more expensive than communication within your own team
+Communicating within your own team is easy. Your team sits right next to each other and in the same office. Your schedules all work together since your team has re-curring meetings scheduled for timeslots you are available at. Your team has shared, agreed upon (hopefully) standards that you follow. When it comes to communicating with other teams, they may be far away. You have to find a schedule that works for both your team and other teams. The standards that your team has might conflict with the standards the other teams have. There also tends to be more misommunication.
 
-increased number of failure points
+##### Which team writes the requirements?
+Requirements almost never divide along components. They mostly divide along multiple components. This makes it hard to know who and which team should work on creating the requirements.
 
-it is hard to write test and requirements for a single component in isolation since a functionality will cross more than one component
+##### Component teams rarely are able to start working on a feature at the same time
+Component teams will each have their own schedule and bandwidth. It is pretty common to see one component team have bandwidth to start working on a feature in April but another component team isn't available to start until July. What happens here?
+
+##### A feature might require significantly more work in some components than others
+When one 
 
 component teams form silos and optimize locally instead of the project as a whole
 
