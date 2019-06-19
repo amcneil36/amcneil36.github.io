@@ -28,6 +28,9 @@ Component teams will each have their own schedule and bandwidth. It is pretty co
 ##### A feature might require significantly more work in some components than others
 What ends up happening here is that one component team would finish all of the work for their component significantly before other teams. This is a complicated situation because the component team that is ahead will have to type up all of this code that is not yet fully integrated because the other components they depend on are way behind. When integration is deferred until late in a project, it almost never goes well. When a particular component is finished early, it would be convenient if the team members can swarm to help components that are behind so that the feature can be released faster. However, with component teams this doesn't happen since component teams don't touch other team's components. So if one component is behind, there is no technique to speed it up. The release will be delayed.
 
+###### Difficulty producing a potentially shippable product increment at the end of each sprint
+It generally requires code changes in each layer and for the code to be fully integrated in each layer to produce a potentially shippable product increment. This means that if a component team wnats a potentially shippable product increment by the end of the sprint, they have to coordinate with other teams. What usually happens instead is each component is developed in isolation and wired together at the very end of the project. This leaves us with no potentially shippable product increment at the end of each sprint, no value added to the client each sprint, and nothing that we can get much feedback from at the sprint review. 
+
 component teams form silos and optimize locally instead of the project as a whole
 
 code is usually integrated at the end
