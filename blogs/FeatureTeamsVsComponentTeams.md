@@ -11,20 +11,42 @@ There are two different types of ways in which teams might organize in order to 
 **Feature teams vs Component teams**
 For feature teams, we do not have to coordinate much with other teams so planning is significantly easier. However, feature teams have to learn quite a bit more technologies, languages, and frameworks since they are going to be making a code change in many different components. Component teams don't need to be able to work in near as many areas so they can have a more narrow focus and specialize. On the other hand, a component team has to coordinate with other component teams in order to complete features so planning is quite a bit tougher. So which route is better?
 
-**Feature teams**
 
-| Pros      | Cons |
-| ----------- | ----------- |
-| Header      | Title       |
-| Paragraph   | Text        |
 
-**Component team cons**
-- Increased number of failure points from one (feature team) to to the number of component teams
--- it only takes 
 
-| Pros      | Cons |
-| ----------- | ----------- |
-| Header      | Increased number of failure points from one (feature team) to to the number of component teams|
-| Paragraph   | Text        |
+up-front freezing the design between interfaces
 
-Producing a potentially shippable product increment
+increased number of failure points
+
+it is hard to write test and requirements for a single component in isolation since a functionality will cross more than one component
+
+component teams form silos and optimize locally instead of the project as a whole
+
+code is usually integrated at the end
+
+hand off
+
+queue
+
+miss-communication
+
+potentially shippable product increment
+
+how does a component team prioritize requests from other teams?
+
+component teams don't know the value of what they are doing "im just doing this becuase someone told me"
+
+too many new hires
+
+what happens when one component needs a lot more work than the others? sure would be nice if we can swarm but nop
+
+what if the teams coordinating have differnet standards/processes?
+
+teams don't understand each other so they will not kno whwo to tell which layer should handle which logic
+-----------------------------------
+a feature team needs to know the whole system? no. the team as a whole, not each individual member requires the skills to implement the feature
+within the team, people can still specialize
+
+features are not randomly distributed to feature teams, the current knoelgde and skills of a team are factored into deciding which team works on which features
+
+
