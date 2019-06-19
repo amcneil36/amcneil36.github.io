@@ -28,36 +28,17 @@ Component teams will each have their own schedule and bandwidth. It is pretty co
 ##### A feature might require significantly more work in some components than others
 What ends up happening here is that one component team would finish all of the work for their component significantly before other teams. This is a complicated situation because the component team that is ahead will have to type up all of this code that is not yet fully integrated because the other components they depend on are way behind. When integration is deferred until late in a project, it almost never goes well. When a particular component is finished early, it would be convenient if the team members can swarm to help components that are behind so that the feature can be released faster. However, with component teams this doesn't happen since component teams don't touch other team's components. So if one component is behind, there is no technique to speed it up. The release will be delayed.
 
-###### Difficulty producing a potentially shippable product increment at the end of each sprint
+##### Difficulty producing a potentially shippable product increment at the end of each sprint
 It generally requires code changes in each layer and for the code to be fully integrated in each layer to produce a potentially shippable product increment. This means that if a component team wnats a potentially shippable product increment by the end of the sprint, they have to coordinate with other teams. What usually happens instead is each component is developed in isolation and wired together at the very end of the project. This leaves us with no potentially shippable product increment at the end of each sprint, no value added to the client each sprint, and nothing that we can get much feedback from at the sprint review. 
 
-component teams form silos and optimize locally instead of the project as a whole
+##### Big up front design and freezing the interfaces between components
+Since there is a larger overhead with meeting people from other teams, component teams might do extensive up-front design and finalize an interface between components so that they can go back to their place and not have to worry about what the other team is doing. However, it is incredibly difficult to up-front predict how everything is going to work out. This usually ends up with teams having to use the adapter pattern to communicate to the interface that was finalized months in advance. However, it is better to have our design be emergent. We want people working on one component for a feature sitting next to someone who is working on another component for the feature. The interface between components will be loosely defined and will gradually emerge as the programmers learn more about the problems they are solving through feedback from their tests. It is easy to coordinate changes to an interface between components when you are sitting right next to each other. With component teams, we might not have this luxury of being able to sit next to each other. 
 
-code is usually integrated at the end
+##### How do Component teams prioritize competing requests?
+Imagine a component team that exists to make software for other teams. Now imagine that 4 different teams request a component team to help them in completing a feature. Does the component team do first come first serve? What if Team A reaches out to component team C before Team B does but Team B has significantly more clients and business value?
 
-hand off
-
-queue
-
-miss-communication
-
-potentially shippable product increment
-
-how does a component team prioritize requests from other teams?
-
-component teams don't know the value of what they are doing "im just doing this becuase someone told me"
-
-too many new hires
-
-what happens when one component needs a lot more work than the others? sure would be nice if we can swarm but nop
-
-what if the teams coordinating have differnet standards/processes?
-
-teams don't understand each other so they will not kno whwo to tell which layer should handle which logic
------------------------------------
-a feature team needs to know the whole system? no. the team as a whole, not each individual member requires the skills to implement the feature
-within the team, people can still specialize
-
-features are not randomly distributed to feature teams, the current knoelgde and skills of a team are factored into deciding which team works on which features
-
-
+### The downsides of Feature teams are manageable
+A feature team has to have a lot more knowledge since it will be working on many more components than a component team
+- this is partially offset by the fact that each individual member on the feature team does not need to know the whole system. The team as a whole, not each individual member needs to have the skills to implement the feature
+A feature team is not going to be as specialized at the work it is doing as the component team is
+- while this is true, members within a feature team can still specialize in different areas which will offset some of these concerns
