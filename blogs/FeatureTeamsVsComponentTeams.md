@@ -42,7 +42,7 @@ A feature team is not going to be as specialized at the work it is doing as the 
 - while this is true, members within a feature team can still specialize in different areas and be assigned tasks that utilize their expertise<sup>6</sup>
 
 ### Conclusion
-We should strongly favor feature teams over component teams in a software organization.<sup>1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 Component teams should be rare.
+We should strongly favor feature teams over component teams in a software organization.<sup>1,2,3,4,5,6,7,8,9,10,11,12,13,14,15</sup> Component teams should be rare.
 
 So what about for situations in which we have many teams, say 100 teams working on the same product at the same time? Would this be a scenario in which we want to use component teams instead of feature teams? Craig Larman and Bad Vodde say no.<sup>2</sup> We can take a large feature, break it down into smaller features, and assign each small feature to a feature team. <sup>2</sup>
 
