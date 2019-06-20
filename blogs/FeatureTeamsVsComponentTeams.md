@@ -13,46 +13,50 @@ For feature teams, we do not have to coordinate much with other teams so plannin
 
 ### There are quite a few drawbacks of component teams
 
-##### Increases number of failure points from one (in a feature team scenario) to the number of component teams<sup>1</sup>
+##### Increases number of failure points from one (in a feature team scenario) to the number of component teams<sup>4</sup>
 Imagine 4 component teams working together to complete a feature. Now imagine one of the component teams 3 of those 4 teams finish their work right away. It only takes one component team to slip a date to delay a release.
 
-##### Communication between teams is much more expensive than communication within your own team
+##### Communication between teams is much more expensive than communication within your own team<sup>5</sup>
 Communicating within your own team is easy. Your team sits right next to each other and in the same office. Your schedules all work together since your team has re-curring meetings scheduled for timeslots you are available at. Your team has shared, agreed upon (hopefully) standards that you follow. When it comes to communicating with other teams, they may be far away. You have to find a schedule that works for both your team and other teams. The standards that your team has might conflict with the standards the other teams have. There also tends to be more misommunication.
 
 ##### Which team writes the requirements?
-Requirements almost never divide along components. They mostly divide along multiple components. This makes it hard to know who and which team should work on creating the requirements.
+Requirements almost never divide along components. They mostly divide along multiple components.<sup>5</sup> This makes it hard to know who and which team should work on creating the requirements.
 
-##### Component teams rarely are able to start working on a feature at the same time
+##### Component teams rarely are able to start working on a feature at the same time<sup>3</sup>
 Component teams will each have their own schedule and bandwidth. It is pretty common to see one component team have bandwidth to start working on a feature in April but another component team isn't available to start until July. What happens here?
 
 ##### A feature might require significantly more work in some components than others
 What ends up happening here is that one component team would finish all of the work for their component significantly before other teams. This is a complicated situation because the component team that is ahead will have to type up all of this code that is not yet fully integrated because the other components they depend on are way behind. When integration is deferred until late in a project, it almost never goes well. When a particular component is finished early, it would be convenient if the team members can swarm to help components that are behind so that the feature can be released faster. However, with component teams this doesn't happen since component teams don't touch other team's components. So if one component is behind, there is no technique to speed it up. The release will be delayed.
 
-##### Difficulty producing a potentially shippable product increment at the end of each sprint
+##### Difficulty producing a potentially shippable product increment at the end of each sprint<sup>4</sup>
 It generally requires code changes in each layer and for the code to be fully integrated in each layer to produce a potentially shippable product increment. This means that if a component team wnats a potentially shippable product increment by the end of the sprint, they have to coordinate with other teams. What usually happens instead is each component is developed in isolation and wired together at the very end of the project. This leaves us with no potentially shippable product increment at the end of each sprint, no value added to the client each sprint, and nothing that we can get much feedback from at the sprint review. 
 
 ##### Big up front design and freezing the interfaces between components
-Since there is a larger overhead with meeting people from other teams, component teams might do extensive up-front design and finalize an interface between components so that they can go back to their place and not have to worry about what the other team is doing. However, it is incredibly difficult to up-front predict how everything is going to work out. This usually ends up with teams having to use the adapter pattern to communicate to the interface that was finalized months in advance. However, it is better to have our design be emergent. We want people working on one component for a feature sitting next to someone who is working on another component for the feature. The interface between components will be loosely defined and will gradually emerge as the programmers learn more about the problems they are solving through feedback from their tests. It is easy to coordinate changes to an interface between components when you are sitting right next to each other. With component teams, we might not have this luxury of being able to sit next to each other. 
+Since there is a larger overhead with meeting people from other teams, component teams might do extensive up-front design and finalize an interface between components so that they can go back to their place and not have to worry about what the other team is doing. However, it is incredibly difficult to up-front predict how everything is going to work out. This usually ends up with teams having to use the adapter pattern to communicate to the interface that was finalized months in advance.<sup>2</sup> However, it is better to have our design be emergent. We want people working on one component for a feature sitting next to someone who is working on another component for the feature. The interface between components will be loosely defined and will gradually emerge as the programmers learn more about the problems they are solving through feedback from their tests.<sup>2</sup> It is easy to coordinate changes to an interface between components when you are sitting right next to each other. With component teams, we might not have this luxury of being able to sit next to each other. 
 
-##### How do Component teams prioritize competing requests?
+##### Competing requests<sup>4</sup>
 Imagine a component team that exists to make software for other teams. Now imagine that 4 different teams request a component team to help them in completing a feature. Does the component team do first come first serve? What if Team A reaches out to component team C before Team B does but Team B has significantly more clients and business value?
 
-### The downsides of Feature teams are manageable
-A feature team has to have a lot more knowledge since it will be working on many more components than a component team
-- this is partially offset by the fact that each individual member on the feature team does not need to know the whole system. 
-The team as a whole, not each individual member needs to have the skills to implement the feature
-
+### The downside of Feature teams is manageable
 A feature team is not going to be as specialized at the work it is doing as the component team is
-- while this is true, members within a feature team can still specialize in different areas which will offset some of these concerns
+- while this is true, members within a feature team can still specialize in different areas and be assigned tasks that utilize their expertise<sup>6</sup>
 
 ### Conclusion
-We should favor feature teams over component teams. Feature teams make planning easy. We can easily coordinate work such that we end up with a potentially shippable product increment at the end of the sprint that can be demo'd to customers. We can let our requirements and design emerge. We can have our components frequently integrated together, allowing us to get valuable feedback from our tests to let us know where we stand.
+We should favor feature teams over component teams.<sup>1,2,3,4,5,6,7,8,9,10,11,12,13 Feature teams make planning easy. We can easily coordinate work such that we end up with a potentially shippable product increment at the end of the sprint that can be demo'd to customers. We can let our requirements and design emerge. We can have our components frequently integrated together, allowing us to get valuable feedback from our tests to let us know where we stand.
 
 So what about for situations in which we have many teams, say 10 teams working on the same product at the same time? Would this be a scenario in which we want to use component teams instead of feature teams? Craig Larman says no. Craig says to take a large feature, break it down into smaller features, and assign each small feature to a feature team.
-
-So should a software organization have zero component teams? Every book that I read that talked about feature teams vs component teams had a strong preference for feature teams. However, none of them made a blanket statement indicating that there should be zero component teams in a software organization. But they did indicate that component teams should be rare. I guess a component has to be super re-usable and important to warrant a component team.
 
 ##### Sources
 1. Axelrod, Arnon. Complete Guide to Test Automation. Apress, 2018  
 2. Craig Larman and BasVodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012.
-[1] Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013.
+3. Craig Larman and BasVodde. Large-Scale Scrum: More with LeSS. Addison-Wesley, 2016.
+4. Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013.
+5. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.
+6. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.
+7. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.
+8. Narayan, Sriram. Agile IT Organization Design. Pearson Education, 2015.
+9. Kim, Gene, et al. The DevOps Handbook: How to Create World-Class Agility, Reliability, and Security in Technology Organizations. IT Revolution, 2016.
+10. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.
+11. Gruver, Gary, et al. A Practical Approach to Large-Scale Agile Development: How HP Transformed LaserJet FutureSmart Firmway. Addison-Wesley, 2015.
+12. Pichler, Roman. Agile Product Management With Scrum. Addison-Wesley, 2010.
+13. Appelo, Jurgen. Management 3.0: Leading Agile Developers, Developing Agile Leaders. Addison-Wesley, 2011
