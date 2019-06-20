@@ -42,14 +42,14 @@ A feature team is not going to be as specialized at the work it is doing as the 
 - while this is true, members within a feature team can still specialize in different areas and be assigned tasks that utilize their expertise<sup>6</sup>
 
 ### Conclusion
-We should favor feature teams over component teams.<sup>1,2,3,4,5,6,7,8,9,10,11,12,13 Feature teams make planning easy. We can easily coordinate work such that we end up with a potentially shippable product increment at the end of the sprint that can be demo'd to customers. We can let our requirements and design emerge. We can have our components frequently integrated together, allowing us to get valuable feedback from our tests to let us know where we stand.
+We should strongly favor feature teams over component teams in a software organization.<sup>1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 Component teams should be rare.
 
-So what about for situations in which we have many teams, say 10 teams working on the same product at the same time? Would this be a scenario in which we want to use component teams instead of feature teams? Craig Larman says no. Craig says to take a large feature, break it down into smaller features, and assign each small feature to a feature team.
+So what about for situations in which we have many teams, say 100 teams working on the same product at the same time? Would this be a scenario in which we want to use component teams instead of feature teams? Craig Larman and Bad Vodde say no.<sup>2</sup> We can take a large feature, break it down into smaller features, and assign each small feature to a feature team. <sup>2</sup>
 
 ##### Sources
 1. Axelrod, Arnon. Complete Guide to Test Automation. Apress, 2018  
-2. Craig Larman and BasVodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012.
-3. Craig Larman and BasVodde. Large-Scale Scrum: More with LeSS. Addison-Wesley, 2016.
+2. Craig Larman and Bas Vodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012.
+3. Craig Larman and Bas Vodde. Large-Scale Scrum: More with LeSS. Addison-Wesley, 2016.
 4. Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013.
 5. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.
 6. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.
@@ -60,3 +60,5 @@ So what about for situations in which we have many teams, say 10 teams working o
 11. Gruver, Gary, et al. A Practical Approach to Large-Scale Agile Development: How HP Transformed LaserJet FutureSmart Firmway. Addison-Wesley, 2015.
 12. Pichler, Roman. Agile Product Management With Scrum. Addison-Wesley, 2010.
 13. Appelo, Jurgen. Management 3.0: Leading Agile Developers, Developing Agile Leaders. Addison-Wesley, 2011
+14. Mary and Tom Poppendieck. Leading Lean Software Development: Results Are Not The Point. Addison-Wesley, 2009.
+15. Craig Larman and BasVodde. Scaling Lean & Agile Development: Thinking and Organizational Tools for Large-Scale Scrum. Addison-Wesley, 2008.
