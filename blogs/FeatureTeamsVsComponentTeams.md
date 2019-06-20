@@ -8,7 +8,7 @@ There are two different types of ways in which teams might organize in order to 
 
 **Component team:** this would be a team that is assembled around particular component(s) that are used to complete part of a feature. The remainder of the feature would be completed by one or more other component teams who are also specialized in components that complete part of a feature. A component team would typically be working on only front-end components or only back-end components. Component teams will commonly work with the same components over and over again throughout multiple features. As a result, a component team will be very specialized in the work that they do.
 
-### Feature teams vs Component teams
+### Which one is better?
 For feature teams, we do not have to coordinate much with other teams so planning is significantly easier. However, feature teams have to learn quite a bit more technologies, languages, and frameworks since they are going to be making a code change in many different components.<sup>3</sup> Component teams don't need to be able to work in near as many areas so they can have a more narrow focus and specialize. On the other hand, a component team has to coordinate with other component teams in order to complete features so planning is quite a bit tougher. So which route is better?
 
 ### There are quite a few drawbacks of component teams
