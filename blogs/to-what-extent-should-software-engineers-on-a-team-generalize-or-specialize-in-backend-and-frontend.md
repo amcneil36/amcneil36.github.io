@@ -43,3 +43,4 @@ if your a front-end specialist, you would end up continuing with front-end tasks
 whoever is writing requiremetns needs to be able to do other stuff because getting ahead on requirements is no good
 same for the tester-trying to write test cases for stuff that is not near ready to be started is waste
 make decisions at the last responsible moment
+what about having a specialist that works on multiple teams?
