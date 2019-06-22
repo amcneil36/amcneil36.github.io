@@ -35,3 +35,11 @@ Lastly, what happens if a specialist takes a vacation? We need to be able to cov
 ## Option # 3
 
 Here's the bottom line. It's good to have a software engineer specialize in an area and prioritize giving them tasks in that area. But the software engineer needs to be able to step up and work on tasks in an area outside of their specialization. Imagine a user story is 70% complete and the sprint is about to end. All that is left is some front-end code but back-end is your main specialization. You need to be able to step up and help out in the front-end to finish the end of the sprint. Or imagine there is a front-end task that is blocked by a back-end task. As someone who is a specialist in front-end, you still need to be able to step up and help with the back-end to help remove blockages. Being able to step up and remove bottlenecks is what separates this option from option 2. As a result, this is the best option.
+
+---------------------------
+note this applies to all teammates
+at some times, certain areas of the project are more important (we need back-end help)
+if your a front-end specialist, you would end up continuing with front-end tasks and get ahead of the back-end code
+whoever is writing requiremetns needs to be able to do other stuff because getting ahead on requirements is no good
+same for the tester-trying to write test cases for stuff that is not near ready to be started is waste
+make decisions at the last responsible moment
