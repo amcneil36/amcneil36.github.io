@@ -53,14 +53,14 @@ I'm going to assign an option to second place and it is not going to be a team o
 I would consider having a team of generalizing-specialists being the best route while having a team containing both specialists and generalists being at a close second. However, going with the honorable mention route is better if that would suit the passion of team members more since having passionate teammates will improve performance. I consider all other options significantly worse.
 
 ## Sources
-1. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.
-a. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.
-b. Shore, James and Warden, Shane. The Art of Agile Development. O'Reilly Media, 2008.
-d. Craig Larman and Bas Vodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012.
-g. Narayan, Sriram. Agile IT Organization Design. Pearson Education, 2015.
-e. Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013.
-f. Gregory, Janet and Crispin, Lisa. More Agile Testing. Addison-Wesley, 2014.
-h. Kim, Gene, et al. The DevOps Handbook: How to Create World-Class Agility, Reliability, and Security in Technology Organizations. IT Revolution, 2016.
-i. Appelo, Jurgen. Management 3.0: Leading Agile Developers, Developing Agile Leaders. Addison-Wesley, 2011
-j. Craig Larman and Bas Vodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012.
-k. Craig Larman and BasVodde. Scaling Lean & Agile Development: Thinking and Organizational Tools for Large-Scale Scrum. Addison-Wesley, 2008.
+1. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.  
+2. Craig Larman and Bas Vodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012. 
+3. Craig Larman and BasVodde. Scaling Lean & Agile Development: Thinking and Organizational Tools for Large-Scale Scrum. Addison-Wesley, 2008.  
+4. Shore, James and Warden, Shane. The Art of Agile Development. O'Reilly Media, 2008.  
+5. Narayan, Sriram. Agile IT Organization Design. Pearson Education, 2015.  
+6. Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013.
+7. Gregory, Janet and Crispin, Lisa. More Agile Testing. Addison-Wesley, 2014.  
+8. Kim, Gene, et al. The DevOps Handbook: How to Create World-Class Agility, Reliability, and Security in Technology Organizations. IT Revolution, 2016.  
+9. Appelo, Jurgen. Management 3.0: Leading Agile Developers, Developing Agile Leaders. Addison-Wesley, 2011  
+10. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.
+11. Craig Larman and Bas Vodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012.
