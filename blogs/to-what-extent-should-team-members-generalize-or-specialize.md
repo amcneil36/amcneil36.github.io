@@ -22,17 +22,14 @@ Unfortunately, this approach typically leads to lower code quality. Everyone is 
 Team members are only working in areas that they are specialized in so they don't need near as much time to be onboarded. After getting onboarded, team members also don't need near as much time doing spikes and other types of studying. Team members would also be more likely to understand best practices in the area(s) they are working in since they only work in areas they are specialized in.
 
 ## cons
-If we were in utopia, this would definitely be the best option. Imagine the universe works out beautifully to where all our user stories we do automagically take the same amount of time doing front-end code as back-end code. We can have half of our software engineers specialize in front-end and half of them specialize in back-end. Or maybe all our user stories are 1/3 front-end and 2/3 back-end so we have 1/3 of our software engineers specialize in front-end and 2/3 of them specialize in back-end. This would be very efficient and easily the way to go.
+This setup makes it difficult to remove bottlenecks. If something is going wrong in a particular area, we might want to have more than one person help out in that area. If people are all specialists, we may not be able to have more than one person to help out so having specialists makes bottlenecks take longer to remove. Secondly, some sprints might contain works that require a little bit different skill sets than other sprints. This means that in some sprints, our specialist set up aligns well with the work that needs to be done but in other sprints the specialist set up does not align well with the work that needs to be done. Lastly, when a specialist is out of office, it might be hard for someone else to cover their area.
 
-Unfortunately, we don't live in utopia. Some user stories will be 50% front-end and 50% back-end. Other user stories will be 85% front-end and 15% back-end. We could also have user stories that are 15% front-end and 85% back-end. As a result, we cannot set up a team of specialists such that the front-end and back-end of a user story become finished around the same time when the specialists are only allowed to work in the area of their specialization. 
+## Generalizing-Specialist
+## pros
+A majority of the work being done by a team member is in an area that they are specialized in. This set up also still has the ability for multiple people to step up and remove bottlenecks since they contain broad skills in many areas.
 
-When a user story is front-end heavy, the back-end specialists will finish their work for the user story before the front-end specialists. Since the back-end specialists are only allowed to do back-end code, they have no choice but to start working on a new user story now. This increases the amount of time that code in one layer is written without being fully integrated into the other layer. Deferring integration lengthens the feedback loop and provides less sense of understanding about the state of the work. We don't truly know if our code will work until it is fully integrated.
-
-Switching to a new user story also increases the amount of user stories in progress. We generally want to lessen the number of user stories in progress. Scrum asks that we produce a potentially shippable product increment by the end of each sprint. Having many partially complete user stories is no good. Partially complete user stories do not add value to the customer and do not promote getting valueable feedback at the sprint demo. Demo'ing partially completed user stories is also less efficient as it results in the user story being demo'd twice (once when incomplete and again when complete).
-
-Lastly, what happens if a specialist takes a vacation? We need to be able to cover for this person when that happens.
-
-## Option # 3
+## cons
+Team members will sometimes work in areas that they have broad skills in which might be a scenario where best practices are followed quite as well in comparison to having people only work in areas they are specialized in. Secondly, it could also be the case that some sprints result in requiring skills that align well with the generalizing-specialist set up and other sprints require skills that do not align well with the generalizing-specialist setup.
 
 Here's the bottom line. It's good to have a software engineer specialize in an area and prioritize giving them tasks in that area. But the software engineer needs to be able to step up and work on tasks in an area outside of their specialization. Imagine a user story is 70% complete and the sprint is about to end. All that is left is some front-end code but back-end is your main specialization. You need to be able to step up and help out in the front-end to finish the end of the sprint. Or imagine there is a front-end task that is blocked by a back-end task. As someone who is a specialist in front-end, you still need to be able to step up and help with the back-end to help remove blockages. Being able to step up and remove bottlenecks is what separates this option from option 2. As a result, this is the best option.
 
@@ -44,3 +41,4 @@ whoever is writing requiremetns needs to be able to do other stuff because getti
 same for the tester-trying to write test cases for stuff that is not near ready to be started is waste
 make decisions at the last responsible moment
 what about having a specialist that works on multiple teams?
+dba specialization
