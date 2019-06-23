@@ -1,4 +1,4 @@
-# To what extent should software engineers on a team generalize or specialize in the back-end and front-end?
+# To what extent should team members generalize or specialize?
 
 We learned previously that scrum teams should be able to do both front-end and back-end code. But should each individual team member be able to write both front-end and back-end code?
 
