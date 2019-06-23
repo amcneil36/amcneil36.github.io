@@ -12,10 +12,10 @@ Lets discuss three different options that might represent a team members skill s
 
 ## Generalist
 ### pros
-It is very easy to do sprint planning because you can assign the tasks to just about anyone. Secondly, if one area of the project is having some issues and needs extra attention, anyone would be able to step up and do a reasonable job in helping out in that area. Teammates can also communicate well together because they have a similar understanding.
+It is very easy to do sprint planning because you can assign the tasks to just about anyone. Secondly, if one area of the project is having some issues and needs extra attention, anyone would be able to step up and do a reasonable job in helping out in that area. Some sprints might require slightly different skill sets than others and for a team of generlists, that's not a problem. Someone could also be out of office and that would be less likely to cause any issues for a team of generalists.
 
 ### cons
-Unfortunately, this approach typically leads to lower code quality. Everyone is working in an area that they are "medium" at. No one is working in an area that they are truly great at. If we were in a situation in which a random number is generated to determine which software engineer does which software engineering task, then having software engineers being a generalist would make sense. But because software engineers can choose which task they want to do, it is more efficient to allow for specialization within software engineers and attempt to have them prioritize towards choosing tasks that suit their specialization. For someone who is a business analyst or tester, the same argument would apply. There may or may not be as much choosing of their tasks in comparison to software engineers but they would still want their specializations to mirror what they work on more frequently. As a result, we don't want this option for any of the roles.
+People need to spend a lot of time doing spikes since there are many areas they need to be adequate in. Onboarding new people will take quite a bit longer. Lastly, people only work in areas they are medium at and don't work in any area they are truly great at.
 
 ## Specialist
 ## pros
@@ -31,7 +31,8 @@ A majority of the work being done by a team member is in an area that they are s
 ## cons
 Team members will sometimes work in areas that they have broad skills in which might be a scenario where best practices are followed quite as well in comparison to having people only work in areas they are specialized in. Secondly, it could also be the case that some sprints result in requiring skills that align well with the generalizing-specialist set up and other sprints require skills that do not align well with the generalizing-specialist setup.
 
-Here's the bottom line. It's good to have a software engineer specialize in an area and prioritize giving them tasks in that area. But the software engineer needs to be able to step up and work on tasks in an area outside of their specialization. Imagine a user story is 70% complete and the sprint is about to end. All that is left is some front-end code but back-end is your main specialization. You need to be able to step up and help out in the front-end to finish the end of the sprint. Or imagine there is a front-end task that is blocked by a back-end task. As someone who is a specialist in front-end, you still need to be able to step up and help with the back-end to help remove blockages. Being able to step up and remove bottlenecks is what separates this option from option 2. As a result, this is the best option.
+## So which option is the best?
+I'm going to go ahead and rule out the option of there being a team of generalists since that is the most obvious one to rule out. If there is no control over who works on what, then having a team of generalists makes sense. But because people can choose what they work on, it makes sense to allow specialization and to have some sort of preference towards having people work in their specialization. The questions is, should they specialize in just one or two areas and only work in those areas? Or should they have broad skills in many areas (in addition to specializing in a few areas) and attempt to work in a wider variety of areas?
 
 ---------------------------
 note this applies to all teammates
@@ -42,3 +43,4 @@ same for the tester-trying to write test cases for stuff that is not near ready 
 make decisions at the last responsible moment
 what about having a specialist that works on multiple teams?
 dba specialization
+group work to fit the teams instead of grouping teams to fit the work
