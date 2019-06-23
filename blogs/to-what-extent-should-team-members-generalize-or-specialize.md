@@ -1,25 +1,25 @@
 # To what extent should team members generalize or specialize?
 
-We learned previously that scrum teams should be able to do both front-end and back-end code. But should each individual team member be able to write both front-end and back-end code?
+Lets imagine we have a scrum team containing some software engineers, a business analyst, and a tester. Maybe the team contains a few other roles too or maybe it doesn't. The answer to this question is going to be the same in either case so do not worry if this example mirrors the set up on your team.
 
-Lets discuss 3 options for software engineers on a scrum team: generalist, specialist, and generalizing-specialist.
+Lets discuss three different options that might represent a team members skill set.
 
-**Generalist:** each individual software engineer is equally comfortable in front-end as back-end  
+**Generalist:** this would be a team member that is equally good in many areas.
 
-**Specialist:** some software engineers specialize in front-end, not worrying about back-end. Remaining software engineers specialize in back-end, not worrying about front-end  
+**Specialist:** this would be a team member that is extremely strong in one or two areas and does not do any work outside of their specialization.
 
-**Generalizing-Specialist:** some software engineers aim to have in-depth knowledge in front-end and broad knowledge in back-end. Remaining software engineers aim to have broad knowledge in front-end and in-depth knowledge in back-end
+**Generalizing-Specialist:** this would be a team member that has in-depth skills in one or two areas and broad skills in other areas. This person would attempt to primarily work in their specializtion but would be more than willing to work in an area outside of their specialization if needed. These people are sometimes called T-shaped people.
 
-## Option # 1
+## Generalist
 ### pros
 It is very easy to do sprint planning because you can assign the tasks to just about anyone. Secondly, if one area of the project is having some issues and needs extra attention, anyone would be able to step up and do a reasonable job in helping out in that area. Teammates can also communicate well together because they have a similar understanding.
 
 ### cons
-Unfortunately, this approach typically leads to lower code quality. Everyone is working in an area that they are "medium" at. No one is working in an area that they are truly great at. If we were in a situation in which we don't have the ability to choose who does which task, then having everyone be equally good in front-end and back-end would make sense. But, we have the flexibility to choose who does which task so it is more efficient if we can have people specialize in an area and then prioritize giving them tasks in that area. As a result, option 1 will not work.
+Unfortunately, this approach typically leads to lower code quality. Everyone is working in an area that they are "medium" at. No one is working in an area that they are truly great at. If we were in a situation in which a random number is generated to determine which software engineer does which software engineering task, then having software engineers being a generalist would make sense. But because software engineers can choose which task they want to do, it is more efficient to allow for specialization within software engineers and attempt to have them prioritize towards choosing tasks that suit their specialization. For someone who is a business analyst or tester, the same argument would apply. There may or may not be as much choosing of their tasks in comparison to software engineers but they would still want their specializations to mirror what they work on more frequently. As a result, we don't want this option for any of the roles.
 
-## Option # 2
+## Specialist
 ## pros
-Software engineers are only working in an area they are specialized in so they should be able to work very fast and produce high quality code
+Team members are only working in areas that they are specialized in so they don't need near as much time to be onboarded. After getting onboarded, team members also don't need near as much time doing spikes and other types of studying. Team members would also be more likely to understand best practices in the area(s) they are working in since they only work in areas they are specialized in.
 
 ## cons
 If we were in utopia, this would definitely be the best option. Imagine the universe works out beautifully to where all our user stories we do automagically take the same amount of time doing front-end code as back-end code. We can have half of our software engineers specialize in front-end and half of them specialize in back-end. Or maybe all our user stories are 1/3 front-end and 2/3 back-end so we have 1/3 of our software engineers specialize in front-end and 2/3 of them specialize in back-end. This would be very efficient and easily the way to go.
