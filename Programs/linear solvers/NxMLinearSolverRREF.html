@@ -1,0 +1,551 @@
+<html> 
+<head><title> NxM Linear Solver </title></head><body>
+<h3> NxM Linear Solver </h3>
+<form id = "formInput"  action = "" method = "post">
+<table border = "0">
+<tr style = "position:absolute; top: 20px; left:200px;"><td><input type = "button" name = "changeDimensions" tabindex = "1" value = "Choose Dimensions" /> &nbsp; <input type = "button" name = "compute" value = "Calculate Solutions" />  &nbsp; <input type = "reset" value = "Clear" /> &nbsp; <input type = "button" name = "decimal" id = "decimal" value = "Click Me for Decimal Solutions" /> &nbsp; First time using this? &nbsp; <input type = "button" id = "helpMe" name = "helpMe" value = "Click me for instructions!" /> </td> </tr>
+<div id = "MyDiv">
+</div>
+<tr style = "position:absolute;"><td>Solutions: <input type = "text" name = "sols" id = "sols" size = "120"/> <br> <br> <br> <br><br> Step by step procedure to solve this system of linear equations (using Gaussian Elimination): <br><br> <textarea rows = "48" cols = "187" name = "work" id = "work"> </textarea> </td></tr><tr style = "position:absolute; top: 48px; left: 1085px;"></tr>
+</table>
+</form>
+</body>
+</html>
+</script>
+<script> // where our calculations will be done
+
+document.getElementById("formInput").changeDimensions.style.background='#4dff4d';
+var elt = document.getElementById("formInput");
+var eq = 0; // number of equations
+var vb = 0; // number of variables
+var decVal = -1;
+var tbl  = document.createElement('table');
+var pivCols = new Array(); // array to represent which columns contain a pivot
+document.getElementById("formInput").helpMe.onclick = help;
+document.getElementById("formInput").decimal.onclick = changeFormatOfSolution; 
+document.getElementById("formInput").changeDimensions.onclick = changeDimensions;
+document.getElementById("formInput").compute.onclick = main;
+
+function help(){ // explaining how this calculator works to the user
+ alert("To use this calculator, click Choose Dimensions and enter a value for the amount of variables and equations. Next, put in your numbers. The right-most text box in each row is what each equation is equal to while the rest are coefficients to each variable. After you finished inputting your numbers, press Calculate Solutions to get your answer\n\nThis calculator will tell you if there are no solutions, one solution, or infinitely many solutions and give you the answer as well as steps showing you how to solve it with Gaussian Elimination. You may choose to receive the answers in fraction or decimal form.");
+} // help
+
+function simplestForm(fraction){ // puts a fraction in simplest form
+	var num = getNumerator(fraction);
+	var den = getDenominator(fraction); 
+	if (num == 0 && den == 0){
+	 noSolution = 1; // setting flag to indicate no solution in the system
+	} 
+	if (num == 0){
+	 return String(0);
+	} 
+	var greatestCommonDivisor = GCD(num, den);
+	var num = num/greatestCommonDivisor;
+	var den = den/greatestCommonDivisor;
+	if (Math.abs(den) == 1){
+	 return String(num/den);
+	} 
+	if (Math.abs(num)==Math.abs(den)){ 
+	 return String(num/den);
+	} 
+	if ((num>0 && den<0) || (num<0 && den<0)){  
+	 return String(num*-1).concat("/").concat(String(den*-1));
+	}
+	return String(num).concat("/").concat(String(den));
+} // simplestForm
+
+function divideFractions(fraction1, fraction2){ // divides two fractions
+	var num = getNumerator(fraction1)*getDenominator(fraction2); 
+	var den = getDenominator(fraction1)*getNumerator(fraction2);
+ return simplestForm(String(num).concat("/").concat(String(den)));
+} // divideFractions
+
+function multiplyFractions(fraction1, fraction2){ // multiplies two fractions
+	var num = getNumerator(fraction1)*getNumerator(fraction2); 
+	var den = getDenominator(fraction1)*getDenominator(fraction2);
+ return simplestForm(String(num).concat("/").concat(String(den)));
+} // multiplyFractions
+
+
+function addFractions(fraction1, fraction2){ // adds two fractions
+	var num = getNumerator(fraction1)*getDenominator(fraction2)+getNumerator(fraction2)*getDenominator(fraction1);
+	var den = getDenominator(fraction1)*getDenominator(fraction2);
+ return simplestForm(String(num).concat("/").concat(String(den)));
+} // addFractions
+
+function subtractFractions(fraction1, fraction2){ // subtracts two fractions
+	var num = getNumerator(fraction1)*getDenominator(fraction2)-getNumerator(fraction2)*getDenominator(fraction1);
+	var den = getDenominator(fraction1)*getDenominator(fraction2);
+ return simplestForm(String(num).concat("/").concat(String(den)));
+} // subtractFractions
+
+function getNumerator(fraction){ // returns the numerator of a fraction
+ var fraction = String(fraction);
+ if (fraction.indexOf("/") == -1){
+	 return parseFloat(fraction);
+	}
+ return parseFloat(fraction.substring(0, fraction.indexOf("/")));
+} // getNumerator
+
+function getDenominator(fraction){ // returns the denominator of a fraction
+	var fraction = String(fraction);
+	if (fraction.indexOf("/") == -1){
+		return 1;
+	}
+ return parseFloat(fraction.substring(fraction.indexOf("/")+1, fraction.length));
+} // getDenominator
+
+function GCD(x, y){ // greatest common divisor function used to find simplest form
+	if (x > y){
+		var a = x;
+		var b = y;
+	}
+	else{
+		var a = y;
+		var b = x; 
+	}  
+	var r = a%b;
+	while (r!=0){
+		var a = b;
+		var b = r;
+		var r = a%b;
+	} // while
+ return Math.abs(b);
+} // GCD
+
+function copyMatrix(inputtedMatrix){ // copies the entire matrix
+ var b = new Array();
+ for (var i = 0; i < inputtedMatrix.length; i++){
+ 	var c = new Array();
+ 	for (var j = 0; j < inputtedMatrix[0].length; j++){
+ 	 c.push(inputtedMatrix[i][j]);
+ 	} // inner for
+	b.push(c);
+ } // outer for
+ return b;
+} // copyMatrix
+	   
+function stringOfMatrixValue(val){ // returns string representation of a matrix value (helpful with fractions)
+ if (decVal != -1){ // if user wants the answer in decimal form
+  if (isNaN(val) && val.indexOf("/") == -1){ // if the value is a letter, we will return that letter
+		 return val;
+		} 
+  return (parseFloat((getNumerator(val)/getDenominator(val)).toFixed(decVal))); // returning in decimal form
+	} 
+ return val;
+} // stringOfMatrixValue
+
+
+function divRow(inputtedMatrix, row, col){ // divide row by pivot
+ var elt = document.getElementById("formInput");
+ pivCols.push(col); // pushing this to our array that states which rows have a pivot
+ var piv = inputtedMatrix[row][col]; // current value of the place in which our pivot will eventually go
+ for (i = 0; i <= vb; i++){ // dividing every entry by the value of the entry that will be converted to a pivot
+  inputtedMatrix[row][i] = divideFractions(inputtedMatrix[row][i], piv);
+	} // for 
+ return;
+} // divRow
+
+function zeroAboveOrBelowEntry(inputtedMatrix, row, col, pivRow){ // zero out the necessary column entry, adjust the rest of the row
+	var ze = inputtedMatrix[row][col]; // the value of the entry that we want to shortly get to 0
+		for (i = col; i <=vb; i++){ // replacing our row with our row minus the product of the row containing the pivot for our column and the value of the number that is going to be zero'd out
+			inputtedMatrix[row][i] = subtractFractions(inputtedMatrix[row][i], multiplyFractions(ze,inputtedMatrix[pivRow][i]));
+		} // for
+	return;
+} // zeroAboveOrBelowEntry
+
+function checkPivot(inputtedMatrix, row, col){ // function to make sure we can make a pivot in our column
+ if (getNumerator(inputtedMatrix[row][col]) != 0){ // if our entry is non-zero, we are fine and can make a pivot out of it
+  return;
+	}
+ if (row+1 >= eq){ // if we are in the last row, we cannot check rows below us for a row that can be swapped for a pivot so we quit
+  return;
+	} 
+ for (var i = row+1; i < eq; i++){ // checking for a row that has a non-zero entry in our column to swap with to make a pivot
+  if (getNumerator(inputtedMatrix[i][col]) != 0){ // if this coefficient inr our column is non-zero, we can use it for a pivot! we will row swap with it and use it as our pivot
+			var b = copyMatrix(inputtedMatrix); // copying our matrix before row swapping so that we can print out this matrix and the new matrix momentarily	  
+			var a = rowSwap(inputtedMatrix, row, i); // swapping our current row with the row that we found that is going to be used to make apivot
+			document.getElementById("work").value = document.getElementById("work").value.concat("Found a 0 at row ".concat((row+1).toString()).concat(" column ").concat((col+1).toString()).concat(". Swapping rows ").concat((row+1).toString()).concat(" and ").concat((i+1).toString()).concat(" of \n\n").concat(stringOfMatrix(b)).concat("\nwill give us \n\n").concat(stringOfMatrix(inputtedMatrix)).concat("\n").concat("-".repeat(184)).concat("\n\n")) // informing user of what we are doing
+			return;
+		}
+	} // for
+} // check Pivot
+
+function rowSwap(inputtedMatrix, row1, row2){ // swap row1 with row2 in our matrix
+ var temp;
+ for (i = 0; i <= vb; i++){
+		temp = inputtedMatrix[row1][i];
+		inputtedMatrix[row1][i] = inputtedMatrix[row2][i];
+		inputtedMatrix[row2][i] = temp;
+	} // for
+} // rowSwap
+
+function stringOfMatrix(inputtedMatrix){ // will make a string representation of the 2d array a as a matrix
+ var strOfMatrix = "";
+ for (var i = 0; i < eq; i++){ 
+  for (var j = 0; j <= vb; j++){ 
+   strOfMatrix = strOfMatrix.concat(stringOfMatrixValue(inputtedMatrix[i][j])).concat('\t'); // separating each row entry by a tab
+		}  // inner for
+   strOfMatrix = strOfMatrix.concat("\n"); // going to next row for our matrix
+	} // outer for 
+return strOfMatrix;
+} // stringOfMatrix
+
+function changeFormatOfSolution(){ // will change work shown from decimal to fraction or vice-versa
+ var elt = document.getElementById("formInput");
+ if (decVal == -1){
+	 decVal = prompt("Enter amount of decimals to round to: "); // user wants decimal form
+	 if (!decVal){ // do nothing if user pressed cancel or left the box blank
+		 decVal = -1;
+			return;
+		} 
+  while(isNaN(decVal) || decVal <= 0 || decVal%1 != 0){ // validating input
+   decVal = prompt("Wrong format. Enter amount of decimals to round to: ");
+   if (!decVal){
+		 	decVal = -1;
+		 	return;
+			}
+		} // while
+  document.getElementById("decimal").value = "Click Me For Fraction Solutions"; // changing button to allow for user to switch to fractions
+  if (elt.sols.value != ""){ // running the program again to update the step by step procedure and solution to decimal format
+		 main();
+		} 
+  else{
+		 return;
+		}
+	}
+ else{
+  decVal = -1; // signifying user wants fractions
+  if (elt.sols.value != ""){ // running the program again to get fraction results if it has been ran before
+		 main();
+		} 
+  document.getElementById("decimal").value = "Click Me For Decimal Solutions";  // changing button to allow for user to switch to decimal
+	}
+} // changeFormatOfSolution
+
+function convertToRREF(inputtedMatrix){ // gets a matrix in RREF
+ var row = 0; // will be used to represent the row we are in
+ for (var col = 0; col < vb; col++){  // iterating over each column of our matrix except the last
+  if (row >= eq){ // if we are below the bottom row, quit
+		 break;
+		} 
+  a = solveCol(inputtedMatrix, row, col); // calling function get a pivot in our column and adjust entries above and below pivot
+  if (getNumerator(inputtedMatrix[row][col]) == 1){ // if we got the pivot to be 1, we go down a row, other wise we stay in the same row for the next column
+	  row++;
+		}
+ } // for
+} 
+
+function solveCol(inputtedMatrix, row, col){ // does all necessary operations on a single column of a matrix (gets pivot, zeros out entries above and below pivot)
+ if (row >= eq){ // if we are below our bottom row, leave the function
+	 return inputtedMatrix;
+	}
+ document.getElementById("work").value = document.getElementById("work").value.concat("Starting on column ".concat((col+1).toString()).concat(" of \n\n").concat(stringOfMatrix(inputtedMatrix)).concat("\n").concat("-".repeat(184)).concat("\n\n")); // telling the user what we are doing
+ checkPivot(inputtedMatrix, row, col); // making sure we can put a pivot here, if not we will row swap
+ if (getNumerator(inputtedMatrix[row][col]) == 0){ // if we couldn't get a non-zero coefficient where we want a pivot, leave the function
+  if (col != vb-1){
+		 document.getElementById("work").value = document.getElementById("work").value.concat("It is not possible to get a pivot in column ".concat((col+1).toString()).concat(" of\n\n").concat(stringOfMatrix(inputtedMatrix)).concat("\nso we will go to the next column but stay in the same row").concat("\n").concat("-".repeat(184)).concat("\n\n"));
+		}
+  else{
+		 document.getElementById("work").value = document.getElementById("work").value.concat("It is not possible to get a pivot in column ".concat((col+1).toString()).concat(" of\n\n").concat(stringOfMatrix(inputtedMatrix)).concat("\nand there is no remaining column eligible for a pivot\n").concat("-".repeat(184)).concat("\n\n"));
+		}
+  return inputtedMatrix;
+	}
+ var b = copyMatrix(inputtedMatrix); // b will be used to help us print two matrices at a time
+ divRow(inputtedMatrix, row, col);  // dividing the row in a by the value we want to be our pivot
+ if (getNumerator(b[row][col])==1){
+	 document.getElementById("work").value = document.getElementById("work").value.concat("The entry in row".concat((row+1).toString()).concat(" column").concat((col+1).toString()).concat(" is already 1. Thus the matrix\n\n").concat(stringOfMatrix(b)).concat("\nremains the same.\n").concat("\n").concat("-".repeat(184)).concat("\n\n"));
+	}
+ else{
+	 document.getElementById("work").value = document.getElementById("work").value.concat("Dividing every entry in row ".concat((row+1).toString()).concat(" by ").concat(stringOfMatrixValue(b[row][col])).concat(" (obtained from the value at row ").concat((row+1).toString()).concat(" column ").concat((col+1).toString()).concat(") of \n\n").concat(stringOfMatrix(b)).concat("\nwill give us \n\n").concat(stringOfMatrix(inputtedMatrix)).concat("\n").concat("-".repeat(184)).concat("\n\n"));
+	}
+ for (var i = 0; i < eq; i++){ // iterating over each row to zero out the value above or below the pivot (staying in the same column)
+  if (i == row){ // if we are on the same row as the pivot, we don't want to do anything (because zero'ing it out would lose it)
+		 continue;
+		} 
+  var b = copyMatrix(inputtedMatrix);
+  zeroAboveOrBelowEntry(inputtedMatrix, i, col, row); // zero'ing out the entry at the specified row and column with row operations
+  if (getNumerator(b[i][col]) == 0){
+   document.getElementById("work").value = document.getElementById("work").value.concat("Row".concat((i+1).toString()).concat(" column").concat((col+1).toString()).concat(" already has a 0. Thus the matrix \n\n").concat(stringOfMatrix(inputtedMatrix)).concat("\nwill remain the same.").concat("\n").concat("-".repeat(184)).concat("\n\n"));
+		}
+  else{
+		 document.getElementById("work").value = document.getElementById("work").value.concat("Replacing row".concat((i+1).toString()).concat(" with row").concat((i+1).toString()).concat(" - ").concat((stringOfMatrixValue(b[i][col])).toString()).concat("*row").concat((row+1).toString()).concat(" of \n\n").concat(stringOfMatrix(b)).concat("\nwill zero out the value of row").concat((i+1).toString()).concat(" column").concat((col+1).toString()).concat(" to give us \n\n").concat(stringOfMatrix(inputtedMatrix)).concat("\n").concat("-".repeat(184)).concat("\n\n"));
+		}
+ } // for
+ return inputtedMatrix;
+} // solveCol
+
+function changeDimensions(){ // adds boxes for input
+	var elt = document.getElementById("formInput");
+	var tempEq = parseInt(prompt("Enter how many equations you want: "));	
+	if (tempEq > 100){
+		var response = prompt("You entered an equation value bigger than 100. Are you sure you want to continue (yes/no)?");
+		if (response.toLowerCase() != "yes"){
+		 return;
+		}  
+	}
+	if (isNaN(tempEq) || tempEq < 1){
+	 return; // if user hit cancel
+	}
+	var tempVb = parseInt(prompt("Enter how many variables you want: "));	
+	if (tempVb > 100){
+ 	var response = prompt("You entered a variable value bigger than 100. Are you sure you want to continue (yes/no)?");
+	 if (response.toLowerCase() != "yes"){
+	  return;
+	 }  
+	}
+	if (isNaN(tempVb) || tempVb < 1){
+ 	return; // if user hit cancel
+	}
+	eq = tempEq;
+	vb = tempVb;
+	elt.sols.value = "";
+	elt.work.value = "";
+	document.getElementById("formInput").changeDimensions.value = "Change Dimensions";
+	document.getElementById("formInput").changeDimensions.style.background=document.getElementById("formInput").compute.style.background;
+	if (eq > 100){
+	 var response = prompt("You requested for there to be more than 100 equations. Are you sure you want to continue (yes/no)?");
+	 if (response == "no"){
+		 return;
+		}  
+	}
+	if (vb > 100){
+	 var response = prompt("You requested for there to be more than 100 variables. Are you sure you want to continue (yes/no)?");
+	 if (response == "no"){
+		 return;
+		}  
+	}
+	var body = document.body;
+	var dv = document.getElementById("MyDiv");   
+	while(tbl.hasChildNodes()){
+	 tbl.removeChild(tbl.firstChild);
+	}
+	dv.appendChild(tbl);
+	tbl.style.width  = '100px';
+	tbl.style.border = '0px solid black';
+	var varStr = "";
+	for(var i = 0; i < eq; i++){
+		var tr = tbl.insertRow();
+		for(var j = 0; j < vb+1; j++){
+			var td = tr.insertCell();
+			var element1 = document.createElement('input');
+			element1.type="text";
+			element1.size = "1";
+			element1.id = "a".concat(i.toString()).concat(",").concat(j.toString());
+			if (j == vb){
+			 element1.style = "text-align: center";
+			}
+			else{
+			 element1.style = "text-align: right";
+			}
+			td.appendChild(element1);
+			if (j == vb){
+			 break;
+			}
+			else if (j == vb-1){
+			 varStr = "x".concat((j+1).toString()).concat("\u00A0\u00A0=\u00A0");
+			}
+			else{
+			 varStr = "x".concat((j+1).toString()).concat("\u00A0+\u00A0");
+			}
+			var t = document.createTextNode(varStr);
+			td = tr.insertCell();
+			td.appendChild(t);
+			td.style.border = '0px solid black';
+		} // inner for
+	} // outer for
+	dv.appendChild(tbl);
+} // done with changeDimensions
+
+function hasNoSolution(inputtedMatrix){ // function to check if the matrix has a solution (could be unique or infinitely many solutions)
+	for (var i = 0; i < eq; i++){
+		var flag = 0;
+		for (var j = 0; j< vb; j++){
+			if (inputtedMatrix[i][j] != 0){
+				flag = 1; // found a non-zero entry in the row
+			} 
+		} // inner for 
+		if (flag == 0 && getNumerator(inputtedMatrix[i][vb]) != 0){  // if we have a row of zeros equal to a non-zero constant: no solution, return the row that causes no solution
+		 return i+1;
+		}
+	} // outer for
+	return 0; // if we made it this far, there is a solution
+} // hasNoSolution 
+
+function hasUniqueSolution(inputtedMatrix){ // checking if the function has a unique solution
+	var elt = document.getElementById("formInput");
+	if (vb>eq){ // if more variables than equations, no unique solution
+		return 0;
+	} 
+	for (var i = 0; i < vb; i++){
+	 if ((inputtedMatrix[i][i]) != 1){
+		 return 0; // if we couldn't get a pivot of 1 along the diagonal, no unique solution
+		}
+	} // for 
+	return 1;
+} // hasUniqueSolution
+
+function uniqueSolutionSolver(inputtedMatrix){ // function to solve an RREF matrix that has a unique solution
+ var answers = new Array(); 
+ var elt = document.getElementById("formInput");
+ for (var i = 0; i < vb; i++){ 
+  answers.push(stringOfMatrixValue(inputtedMatrix[i][vb])); // the value for the (i+1)th varaible is the right-most coefficient in the row since this is in RREF
+	} // for
+ var strSols = ""; // will be used to create a nice string of our answers
+ for (var i = 0; i < vb-1; i++){
+  strSols = strSols.concat("x").concat((i+1).toString()).concat(" = ").concat(answers[i]).concat(", "); // making a nice string out of our answers now
+	} 
+ strSols = strSols.concat("x").concat(vb).concat(" = ").concat(answers[vb-1]); // doing the last solution manually so that we don't have a comma for the last one	
+ elt.sols.value = strSols; // writing our result to the top text area then writing our result to the bottom text area
+ document.getElementById("work").value = document.getElementById("work").value.concat("This system is now in RREF and the number of pivots is equal to the number of variables. Thus, this system\nhas a unique solution from picking off the coefficients from the right-hand side from top to bottom:\n\n").concat(strSols).concat("\n\n"); 
+} // uniqueSolutionSolver
+
+function infiniteSolutions(inputtedMatrix){ // function to solve an RREF matrix that has infinite solutions
+ var elt = document.getElementById("formInput");
+ var numZeroedRows = 0; // number of rows that have all zeros
+ for (var i = 0; i < eq; i++){ // counting number of rows that have all zeros
+  flag = 0; 
+  for (var j = 0; j <= vb; j++){
+   if (getNumerator(inputtedMatrix[i][j])!=0){
+			 flag = 1; // found a non-zero entry so this row is not all zeros, setting flag to 1 to signify that
+			}
+		} // inner for 
+  if (flag == 0){ // if we couldn't find a non-zero entry, add to our count of zero'd out rows
+		 numZeroedRows++;
+		} 
+ } // outer for
+ var equations = eq - numZeroedRows; // since our zero'd rows will be at the bottom, we will just do the rows that aren't zero'd out
+ freeVariables = new Array(); // used to store the letters for the variables that will be free
+ for (var i = 0; i < vb; i++){
+  freeVariables.push(-1);  // pushing a -1 to signify a free variable (will shortly over-write the -1's where we want our free variable)
+	} // for
+ for (var i = 0; i < pivCols.length; i++){  // placing a 1 at the indexes that have a pivot in the column (meaning no free variable from that column)
+  freeVariables[pivCols[i]] = 1;
+	}
+ var answers = new Array();
+ for (var i = 0; i < vb; i++){
+  if (freeVariables[i] == -1){ // if we have a free variable, make a letter for it (starting with 'a')
+		 answers[i] = String.fromCharCode(97 + i);
+		} 
+  else{ // otherwise, 'A' will be used to signify not a free variable
+		 answers[i] = 'A';
+		}	
+ } // for
+ document.getElementById("work").value = document.getElementById("work").value.concat("This system is now in RREF. Notice the column(s) ");
+ var flag = 0; // used for us to know whether or not to place a comma at the start of the string that represents the matrix value
+ for (var i = 0; i <vb; i++){
+  if (answers[i] != 'A'){ // if we are in the free variable column...
+   if (flag == 1){
+			 document.getElementById("work").value = document.getElementById("work").value.concat(", ");
+			}
+   document.getElementById("work").value = document.getElementById("work").value.concat(i+1); flag = 1;  // after our first, value, we can put commas at the start of remaining values so we'll set our flag to 1
+		}
+	} // for
+ document.getElementById("work").value = document.getElementById("work").value.concat(" do not have a pivot. Thus this system has infinitely\nmany solutions and the variable(s) ");
+ var flag = 0; // flag used for commas again
+ for (var i = 0; i <vb; i++){ // writing to our textarea showing which variables are free
+  if (answers[i] != 'A'){ // checking if a free variable
+   if (flag == 1){
+			 document.getElementById("work").value = document.getElementById("work").value.concat(", ");
+			}
+		 document.getElementById("work").value = document.getElementById("work").value.concat("x").concat(i+1); flag = 1;
+		}
+ }
+ document.getElementById("work").value = document.getElementById("work").value.concat(" will be free. The rest of the variables will be equal to the right-most\nvalue of the row minus the products of any free variables and their coefficients in the row (if there are any)\n\n").concat("-".repeat(184)).concat("\n\n");
+ document.getElementById("work").value = document.getElementById("work").value.concat("All solutions to this system of linear equations are of the form:\n\n");
+ // making a nice string in each entry of our aray that will represent it's value
+ for (var i = 0; i < vb; i++){
+  if (answers[i] != 'A'){ // if we have a free variable, it's already in the correct string formatting
+		 continue;
+		} 
+  var pivRow = -1; ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  for (var j = 0; j < equations; j++){
+   if (getNumerator(inputtedMatrix[j][i]) == '1'){ // if value is a 1, we store the row
+			 pivRow = j; 
+			}
+		} 
+  answers[i] = stringOfMatrixValue(inputtedMatrix[pivRow][vb]);  // picking off the right-most coefficient to be the start of our solution
+  // figure out if needing to subtract off any free variables for our solution
+  for (var x = 0; x < vb; x++){
+   if (x == i){ // don't need to check ourself for whether or not we are a free variable
+			 continue;
+			} 
+   if (getNumerator(inputtedMatrix[pivRow][x]) != 0){ // if we have a non-zero coefficient for a potential free variable in our row 
+    if (getNumerator(answers[i]) != 0){  // if our current value is 0, we don't want to show it at the start of the subtraction (ex: 0 - (2)a as a solution, we would rather have -(2)a since it is cleaner)
+				 answers[i] = (answers[i].toString()).concat(" - ").concat("(").concat(stringOfMatrixValue(inputtedMatrix[pivRow][x])).concat(")").concat(answers[x]);
+				}
+    else{
+				 answers[i] = "- (".concat(stringOfMatrixValue(inputtedMatrix[pivRow][x])).concat(")").concat(answers[x]); // making string of our solution with subtracting off free variable and it's coefficient
+				}
+			} 
+ } // for
+ } // for
+ for (var i = 0; i <vb; i++){ // taking our array of strings of solutions and putting it all together
+  answers[i] = "x".concat((i+1).toString()).concat(" = ").concat((answers[i])); // making nice string of our solution
+	} // for
+ for (i = 0; i < vb-1; i++){ // printing out one solution at a time to the top and bottom textarea
+  elt.sols.value = elt.sols.value.concat(answers[i]).concat(",   "); // writing to the top textarea
+  document.getElementById("work").value = document.getElementById("work").value.concat(answers[i]).concat(",   "); // writing to the bottom textarea
+ } // for
+ elt.sols.value = elt.sols.value.concat(answers[vb-1]); // doing last one manually so there is no comma after it
+ document.getElementById("work").value = document.getElementById("work").value.concat(answers[vb-1]);
+ document.getElementById("work").value = document.getElementById("work").value.concat("\n\n");
+} //infiniteSolutions
+
+function readInput(inputtedMatrix){
+var idx = "a".concat((0).toString()).concat(",").concat((0).toString());
+ for (var i = 0; i < eq; i++){ // reading input from the user into a 2d array
+  var rowValues = new Array(); // array to store all of the values in a row to push to our 2d array
+  for (var j = 0; j < vb+1; j++){
+   var idx = "a".concat((i).toString()).concat(",").concat((j).toString());
+   if (document.getElementById(idx).value == ""){ // if textbox is empty, we will assume the user wants a 0 there
+			 document.getElementById(idx).value = "0"
+			} 
+   if (isNaN(getNumerator(document.getElementById(idx).value))){
+			 alert("One or more input values is not a number");
+    document.getElementById("work").value = "";
+				elt.sols.value = "";
+				return;
+			}		  
+   rowValues.push(document.getElementById(idx).value); // storing the value in our array that stores all of the row values
+  } // inner for
+  inputtedMatrix.push(rowValues); // pushing the row into our 2d array
+ } // outer for
+  document.getElementById("work").value = "You entered:\n\n".concat(stringOfMatrix(inputtedMatrix).concat("\n").concat("-".repeat(184)).concat("\n\n"));
+} // readInput
+
+function backSolve(inputtedMatrix){
+ if (hasNoSolution(inputtedMatrix)){ // if our mantrix does not have a solution
+  document.getElementById("work").value = document.getElementById("work").value.concat("This system is now in RREF. There is no solution because row ").concat(hasNoSolution(inputtedMatrix).toString()).concat(" has all zeroes equal to a non-zero constant.");
+  elt.sols.value = "No solution because after RREF is complete, row ".concat(hasNoSolution(inputtedMatrix).toString()).concat( " ends up with all zeroes equal to a non-zero constant.");
+ }
+ else if (hasUniqueSolution(inputtedMatrix)){ // if we have a unique solution	
+  uniqueSolutionSolver(inputtedMatrix); // using our function to calculate and write the unique solution
+ }
+ else{
+  infiniteSolutions(inputtedMatrix); 
+ }
+} // backSolve
+
+function main(){ // reads input, does computations, and stores output
+ elt.sols.value = "";
+	elt.work.value = "";
+ if (eq == 0 || eq < 0 || isNaN(eq) || eq == "" || !eq){
+	 alert("Invalid number of equations. Please select an appropriate number and click Generate Dimensions.");
+		return;
+	}
+ if (vb == 0 || vb < 0 || isNaN(vb) || vb == "" || !vb){
+	 alert("Invalid number of variables. Please select an appropriate number and click Generate Dimensions.");
+		return;
+	}
+	pivCols = new Array();
+ var inputtedMatrix = new Array();
+ readInput(inputtedMatrix);
+ convertToRREF(inputtedMatrix);
+ backSolve(inputtedMatrix);
+} // done with main
+
+</script>
+</html>
+
+
