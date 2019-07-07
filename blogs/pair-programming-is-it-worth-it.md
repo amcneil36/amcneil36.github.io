@@ -29,12 +29,12 @@ Dr. Laurie Williams continued to write a book two years later and concluded that
 Another common argument a person might make against pair programming is that they prefer to work independently and don't like having to work with a partner. It is most likely the case that a developer who has not pair programmed before will be skeptical to the idea of pair programming.<sup>6</sup> However, statistically significant results concluded that developers who had previously coded alone reported that they enjoyed pair programming more than coding alone<sup>1</sup>. In fact, before I pair programmed, I did not predict that it would be more enjoyable than programming alone. After I bit the bullet and tried out pair programming, I liked it more than not pair programming. In fact, my whole team likes pair programming now. Despite the fact that most developers who have done pair programming have reported that pair programming is more fun than programming alone, there will still be developers who try pair programming and don't find it as fun as programming alone.
 
 ## Conclusion
-So is pair programming worth it? It looks like the answer from me is a resounding yes. However, lets close by considering three scenarios:
-1) A team engages in pair programming and is passionate about pair programming
-2) A team engages in pair programming and is not passionate about pair programming
+So is pair programming worth it? It looks like the answer from me is going to be a resounding yes. In fact, I have seen many books that have also argued in favor of incorporating pair programming.<sup>2,3,4,6,7,8,9,10,11,12</sup> However, lets close by considering three scenarios:
+1) A team pair programs and is passionate about pair programming
+2) A team pair programs but is not passionate about pair programming
 3) A team does not pair program
 
-All books that I have read that talked about pair programming strongly recommend it. I would argue that scenario 1) is the best by far as a result. We have seen many benefits from pair programming and even a reduced cycle time and reduced cost so it is hard to argue against pair programming unless people just happen to not enjoy it. Pair Programming Illuminated<sup>6</sup> argues that attempting to force a team to pair program is the wrong idea. If a team just isn't passionate about pair programming, their output will be worse than not doing pair programming at all. As a result scenario 2) is the worst scenario. I think that any team that has never pair programmed before should give it a try, even if they predict they won't like it. If the team still does not enjoy pair programming after 2-4 weeks, then they can stop pair programming and never do it again. 
+I would argue that scenario 1) is the best by far. We have seen many benefits from pair programming and even a reduced cycle time and reduced cost so it is hard to argue against pair programming unless people just happen to not enjoy it. Pair Programming Illuminated<sup>6</sup> argues that attempting to force a team to pair program is the wrong idea. If a team just isn't passionate about pair programming, their output will be worse than not doing pair programming at all. As a result scenario 2) is the worst scenario. I think that any team that has never pair programmed before should give it a try, even if they predict they won't like it. Pair programming is one of those things that most people predict they won't like it but then turn around liking it after they try it out for the first time. If a team tries out pair programming and still does not enjoy it after 2-4 weeks, then they can stop pair programming and never do it again.  
 
 So what if our team does do pair programming? Would we pair program every task? Should we pair experts with experts, novices with experts, novices with experts, or a little of each? How frequently should we rotate pairs? We will explore the answers to these questions in a future blog post.
 
@@ -42,6 +42,12 @@ So what if our team does do pair programming? Would we pair program every task? 
 1. Williams, L. A. The Collaborative Software Process. PhD Dissertation in Department of Computer Science. Salt Lake City, UT: University of Utah, 2000. 
 2. Kim, Gene, et al. The DevOps Handbook: How to Create World-Class Agility, Reliability, and Security in Technology Organizations. IT Revolution, 2016.  
 3. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.  
-4. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.
-5. Humphrey, W.S., A Discipline for Software Engineering. SEI Series in Software Engineering, ed. P. Freeman, Musa, John. 1995: Addison Wesley Longman, Inc
-6. Williams, Laurie and Kessler, Robert. Pair Programming Illuminated. Addison-Wesley, 2002.
+4. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.  
+5. Humphrey, W.S., A Discipline for Software Engineering. SEI Series in Software Engineering, ed. P. Freeman, Musa, John. 1995: Addison Wesley Longman, Inc  
+6. Williams, Laurie and Kessler, Robert. Pair Programming Illuminated. Addison-Wesley, 2002.  
+7. Martin, Robert. The Clean Coder. Prentice Hall, 2011.  
+8. Beck, Kent and Andres, Cynthia. Extreme Programming Explained. Addison-Wesley, 2004.  
+9. Axelrod, Arnon. Complete Guide to Test Automation. Apress, 2018  
+10. Shore, James and Warden, Shane. The Art of Agile Development. O'Reilly Media, 2008.  
+11. Craig Larman and Bas Vodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012.  
+12. Craig Larman and BasVodde. Scaling Lean & Agile Development: Thinking and Organizational Tools for Large-Scale Scrum. Addison-Wesley, 2008.  
