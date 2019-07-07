@@ -6,9 +6,10 @@ You walk around your office and you see that most developers are sitting by them
 A study performed by Dr. Laurie Williams in the year of 2000 concluded that pair programming results in 15% fewer defects.<sup>1</sup>. She believes that this is attributed to pairs considering more design alternatives, resulting in a more simple design.
 
 ## Knowledge transfer, more understanding of the code
-Pair programming has the additional benefit of knowledge transfer.<sup>2</sup>
+Pair programming has the additional benefit of knowledge transfer.<sup>2</sup> Almost every time I pair program with someone, I learn at least one cool keyboard shortcut or way of using a tool that I was not aware of. Whenever I am learning a new technology, I like to pair with someone who is already familiar with that technology. I will learn significantly faster this way than working on my own. You will also be surprised how often an expert still learns when being paired with a novice. One of the most important questions to ask at the end of the year is how much you improved in the past 365 days. If you did pair programming, you will have improved more than if you did not do pair programming. It is pretty cool to think that using pair programming would help you improve more from year to year than not pair programming.
 
 ## Easier planning
+
 
 ## Continuous review
 
