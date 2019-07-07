@@ -17,6 +17,15 @@ Imagine that you are working on a task by yourself and at the start of the task,
 ## Less merge conflicts
 There is a non-linear relationship between the number of branches and integration problems.<sup>4</sup> This means that cutting the number of branches in half with pair programming will make integration more than twice as easy. This means that the more teammates there are, the more important it is to pair program. Not only that, but there will be significantly less merge conflicts. You might think that having people pair program will cut merge conflicts in half. That is not the case. It will actually reduce merge conflicts by more than that. Imagine two developers that are not pair programming. Any developer might have a merge conflict with one other developer. Now imagine that these two developers pair program. They will not have any merge conflicts! Lets visualize this for four developers who are not pair programming. Any of these developers could have merge conflicts with three other branches. Now imagine that these four developers pair program. They could only have merge conflicts with one other branch!
 
+## So why doesn't everyone pair program?
+There are two common reasons as to why some people won't pair program. The most common reason a team might not do pair programming is that they feel pair programming will be more expensive and will get the product to the market later. The second reason is that some team members like working independently without someone sitting next to them.
+
+### Time to market and cost
+
+### Sitting next to a partner
+
+## Conclusion
+
 ## Sources
 1. Williams, L. A. The Collaborative Software Process. PhD Dissertation in Department of Computer Science. Salt Lake City, UT: University of Utah, 2000. 
 2. Kim, Gene, et al. The DevOps Handbook: How to Create World-Class Agility, Reliability, and Security in Technology Organizations. IT Revolution, 2016.  
