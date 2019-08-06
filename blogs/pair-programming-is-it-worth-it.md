@@ -30,9 +30,9 @@ Another common argument a person might make against pair programming is that the
 
 ## Conclusion
 So is pair programming worth it? It may appear that the answer from me is going to be a resounding yes. In fact, I have seen many books that have also argued in favor of incorporating pair programming<sup>2,3,4,6,7,8,9,10,11,12</sup> and none that have completely opposed pair programming. However, lets close by considering three scenarios:
-1) A team pair programs and is passionate about pair programming
-2) A team pair programs but is not passionate about pair programming
-3) A team does not pair program
+1) A team pair programs and is passionate about pair programming  
+2) A team pair programs but is not passionate about pair programming  
+3) A team does not pair program  
 
 I would argue that scenario 1 is the best by far. We have seen many benefits from pair programming and even a reduced cycle time and reduced cost so it is hard to argue against pair programming unless people just happen to not enjoy it. Pair Programming Illuminated<sup>6</sup> argues that attempting to force a team to pair program is the wrong idea. If a team just isn't passionate about pair programming, their output will be worse than not doing pair programming at all. As a result, scenario 2 is the worst scenario. I think that any team that has never pair programmed before should give it a try, even if they predict they won't like it. Pair programming is one of those things that most people predict they won't like it but then turn around liking it after they try it out for the first time. If a team tries out pair programming and still does not enjoy it after 2-4 weeks, then they should stop pair programming and never do it again.  
 
