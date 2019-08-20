@@ -1,3 +1,4 @@
+## Feature teams vs component teams-which one is better?
 ### Overview of Feature teams and Component teams
 
 Clients will request a feature which is some sort of functionality which is useful to them. Features will almost always require code changes in multiple components.<sup>1</sup> A component can be thought of as a re-usable asset which may be used to help complete a portion of one or more features. 
