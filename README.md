@@ -1,6 +1,6 @@
-Andrew's software engineering blog
+# Andrew's software engineering blog
 
-Blog Posts by Category
+## Blog Posts by Category
 
 <details>
   <summary>Pair Programming</summary>
