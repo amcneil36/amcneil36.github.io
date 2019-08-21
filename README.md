@@ -4,8 +4,9 @@
 
 <details>
   <summary>Pair Programming</summary>
-  
-  * <a href="https://amcneil36.github.io/blogs/pair-programming-is-it-worth-it">Pair Programming: is it worth it?</a>
+  <ul>
+  <li><a href="https://amcneil36.github.io/blogs/pair-programming-is-it-worth-it">Pair Programming: is it worth it?</a></li>
+</ul>
 </details>
 
 <details>
