@@ -2,7 +2,7 @@
 ### Introduction
 This blog post is going to assume that you are already convinced that [pair programming is worth using](https://amcneil36.github.io/blogs/pair-programming-is-it-worth-it). But when should we use pair programming and how can we get the most out of it? We'll talk about how to maximize the benefit of pair programming.
 
-### Should every task be pair programmed? If not, how do we decide which tasks should be pair programmed?
+### Which work should be pair programmed?
 There are a couple factors that influence the return on investment of pair programming. 
 
 The tougher the task is, the more return on investment there is from pair programming.<sup>1</sup>. Adding a second brain to difficult task might go a long way to speed up a difficult task. But adding a second brain to an easy, trivial task doesn't speed up the task as much.
