@@ -2,6 +2,9 @@
 ### Introduction
 This blog post is going to assume that you are already convinced that [pair programming is worth using](https://amcneil36.github.io/blogs/pair-programming-is-it-worth-it). But when should we use pair programming and how can we get the most out of it? We'll talk about how to maximize the benefit of pair programming.
 
+### Driver/Navigator
+The most common way to do pair programming is the driver/navigator setup where the driver is the person who is typing and thinking about what to do whereas the navigator is the person looking on and thinking about the big picture. This is generally the most effective way to pair program.
+
 ### Which work should be pair programmed?
 Some people like the idea of pair programming all work while some don't. I don't like the idea of pair programming all work. There are a couple factors that influence the return on investment of pair programming that I recommend taking into account to determine if pairing for a particular task is worth it. 
 
@@ -22,6 +25,15 @@ Many teams implementing pair programming have reported greater success from rota
 Have the two people pairing sit side by side. Having one person sit behind the other person will cause that person to breathe down the other person's neck which we don't want.
 
 Place the monitor equally between the two people. Both people should have their own keyboard and mouse that are plugged into the monitor so that either person can take over without having to slide the mouse or keyboard. If you cannot set up your desk with two keyboards and two mice, have the keyboard and mouse directly in front of the driver in the way that is the most comfortable for the driver.
+
+### Novice/Expert pairing
+I would consider this to be by far the best pair because of the knowledge transfer from the expert to the novice. This will build up new teammates about as fast as any strategy and has the most return on investment. Have the novice be the driver for around 2/3 of the time for this. Try something along the lines of having the novice be the driver for 20 minutes or so and then let the expert be the driver for around 10 minutes and then repeat.
+
+###  Novice/Novice pairing
+The novice/novice pairing is considered to be the worst type of pairing<sup>1</sup>. What commonly happens is that you have two people get stuck on something for 3 hours, only to ask an expert for help who figures it out in 2 minutes. The novice driver might make a mistake or do something that is sub-optimal and the navigator might not catch it due to being a novice. The continuous review aspect of pair programming is less noticeable in the novice/novice pairing as a result. There also isn't much of any knowledge transfer. Placing at least one expert in a pair allows for knowledge transfer and good feedback to help make you less likely to get stuck.
+
+### Expert/Expert pairing
+
 
 ## Sources
 1. Williams, Laurie and Kessler, Robert. Pair Programming Illuminated. Addison-Wesley, 2002.  
