@@ -52,7 +52,7 @@ If the driver is getting tired or frustrated, this is generally a good time to s
 
 As a driver, you should be talking out loud as you think so that the navigator is able to understand your thought process<sup>1</sup>.
 
-### No formal code reviews?
+### Should there be formal code reviews?
 
 
 ## Sources
