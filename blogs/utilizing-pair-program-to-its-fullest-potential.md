@@ -2,8 +2,15 @@
 ### Introduction
 This blog post is going to assume that you are already convinced that [pair programming is worth using](https://amcneil36.github.io/blogs/pair-programming-is-it-worth-it). But when should we use pair programming and how can we get the most out of it? We'll talk about how to maximize the benefit of pair programming.
 
-### Driver/Navigator
-The most common way to do pair programming is the driver/navigator setup where the driver is the person who is typing and thinking about what to do whereas the navigator is the person looking on and thinking about the big picture. This is generally the most effective way to pair program.
+## Pair programming styles
+## Driver/Navigator
+The most common way to do pair programming is the driver/navigator setup where the driver is the person who is typing and thinking about what to do whereas the navigator is the person looking on and thinking about the big picture. This is what you will want to do most of the time excepth when one person is extremely new and the other person is an expert which we will talk about below.
+
+## Backseat Navigator
+The less experienced the driver is, the more help the driver is going to need. With extremely new people, it can make sense to use the backseat navigator approach when the new person is driving and paired with somemone more experienced. In the backseat navigator setup, the navigator has more of an emphasis on instructing the driver on what to do.
+
+## Tour Guide
+In the tour guide setup, the person driving has more of an emphasis on informing the navigator about what is going on. Whenever a beginner and an exerpeinced person are paired together and the experienced person is driving, it makes sense to do the tour guide approach so that the beginner can understand what is going on. The tour guide needs to go slow or else the beginner looking on will not understand anything and won't learn. The tour guide approach can also be useful when catching someone up after they just came back from an absense.
 
 ### Ping Pong Pairing
 In this setup, one person starts by writing a failing unit test. The people will then swap roles and the next person will write the code necessary to pass the unit test in addition to any refactoring that is needed. This person will then write a failing unit test and then swap roles to let the other person write the code to make the unit test pass. The process repeats. I recommend using this approach.
