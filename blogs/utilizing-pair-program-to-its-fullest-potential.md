@@ -16,11 +16,16 @@ The more dependencies there are between tasks for the sprint, the more it makes 
 The more fun your team members find pair programming, the more they should pair program. In fact, if they try pair programming and don't like it, they shouldn't pair program at all.
 
 ### Rotating Pairs
+Many teams implementing pair programming have reported greater success from rotating out who is pair programming with who. I have heard of people rotating anywhere from once every hour up until once every 3 or 4 days. There was a study done in an attempt to determine the most efficient way to do pair rotation<sup>5</sup>. The team involved in the study reported the highest velocity when pairs were rotated every 90 minutes with the more experienced person in the pair being the one to be rotated off the task. The author went on to explain in a separate post that he considers 90 minute intervals to only be optimal for teams that are experienced in pair programming. He likes the idea of teams new to pair programming to rotate pairs every 3 or 4 days and work their way down to 90 minute rotations.
 
+### Pair Programming desk setup
+Have the two people pairing sit side by side. Having one person sit behind the other person will cause that person to breathe down the other person's neck which we don't want.
 
+Place the monitor equally between the two people. Both people should have their own keyboard and mouse that are plugged into the monitor so that either person can take over without having to slide the mouse or keyboard. If you cannot set up your desk with two keyboards and two mice, have the keyboard and mouse directly in front of the driver in the way that is the most comfortable for the driver.
 
 ## Sources
 1. Williams, Laurie and Kessler, Robert. Pair Programming Illuminated. Addison-Wesley, 2002.  
 2. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.  
 3. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.  
 4. Shukla, A. (2002). "Pair Programming and the Factors Affecting Brook's Law," Master's Thesis, North Carolina State University
+5. Belshee, Arlo. Promiscuous Pairing and Beginner’s Mind: Embrace Inexperience. Silver Platter Software, 2005.
