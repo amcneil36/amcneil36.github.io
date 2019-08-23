@@ -41,9 +41,12 @@ I would consider this type of pairing to be more effective than the novice/novic
 ### Pair Programming ettiquite
 When being the navigator, due not immediately inform the driver of a typo that they have made<sup>1</sup>. The driver might be aware of the typo that they have made and just be in the progress of finishing off what they are typing before going back to correct the typo. Give the driver a few seconds just to be sure that the driver is not aware of the typo before informing the driver of the typo. It is also not necessary to state the obvious or to try to micro manage every line of code that the driver needs to type in the event that the driver partially knows what they are doing. If the driver has no idea what they are doing, then it makes sense to kind of "back seat drive" where you give more instructions.
 
-If the driver is getting tired or frustrated, this is generally a good time to have the navigator take over<sup>1</sup>.
+If the driver is getting tired or frustrated, this is generally a good time to swap roles with the navigator<sup>1</sup>.
 
 As a driver, you should be talking out loud as you think so that the navigator is able to understand your thought process<sup>1</sup>.
+
+### No formal code reviews?
+
 
 ## Sources
 1. Williams, Laurie and Kessler, Robert. Pair Programming Illuminated. Addison-Wesley, 2002.  
