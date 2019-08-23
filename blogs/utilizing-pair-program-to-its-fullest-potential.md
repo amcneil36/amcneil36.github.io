@@ -30,10 +30,17 @@ Place the monitor equally between the two people. Both people should have their 
 I would consider this to be by far the best pair because of the knowledge transfer from the expert to the novice. This will build up new teammates about as fast as any strategy and has the most return on investment. Have the novice be the driver for around 2/3 of the time for this. Try something along the lines of having the novice be the driver for 20 minutes or so and then let the expert be the driver for around 10 minutes and then repeat.
 
 ###  Novice/Novice pairing
-The novice/novice pairing is considered to be the worst type of pairing<sup>1</sup>. What commonly happens is that you have two people get stuck on something for 3 hours, only to ask an expert for help who figures it out in 2 minutes. The novice driver might make a mistake or do something that is sub-optimal and the navigator might not catch it due to being a novice. The continuous review aspect of pair programming is less noticeable in the novice/novice pairing as a result. There also isn't much of any knowledge transfer. Placing at least one expert in a pair allows for knowledge transfer and good feedback to help make you less likely to get stuck.
+The novice/novice pairing is considered to be the least effective type of pairing<sup>1</sup>. What commonly happens is that you have two people get stuck on something for 3 hours, only to ask an expert for help who figures it out in 2 minutes. The novice driver might make a mistake or do something that is sub-optimal and the navigator might not catch it due to being a novice. The continuous review aspect of pair programming is less noticeable in the novice/novice pairing as a result. There also isn't much of any knowledge transfer. Placing at least one expert in a pair allows for knowledge transfer and good feedback to help make you less likely to get stuck.
 
 ### Expert/Expert pairing
+I would consider this type of pairing to be more effective than the novice/novice pairing but less effective than the novice/expert pairing. Having at least one expert in the pair means that we are less likely to get stuck and are more likely to continuously progress. If the driver makes a careless mistake, the navigator is likely to catch it since the navigator is an expert.
 
+### Pair Programming ettiquite
+When being the navigator, due not immediately inform the driver of a typo that they have made<sup>1</sup>. The driver might be aware of the typo that they have made and just be in the progress of finishing off what they are typing before going back to correct the typo. Give the driver a few seconds just to be sure that the driver is not aware of the typo before informing the driver of the typo. It is also not necessary to state the obvious or to try to micro manage every line of code that the driver needs to type in the event that the driver partially knows what they are doing. If the driver has no idea what they are doing, then it makes sense to kind of "back seat drive" where you give more instructions.
+
+If the driver is getting tired or frustrated, this is generally a good time to have the navigator take over<sup>1</sup>.
+
+As a driver, you should be talking out loud as you think so that the navigator is able to understand your thought process<sup>1</sup>.
 
 ## Sources
 1. Williams, Laurie and Kessler, Robert. Pair Programming Illuminated. Addison-Wesley, 2002.  
