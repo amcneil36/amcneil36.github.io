@@ -3,7 +3,7 @@
 This blog post is going to assume that you are already convinced that [pair programming is worth using](https://amcneil36.github.io/blogs/pair-programming-is-it-worth-it). But when should we use pair programming and how can we get the most out of it? We'll talk about how to maximize the benefit of pair programming.
 
 ### Which work should be pair programmed?
-There are a couple factors that influence the return on investment of pair programming. 
+Some people like the idea of pair programming all work while some don't. I don't like the idea of pair programming all work. There are a couple factors that influence the return on investment of pair programming that I recommend taking into account to determine if pairing for a particular task is worth it. 
 
 The tougher the task is, the more it makes sense to pair program.<sup>1</sup>. Adding a second brain to a difficult task might go a long way to speed up a difficult task. But adding a second brain to an easy, trivial task doesn't speed up the task as much. So if you take a look at the toughest work that needs to be done for your project, those items are good pair programming candidates. 
 
@@ -14,6 +14,10 @@ The more programmers there are on a team, the more it makes sense to pair progra
 The more dependencies there are between tasks for the sprint, the more it makes sense to pair program. Imagine a scenario where there is a team of 4 programmers. Let's say that there are 4 high value tasks and 2 low value tasks that need to be worked on. Furthermore, let's say that 2 of the high value tasks are dependent on the other high value tasks. With 4 programmers and no pair programming, you would start out with 2 high value tasks in progress and 2 low priority tasks in progress. This is inconvenient because this means that we are going to be finishing some of the low value tasks before some of the high value tasks. If we are pair programming, we can have 2 high value tasks in progress and when those finish, we can go on to the next 2 high value tasks. This way, the low value tasks are worked on last.
 
 The more fun your team members find pair programming, the more they should pair program. In fact, if they try pair programming and don't like it, they shouldn't pair program at all.
+
+### Rotating Pairs
+
+
 
 ## Sources
 1. Williams, Laurie and Kessler, Robert. Pair Programming Illuminated. Addison-Wesley, 2002.  
