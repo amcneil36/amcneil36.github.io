@@ -6,7 +6,7 @@
   <summary>Pair Programming</summary>
 <ul>
   <li><a href="https://amcneil36.github.io/blogs/pair-programming-is-it-worth-it">Pair Programming: is it worth it?</a></li>
-  <li><a href="https://amcneil36.github.io/blogs/utilizing-pair-program-to-its-fullest-potential-for-your-team">Utilizing pair programming to it’s fullest potential for your team</a></li>
+  <li><a href="https://amcneil36.github.io/blogs/maximizing-the-return-on-investment-of-pair-programming">Maximizing the return on investment of pair programming</a></li>
 </ul>
 </details>
 
