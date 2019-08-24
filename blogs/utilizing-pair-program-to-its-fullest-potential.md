@@ -58,8 +58,13 @@ If the driver is getting tired or frustrated, this is generally a good time to s
 
 As a driver, you should be talking out loud as you think so that the navigator is able to understand your thought process<sup>1</sup>.
 
-### Should there be formal code reviews?
+### Should there still be formal code reviews on pair programmed tasks?
+Most teams have their process set up where all code needs to be reviewed before being merged to trunk. What about with pair programming? For tasks that have been pair programmed, should this code still get reviewed by others prior to merging to trunk? Or should a task that is pair programmed be merged to trunk without being reviewed by others?
 
+#### An argument for no formal code reviews on pair programmed work
+Kent Beck recommends merging pair programmed work to trunk without going through a formal review process. The founder of extreme programming says "...ExtremeProgramming projects do not require explicit reviews. Drop them from your methodology." That excerpt can be found [here](http://wiki.c2.com/?ExtremeProgrammingCodeReviews). Kent Beck recommends team members merging to trunk at least once per day but preferably multiple times per day. This is done to reduce integration issues. This is a lot easier to do when no formal code reviews are needed.
+
+It is natural for some tasks within a user story to depend on each other<sup>8</sup>. If you finish coding up a task in the user story and upload your code to be reviewed, your next task within the user story might be something that depends on the code that is in review. As you are waiting for your code to get reviewed, you have a delimma. You could branch off of what is in review or you could pick a task in another user story. Branching off something in review is problematic because you are making a branch that is becoming more divergent from master. Furthermore, any code change made on the branch in review has to be merged into your new child branch. Picking a task from another user story is also problematic because you are switching to another user story without finishing your current user story so you are slowing down how frequently you produce a potentially shippable produc increment that you can demo for feedback.
 
 ## Sources
 1. Williams, Laurie and Kessler, Robert. Pair Programming Illuminated. Addison-Wesley, 2002.  
@@ -69,3 +74,4 @@ As a driver, you should be talking out loud as you think so that the navigator i
 5. Belshee, Arlo. Promiscuous Pairing and Beginner’s Mind: Embrace Inexperience. Silver Platter Software, 2005.
 6. Beck, Kent and Andres, Cynthia. Extreme Programming Explained. Addison-Wesley, 2004.
 7. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.
+8. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.
