@@ -72,7 +72,7 @@ Some industries are more regulated than others which might make it harder to get
 #### So what is the answer?
 I don't think there is a one size fits all answer to this question. The more regulated your industry is, the more it makes sense to do formal reviews. Secondly, the greater the risk of the task, the more it makes sense to do formal reviews. Thirdly, the less experience that the members of the pair has, the more it makes sense to do formal reviews. And fourthly, the more experience the people who were not part of the pair are, the more it makes sense to do formal reviews. I think you would want to take a look at these factors and make the decision about whether or not to do a formal review on a particular task based on that. I think it would be fair to do a mix of formal reviews and no formal reviews for tasks based on weighing these four factors against your task.
 
-Jez Humble, author of *Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation*<sup>9</sup> proposes a common ground alternative. You can merge to trunk without having gone throurgh formal code review and let the other team members optionally review post commit. 
+Jez Humble, author of *Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation*<sup>9</sup> proposes a common ground alternative. You can merge to trunk without having gone throurgh formal code review and let the other team members optionally review post commit. I would imagine that as long as commiting to trunk doesn't release to the client, this would be a low-risk compromise. 
 
 ## Sources
 1. Williams, Laurie and Kessler, Robert. Pair Programming Illuminated. Addison-Wesley, 2002.  
