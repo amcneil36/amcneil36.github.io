@@ -66,6 +66,12 @@ Kent Beck recommends merging pair programmed work to trunk without going through
 
 It is natural for some tasks within a user story to depend on each other<sup>8</sup>. If you finish coding up a task in the user story and upload your code for a formal review, your next task within the user story might be something that depends on the code that is in review. As you are waiting for your code to get reviewed, you have a delimma. You could branch off of what is in review or you could pick a task in another user story. Branching off something in review is problematic because you are making a branch that is becoming more divergent from master. Furthermore, any code change made on the branch in review has to be merged into your new child branch. Picking a task from another user story is also problematic because you are switching to another user story without finishing your current user story so you are slowing down how frequently you produce a potentially shippable product increment that you can demo for feedback. Ending the sprint with a few fully completed user stories is a lot better than ending the sprint with many partially completed user stories since it is the fully completed user stories that deliver feedback and are demo'd<sup>7</sup>.
 
+#### An argument for formal code reviews on pair programmed work
+Some industries are more regulated than others which might make it harder to get away with merging to trunk with no formal code review. Furthermore, some of the tasks on a project are more risky than others where mistakes can cost a lot of money. On top of that, some team members may feel uncomfortable with the idea of code getting merged to trunk that they did not get a chance to look at.
+
+#### So what is the answer?
+I don't think there is a one size fits all answer to this question. The more regulated your industry is, the more it makes sense to do formal reviews. Secondly, the greater the risk of the task, the more it makes sense to do formal reviews. Thirdly, the less experience that the members of the pair has, the more it makes sense to do formal reviews. And fourthly, the more experience the people who were not part of the pair are, the more it makes sense to do formal reviews.
+
 ## Sources
 1. Williams, Laurie and Kessler, Robert. Pair Programming Illuminated. Addison-Wesley, 2002.  
 2. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.  
