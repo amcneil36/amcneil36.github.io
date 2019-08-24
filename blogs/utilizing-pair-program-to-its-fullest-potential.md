@@ -4,7 +4,7 @@ This blog post is going to assume that you are already convinced that [pair prog
 
 ### Pair programming styles
 #### Driver/Navigator
-The most common way to do pair programming is the driver/navigator setup where the driver is the person who is typing and thinking about what to do whereas the navigator is the person looking on and thinking about the big picture. This is what you will want to do most of the time except when one person is extremely new and the other person is an expert which we will talk about below.
+The most common way to do pair programming is the driver/navigator setup where the driver is the person who is typing and thinking about what to do whereas the navigator is the person looking on and thinking about the big picture.  
 
 #### Backseat Navigator
 The less experienced the driver is, the more help the driver is going to need. With extremely new people, it can make sense to use the backseat navigator approach when the new person is driving and paired with someone more experienced. In the backseat navigator setup, the navigator has more of an emphasis on instructing the driver on what to do.
