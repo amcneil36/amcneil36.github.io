@@ -8,11 +8,11 @@ Lets discuss three different options that might represent a team member's skill 
 
 **Specialist:** this would be a team member that is extremely strong in one or two areas and does not do any work outside of their specialization.
 
-**Generalizing-Specialist:** this would be a team member that has in-depth skills in one or two areas and broad skills in other areas. This person would attempt to primarily work in their specializtion but would be more than willing to work in an area outside of their specialization if needed. These people are sometimes called T-shaped people.
+**Generalizing-Specialist:** this would be a team member that has in-depth skills in one or two areas and broad skills in other areas. This person would attempt to primarily work in their specialization but would be more than willing to work in an area outside of their specialization if needed. These people are sometimes called T-shaped people.
 
 ## Generalist
 ### pros
-It is very easy to do sprint planning because you can assign the tasks to just about anyone. Secondly, if one area of the project is having some issues and needs extra attention, anyone would be able to step up and do a reasonable job in helping out in that area. Some sprints might require slightly different skill sets than others and for a team of generlists, that's not a problem. Someone could also be out of office and that would be less likely to cause any issues for a team of generalists.
+It is very easy to do sprint planning because you can assign the tasks to just about anyone. Secondly, if one area of the project is having some issues and needs extra attention, anyone would be able to step up and do a reasonable job in helping out in that area. Some sprints might require slightly different skill sets than others and for a team of generalists, that's not a problem. Someone could also be out of office and that would be less likely to cause any issues for a team of generalists.
 
 ### cons
 People need to spend a lot of time doing spikes since there are many areas they need to be adequate in. Onboarding new people will take quite a bit longer. Lastly, people only work in areas they are medium at and don't work in any area they are truly great at.<sup>1</sup>
