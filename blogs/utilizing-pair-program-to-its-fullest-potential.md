@@ -74,6 +74,9 @@ I don't think there is a one size fits all answer to this question. The more reg
 
 Jez Humble, author of *Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation*<sup>9</sup> proposes a common ground alternative. You can merge to trunk without having gone throurgh formal code review and let the other team members optionally review post commit. I would imagine that as long as commiting to trunk doesn't release to the client, this would be a low-risk compromise for any team members who feel uncomfortable having any code getting merged to trunk without them having seen the code. If the person reviewing post commit found any issues, they would then possibly pair program with one of the two pair programmers that committed the issue in order to fix it.
 
+### Conclusion
+So there you have it. I like the idea of weighing in many different factors for how your team chooses to utilize pair programming. It truly feels like many aspects of pair programming are not a one size fits all approach. This is because different teams have reported different frequencies of pair rotation to be optimal for them and have reported different percentages of work to be optimal for them. Many teams out there also have reported various levels of success between still doing formal code reviews on pair programmed work and not doing formal code reviews on pair programmed work. There are many factors that you have to weigh in on that correspond to your team and company that would determine the recommended way for your team to utilize pair programming. I have tried to communicate what these factors are so you can make these decisions for yourself.
+
 ## Sources
 1. Williams, Laurie and Kessler, Robert. Pair Programming Illuminated. Addison-Wesley, 2002.  
 2. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.  
