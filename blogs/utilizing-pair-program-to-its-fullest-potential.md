@@ -16,7 +16,7 @@ In the tour guide setup, the person driving has more of an emphasis on informing
 In this setup, one person starts by writing a failing unit test. The people will then swap roles and the next person will write the code necessary to pass the unit test in addition to any refactoring that is needed. This person will then write a failing unit test and then swap roles to let the other person write the code to make the unit test pass. The process repeats. I recommend using this approach.
 
 ### Which work should be pair programmed?
-Some people like the idea of pair programming all work while some don't. I don't like the idea of pair programming all work. There are a couple factors that influence the return on investment of pair programming that I recommend taking into account to determine if pairing for a particular task is worth it. 
+Founder of Extreme Programming, Kent Beck, likes the idea of all work being pair programmed<sup>6</sup>. Mike Cohn, author of *Succeeding with Agile<sup>7</sup>,* likes the idea of pair programming where appropriate but not pair programming all of the tasks. I will side with Mike on this one. There are a couple factors that influence the return on investment of pair programming that I recommend taking into account to determine if pairing for a particular task is worth it. 
 
 The tougher the task is, the more it makes sense to pair program.<sup>1</sup>. Adding a second brain to a difficult task might go a long way to speed up a difficult task. But adding a second brain to an easy, trivial task doesn't speed up the task as much. So if you take a look at the toughest work that needs to be done for your project, those items are good pair programming candidates. 
 
@@ -61,3 +61,5 @@ As a driver, you should be talking out loud as you think so that the navigator i
 3. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.  
 4. Shukla, A. (2002). "Pair Programming and the Factors Affecting Brook's Law," Master's Thesis, North Carolina State University
 5. Belshee, Arlo. Promiscuous Pairing and Beginner’s Mind: Embrace Inexperience. Silver Platter Software, 2005.
+6. Beck, Kent and Andres, Cynthia. Extreme Programming Explained. Addison-Wesley, 2004.
+7. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.
