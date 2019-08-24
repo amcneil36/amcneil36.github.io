@@ -78,11 +78,11 @@ Jez Humble, author of *Continuous Delivery: Reliable Software Releases Through B
 Different teams have reported different frequencies of pair rotation to be optimal for them. Different teams have also had differing levels of success with different percentage of work being pair programmed. Many teams out there also have reported various levels of success between still doing formal code reviews on pair programmed work and not doing formal code reviews on pair programmed work. As a result, it is clear to see that what works for one team may not work for the another. As a result, it is hard to give a one size fits all piece of advice. There are many different factors about a particular team or company that might affect which way to utilize pair programming would be best for them. I have tried to communicate what these factors are so you can make these decisions based on your unique situation.
 
 ## Sources
+a. Beck, Kent and Andres, Cynthia. Extreme Programming Explained. Addison-Wesley, 2004.  
+b. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.  
 c. Williams, Laurie and Kessler, Robert. Pair Programming Illuminated. Addison-Wesley, 2002.  
+d. Shukla, A. (2002). "Pair Programming and the Factors Affecting Brook's Law," Master's Thesis, North Carolina State University  
 e. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.  
-d. Shukla, A. (2002). "Pair Programming and the Factors Affecting Brook's Law," Master's Thesis, North Carolina State University
-f. Belshee, Arlo. Promiscuous Pairing and Beginner’s Mind: Embrace Inexperience. Silver Platter Software, 2005.
-a. Beck, Kent and Andres, Cynthia. Extreme Programming Explained. Addison-Wesley, 2004.
-b. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.
-g. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.
+f. Belshee, Arlo. Promiscuous Pairing and Beginner’s Mind: Embrace Inexperience. Silver Platter Software, 2005.  
+g. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.  
 h. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.
