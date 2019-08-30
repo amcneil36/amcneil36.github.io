@@ -9,5 +9,7 @@ A DevOps study was done on thousands of organizations from 2015-2017, analyzing 
 * no code freezes
 * no stabilization periods
 
+As we brainstorm how we want to do our branching, we should keep these points in mind.
+
 ## Sources
 a. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.  
