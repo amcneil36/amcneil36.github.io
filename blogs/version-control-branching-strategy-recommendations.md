@@ -20,6 +20,13 @@ Whenever starting a new task, branch off trunk. Whenever you have produced a sma
 
 Why would we consider merging our code if we haven't actually completed a task or feature yet. There is a non-linear relationship between lifespan of a branch and difficulty of integration.<sup>a</sup> This is where the idea of Continuous Integration came from. If we merge into trunk more frequently, we will have less integration issues. The recommendation from Kent Beck, founder of Extreme Programming, is to merge into trunk at least once per day but preferably multiple times per day.<sup>c</sup>
 
+Okay cool so branch off trunk, do some coding, merge into trunk. Repeat. Nice and easy. What about for releasing? We will look at two branching strategies.
+### Releasing
+#### Branch for release
+In this setup, you branch off of trunk to create a release branch whenever you are ready to release.<sup>b</sup> You can then go through the release process with the release branch. Because we are branching off of trunk to release, other developers can continue to develop and merge code in to trunk without affecting the release.
+
+What if there is a defect in testing the release branch? You should branch off of trunk, try to reproduce the defect, fix the defect, merge your branch to trunk, and then cherry pick the commit from trunk to the release branch. The cherry pick is used to that you only inherit the defect fix and don't potentially inherit code that is for a new feature that was not intended to be released. You could do things the other way around where you do the fix on the release branch and cherry pick from the release branch to trunk. The problem with that is there is always the chance that you forget to cherry pick the commit from the release branch to trunk. When it comes to cherry picking the commit from trunk to the release branch, that is less likely to be forgotten because the test in the production-like environment would still fail until you have the 
+
 ## Sources
 a. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.  
 b. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.  
