@@ -30,7 +30,7 @@ What if there is a defect in testing the release branch? You should branch off o
 What should we do when fixing a defect in production? Do the same thing. Fix the issue in trunk and then cherry pick to the release branch. There is one exception to this. If the defect is critical, then we should fix it on the release branch first and then cherry pick that fix to trunk. This is because the added amount of time it would take to get the defect fixed on the release branch as a result of having to fix the defect on trunk first is not worth it for a critical defect. Since the defect is critical, we would want to get it fixed as soon as possible on the release branch and then release. After that, we can worry about fixing it on trunk.  
 
 The last thing I want to point out is if you can't reproduce the defect on trunk, then just fix the defect on the release branch instead.
-### Release from trunk
+#### Release from trunk
 
 
 ## Sources
