@@ -14,13 +14,15 @@ As we brainstorm how we want to do our branching, we should keep these points in
 ## Maintain One Version of Code
 It can be a support nightmare when multiple versions of code are out in production.<sup>b</sup> In order to investigate, you need to revert back to whichever version of code that the client is on. When you fix the code, you need to merge those changes into the other vesrions of code. Similarly, having multiple versions of code in development will have the same issues. You do a bug fix in production and you need to merge those changes into all of the development versions. Having multiple versions of code in development also makes it tougher understand the code base and leads to integration issues later down the road when it is time to merge everything together. So whenever possible, maintain one version of code in production and one version of code in development.
 
+Some clients might have slightly different use-cases which might make it feel tempting to have multiple versions of code in order to support different use-cases. We should instead aim to have a configuration option where the client can adjust a configuration setting to make the software to behave the way they want.<sup>c</sup> This way, we can have the same version of code support both client workflows. We can have the configuration default to the more common workflow or we can prompt the user to choose a configuration setting on their first time using it.
+
 ## A branching strategy for high delivery performance and maintaining one version of code
 ### When doing development
 Whenever starting a new task, branch off trunk. Whenever you have produced a small amount of working code, you can get your code reviewed and then merge into trunk. This may not be enough code to complete the task or the feature. As long as you have produced a small amount of working software, it is OK to merge.
 
 Why would we consider merging our code if we haven't actually completed a task or feature yet. There is a non-linear relationship between lifespan of a branch and difficulty of integration.<sup>a</sup> This is where the idea of Continuous Integration came from. If we merge into trunk more frequently, we will have less integration issues. The recommendation from Kent Beck, founder of Extreme Programming, is to merge into trunk at least once per day but preferably multiple times per day.<sup>c</sup>
 
-Okay cool so branch off trunk, do some coding, merge into trunk. Repeat. Nice and easy. What about for releasing? We will look at two branching strategies.
+Okay cool so branch off trunk, do some coding, merge into trunk. Repeat. Nice and easy. The fact that everyone is branching off the same branch and merging into the same branch means all of our code is getting integrated together more frequently which will reduce integration problems. Okay cool so we understand branching for development. What about for releasing? We will look at two branching strategies.
 ### Releasing
 #### Branch for release
 In this setup, you branch off of trunk to create a release branch whenever you are ready to release.<sup>b</sup> You can then go through the release process with the release branch. This prevents the practice of the code freeze. Because we are branching off of trunk to release, other developers can continue to develop and merge code in to trunk without affecting the release.
@@ -31,7 +33,9 @@ What should we do when fixing a defect in production? Do the same thing. Fix the
 
 The last thing I want to point out is if you can't reproduce the defect on trunk, then just fix the defect on the release branch instead.
 #### Release from trunk
+One of the downsides of the branch for release is that everytime there is a defect in production, you have to get the defect fixed in two places: trunk and the release branch. One way around this is to do the release from trunk approach. 
 
+In the release from trunk approach, we do not create a branch when it is time to release. We just release from the trunk branch. If something goes wrong in production, we would do the fix in trunk and then release from trunk. This makes it such that when there is a defect in production, we no longer have to do the fix in two branches.
 
 ## Sources
 a. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.  
