@@ -44,10 +44,12 @@ So in this scenario, we merge every code change to trunk and just make sure that
 Branch by abstraction is a technique for modifying existing functionality while still keeping trunk releaseable.<sup>b</sup> The name of this technique is misleading as it is not creating a new branch. It entails
 1. Create an abstraction around the area of code that needs to be changed. This might be an interface depending on the programming language you are using 
 2. Refactor the existing code to call into this abstraction  
-3. Create a new implementation of the abstraction. This might be an implementation of the interface
-4. Use a feature flag to determine whether or not to call into the new implementation or the old implementation. The old implementation should be called into by default.
-5. Finish off working on and testing the new implementation  
-6. Update the 
+3. Create a new implementation of the abstraction. This might be an implementation of the interface  
+4. Use a feature flag to determine whether or not to call into the new implementation or the old implementation. The old implementation should be called into by default  
+5. Finish off working on and testing the new implementation   
+6. Update the code to call into the new implementation by default and remove the feature flag  
+7. Optionally remove the old implementation  
+8. Optionally remove the abstraction
 
 ## Sources
 a. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.  
