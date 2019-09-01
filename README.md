@@ -3,6 +3,13 @@
 ## Blog Posts by Category
 
 <details>
+  <summary>Continuous Integration</summary>
+<ul>
+  <li><a href="https://amcneil36.github.io/blogs/version-control-branching-strategy-recommendations">Version Control Branching Strategy Recommendations</a></li>
+</ul>
+</details>
+
+<details>
   <summary>Pair Programming</summary>
 <ul>
   <li><a href="https://amcneil36.github.io/blogs/pair-programming-is-it-worth-it">Pair Programming: is it worth it?</a></li>
