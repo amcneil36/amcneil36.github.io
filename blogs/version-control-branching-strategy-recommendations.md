@@ -20,7 +20,7 @@ Some clients might have slightly different use-cases which might make it feel te
 ### When doing development
 Whenever starting a new task, branch off trunk. Whenever you have produced a small amount of working code, you can get your code reviewed and then merge into trunk. This may not be enough code to complete the task or the feature. As long as you have produced a small amount of working software, it is OK to merge.
 
-Why would we consider merging our code if we haven't actually completed a task or feature yet. There is a non-linear relationship between lifespan of a branch and difficulty of integration.<sup>a</sup> This is where the idea of Continuous Integration came from. If we merge into trunk more frequently, we will have less integration issues. The recommendation from Kent Beck, founder of Extreme Programming, is to merge into trunk at least once per day but preferably multiple times per day.<sup>c</sup> There is also a non-linear relationship between number of branches and integration issues.<sup>a</sup> We should use pair programming to reduce the numer of active branches.<sup>b,c</sup>
+Why would we consider merging our code if we haven't actually completed a task or feature yet. There is a non-linear relationship between lifespan of a branch and difficulty of integration.<sup>a</sup> This is where the idea of Continuous Integration came from. If we merge into trunk more frequently, we will have less integration issues. The recommendation from Kent Beck, founder of Extreme Programming, is to merge into trunk at least once per day but preferably multiple times per day.<sup>c</sup> There is also a non-linear relationship between number of branches and integration issues.<sup>a</sup> We should use pair programming to reduce the number of active branches.<sup>b,c</sup>
 
 Okay cool so branch off trunk, do some coding, merge into trunk. Repeat. Nice and easy. The fact that everyone is branching off the same branch and merging into the same branch means all of our code is getting integrated together more frequently which will reduce integration problems. Okay cool so we understand branching for development. What about for releasing? We will look at two branching strategies.
 ### Releasing
@@ -33,7 +33,7 @@ What should we do when fixing a defect in production? Do the same thing. Fix the
 
 The last thing I want to point out is if you can't reproduce the defect on trunk, then just fix the defect on the release branch instead.
 #### Release from trunk
-One of the downsides of the branch for release is that everytime there is a defect in production, you have to get the defect fixed in two places: trunk and the release branch. One way around this is to do the release from trunk approach. 
+One of the downsides of the branch for release is that every time there is a defect in production, you have to get the defect fixed in two places: trunk and the release branch. One way around this is to do the release from trunk approach. 
 
 In the release from trunk approach, we do not create a branch when it is time to release. We just release from the trunk branch. If something goes wrong in production, we would do the fix in trunk and then release from trunk. This makes it such that when there is a defect in production, we no longer have to do the fix in two branches. There may be a possible concern from this. We are merging all of our development code to trunk, even when the feature we are working on is not complete. Wouldn't that mean that if there were a defect in production and we release from trunk after fixing it, we would then ship out a partially completed feature that is not ready to be used yet? The answer to this question: feature toggles.
 
@@ -41,20 +41,20 @@ Feature toggles allow us to turn on or off features without having to make a cod
 
 So in this scenario, we merge every code change to trunk and just make sure that any features that are not fully completed are somehow inaccessible to the user in production by means of a feature toggle. This strategy works very well when we are adding functionality since we can just turn the new feature off. What about when we are modifying existing functionality? Here is where branch by abstraction comes in.
 
-Branch by abstraction is a technique for modifying existing functionality while still keeping trunk releaseable.<sup>b</sup> The name of this technique is misleading as it is not creating a new branch. It entails
+Branch by abstraction is a technique for modifying existing functionality while still keeping trunk releasable.<sup>b</sup> The name of this technique is misleading as it is not creating a new branch. It entails
 1. Create an abstraction around the area of code that needs to be changed. This might be an interface depending on the programming language you are using 
 2. Refactor the existing code to call into this abstraction  
 3. Create a new implementation of the abstraction. This might be an implementation of the interface  
-4. Use a feature flag to determine whether or not to call into the new implementation or the old implementation. The old implementation should be called into by default  
+4. Use a feature flag to determine whether to call into the new implementation or the old implementation. The old implementation should be called into by default  
 5. Finish off working on and testing the new implementation   
 6. Update the code to call into the new implementation by default and remove the feature flag  
 7. Optionally remove the old implementation  
 8. Optionally remove the abstraction
 
 #### Which release approach should we choose?
-This is primmarily a battle of whether fixing defects on two branches or implementing feature toggles is more time consuming. Feature toggles would probably take some time to set up initially since you have to figure out how to implement the config file or database read for the first feature toggle you make. But after that, all future feature flags will be implemented the exact same way with only the name of the feature flag changing. So in the long run, the feature toggle route will most likely take less time than fixing defects on two branches. On the other hand, what if we historically have very few defects in production? If we are rarely having to fix defects on two branches as a result of rarely having defects at all, then that might be faster than implementing feature toggles, even in the long run.
+This is primarily a battle of whether fixing defects on two branches or implementing feature toggles is more time consuming. Feature toggles would probably take some time to set up initially since you have to figure out how to implement the config file or database read for the first feature toggle you make. But after that, all future feature flags will be implemented the exact same way with only the name of the feature flag changing. So in the long run, the feature toggle route will most likely take less time than fixing defects on two branches. On the other hand, what if we historically have very few defects in production? If we are rarely having to fix defects on two branches as a result of rarely having defects at all, then that might be faster than implementing feature toggles, even in the long run.
 
-Another thing to keep in mind is-what if two different teams are working on the same component for two different releases? A component could be shared by many different teams within an organization. This can really complicate things if you are merging code into trunk that is not releaseable. Feature toggles would allow all teams to merge all code changes into trunk while keeping trunk releaseable. You might say "we will own this component and not let anyone else make code changes to it" but that is a silo'd approach that is not recommended in agile IT organizations.
+Another thing to keep in mind is-what if two different teams are working on the same component for two different releases? A component could be shared by many different teams within an organization. This can complicate things if you are merging code into trunk that is not releasable. Feature toggles would allow all teams to merge all code changes into trunk while keeping trunk releasable. You might say "we will own this component and not let anyone else make code changes to it" but that is a siloed approach that is not recommended in agile IT organizations.
 
 So with the above information in mind, I prefer the release from trunk approach. It will generally take less time and have less difficulty of coordination.
 
