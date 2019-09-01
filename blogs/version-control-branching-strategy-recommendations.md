@@ -51,6 +51,13 @@ Branch by abstraction is a technique for modifying existing functionality while 
 7. Optionally remove the old implementation  
 8. Optionally remove the abstraction
 
+#### Which release approach should we choose?
+This is primmarily a battle of whether fixing defects on two branches or implementing feature toggles is more time consuming. Feature toggles would probably take some time to set up initially since you have to figure out how to implement the config file or database read for the first feature toggle you make. But after that, all future feature flags will be implemented the exact same way with only the name of the feature flag changing. So in the long run, the feature toggle route will most likely take less time than fixing defects on two branches. On the other hand, what if we historically have very few defects in production? If we are rarely having to fix defects on two branches as a result of rarely having defects at all, then that might be faster than implementing feature toggles, even in the long run.
+
+Another thing to keep in mind is-what if two different teams are working on the same component for two different releases? A component could be shared by many different teams within an organization. This can really complicate things if you are merging code into trunk that is not releaseable. Feature toggles would allow all teams to merge all code changes into trunk while keeping trunk releaseable. You might say "we will own this component and not let anyone else make code changes to it" but that is a silo'd approach that is not recommended in agile IT organizations.
+
+So with the above information in mind, I prefer the release from trunk approach. It will generally take less time and have less difficulty of coordination.
+
 ## Sources
 a. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.  
 b. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.  
