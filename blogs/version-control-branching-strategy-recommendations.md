@@ -35,7 +35,7 @@ The last thing I want to point out is if you can't reproduce the defect on trunk
 #### Release from trunk
 One of the downsides of the branch for release is that everytime there is a defect in production, you have to get the defect fixed in two places: trunk and the release branch. One way around this is to do the release from trunk approach. 
 
-In the release from trunk approach, we do not create a branch when it is time to release. We just release from the trunk branch. If something goes wrong in production, we would do the fix in trunk and then release from trunk. This makes it such that when there is a defect in production, we no longer have to do the fix in two branches.
+In the release from trunk approach, we do not create a branch when it is time to release. We just release from the trunk branch. If something goes wrong in production, we would do the fix in trunk and then release from trunk. This makes it such that when there is a defect in production, we no longer have to do the fix in two branches. You might have a concern about this. We are merging all of our development code to trunk, even when the feature we are working on is not complete. Wouldn't that mean that if there were a defect in production and we release from trunk after fixing it, we would then ship out a partially completed feature that is not ready to be used yet?
 
 ## Sources
 a. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.  
