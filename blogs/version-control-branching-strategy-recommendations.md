@@ -62,10 +62,10 @@ So with the above information in mind, I prefer the release from trunk approach.
 To summarize the key points:
 * maintain one version of code in development and production
 * all branches should be created off of trunk and merged back into trunk within 1 day of creation
-* it is OK to merge code into trunk that does not create a task or feature
-* use pair programming to reduce the number of active branches
+* it is OK to merge code into trunk that does not complete a task or feature
 * use feature flags to hide partially completed features in production while making them visible in development and testing
 * use branch by abstraction to modify existing functionality
+* use pair programming to reduce the number of active branches
 
 ## Sources
 a. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.  
