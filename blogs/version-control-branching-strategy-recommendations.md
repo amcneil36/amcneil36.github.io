@@ -58,6 +58,13 @@ Another thing to keep in mind is-what if two different teams are working on the 
 
 So with the above information in mind, I prefer the release from trunk approach. It will generally take less time and have less difficulty of coordination.
 
+## Conclusion
+To summarize the key points:
+* maintain one version of code in development and production
+* all branches are created off of trunk and merged back into trunk within 1 day of creation
+* it is OK to merge code into trunk that does not create a task or feature
+* use feature flags to hide partially completed features in production while making them visible in development and testing
+
 ## Sources
 a. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.  
 b. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.  
