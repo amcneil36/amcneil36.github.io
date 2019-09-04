@@ -63,7 +63,7 @@ Another thing to keep in mind: what if two different teams are working on the sa
 So with the above information in mind, I prefer the release from trunk approach. It will generally take less time and have less difficulty of coordination.
 
 #### What if our repository is set up to automatically release to production when committing to trunk?
-When merging into trunk automatically triggers a release to production, we have to think about the problem a little differently. If our branching model is to always branch off of trunk and then merge into trunk, we will then be releasing to production on every code change in this scenario. 
+When merging into trunk automatically triggers a release to production, we have to think about the problem a little differently. If our branching model is to always branch off of trunk and then merge into trunk, we will then be releasing to production on every code change in this scenario. This is known as Continuous Deployment. However, Continuous Deployment is not for everyone-some teams might need to have a schedule or cadence for releases based on regulatory measures.<sup>2</sup> 
 
 ## Conclusion
 To summarize the key points:
