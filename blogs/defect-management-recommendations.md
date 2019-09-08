@@ -2,9 +2,13 @@
 
 It can be difficult to determine how to choose between working on defects and working on features. It might also be unclear as to how much time should be spent working on defects. We will discuss some options out there for how to answer these questions. We will start by discussing defect management recommendations for departments of one team where there is just one team working on a product. After that, we will discuss defect management recommendations for departments where multiple teams are working on the same product.
 
-## One team working on a product
+## When a department has only one team working on a product
 
-How do we prioritize between defects and enhancements?
+### How do we prioritize between defects and enhancements?
+
+#### Fully Allocate 1 or 2 people to support at all times
+This is the easiest route for handling defects. You can take one or two people and fully allocate them to support. They will only work on defect fixes and tech debt. The rest of the team will work on enhancements for the next reelase.
+
 	• Fully allocate 1 or 2 people to support every sprint where they will do support no matter what
 		○ Predictable velocity but might cause someone to be working on a lower priority item than the feature
 	• Ignore defects unless critical. Put them in next sprint and assign to some people. If critical then fail the sprint
