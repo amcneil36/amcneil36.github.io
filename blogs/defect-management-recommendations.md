@@ -10,6 +10,8 @@ Another complication with defects is that incoming defects can make it tougher t
 
 Not only can defects mess up our release, but they can also mess up our sprint. We could be on pace to finish everything for the sprint but then get pulled into defects and no longer complete all of the work in the sprint.
 
+If we were aware of all of the severe defects in production, then we could do all of the severe defects before even starting our feature. We would then have everyone work on the feature uninterupted until release. But because some of these severe defects in production might not be found by a client until we are in the middle of working on our feature, we have to be able to set aside time to work on these defects. When planning our next release, we should assume that 20-30% of our time is going to be spent on defects and technical debt. 
+
 #### Fully Allocate 1 or 2 people to support at all times
 This is the easiest route for handling defects. You will have 1 or 2 people fully allocated to support at all times. You will then have the remaining people all do enhancements or all join in on support. Most of the time, these remaining people will be doing enhancements instead of support. Whenever enhancements are being worked on, we should rotate the 1 or 2 people out of support and into the enhancement group. As that happens, we would then rotate 1 or 2 people out of the enhancement group and into support. Having anyone permanently do support for a long time will lead to burn out, less learning, and consequently turnover. That is why it is important to rotate out the people who are donig support.
 
