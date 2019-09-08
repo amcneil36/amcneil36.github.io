@@ -10,6 +10,10 @@ Another complication with defects is that incoming defects can make it tougher t
 
 Not only can defects mess up our release, but they can also mess up our sprint. We could be on pace to finish everything for the sprint but then get pulled into defects and no longer complete all of the work in the sprint.
 
+In a perfect world, we would have everyone on the team work on the same release which is the next release. We wouldn't switch to something else until we release. This will make for the earliest releases to market. Let's say we have project A which is 1 month of work and project B which is also 1 month of work. Let's say that project A and B can be released individually. It doesn't make sense to complete part of project A and then switch to project B without releasing project A. Having multiple partially complete projects at a time is just more waste because value is not delivered until we release.
+
+The same thing could be said about defects. Suppose there is some known defect called Defect A. Also suppose we have a feature we are about to work on called Project A. It would not make sense to work on project A, switch to fixing defect A, and then coming back to finish project A. We should either do all of project A followed by all of defect A or do all of defect A followed by all of project A.
+
 If we were aware of all of the severe defects in production, then we could do all of the severe defects before even starting our feature. We would then have everyone work on the feature uninterupted until release. But because some of these severe defects in production might not be found by a client until we are in the middle of working on our feature, we have to be able to set aside time to work on these defects. When planning our next release, we should assume that 20-30% of our time is going to be spent on defects and technical debt. 
 
 #### Fully Allocate 1 or 2 people to support at all times
