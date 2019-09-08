@@ -11,10 +11,10 @@ Great! So whenever we start working on a feature, we should never have anyone sw
 
 Not having a good idea of how much time you will be spent in support can make it difficult to do our release planning. We don't know which date to go with if we have no clue how much we might get pulled into support. The same thing could be said about sprint planning for teams utilizing scrum. Let's take a look at some approaches to deal with defects and enhancements.
 
-#### Fully Allocate 1 or 2 people to support at all times
-This is the easiest route for handling defects. You will have 1 or 2 people fully allocated to support at all times. You will then have the remaining people all do enhancements or all join in on support. Most of the time, these remaining people will be doing enhancements instead of support. Whenever enhancements are being worked on, we should rotate the 1 or 2 people out of support and into the enhancement group. As that happens, we would then rotate 1 or 2 people out of the enhancement group and into support. Having anyone permanently do support for a long time will lead to burn out, less learning, and consequently turnover. That is why it is important to rotate out the people who are donig support.
+#### Fully Allocate 1 or 2 people to support at all times. The rest can all do enhancements or all join in support.
+This is the easiest route for handling defects. You will have 1 or 2 people fully allocated to support at all times. You will then have the remaining people all do enhancements or all join in on support. Most of the time, these remaining people will be doing enhancements instead of support. Whenever enhancements are being worked on, we should rotate the 1 or 2 people out of support and into the enhancement group. When that happens, we would also rotate 1 or 2 people out of the enhancement group and into support. Having anyone permanently do support for a long time will lead to burn out, less learning, and consequently turnover. That is why it is important to rotate out the people who are doing support.
 
-The good thing about having 1 or 2 fully allocated people to support at all times is that it makes work a lot more predictable for the group doing enhancements. 
+The good thing about having 1 or 2 fully allocated people to support at all times is that it makes velocity a lot more predictable for the feature that is being worked on. We no longer have to guess at 
 
 	• Fully allocate 1 or 2 people to support every sprint where they will do support no matter what
 		○ Predictable velocity but might cause someone to be working on a lower priority item than the feature
