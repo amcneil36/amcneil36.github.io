@@ -7,7 +7,7 @@ It can be difficult to determine how to choose between working on defects and wo
 ### How do we prioritize between defects and enhancements?
 
 #### Fully Allocate 1 or 2 people to support at all times
-This is the easiest route for handling defects. You can take one or two people and fully allocate them to support. They will only work on defect fixes and tech debt. The rest of the team will work on enhancements for the next reelase.
+This is the easiest route for handling defects. You can take one or two people and fully allocate them to support for a few sprints. They will only work on defect fixes and tech debt. After a few sprints are up, you should rotate out the people from support. The rest of the team can be doing enhancements.
 
 	• Fully allocate 1 or 2 people to support every sprint where they will do support no matter what
 		○ Predictable velocity but might cause someone to be working on a lower priority item than the feature
