@@ -53,7 +53,7 @@ Suppose that your team has a large amount of incoming defects. If you are doing 
 
 Now suppose you are instead on a team that has minimal incoming defects. If you are doing Scrum, your plans made in sprint planning will be more likely to hold up since there will be less interuptions. You would be more likely to be doing tasks that immediately deliver value and receive feedback in a demo.
 
-So there you have it. For teams that are highly interupted with things such as defects, I like option 3 better. For teams that are not interupted as much, I prefer option 2.
+So there you have it. For teams that are highly interupted with things such as defects, I like option 3 better. For teams that are not interupted as much, I prefer option 2. The only exception to this would be for teams that rarely receive valueable feedback in a demo. If you don't receive valuable feedback in a demo, then you don't get as much benefit from timeboxing. In that scenario, I would recommend Kanban, regardless of how few incoming defects there are.
 
 
 
