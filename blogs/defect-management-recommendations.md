@@ -22,7 +22,8 @@ For the group working on enhancements, I prefer Scrum. The added predictability 
 
 The obvious downside to this approach is that we might not all be working on the highest priority items at any point in time. We have 1 or 2 people fully allocated to support at any given time so that our velocity on the feature is predictable. However, if there are not any high priority defects at any point in time, then the work that the people are doing in support might not be as high priority as the work being done on the feature. 
 
-
+#### Allocate a buffer for each sprint for support
+In the previous scenario, we had 1 or 2 people break off from the team to do support. In this scenario, we have the whole team doing Scrum together and anyone could potentially work on a defect during the sprint. If a high or critical priority defect comes in during the sprint, the defect will be added to the sprint and looked at right away. If a medium priority defect comes in during the sprint, the product owner will make a judgement call as to whether or not to add that defect to the current sprint. When the team does their sprint planning, they will not sign up for work that fills up the entire sprint. They will have a buffer so that there is room to add defects that are reported during the sprint if needed. Also during the sprint planning meeting, the team can pull in unfinished defects that had been worked on during the previous sprint. In addition to that, the product owner will make a judgement call as to whether or not the medium priority defects found in the previous sprint should be fixed now or fixed after the feature is released. As a result, any given sprint planning meeting could result in signing up for only defects, only enhancements, or a mix of both. 
 
 
 	• Fully allocate 1 or 2 people to support every sprint where they will do support no matter what
