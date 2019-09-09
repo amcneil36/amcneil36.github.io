@@ -36,7 +36,10 @@ A similar statement could be made about planning our releases. In the previous a
 This approach is a bit more complicated to implement than the previous approach because the product owner has many judgement calls to make about whether or not to add medium priority defects to the sprint. The product owner also has to prioritize between defects and enhancements here unlike in the approach above. The benefit we see with this approach is that we are more likely to be working on higher priority items at any point in time. This comes at the expense of having a tougher time keeping velocity consistent.
 
 #### Whole team does Kanban!
-We could do away with sprints completely and just do Kanban. Whenever a defect comes in, the product owner doesn't have to make any judgement call about whether or not to pull it into the sprint. The product owner just has to look at the product backlog and prioritize defects.
+We could do away with sprints completely and just do Kanban. Whenever a defect comes in, the product owner doesn't have to make any judgement call about whether or not to pull it into the sprint. The product owner just has to make a judgement call as to whether or not the defect is placed ahead of or behind the stories for the feature in the backlog. Thus, Kanban makes it easier to deal with defects and unpredictability than Scrum. If our feature starts to get behind schedule, we can consider trying to place a higher percentage of incoming defects further down in the backlog to where they are worked on after the feature is completed and released. We can have any person do defects and enhancemnts at any time with this approach. We should also make sure that we are rotating who is doing defect fixes.
+
+#### Plan timeboxes ahead of time where everyone does support
+Unlike the previous ideas mentioned, this one makes no sense. This scenario would be something like doing high-level planning for your next few months of work and you pick one random month to be the designated "support" month where everyone does support. Or maybe you just pick a random sprint in the upcoming months to be the designated support sprint. 
 
 
 
