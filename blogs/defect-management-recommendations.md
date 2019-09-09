@@ -27,6 +27,8 @@ In the previous scenario, we had 1 or 2 people break off from the team to do sup
 
 When making the judgement call in the middle of the sprint about whether or not to pull a medium priority defect into the sprint, the product owner can look at the buffer we have allocated to support and see if there is still room for defects within the sprint.
 
+Unlike the previous approach, any developer could potentially do support during any sprint. We still want to use a rotation to determine who does which defect so that it is not always the same people doing defect fixes.
+
 If there are no interuptions during the sprint, then our velocity towards our feature is going to be higher. If there are many high priority interuptions during a sprint, then our velocity towards our feature is going to be lower for the sprint. This is why the product owner needs to look at our buffer to make a judgement call as to whether or not to pull medium priority defects into the sprint in the middle of the sprint. If we are half-way through the sprint and have already used up most of our buffer, it probably doesn't make sense to pull in a medium priority defect to the sprint that was just discovered because that would put us at risk of accomplishing our sprint goal.
 
 A similar statement could be made about planning our releases. In the previous approach, we might always allocate 2/7 of our people to support so we know that roughly 30% of our time is spent on support. If we have a large variety of amount of time spent working in support, it is going to be difficult to plan a release date for our feature. As a result, we should give a buffer for support when release planning. Suppose we give ourself a buffer of 30% for support during release planning. If we were to be half way to our release date and already used more of our buffer than predicted, we would probably want to hold off on more of the medium priority defects until after the feature is released. A burn down chart should be used to look at how our feature is coming along in relation to the release date so that the product owner can have an easier time making the judgement call between working on medium priority defects now vs after the feature is released.
@@ -34,6 +36,9 @@ A similar statement could be made about planning our releases. In the previous a
 This approach is a bit more complicated to implement than the previous approach because the product owner has many judgement calls to make about whether or not to add medium priority defects to the sprint. The product owner also has to prioritize between defects and enhancements here unlike in the approach above. The benefit we see with this approach is that we are more likely to be working on higher priority items at any point in time. This comes at the expense of having a tougher time keeping velocity consistent.
 
 #### Whole team does Kanban!
+We could do away with sprints completely and just do Kanban. Whenever a defect comes in, the product owner doesn't have to make any judgement call about whether or not to pull it into the sprint. The product owner just has to look at the product backlog and prioritize defects.
+
+
 
 	• Fully allocate 1 or 2 people to support every sprint where they will do support no matter what
 		○ Predictable velocity but might cause someone to be working on a lower priority item than the feature
