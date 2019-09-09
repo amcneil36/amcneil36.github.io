@@ -20,7 +20,7 @@ The people in support should use Kanban. Kanban works a lot better than Scrum fo
 
 For the group working on enhancements, I prefer Scrum. The added predictability that comes with this team not having to worry about incoming defects results in a lot more benefit from timeboxing. Scrum will hold the team accountable to doing a vertical slice of work that they can demo at the end of the sprint for feedback.
 
-The obvious downside to this approach is that we might not all be working on the highest priority items at any point in time. We have 1 or 2 people fully allocated to support at any given time so that our velocity on the feature is predictable. However, if there are not any high priority defects at any point in time, then the work that the people are doing in support might not be as high priority as the work being done on the feature.
+The obvious downside to this approach is that we might not all be working on the highest priority items at any point in time. We have 1 or 2 people fully allocated to support at any given time so that our velocity on the feature is predictable. However, if there are not any high priority defects at any point in time, then the work that the people are doing in support might not be as high priority as the work being done on the feature. 
 
 
 
