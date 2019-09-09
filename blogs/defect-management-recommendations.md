@@ -49,7 +49,7 @@ Now it is time to decide! I am going to go ahead and rule out option 1. Suppose 
 
 Now it's a battle between option 2 and 3. This is essentially just a battle between Scrum and Kanban. There is no universal agreement as to which one is better. However, it is pretty clear that there are situations where Scrum makes more sense than Kanban and vice versa. 
 
-Suppose that your team has a large amount of incoming defects. If you are doing Scrum, it will be very hard to plan sprints because a lot of high priority defects could come in at any time and throw off your plans made in sprint planning. You could make a larger buffer but having a large buffer just makes sprint planning unclear as to what will actually be done which starts to make sprint planning less helpful. We could negate some of this by just making our sprint shorter. With a shorter sprint, we can stick with our plans more because pushing an incoming defect to the next sprint isn't as big of a deal.
+Suppose that your team has a large amount of incoming defects. If you are doing Scrum, it will be very hard to plan sprints because a lot of high priority defects could come in at any time and throw off your plans made in sprint planning. You could make a larger buffer but having a large buffer just makes sprint planning unclear as to what will actually be done which starts to make sprint planning less helpful. We could negate some of this by just making our sprint shorter. With a shorter sprint, we can stick with our sprint planning plans more because pushing an incoming defect to the next sprint is no longer as big of a problem.
 
 
 
