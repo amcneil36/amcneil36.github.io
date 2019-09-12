@@ -26,7 +26,7 @@
 </details>
 
 <details>
-  <summary>miscellaneous</summary>  
+  <summary>Miscellaneous</summary>  
 <ul>
   <li><a href="https://amcneil36.github.io/blogs/defect-management-recommendations">Defect Management Recommendations</a></li>
 </ul>
