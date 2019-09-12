@@ -44,7 +44,8 @@ After the issue investigation is completed and it is determined that a code chan
 
 Dealing with defects when using Scrum is a little tricky so I think it deserves it's own section.
 
-
+### Dealing with defects when using Scrum
+Dealing with defects when using Scrum can be unclear at first because Scrum has this concept of sprints where adding new items to the sprint in the middle of the sprint is generally discouraged.
 
 
 
