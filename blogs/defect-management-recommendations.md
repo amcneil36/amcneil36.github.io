@@ -74,3 +74,10 @@ One thing to be careful of when trying to prioritize between incoming defects an
 A study from IBM was done in 2008 analyzing the cost of software defects found at different stages. The cost to fix a defect in coding was 6.5 times higher than the cost to fix a defect during design. The cost to fix a defect during testing was 15 times higher than during design. Finally, the cost ot fix a defect in production was 100 times higher than during design. This means that we should almost always avoid releasing with known defects.
 
 ### Summary
+We want to be prioritizing between defects and enhancements
+* We should investigate issues reported in production immediately but do not necessarily need to fix them immediately
+* Sometimes a feature will be higher priority than a defect fix and vice-versa
+* Place defects and enhancements in the same backlog so it is easier to prioritize
+* Have the same team capable of doing both enhancements and defects so we can prioritize between defects and enhancements
+* Teams with less incoming defects may benefit more from using Scrum. Teams with more incoming defects may benefit more from Kanban
+* Monitor the progress of the feature with a burn down chart to help prioritize between defects and enhancements
