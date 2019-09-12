@@ -24,7 +24,7 @@ In *Extreme Programming Explained,<sup>1</sup>* Martin Fowler and Kent Beck advi
 
 Having the same team handle support and enhancements allows us to make sure we are working on the highest priority items at all times. This allows the customer to make trade off decisions about whether to prioritize the feature or the defect. During times where more defects are reported than normal, we can allocate more people to support as needed. When there are less defects reported than normal, we can allocate more people to features instead. Having this flexibility to easily adjust our allocation to enhancements or defects based on changes in priorities is what makes having a single team for handling enhancements and support the better route.
 
-### Avoid scheduling recurring "support only" sprints
+### Avoid scheduling recurring "support only" timeslots
 Some teams might come up with a team rule where every quarter they need to have 2 sprints where they only do defect fixes. Or maybe they come up with a team rule where every they need to spend least one quarter where they only do defect fixes. This does not mean that the team doesn't do defect outside of this time. It just means that when this time arrives, they will only do defect fixes.
 
 This idea should be avoided because it may cause us to not be working on the highest priority items at any point in time. If you look at the product backlog and the most important items are defects, then it is fine to have the whole team do defect fixes during that time. However, if no defects are identified as the highest priority items, we don't want the team to be forced to work on defects just because their team rule indicates that it is that time of the year to only do defect fixes.
