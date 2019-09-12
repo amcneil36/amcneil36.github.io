@@ -37,8 +37,12 @@ When there is an issue reported in production, we can think of the way we handle
 
 The investigation portion might be making note of things such as how frequently the bug occurs, how high the impact is when the bug does occur, assigning a priority to the ticket, estimating the time it will take to fix the issue, or closing the ticket after determining it's not an issue. We should not spend much time determining if a change request is considered an enhancement or defect fix since that won't affect how early the change request is completed unless we have an SLA with the customer on defect fixes. Lastly, estimating defects is generally tougher to do than estimating enhancements so if you feel unsure then just mark the time estimate as unknown.
 
-After the issue investigation is completed and it is determined that a code change is going to need to be made, the customer will make the judgement call of whether this code change needs to be made now or if it should wait. If the issue is high priority, then the customer would mostlikely have the developer start fixing the issue as soon as the investigation is done. If the issue is medium priority or lower, then the product owner will now make a judgement call as to whether or not the person who investigated the issue should go ahead and fix it or if the person should resume working on the feature and get to this issue later. 
+After the issue investigation is completed and it is determined that a code change is going to need to be made, the customer will make the judgement call of whether this code change needs to be made now or if it should wait. If the issue is high priority, then the customer would most likely have the developer start fixing the issue as soon as the investigation is done. If the issue is medium priority or lower, then there are a few different things that the product owner might do:
+1. Pull the change request into the current sprint and start working on it now
+2. Place the change request at the top of the product backlog so that it can be done in the next sprint
+3. Place the change request farther down in the product backlog so it is done some time after the feature is released  
 
+Dealing with defects when using Scrum is a little tricky so I think it deserves it's own section.
 
 
 
