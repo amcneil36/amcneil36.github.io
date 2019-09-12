@@ -24,3 +24,10 @@
   <li><a href="https://amcneil36.github.io/blogs/to-what-extent-should-team-members-generalize-or-specialize">To what extent should team members generalize or specialize?</a></li>  
 </ul>
 </details>
+
+<details>
+  <summary>miscellaneous</summary>  
+<ul>
+  <li><a href="https://amcneil36.github.io/blogs/defect-management-recommendations">Defect Management Recommendations</a></li>
+</ul>
+</details>
