@@ -37,7 +37,7 @@ When there is an issue reported in production, we can think of the way we handle
 
 The investigation portion might be making note of things such as how frequently the bug occurs, how high the impact is when the bug does occur, assigning a priority to the ticket, estimating the time it will take to fix the issue, or closing the ticket after determining it's not an issue. We should not spend much time determining if a change request is considered an enhancement or defect fix since that won't affect how early the change request is completed unless we have an SLA with the customer on defect fixes. Lastly, estimating defects is generally tougher to do than estimating enhancements so if you feel unsure then just mark the time estimate as unknown.
 
-
+After the issue investigation is completed and it is determined that a code change is going to need to be made, the product owner needs to place the change request in the product backlog according to priority. If this issue is high priority, then someone needs to stop what they are doing and get to fixing the issue. This would preferably be the same person who did the investigation since this person has all of the information fresh on their mind. 
 
 
 
