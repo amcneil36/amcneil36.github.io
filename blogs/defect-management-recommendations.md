@@ -74,7 +74,7 @@ One thing to be careful of when trying to prioritize between incoming defects an
 A study from IBM was done in 2008 analyzing the cost of software defects found at different stages.<sup>3</sup> It had the following findings:
 * The cost to fix a defect in coding was 6.5 times higher than the cost to fix a defect during design
 * The cost to fix a defect during testing was 15 times higher than during design
-* The cost to fix a defect in production was 100 times higher than during design. 
+* The cost to fix a defect in production was 100 times higher than during design  
 
 This means that we should almost always avoid releasing with known defects.
 
