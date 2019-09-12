@@ -75,9 +75,8 @@ A study from IBM was done in 2008 analyzing the cost of software defects found a
 
 ### Summary
 We want to set up our teams in a way where we can easily prioritize between defects and enhancements.
-* Sometimes a feature will be higher priority than a defect fix and vice-versa
 * Place defects and enhancements in the same backlog
 * Have the same team capable of doing both enhancements and defects
 * Teams with less incoming defects may benefit more from using Scrum. Teams with more incoming defects may benefit more from Kanban
 * Monitor the progress of the feature with a burn down chart to help prioritize between defects and enhancements
-* Investigate issues reported in production immediately but do not necessarily fix the issue immediately
+* Issues reported in production should be investigated immediately but do not necessarily need to be fixed immediately
