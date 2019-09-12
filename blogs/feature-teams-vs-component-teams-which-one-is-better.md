@@ -47,7 +47,7 @@ We should strongly favor feature teams over component teams in a software organi
 
 So what about for situations in which we have many teams, say 100 teams working on the same product at the same time? Would this be a scenario in which we want to use component teams instead of feature teams? Craig Larman and Bad Vodde say no.<sup>2</sup> We can take a large feature, break it down into smaller features, and assign each small feature to a feature team. <sup>2</sup>
 
-##### Sources
+## Sources
 1. Axelrod, Arnon. Complete Guide to Test Automation. Apress, 2018  
 2. Craig Larman and Bas Vodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012.
 3. Craig Larman and Bas Vodde. Large-Scale Scrum: More with LeSS. Addison-Wesley, 2016.
