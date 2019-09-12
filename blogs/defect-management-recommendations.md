@@ -60,18 +60,23 @@ The more incoming defects that a team typically has to handle, the more we shoul
 * spend less time doing sprint planning  
   * with more unpredictability, we don't want to spend as much time doing sprint planning since a higher percentage of our planning could go to waste
 
-As we can see, the more unpredictability there is, the less that our plans made in sprint planning will hold up. This brings up an interesting question: if we have a lot of unpredictability due to having many incoming defects each sprint, should we consider doing Kanban instead of Scrum? There is no widely accepted answer in terms of whether Scrum or Kanban is overall better. I will say that the more predictability there is, the more I prefer Scrum. The less predictability there is, the more I prefer Kanban. So for teams with huge amounts of incoming defects, I prefer Kanban. When there is an incoming defect when using Kanban, we just have to decide whether to do the defect fix right now or after our feature is done. There is no need to brainstorm whether to pull the ticket into the next sprint since no sprints are used in Kanban. Having no sprints makes handling random changes in plans easier.
+As we can see, the more unpredictability there is, the less that our plans made in sprint planning will hold up. This brings up an interesting question: if we have a lot of unpredictability due to having many incoming defects each sprint, should we consider doing Kanban instead of Scrum? There is no widely accepted answer in terms of whether Scrum or Kanban is overall better. I will say that the more predictability there is, the more I prefer Scrum. The less predictability there is, the more I prefer Kanban. So for teams with huge amounts of incoming defects, I prefer Kanban. When there is an incoming defect for a team using Kanban, they just have to decide whether to do the defect fix right now or after our feature is done. There is no judgement call that needs to be made about pulling the ticket into this sprint or next sprint since no sprints are used in Kanban. Thus, having no sprints makes handling random changes in plans easier.
 
-### Monitoring progress of feature to help prioritize between defects and the feature
+### Monitoring progress of a feature to help prioritize between defects and the feature
 One thing to be careful of when trying to prioritize between incoming defects and the current feature we are working on is we could spend a bit more time than predicted doing defects instead of the feature which could cause our feature to become behind schedule. We should use a burn down chart to visualize whether or not our feature is on schedule . The more that our feature becomes behind schedule, the more the sense of urgency we might use to have incoming defects done after the feature is released.
 
 ### Cost of finding defects in different stages
-A study from IBM was done in 2008 analyzing the cost of software defects found at different stages. The cost to fix a defect in coding was 6.5 times higher than the cost to fix a defect during design. The cost to fix a defect during testing was 15 times higher than during design. Finally, the cost ot fix a defect in production was 100 times higher than during design. This means that we should almost always avoid releasing with known defects.
+A study from IBM was done in 2008 analyzing the cost of software defects found at different stages.<sup>b</sup> It had the following findings:
+* The cost to fix a defect in coding was 6.5 times higher than the cost to fix a defect during design
+* The cost to fix a defect during testing was 15 times higher than during design
+* The cost to fix a defect in production was 100 times higher than during design. 
+
+This means that we should almost always avoid releasing with known defects.
 
 ### Summary
-We want to set up our teams in a way where we can easily prioritize between defects and enhancements.
+We want to set up our teams in a way where we can easily prioritize between defects and enhancements. Some things to keep in mind:
 * Place defects and enhancements in the same backlog
-* Have the same team capable of doing both enhancements and defects
+* Have the same team handle enhancements and support
 * Teams with less incoming defects may benefit more from using Scrum. Teams with more incoming defects may benefit more from Kanban
 * Monitor the progress of the feature with a burn down chart to help prioritize between defects and enhancements
 * Issues reported in production should be investigated immediately but do not necessarily need to be fixed immediately
@@ -79,4 +84,5 @@ We want to set up our teams in a way where we can easily prioritize between defe
 This helps ensure that we are always working on the highest priority items at all times.
 
 # Sources
-a. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.
+a. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.  
+b. Dawson, Maurice & Burrell, Darrell & Rahim, Emad & Brewster, Stephen. (2010). Integrating Software Assurance into the Software Development Life Cycle (SDLC). Journal of Information Systems Technology and Planning. 3. 49-53. 
