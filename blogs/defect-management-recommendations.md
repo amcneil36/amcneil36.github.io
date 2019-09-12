@@ -1,9 +1,9 @@
 # Defect Management Recommendations
 
-### Should defects go in a separate backlog?
-No. One product one backlog. Having defects in a separate backlog than enhancements makes it more difficult to prioritize. The product owner now has to look at two different backlogs in order to determine what to do next. Is the top item on the enhancement backlog or the top item on the defect backlog more important? With enhancements and defects in the same backlog, it is easy. The backlog is sorted by priority. If a particular defect is more important than a particular enhancement, then the defect goes higher up in the backlog than the enhancement and vice-versa. Having the defects and enhancements in the same backlog makes it very easy to visualize which work to do next.
+### Place defects in the same backlog as enhancements
+Having defects in a separate backlog than enhancements makes it more difficult to prioritize. The product owner now has to look at two different backlogs in order to determine what to do next. Is the top item on the enhancement backlog or the top item on the defect backlog more important? With enhancements and defects in the same backlog, it is easy. The backlog is sorted by priority. If a particular defect is more important than a particular enhancement, then the defect goes higher up in the backlog than the enhancement and vice-versa. Having the defects and enhancements in the same backlog makes it very easy to visualize which work to do next. This is where the saying 'one product one backlog' comes from.
 
-### Should we have a zero defect backlog?
+### We don't need to always fix defects immediately
 Some teams do what is called a zero defect backlog approach. For some teams, this means that whenever a defect is reported, at least one person has to immediately stop the enhancement they are doing and fix the defect right away. Other teams are more flexible with the zero defect backlog approach and have a policy of just needing to get any incoming defect fixed within, say, 4 months of being reported.
 
 Martin Fowler and Kent Beck are opposed to the idea of a zero defect backlog. The problem with the zero defect backlog approach is that it assumes that stopping to fix an incoming defect in production is always going to be what is in the best interest of the customer. We have to think in terms of opportunity cost here. Time spent fixing a defect is less time spent working on a feature and vice-versa. There will be scenarios in which stopping work on a feature to fix a defect is what is in the best interest of the customer. There will be scenarios in which finishing the feature before fixing the defect is what is in the best interest of the customer. The customer has to make a judgement call about whether to continue working on the feature or to stop to fix the defect.
@@ -28,9 +28,6 @@ Having the same team do both support and enhancements allows us to make sure we 
 Some teams might come up with a team rule where every quarter they need to have 2 sprints where they only do defect fixes. Or maybe they come up with a team rule where every year there need sto be at least one quarter where they only do defect fixes. This does not mean that the team doesn't do defect outside of this time. It is just that when this time arrives, they will only do defect fixes.
 
 This is a bad idea because it may cause us to not be working on the highest priority items at any point in time. If you look at the product backlog and the most important items are defects, then it is fine to have the whole team do defect fixes during that time. However, if no defects are identified as the highest priority items, we don't want the team to be forced to work on defects just because their team rule indicates that it is that time of the year to only do defect fixes.
-
-### Cost of finding defects in different stages
-A study from IBM was done in 2008 analyzing the cost of software defects found at different stages. The cost to fix a defect in coding was 6.5 times higher than the cost to fix a defect during design. The cost to fix a defect during testing was 15 times higher than during design. Finally, the cost ot fix a defect in production was 100 times higher than during design. This means that we should almost always avoid releasing with known defects.
 
 ### Dealing with issues reported in production: a two step process
 When there is an issue reported in production, we can think of the way we handle the issue in terms of two steps. The first step is investigating the issue that was reported and the second step is fixing the issue. All issues reported in production should be investigated by someone right away but do not necessarily need to be fixed right away. The purpose of investigating the issue is so that we can get enough information so that we know how to prioritize it. We need to know if we should stop what we are doing to fix the issue or if it is something that could be put off to a later point in time.
@@ -72,3 +69,8 @@ As we can see, the more unpredictability there is, the less that our plans made 
 
 ### Monitoring progress of feature to help prioritize between defects and the feature
 One thing to be careful of when trying to prioritize between incoming defects and the current feature we are working on is we could spend a bit more time than predicted doing defects instead of the feature which could cause our feature to become behind schedule. We should use a burn down chart to visualize whether or not our feature is on schedule . The more that our feature becomes behind schedule, the more the sense of urgency we might use to have incoming defects done after the feature is released.
+
+### Cost of finding defects in different stages
+A study from IBM was done in 2008 analyzing the cost of software defects found at different stages. The cost to fix a defect in coding was 6.5 times higher than the cost to fix a defect during design. The cost to fix a defect during testing was 15 times higher than during design. Finally, the cost ot fix a defect in production was 100 times higher than during design. This means that we should almost always avoid releasing with known defects.
+
+### Summary
