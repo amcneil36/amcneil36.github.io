@@ -83,7 +83,7 @@ We want to set up our teams in a way where we can easily prioritize between defe
 * Place defects and enhancements in the same backlog
 * Have the same team handle enhancements and support
 * Teams with less incoming defects may benefit more from using Scrum. Teams with more incoming defects may benefit more from Kanban
-* Monitor the progress of the feature with a burn down chart to help prioritize between defects and enhancements
+* Monitor the progress of a feature with a burn down chart to help prioritize between defects and enhancements
 * Issues reported in production should be investigated immediately but do not necessarily need to be fixed immediately
 
 This helps ensure that we are always working on the highest priority items at all times.
