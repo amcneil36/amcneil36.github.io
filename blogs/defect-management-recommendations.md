@@ -1,4 +1,4 @@
-# Defect Management Recommendations
+## Defect Management Recommendations
 
 ### Place defects in the same backlog as enhancements
 Having defects in a separate backlog than enhancements makes it more difficult to prioritize. The product owner now has to look at two different backlogs in order to determine what to do next. Is the top item on the enhancement backlog or the top item on the defect backlog more important? With enhancements and defects in the same backlog, it is easy. The backlog is sorted by priority. If a particular defect is more important than a particular enhancement, then the defect goes higher up in the backlog than the enhancement and vice-versa. Having the defects and enhancements in the same backlog makes it very easy to visualize which work to do next. This is where the saying "one product one backlog" comes from.
@@ -88,7 +88,7 @@ We want to set up our teams in a way where we can easily prioritize between defe
 
 This helps ensure that we are always working on the highest priority items at all times.
 
-# Sources
+## Sources
 1. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.  
 2. Sterling, Christ and Barton, Brent. Managing Software Debt. Addison-Wesley, 2011.
 3. Dawson, Maurice & Burrell, Darrell & Rahim, Emad & Brewster, Stephen. (2010). Integrating Software Assurance into the Software Development Life Cycle (SDLC). Journal of Information Systems Technology and Planning. 3. 49-53.
