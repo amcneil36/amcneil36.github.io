@@ -45,7 +45,17 @@ After the issue investigation is completed and it is determined that a code chan
 Dealing with defects when using Scrum is a little tricky so I think it deserves it's own section.
 
 ### Dealing with defects when using Scrum
-Dealing with defects when using Scrum can be unclear at first because Scrum has this concept of sprints where adding new items to the sprint in the middle of the sprint is generally discouraged.
+Dealing with defects when using Scrum can be unclear at first because Scrum has this philosophy with sprints where adding new items to the sprint in the middle of the sprint is generally to be avoided when possible. The reason for this is that we do our sprint planning to produce the potentially shippable product increment that we can demo for feedback. Any change to the sprint could make it possible to fail the sprint goal. However, we have to be able to pull incoming defects into the sprint when they are high priority. As a result, we have two options for our sprint planning:
+1. Fill up the whole sprint with work during the sprint planning. When high priority defects come in, pull them into the sprint and allow some of the originally planned work to not be finished
+2. Plan each sprint with a buffer where we leave enough of the sprint open to where we feel comfortable being able to pull in high priority defects and complete everything. If no defects come in and we finish everything, take the item off the top of the backlog.
+
+ 
+
+
+
+
+
+
 
 
 
