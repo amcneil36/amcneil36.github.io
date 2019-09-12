@@ -47,102 +47,28 @@ Dealing with defects when using Scrum is a little tricky so I think it deserves 
 ### Dealing with defects when using Scrum
 Dealing with defects when using Scrum can be unclear at first because Scrum has this philosophy with sprints where adding new items to the sprint in the middle of the sprint is generally to be avoided when possible. The reason for this is that we do our sprint planning to produce the potentially shippable product increment that we can demo for feedback. Any change to the sprint could make it possible to fail the sprint goal. However, we have to be able to pull incoming defects into the sprint when they are high priority. As a result, we have two options for our sprint planning:
 1. Fill up the whole sprint with work during the sprint planning. When high priority defects come in, pull them into the sprint and allow some of the originally planned work to not be finished
-2. Plan each sprint with a buffer where we leave enough of the sprint open to where we feel comfortable being able to pull in high priority defects and complete everything. If no defects come in and we finish everything, take the item off the top of the backlog.
+2. Plan each sprint with a buffer where we leave enough of the sprint open to where we feel comfortable being able to pull in new incoming high priority defects from production and complete everything. If no defects come in and we finish everything for the sprint early, take the next item off the top of the backlog.
 
- 
+I prefer scenario 2 so that we don't have as much of our sprint planning going to waste when defects arise and we are more likely to accomplish the goal of the sprint.  This makes it more likely to produce a potentially shippable product increment that we can get feedback on since we set our sprint goal smaller and more obtainable. 
 
+When a defect is reported in the middle of the sprint, we will have someone immediately investigate it. After it is determined that a change needs to be made, one of three things could happen:
+1. Pull the change request into the current sprint and start working on it now
+2. Place the change request at the top of the product backlog so that it can be done in the next sprint
+3. Place the change request farther down in the product backlog so it is done some time after the feature is released  
 
+For high priority defects, we probably want to do 1. For everything else, the product owner will make a judgement call as to which of these three to do. If we pull too many defects into the current sprint, we are at danger of not accomplishing the sprint goal. This is what the buffer is for. The more we eat into the buffer during the sprint, the more the sense of urgency should be to avoid option 1 for incoming defects during the sprint. Being further along in our sprint also is a scenario where option 1 makes less sense because at that time we are almost ready for the new sprint planning anyway.
 
+Option 2 might sound like a violation of what we discussed earlier about minimizing waste. If we finish our sprint without releasing our feature and then switch to the defect, shouldn't we have just fixed the defect first? This is the only scenario that is the exception to that rule. By moving the defect to the next sprint, we are more likely to complete the sprint goal and get feedback in our demo at the end of the sprint. In this case, we are considering the additional feedback from our demo to be more important than finishing the defect fix earlier.  
 
+The more incoming defects that a team typically has to handle, the more we should:
+* have a larger buffer for sprint planning
+ * this allows us to handle more defects in the sprint
+*decrease the sprint duration
+ *this makes it easier to push the defect to the next sprint since that wouldn't be as long as a wait
+*spend less time doing sprint planning
+ *with more unpredictability, we don't want to spend as time doing sprint planning since a higher percentage of our planning could go to waste
 
+As we can see, the more unpredictability there is, the less that our plans made in sprint planning will hold up. This brings up an interesting question: if we have a lot of unpredictability due to having many incoming defects each sprint, should we consider doing Kanban instead of Scrum? There is no widely accepted answer in terms of whether Scrum or Kanban is overall better. I will say that the more predictability there is, the more I prefer Scrum. The less predictability there is, the more I prefer Kanban. So for teams with huge amounts of incoming defects, I prefer Kanban. When there is an incoming defect when using Kanban, we just have to decide whether to do the defect fix right now or after our feature is done. There is no need to brainstorm whether to pull the ticket into the next sprint since no sprints are used in Kanban. Having no sprints makes handling random changes in plans easier.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#### Allocate a buffer for each sprint for support
-In the previous scenario, we had 1 or 2 people break off from the team to do support. In this scenario, we have the whole team doing Scrum together and anyone could potentially work on a defect during the sprint. If a high or critical priority defect comes in during the sprint, the defect will be added to the sprint and looked at right away. If a medium priority defect comes in during the sprint, the product owner will make a judgement call as to whether or not to add that defect to the current sprint. When the team does their sprint planning, they will not sign up for work that fills up the entire sprint. They will have a buffer so that there is room to add defects that are reported during the sprint if needed. Also during the sprint planning meeting, the team can pull in unfinished defects that had been worked on during the previous sprint. In addition to that, the product owner will make a judgement call as to whether or not the medium priority defects found in the previous sprint should be fixed now or fixed after the feature is released. As a result, any given sprint planning meeting could result in signing up for only defects, only enhancements, or a mix of both. 
-
-When making the judgement call in the middle of the sprint about whether or not to pull a medium priority defect into the sprint, the product owner can look at the buffer we have allocated to support and see if there is still room for defects within the sprint.
-
-Unlike the previous approach, any developer could potentially do support during any sprint. We still want to use a rotation to determine who does which defect so that it is not always the same people doing defect fixes.
-
-If there are no interuptions during the sprint, then our velocity towards our feature is going to be higher. If there are many high priority interuptions during a sprint, then our velocity towards our feature is going to be lower for the sprint. This is why the product owner needs to look at our buffer to make a judgement call as to whether or not to pull medium priority defects into the sprint in the middle of the sprint. If we are half-way through the sprint and have already used up most of our buffer, it probably doesn't make sense to pull in a medium priority defect to the sprint that was just discovered because that would put us at risk of accomplishing our sprint goal.
-
-A similar statement could be made about planning our releases. In the previous approach, we might always allocate 2/7 of our people to support so we know that roughly 30% of our time is spent on support. If we have a large variety of amount of time spent working in support, it is going to be difficult to plan a release date for our feature. As a result, we should give a buffer for support when release planning. Suppose we give ourself a buffer of 30% for support during release planning. If we were to be half way to our release date and already used more of our buffer than predicted, we would probably want to hold off on more of the medium priority defects until after the feature is released. A burn down chart should be used to look at how our feature is coming along in relation to the release date so that the product owner can have an easier time making the judgement call between working on medium priority defects now vs after the feature is released.
-
-This approach is a bit more complicated to implement than the previous approach because the product owner has many judgement calls to make about whether or not to add medium priority defects to the sprint. The product owner also has to prioritize between defects and enhancements here unlike in the approach above. The benefit we see with this approach is that we are more likely to be working on higher priority items at any point in time. This comes at the expense of having a tougher time keeping velocity consistent.
-
-#### Whole team does Kanban!
-We could do away with sprints completely and just do Kanban. Whenever a defect comes in, the product owner doesn't have to make any judgement call about whether or not to pull it into the sprint. The product owner just has to make a judgement call as to whether or not the defect is placed ahead of or behind the stories for the feature in the backlog. Thus, Kanban makes it easier to deal with defects and unpredictability than Scrum. If our feature starts to get behind schedule, we can consider trying to place a higher percentage of incoming defects further down in the backlog to where they are worked on after the feature is completed and released. We can have any person do defects and enhancemnts at any time with this approach. We should also make sure that we are rotating who is doing defect fixes.
-
-#### Which option should we go with?
-Option 1 is very easy to do, has a predictable velocity, and makes it easy to get valuable feedback at the demo. The downside is that the most important items might not be worked on at any point in time due to having 1 or 2 people that need to do support no matter what. Also, in scenarios in which there are many defects reported at the same time, we might have to pull people off of the enhancement team to help with defects anyway. We would need a team that has a decent amount of defects or tech debt for it to be worth considering having anyone fully allocated to support for a whole sprint. 
-
-Option 2 does a better job than Option 1 of making sure the highest priority items are worked on at all times. However, option 2 is the most complicated option because you have to plan a buffer into the sprint and then make a judgement call when a defect is reported as to whether or not to pull it into the sprint. Since we are doing scrum, we should still be getting valuable feedback at the demo.
-
-Option 3 is very easy to do and is the best at handling disruptions. This option does a good job of making sure the higher priority items are worked on. The only downside is that since we aren't using sprints, we might not receive quite as valuable feedback at the demo.
-
-Now it is time to decide! I am going to go ahead and rule out option 1. Suppose you are doing option 1 where you fully allocate 2 out of 7 people to support every sprint. This is around 30% support allocation. You could technically do something similar in option 2 where in option 2 you allocate a 30% buffer to every sprint for support work. You have the flexibility to end up spending slightly more or less time doing support than that depending on how many defects are reported during that sprint. This added flexibility is what allows for option 2 to be better than option 1 since it helps us work on higher priority items at any point in time. Option 1 also suffers from having someone diverged from the feature for a longer time and potentially being confused when they return to the feature. It can also be tough to allocate someone to support for a lengthy time if they are the only one who is good in a particular area. This makes the feature tougher to work on.
-
-Now it's a battle between option 2 and 3. This is essentially just a battle between Scrum and Kanban. There is no universal agreement as to which one is better. However, it is pretty clear that there are situations where Scrum makes more sense than Kanban and vice versa. 
-
-Suppose that your team has a large amount of incoming defects. If you are doing Scrum, it will be very hard to plan sprints because a lot of high priority defects could come in at any time and throw off your plans made in sprint planning. You could make a larger buffer but having a large buffer just makes sprint planning unclear as to what will actually be done which starts to make sprint planning less helpful. We could negate some of this by just making our sprint shorter. With a shorter sprint, we can stick with our sprint planning plans more because pushing an incoming defect to the next sprint is no longer as big of a problem. So it could be said that with more interuptions, a smaller sprint is needed. However, if there are many defects, we will get to a point where our sprint becomes so small that we have a hard time producing a potentially shippable product increment at the end of the sprint for feedback. At that point, we might as well be doing Kanban instead. With Kanban, we can have defects pouring in frequently and we don't have to make that difficult decision about "do we pull this into the sprint" or not.
-
-Now suppose you are instead on a team that has minimal incoming defects. If you are doing Scrum, your plans made in sprint planning will be more likely to hold up since there will be less interuptions. You would be more likely to be doing tasks that immediately deliver value and receive feedback in a demo.
-
-So there you have it. For teams that are highly interupted with things such as defects, I like option 3 better. For teams that are not interupted as much, I prefer option 2. The only exception to this would be for teams that rarely receive valueable feedback in a demo. If you don't receive valuable feedback in a demo, then you don't get as much benefit from timeboxing. In that scenario, I would recommend Kanban, regardless of how few incoming defects there are.
-
-
-
-
-	• Fully allocate 1 or 2 people to support every sprint where they will do support no matter what
-		○ Predictable velocity but might cause someone to be working on a lower priority item than the feature
-	• Ignore defects unless critical. Put them in next sprint and assign to some people. If critical then fail the sprint
-		○ Makes velocity less predictable. Could say something like "30% of the time we do support" so some defects are pushed to later sprint
-		○ Might make more sense to do kanban though
-	• Allocate 30% of each sprint to unplanned work where we can pull in w/e defects we want, even ones that are not critical
-	• Have the whole team do kanban!!
-Do we use a separate backlog?
-	• No. Doing so makes it hard to tell if the top item on the defect backlog is higher priority than the top item on the enhancement backlog. When finishing a feature, it might be good to have everyone do defects for a lil. We can have views within the product backlog.
-	
-Spend 20-30% of the time doing support
-
-Bugs in production vs bugs found in testing
-
-Large departments
-
-Rotate whole teams into support
-	• Doesn't work with 2 teams because then we are 50% support
-	• Benefit of having teams stay together
-	• Support team will be cross functional
-	• Makes sense for large departments
-	• Makes sense when teams have similar knowledge of features/products
-	• Can be annoying if a feature is almost done and that team is rotated into support
-
-Rotate few people from each team into support
-	• Works for any team size, especially small teams
-	• Problematic if one team only has one FE expert or one BE expert and that person goes into support
-	• Makes the support team diverse if they have worked on many different features
-
-Strategy when doing support:
-	• Do investigating and try to fix
-	• Fix if not lower priority
-	• Investigate more important than fix
-	• Client reported more important
-	• Try to reproduce defect internally from the front-end
-	• Write an automated test that shows the defect failing
+### Monitoring progress of feature to help prioritize between defects and the feature
+One thing to be careful of when trying to prioritize between incoming defects and the current feature we are working on is we could spend a bit more time than predicted doing defects instead of the feature which could cause our feature to become behind schedule. We should use a burn down chart to visualize whether or not our feature is on schedule . The more that our feature becomes behind schedule, the more the sense of urgency we might use to have incoming defects done after the feature is released.
