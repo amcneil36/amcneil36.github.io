@@ -62,10 +62,10 @@ Option 2 might sound like a violation of what we discussed earlier about minimiz
 
 The more incoming defects that a team typically has to handle, the more we should:
 * have a larger buffer for sprint planning
- * this allows us to handle more defects in the sprint
-*decrease the sprint duration
- *this makes it easier to push the defect to the next sprint since that wouldn't be as long as a wait
-*spend less time doing sprint planning
+ * this allows us to handle more defects in the sprint  
+* decrease the sprint duration  
+ * this makes it easier to push the defect to the next sprint since that wouldn't be as long as a wait  
+* spend less time doing sprint planning  
  *with more unpredictability, we don't want to spend as time doing sprint planning since a higher percentage of our planning could go to waste
 
 As we can see, the more unpredictability there is, the less that our plans made in sprint planning will hold up. This brings up an interesting question: if we have a lot of unpredictability due to having many incoming defects each sprint, should we consider doing Kanban instead of Scrum? There is no widely accepted answer in terms of whether Scrum or Kanban is overall better. I will say that the more predictability there is, the more I prefer Scrum. The less predictability there is, the more I prefer Kanban. So for teams with huge amounts of incoming defects, I prefer Kanban. When there is an incoming defect when using Kanban, we just have to decide whether to do the defect fix right now or after our feature is done. There is no need to brainstorm whether to pull the ticket into the next sprint since no sprints are used in Kanban. Having no sprints makes handling random changes in plans easier.
