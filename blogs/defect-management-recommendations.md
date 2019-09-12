@@ -35,11 +35,7 @@ A study from IBM was done in 2008 analyzing the cost of software defects found a
 ### Dealing with issues reported in production: a two step process
 When there is an issue reported in production, we can think of the way we handle the issue in terms of two steps. The first step is investigating the issue that was reported and the second step is fixing the issue. All issues reported in production should be investigated by someone right away but do not necessarily need to be fixed right away. The purpose of investigating the issue is so that we can get enough information so that we know how to prioritize it. We need to know if we should stop what we are doing to fix the issue or if it is something that could be put off to a later point in time.
 
-The investigation portion might be making note of things such as how frequently the bug occurs, how high the impact is when the bug does occur, assigning a priority to the ticket, estimating the time it will take to fix the issue, or closing the ticket after determining it's not an issue. Estimating defects is generally tougher to do than estimating enhancements so if you feel unsure then just mark the estimate as unknown.
-
-We should not spend much time determining if an issue is a defect or enhancement. In fact, when prioritizing what to do next, it really doesn't make any difference if something is a defect or enhancement. Having something categorized as a defect doesn't mean we will get to it sooner. Defect corrections and enhancements can both be thought of as a body of work that adds value to the customer. We could take 
-
-
+The investigation portion might be making note of things such as how frequently the bug occurs, how high the impact is when the bug does occur, assigning a priority to the ticket, estimating the time it will take to fix the issue, or closing the ticket after determining it's not an issue. We should not spend much time determining if a change request is considered an enhancement or defect fix since that won't affect how early the change request is completed unless we have an SLA with the customer on defect fixes. Lastly, estimating defects is generally tougher to do than estimating enhancements so if you feel unsure then just mark the time estimate as unknown.
 
 
 
