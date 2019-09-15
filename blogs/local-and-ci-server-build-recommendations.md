@@ -45,6 +45,8 @@ Nightly builds are builds that run once per day, usually around 3 am when no one
 
 Tests like load tests, stress tests, and longevity tests are all good candidates to have ran nightly on a ci-server.<sup>a</sup> Thse tests would also ideally be ran in parallel.
 
+### Use the application API to put the environment 
+
 ## Sources
 a. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.  
 b. Beck, Kent and Andres, Cynthia. Extreme Programming Explained. Addison-Wesley, 2004.  
