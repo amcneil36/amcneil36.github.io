@@ -26,7 +26,7 @@ We would ideally run all acceptance tests on the commit build. However, we did s
   * the most common type of automated test should be a unit test followed by the back-end functional tests followed by GUI tests
 * delete any redundant acceptance tests that don't add much value over already existing acceptance tests
 
-
+If the acceptance tests are still causing the build to take longer than 10 minutes after doing this, then we want to take the least important acceptance tests and have them run post-commit.<sup>a</sup> The most important acceptance test and the ones that are most likely to fail should be the ones ran on commit in this case. All acceptance tests would still need to pass before releasing though.
 
 ## Sources
 a. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.
