@@ -45,7 +45,11 @@ Nightly builds are builds that run once per day, usually around 3 am when no one
 
 Tests like load tests, stress tests, and longevity tests are all good candidates to have ran nightly on a ci-server.<sup>a</sup> Thse tests would also ideally be ran in parallel.
 
-### Use the application API to put the environment 
+### Use the application's API to put the environment in the correct state for tests
+What some people will do to put the environment in the correct state needed for their test is to write their own code to set up the environment. The problem with this is that when the environment changes, we would have to update our test code to set up the environment properly for the new changes. We should use the application's API to set up the state for our tests so that when changes to the environment are made, our tests will automatically set up the environment the new way.<sup>a</sup> This will ensure that we are testing our application against the correct environment.
+
+### Set up a timebox for fixing builds before reverting
+If a check-in breaks the build, everyone needs to stop what they are doing and try to fix the build for ten minutes. If no one can fix the build within ten minutes, revert the commit that broke the build.<sup>a</sup>
 
 ## Sources
 a. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.  
