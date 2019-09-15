@@ -18,7 +18,9 @@ We want our build that is ran on commit to be able to be ran in 10 or fewer minu
 All unit tests should run on the commit build. Any unit test under 1/10 of a second is a slow test.<sup>c</sup> Therefore we should have no issue with unit tests taking the build a much longer time to finish.
 
 #### Acceptance tests
-
+We would ideally run all acceptance tests on the commit build. However, we did say that we want a 10 minute build and in some cases, running all of the acceptance tests would take longer than 10 minutes. If our acceptance tests are causing our build to take longer than 10 minutes, then we should look into doing the following:
+* run the acceptance tests in parallel
+* share expensive tests between resources
 
 ## Sources
 a. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.
