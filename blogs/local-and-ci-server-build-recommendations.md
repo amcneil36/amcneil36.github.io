@@ -40,6 +40,11 @@ Our build should be able to create a new environment, run all of the tests, and 
 ### Smoke test deployments
 When deploying to any environment, we should have smoke tests that run to make sure that the environment is configured properly.<sup>a</sup> If any external service we depend on is not working or not configured properly, the test should fail.
 
+### Nightly build
+Nightly builds are builds that run once per day, usually around 3 am when no one is awake. These are most commonly done with tests that might use expensive resources or take a long time. The downside of nightly builds is that if something goes wrong, you don't find out until the next day. It would be convenient if everything ran on commit so that you know sooner if something went wrong. However, some things are too expensive and just can't be ran on commit.
+
+Tests like load tests, stress tests, and longevity tests are all good candidates to have ran nightly on a ci-server.<sup>a</sup> Thse tests would also ideally be ran in parallel.
+
 ## Sources
 a. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.  
 b. Beck, Kent and Andres, Cynthia. Extreme Programming Explained. Addison-Wesley, 2004.  
