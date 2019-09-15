@@ -46,7 +46,7 @@ Nightly builds are builds that run once per day, usually around 3 am when no one
 Tests like load tests, stress tests, and longevity tests are all good candidates to have ran nightly on a ci-server.<sup>1</sup> These tests would also ideally be ran in parallel.
 
 ### Use the application's API to put the environment in the correct state for tests
-What some people will do to put the environment in the correct state needed for their test is to write their own code to set up the environment. The problem with this is that when the environment changes, we would have to update our test code to set up the environment properly for the new changes. We should use the application's API to set up the state for our tests so that when changes to the environment are made, our tests will automatically set up the environment the new way.<sup>1</sup> This will ensure that we are testing our application against the correct environment.
+What some people will do to put the environment in the correct state needed for their test is to write their own code to set up the environment. The problem with this is that when the environment changes in production, we would have to update our test code to set up the environment properly for the new changes. We should use the application's API to set up the state for our tests so that when changes to the environment are made in production, our tests will automatically set up the environment the new way.<sup>1</sup> This will ensure that we are testing our application against the correct environment.
 
 ### Favor push hooks over polling
 Some people will set up their ci-server to poll their repository every so often for changes. This is not only expensive, but it also causes the ci-server to not necessarily build the project right away after receiving a commit. We should instead use a push hook to where the ci-server is notified by our version control system as soon as we push. This will make our project built as soon as a commit is pushed and will use up much less resources.
@@ -56,8 +56,8 @@ When developing on a branch, I like having the ci-server build my branch post co
 
 When it comes to merging code into trunk, however, I prefer the ci-server to build pre-commit. What I mean by this is that the ci-server will locally merge the development branch into trunk and build that. If the build succeeds, the ci-server will notify you that it succeeded. The ci-server could either automatically commit this merge to trunk upon a successful build or have you press a button or type a command to indicate that you want to complete the merge. This helps keep the trunk build passing.
 
-### Set up a timebox for fixing broken builds before reverting
-If a check-in breaks the build, everyone needs to stop what they are doing and try to fix the build. If no one can fix the build within ten minutes, revert the commit that broke the build.<sup>1</sup> This helps keep the build passing and prevents people from getting blocked on merging.
+### Set up a timebox for fixing broken trunk builds before reverting
+If a check-in to trunk breaks the build, everyone needs to stop what they are doing and try to fix the build. If no one can fix the build within ten minutes, revert the commit that broke the build.<sup>1</sup> This helps keep the build passing and prevents people from getting blocked on merging.
 
 ## Sources
 1. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.  
