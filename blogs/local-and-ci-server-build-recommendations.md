@@ -14,8 +14,13 @@ We want our build that is ran on commit to be able to be ran in 10 or fewer minu
 * check for good/bad programming practices
 * security vulnerability checks
 
+#### Unit tests
+All unit tests should run on the commit build. Any unit test under 1/10 of a second is a slow test.<sup>c</sup> Therefore we should have no issue with unit tests taking the build a much longer time to finish.
+
+#### Acceptance tests
 
 
 ## Sources
 a. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.
 b. Beck, Kent and Andres, Cynthia. Extreme Programming Explained. Addison-Wesley, 2004.
+c. Feathers, Michael. Working Effectively with Legacy Code. Pearson Education, 2005.
