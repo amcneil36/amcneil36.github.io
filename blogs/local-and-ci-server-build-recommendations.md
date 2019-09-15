@@ -31,6 +31,9 @@ If the acceptance tests are still causing the build to take longer than 10 minut
 ### Ability to choose the environment to deploy to on the command line
 We should be able to deploy to any environment we want by just running one command on the command line.<sup>a</sup> This could be as simple as just passing in the environment name as a parameter to the command that is ran on the command line.
 
+### Containerization
+Our build should be able to create a new environment, run all of the tests, and then destroy the environment.<sup>e</sup> This is best done with containerization.<sup>e</sup>
+
 ### Smoke test deployments
 When deploying to any environment, we should have smoke tests that run to make sure that the environment is configured properly.<sup>a</sup> If any external service we depend on is not working or not configured properly, the test should fail.
 
@@ -39,3 +42,4 @@ a. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Release
 b. Beck, Kent and Andres, Cynthia. Extreme Programming Explained. Addison-Wesley, 2004.  
 c. Feathers, Michael. Working Effectively with Legacy Code. Pearson Education, 2005.  
 d. Wolff, Eberhard. A Practical Guide to Continuous Delivery. Addison-Wesley, 2017.  
+e. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.
