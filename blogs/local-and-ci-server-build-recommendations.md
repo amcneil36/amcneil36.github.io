@@ -35,7 +35,7 @@ We should be able to deploy to any environment we want by just running one comma
 When deploying to any environment, we should have smoke tests that run to make sure that the environment is configured properly.<sup>a</sup> If any external service we depend on is not working or not configured properly, the test should fail.
 
 ## Sources
-a. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.
-b. Beck, Kent and Andres, Cynthia. Extreme Programming Explained. Addison-Wesley, 2004.
-c. Feathers, Michael. Working Effectively with Legacy Code. Pearson Education, 2005.
-d. Wolff, Eberhard. A Practical Guide to Continuous Delivery. Addison-Wesley, 2017.
+a. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.  
+b. Beck, Kent and Andres, Cynthia. Extreme Programming Explained. Addison-Wesley, 2004.  
+c. Feathers, Michael. Working Effectively with Legacy Code. Pearson Education, 2005.  
+d. Wolff, Eberhard. A Practical Guide to Continuous Delivery. Addison-Wesley, 2017.  
