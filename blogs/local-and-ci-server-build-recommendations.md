@@ -22,9 +22,14 @@ We would ideally run all acceptance tests on the commit build. However, we did s
 * run the acceptance tests in parallel<sup>a</sup>
 * share expensive resources between tests<sup>a</sup>
   * if there are resources that take a long time to make, we could look at having this resource made once and sharing this instance between tests<sup>a</sup>
-* adhere to the test automation pyramid when determining how much of each test type to make
+* adhere to the test automation pyramid when determining how much of each test type to make<sup>d</sup>
+  * the most common type of automated test should be a unit test followed by the back-end functional tests followed by GUI tests
+* delete any redundant acceptance tests that don't add much value over already existing acceptance tests
+
+
 
 ## Sources
 a. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.
 b. Beck, Kent and Andres, Cynthia. Extreme Programming Explained. Addison-Wesley, 2004.
 c. Feathers, Michael. Working Effectively with Legacy Code. Pearson Education, 2005.
+d. Wolff, Eberhard. A Practical Guide to Continuous Delivery. Addison-Wesley, 2017.
