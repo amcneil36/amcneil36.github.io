@@ -48,6 +48,9 @@ Tests like load tests, stress tests, and longevity tests are all good candidates
 ### Use the application's API to put the environment in the correct state for tests
 What some people will do to put the environment in the correct state needed for their test is to write their own code to set up the environment. The problem with this is that when the environment changes, we would have to update our test code to set up the environment properly for the new changes. We should use the application's API to set up the state for our tests so that when changes to the environment are made, our tests will automatically set up the environment the new way.<sup>a</sup> This will ensure that we are testing our application against the correct environment.
 
+### Favor push hooks over polling
+Some people will set up their ci-server to poll their repository every so often for changes. This is not only expensive but it also causes the ci-server to not necessarily build the project right away after receving a commit. We should instead use a push hook to where the ci-server is notified by our version control system as soon as we push. This will make our project built as soon as a commit is pushed and will use up much less resources.
+
 ### Set up a timebox for fixing broken builds before reverting
 If a check-in breaks the build, everyone needs to stop what they are doing and try to fix the build. If no one can fix the build within ten minutes, revert the commit that broke the build.<sup>a</sup> This helps keep the build passing and prevents people from getting blocked on merging.
 
