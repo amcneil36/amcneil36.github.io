@@ -51,6 +51,11 @@ What some people will do to put the environment in the correct state needed for 
 ### Favor push hooks over polling
 Some people will set up their ci-server to poll their repository every so often for changes. This is not only expensive but it also causes the ci-server to not necessarily build the project right away after receving a commit. We should instead use a push hook to where the ci-server is notified by our version control system as soon as we push. This will make our project built as soon as a commit is pushed and will use up much less resources.
 
+### Pre-tested commit vs post-tested commit on ci-server
+When developing on a branch, I like having the ci-server build my branch post commit. This means that my commit is made to my remote branch and then the ci-server builds. This does allow for my build to go red but I don't find that as big of a deal on a development branch in comparison to trunk. I sometimes just want to be able to save my work remotely or be able to show a teammate my work remotely and I don't want that attempt at commiting to be rejected on my remote development branch due to a red build.
+
+When it comes to merging code into trunk, however, I prefer the ci-server to build pre-commit. What I mean by this is that the ci-server will locally merge your development branch into trunk and build that. If the build succeeds, the ci-server will notify you that it succeeded. The ci-server could either automatically commit this merge to trunk upon a successful build or have you press a button or type a command to indicate that you want to complete the merge. This helps keep the trunk build passing.
+
 ### Set up a timebox for fixing broken builds before reverting
 If a check-in breaks the build, everyone needs to stop what they are doing and try to fix the build. If no one can fix the build within ten minutes, revert the commit that broke the build.<sup>a</sup> This helps keep the build passing and prevents people from getting blocked on merging.
 
