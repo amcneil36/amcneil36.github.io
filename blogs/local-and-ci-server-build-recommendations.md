@@ -28,6 +28,9 @@ We would ideally run all acceptance tests on the commit build. However, we did s
 
 If the acceptance tests are still causing the build to take longer than 10 minutes after doing this, then we want to take the least important acceptance tests and have them run post-commit.<sup>a</sup> The most important acceptance test and the ones that are most likely to fail should be the ones ran on commit in this case. All acceptance tests would still need to pass before releasing though.
 
+### Place all tests in the same repository as the code they test
+Sometimes people will try to place acceptance tests in a different repository than the code they test. This makes it harder to set up a build that runs all of the necessary tests. It also prevents people from having a repository out of date with the repository that tests it. Having tests in the same repository as the code they test will make the build easier to set up and will make it less likely that people merge with tests that are failing elsewhere.
+
 ### Ability to choose the environment to deploy to on the command line
 We should be able to deploy to any environment we want by just running one command on the command line.<sup>a</sup> This could be as simple as just passing in the environment name as a parameter to the command that is ran on the command line.
 
