@@ -6,7 +6,7 @@
   <summary>Continuous Integration/Continuous Delivery</summary>
 <ul>
   <li><a href="https://amcneil36.github.io/blogs/version-control-branching-strategy-recommendations">Version Control Branching Strategy Recommendations</a></li>
-  <li><a href="https://amcneil36.github.io/local-and-ci-server-build-recommendations">Local and Ci-Server Build Recommendations</a></li>
+  <li><a href="https://amcneil36.github.io/blogs/local-and-ci-server-build-recommendations">Local and Ci-Server Build Recommendations</a></li>
 </ul>
 </details>
 
