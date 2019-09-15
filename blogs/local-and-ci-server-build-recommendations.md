@@ -4,7 +4,7 @@ We want our build to be able to be started from the command line.<sup>1</sup> Th
 
 ### Commit build recommendations
 #### 10-minute build
-We want our build that is ran on commit to be able to be ran in 10 or fewer minutes.<sup>1,2</sup> Having a build that takes longer than this makes it take a while to fix errors in the build since there has will be a long wait time to make sure that the build completes. People will also be less inclined to merge to trunk as frequently if the build has a long wait time. 
+We want our build that is ran on commit to be able to be ran in 10 or fewer minutes.<sup>1,2</sup> Having a build that takes longer than this makes it take a while to fix errors in the build since there has will be a long wait time to make sure that the build passes. People will also be less inclined to merge to trunk as frequently if the build has a long wait time. 
 
 #### Static analyzers to run
 * code formatters
@@ -26,7 +26,7 @@ We would ideally run all acceptance tests on the commit build. However, we did s
   * the most common type of automated test should be a unit test followed by the back-end functional tests followed by GUI tests
 * delete any redundant acceptance tests that don't add much value over already existing acceptance tests
 
-If the acceptance tests are still causing the build to take longer than 10 minutes after doing this, then we want to take the least important acceptance tests and have them run post-commit.<sup>1</sup> The most important acceptance test and the ones that are most likely to fail should be the ones ran on commit in this case. This would make the commit stage fast while having the post-commit build still be likely to pass. In either case, we should make sure that all acceptance tests pass prior to releasing.
+If the acceptance tests are still causing the build to take longer than 10 minutes after doing this, then we want to take the least important acceptance tests and have them run post-commit.<sup>1</sup> The most important acceptance tests and the ones that are most likely to fail should be the ones ran on commit in this case. This would make the commit stage fast while having the post-commit build still be likely to pass. In either case, we should make sure that all acceptance tests pass prior to releasing.
 
 ### Place all tests in the same repository as the code they test
 Sometimes people will try to place acceptance tests in a different repository than the code they test. This makes it harder to set up a build that runs all the necessary tests. It also makes it possible for the production repository to be out of date with the corresponding acceptance testing repository. Having tests in the same repository as the code they test will make the build easier to set up and will make it less likely that people merge with tests that are failing elsewhere.
@@ -35,7 +35,7 @@ Sometimes people will try to place acceptance tests in a different repository th
 We should be able to deploy to any environment we want by just running one command on the command line.<sup>1</sup> This could be as simple as just passing in the environment name as a parameter to the command that is ran on the command line.
 
 ### Containerization
-Our build should be able to create a new environment, run all of the tests, and then destroy the environment.<sup>5</sup> This is best done with containerization.<sup>5</sup>
+Our build should be able to create a new environment, run all of the tests, and then destroy the environment.<sup>5</sup> This is best done with containerization.<sup>5</sup> The purpose of creating the new environment is so that our environment is always in a consistent state when running tests.
 
 ### Smoke test deployments
 When deploying to any environment, we should have smoke tests that run to make sure that the environment is configured properly.<sup>1</sup> If any external service we depend on is not working or not configured properly, the corresponding smoke test should fail.
