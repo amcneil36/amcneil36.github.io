@@ -28,6 +28,12 @@ We would ideally run all acceptance tests on the commit build. However, we did s
 
 If the acceptance tests are still causing the build to take longer than 10 minutes after doing this, then we want to take the least important acceptance tests and have them run post-commit.<sup>a</sup> The most important acceptance test and the ones that are most likely to fail should be the ones ran on commit in this case. All acceptance tests would still need to pass before releasing though.
 
+### Ability to choose the environment to deploy to on the command line
+We should be able to deploy to any environment we want by just running one command on the command line.<sup>a</sup> This could be as simple as just passing in the environment name as a parameter to the command that is ran on the command line.
+
+### Smoke test deployments
+When deploying to any environment, we should have smoke tests that run to make sure that the environment is configured properly.<sup>a</sup> If any external service we depend on is not working or not configured properly, the test should fail.
+
 ## Sources
 a. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.
 b. Beck, Kent and Andres, Cynthia. Extreme Programming Explained. Addison-Wesley, 2004.
