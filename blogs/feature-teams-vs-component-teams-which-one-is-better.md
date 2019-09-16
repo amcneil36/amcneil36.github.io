@@ -38,6 +38,9 @@ Since there is a larger overhead with meeting people from other teams, component
 ##### Competing requests<sup>4</sup>
 Imagine a component team that exists to make software for other teams. Now imagine that four different teams request a component team to help them in completing a feature. How would the component team know how to prioritize competing requests? Does the component team do first come first serve? What if Team A reaches out to component team C before Team B does but Team B has significantly more clients and business value?
 
+##### Component teams don't allow for the highest priority features to progress at any point in time
+Suppose that in one quarter, there are tons of high priority requests for code changes to be made by a component team on a component. The component team may not have enough resources to get to all of these requests so some of these high priority requests wouldn't be able to be worked on which will delay features. With the feature team set up, if many teams have high priority requests for code changes in a component, they could all work on making code changes in the component. This is why the feature team set up is considered to be a set up that is for optimizing value. 
+
 ### The downside of Feature teams is manageable
 A feature team is not going to be as specialized at the work it is doing as the component team is
 - while this is true, members within a feature team can still specialize in different areas and give themselves a preference towards choosing tasks that suit their expertise.<sup>6</sup>
