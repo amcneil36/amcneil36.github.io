@@ -41,6 +41,8 @@ Imagine a component team that exists to make software for other teams. Now imagi
 ### The downside of Feature teams is manageable
 A feature team is not going to be as specialized at the work it is doing as the component team is
 - while this is true, members within a feature team can still specialize in different areas and give themselves a preference towards choosing tasks that suit their expertise.<sup>6</sup>
+- someone knowledgeable about a component that a feature team needs to change can point the feature team in the right direction about which packages to focus on learning<sup>2</sup>
+  - a package by feature structure can be used to make it easier to determine which packages need code changes
 
 ### Conclusion
 We should strongly favor feature teams over component teams in a software organization.<sup>1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16</sup> Component teams should be rare. Feature teams make it much easier to code a little bit of each layer and fully integrate the layers by the end of the sprint. This is because all of the expertise needed to do this is on the same team. This goes well with agile, promoting iterative and incremental development for early feedback. A feature team will start working on a feature and keep working on it until it is done. We don't have to worry about a partially completed feature sitting on the shelf waiting in queue due to a hand-off to another team. This reduces cycle time which gets our product out to customers faster.
