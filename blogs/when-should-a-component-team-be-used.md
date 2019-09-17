@@ -20,5 +20,8 @@ Components with a lot of low-level code would generally be scenarios in which it
 #### Security
 Components that deal with security would be components that would be hard for any developer in an organization to jump in and work with. This is because a developer would need to spend a lot of time learning about security before being able to make these code changes.
 
-#### Legacy Code/Spaghetti Code
-Any components with low quality code are going to be difficult to 
+#### Legacy Code
+Legacy code generally has a large overhead of learning and are very fragile to changes which makes legacy code decent candidates for a component team. 
+
+#### Weird/Uncommon technology
+When teams within an organization use similar technologies for their components, it is easier to be in a scenario in which any team could make code changes in another team's components. If a team uses a different technology, especially if this technology is not well documented or known, this would add a bit of an overhead to having other teams making the code change in the component.
