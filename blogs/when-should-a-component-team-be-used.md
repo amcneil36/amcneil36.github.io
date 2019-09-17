@@ -9,6 +9,16 @@ In the feature team setup, there is an overhead of having to learn about the com
 
 For components that are easy to work with and learn, it might be, for example, 1.3 times more man hours for your team to do the code change in the component than for the component team to make the code change. We would generally be fine with spending 1.3 times more man hours since it prevents the additional overhead of cross-team dependencies and work sitting in queue. What about for difficult to work with components?
 
-When components are difficult to work with, the initial overhead of having to learn about a component before making code changes in it starts to become too great for it to be worth it to use the feature team setup. For components that are difficult to work with, it could easily take 20 times more man hours for our team to do the code change than for the component team to do the code change.
+When components are difficult to work with, the initial overhead of having to learn about a component before making code changes in it starts to become too great for it to be worth it to use the feature team setup. For components that are difficult to work with, it could easily take 20 times more man hours for our team to do the code change than for the component team to do the code change. At that point, we would generally be fine having a component team do the work, even if it has to sit in queue for a little.
 
-The more difficult the component is to work with, the larger the overhead of learning the component will be and the more time it will take your team to make the code change relative to a component team to make the change. For working with a simple component, it might only take 1.3 times longer for our team to make a code change in a component than if a component team made the code change. This will usually be worth it. We might accept this if the alternative is our work sitting in queue. But for a difficult component, it could take 20 times longer for our team to make a code change in a component as opposed to a component team making the code change. At this point, we are probably OK having a component team service our request.
+**So it could be said that the more dificult it is to work with a component, the more sense it makes to have a component team. The less difficult it is to work with a component, the less sense it makes to have a component team used.** Let's get into some example of components that might be difficult to work with.
+
+### Examples of components that would be difficult to work with
+#### Low Level Code in components
+Components with a lot of low-level code would generally be scenarios in which it would take a lot of extra time to study the component prior to making the code change. This is becaues the low-level code requires more code in order to do less work.
+
+#### Security
+Components that deal with security would be components that would be hard for any developer in an organization to jump in and work with. This is because a developer would need to spend a lot of time learning about security before being able to make these code changes.
+
+#### Legacy Code/Spaghetti Code
+Any components with low quality code are going to be difficult to 
