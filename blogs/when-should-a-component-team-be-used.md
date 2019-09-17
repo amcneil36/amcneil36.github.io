@@ -28,3 +28,6 @@ When teams within an organization use similar technologies for their components,
 
 #### Overly complicated data model
 We should try to make our data model as simple as possible to where we don't need to make a component team that works with the data model. But if we cannot keep our data model simple, then there will be a bit of an overhead for other teams needing to make code changes to the component. So this is another scenario in which a component team may make sense.
+
+### Does the re-usability and number of consumers of a component affect whether or not we should have a component team?
+It is commonly believed that the more re-usable and widely used a component is predicted to be, the more it makes sense to have a component team in charge of the component.
