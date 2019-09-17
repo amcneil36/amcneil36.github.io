@@ -11,7 +11,7 @@ For a component that is easy to work with and learn, it might take, for example,
 
 When components are difficult to work with, the initial overhead of having to learn about a component before making code changes in it starts to become too great for it to be worth it to use the feature team setup. For components that are difficult to work with, it could easily take 20 times more man hours to make a code change in a component with a feature team setup than in a component team setup. When code changes take significantly more man hours in a feature team setup than a component team setup, we would generally be fine having a component team do the work, even if it results in the work having to sit in queue for a little.
 
-So it could be said that **the more difficult it is to work with a component, the more sense it makes to form a component team around that component. The less difficult it is to work with a component, the less sense it makes to form a component team around that component.** Let's get into some example of components that might be difficult to work with.
+So it could be said that **the more difficult it is to work with a component, the more sense it makes to form a component team around that component. The less difficult it is to work with a component, the less sense it makes to form a component team around that component.** Let's get into some examples of components that would be difficult to work with.
 
 ### Examples of components that would be difficult to work with
 #### Low Level Code in components
@@ -20,17 +20,17 @@ Components with a lot of low-level code would generally be scenarios in which it
 #### Security
 Components that deal with security would be components that would be hard for any developer in an organization to jump in and work with. This is because a developer would need to spend a lot of time learning about security before being able to make these code changes.
 
-#### Legacy Code
-Legacy code generally has a large overhead of learning and are very fragile to changes which makes legacy code decent candidates for a component team. 
+#### Weird/Uncommon technologies
+When teams within an organization use similar technologies for their components, it is easier for any team to make a code change in any component. If a component uses a different technology, especially if this technology is not well documented or known, this would add a bit of an overhead to other teams needing to make code changes in the component.
 
-#### Weird/Uncommon technology
-When teams within an organization use similar technologies for their components, it is easier to be in a scenario in which any team could make code changes in another team's components. If a team uses a different technology, especially if this technology is not well documented or known, this would add a bit of an overhead to having other teams making the code change in the component.
+#### Legacy Code
+Legacy code generally has a large overhead of learning and is very fragile to changes. We should try to keep our code modernized to where a component team is not needed but if that is not feasible, then a component team is something to look into.
 
 #### Overly complicated data model
-We should try to make our data model as simple as possible to where we don't need to make a component team that works with the data model. But if we cannot keep our data model simple, then there will be a bit of an overhead for other teams needing to make code changes to the component. So this is another scenario in which a component team may make sense.
+We should try to make our data model as simple as possible to where we don't need to make a component team that works with the data model. But if we cannot keep our data model simple, then there will be a bit of an overhead for other teams needing to make code changes to the component. So this is a scenario in which a component team may make sense as a last resort.
 
 ### Does the re-usability and number of consumers of a component affect whether or not we should have a component team?
-It is commonly believed that the more re-usable and widely used a component is predicted to be, the more it makes sense to have a component team in charge of the component. I would agree that these factors increase the likelihood that a component team makes sense. But I don't think that these factors play as big of a role as most people might think. The difficulty of making code changes in a component would play a much more significant role than these factors in determining whether a component team makes sense. Even if a lot of teams need code changes made in a component, they probably wouldn't want the overhead of cross team dependencies and work sitting in queue if they could make the code changes themselves in just a few additional man hours than what the component team would need.
+It is commonly believed that the more re-usable and widely used a component is predicted to be, the more it makes sense to form a component team around that component. I would agree that these factors increase the likelihood that a component team makes sense. But I don't think that these factors play as big of a role as most people might think. The difficulty of making code changes in a component would play a much more significant role than these factors in determining whether a component team makes sense. Even if a lot of teams need code changes made in a component, they probably wouldn't want the overhead of cross team dependencies and work sitting in queue if they could make the code changes themselves in just a few additional man hours than what it would take in a component team setup.
 
 ## Additional Resources
 * [SAFe Features and Components](https://www.scaledagileframework.com/features-and-components/)
