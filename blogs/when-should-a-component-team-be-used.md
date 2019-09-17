@@ -11,7 +11,7 @@ For a component that is easy to work with and learn, it might take, for example,
 
 When components are difficult to work with, the initial overhead of having to learn about a component before making code changes in it starts to become too great for it to be worth it to use the feature team setup. For components that are difficult to work with, it could easily take 20 times more man hours to make a code change in a component with a feature team setup than in a component team setup. When code changes take significantly more man hours in a feature team setup than a component team setup, we would generally be fine having a component team do the work, even if it results in the work having to sit in queue for a little.
 
-So it could be said that **the more difficult it is to work with a component, the more sense it makes to have a component team. The less difficult it is to work with a component, the less sense it makes to have a component team used.** Let's get into some example of components that might be difficult to work with.
+So it could be said that **the more difficult it is to work with a component, the more sense it makes to form a component team around that component. The less difficult it is to work with a component, the less sense it makes to form a component team around that component.** Let's get into some example of components that might be difficult to work with.
 
 ### Examples of components that would be difficult to work with
 #### Low Level Code in components
