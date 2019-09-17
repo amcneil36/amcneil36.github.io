@@ -31,3 +31,7 @@ We should try to make our data model as simple as possible to where we don't nee
 
 ### Does the re-usability and number of consumers of a component affect whether or not we should have a component team?
 It is commonly believed that the more re-usable and widely used a component is predicted to be, the more it makes sense to have a component team in charge of the component. I would agree that these factors increase the likelihood that a component team makes sense. But I don't think that these factors play as big of a role as most people might think. The difficulty of making code changes in a component would play a much more significant role than these factors in determining whether a component team makes sense. Even if a lot of teams need code changes made in a component, they probably wouldn't want the overhead of cross team dependencies and work sitting in queue if they could make the code changes themselves in just a few additional man hours than what the component team would need.
+
+## Additional Resources
+* [SAFe Features and Components](https://www.scaledagileframework.com/features-and-components/)
+* [SAFe Shared Services](https://www.scaledagileframework.com/shared-services/)
