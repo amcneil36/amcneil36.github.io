@@ -54,7 +54,9 @@ A feature team is not going to be as specialized at the work it is doing as the 
 ### Conclusion
 We should strongly favor feature teams over component teams in a software organization.<sup>1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16</sup> Component teams should be rare. Feature teams make it much easier to code a little bit of each layer and fully integrate the layers by the end of the sprint. This is because all of the expertise needed to do this is on the same team. This goes well with agile, promoting iterative and incremental development for early feedback. A feature team will start working on a feature and keep working on it until it is done. We don't have to worry about a partially completed feature sitting on the shelf waiting in queue due to a hand-off to another team. This reduces cycle time which gets our product out to customers faster. So while component teams might make sense in that they allow everyone to work in their expertise, they suffer from resource allocation issues and scheduling conflicts.
 
-So what about for situations in which we have many teams, say 100 teams working on the same product at the same time? Would this be a scenario in which we want to use component teams instead of feature teams? Craig Larman and Bad Vodde say no.<sup>2</sup> We can take a large feature, break it down into smaller features, and assign each small feature to a feature team. <sup>2</sup>
+What about for situations in which we have many teams, say 100 teams working on the same product at the same time? Would this be a scenario in which we want to use component teams instead of feature teams? Craig Larman and Bad Vodde say no.<sup>2</sup> We can take a large feature, break it down into smaller features, and assign each small feature to a feature team. <sup>2</sup>
+
+So when should component teams be used? For that, I have made a new blog post which can be found [here](https://amcneil36.github.io/blogs/when-should-a-component-team-be-used).
 
 ## Sources
 1. Axelrod, Arnon. Complete Guide to Test Automation. Apress, 2018  
