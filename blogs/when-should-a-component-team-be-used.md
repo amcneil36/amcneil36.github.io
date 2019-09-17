@@ -25,3 +25,6 @@ Legacy code generally has a large overhead of learning and are very fragile to c
 
 #### Weird/Uncommon technology
 When teams within an organization use similar technologies for their components, it is easier to be in a scenario in which any team could make code changes in another team's components. If a team uses a different technology, especially if this technology is not well documented or known, this would add a bit of an overhead to having other teams making the code change in the component.
+
+#### Overly complicated data model
+We should try to make our data model as simple as possible to where we don't need to make a component team that works with the data model. But if we cannot keep our data model simple, then there will be a bit of an overhead for other teams needing to make code changes to the component. So this is another scenario in which a component team may make sense.
