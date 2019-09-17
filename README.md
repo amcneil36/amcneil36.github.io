@@ -22,6 +22,7 @@
   <summary>Teams</summary>  
 <ul>
   <li><a href="https://amcneil36.github.io/blogs/feature-teams-vs-component-teams-which-one-is-better">Feature teams vs component teams-which one is better?</a></li>
+  <li><a href="https://amcneil36.github.io/blogs/when-should-a-component-team-be-used">When should a component team be used?</a></li>
   <li><a href="https://amcneil36.github.io/blogs/to-what-extent-should-team-members-generalize-or-specialize">To what extent should team members generalize or specialize?</a></li>  
 </ul>
 </details>
