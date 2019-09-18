@@ -15,8 +15,11 @@ Others will do what is referred to as "just enough design upfront." In this scen
 
 ### Which option should we go with?
 #### The problem with freezing the design
-The problem with freezing the design is that it puts a lot of pressure on getting the design right the first time.<sup>a</sup> If the design we come up with is sub-optimal, we are stuck with it because the design is frozen. As a result, we should not be freezing the design.
+The problem with freezing the design is that it puts a lot of pressure on getting the design right the first time.<sup>a</sup> If the design we come up with is sub-optimal, we are stuck with it because the design is frozen. This generally results in overly complex code with unused functionality.<sup>b</sup> As a result, we should not be freezing the design.
+
+#### Trying to do big upfront design before coding is difficult
 
 
 ## Sources
 a. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999.
+b. Sterling, Christ and Barton, Brent. Managing Software Debt. Addison-Wesley, 2011.
