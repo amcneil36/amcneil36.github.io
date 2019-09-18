@@ -1,5 +1,5 @@
 ## How much upfront design should be done before coding?
-I have seen teams with a large amount of variance in the amount of design they do upfront before coding. Let's talk about a couple different options and then discuss which one makes the most sense. To some degree, this is a question of spending more time doing design and less time doing refactoring versus spending less time doing design and more time doing refactoring. Lets take a look at these options individually.
+Suppose we are ready to start working on a new user story. How much upfront design should we do before starting to code up this user story? Let's talk about a couple different options and then discuss which one makes the most sense.
 
 ### Some options for how much design to do before codingn
 #### Big upfront design before coding
