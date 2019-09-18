@@ -16,3 +16,5 @@ Sometimes you will be in a scenario where some code out there almost does what y
 ### Do not refactor any code that has no unit tests
 One of the downsides of refactoring is that we could potentially break something. If there are no unit tests in the code we are refactoring, then it is hard to tell if our refactoring broke anything. Therefore, we should not consider refactoring any code that has no unit tests. If we are interested in refactoring code that has no unit tests, we should add the unit tests first and then do the refactoring after. If we aren't interested in adding unit tests then we will not be refactoring.
 
+## Sources
+1. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999.  
