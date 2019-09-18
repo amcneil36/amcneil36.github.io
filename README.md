@@ -6,6 +6,7 @@
   <summary>Coding and Design</summary>
 <ul>
   <li><a href="https://amcneil36.github.io/blogs/when-is-it-appropriate-to-refactor-previously-existing-code">When is it appropriate to refactor previously existing code?</a></li>
+  <li><a href="https://amcneil36.github.io/blogs/how-much-up-upfront-design-should-be-done-before-coding">How much upfront design should be done before coding?</a></li>
 </ul>
 </details>
 
