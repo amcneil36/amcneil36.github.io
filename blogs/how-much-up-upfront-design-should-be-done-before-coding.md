@@ -3,3 +3,5 @@ I have seen teams with a large amount of variance in the amount of design they d
 
 ### Big upfront design before coding
 In this option, team members will do high and low level design prior to coding. Many teams that take this approach will also "freeze" the design once it is approved. This means that once the design is approved, the person doing the coding has to code up precisely to what the design indicates and has no freedom to code up the task in a slightly different way. The only exception would be if the person who codes it up happens to see that it won't be possible to get the code working with that design. At that point, they might do some more design and have it reviewed by teammates prior to continuing the code. 
+
+Other teams that do big upfront design prior to coding will not freeze the design. They would still do high and low level design prior to coding but they will have the freedom to refactor the code to as they go such that the code might not eventually go on to completely use the low level design that was originally planned.
