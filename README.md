@@ -3,6 +3,13 @@
 ## Blog Posts by Category
 
 <details>
+  <summary>Coding and Design</summary>
+<ul>
+  <li><a href="https://amcneil36.github.io/blogs/when-is-it-appropriate-to-refactor-previously-existing-code">When is it appropriate to refactor previously existing code?</a></li>
+</ul>
+</details>
+
+<details>
   <summary>Continuous Integration/Continuous Delivery</summary>
 <ul>
   <li><a href="https://amcneil36.github.io/blogs/version-control-branching-strategy-recommendations">Version Control Branching Strategy Recommendations</a></li>
