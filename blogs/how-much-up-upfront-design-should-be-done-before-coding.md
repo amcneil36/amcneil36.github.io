@@ -18,8 +18,9 @@ Others will do what is referred to as "just enough design upfront." In this scen
 The problem with freezing the design is that it puts a lot of pressure on getting the design right the first time.<sup>a</sup> If the design we come up with is sub-optimal, we are stuck with it because the design is frozen. This generally results in overly complex code with unused functionality.<sup>b</sup> As a result, we should not be freezing the design.
 
 #### Trying to do big upfront design before coding is difficult
-
+Trying to do big upfront design before coding is very hard to do. We cannot create a complete design upfront by simply working longer and harder.<sup>c</sup> When brainstoroming the low-level design, our thinking is full of many holes.<sup>a</sup> We might think that things behave a certain way based on our understanding of their documentation but we find out that they behave differently after getting feedback from an integration test. As a result, it turns out that as we code up a problem and get feedback from our tests, we learn more about the problem we are trying to solve. So we will need to let some of our design emerge after the coding has already started.<sup>c</sup>
 
 ## Sources
 a. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999.
 b. Sterling, Christ and Barton, Brent. Managing Software Debt. Addison-Wesley, 2011.
+c. Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013.
