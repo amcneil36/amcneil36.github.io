@@ -10,4 +10,4 @@ Martin Fowler recommends only refactor code if it will help you with the current
 #### Refactor to help you understand code that is needed to be understood for your task
 Suppose you need to make a code change in a file. Let's say that you need to look at and understand a few other files before you can make this code change. If these other files are confusing you, it is a good idea to refactor them in order to help you understand the code better. This would generally involve renaming variables and methods or extracting blocks of code out into their own method with a descriptive name. Or, if your own file that you need to make a code change in is confusing you, it is a good idea to refactor there as well. So any time that something is confusing you that you need to understand in order to do your task, it is a good idea to refactor it to help you understand it. I am not talking about this as a temporary refactoring that gets undone after you understand the code. You should do this as a permanent refactoring that gets merged to trunk with the rest of your work.
 
-#### 
+#### Refactor if it will make your code change easier
