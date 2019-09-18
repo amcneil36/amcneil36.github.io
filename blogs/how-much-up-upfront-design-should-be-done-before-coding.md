@@ -15,25 +15,25 @@ Others will do what is referred to as "just enough design upfront." In this scen
 
 ### Which option should we go with?
 #### The problem with freezing the design
-The problem with freezing the design is that it puts a lot of pressure on getting the design right the first time.<sup>a</sup> If the design we come up with is sub-optimal, we are stuck with it because the design is frozen. This generally results in overly complex code with unused functionality.<sup>b</sup> As a result, we should not be freezing the design.
+The problem with freezing the design is that it puts a lot of pressure on getting the design right the first time.<sup>1</sup> If the design we come up with is sub-optimal, we are stuck with it because the design is frozen. This generally results in overly complex code with unused functionality.<sup>2</sup> As a result, we should not be freezing the design.
 
 #### Trying to do big upfront design before coding is difficult
-Trying to do big upfront design before coding is very hard to do. We cannot create a complete design upfront by simply working longer and harder.<sup>c</sup> When brainstorming the low-level design, our thinking is full of many holes.<sup>a</sup> We might think that things behave a certain way based on our understanding of their documentation but we find out that they behave differently after getting feedback from an integration test. As a result, it turns out that as we code up a problem and get feedback from our tests, we learn more about the problem we are trying to solve. So we will need to let some of our design emerge after the coding has already started.<sup>c</sup> 
+Trying to do big upfront design before coding is very hard to do. We cannot create a complete design upfront by simply working longer and harder.<sup>3</sup> When brainstorming the low-level design, our thinking is full of many holes.<sup>1</sup> We might think that things behave a certain way based on our understanding of their documentation but we find out that they behave differently after getting feedback from an integration test. As a result, it turns out that as we code up a problem and get feedback from our tests, we learn more about the problem we are trying to solve. So we will need to let some of our design emerge after the coding has already started.<sup>3</sup> 
 
 #### Doing no upfront design before coding will result in too much time spent doing rework
 It is correct to understand that we do not need to do all of the upfront design before coding since some of our design can only emerge after coding has started. However, trying to do no design upfront design before coding will cause there to be so much time spent doing rework. Blindly jumping in and coding will often make it take longer to get something working since we may not have even thought enough about the problem. The time spent refactoring will also be quite big as a result of this.
 
 #### And the winner is...
-We should do "just enough" upfront design before coding.<sup>a,b,c,d,e,f,g,h,i,j</sup>  This approach has the correct balance between doing enough design to understand the problem and not needing to spend too much time on rework. This balance results in the fastest velocity. I'd also argue that this results in the best design as well since teams doing big upfront design prior to coding tends to be more hesitant to refactor since they have already spent so much time doing the design. It could be entirely possible that doing big design up front was the best approach to take in the past.<sup>d</sup> With automated testing frameworks not being widely available at the early stages of software development, refactoring was less feasible. This made it more important to try to get the design right the first time. But in today's world, we should take the approach of doing just enough design before coding and let the low-level design emerge via refactoring.
+We should do "just enough" upfront design before coding.<sup>1,2,3,4,5,6,7,8,9,10</sup>  This approach has the correct balance between doing enough design to understand the problem and not needing to spend too much time on rework. This balance results in the fastest velocity. I'd also argue that this results in the best design as well since teams doing big upfront design prior to coding tends to be more hesitant to refactor since they have already spent so much time doing the design. It could be entirely possible that doing big design up front was the best approach to take in the past.<sup>4</sup> With automated testing frameworks not being widely available at the early stages of software development, refactoring was less feasible. This made it more important to try to get the design right the first time. But in today's world, we should take the approach of doing just enough design before coding and let the low-level design emerge via refactoring.
 
 ## Sources
-a. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999.  
-b. Sterling, Christ and Barton, Brent. Managing Software Debt. Addison-Wesley, 2011.  
-c. Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013.  
-d. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.  
-e. Beck, Kent. Test-Driven Development By Example. Addison-Wesley, 2003.  
-f. Bain, Scott. Emergent Design: The Evolutionary Nature of Professional Software Development. Addison-Wesley,  2008.  
-g. Beck, Kent. Extreme Programming Explained, Embrace Change. Addison-Wesley, 2012.  
-h. Narayan, Sriram. Agile IT Organization Design: For Digital Transformation And Continuous Delivery. Addison-Wesley, 2015.  
-i. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.  
-j. Cohn, Mike. User Stories Applied For Agile Software Development. Addison-Wesley, 2004.  
+1. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999.  
+2. Sterling, Christ and Barton, Brent. Managing Software Debt. Addison-Wesley, 2011.  
+3. Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013.  
+4. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.  
+5. Beck, Kent. Test-Driven Development By Example. Addison-Wesley, 2003.  
+6. Bain, Scott. Emergent Design: The Evolutionary Nature of Professional Software Development. Addison-Wesley,  2008.  
+7. Beck, Kent. Extreme Programming Explained, Embrace Change. Addison-Wesley, 2012.  
+8. Narayan, Sriram. Agile IT Organization Design: For Digital Transformation And Continuous Delivery. Addison-Wesley, 2015.  
+9. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.  
+10. Cohn, Mike. User Stories Applied For Agile Software Development. Addison-Wesley, 2004.  
