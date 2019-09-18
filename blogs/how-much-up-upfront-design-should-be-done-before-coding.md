@@ -24,10 +24,17 @@ Trying to do big upfront design before coding is very hard to do. We cannot crea
 It is correct to understand that we do not need to do all of the upfront design before coding since some of our design can only emerge after coding has started. However, trying to do no design upfront design before coding will cause there to be so much time spent doing rework. Blindly jumping in and coding will often times make it take longer to get something working since we may not have even thought enough about the problem. The time spent refactoring will also be quite big as a result of this.
 
 #### And the winner is...
-When it comes to how much upfront design we should do before coding, the answer is "just enough." This approach has the correct balance between doing enough design to understand the problem and not needing to spend too much time on rework. This balance results in the fastest velocity. I'd also argue that this results in the best design as well since teams doing big upfront design prior to coding tens to be more hesitant to refactor since they have already spent so much time doing the design. It could be entirely possible that doing big design up front was the best approach to take in the past.<sup>d</sup> With automated testing frameworks not being widely available at the early stages of software development, refactoring was less feasilble. This made it more important to try to get the design right the first time. But in today's world, we should take the approach of doing just enough design before coding and let the low level design emerge via refactoring.
+When it comes to how much upfront design we should do before coding, the answer is "just enough."<sup>a, b, c, d,  This approach has the correct balance between doing enough design to understand the problem and not needing to spend too much time on rework. This balance results in the fastest velocity. I'd also argue that this results in the best design as well since teams doing big upfront design prior to coding tens to be more hesitant to refactor since they have already spent so much time doing the design. It could be entirely possible that doing big design up front was the best approach to take in the past.<sup>d</sup> With automated testing frameworks not being widely available at the early stages of software development, refactoring was less feasilble. This made it more important to try to get the design right the first time. But in today's world, we should take the approach of doing just enough design before coding and let the low level design emerge via refactoring.
 
 ## Sources
-a. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999.
-b. Sterling, Christ and Barton, Brent. Managing Software Debt. Addison-Wesley, 2011.
-c. Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013.
-d. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.
+a. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999.  
+b. Sterling, Christ and Barton, Brent. Managing Software Debt. Addison-Wesley, 2011.  
+c. Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013.  
+d. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.  
+e. Beck, Kent. Test Driven Development By Example. 2002  
+f. Bain, Scott. Emergent Design: The Evolutionary Nature of Professional Software Development. Addison-Wesley,  2008.  
+g. Beck, Kent. Extreme Programming Explained, Embrace Change . Addison-Wesley, 2012.  
+h. Agile IT Organization Design, For Digital Transformation and Continuous Delivery – Sriram Narayan  
+i. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations – Forsgren PhD, Jez Humble, Gene Kim  
+j. Cohn, Mike. User Stories Applied For Agile Sowftware Development. Addison-Wesley, 2004.
+
