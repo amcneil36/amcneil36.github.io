@@ -2,6 +2,7 @@
 Suppose you have a codebase that you feel takes a long time to do code changes in due to portions of the codebase being coded or designed poorly. It would make sense to have some refactoring done on the codebase in order to make the code easier to work with. But when should we do this refactoring? One option is to schedule time in advance for refactoring. We could create refactoring tasks where the only objective is to refactor the codebase. There would be no new functionality for this task. The only purpose of these tasks would be to make future code changes easier and faster. However, in *Refactoring: Improving the Design of Existing Code*<sup>1</sup>, Martin Fowler argues that we shouldn't create refactoring tasks where the only purpose of the task is to refactor. There are a few reasons for this:
 1. Tasks for refactoring do not add any immediate business value as they do not change the external behavior of the system  
 2. Refactoring tasks only add value if a future task goes on to benefit from it. This makes refactoring tasks more along the lines of 'coding for the future.'  We could run into a scenario where we refactor something that we think will help us in the future but then never end up needing that refactoring in the future  
+
 Let's jump into the correct time to do refactoring.
 
 ### Only refactor previously existing code if it will help you with your current task
