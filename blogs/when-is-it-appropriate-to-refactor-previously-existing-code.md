@@ -1,7 +1,11 @@
 ## When is it appropriate to refactor previously existing code?
 Suppose you have a code base that you feel takes a long time to do code changes in due to portions of the code base being coded or designed poorly. It would make sense to have some refactoring done on the code base in order to make the code easier to work with. But when should we do this refactoring? One option is to schedule time in advance for refactoring. We could create refactoring tasks where the only objective is to refactor the code base. There would be no new functionality for this task. The only purpose of these tasks would be to make future code changes easier and faster. However, in *Refactoring: Improving the Design of Existing Code*, Martin Fowler argues that we shouldn't create refactoring tasks where the only purpose of the task is to refactor. There are a few reasons for this:
-1. Tasks for refactoring do not add any immediate business value as they do not change the external behavior of the system
+1. Tasks for refactoring do not add any immediate business value as they do not change the external behavior of the system  
 2. Refactoring tasks only add value if a future task goes on to benefit from it. This makes refactoring tasks more along the lines of 'coding for the future.'  We could run into a scenario where we refactor something that we think will help us in the future but then never end up needing that refactoring in the future
 Let's jump into the correct time to do refactoring.
 
 ### Only refactor previously existing code if it will help you with your current task
+Martin Fowler recommends only refactor code if it will help you with the current task you are doing. Let's talk about some examples of this.
+
+#### Refactoring soley for the purpose of trying to understand the code better
+Suppose you need to make a code change in a file. Let's say that you need to look at and understand a few other files before you can make this code change. If these other files are confusing you, it is a good idea to refactor them in order to help you understand the code better. This would generally involve renaming variables and methods or extracting blocks of code out into their own method with a descriptive name. Or, if your own file that you need to make a code change in is confusing you, it is a good idea to refactor there as well. 
