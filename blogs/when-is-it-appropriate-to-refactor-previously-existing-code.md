@@ -10,4 +10,9 @@ Martin Fowler recommends only refactor code if it will help you with the current
 #### Refactor to help you understand code that is needed to be understood for your task
 Suppose you need to make a code change in a file. Let's say that you need to look at and understand a few other files before you can make this code change. If these other files are confusing you, it is a good idea to refactor them in order to help you understand the code better. This would generally involve renaming variables and methods or extracting blocks of code out into their own method with a descriptive name. Or, if your own file that you need to make a code change in is confusing you, it is a good idea to refactor there as well. So any time that something is confusing you that you need to understand in order to do your task, it is a good idea to refactor it to help you understand it. I am not talking about this as a temporary refactoring that gets undone after you understand the code. You should do this as a permanent refactoring that gets merged to trunk with the rest of your work.
 
-#### Refactor if it will make your code change easier
+#### Refactor the design to make it more modular or more re-usable so that code for your current task can call into it
+Sometimes you will be in a scenario where some code out there almost does what you need but not quite. If this code were instead designed slightly different, you could call into it for your current task and it would save a lot of work. This is a scenario where you would want to look into refactoring the previously existing code to make it more modular or more re-usable so that you can call into it for your current task.
+
+### Do not refactor any code that has no unit tests
+One of the downsides of refactoring is that we could potentially break something. If there are no unit tests in the code we are refactoring, then it is hard to tell if our refactoring borke anything. Therefore, we should not consider refactoring any code that has no unit tests. If we are interested in refactoring code that has no unit tests, we should add the unit tests first and then do the refactoring after.
+
