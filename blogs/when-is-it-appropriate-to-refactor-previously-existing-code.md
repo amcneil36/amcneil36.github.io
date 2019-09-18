@@ -1,1 +1,2 @@
-
+## When is it appropriate to refactor previously existing code?
+Suppose you have a code base that you feel takes a long time to do code changes in due to portions of the code base being coded or designed poorly. It would make sense to have some refactoring done on the code base in order to make the code easier to work with. But when should we do this refactoring? One option is to schedule time in advance for refactoring. We could create refactoring tasks where the only objective is to refactor the code base. There would be no new functionality for this task. The only purpose of these tasks would be to make future code changes easier and faster. 
