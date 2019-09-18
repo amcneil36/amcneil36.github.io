@@ -35,6 +35,6 @@ e. Beck, Kent. Test-Driven Development By Example. Addison-Wesley, 2003.
 f. Bain, Scott. Emergent Design: The Evolutionary Nature of Professional Software Development. Addison-Wesley,  2008.  
 g. Beck, Kent. Extreme Programming Explained, Embrace Change. Addison-Wesley, 2012.  
 h. Narayan, Sriram. Agile IT Organization Design: For Digital Transformation And Continuous Delivery. Addison-Wesley, 2015.  
-i. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018. 
+i. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.  
 j. Cohn, Mike. User Stories Applied For Agile Sowftware Development. Addison-Wesley, 2004.  
 
