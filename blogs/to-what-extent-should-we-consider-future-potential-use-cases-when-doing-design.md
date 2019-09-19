@@ -51,7 +51,7 @@ public class Person {
  public int weight;
 }
 ```
-After that is done we are about to start the user story that requires midd interseted in having middle name display on the application we drop that user story. Notice how our Person class ended up being a little different than initially predicted.
+After that is done we are about to start the user story that requires middle name but it turns out it is time for the sprint demo. The customer sees how everything looks in the demo and decides they no longer want middle name to display in the application so we drop that user story. Notice how our Person class ended up being a little different than initially predicted. Notice how our Person class ended up being a little different than initially predicted.
 
 There were a couple of benefits that we have learned about as we went through this exercise of writing the minimum code needed to satisfy the requirements of our current user story. One benefit of writing only enough code for our current user story is that less code has to get tossed when requirements change. If we wrote all of the fields for the Person class in our first user story, some of our code would have needed to be backspaced upon finding out later we didn't need some of it.
 
