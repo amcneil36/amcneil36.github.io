@@ -7,7 +7,7 @@
 <ul>
   <li><a href="https://amcneil36.github.io/blogs/when-is-it-appropriate-to-refactor-previously-existing-code">When is it appropriate to refactor previously existing code?</a></li>
   <li><a href="https://amcneil36.github.io/blogs/how-much-up-upfront-design-should-be-done-before-coding">How much upfront design should be done before coding?</a></li>
-  <li><a href="https://amcneil36.github.io/blogs/to-what-extent-should-we-consider-future-potential-use-cases-when-doing-design">To what extent should we consider future potential use cases when doing design?</a></li>
+  <li><a href="https://amcneil36.github.io/blogs/to-what-extent-should-we-consider-future-potential-usecases-when-doing-design">To what extent should we consider future potential usecases when doing design?</a></li>
 </ul>
 </details>
 
