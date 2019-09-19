@@ -39,7 +39,7 @@ public class Person {
  public int age;
 }
 ```
-After that we get to our next user story. We were thinking we need height but we realize we made a mistake or the customer changed their mind. We don't need height. We actually need weight. So we add that in.
+After that we get to our next user story. We were thinking we need height but we realize we made a mistake and we actually need weight instead.
 ```
 public class Person {
  public String firstName;
