@@ -24,9 +24,9 @@ public class Person {
  public int height;
 }
 ```
-As we start to work on our user story that needs first name and last name, we don't worry about adding in the middle name, age, or height fields yet. We do just enough code to satisfy the requirements for our current user story.
+As we start to work on our user story that needs first name and last name, we don't worry about adding in the middle name, age, or height fields yet. Instead of doing all of the code for the Person class now, we instead do just enough code to satisfy the requirements for our current user story.
 ```
-public class User {
+public class Person {
  public String firstName;
  public String lastName;
 }
@@ -50,3 +50,4 @@ public class Person {
 ```
 After that is done we are about to start the user story that requires middle name but it turns out it is time for the sprint demo. The customer sees how everything looks in the demo and decides they no longer need middle name so we drop that user story.
 
+There were a couple of advantages that we received by only writing enough code for our current user story. The first advantage of writing only enough code for our current user story is that less code has to get tossed when requirements change. The second benefit is that our code is less complex for a larger percentage of the project. Having code that is less complex will make it easier to make code changes. So if we only add complexity when needed, we will be able to work faster than if we were to add a lot of complexity at the start. Also, adding a lot of code that isn't getting called from anywhere due to not being needed for your current user story makes it confusing as to what the purpose of the code is for. If we had coded up the entire Person class on the first user story that only needed first name and last name, it would have been unclear to others what the purpose of the middlename, height, and age fields was.
