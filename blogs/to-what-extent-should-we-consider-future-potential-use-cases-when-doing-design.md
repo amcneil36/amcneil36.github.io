@@ -12,43 +12,40 @@ It could be said that the amount we should code for potential future use-cases d
 
 The most noticeable downside you will observe when trying to code for the future is that it is incredibly difficult. You could be sitting there all day trying to field questions like "well what if tomorrow ______ happens and then ______ will no longer work?" "What if in the future, we need to account for ______?" You could easily turn a two day task into a complicated three month long task trying to account for every scenario that could possibly arise in the future. Most of the time, you will have no idea what might change in the future, even if you think you do. So any additional time spent trying to account for future use-cases that you currently do not have will rarely go on to pay for itself.
 
-So we primarily just want our design to account for current use-cases that we have. Let's get back to the user story design question now. We now know that when doing design for our user story, we don't have to worry about our design accounting for future potential user story that we haven't came up with yet. Should our design account for other planned user stories? To some degree, yes. Being aware of other planned user stories will help us make sure that we are going in the right direction with the way that we do our user story so that our code is less likely to get scrapped later. However, we don't want our design to be causing us to write any additional code that is not needed to complete our user story. Here's an example. Suppose in the future, we think we might need something like
+So we primarily just want our design to account for current use-cases that we have. Let's get back to the user story design question now. We now know that when doing design for our user story, we don't have to worry about our design accounting for future potential user story that we haven't came up with yet. Should our design account for other planned user stories? To some degree, having some knowledge of other planned user stories could be helpful to make sure that the design we are going with is going in the right direction and won't be as likely to get scrapped. However, the further out a user story is from being started, the more time there is for things to potentially change. As a result, the further a user story is from being started, the less certain we are of how this user story will look and the less we would want to take this user story into account for trying to make sure our current design will work moving forward. Let's give an example of this. 
+
+Suppose that for our next user story, we will need to be able to store a person's first name and last name. Suppose for the user story after that, we predict we will need age. After that, suppose for the user story after that, we predict we will need height. Lastly, suppose after that we think we will need middle name. We think to ourself that maybe in the future, we might eventually end up with something like:
+```
+public class Person {
+ public String firstName;
+ public String lastName;
+ public String middleName;
+ public int age;
+ public int height;
+}
+```
+As we start to work on our user story that needs first name and last name, we don't worry about adding in the age and height fields yet. We do just enough code to satisfy the requirements for our current user story.
 ```
 public class User {
  public String firstName;
  public String lastName;
 }
 ```
-If our user story only needs firstName, we will only code up
+After we complete this user story, we get to our next user story. We need age so we add that in.
 ```
-public class User {
+public class Person {
  public String firstName;
-}
-```
-for our user story. Having additional code that doesn't get called anywhere adds additional complexity and confusion so we should only type enough code needed for our user story. As we get to user stories that need more data, we add the field as we go. Now suppose instead we need something slightly different like
-```
-public class User {
- public Name name;
+ public String lastName;
  public int age;
 }
-public class Name {
+```
+After that we get to our next user story. We were thinking we need height but we realize we made a mistake or the customer changed their mind. We don't need height. We actually need weight. So we add that in.
+```
+public class Person {
  public String firstName;
  public String lastName;
+ public int age;
+ public int weight;
 }
 ```
-If we only need firstName for our first user story, it would be OK to start out like
-```
-public class User {
- public Name name;
-}
-public class Name {
- public String firstName;
-}
-```
-instead of
-```
-public class User {
- public String firstName;
-}
-```
-This is where having some knowledge of future user stories is helpful. It allows us to design our code in a way that we can make passive code changes to it later down the road when we do our future user stories. 
+After that is done we prepare to start the user story that requires middle name. We find out the customer is no longer interested in middle name.
