@@ -6,3 +6,8 @@ In this scenario, we write just enough code to meet the current requirements. We
 
 ### Coding for the future
 In this scenario, we try to brainstorm future potential use-cases and make our code generic enough to account for them. This would include doing more code than what the current requirements would need. We spend extra time doing design early on in hopes that it will save time in the future.
+
+### Which option should we go with?
+We should primarily be coding for now. The first downside you will notice when trying to code for the future is that it is incredibly difficult. You could be sitting there all day trying to account for questions such as "well what if tomorrow ______ happens and then ______ will no longer work?" 
+
+More often than not, these future potential use-cases we have brainstormed end up never being needed. So this additional time spent on designing for the future usually doesn't go on to pay for itself in the long run. 
