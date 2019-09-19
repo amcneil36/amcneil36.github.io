@@ -17,7 +17,7 @@ When determining how generic we want our code to be, we only want it to be gener
 
 So we just want our design to account for current usecases that we have. Let's get back to the user story design question now. We now know that when doing design for our user story, we shouldn't worry about our design needing to account for future potential user stories that we haven't came up with yet. Should our design account for other planned user stories? To some degree, having some knowledge of other planned user stories could be helpful to make sure that the design we are coming up with is going in the right direction and won't be as likely to get scrapped. However, the further out a user story is from being started, the more time there is for things to potentially change. As a result, the further a user story is from being started, the less certain we are of how this user story will look and the less we would want to take this user story into account for trying to make sure our current design will work moving forward. Let's give an example of coding for now to show why we should code for now. 
 
-Suppose that for our next user story, we will need to be able to store a person's first name and last name. Suppose for the user story after that, we predict we will need age. After that, we predict we will need height. After that, we think we will need middle name. We take this information and decide that maybe we should have a Person class that stores this information. We think to ourself that maybe in the future, the class could eventually go on to look like this:
+Suppose that for a task in our next user story, we will need to be able to store a person's first name and last name. Suppose for the user story after that, we predict we will need age. After that, we predict we will need height. After that, we think we will need middle name. We take this information and decide that maybe we should have a Person class that stores this information. We think to ourself that maybe in the future, the class could eventually go on to look like this:
 ```
 public class Person {
  public String firstName;
@@ -51,7 +51,7 @@ public class Person {
  public int weight;
 }
 ```
-After that is done we are about to start the user story that requires middle name but it turns out it is time for the sprint demo. The customer sees how everything looks in the demo and decides they no longer need middle name so we drop that user story. Notice how our Person class ended up being a little different than initially predicted.
+After that is done we are about to start the user story that requires midd interseted in having middle name display on the application we drop that user story. Notice how our Person class ended up being a little different than initially predicted.
 
 There were a couple of benefits that we have learned about as we went through this exercise of writing the minimum code needed to satisfy the requirements of our current user story. One benefit of writing only enough code for our current user story is that less code has to get tossed when requirements change. If we wrote all of the fields for the Person class in our first user story, some of our code would have needed to be backspaced upon finding out later we didn't need some of it.
 
