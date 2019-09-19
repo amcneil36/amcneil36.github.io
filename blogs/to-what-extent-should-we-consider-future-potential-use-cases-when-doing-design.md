@@ -60,6 +60,6 @@ Another benefit of only writing the minimum amount of code required for our user
 We should be primarily coding for now. It would be OK to briefly think about other planned user stories to make sure your design is going in the right direction but even those user stories can be likely to change. When working on a user story, only write the minimum amount of code to satisfy the requirements for your current user story. Do not attempt to account for any additional scenarios that your user story does not require. When in doubt, leave it out. 
 
 ## Sources
-a. Shore, James and Warden, Shane. The Art of Agile Development. O'Reilly Media, 2008.
+a. Shore, James and Warden, Shane. The Art of Agile Development. O'Reilly Media, 2008.  
 b. Beck, Kent. Extreme Programming Explained, Embrace Change. Addison-Wesley, 2012.  
 c. Shalloway, Allan and Beaver, Guy. Lean-Agile Software Development: Achieving Enterprise Agility. Addison-Wesley, 2010.  
