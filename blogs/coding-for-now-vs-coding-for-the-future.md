@@ -1,1 +1,2 @@
-
+## Coding for now vs Coding for the future
+Suppose there are many user stories in the product backlog for a product that you are working on. You are about to start doing design for one of the user stories now. As you do this design, to what extent should your design account for other user stories? For example, should you only look at your user story and do design that is optimal for only your user story? Should you try to do your desgin for your user story in such a way that the other user stories in the product backlog will be easier? Should we take it one step further and try to do our design such that future user stories that we haven't came up yet will be easier? 
