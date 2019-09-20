@@ -36,7 +36,8 @@ Abstract classes are less-reusable than interfaces due to the issues outlined ab
 * Increasing visibility of a method from private to package-private soley for the sake of directly invoking the method in a test
 * Increasing the visibility of a field from private to package-private soley for the sake of setting it in a test
 * Adding in a setter to a field soley for the sake of setting it in a test
-#### 10) All of your code should be easily testable by passing in mocks to parameters. Do not do anything hacky in your tests. If doing something hacky is the only way to test your code, then you are following poor design practices. This means that you are too coupled to implementation details. Here are some anti-patterns below that might appear when some people try to unit test poorly designed code.
+#### 10) All of your code should be easily testable by passing in mocks to parameters
+Do not do anything hacky in your tests. If doing something hacky is the only way to test your code, then you are following poor design practices. This means that you are too coupled to implementation details. Here are some anti-patterns below that might appear when some people try to unit test poorly designed code.
 * Modifying global state in order to run your tests
 * Using reflection to set the value of private fields
 * Using a 3rd party framework to mock static/final/new operators
@@ -67,11 +68,11 @@ This makes code thread-safe and easier to follow.
 If you feel the need to add source code comments, then your code is too complicated and is not self-documenting. You can fix this by extracting out private methods or in-line variables whose name explains what the source code comment would have said.
 * Extract out code with a lot of logic into it's own private method with a long descriptive name explaining what the code is doing
 * Magic numbers need to be replaced with a constant that explains what the number is for
-* Consider extracting out boolean logic into a boolean variable or boolean method that explains the purpose.  
+* Consider extracting out boolean logic into a boolean variable or boolean method that explains the purpose  
 #### 24) Favor one logical statement per line of code over method chaining except for when using fluent interfaces
-* Fluent interfaces are designed to where method chaining is easier to read and typically have a lot of methods on a class whose return type is the class. These classes read like english when there is method chaining done.
-  * Examples may include Mockito API, builder pattern, java.util.Optional, streams, and many more functional programming libraries. Use method chaining with these.
-* Method chaining (when being used on something other than a Fluent Interface) generally makes code harder to read. It also makes code harder to troubleshoot as the stack trace may point to a line of code that has multiple things going on. Refactoring code that is method chained with the Introduce Explaining Variable refactor can make your code easier to follow.
+* Fluent interfaces are designed to where method chaining is easier to read and typically have a lot of methods on a class whose return type is the class. These classes read like english when there is method chaining done
+  * Examples may include Mockito API, builder pattern, java.util.Optional, streams, and many more functional programming libraries. Use method chaining with these
+* Method chaining (when being used on something other than a Fluent Interface) generally makes code harder to read. It also makes code harder to troubleshoot as the stack trace may point to a line of code that has multiple things going on. Refactoring code that is method chained with the Introduce Explaining Variable refactor can make your code easier to follow
 #### 25) Ya Ain't Gonna Need It (YAGNI)
 * Implement things that you need now instead of things that you foresee you will need
 * Delete code that is not getting called from anywhere
@@ -89,7 +90,7 @@ If you feel the need to add source code comments, then your code is too complica
   * If a method requires only firstName, have the method take in the firstName instead of the User object
   * If a method requires the User object, pass in the User object instead of passing in all of the fields of the user
   * If a method requires two or more fields of the User, then whether or not you should pass in the User object or the fields of the User object is subjective. I'll provide my two cents
-    * If having your method being coupled to the User object is not going to cause code duplication elsewhere, then pass in the whole User object. This would mean that you do not have a use-case where you need, for example, firstName and lastName fields that might come from something other than a User object. Generally, the more fields of a POJO that a method needs, the more likely it is that you would want to pass in the POJO instead of the individual fields. This is because passing in the User object helps reduce the number of parameters, helping readability.
+    * If having your method being coupled to the User object is not going to cause code duplication elsewhere, then pass in the whole User object. This would mean that you do not have a use-case where you need, for example, firstName and lastName fields that might come from something other than a User object. Generally, the more fields of a POJO that a method needs, the more likely it is that you would want to pass in the POJO instead of the individual fields. This is because passing in the User object helps reduce the number of parameters, helping readability
 #### 28) Only validate parameters at the boundary points of your application
 * This would be any portion of your code where you cannot control what value of a parameter is passed in (generally the entry-point of an application or a parameter that comes from the result of an external call)
 * You should code your application up such that the internals will not be able to receive bogus input in the first place (except for boundary points)
