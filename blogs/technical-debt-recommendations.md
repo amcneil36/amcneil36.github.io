@@ -4,5 +4,7 @@ Technical debt is any shortcut that a team chooses to do now that will impede fu
 ## Tackling technical debt as you work on stories
 In this approach, we do not schedule a task for eliminating technical debt. We work on our stories just like normal but we eliminate technical debt whenever it impedes our task. Suppose there is a poorly named variable in the code called 'aiekdj.' Let's even say that we are aware that this variable is in the code somewhere. If our user story we are working on has no affiliation with this variable, then we will complete our user story without having changed the variable name. If the user story we are working on depends on this variable somehow, we will change the variable name to be more descriptive. 
 
+This approach should be your default way of eliminating technical debt. With this approach, we immediately benefit every time we eliminate technical debt. The problem with scheduling time periods for technical debt tasks where all you do is eliminate technical debt is that you don't get any benefit until you go on to do a task that benefits from having that technical debt removed. If you eliminate some technical debt but never end up doing a task that benefits from it, then you have wasted your time.
+
 ## Sources
 1. Sterling, Christ and Barton, Brent. Managing Software Debt. Addison-Wesley, 2011.
