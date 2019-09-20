@@ -30,11 +30,11 @@ Abstract classes are less-reusable than interfaces due to the issues outlined ab
 * When testing implementation, we might verify that a mock called a certain method.
   * However there is one exception. If the method you are verifying has a side effect like inserting into the database, then that is considered testing behavior
 * Testing implementation creates for difficult to understand tests. 
-* Refactoring the tests without changing implementation should not break your unit tests. Unit tests should only break if there is a bug introduced in your code. If your unit tests break after every minor re-factor, it will take significantly longer to maintain your tests with little benefit
+* Refactoring the tests without changing implementation should not break your unit tests. If your unit tests break after every minor re-factor, it will take significantly more work to maintain your tests
 #### 6) Know what to test in an application
-* Never directly call into any package-private or private methods in a unit test as this is testing implementation details. In order to make sure that a package-private or private method is working as intended, directly call into it through your public/protected API.
+* Never directly call into any package-private or private methods in a unit test as this is testing implementation details. In order to make sure that a package-private or private method is working as intended, call into it through your public/protected API.
 * Unit test all public/protected methods. Mock out all side effects in your unit tests. In this situation, we don't care whether or not a database connection works.
-* Write an integration test (no mocking)  for all publc/protected methods that had any side effects mocked out in their unit tests. In this situation we care about whether or not a database connection works.
+* Write an integration test (no mocking) for public/protected methods that have side effects mocked out in their unit tests. In this situation we care about whether or not a database connection works. It may not be needed to do this for all public/protected methods with side effects if you feel comfortable enough from your acceptance tests.
 * Write acceptance tests against requirements. This is end-to-end testing where we test the entire workflow of the application.
 #### 7) Javadoc all public/protected fields/constructors/methods in the src/main/java directory. Do not JavaDoc anything in the test directory. Your JavaDocs should explain what your API does but not how it does it. In other words, consumers are conserned about behavior and not implementation. Implementation should be easy to change.
 #### 8) Override hashcode, equals, and toString on entity/pojo/value object classes
