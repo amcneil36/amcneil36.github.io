@@ -1,18 +1,18 @@
 ## Additional Coding Recommendations
 
 #### 1. Favor depending on an interface over depending on an implementation of an interface.
-a. Lets say you have FooInterface and FooImpl which implements FooInterface.
-i. Lets say that Class A takes in a FooImpl in it's constructor. If a non-passive code change is made to FooImpl, now Class A has received a non-passive change.
-ii. Lets say that Class B takes in a FooInterface in it's constructor. If a non-passive code change is made to FooImpl, Class A has not received a non-passive change.
+Lets say you have FooInterface and FooImpl which implements FooInterface.
+* Lets say that Class A takes in a FooImpl in it's constructor. If a non-passive code change is made to FooImpl, now Class A has received a non-passive change.
+* Lets say that Class B takes in a FooInterface in it's constructor. If a non-passive code change is made to FooImpl, Class A has not received a non-passive change.
 #### 2. Favor interfaces over subclassing when needing  re-usability
-a. There are a few issues with subclassing:
-i. You are coupled to the superconstructor's implementation. If the superconstructor has any side effects or parameters, you are forced to go through those side effects and pass in whatever is valid for those parameters
-ii. If a method of a superclass m1 calls into some other method of the superclass m2, then having your subclass override m1 can actually change the behavior of m2. This can create for very difficult to debug scenarios
-iii. If any code change is made to the class you are subclassing, then your subclass could be affected despite you not making a code change. This can also create a difficult to debug scenario
-b. With interfaces, the benefits you receive include
-i. Complete control over your constructor(s)
-ii. As long as no method signatures are created/modified, you will not be the victim of a non-passive code change
-iii. Not needing an implementation of your dependencies needing to be completed by the time you are ready to start coding your class. If you depend on an interface, you can fully unit test your class, passing in a mock for the interface. This makes it easier to do vertical slices in agile development. Integration tests, however, are not possible until an implementation is completed.
+* There are a few issues with subclassing:
+  * You are coupled to the superconstructor's implementation. If the superconstructor has any side effects or parameters, you are forced to go through those side effects and pass in whatever is valid for those parameters
+  * If a method of a superclass m1 calls into some other method of the superclass m2, then having your subclass override m1 can actually change the behavior of m2. This can create for very difficult to debug scenarios
+  * If any code change is made to the class you are subclassing, then your subclass could be affected despite you not making a code change. This can also create a difficult to debug scenario
+* With interfaces, the benefits you receive include
+  * Complete control over your constructor(s)
+  * As long as no method signatures are created/modified, you will not be the victim of a non-passive code change
+  * Not needing an implementation of your dependencies needing to be completed by the time you are ready to start coding your class. If you depend on an interface, you can fully unit test your class, passing in a mock for the interface. This makes it easier to do vertical slices in agile development. Integration tests, however, are not possible until an implementation is completed.
 #### 3) Favor interfaces over abstract classes
 a. Abstract classes are less-reusable than interfaces due to the issues outlined above on subclassing
 #### 4) Factory pattern
