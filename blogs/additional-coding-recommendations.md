@@ -1,10 +1,10 @@
 ## Additional Coding Recommendations
 
-#### 1. Favor depending on an interface over depending on an implementation of an interface.
+#### 1) Favor depending on an interface over depending on an implementation of an interface.
 Lets say you have FooInterface and FooImpl which implements FooInterface.
 * Lets say that Class A takes in a FooImpl in it's constructor. If a non-passive code change is made to FooImpl, now Class A has received a non-passive change.
 * Lets say that Class B takes in a FooInterface in it's constructor. If a non-passive code change is made to FooImpl, Class A has not received a non-passive change.
-#### 2. Favor interfaces over subclassing when needing  re-usability
+#### 2) Favor interfaces over subclassing when needing  re-usability
 * There are a few issues with subclassing:
   * You are coupled to the superconstructor's implementation. If the superconstructor has any side effects or parameters, you are forced to go through those side effects and pass in whatever is valid for those parameters
   * If a method of a superclass m1 calls into some other method of the superclass m2, then having your subclass override m1 can actually change the behavior of m2. This can create for very difficult to debug scenarios
