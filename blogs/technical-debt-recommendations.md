@@ -16,9 +16,9 @@ I used to think that doing something that introduces technical debt was always t
 
 When thinking about doing something that will add technical debt, we need to answer the following question:
 
-*Should we make some sacrifices to get our feature to market earlier knowing that this will slow down some future releases?* 
+*Should we take some shortcuts that will get our feature to market earlier but will slow down some future releases?* 
 
-In most scenarios, we want to be able to work on a feature and release it without doing any shortcuts that result in technical debt. However, there are some exceptions where it makes sense to 
+In most scenarios, the answer is no. Sometimes the answer will be yes.
 
 ## Sources
 1. Sterling, Christ and Barton, Brent. Managing Software Debt. Addison-Wesley, 2011.
