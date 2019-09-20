@@ -59,9 +59,9 @@ Having a constructor throw if invalid parameters are passed in is fine. Other th
 #### 13) Aim for one assert per test
 * If a test with multiple asserts fails, it takes longer to determine what actually went wrong
 #### 14) No tests should affect other tests. The order that the tests are ran should not affect the output
-* If tests are modifying any objects that are used throughout the class, those objects should be re-initialized in the @Before method
+* If tests are modifying any objects that are used throughout the class, those objects should be re-initialized before each test
 #### 15) Know when to pass an object vs passing primitives vs making a criteria object
-#### 16) Know when to program to put the new operator in your application
+#### 16) Know where to put the new operator in your application
 * Factory classes can have the new operator for any  type of object
 * Remaining classes should generally not have the new operator show up except for the creation of classes such as
   * Collections
@@ -85,7 +85,7 @@ Having a constructor throw if invalid parameters are passed in is fine. Other th
 * Consider extracting out boolean logic into a boolean variable or boolean method that explains the purpose.  
 #### 24) Favor one logical statement per line of code over method chaining except for when using fluent interfaces
 * Fluent interfaces are designed to where method chaining is easier to read and typically have a lot of methods on a class whose return type is the class. These classes read like english when there is method chaining done.
-  * Examples may include Mockito API, builder pattern, java.util.Optional, streams, and many more functional programming libraries. Use method chaining with these all day
+  * Examples may include Mockito API, builder pattern, java.util.Optional, streams, and many more functional programming libraries. Use method chaining with these.
 * Method chaining (when being used on something other than a Fluent Interface) generally makes code harder to read. It also makes code harder to troubleshoot as the stack trace may point to a line of code that has multiple things going on. Refactoring code that is method chained with the Introduce Explaining Variable refactor can make your code easier to follow.
 #### 25) Ya Ain't Gonna Need It (YAGNI)
 * Implement things that you need now instead of things that you foresee you will need
@@ -95,7 +95,7 @@ Having a constructor throw if invalid parameters are passed in is fine. Other th
 * Try to minimize complexity in your classes
   * Replace conditional with polymorphism
 * Try to avoid doing anything hacky
-* Avoid global state, side effects, mutability as much as possible
+* Avoid global state, side effects, and mutability as much as possible
 #### 27) Don't pass in one object as a means of getting another object. Pass in directly what you need (law of demeter)
 * This promotes information hiding, decreases coupling, makes the class more re-usable, and makes the class easier to understand (KISS)
 * A cashier at McDonalds doesn't need your wallet in order to place your order. The cashier needs your $5. It should not matter if the $5 comes from a wallet, a purse, or a pocket
