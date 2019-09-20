@@ -98,9 +98,8 @@ Having a constructor throw if invalid parameters are passed in is fine. Other th
 * Avoid global state, side effects, and mutability as much as possible
 #### 27) Don't pass in one object as a means of getting another object. Pass in directly what you need (law of demeter)
 * This promotes information hiding, decreases coupling, makes the class more re-usable, and makes the class easier to understand (KISS)
-* A cashier at McDonalds doesn't need your wallet in order to place your order. The cashier needs your $5. It should not matter if the $5 comes from a wallet, a purse, or a pocket
+* A cashier at McDonalds doesn't need your wallet in order to place your order. The cashier needs your $5. It should not matter if the $5 comes from a wallet, or a purse
 * Don't have a FooFactory be a dependency of your class if the way for creating a Foo is known at compile time (in other words, known how to be made by a DI framework). Have your class depend on Foo instead. If the way for creating a Foo depends on runtime arguments, then it is fine to depend on a FooFactory instead
-  * Using similar logic, never pass in a TracerManager to a class if all the class needs is a Tracer. Pass in the Tracer
 * There can be an exception to the rule of passing in directly what is needed. Lets say that you have User object which just has getter/setter for the fields firstName, middleName, lastName, age
   * If a method requires only firstName, have the method take in the firstName instead of the User object
   * If a method requires the User object, pass in the User object instead of passing in all of the fields of the user
