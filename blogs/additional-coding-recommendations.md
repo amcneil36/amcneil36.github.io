@@ -1,13 +1,13 @@
 ## Additional Coding Recommendations
 
 #### 1) Favor depending on an interface over depending on an implementation of an interface.
-Lets say you have FooInterface and FooImpl which implements FooInterface.
+Lets say you have FooImpl which implements FooInterface.
 * Lets say that Class A takes in a FooImpl in it's constructor. If a non-passive code change is made to FooImpl, now Class A has received a non-passive change.
 * Lets say that Class B takes in a FooInterface in it's constructor. If a non-passive code change is made to FooImpl, Class A has not received a non-passive change.
 #### 2) Favor interfaces over subclassing when needing  re-usability
-* There are a few issues with subclassing:
-  * You are coupled to the superconstructor's implementation. If the superconstructor has any side effects or parameters, you are forced to go through those side effects and pass in whatever is valid for those parameters
-  * If a method of a superclass m1 calls into some other method of the superclass m2, then having your subclass override m1 can actually change the behavior of m2. This can create for very difficult to debug scenarios
+* There are a few downsides of subclassing:
+  * You are coupled to the superconstructor's implementation. If the superconstructor has any side effects or parameters, you are forced to go through those side effects and pass in whichever parameters are needed
+  * If a method m1 of a superclass calls into some other method m2 of the superclass, then having your subclass override m1 can actually change the behavior of m2. This can create for very difficult to debug scenarios
   * If any code change is made to the class you are subclassing, then your subclass could be affected despite you not making a code change. This can also create a difficult to debug scenario
 * With interfaces, the benefits you receive include
   * Complete control over your constructor(s)
@@ -18,9 +18,12 @@ Abstract classes are less-reusable than interfaces due to the issues outlined ab
 #### 4) Factory pattern
 * Useful when an object is expensive to instantiate so you want to defer instantiation until right before the object is needed
 * Useful when an object depends on runtime parameters in order to be created
-* May have multiple create methods
-* May have multiple new operators
+* helps simplify classes with business logic by pulling out the creation logic
 * Should ideally not contain conditional statements or looping
+* May have multiple create methods in the same factory
+  * objects that are used for similar reasons can go in the same factory class
+* May have multiple new operators in the same factory
+  * suppose that our application needs to create an instance of A in order to create an instance of B. Furthermore, suppose our application needs to call methods on B but doesn't need to call any methods on A. We should have a factory method that internally creates an instance of A then an instance of B and returns B. In other words, our factories should create the objects we directly need instead of objects that are only used to create another object. This helps simplify consuming classes.  
 #### 5) Test behavior, not implementation
 * The largest impact that the consumers will experience is the behavior. Implementation is something that should be easy and free to change at any time.
 * When testing behavior, we might assert that the return value is correct.
