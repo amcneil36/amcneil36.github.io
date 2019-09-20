@@ -20,7 +20,9 @@ When thinking about doing something that will add technical debt, we need to ans
 
 In most scenarios, the answer is no. Sometimes the answer will be yes.
 
-Suppose that your company is working on a feature and a competitor of yours is working on a similar feature. Your stakeholders consider it critical that your feature makes it to market before your competitor's feature. You could find yourself in a situation where the increase in profit by delivering early more than offsets the additional cost that is incurred from introducing tech debt. 
+Suppose that your company is working on a feature and a competitor of yours is working on a similar feature. Your stakeholders consider it critical that your feature makes it to market before your competitor's feature. You could find yourself in a situation where the increase in revenue generated from taking shortcuts to deliver early more than offsets the additional cost that is incurred from introducing tech debt.
+
+Another scenario where introducing tech debt might make sense is when you are behind schedule on a project with a strict deadline set by the government where missing the deadline results in your clients getting fined a large sum. Taking a shortcut that introduces technical debt is not supposed to be the default response to being behind schedule. That is where reducing scope comes into play. 
 
 ## Sources
 1. Sterling, Christ and Barton, Brent. Managing Software Debt. Addison-Wesley, 2011.
