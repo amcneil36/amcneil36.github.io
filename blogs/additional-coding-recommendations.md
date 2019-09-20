@@ -25,12 +25,12 @@ Abstract classes are less-reusable than interfaces due to the issues outlined ab
 * May have multiple new operators in the same factory
   * suppose that our application needs to create an instance of A in order to create an instance of B. Furthermore, suppose our application needs to call methods on B but doesn't need to call any methods on A. We should have a factory method that internally creates an instance of A then an instance of B and returns B. In other words, our factories should create the objects we directly need instead of objects that are only used to create another object. This helps simplify consuming classes.  
 #### 5) Test behavior, not implementation
-* The largest impact that the consumers will experience is the behavior. Implementation is something that should be easy and free to change at any time.
+* Consumer's don't experience implementation. They experience behavior. Implementation is something that should be easy and free to change at any time.
 * When testing behavior, we might assert that the return value is correct.
 * When testing implementation, we might verify that a mock called a certain method.
+  * However there is one exception. If the method you are verifying has a side effect like inserting into the database, then that is considered testing behavior
 * Testing implementation creates for difficult to understand tests. 
 * Refactoring the tests without changing implementation should not break your unit tests. Unit tests should only break if there is a bug introduced in your code. If your unit tests break after every minor re-factor, it will take significantly longer to maintain your tests with little benefit
-* It is okay to verify that a method was called if the method you are verifying has a side effect. Side effects are considered behavior. This is the only way to test void methods. If a void method has no side effects, then you can delete it. Other than verifying side effects, the only behavior being tested should be exceptions getting thrown (correct message + correct exception type) or a method's return values
 #### 6) Know what to test in an application
 * Never directly call into any package-private or private methods in a unit test as this is testing implementation details. In order to make sure that a package-private or private method is working as intended, directly call into it through your public/protected API.
 * Unit test all public/protected methods. Mock out all side effects in your unit tests. In this situation, we don't care whether or not a database connection works.
