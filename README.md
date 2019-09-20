@@ -40,5 +40,6 @@
   <summary>Miscellaneous</summary>  
 <ul>
   <li><a href="https://amcneil36.github.io/blogs/defect-management-recommendations">Defect Management Recommendations</a></li>
+  <li><a href="https://amcneil36.github.io/blogs/technical-debt-recommendations">Technical Debt Recommendations</a></li>
 </ul>
 </details>
