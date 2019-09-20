@@ -24,5 +24,8 @@ Suppose that your company is working on a feature and a competitor of yours is w
 
 Another scenario where introducing tech debt might make sense is when you are behind schedule on a project with a strict deadline where the cost of missing the deadline is enormous. Maybe the deadline is set by the government and if you miss the deadline, all of your clients get fined a large sum by the government. Taking a shortcut that introduces technical debt is not supposed to be the default response to being behind schedule. That is where reducing scope comes into play. Maybe you have reduced scope as much as you could and you are still behind schedule. Your team starts to consider doing overtime but even with overtime you are concerned you might not make the deadline. What do you do? Unfortunately, you just might have to start brainstorming to see if there are some shortcuts you can take.
 
+## Communication between Software Engineers and business people about technical debt
+
+
 ## Sources
 1. Sterling, Christ and Barton, Brent. Managing Software Debt. Addison-Wesley, 2011.
