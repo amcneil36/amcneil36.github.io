@@ -112,10 +112,3 @@ Having a constructor throw if invalid parameters are passed in is fine. Other th
 #### 29) Don't repeat yourself (DRY)
 * Once you have common code repeated three times, extract it out into a common method (Rule of Three)
   * if the common code is only repeated twice but it is a ton of lines of code, go ahead and extract
-#### 30) Know when to refactor previously existing code
-* Martin Fowler: "You don't decide to refactor, you refactor because you want to do something else, and refactoring helps you do that other thing." I will provide some examples below:
-  * You have to do a task that depends on other code in your project that you are having a hard-time understanding. You can refactor the code that you depend on until you understand it well enough. You can then start doing your coding task. You will upload both the refactoring code and your code that you eventually planned to do for review. Whether or not you want them separate reviews depends on the length of the refactor
-  * You have to do a task that depends on other code in your project and you believe that a simple refactor to other code would make your task easier (perhaps less lines of code or less complexity). You may refactor the code that you depend on in order to make your task easier and upload both for review (either in the same review or separate)
-#### 31) Unit test all newly written code no matter what. When doing refactoring or modification of any existing non-tested code: add tests first, refactor, fix tests if needed. You shouldn't add unit tests to legacy code unless you are changing it.
-#### 32) Favor unchecked exceptions over checked exceptions. Don't use status objects for success/failure unless the caller is from a different programming language that is not capable of handling an exception
-#### 33) Class names should be nouns, method names should be verbs
