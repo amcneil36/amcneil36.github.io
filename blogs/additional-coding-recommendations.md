@@ -2,40 +2,31 @@
 
 #### 1) Favor depending on an interface over depending on an implementation of an interface.
 Lets say you have FooImpl which implements FooInterface.
-* Lets say that Class A takes in a FooImpl in it's constructor. If a non-passive code change is made to FooImpl, now Class A has received a non-passive change.
-* Lets say that Class B takes in a FooInterface in it's constructor. If a non-passive code change is made to FooImpl, Class A has not received a non-passive change.
+* Lets say that Class A takes in a FooImpl in it's constructor. If a non-passive code change is made to FooImpl, now Class A has received a non-passive change
+* Lets say that Class B takes in a FooInterface in it's constructor. If a non-passive code change is made to FooImpl, Class A has not received a non-passive change
 #### 2) Favor interfaces over subclassing when needing  re-usability
 * There are a few downsides of subclassing:
   * You are coupled to the superconstructor's implementation. If the superconstructor has any side effects or parameters, you are forced to go through those side effects and pass in whichever parameters are needed
-  * If a method m1 of a superclass calls into some other method m2 of the superclass, then having your subclass override m1 can actually change the behavior of m2. This can create for very difficult to debug scenarios
+  * If a method m1 of a superclass calls into some other method m2 of the superclass, then having your subclass override m2 can actually change the behavior of m1. This can create for very difficult to debug scenarios
   * If any code change is made to the class you are subclassing, then your subclass could be affected despite you not making a code change. This can also create a difficult to debug scenario
 * With interfaces, the benefits you receive include
   * Complete control over your constructor(s)
   * As long as no method signatures are created/modified, you will not be the victim of a non-passive code change
   * Not needing an implementation of your dependencies needing to be completed by the time you are ready to start coding your class. If you depend on an interface, you can fully unit test your class, passing in a mock for the interface. This makes it easier to do vertical slices in agile development. Integration tests, however, are not possible until an implementation is completed.
 #### 3) Favor interfaces over abstract classes
-Abstract classes are less-reusable than interfaces due to the issues outlined above on subclassing
-#### 4) Factory pattern
-* Useful when an object is expensive to instantiate so you want to defer instantiation until right before the object is needed
-* Useful when an object depends on runtime parameters in order to be created
-* helps simplify classes with business logic by pulling out the creation logic
-* Should ideally not contain conditional statements or looping
-* May have multiple create methods in the same factory
-  * objects that are used for similar reasons can go in the same factory class
-* May have multiple new operators in the same factory
-  * suppose that our application needs to create an instance of A in order to create an instance of B. Furthermore, suppose our application needs to call methods on B but doesn't need to call any methods on A. We should have a factory method that internally creates an instance of A then an instance of B and returns B. In other words, our factories should create the objects we directly need instead of objects that are only used to create another object. This helps simplify consuming classes.  
+Abstract classes are less-reusable than interfaces due to the issues outlined above on subclassing.
 #### 5) Test behavior, not implementation
-* Consumer's don't experience implementation. They experience behavior. Implementation is something that should be easy and free to change at any time.
-* When testing behavior, we might assert that the return value is correct.
-* When testing implementation, we might verify that a mock called a certain method.
+* Consumer's don't experience implementation. They experience behavior. Implementation is something that should be easy and free to change at any time
+* When testing behavior, we might assert that the return value is correct
+* When testing implementation, we might verify that a mock called a certain method
   * However there is one exception. If the method you are verifying has a side effect like inserting into the database, then that is considered testing behavior
-* Testing implementation creates for difficult to understand tests. 
+* Testing implementation creates for difficult to understand tests.
 * Refactoring the tests without changing implementation should not break your unit tests. If your unit tests break after every minor re-factor, it will take significantly more work to maintain your tests
 #### 6) Know what to test in an application
-* Never directly call into any package-private or private methods in a unit test as this is testing implementation details. In order to make sure that a package-private or private method is working as intended, call into it through your public/protected API.
-* Unit test all public/protected methods. Mock out all side effects in your unit tests. In this situation, we don't care whether or not a database connection works.
-* Write an integration test (no mocking) for public/protected methods that have side effects mocked out in their unit tests. In this situation we care about whether or not a database connection works. It may not be needed to do this for all public/protected methods with side effects if you feel comfortable enough from your acceptance tests.
-* Write acceptance tests against requirements. This is end-to-end testing where we test the entire workflow of the application.
+* Never directly call into any package-private or private methods in a unit test as this is testing implementation details. In order to make sure that a package-private or private method is working as intended, call into it through your public/protected API
+* Unit test all public/protected methods. Mock out all side effects in your unit tests. In this situation, we don't care whether or not a database connection works
+* Write an integration test (no mocking) for public/protected methods that have side effects mocked out in their unit tests. In this situation we care about whether or not a database connection works. It may not be necessary to do integration test all public/protected methods with side effects if you feel comfortable enough from your acceptance tests that call into them
+* Write acceptance tests against requirements. This is end-to-end testing where we test the entire workflow of the application
 #### 7) Javadoc all public/protected fields/constructors/methods in the src/main/java directory. Do not JavaDoc anything in the test directory. Your JavaDocs should explain what your API does but not how it does it. In other words, consumers are conserned about behavior and not implementation. Implementation should be easy to change.
 #### 8) Override hashcode, equals, and toString on entity/pojo/value object classes
 * The purpose of overriding hashcode and equals is so the consumer is provided a way to check for value equality. Consumers can already check for reference equality by using the == symbol. Value equality helps greatly when asserting on the return value in a unit test.
@@ -46,11 +37,10 @@ Abstract classes are less-reusable than interfaces due to the issues outlined ab
 * Increasing the visibility of a field from private to package-private soley for the sake of setting it in a test
 * Adding in a setter to a field soley for the sake of setting it in a test
 #### 10) All of your code should be easily testable by passing in mocks to parameters. Do not do anything hacky in your tests. If doing something hacky is the only way to test your code, then you are following poor design practices. This means that you are too coupled to implementation details. Here are some anti-patterns below that might appear when some people try to unit test poorly designed code.
-* Modifying global state in order to run your tests (including usage of Madhatter, ServiceProviders)
+* Modifying global state in order to run your tests
 * Using reflection to set the value of private fields
-* Using powermock or a 3rd party framework to mock static/final/new operators
+* Using a 3rd party framework to mock static/final/new operators
 * Subclassing, mocking, spying the class under test
-* Using a dependency injection framework in a unit test (using them in an integration test is fine though)
 #### 11) Constructors should have no side effects or logic. They should just do assignment
 Having a constructor throw if invalid parameters are passed in is fine. Other than that, the constructor should only do field assignment. For example, it should primarily be "this.field1 = parameter1; this.field2 = parameter2;" etc. Do not create any new objects or put side effects in the constructor.
 * Having work in your constructor reduces re-usability as any subclass is coupled to your constructor
@@ -60,13 +50,6 @@ Having a constructor throw if invalid parameters are passed in is fine. Other th
 * If a test with multiple asserts fails, it takes longer to determine what actually went wrong
 #### 14) No tests should affect other tests. The order that the tests are ran should not affect the output
 * If tests are modifying any objects that are used throughout the class, those objects should be re-initialized before each test
-#### 15) Know when to pass an object vs passing primitives vs making a criteria object
-#### 16) Know where to put the new operator in your application
-* Factory classes can have the new operator for any  type of object
-* Remaining classes should generally not have the new operator show up except for the creation of classes such as
-  * Collections
-  * POJO/entity/value objects
-  * Other classes that have no side effects and minimum logic in them
 #### 17) Never return null
 #### 18) Do not use interfaces for POJO/entity/value objects
 * This causes adding a field to the class to be a non-passive change
