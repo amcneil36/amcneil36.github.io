@@ -12,9 +12,13 @@ In this approach, we schedule tasks for eliminating technical debt. The only pur
 From the previous section, I hinted that tackling technical debt while you work on stories is the better approach. In most technical debt scenarios, you can remove a little bit of tech debt by doing a little bit of work which is how the tackling tech debt as you work on stories approach works best. However, in a few scenarios, the tech debt is set up in such a way that you cannot remove a little bit of tech debt by doing a little bit of work. The only way to even remove any tech debt might be to remove a lot of the tech debt by doing a lot of work. Perhaps you have to uplift your project to a different framework or technology and the framework or technology is set up in such a way where it either all goes through or none of it goes through. Instead of it being possible to just uplift a few files at a time and the project works with only a few files uplifted, maybe the framework or technology requires all files to be uplifted for the project to build. This would be an example where scheduling a technical debt task is the better of the two approaches. 
 
 ## Doing an approach that reduces technical debt is not always the wrong idea
-I used to think that doing something that introduces technical debt was always the wrong approach. It felt obvious to me that our team would complete the most work in the long term by never introducing any tech debt. I was of the opinion that planning in such a way that we complete the most amount of work in the long term was the way to go. It turns out this wasn't quite the right idea.
+I used to think that doing something that introduces technical debt was always the wrong approach. It felt obvious to me that our team would complete the most work in the long term by never introducing any tech debt. I was of the opinion that planning in such a way that we complete the most amount of work in the long term was the way to go. I eventually found out this wasn't quite the right idea.
 
+When thinking about doing something that will add technical debt, we need to answer the following question:
 
+Should we make some sacrifices to get our feature to market earlier knowing that this will slow down some future releases? 
+
+In most scenarios, we want to be able to work on a feature and release it without doing any shortcuts that result in technical debt. However, there are some exceptions where it makes sense to 
 
 ## Sources
 1. Sterling, Christ and Barton, Brent. Managing Software Debt. Addison-Wesley, 2011.
