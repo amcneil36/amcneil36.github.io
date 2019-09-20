@@ -44,25 +44,27 @@ Abstract classes are less-reusable than interfaces due to the issues outlined ab
 #### 11) Constructors should have no side effects or logic. They should just do assignment
 Having a constructor throw if invalid parameters are passed in is fine. Other than that, the constructor should only do field assignment. For example, it should primarily be "this.field1 = parameter1; this.field2 = parameter2;" etc. Do not create any new objects or put side effects in the constructor.
 * Having work in your constructor reduces re-usability as any subclass is coupled to your constructor
-* Having side effects in a constructor will slow down your application's startup if it is one of the class' used in your entry point's object graph. Having side effects in the constructor will also create for difficult to predict and difficult to design software. For example. Say that class Foo requires for a transaction to be active in order to instantiate it. When you are doing the design for your task, you might not be aware that Foo's constructor requires a transaction to be active. You might decide which classes take in a Foo in their constructor, only to figure out later that your design may not work as a transaction may not be active at the necessary time.
-#### 12) Either fix all warnings or suppress them. If you are going to suppress a warning, add a source-code comment explaining why you are suppressing it. The correct approach most of the time will be to fix the warning. However, don't fix a warning just because it is a warning. If you have done some research and you feel that it makes more sense to suppress a particular warning rather than fix it, go ahead and suppress it.
+* Having side effects in a constructor will slow down your application's startup if it is one of the class' used in your entry point's object graph. Having side effects in the constructor will also create for difficult to predict and difficult to design software. For example. Say that class Foo requires for a transaction to be active in order to instantiate it. When you are doing the design for your task, you might not be aware that Foo's constructor requires a transaction to be active. You might decide which classes take in a Foo in their constructor, only to figure out later that your design may not work as a transaction may not be active at the necessary time
+#### 12) Either fix all warnings or suppress them. If you are going to suppress a warning, add a source-code comment explaining why you are suppressing it. The correct approach most of the time will be to fix the warning. However, don't fix a warning just because it is a warning. If you have done some research and you feel that it makes more sense to suppress a particular warning rather than fix it, go ahead and suppress it
 #### 13) Aim for one assert per test
-* If a test with multiple asserts fails, it takes longer to determine what actually went wrong
+If a test with multiple asserts fails, it takes longer to determine what actually went wrong.
 #### 14) No tests should affect other tests. The order that the tests are ran should not affect the output
-* If tests are modifying any objects that are used throughout the class, those objects should be re-initialized before each test
+If tests are modifying any objects that are used throughout the class, those objects should be re-initialized before each test.
 #### 17) Never return null
+Returning null requires the consumer to have to do a null check which makes the code more cluttered. We can return default values, an optional, or throw instead.
 #### 18) Do not use interfaces for POJO/entity/value objects
-* This causes adding a field to the class to be a non-passive change
+This causes adding a field to the class to be a non-passive change.
 #### 19) A client should not be forced to depend on methods that it does not use (Interface Segregation Principle)
 * Multiple methods should go on the same interface if overriding one method will likely result in needing to override the other methods
 * Interfaces should favor having few methods over many methods as implementing an interface means that all methods need to be overidden
 #### 20) Favor immutable fields over mutable fields
-* This makes code thread-safe and easier to follow
+This makes code thread-safe and easier to follow.
 #### 21) Methods should be small-generally five lines of code or less
 * If a method starts doing too much, refactor code into a private method or another class
 * For loops and the content within a for loop should be extracted into their own method
 #### 22) If a class starts doing too much, extract some of the work out into another class
-#### 23) Avoid using source code comments to explain what your code is doing. If you feel the need to add source code comments, then your code is too complicated and is not self-documenting. You can fix this by extracting out private methods or in-line variables whose name explains what the source code comment would have said
+#### 23) Avoid using source code comments to explain what your code is doing
+If you feel the need to add source code comments, then your code is too complicated and is not self-documenting. You can fix this by extracting out private methods or in-line variables whose name explains what the source code comment would have said.
 * Extract out code with a lot of logic into it's own private method with a long descriptive name explaining what the code is doing
 * Magic numbers need to be replaced with a constant that explains what the number is for
 * Consider extracting out boolean logic into a boolean variable or boolean method that explains the purpose.  
