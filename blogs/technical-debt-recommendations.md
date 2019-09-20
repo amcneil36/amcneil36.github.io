@@ -20,5 +20,7 @@ When thinking about doing something that will add technical debt, we need to ans
 
 In most scenarios, the answer is no. Sometimes the answer will be yes.
 
+Suppose that your company is working on a feature and a competitor of yours is working on a similar feature. Your stakeholders consider it critical that your feature makes it to market before your competitor's feature. You could find yourself in a situation where the increase in profit by delivering early more than offsets the additional cost that is incurred from introducing tech debt. 
+
 ## Sources
 1. Sterling, Christ and Barton, Brent. Managing Software Debt. Addison-Wesley, 2011.
