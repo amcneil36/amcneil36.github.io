@@ -57,7 +57,7 @@ If tests are modifying any objects that are used throughout the class, those obj
 #### 14) Never return null
 Returning null requires the consumer to have to do a null check which makes the code more cluttered. We can return default values, an optional, or throw instead.
 #### 15) Do not use interfaces for POJO/entity/value objects
-This causes adding a field to the class to be a non-passive change.
+This causes adding a field to the class to be a non-passive change, assuming a corresponding getter needs to be added to the interface.
 #### 16) A client should not be forced to depend on methods that it does not use (Interface Segregation Principle)
 * Multiple methods should go on the same interface if overriding one method will likely result in needing to override the other methods
 * Interfaces should favor having few methods over many methods as implementing an interface means that all methods need to be overidden
