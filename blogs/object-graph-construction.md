@@ -41,3 +41,19 @@ We could keep having our classes ask for the consumer to pass in the dependencie
 Suppose we create all of our objects at the entry point of the application. This means that all of our other classes will be very re-usable and are going to have less logic in them since they are not concerned about creational logic. Our entry-point will have a bunch of dependencies hard-coded with new operators though. Doesn't that mean that consumers calling into our entry-point are now coupled to implementation details and have lost re-usability? No. An entry point is where the application starts. Nothing calls into it. If something did, then it wouldn't be an entry point.
 
 #### Some objects cannot get instantiated at the entry-point of our application due to having constructor arguments not known at compile time
+Let's say that we have a PersonRepository class that inserts someone's name into the database.
+```
+public class PersonRepository {
+ private final String name;
+ 
+ public PersonRepository(String name){
+  this.name = name;
+ }
+
+ public void insertByName(){
+ .
+ .
+ }
+}
+```
+Furthermore, let's say that the entry point of our application doesn't know the person's name. Maybe our application has to read some data from the database before getting a person's name. In this scenario, we wouldn't be able to instantiate a PersonRepository at the entry point of our application because PersonRepository depends on name which we don't know at the entry point of our application. 
