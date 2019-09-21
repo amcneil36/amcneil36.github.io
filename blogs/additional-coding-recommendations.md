@@ -22,7 +22,7 @@ Abstract classes are less-reusable than interfaces due to the issues outlined ab
 * When testing implementation, we might verify that a mock called a certain method
   * However there is one exception. If the method you are verifying has a side effect like inserting into the database, then that is considered testing behavior
 * Testing implementation results in tests that have an unclear purpose
-* Refactoring the tests without changing behavior should not break your unit tests. If your unit tests break after every minor re-factor, it will take significantly more work to maintain your tests
+* Refactoring the code without changing behavior should not break your unit tests. If your unit tests break after every minor re-factor, it will take significantly more work to maintain your tests
 #### 5) Know what to test in an application
 * Never directly call into any package-private or private methods in a unit test as this is testing implementation details. In order to make sure that a package-private or private method is working as intended, call into it through your public/protected API
 * Unit test all public/protected methods. Mock out all side effects in your unit tests. In this situation, we don't care whether or not a database connection works
