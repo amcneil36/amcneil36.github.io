@@ -65,7 +65,7 @@ public class PersonRepositoryFactory {
  }
 }
 ```
-We can then create the PersonRepositoryFactory at the entry-point of our application. However, there is a way we can get around needing a factory. Suppose we had designed PersonRepository differently:
+We can then create the PersonRepositoryFactory at the entry-point of our application. However, there is a way we can get around needing to do this extra work. Suppose we had designed PersonRepository differently:
 ```
 public class PersonRepository {
  
