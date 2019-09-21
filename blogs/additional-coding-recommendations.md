@@ -26,7 +26,7 @@ Abstract classes are less-reusable than interfaces due to the issues outlined ab
 #### 5) Know what to test in an application
 * Never directly call into any package-private or private methods in a unit test as this is testing implementation details. In order to make sure that a package-private or private method is working as intended, call into it through your public/protected API
 * Unit test all public/protected methods. Mock out all side effects in your unit tests. In this situation, we don't care whether or not a database connection works
-* Write an integration test (no mocking) for public/protected methods that have side effects mocked out in their unit tests. In this situation we care about whether or not a database connection works. It may not be necessary to do integration test all public/protected methods with side effects if you feel comfortable enough from your acceptance tests that call into them
+* Write an integration test (no mocking) for public/protected methods that have side effects mocked out in their unit tests. It may not be necessary to do integration test all public/protected methods with side effects if you feel comfortable enough from your acceptance tests that call into them
 * Write acceptance tests against requirements. This is end-to-end testing where we test the entire workflow of the application
 #### 6) Javadoc all public/protected fields/constructors/methods in the src/main/java directory. Do not JavaDoc anything in the test directory. Your JavaDocs should explain what your API does but not how it does it.
 Consumers are concerned about behavior and not implementation. Implementation should be easy to change.
