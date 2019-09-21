@@ -56,4 +56,12 @@ public class PersonRepository {
  }
 }
 ```
-Furthermore, let's say that the entry point of our application doesn't know the person's name. Maybe our application has to read some data from the database before getting a person's name. In this scenario, we wouldn't be able to instantiate a PersonRepository at the entry point of our application because PersonRepository depends on name which we don't know at the entry point of our application. 
+Furthermore, let's say that the entry point of our application doesn't know the person's name. Maybe our application has to read some data from the database before getting a person's name. In this scenario, we wouldn't be able to instantiate a PersonRepository at the entry point of our application because PersonRepository depends on name which we don't know at the entry point of our application. This means we would need somewhere deeper down in our application to instantiate a PersonRepository. This would result in somewhere deeper down programming to implementation by creating the PersonRepository with the new operator. However, we can get around that by making a Factory
+```
+public class PersonRepositoryFactory {
+ 
+ public PersonRepository createPersonRepository(String name){
+  return new PersonRepository(name);
+ }
+}
+```
