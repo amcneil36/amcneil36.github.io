@@ -20,7 +20,7 @@ Abstract classes are less-reusable than interfaces due to the issues outlined ab
 * Consumer's don't experience implementation. They experience behavior. Implementation is something that should be easy and free to change at any time
 * When testing behavior, we might assert that the return value is correct
 * When testing implementation, we might verify that a mock called a certain method
-  * However there is one exception. If the method you are verifying has a side effect like inserting into the database, then that is considered testing behavior
+  * However, there is one exception. If the method you are verifying has a side effect like inserting into the database, then that is considered testing behavior
 * Testing implementation results in tests that have an unclear purpose
 * Refactoring the code without changing behavior should not break your unit tests. If your unit tests break after every minor re-factor, it will take significantly more work to maintain your tests
 #### 5) Know what to test in an application
