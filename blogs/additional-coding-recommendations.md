@@ -103,4 +103,8 @@ If you feel the need to add source code comments, then your code is too complica
   * if the common code is only repeated twice but it is a ton of lines of code, go ahead and extract
 
 ## Sources
-1. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999. 
+1. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999.  
+2. Martin, Robert. Clean Code: A Handbook of Agile Software Craftsmanship. Prentice Hall, 2009.  
+3. Bloch, Joshua. Effective Java. Pearson Education, 2018.  
+4. McConnell, Steve. Code Complete: A Practical Handbook of Software Construction. 2004.  
+5. Martin, Robert. Clean Architecture: A Craftsman's Guide to Software Structure and Design. Prentice Hall, 2018.  
