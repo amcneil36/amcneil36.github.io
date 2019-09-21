@@ -66,7 +66,7 @@ This makes code thread-safe and easier to follow.
 #### 18) Methods should be small-generally five lines of code or less
 * If a method starts doing too much, refactor code into a private method or another class
 * For loops and the content within a for loop should be extracted into their own method
-#### 19) Classes should generally be 3000 lines of code or less
+#### 19) Classes should generally be 300 lines of code or less
 If a class starts doing too much, extract some of the work out into another class.
 #### 20) Avoid using source code comments to explain what your code is doing
 If you feel the need to add source code comments, then your code is too complicated and is not self-documenting. You can fix this by extracting out private methods or in-line variables whose name explains what the source code comment would have said.
