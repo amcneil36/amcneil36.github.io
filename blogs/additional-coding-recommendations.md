@@ -27,7 +27,8 @@ Abstract classes are less-reusable than interfaces due to the issues outlined ab
 * Unit test all public/protected methods. Mock out all side effects in your unit tests. In this situation, we don't care whether or not a database connection works
 * Write an integration test (no mocking) for public/protected methods that have side effects mocked out in their unit tests. In this situation we care about whether or not a database connection works. It may not be necessary to do integration test all public/protected methods with side effects if you feel comfortable enough from your acceptance tests that call into them
 * Write acceptance tests against requirements. This is end-to-end testing where we test the entire workflow of the application
-#### 7) Javadoc all public/protected fields/constructors/methods in the src/main/java directory. Do not JavaDoc anything in the test directory. Your JavaDocs should explain what your API does but not how it does it. In other words, consumers are conserned about behavior and not implementation. Implementation should be easy to change.
+#### 7) Javadoc all public/protected fields/constructors/methods in the src/main/java directory. Do not JavaDoc anything in the test directory. Your JavaDocs should explain what your API does but not how it does it.
+Consumers are concerned about behavior and not implementation. Implementation should be easy to change.
 #### 8) Override hashcode, equals, and toString on entity/pojo/value object classes
 * The purpose of overriding hashcode and equals is so the consumer is provided a way to check for value equality. Consumers can already check for reference equality by using the == symbol. Value equality helps greatly when asserting on the return value in a unit test
 * Overriding toString makes it easier to see what the values of each field are
@@ -46,7 +47,8 @@ Do not do anything hacky in your tests. If doing something hacky is the only way
 Having a constructor throw if invalid parameters are passed in is fine. Other than that, the constructor should only do field assignment. For example, it should primarily be "this.field1 = parameter1; this.field2 = parameter2;" etc. Do not create any new objects or put side effects in the constructor.
 * Having work in your constructor reduces re-usability as any subclass is coupled to your constructor
 * Having side effects in a constructor will slow down your application's startup if it is one of the class' used in your entry point's object graph. Having side effects in the constructor will also create for difficult to predict and difficult to design software. For example. Say that class Foo requires for a transaction to be active in order to instantiate it. When you are doing the design for your task, you might not be aware that Foo's constructor requires a transaction to be active. You might decide which classes take in a Foo in their constructor, only to figure out later that your design may not work as a transaction may not be active at the necessary time
-#### 12) Either fix all warnings or suppress them. If you are going to suppress a warning, add a source-code comment explaining why you are suppressing it. The correct approach most of the time will be to fix the warning. However, don't fix a warning just because it is a warning. If you have done some research and you feel that it makes more sense to suppress a particular warning rather than fix it, go ahead and suppress it
+#### 12) Either fix warnings or suppress them.
+If you are going to suppress a warning, add a source-code comment explaining why you are suppressing it. The correct approach most of the time will be to fix the warning. However, don't fix a warning just because it is a warning. If you have done some research and you feel that the warning is not worth the time to fix or that it is not really an issue, go ahead and suppress it.
 #### 13) Aim for one assert per test
 If a test with multiple asserts fails, it takes longer to determine what actually went wrong.
 #### 14) No tests should affect other tests. The order that the tests are ran should not affect the output
@@ -63,7 +65,8 @@ This makes code thread-safe and easier to follow.
 #### 21) Methods should be small-generally five lines of code or less
 * If a method starts doing too much, refactor code into a private method or another class
 * For loops and the content within a for loop should be extracted into their own method
-#### 22) If a class starts doing too much, extract some of the work out into another class
+#### 22) Classes should generally be 3000 lines of code or less
+If a class starts doing too much, extract some of the work out into another class.
 #### 23) Avoid using source code comments to explain what your code is doing
 If you feel the need to add source code comments, then your code is too complicated and is not self-documenting. You can fix this by extracting out private methods or in-line variables whose name explains what the source code comment would have said.
 * Extract out code with a lot of logic into it's own private method with a long descriptive name explaining what the code is doing
@@ -98,3 +101,6 @@ If you feel the need to add source code comments, then your code is too complica
 #### 29) Don't repeat yourself (DRY)
 * Once you have common code repeated three times, extract it out into a common method (Rule of Three)
   * if the common code is only repeated twice but it is a ton of lines of code, go ahead and extract
+
+## Sources
+1. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999. 
