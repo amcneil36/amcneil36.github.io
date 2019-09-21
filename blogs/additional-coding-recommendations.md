@@ -20,7 +20,7 @@ Abstract classes are less-reusable than interfaces due to the issues outlined ab
 * When testing behavior, we might assert that the return value is correct
 * When testing implementation, we might verify that a mock called a certain method
   * However there is one exception. If the method you are verifying has a side effect like inserting into the database, then that is considered testing behavior
-* Testing implementation creates for difficult to understand tests.
+* Testing implementation creates for difficult to understand tests
 * Refactoring the tests without changing implementation should not break your unit tests. If your unit tests break after every minor re-factor, it will take significantly more work to maintain your tests
 #### 6) Know what to test in an application
 * Never directly call into any package-private or private methods in a unit test as this is testing implementation details. In order to make sure that a package-private or private method is working as intended, call into it through your public/protected API
@@ -29,7 +29,7 @@ Abstract classes are less-reusable than interfaces due to the issues outlined ab
 * Write acceptance tests against requirements. This is end-to-end testing where we test the entire workflow of the application
 #### 7) Javadoc all public/protected fields/constructors/methods in the src/main/java directory. Do not JavaDoc anything in the test directory. Your JavaDocs should explain what your API does but not how it does it. In other words, consumers are conserned about behavior and not implementation. Implementation should be easy to change.
 #### 8) Override hashcode, equals, and toString on entity/pojo/value object classes
-* The purpose of overriding hashcode and equals is so the consumer is provided a way to check for value equality. Consumers can already check for reference equality by using the == symbol. Value equality helps greatly when asserting on the return value in a unit test.
+* The purpose of overriding hashcode and equals is so the consumer is provided a way to check for value equality. Consumers can already check for reference equality by using the == symbol. Value equality helps greatly when asserting on the return value in a unit test
 * Overriding toString makes it easier to see what the values of each field are
 #### 9) Do not make code changes that exist solely for the sake of testing. Here are some anti-patterns below:
 * Having two constructors where one constructor (usually package-private) only exists for testing
