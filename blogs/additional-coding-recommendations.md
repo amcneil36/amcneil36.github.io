@@ -78,7 +78,7 @@ If you feel the need to add source code comments, then your code is too complica
   * Examples may include Mockito API, builder pattern, java.util.Optional, streams, and many more functional programming libraries. Use method chaining with these
 * Method chaining (when being used on something other than a Fluent Interface) generally makes code harder to read. It also makes code harder to troubleshoot as the stack trace may point to a line of code that has multiple method calls. Refactoring code that is method chained with the Introduce Explaining Variable refactor can make your code easier to follow
 #### 22) Ya Ain't Gonna Need It (YAGNI)
-* Implement things that you need now instead of things that you foresee you will need
+* Implement things that you need now instead of things that you think you will need later
 * Delete code that is not getting called from anywhere
 * Don't open a spike unless you have a task that is blocked by the spike
 #### 23) Keep It Simple Stupid (KISS)
