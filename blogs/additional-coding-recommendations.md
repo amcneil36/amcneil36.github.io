@@ -76,7 +76,7 @@ If you feel the need to add source code comments, then your code is too complica
 #### 21) Favor one logical statement per line of code over method chaining except for when using fluent interfaces
 * Fluent interfaces are designed to where method chaining is easier to read and typically have a lot of methods on a class whose return type is the class. These classes read like English when there is method chaining done
   * Examples may include Mockito API, builder pattern, java.util.Optional, streams, and many more functional programming libraries. Use method chaining with these
-* Method chaining (when being used on something other than a Fluent Interface) generally makes code harder to read. It also makes code harder to troubleshoot as the stack trace may point to a line of code that has multiple things going on. Refactoring code that is method chained with the Introduce Explaining Variable refactor can make your code easier to follow
+* Method chaining (when being used on something other than a Fluent Interface) generally makes code harder to read. It also makes code harder to troubleshoot as the stack trace may point to a line of code that has multiple method calls. Refactoring code that is method chained with the Introduce Explaining Variable refactor can make your code easier to follow
 #### 22) Ya Ain't Gonna Need It (YAGNI)
 * Implement things that you need now instead of things that you foresee you will need
 * Delete code that is not getting called from anywhere
