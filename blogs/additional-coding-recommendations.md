@@ -31,7 +31,7 @@ Abstract classes are less-reusable than interfaces due to the issues outlined ab
 #### 6) Javadoc all public/protected fields/constructors/methods in the src/main/java directory. Do not JavaDoc anything in the test directory. Your JavaDocs should explain what your API does but not how it does it.
 Consumers are concerned about behavior and not implementation. Implementation should be easy to change.
 #### 7) Override hashcode, equals, and toString on entity/pojo/value object classes
-* The purpose of overriding hashcode and equals is so the consumer is provided a way to check for value equality. Consumers can already check for reference equality by using the == symbol. Value equality helps greatly when asserting on the return value in a unit test
+* The purpose of overriding hashcode and equals is so the consumer is provided a way to check for value equality. Consumers can already check for reference equality by using the == symbol
 * Overriding toString makes it easier to see what the values of each field are
 #### 8) Do not make code changes that exist solely for the sake of testing. Here are some anti-patterns below:
 * Having two constructors where one constructor (usually package-private) only exists for testing
