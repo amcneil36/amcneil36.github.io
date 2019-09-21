@@ -65,7 +65,7 @@ public class PersonRepositoryFactory {
  }
 }
 ```
-We can then create the PersonRepositoryFactory at the entry-point of our application. Let's look at how the PersonRepository's instantiation would have looked in the object graph had it been designed differnetly. Suppose PersonRepository method injected the name instead of constructor injecting it.
+We can then create the PersonRepositoryFactory at the entry-point of our application. Any class that needs a PersonRepository will take in a PersonRepositoryFactory through it's constructor. Let's look at how the PersonRepository's instantiation would have looked in the object graph had it been designed differently. Suppose PersonRepository method injected the name instead of constructor injecting it.
 ```
 public class PersonRepository {
  
