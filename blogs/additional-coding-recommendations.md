@@ -103,7 +103,7 @@ If you feel the need to add source code comments, then your code is too complica
 * Once you have common code repeated three times, extract it out into a common method (Rule of Three)
   * if the common code is only repeated twice but it is a ton of lines of code, go ahead and extract
 #### 27) Do not optimize for performance without having metrics
-Suppose you have two possible solutions to a problem in mind. One solution is predicted to be easier to implement than the other but is predicted to have worse performance. You should generally try the easier solution and performance test it to see if the performance is OK. We want to performance test our solution as early as possible. This might even include writing some dummy code to mirror the easier solution and performance testing that. If our performance test results in slow results, then consider the more complicated solution. Most of the time performance will not be an issue.
+Suppose you have two possible solutions to a problem in mind. One solution is predicted to be easier to implement than the other but is predicted to have worse performance. You should generally try the easier solution and performance test it to see if the performance is OK. We want to performance test our solution as early as possible. This might even include writing some dummy code to mirror the easier solution and performance testing that. This way, less code gets tossed if our performance test is unsatisfactory. If our performance test results in slow results, then try the more complicated solution. Most of the time performance will not be an issue.
 
 ## Sources
 1. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999.  
