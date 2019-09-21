@@ -34,9 +34,9 @@ Consumers are concerned about behavior and not implementation. Implementation sh
 * Overriding toString makes it easier to see what the values of each field are
 #### 9) Do not make code changes that exist solely for the sake of testing. Here are some anti-patterns below:
 * Having two constructors where one constructor (usually package-private) only exists for testing
-* Increasing visibility of a method from private to package-private soley for the sake of directly invoking the method in a test
-* Increasing the visibility of a field from private to package-private soley for the sake of setting it in a test
-* Adding in a setter to a field soley for the sake of setting it in a test
+* Increasing visibility of a method from private to package-private solely for the sake of directly invoking the method in a test
+* Increasing the visibility of a field from private to package-private solely for the sake of setting it in a test
+* Adding in a setter to a field solely for the sake of setting it in a test
 #### 10) All of your code should be easily testable by passing in mocks to parameters
 Do not do anything hacky in your tests. If doing something hacky is the only way to test your code, then you are following poor design practices. This means that you are too coupled to implementation details. Here are some anti-patterns below that might appear when some people try to unit test poorly designed code.
 * Modifying global state in order to run your tests
@@ -73,7 +73,7 @@ If you feel the need to add source code comments, then your code is too complica
 * Magic numbers need to be replaced with a constant that explains what the number is for
 * Consider extracting out boolean logic into a boolean variable or boolean method that explains the purpose  
 #### 24) Favor one logical statement per line of code over method chaining except for when using fluent interfaces
-* Fluent interfaces are designed to where method chaining is easier to read and typically have a lot of methods on a class whose return type is the class. These classes read like english when there is method chaining done
+* Fluent interfaces are designed to where method chaining is easier to read and typically have a lot of methods on a class whose return type is the class. These classes read like English when there is method chaining done
   * Examples may include Mockito API, builder pattern, java.util.Optional, streams, and many more functional programming libraries. Use method chaining with these
 * Method chaining (when being used on something other than a Fluent Interface) generally makes code harder to read. It also makes code harder to troubleshoot as the stack trace may point to a line of code that has multiple things going on. Refactoring code that is method chained with the Introduce Explaining Variable refactor can make your code easier to follow
 #### 25) Ya Ain't Gonna Need It (YAGNI)
