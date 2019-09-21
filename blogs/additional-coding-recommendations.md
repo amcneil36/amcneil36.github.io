@@ -12,6 +12,7 @@ Lets say you have FooImpl which implements FooInterface.
 * With interfaces, the benefits you receive include
   * Complete control over your constructor(s)
   * As long as no method signatures are created/modified, you will not be the victim of a non-passive code change
+    * when a non-passive code change is made to an interface, you will find out at compile time which is easier to troubleshoot
   * Not needing an implementation of your dependencies needing to be completed by the time you are ready to start coding your class. If you depend on an interface, you can fully unit test your class, passing in a mock for the interface. This makes it easier to do vertical slices in agile development. Integration tests, however, are not possible until an implementation is completed.
 #### 3) Favor interfaces over abstract classes
 Abstract classes are less-reusable than interfaces due to the issues outlined above on subclassing.
