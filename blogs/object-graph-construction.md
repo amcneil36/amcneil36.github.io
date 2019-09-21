@@ -77,4 +77,4 @@ public class PersonRepository {
  }
 }
 ```
-Now we can instantiate a PersonRepository at the entry-point of our application.
+Now we can instantiate a PersonRepository at the entry-point of our application and all classes that need a PersonRepository can depend on a PersonRepository instead of a PersonRepositoryFactory so they will be more simple.
