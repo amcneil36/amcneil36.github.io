@@ -34,3 +34,6 @@ public class Foo {
 }
 ```
 Now our Foo class is more re-usable. We are passing in the interface through the constructor so the consumer can choose any implementation of the DatabaseAuthenticator interface they want. Furthermore, they can potentially use subclassing on any implementations of the interface provided that the implementation is not a final class. Consumers can switch which implementation of DatabaseAuthenticator they use without a non-passive change being made to Foo. Our Foo class is also much more simple now. It doesn't need to know how to create a DatabaseAuthenticator. 
+
+### When using dependency injection, where do all of our objects get instantiated?
+We could keep having our classes ask for the consumer to pass in the dependencies they need instead of having our classes internally instantiate the dependencies they need. But if we keep doing this, we need these dependencies to get instantiated somewhere, right? Where do these dependencies all get instantiated?
