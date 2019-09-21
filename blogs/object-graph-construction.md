@@ -83,3 +83,8 @@ public class PersonRepository {
 Now we can instantiate a PersonRepository at the entry-point of our application and all classes that need a PersonRepository can depend on a PersonRepository instead of a PersonRepositoryFactory so they will be more simple.
 
 So when deciding between constructor and method injection, I prefer constructor injecting dependencies that are known at compile time and method injecting dependencies that are known only at runtime. This allows for your objects to be created at the entry-point of the application. Sometimes you will depend on some 3rd party classes that were not designed this way so you could end up needing to create a factory method for instantiating those 3rd party classes.
+
+### Factory recommendations
+We talked about needing to make factories in scenarios where we depend on classes who have some constructor arguments not known until runtime. There is another scenario in which a factory might make sense. The entry-point of our application might have 30 new operators if all of the logic for creating these dependencies is inside of the entry-point of our application. Instead of doing this, we should move the creational logic to a factory and just have the entry-point call into a factory to get the dependencies it needs. Since we know that factories are important, let's talk about some recommendations for them.
+
+
