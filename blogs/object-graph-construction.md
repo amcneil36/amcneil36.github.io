@@ -41,7 +41,7 @@ We could keep having our classes ask for the consumer to pass in the dependencie
 Suppose we create all of our objects at the entry point of the application. This means that all of our other classes will be very re-usable and are going to have less logic in them since they are not concerned about creational logic. Our entry-point will have a bunch of dependencies hard-coded with new operators though. Doesn't that mean that consumers calling into our entry-point are now coupled to implementation details and have lost re-usability? No. An entry point is where the application starts. Nothing calls into it. If something did, then it wouldn't be an entry point.
 
 #### Some objects cannot get instantiated at the entry-point of our application due to having constructor arguments not known at compile time
-Let's say that we made a PersonRepository class that inserts someone's name into the database.
+Let's say there is a PersonRepository class that inserts someone's name into the database.
 ```
 public class PersonRepository {
  private final String name;
@@ -65,7 +65,7 @@ public class PersonRepositoryFactory {
  }
 }
 ```
-We can then create the PersonRepositoryFactory at the entry-point of our application. However, there is a way we can get around needing to do this extra work. Suppose we had designed PersonRepository differently:
+We can then create the PersonRepositoryFactory at the entry-point of our application. Let's look at how the PersonRepository's instantiation would have looked in the object graph had it been designed differnetly. Suppose PersonRepository method injected the name instead of constructor injecting it.
 ```
 public class PersonRepository {
  
