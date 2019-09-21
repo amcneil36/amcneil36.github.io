@@ -79,4 +79,4 @@ public class PersonRepository {
 ```
 Now we can instantiate a PersonRepository at the entry-point of our application and all classes that need a PersonRepository can depend on a PersonRepository instead of a PersonRepositoryFactory so they will be more simple.
 
-So when deciding between constructor and method injection, I prefer constructor injecting dependencies that are known at compile time and method injecting dependencies that are known only at runtime.
+So when deciding between constructor and method injection, I prefer constructor injecting dependencies that are known at compile time and method injecting dependencies that are known only at runtime. This allows for your objects to be created at the entry point of the application.
