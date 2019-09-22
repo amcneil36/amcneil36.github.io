@@ -1,5 +1,5 @@
 ## Object Graph Construction Recommendations
-In your application, you may have many objects created and destroyed at different points in time. The way we code up our application has a significant difference on how the object graph will look. Should we try to have most of our objects instantiated at the entry-point of our application? Should objects only be instantiated right before they are used? Should our classes internally create all of the objects they need or should they ask for the objects they need? We will take a look.
+In your application, you may have many objects created and destroyed at different points in time. The way we code up our application has a significant difference on how the object graph will look. Should we try to have most of our objects instantiated at the entry point of our application? Should objects only be instantiated right before they are used? Should our classes internally create all of the objects they need or should they ask for the objects they need? We will take a look.
 
 ### Having your class internally create objects it depends on
 Suppose we have a class that creates an object it depends on. Lets say the object it makes is called DatabaseAuthenticatorImpl which implements DatabaseAuthenticator.
@@ -36,11 +36,11 @@ public class Foo {
 Now our Foo class is more re-usable. We are passing in the interface through the constructor so the consumer can choose any implementation of the DatabaseAuthenticator interface they want. Furthermore, they can potentially use subclassing on any implementations of the interface provided that the implementation is not a final class. Consumers can switch which implementation of DatabaseAuthenticator they use without a non-passive change being made to Foo. Our Foo class is also much more simple now. It doesn't need to know how to create a DatabaseAuthenticator. 
 
 ### When using dependency injection, where do all of our objects get instantiated?
-We could keep having our classes ask for the consumer to pass in the dependencies they need instead of having our classes internally instantiate the dependencies they need. But if we keep doing this, we need these dependencies to get instantiated somewhere, right? Where do these dependencies all get instantiated? Ideally, they would get instantiated as close to the entry-point of the application as possible.
+We could keep having our classes ask for the consumer to pass in the dependencies they need instead of having our classes internally instantiate the dependencies they need. But if we keep doing this, we need these dependencies to get instantiated somewhere, right? Where do these dependencies all get instantiated? Ideally, they would get instantiated as close to the entry point of the application as possible.
 
-Suppose we create all of our objects at the entry point of the application. This means that all of our other classes will be very re-usable and are going to have less logic in them since they are not concerned about creational logic. Our entry-point will have a bunch of dependencies hard-coded with new operators though. Doesn't that mean that consumers calling into our entry-point are now coupled to implementation details and have lost re-usability? No. An entry point is where the application starts. Nothing calls into it. If something did, then it wouldn't be an entry point.
+Suppose we create all of our objects at the entry point of the application. This means that all of our other classes will be very re-usable and are going to have less logic in them since they are not concerned about creational logic. Our entry point will have a bunch of dependencies hard-coded with new operators though. Doesn't that mean that consumers calling into our entry point are now coupled to implementation details and have lost re-usability? No. An entry point is where the application starts. Nothing calls into it. If something did, then it wouldn't be an entry point.
 
-#### Some objects cannot get instantiated at the entry-point of our application due to having constructor arguments not known at compile time
+#### Some objects cannot get instantiated at the entry point of our application due to having constructor arguments not known at compile time
 Let's say there is a PersonRepository class that inserts someone's name into the database.
 ```
 public class PersonRepository {
@@ -65,7 +65,7 @@ public class PersonRepositoryFactory {
  }
 }
 ```
-We can then create the PersonRepositoryFactory at the entry-point of our application. Any class that needs a PersonRepository will take in a PersonRepositoryFactory through it's constructor.
+We can then create the PersonRepositoryFactory at the entry point of our application. Any class that needs a PersonRepository will take in a PersonRepositoryFactory through it's constructor.
 
 #### Constructor inject dependencies known at compile time. Method inject dependencies known at runtime
 Let's look at how the PersonRepository would have looked in the object graph had it been designed differently. Suppose PersonRepository method injected the name instead of constructor injecting it.
@@ -80,12 +80,12 @@ public class PersonRepository {
  }
 }
 ```
-Now we can instantiate a PersonRepository at the entry-point of our application and all classes that need a PersonRepository can depend on a PersonRepository instead of a PersonRepositoryFactory so they will be more simple.
+Now we can instantiate a PersonRepository at the entry point of our application and all classes that need a PersonRepository can depend on a PersonRepository instead of a PersonRepositoryFactory so they will be more simple.
 
-So when deciding between constructor and method injection, I prefer constructor injecting dependencies that are known at compile time and method injecting dependencies that are known only at runtime. This allows for your objects to be created at the entry-point of the application. Sometimes you will depend on some 3rd party classes that were not designed this way so you could end up needing to create a factory method for instantiating those 3rd party classes.
+So when deciding between constructor and method injection, I prefer constructor injecting dependencies that are known at compile time and method injecting dependencies that are known only at runtime. This allows for your objects to be created at the entry point of the application. Sometimes you will depend on some 3rd party classes that were not designed this way so you could end up needing to create a factory method for instantiating those 3rd party classes.
 
 ### Another scenario where it makes sense to make a factory
-We talked about needing to make factories in scenarios where we depend on classes who have some constructor arguments not known until runtime. There is another scenario in which a factory might make sense. The entry-point of our application might have 30 new operators if all of the logic for creating these dependencies is inside of the entry-point of our application. Instead of doing this, we should move the creational logic to a factory and just have the entry-point call into a factory to get the dependencies it needs. Since we know that factories are important, let's talk about some recommendations for them.
+We talked about needing to make factories in scenarios where we depend on classes who have some constructor arguments not known until runtime. There is another scenario in which a factory might make sense. The entry point of our application might have 30 new operators if all of the logic for creating these dependencies is inside of the entry point of our application. Instead of doing this, we should move the creational logic to a factory and just have the entry point call into a factory to get the dependencies it needs. Since we know that factories are important, let's talk about some recommendations for them.
 
 ### Factory recommendations
 Keep business logic out of factories. Factories should primarily just be called 'new' one or more times.
@@ -100,7 +100,7 @@ Have the factory make direct dependencies that are needed. For example, suppose 
 It could be said that there are two types of classes. Factories and classes with business logic. The bulk of our objects will be created in factories. However, there are still some objects that can be created in our classes with business logic that don't need to be made by a factory. This would be classes like value objects, entities, and collections. These classes don't have any logic in them that we would need to override so programming to implementation and instantiating them in our business logic classes with the new operator is fine. 
 
 ### DI Framework
-We mentioned earlier that we should create a factory that instantiates all of the objects with all of the new operators needed for the entry-point of our application. This can take a bit of time to code up. Dependency Injection frameworks were created in order to reduce the amount of code that needs to be typed up in order to instantiate your objects. You can instantiate the injector (sometimes referred to as the container) at the entry point of your application and use the injector to instantiate any dependencies needed for the entry point of your application. For medium to large projects, the DI frameworks can save many lines of code. For smaller projects, the DI framework wouldn't save enough lines of code to justify using.
+We mentioned earlier that we should create a factory that instantiates all of the objects with all of the new operators needed for the entry point of our application. This can take a bit of time to code up. Dependency Injection frameworks were created in order to reduce the amount of code that needs to be typed up in order to instantiate your objects. You can instantiate the injector (sometimes referred to as the container) at the entry point of your application and use the injector to instantiate any dependencies needed for the entry point of your application. For medium to large projects, the DI frameworks can save many lines of code. For smaller projects, the DI framework wouldn't save enough lines of code to justify using.
 
 One of the downsides of DI frameworks is that they use reflection to look up classes so a lot of the errors you will encounter will be at runtime instead of compile time. However, this also has an upside in that it generally results in less places that you have to update your code when constructors are modified.
 
