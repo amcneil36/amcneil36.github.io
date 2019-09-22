@@ -1,5 +1,7 @@
-## Completed Reading Lists and Recommended Readings
+## Completed Reading List and Recommended Readings
+In this post I am keeping track of all the books I have read and am documenting which of these books I feel are the best books to read. I started keeping track of these books in 2019 so I haven't included any books that I read prior to then.
 
+### Completed Reading List (since 2019)
 1. Kerievsky, Joshua. Refactoring to Patterns. Addison-Wesley, 2004.
 1. Martin, Robert. Clean Code: A Handbook of Agile Software Craftsmanship. Prentice Hall, 2009.
 1. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999.
@@ -102,3 +104,5 @@
 1. MacLeod, Chris. The Social Skills Guidebook: Manage Shyness, Improve Your Conversations, and Make Friends, Without Giving Up Who You Are. 2016.
 1. McConnell, Steve. Software Estimation: Demystifying the Black Art. Microsoft Press, 2006.
 1. Fournier, Camille. The Manager's Path. A Guide for Tech Leaders Navigating Growth & Change. O'Reilly Media, 2017.
+
+### Recommended Readings
