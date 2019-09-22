@@ -71,7 +71,7 @@ So when should component teams be used? For that, I have made a new blog post wh
 10. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018.
 11. Gruver, Gary, et al. A Practical Approach to Large-Scale Agile Development: How HP Transformed LaserJet FutureSmart Firmway. Addison-Wesley, 2015.
 12. Pichler, Roman. Agile Product Management With Scrum. Addison-Wesley, 2010.
-13. Appelo, Jurgen. Management 3.0: Leading Agile Developers, Developing Agile Leaders. Addison-Wesley, 2011
-14. Mary and Tom Poppendieck. Leading Lean Software Development: Results Are Not The Point. Addison-Wesley, 2009.
-15. Craig Larman and BasVodde. Scaling Lean & Agile Development: Thinking and Organizational Tools for Large-Scale Scrum. Addison-Wesley, 2008.
+13. Appelo, Jurgen. Management 3.0: Leading Agile Developers, Developing Agile Leaders. Addison-Wesley, 2011.  
+14. Mary and Tom Poppendieck. Leading Lean Software Development: Results Are Not The Point. Addison-Wesley, 2009.  
+15. Craig Larman and BasVodde. Scaling Lean & Agile Development: Thinking and Organizational Tools for Large-Scale Scrum. Addison-Wesley, 2008.  
 16. Grosse, Alexander and Loftesness, David. Scaling Teams, Strategies for Building Successful Teams and Organizations. O'Reilly Media Inc., 2017.
