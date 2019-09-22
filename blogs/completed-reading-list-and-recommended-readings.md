@@ -57,7 +57,7 @@ In this post I am keeping track of all the books I have read and am documenting 
 1. Denning, Stephen. The Age of Agile. Amacom, 2018.
 1. Grosse, Alexander and Loftesness, David. Scaling Teams, Strategies for Building Successful Teams and Organizations. O'Reilly Media Inc., 2017.
 1. Leffingwell, Dean. Agile Software Requirements, Lean Requirements Practices for Teams, Programs, and the Enterprise. Addison-Wesley, 2011.
-1. Sonmez, John. The Complete Software Developer's Career Guide: How to Learn Your Next Programming Language, Ace Your Programming Interview, and Land The Coding Job Of Your Dreams. Simple Programmer, 2015.
+1. Sonmez, John. The Complete Software Developer's Career Guide. Simple Programmer, 2015.
 1. Catlin, Karen. Vijayashanker, Poornima. Present! A techies guide to public speaking. 2015.
 1. Sonmez, John. Soft Skills: The software devleoper's life manual. Manning Publications, 2015.
 	Highsmith, Jim. Agile Project Management, Creating Innovative Products. Addison-Wesley, 2004.
