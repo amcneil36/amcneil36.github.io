@@ -5,7 +5,7 @@ Test-Driven-Development (TDD) involves writing a failing test and then writing t
 Double Loop TDD involves an outer loop where we do red-green-refactor on our acceptance tests. In order to make our acceptance test go from red to green, we do red-green-refactor on unit tests (inner loop). Here is an image from [Waldemar Mękal’s presentation on double loop TDD](https://www.youtube.com/watch?v=c9FdwL1_TBE&feature=youtu.be) that displays this process
 
 ![](http://cezary.mcwronka.com.hostingasp.pl/wp-content/uploads/2016/03/DoubleLoopTDD-1024x652.png)
-Here are the steps explained at a lower level that I recommend using for implementing double loop TDD:
+Here are the steps explained at a lower level that I recommend using for implementing double loop TDD to complete user stories:
 1. Brainstorm user stories
 2. Pick a user story
 3. Brainstorm given/when/thens (acceptance criteria)
@@ -21,7 +21,7 @@ Here are the steps explained at a lower level that I recommend using for impleme
 13. Repeat Step 9 until all unit tests are done
 14. Repeat Step 8 until the acceptance test is passing
 15. Refactor
-16. Repeat Step 4 until all given/when/thens have been tested (if needed)
+16. Repeat Step 4 until all given/when/thens have been tested
 17. Repeat Step 3 until the user story is completed
 
 ## Sources
