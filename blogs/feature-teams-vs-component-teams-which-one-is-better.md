@@ -59,7 +59,7 @@ What about for situations in which we have many teams, say 100 teams working on 
 So when should component teams be used? For that, I have made a new blog post which can be found [here](https://amcneil36.github.io/blogs/when-should-a-component-team-be-used).
 
 ## Sources
-1. Axelrod, Arnon. Complete Guide to Test Automation. Apress, 2018  
+1. Axelrod, Arnon. Complete Guide to Test Automation, Techniques, Practices, and Patterns for Building and Maintaining Effective Software Projects. Apress, 2018  
 2. Craig Larman and Bas Vodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012.
 3. Craig Larman and Bas Vodde. Large-Scale Scrum: More with LeSS. Addison-Wesley, 2016.
 4. Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013.
