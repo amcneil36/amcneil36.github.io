@@ -88,13 +88,13 @@ So when deciding between constructor and method injection, I prefer constructor 
 We talked about needing to make factories in scenarios where we depend on classes who have some constructor arguments not known until runtime. There is another scenario in which a factory might make sense. The entry point of our application might have 30 new operators if all of the logic for creating these dependencies is inside of the entry point of our application. Instead of doing this, we should move the creational logic to a factory and just have the entry point call into a factory to get the dependencies it needs.
 
 ### Factory recommendations
-Keep business logic out of factories. Factories should primarily just be called 'new' one or more times.
+Keep business logic out of factories. Factories should primarily just be call 'new' one or more times.
 
 Objects that are needed for similar scenarios should go on the same factory in different create methods.
 
 Just like any other classes, place dependencies known at compile time on the factory's constructor and dependencies known at runtime on the factory's method signatures.
 
-Have the factory make direct dependencies that are needed. For example, suppose that your class needs an instance of A in order to create an instance of B.  Furthermore, suppose our application needs to call methods on B but doesn't need to call any methods on A. We should have a factory method that internally creates an instance of A then an instance of B and returns B. In other words, our factories should create the objects we directly need instead of objects that are only used to create another object. This helps simplify consuming classes.  
+Have the factory make direct dependencies that are needed. For example, suppose that your class needs an instance of A in order to create an instance of B.  Furthermore, suppose our application needs to call methods on B but doesn't directly need to call any methods on A. We should have a factory method that internally creates an instance of A then an instance of B and returns B. In other words, our factories should create the objects we directly need instead of objects that are only used to create another object. This helps simplify consuming classes.  
 
 ### Should all new operators go in factories?
 It could be said that there are two types of classes. Factories and classes with business logic. The bulk of our objects will be created in factories. However, there are still some objects that can be created in our classes with business logic that don't need to be made by a factory. This would be classes like value objects, entities, and collections. These classes don't have any logic in them that we would need to override so programming to implementation and instantiating them in our business logic classes with the new operator is fine. 
