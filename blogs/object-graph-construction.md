@@ -99,4 +99,5 @@ Have the factory make direct dependencies that are needed. For example, suppose 
 ### Should all new operators go in factories?
 It could be said that there are two types of classes. Factories and classes with business logic. The bulk of our objects will be created in factories. However, there are still some objects that can be created in our classes with business logic that don't need to be made by a factory. This would be classes like value objects, entities, and collections. These classes don't have any logic in them that we would need to override so programming to implementation and instantiating them in our business logic classes with the new operator is fine. 
 
-### Service Locator pattern
+### DI Framework
+We mentioned earlier that we should create a factory that instantiates all of the objects with all of the new operators needed for the entry-point of our application. This can take a bit of time to code up. Dependency Injection frameworks were created in order to reduce the amount of code that needs to be typed up in order to instantiate your objects. You can instantiate the injector (sometimes referred to as the container) at the entry point of your application and use the injector to instantiate any dependencies needed for the entry point of your application.
