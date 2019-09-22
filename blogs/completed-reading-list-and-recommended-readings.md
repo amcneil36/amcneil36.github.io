@@ -1,0 +1,104 @@
+## Completed Reading Lists and Recommended Readings
+
+1. Kerievsky, Joshua. Refactoring to Patterns. Addison-Wesley, 2004.
+1. Martin, Robert. Clean Code: A Handbook of Agile Software Craftsmanship. Prentice Hall, 2009.
+1. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999.
+1. Martin, Robert. Clean Architecture: A Craftsman's Guide to Software Structure and Design. Prentice Hall, 2018.
+1. Mancuso, Sandro. The Software Craftsman: Professionalism, Pragmatism, Pride. Pearson Education, 2015.
+1. Beck, Kent. Test-Driven Development By Example. Addison-Wesley, 2003. 
+1. Bloch, Joshua. Effective Java. Pearson Education, 2018.
+1. Myers, Glenford. The Art of Software Testing. Word Associations, 2012.
+1. Feathers, Michael. Working Effectively with Legacy Code. Pearson Education, 2005.
+1. Hunt, Andrew and Thomas, David. The Pragmatic Programmer, From Journeyman to Master. Addison-Wesley, 2000.
+1. McConnell, Steve. Code Complete: A Practical Handbook of Software Construction. 2004.
+1. Bain, Scott. Emergent Design, The Evolutionary Nature of Professional Software Development. Addison-Wesley, 2008.
+1. Sterling, Christ and Barton, Brent. Managing Software Debt. Addison-Wesley, 2011.
+1. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.
+1. Cohn, Mike. User Stories Applied For Agile Software Development. Addison-Wesley, 2004
+1. Beck, Kent. Extreme Programming Explained, Embrace Change. Addison-Wesley, 2012.
+1. Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013. 
+1. Brechner, Eric. Agile Project Management with Kanban. Microsoft Press, 2015.
+1. Axelrod, Arnon. Complete Guide to Test Automation, Techniques, Practices, and Patterns for Building and Maintaining Effective Software Projects. Apress, 2018
+1. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.
+1. Fowler, Martin. Patterns of Enterprise Application Architecture. Addison-Wesley, 2003.
+1. Ingeno, Jospeh. Software Architect’s Handbook, Become a successful software architect by implementing effective architecture concepts. Packt, 2018.
+1. Duvall, Paul et al. Continuous Integration, Improving Software Quality and Reducing Risk. Pearson Education, 2007.
+1. Narayan, Sriram. Agile IT Organization Design: For Digital Transformation And Continuous Delivery. Addison-Wesley, 2015.
+1. Gregory, Janet and Crispin, Lisa. More Agile Testing. Addison-Wesley, 2014.
+1. Goldstein, Ilan. Scrum Shortcuts without Cutting Corners, Agile Tactics, Tools, & Tips. Addison-Wesley, 2014.
+1. Wiegers, Karl and Beatty, Joy. Software Requirements. Microsoft Press, 2013.
+1. Kim, Gene, et al. The DevOps Handbook: How to Create World-Class Agility, Reliability, and Security in Technology Organizations. IT Revolution, 2016.
+1. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018. 
+1. Wolff, Eberhard. A Practical Guide to Continuous Delivery. Addison-Wesley, 2017.
+1. Learning Continuous Integration with Jenkins, A beginner's guide to implementing Continuous Integration and Continuous Delivery using Jenkins 2, 2nd Edition – Nikhil Pathania
+1. Gruver, Gary, et al. A Practical Approach to Large-Scale Agile Development: How HP Transformed LaserJet FutureSmart Firmway. Addison-Wesley, 2015.
+1. Swartout, Paul. Continuous Delivery and DevOps – A Quickstart Guide, Start your journey to successful adoption of CD and DevOps. Packt, 2018.
+1. Crispin, Lisa and Gregory, Janet. Agile Testing, A Practical Guide for Testers and Agile Teams. Addison-Wesley, 2008.
+1. Markus Gärtner. ATDD by Example, A Practical Guide to Acceptance Test-Driven Development. Addison-Wesley, 2013.
+1. Shore, James and Warden, Shane. The Art of Agile Development. O'Reilly Media, 2008.
+1. Cohn, Mike. Agile Estimation and Planning. Pearson Education, 2006.
+1. Freeman, Steve. Growing Object-Oriented Software, Guided by Tests. Addison-Wesley, 2012. 
+1. Boyde, Joshua. A Down-To-Earth Guide To SDLC Project Management, Getting your system/software development life cycle project successfully across the line using PMBOK adaptively. 2014.
+1. Pichler, Roman. Agile Product Management With Scrum. Addison-Wesley, 2010.
+1. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.
+1. Lacey, Mitch. The Scrum Field Guide, Agile Advice for Your First Year and Beyond. Addison-Wesley, 2015.
+1. Appelo, Jurgen. Management 3.0: Leading Agile Developers, Developing Agile Leaders. Addison-Wesley, 2011.
+1. Craig Larman and Bas Vodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012.
+1. Craig Larman and BasVodde. Scaling Lean & Agile Development: Thinking and Organizational Tools for Large-Scale Scrum. Addison-Wesley, 2008.  
+1. Larman, Craig. Vodde, Bas. Large-Scale Scrum: More with LeSS. Addison-Wesley, 2014.
+1. Pearl, Mark. Code with the Wisdom of the Crowd: Get Better Together with Mob Programming. The Pragmatic Programmers, 2018.
+1. Reinertsen, Donald. The Principles of Product Development Flow: Second Generation Lean Product Development. Celeritas Publishing, 2009.
+1. Poppendieck, Mary and Poppendieck, Tom. Lean Software Development: An Agile Toolkit. Addison-Wesley, 2015.
+1. Poppendieck, Mary and Poppendieck, Tom. Implementing Lean Software Development, From Concept to Cash. Addison-Wesley, 2015.
+1. Mary and Tom Poppendieck. Leading Lean Software Development: Results Are Not The Point. Addison-Wesley, 2009. 
+1. Williams, Laurie and Kessler, Robert. Pair Programming Illuminated. Addison-Wesley, 2002.
+1. Denning, Stephen. The Age of Agile. Amacom, 2018.
+1. Grosse, Alexander and Loftesness, David. Scaling Teams, Strategies for Building Successful Teams and Organizations. O'Reilly Media Inc., 2017.
+1. Leffingwell, Dean. Agile Software Requirements, Lean Requirements Practices for Teams, Programs, and the Enterprise. Addison-Wesley, 2011.
+1. Sonmez, John. The Complete Software Developer's Career Guide: How to Learn Your Next Programming Language, Ace Your Programming Interview, and Land The Coding Job Of Your Dreams. Simple Programmer, 2015.
+1. Catlin, Karen. Vijayashanker, Poornima. Present! A techies guide to public speaking. 2015.
+1. Sonmez, John. Soft Skills: The software devleoper's life manual. Manning Publications, 2015.
+	Highsmith, Jim. Agile Project Management, Creating Innovative Products. Addison-Wesley, 2004.
+1. Cote, Michael. Monolithic Transformation: Using DevOps, Agile, and Cloud Platforms to Execute a Digital Transformation Strategy. Pivotal Software, 2019.
+1. Crockford, Douglas. JavaScript: The Good Parts, Uahoo! Inc. 2008.
+1. Sefanov, Stoyan. JavaScript Patterns: build Better Applications with Codign and Design Patterns. Yahoo!, Inc. 2010.
+1. Wampler, Dean. Functional Programming for Java Developers. O'Reilly Media Inc., 2011.
+1. Haverbeke, Marijn. Eloquent JavaScript. No Starch Press, 2011.
+1. Herman, David. Effective JavaScript: 68 Specific Ways To Harness The Power Of JavaScript. Addison-Wesley, 2013.
+1. Nolasco, Fabio. Professional Front-End Architecdture: Helping Front-End Development Reach Its Full Potential. 2018.
+1. Davis, Jennifer and Daniels, Ryn. Effective DevOps: Building a Culture of Collaboration, Affinity, and Tooling at Scale. O'Reilly media, Inc. 2018.
+1. Lopp, Michael. Being Geek: The software Developer's Career Handbook. O'Reilly, 2010.
+1. Klaus, Peggy. The Hard Truth About Soft Skills: Workplace Lessons Smart People Wish They'd Learned Sooner. 2010.
+1. Anderson, Jonathan et al. Effective UI: The Art of Building Great User Experience in Software. O'Reilly, 2010.
+1. Grant, Will. 101 UX Principles. Packt Publishing, 2018.
+1. Ou, Andrew. The Tao of Design and User Experience: The Best Experience is no Experience. 2017.
+1. Canziba, Elvis. Hands On UX Design For Developers: Design, Prototype, and Implement compelling user experiences from scrtch. Packt Publishing Ltd, 2018.
+1. Glass, Robert. Facts and Fallacies of Software Engineering. Addison-Wesley, 2002.
+1. Derby, Esther and Larsen, Diana. Agile Retrospectives: Making Good Teams Great. The Pragmatic Programmers, 2006.
+1. Ford, Neal. Functional Thinking. O'Reilly Media Inc, 2014.
+1. Wall, Richard. Agile Project Management: A Step by step guide to understanding the agile project management lifecycle for beginners. 2017.
+1. Gruver, Gary And Mouser, Tommy. Leading The Transformation: Applying Agile and DevOps Principles at Scale. IT Revolution, 2015.
+1. Adkins, Lyssa. Coaching Agile Teams. Addison-Wesley, 2010.
+1. Tyler, Josh. Building Great Software Engineering Teams. Apress, 2015.
+1. Lopp, Michael. Managing Humans: Biting and Humorous Tales of a Software Engineering Manager. Apress, 2016.
+1. Hesselberg, Jorgen. Unlocking Agility: An Insider's Guide to Agile Enterprise Transformation. Addison-Wesley, 2019.
+1. Berg, Cory. Software ++: Must-Have Skills for Software Engineers. 2015.
+1. Unger, Russ and Chandler, Carolyn. A Project Guide to UX Design: For user experience designers in the field or in the making. New Riders, 2012.
+1. DeMarco, Tom and Lister, Tim. Peopleware: Productive Projects and Teams. Addison-Wesley, 2014.
+1. Brooks Jr., Frederick P. The Mythical Man-Month, Anniversary Edition: Essays On Software Engineering. Addison-Wesley, 2010.
+1. Richardson, Jared and Gwaitney, William A. Ship it!: A Practical Guide to Successful Software Projects. The Pragmatic Programmers, 2011.
+1. Brown, William H et al. Anti Patterns: Refactoring Software, Architectures, and Projects in Crisis. John Wiley & Sons. Inc, 1998.
+1. Rasmusson, Jonathan. The Agile Samurai: How Agile Masters Deliver Great Software. The Pragmatic Programmers, 2010.
+1. Newman, Sam. Building Microservices: Designing Fine-Grained Systems. O'Reilly Media, Inc., 2016.
+1. Carnegie, Dale. How To Win Friends and Influence People. 1936.
+1. Shalloway, Allan and Beaver, Guy. Lean-Agile Software Development: Achieving Enterprise Agility. Addison-Wesley, 2010.
+1. Cummings, Glenn. Emotional Intelligence: The Most Complete Blueprint to Develop And Boost Your EQ. Improve Your Social Skills, Emotional Agility and Discover Why it Can Matter More Than IQ. Carol Brown, 2019.
+1. Goleman, Brandon. Emotional Intelligence: For a Better Life, success at work, and happier relationships. Improve Your Social Skills, Emotional Agility and Discover Why it Can Matter More Than IQ. 2019.
+1. Coleman, Dan. Emotional Intelligence : Improve Your EQ For Business And Relationships. 2018.
+1. Coleman, Mark. Emotional Intelligence Practical Guide: How to Retrain Your Brain to Win Friends, Influence People, Improve your Social Skills, Achieve Happier Relationships, and Raise Your EQ . 2019.
+1. Ousterhout, John. A Philosophy of Software Design. Yaknyam Press, 2018.
+1. Fields, Jay. Working Effectively with Unit Tests. Lean Publishing, 2014.
+1. Tuhovsky, Ian. Communication Skills Training: A Practical Guide to Improving Your Social Intelligence, Presentation, Persuasion and Public Speaking. 2015.
+1. MacLeod, Chris. The Social Skills Guidebook: Manage Shyness, Improve Your Conversations, and Make Friends, Without Giving Up Who You Are. 2016.
+1. McConnell, Steve. Software Estimation: Demystifying the Black Art. Microsoft Press, 2006.
+1. Fournier, Camille. The Manager's Path. A Guide for Tech Leaders Navigating Growth & Change. O'Reilly Media, 2017.
