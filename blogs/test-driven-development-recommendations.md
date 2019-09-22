@@ -48,7 +48,7 @@ assertThat(adder.add(2,3), is(5));
 ```
 We can now create an Adder class with an add method to remove the compilation error
 ```
-public class Adder{
+public class Adder {
  public int add(int n1, int n2){
   return 0;
  }
@@ -85,9 +85,10 @@ public class Adder{
 }
 ```
 Our test of adding 2 and 3 now passes. Instead of refactoring to completely solve the problem in a more generic way, we write a second test that is similar to the first test but with slightly different numbers.
-
+```
 Adder adder = new Adder();
 assertThat(adder.add(6,7), is(13));
+```
 This test fails since our code is hard-coded to return 5. We cannot update our 'add' method to return 13 to pass this test since that will cause the first test to fail.
 
 We have to think of a generic way to solve the problem. We brainstorm a generic way to solve the problem.
