@@ -131,11 +131,10 @@ add two negative numbers
 ```
 We decide to work on adding two negative numbers
 ```
-# neither of these two lines will compile but that is OK
 Adder adder = new Adder();
 assertThat(adder.add(-1,-2), is(-3));
 ```
-Now that we have written our test, we run it. In this situation, the test actually passes because the implementation code that we previously wrote for adding two positive numbers happens to cause this test to pass. Most of the times that we add a test, it will fail. Due to the example I picked, this happened to not be the case. We are about to start writing our last test but it just dawned on us that someone could pass in 0 as input. For whatever reason, we decide this is a valid scenario we need to test. As a result, we add it to our list
+Now that we have written our test, we run it. In this situation, the test actually passes because the implementation code that we previously wrote for adding two positive numbers happens to cause this test to pass. Most of the time that we add a test, it will fail. Due to the example I picked, this happened to not be the case. We are about to start writing our last test but it just dawned on us that someone could pass in 0 as input. For whatever reason, we decide this is a valid scenario we need to test. As a result, we add it to our list
 ```
 add two positive numbers # completed
 add one positive and one negative number
@@ -146,13 +145,13 @@ add one zero and one non-zero number
 We decide to write the test for adding a positive and negative number. Just because of the nature of this example, the test passes when we run it without us having to add or modify any implementation code. This will usually not be the case. We continue on and write the next test and repeat the process until all test cases pass. We are now done!
 
 #### Additional Recommendations/Questions answered
-Write the unit test backwards
+##### Write the unit test backwards
 Write tests in this order:
 1. write the test name so we know what we are testing
-2. write the call to the code
+2. write the call to the method
 3. write the expectation/assertion
 4. write the setup
-5. write the teardown
+5. write the teardown  
 The purpose of this order is to focus on what we want the system to do rather than how we want it to do it
 
 ##### Only write enough implementation code to pass your current failing test case, ignoring other planned test cases
