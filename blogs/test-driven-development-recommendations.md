@@ -18,11 +18,10 @@ Here are the steps explained at a lower level that I recommend using for impleme
 10. Write a failing unit test
 11. Write the minimum amount of code to make the test pass
 12. Refactor
-13. Repeat Step 9 until all unit tests are done
-14. Repeat Step 8 until the acceptance test is passing
+13. Repeat from Step 9 until all unit tests are done
+14. Repeat from Step 8 until the acceptance test is passing
 15. Refactor
-16. Repeat Step 4 until all given/when/thens have been tested
-17. Repeat Step 3 until the user story is completed
+16. Repeat from Step 4 until all given/when/thens have been tested
 
 ### Recommendations for brainstorming scenarios to test
 When brainstorming which acceptance tests to write, we should try to upfront brainstorm most of the scenarios that we might want to eventually go on to test. However, it is not necessarily the case that we will be able to upfront come up with every scenario that we will want for the user story. It may be the case that as we start coding up the story, we learn about more scenarios that we had not thought about before. That is OK. We can add scenarios to our list at any time as we work on the story. The same holds true for brainstorming unit test cases.
