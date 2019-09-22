@@ -42,7 +42,7 @@ Person person = retrievePersonFromDatabase();
 .
 .
 ```
-Any time that you see a source code documentation explaining what a block of code does, you can replace the block of code with a private method and remove the source code documentation. This makes the code cleaner and quicker to read.
+Any time that you see a source code documentation explaining what a block of code does, you can replace the block of code with a private method and remove the source code documentation.
 
 Another technique for eliminating source code is introducing an explaining variable. Suppose we have the following source code and source code doc:
 ```
@@ -59,11 +59,15 @@ if (person.age > 18){
 This can be refactored into 
 ```
 .
+.
 boolean isPersonAnAdult = person.age > 18
 if (isPersonAnAdult){
 .
+.
 }
 .
+.
 ```
+Having descriptive variable and method names reduces the need for source code comments. We end up not needing to use source code comments to explain what our code does because that is already covered by our API documentation, our method names, and our variable names. For private methods and private variables, feel free to make their name longer if that is what it takes to make them understood. Since private methods and variables only exist in the class, you can make them very long and they will not clutter up consuming code since consuming code cannot call into them.
 #### Documenting intention
 Sometimes you might look at code and ask "why was this coded this way? Shouldn't we have just coded it this other way instead?" Perhaps there is a one-off scenario and you needed someone coded a specific way for a certain reason. Documenting the reason for taking a certain approach could prevent future time being wasted by another developer trying to refactor the code to an approach you already tried that didn't work. Another example of this would be having your code not check for something 
