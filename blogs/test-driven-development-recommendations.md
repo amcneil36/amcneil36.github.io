@@ -31,5 +31,5 @@ When brainstorming which acceptance tests to write, we should try to upfront bra
 When it comes to choosing which failing acceptance test to write next, we should choose a simple happy path.<supb</sup> This will give us early confidence about our progress of the user story. The sad paths should be left for last. When brainstorming which failing unit test to write next, we can follow the same approach that is used for determining the acceptance test to write. It is important to note that once we write a failing acceptance test, we don't want to write another failing acceptance test until we got our acceptance test passing. Focusing on one acceptance test at a time will make it easier. The same could be said for unit tests. We would ideally have one failing acceptance test and one failing unit test at a time.
 
 ## Sources
-a. Freeman, Steve. Growing Object-Oriented Software, Guided by Tests. Addison-Wesley, 2012.
+a. Freeman, Steve. Growing Object-Oriented Software, Guided by Tests. Addison-Wesley, 2012.  
 b. Beck, Kent. Test-Driven Development By Example. Addison-Wesley, 2003.
