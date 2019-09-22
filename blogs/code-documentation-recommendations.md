@@ -73,3 +73,6 @@ Having descriptive variable and method names reduces the need for source code co
 So when does it makes sense to use source code documentation? The most common and most reasonable time to make a source code documentation is when you are documenting intent. Sometimes you might look at code and ask "why was this coded this way? Shouldn't we have just coded it this other way instead?" Perhaps there is a one-off scenario and you needed something coded a specific way for a certain reason. Documenting the reason for taking a certain approach could prevent future time being wasted by another developer trying to refactor the code to an approach you already tried that didn't work.
 
 Another example of this would be having your code not check for a scenario that might appear to others like it should be accounted for. You can drop a source code comment explaining why you didn't need to account for that particular scenario. You can also drop a source code comment when you account for a scenario that might look like to others that it doesn't need to be accounted for.
+
+## Sources
+1. Martin, Robert. Clean Code: A Handbook of Agile Software Craftsmanship. Prentice Hall, 2009.
