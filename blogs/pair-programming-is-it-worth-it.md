@@ -47,7 +47,7 @@ So what if our team does do pair programming? Would we pair program every task? 
 6. Williams, Laurie and Kessler, Robert. Pair Programming Illuminated. Addison-Wesley, 2002.  
 7. Martin, Robert. The Clean Coder. Prentice Hall, 2011.  
 8. Beck, Kent and Andres, Cynthia. Extreme Programming Explained. Addison-Wesley, 2004.  
-9. Axelrod, Arnon. Complete Guide to Test Automation. Apress, 2018  
+9. Axelrod, Arnon. Complete Guide to Test Automation, Techniques, Practices, and Patterns for Building and Maintaining Effective Software Projects. Apress, 2018  
 10. Shore, James and Warden, Shane. The Art of Agile Development. O'Reilly Media, 2008.  
 11. Craig Larman and Bas Vodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012.  
 12. Craig Larman and BasVodde. Scaling Lean & Agile Development: Thinking and Organizational Tools for Large-Scale Scrum. Addison-Wesley, 2008.  
