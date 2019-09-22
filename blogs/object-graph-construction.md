@@ -84,7 +84,14 @@ Now we can instantiate a PersonRepository at the entry-point of our application 
 
 So when deciding between constructor and method injection, I prefer constructor injecting dependencies that are known at compile time and method injecting dependencies that are known only at runtime. This allows for your objects to be created at the entry-point of the application. Sometimes you will depend on some 3rd party classes that were not designed this way so you could end up needing to create a factory method for instantiating those 3rd party classes.
 
-### Factory recommendations
+### Another scenario where it makes sense to make a factory
 We talked about needing to make factories in scenarios where we depend on classes who have some constructor arguments not known until runtime. There is another scenario in which a factory might make sense. The entry-point of our application might have 30 new operators if all of the logic for creating these dependencies is inside of the entry-point of our application. Instead of doing this, we should move the creational logic to a factory and just have the entry-point call into a factory to get the dependencies it needs. Since we know that factories are important, let's talk about some recommendations for them.
 
+### Factory recommendations
+Keep business logic out of factories. Factories should primarily just be called 'new' one or more times.
 
+Objects that are needed for similar scenarios should go on the same factory in different create methods.
+
+Just like any other classes, place dependencies known at compile time on the factory's constructor and dependencies known at runtime on the factory's method signatures.
+
+Have the factory make direct dependencies that are needed. For example, suppose that your class needs an instance of A in order to create an instance of B.  Furthermore, suppose our application needs to call methods on B but doesn't need to call any methods on A. We should have a factory method that internally creates an instance of A then an instance of B and returns B. In other words, our factories should create the objects we directly need instead of objects that are only used to create another object. This helps simplify consuming classes.  
