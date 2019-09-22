@@ -21,4 +21,30 @@ Documenting behavior instead of implementation has the added benefit that we do 
 When it comes to testing, we should also be testing our behavior. We essentially just need to make sure that our API does what our documentation says it does. Testing behavior also has the added benefit of not needing to fix all of the tests after every minor refactoring.
 
 ### Source Code Documentation
-As stated above, we are considering source code documentation to be any type of documentation that someone looking at the source code might see. Most people who are calling into your API would never look at any of your source code documentation. The people who would read the source code documentation would be anyone who is a contributor to the repository that is storing the source code. As a result, source code documentation is more intended to help out the developers who are making changes to the source code.
+As stated above, we are considering source code documentation to be any type of documentation that someone looking at the source code might see. Most people who are calling into your API would never look at any of your source code documentation. The people who would read the source code documentation would be anyone who is a contributor to the repository that is storing the source code. As a result, source code documentation is more intended to help out the developers who are making changes to the source code. Unlike public API documentation, we really shouldn't need a lot of source code documentation. In many cases, there are ways to extract methods with a descriptive name to eliminate source code comments. Suppose we have this method with a source code doc explainign what a clump of code does:
+```
+public void doSomething(){
+.
+.
+// retrieves person from the database
+Transaction transaction = openTransaction();
+Connection connection = establishConnection();
+Person person = personDAO.retrievePerson();
+connection.close();
+transaction.close();
+.
+.
+}
+```
+This logic could be refactored to a private method. After that, doSomething would look like this:
+```public void doSomething(){
+.
+.
+Person person = retrievePersonFromDatabase();
+.
+.
+}
+```
+Any time that you see a source code documentation explaining what a block of code does, you can replace the block of code with a private method and remove the source code documentation. This makes the code cleaner and quicker to read.
+#### Documenting intention
+Sometimes you might look at code and ask "why was this coded this way? Shouldn't we have just coded it this other way instead?" Perhaps there is a one-off scenario and you needed someone coded a specific way for a certain reason. Documenting the reason for taking a certain approach could prevent future time being wasted by another developer trying to refactor the code to an approach you already tried that didn't work. Another example of this would be having your code not check for something 
