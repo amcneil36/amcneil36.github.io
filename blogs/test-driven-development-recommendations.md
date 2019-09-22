@@ -152,6 +152,7 @@ Write tests in this order:
 3. write the expectation/assertion
 4. write the setup
 5. write the teardown  
+
 The purpose of this order is to focus on what we want the system to do rather than how we want it to do it
 
 ##### Only write enough implementation code to pass your current failing test case, ignoring other planned test cases
