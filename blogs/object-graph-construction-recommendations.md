@@ -38,7 +38,7 @@ Now our Foo class is more re-usable. We are passing in the interface through the
 ### When using dependency injection, where do all of our objects get instantiated?
 We could keep having our classes ask for the consumer to pass in the dependencies they need instead of having our classes internally instantiate the dependencies they need. But if we keep doing this, we need these dependencies to get instantiated somewhere, right? Where do these dependencies all get instantiated? Ideally, they would get instantiated as close to the entry point of the application as possible.
 
-Suppose we create all of our objects at the entry point of the application. This maximizes re-usability as it pulls creational logic out of all of the other classes in the application. In order to get different behavior, we just re-wire the application differently. Having the objects created at the entry point simply just makes more locations where we can re-wire our application differently.
+Suppose we create all of our objects at the entry point of the application. This maximizes re-usability as it pulls creational logic out of all of the other classes in the application. In order to get different behavior, we just re-wire the application differently. Having the objects created at the entry point simply just makes more locations where we can re-wire our application differently since more classes are asking for dependencies instead of hard-coding them.
 
 #### Some objects cannot get instantiated at the entry point of our application due to having constructor arguments not known at compile time
 Let's say there is a PersonRepository class that inserts someone's name into the database.
