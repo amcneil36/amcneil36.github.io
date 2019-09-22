@@ -20,7 +20,7 @@ Documenting behavior instead of implementation has the added benefit that we do 
 
 When it comes to testing, we should also be testing our behavior. We essentially just need to make sure that our API does what our documentation says it does. Testing behavior also has the added benefit of not needing to fix all of the tests after every minor refactoring.
 
-### Source Code Documentation
+### Source Code Documentation Recommendation
 As stated above, we are considering source code documentation to be any type of documentation that someone looking at the source code might see. Most people who are calling into your API would never look at any of your source code documentation. The people who would read the source code documentation would be anyone who is a contributor to the repository that is storing the source code. As a result, source code documentation is more intended to help out the developers who are making changes to the source code. Unlike public API documentation, we really shouldn't need a lot of source code documentation. In many cases, there are ways to extract methods with a descriptive name to eliminate source code comments. Suppose we have this method with a source code doc explainign what a clump of code does:
 ```
 .
