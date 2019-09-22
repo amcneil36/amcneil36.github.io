@@ -34,7 +34,7 @@ Plan: we want to make a class called Adder with a method called 'add' which adds
 
 We will use TDD to solve this problem.
 
-The first step is to write down some scenarios that we are interested in testing. We should aim to get most of the scenarios written down right now. This list we are making is not finalized though. As we attempt to solve these problems, we might discover new problems. If this happens, we can always add or remove scenarios from our list of tests.
+The first step is to write down some scenarios that we are interested in testing. We should aim to get most of the scenarios written down right now but it may not be all of them.
 ```
 add two positive numbers
 add one positive and one negative number
@@ -54,7 +54,7 @@ public class Adder{
  }
 }
 ```
-We can run our test to see that it fails. We need to make it pass. There are three strategies that can be used to make the test pass.
+We can run our test to see that it fails. We need to make it pass. There are three strategies discussed in *Test-Driven Development By Example*<sup>b</sup> for how to make a unit test path.
 
 #### Solving the problem with 'fake it' strategy
 The 'fake it' strategy involves hard-coding a value to make your test pass and gradually replacing hard-coding with variables until you have real code. Using the 'fake it' strategy, we can make our pass test by just returning 5.
