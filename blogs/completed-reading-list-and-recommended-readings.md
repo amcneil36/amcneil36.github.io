@@ -1,5 +1,5 @@
 ## Completed Reading List and Recommended Readings
-In this post I am keeping track of all the books I have read and am documenting which of these books I feel are the best books to read. I started keeping track of these books in 2019 so I haven't included any books that I read prior to then.
+In this post I am keeping track of all the books I have read and am documenting which of these books I feel are the best books to read for people who are working in software development. I started keeping track of these books in 2019 so I haven't included any books that I read prior to then. Most of these books will be specific to software development. The remaining books will be on topics that are indirectly useful for software development like professionalism, presentation skills, social skills, etc. If I read any book that is not beneficial to software development, I will not include it on this list. Some of these books will only be relevant to software engineers and others will be relevant to all people on a software development team.
 
 ### Completed Reading List (since 2019)
 1. Kerievsky, Joshua. Refactoring to Patterns. Addison-Wesley, 2004.
