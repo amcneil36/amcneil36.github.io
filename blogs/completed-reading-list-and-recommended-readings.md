@@ -60,7 +60,7 @@
 1. Sonmez, John. Soft Skills: The software devleoper's life manual. Manning Publications, 2015.
 	Highsmith, Jim. Agile Project Management, Creating Innovative Products. Addison-Wesley, 2004.
 1. Cote, Michael. Monolithic Transformation: Using DevOps, Agile, and Cloud Platforms to Execute a Digital Transformation Strategy. Pivotal Software, 2019.
-1. Crockford, Douglas. JavaScript: The Good Parts, Uahoo! Inc. 2008.
+1. Crockford, Douglas. JavaScript: The Good Parts, Yahoo! Inc. 2008.
 1. Sefanov, Stoyan. JavaScript Patterns: build Better Applications with Codign and Design Patterns. Yahoo!, Inc. 2010.
 1. Wampler, Dean. Functional Programming for Java Developers. O'Reilly Media Inc., 2011.
 1. Haverbeke, Marijn. Eloquent JavaScript. No Starch Press, 2011.
