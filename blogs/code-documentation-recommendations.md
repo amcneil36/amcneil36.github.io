@@ -1,1 +1,2 @@
 ## Code Documentation Recommendations
+We will look into two different types of documentation: public API documentation and source code documentation. For purposes of this blog post, we will consider public API documentation to be any type of documentation that is used to explain code that consumers can call into. We will consider source code documentation to be any type of documentation that can only be seen by someone who is looking at the source code.
