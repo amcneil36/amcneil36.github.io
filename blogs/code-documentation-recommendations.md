@@ -46,27 +46,22 @@ Any time that you see a source code comment explaining what a block of code does
 
 Another technique for eliminating source code is introducing an explaining variable. Suppose we have the following source code and source code doc:
 ```
-.
-.
 // if the person is an adult
-if (person.age >= 18){
-.
-.
-}
-.
-.
+if (person.age >= 18)
 ```
 This can be refactored into 
 ```
-.
-.
 boolean isPersonAnAdult = person.age >= 18
-if (isPersonAnAdult){
-.
-.
-}
-.
-.
+if (isPersonAnAdult)
+```
+Lastly, we can replace magic numbers with constants that explain what the number represents:
+```
+// setting columnIndex to the age column
+columnIndex = 15
+```
+can become
+```
+columnIndex = AGE_COLUMN_INDEX
 ```
 Having descriptive variable and method names reduces the need for source code comments. We end up not needing to use source code comments to explain what our code does because that is already covered by our API documentation, our method names, and our variable names. For private methods and private variables, feel free to make their name longer if that is what it takes to make them understood. Since consumers do not have access to private methods and private variables, you can give them a much longer name without adding clutter to consuming code. 
 
