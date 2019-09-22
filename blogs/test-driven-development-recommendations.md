@@ -78,7 +78,7 @@ We now re-run our test to make sure it still passes.
 #### Solving the problem with Triangulation
 The triangulation strategy involves starting off by passing a failing test with a hard-coded return value just like how the 'fake it' strategy started
 ```
-public class Adder{
+public class Adder {
  public int add(int n1, int n2){
   return 5;
  }
@@ -92,12 +92,13 @@ assertThat(adder.add(6,7), is(13));
 This test fails since our code is hard-coded to return 5. We cannot update our 'add' method to return 13 to pass this test since that will cause the first test to fail.
 
 We have to think of a generic way to solve the problem. We brainstorm a generic way to solve the problem.
-
-public class Adder{
+```
+public class Adder {
  public int add(int n1, int n2){
   return n1 + n2;
  }
 }
+```
 We now have both of our tests passing which indicates that our code is working in a way that is generic. We may optionally delete one of the two tests if we feel it is no longer adding value.
 
 #### Solving the problem with Obvious implementation
