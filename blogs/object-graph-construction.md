@@ -101,3 +101,5 @@ It could be said that there are two types of classes. Factories and classes with
 
 ### DI Framework
 We mentioned earlier that we should create a factory that instantiates all of the objects with all of the new operators needed for the entry-point of our application. This can take a bit of time to code up. Dependency Injection frameworks were created in order to reduce the amount of code that needs to be typed up in order to instantiate your objects. You can instantiate the injector (sometimes referred to as the container) at the entry point of your application and use the injector to instantiate any dependencies needed for the entry point of your application. For medium to large projects, the DI frameworks can save many lines of code. For smaller projects, the DI framework wouldn't save enough lines of code to justify using.
+
+One of the downsides of DI frameworks is that they use reflection to look up classes so a lot of the errors you will encounter will be at runtime instead of compile time. However, this also has an upside in that it generally results in less places that you have to update your code when constructors are changed.
