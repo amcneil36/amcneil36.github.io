@@ -59,7 +59,7 @@ We can run our test to see that it fails. We need to make it pass. There are thr
 #### Solving the problem with 'fake it' strategy
 The 'fake it' strategy involves hard-coding a value to make your test pass and gradually replacing hard-coding with variables until you have real code. Using the 'fake it' strategy, we can make our pass test by just returning 5.
 ```
-public class Adder{
+public class Adder 
  public int add(int n1, int n2){
   return 5;
  }
@@ -67,7 +67,7 @@ public class Adder{
 ```
 Now that we were able to get this test to pass, we can refactor it.
 ```
-public class Adder{
+public class Adder {
  public int add(int n1, int n2){
   return n1 + n2;
  }
@@ -104,7 +104,7 @@ We now have both of our tests passing which indicates that our code is working i
 #### Solving the problem with Obvious implementation
 The two previous techniques involved solving the problem by taking small steps. This technique solves the problem with larger steps. When it is obvious as to what the implementation code should look like, go ahead and write it.
 ```
-public class Adder{
+public class Adder {
  public int add(int n1, int n2){
   return n1 + n2;
  }
