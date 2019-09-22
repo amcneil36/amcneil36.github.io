@@ -1,4 +1,4 @@
-## Object Graph Construction
+## Object Graph Construction Recommendations
 In your application, you may have many objects created and destroyed at different points in time. The way we code up our application has a significant difference on how th object graph will look. Should we try to have most of our objects instantiated at the entry-point of our application? Should objects only be instantiated right before they are used? Should our classes internally create all of the objects they need or should they ask for the objects they need? We will take a look.
 
 ### Having your class internally create objects it depends on
