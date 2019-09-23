@@ -22,7 +22,7 @@ We should have one backlog for each product so it is easy to see which work we s
 ### Demos
 Team members should spend no more than 2 hours each sprint preparing for the demos. Demos are intentionally held informally to make sure that team members have more time to work on the tasks that they pulled into the sprint.
 
-Team members should only demo user stories that satisfy the team's definition of done. This should be some sort of end to end functionality where the team members can start the application and show something of value to customers. Some teams will attempt to demo some partially complete funcdtionality where they kick off some test from the back-end. Or maybe they demo the design. Don't do this. Only demo completed end to end functionality that can be expressed in terms of business value and can be functionally understood by customers.
+Team members should only demo user stories that satisfy the team's definition of done. This should be some sort of end to end functionality where the team members can start the application and show something of value to customers. Some teams will attempt to demo some partially complete functionality where they kick off some test from the back-end. Or maybe they demo the design. Don't do this. Only demo completed end to end functionality that can be expressed in terms of business value and can be functionally understood by customers.
 
 ### Retros
 Talk about what went well and what can be improved. Try to tackle at least one improvement action each sprint provided that at least one improvement action was mentioned in the retro. Have someone volunteer to be responsible for seeing this improvement action go through.
@@ -33,7 +33,7 @@ It is generally a good idea for managers to step out of the retro so that teams 
 Sprints are generally 2-4 weeks in length. I tend to prefer the 2 week sprint the most. It is also the most common sprint length that teams go with. The longer the sprint is, the harder it is to come u with sprint plans that are likely to hold up. 
 
 ### Let the product owner prioritize work
-In traditional environements, a manager would choose which work to do. In Scrum, it is the product owner who chooses which work should be donne. The product owner will have a business background as well as domain knowledge and understanding of the customers so that he or she can determine which work needs to be done in which order.
+In traditional environments, a manager would choose which work to do. In Scrum, it is the product owner who chooses which work should be done. The product owner will have a business background as well as domain knowledge and understanding of the customers so that he or she can determine which work needs to be done in which order.
 
 ### Recommended development team size
 Development teams should typically have around 5-7 team members. Too few people results in not much room for specialization and too many people results in stepping on each other's toes.
