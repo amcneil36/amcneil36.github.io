@@ -107,9 +107,16 @@ In this post I am keeping track of all the books I have read and am documenting 
 
 ### Recommended Readings
 This list will be sorted from best to worst in terms of how much I recommend reading it. That being said, any book that makes this list is terrific. Many of the books that did not make this list were also very good but I wanted to keep this list small because throwing too many books at people might discourage them. 
+
 #### 1. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999.
+My favorite part about this book is that it talks about when to refactor code and when to leave it alone. I have worked on projects in the past where I later realized I made sub-optimal design decisions and was wondering when or if it would ever be appropriate to refactor the code I had written. This book is also very good at explaining different refactorings that can be done to improve the quality of the code. This book has helped my software development career more than any other book that I have read.
+
 #### 2. Martin, Robert. Clean Code: A Handbook of Agile Software Craftsmanship. Prentice Hall, 2009.
+This book helped me write code that is easier to read. It communicated the important of explaining yourself in code. It talks about how to document your code and where to document your code. It talks about setting up your code to follow the single responsibility principle. This book was written in a way that is easy for beginners to understand. I think all software engineers should read this book early in their career.
+
 #### 3. Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013.
+I have read a couple different books on scrum but this was the most complete one. This book goes really far in-depth on scrum. It talks about all of the recurring scrum meetings and what to do in the meetings. This book also talks about the various roles on the scrum team. You don't have to read multiple books on scrum. You can get everything you need to know about scrum from this book. You do not have to be a software engineer to read this book. Anyone on a scrum team can benefit from reading this book.
+
 #### 4. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.
 #### 5. Cohn, Mike. Agile Estimation and Planning. Pearson Education, 2006.
 #### 6. Carnegie, Dale. How To Win Friends and Influence People. 1936.
