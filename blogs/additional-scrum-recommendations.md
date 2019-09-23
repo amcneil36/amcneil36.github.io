@@ -1,5 +1,5 @@
 ## Additional Scrum Recommendations
-In this blog post, I'll include small tidbits of information useful for Scrum. There may be other blog posts that go further in-depth of some of these topics but this at least will provide a high-level overview of many important areas.
+In this blog post, I'll include small tidbits of useful information for Scrum. There may be other blog posts that go further in-depth of some of these topics but this at least will provide a high-level overview of many important areas.
 
 ### Sprint goal
 Each sprint should have a sprint goal which is the goal of what you want to accomplish this sprint.
@@ -35,3 +35,8 @@ Development teams should typically have aroudn 5-7 team members. Too few people 
 
 ### Recommended day to start and end the sprint
 A lot of people like Monday - Friday sprints because they are easy to visualize. The only downside of that is that sprints have the planning at the start of the sprint and the demos/reviews at the end of the sprint. Mondays and Fridays are the days where people are more likely to be on vacation since they are near the weekend. As a result, I personally like the Wednesday to Wednesday sprints. 
+
+### Retros
+Talk about what went well and what can be improved. Try to tackle at least one improvement action each sprint provided that at least one improvement action was mentioned in the retro. Have someone volunteer to be responsible for seeing this improvement action go through.
+
+It is generally a good idea for managers to step out of the retro so that teams can feel more comfortable communicating their recommendations.
