@@ -1,5 +1,5 @@
 ## Additional Scrum Recommendations
-In this blog post, I'll include small tidbits of useful information for Scrum. There may be other blog posts that go further in-depth of some of these topics but this at least will provide a high-level overview of many important areas.
+In this blog post, I'll include small tidbits of useful information for Scrum. There may be other blog posts that go further in-depth on some of these topics but this at least will provide a high-level overview of many important areas.
 
 ### Sprint goal
 Each sprint should have a sprint goal which is the goal of what you want to accomplish this sprint.
@@ -15,7 +15,7 @@ Leave most of the tasks in sprint planning unassigned. Since some tasks may take
 ### Product Backlog
 The product backlog needs to be sorted by priority with the highest priority items on the top. This way the team can primarily just look at the top of the backlog to see which work is about to be worked on.
 
-The further down the product backlog, the less sense it makes to break down the product backlog item (PBI). This is because when the PBI is farther away from being worked on, there is more time that will pass by until then at which point the market could change, the customer could change their mind, or some earlier PBI's that this PBI depends on got coded up in a different way which changes how this PBI needs to be done. So trying to break down a PBI that is farther out could result in a lot of your time going to waste.
+The further down the product backlog, the less sense it makes to break down the product backlog item (PBI). This is because when the PBI is farther away from being worked on, there is more time that will pass by until the PBI will be worked on at which point the market could change, the customer could change their mind, or some earlier PBI's that this PBI depends on got coded up in a different way which changes how this PBI needs to be done. So trying to break down a PBI that is farther out could result in a lot of your time going to waste.
 
 We should have one backlog for each product so it is easy to see which work we should work on at any point of time.
 
@@ -27,10 +27,10 @@ Team members should only demo user stories that satisfy the team's definition of
 ### Retros
 Talk about what went well and what can be improved. Try to tackle at least one improvement action each sprint provided that at least one improvement action was mentioned in the retro. Have someone volunteer to be responsible for seeing this improvement action go through.
 
-It is generally a good idea for managers to step out of the retro so that teams can feel more comfortable communicating their recommendations.
+It is generally a good idea for managers to step out of the retro so that team members can feel more comfortable communicating their recommendations.
 
 ### Sprint length
-Sprints are generally 2-4 weeks in length. I tend to prefer the 2 week sprint the most. It is also the most common sprint length that teams go with. The longer the sprint is, the harder it is to come u with sprint plans that are likely to hold up. 
+Sprints are generally 2-4 weeks in length. I tend to prefer the 2 week sprint the most. That is also the most common sprint length that teams go with. The longer the sprint is, the harder it is to come up with sprint plans that are likely to hold up. 
 
 ### Let the product owner prioritize work
 In traditional environments, a manager would choose which work to do. In Scrum, it is the product owner who chooses which work should be done. The product owner will have a business background as well as domain knowledge and understanding of the customers so that he or she can determine which work needs to be done in which order.
