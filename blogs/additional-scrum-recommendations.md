@@ -26,3 +26,9 @@ We should have one backlog for each product so it is easy to see which work we s
 Use a pull system where team members get to decide which tasks to sign up for.
 
 Leave most of the tasks in sprint planning unassigned. Since some tasks may take longer or shorter than predicted, we want for anyone to be able to pick up tasks as needed.
+
+### Let the product owner prioritize work
+In traditional environements, a manager would choose which work to do. In Scrum, it is the product owner who chooses which work should be donne. The product owner will have a business background as well as domain knowledge and understanding of the customers so that he or she can determine which work needs to be done in which order.
+
+### Recommended development team length
+Development teams should typically have aroudn 5-7 team members.
