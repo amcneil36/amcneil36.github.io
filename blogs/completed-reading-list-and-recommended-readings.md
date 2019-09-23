@@ -106,3 +106,15 @@ In this post I am keeping track of all the books I have read and am documenting 
 1. Fournier, Camille. The Manager's Path. A Guide for Tech Leaders Navigating Growth & Change. O'Reilly Media, 2017.
 
 ### Recommended Readings
+This list will be sorted from best to worst in terms of how much I recommend reading it. That being said, any book that makes this list is terrific. Many of the books that did not make this list were also very good but I wanted to keep this list small because throwing too many books at people might discourage them. 
+#### 1. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999.
+#### 2. Martin, Robert. Clean Code: A Handbook of Agile Software Craftsmanship. Prentice Hall, 2009.
+#### 3. Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013.
+#### 4. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.
+#### 5. Cohn, Mike. Agile Estimation and Planning. Pearson Education, 2006.
+#### 6. Carnegie, Dale. How To Win Friends and Influence People. 1936.
+#### 7. Beck, Kent. Test-Driven Development By Example. Addison-Wesley, 2003.
+#### 8. Freeman, Steve. Growing Object-Oriented Software, Guided by Tests. Addison-Wesley, 2012.
+#### 9. Craig Larman and Bas Vodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012.
+#### 10. Catlin, Karen. Vijayashanker, Poornima. Present! A techies guide to public speaking. 2015.
+#### 11. Bloch, Joshua. Effective Java. Pearson Education, 2018.
