@@ -130,6 +130,10 @@ This is one of those books that will indrectly help anyone who is working in sof
 Kent Beck is considered to be the founder of test driven development. So who better to read a book on TDD from than him? This book contains a lot of high quality information on how to use TDD. It includes writing test scenarios, choosing which scenarios to test first, and different strategies for making a test pass. The only downside of this book is that it is primarily just talking about using TDD for unit testing and does not cover Acceptance Test Driven Development (ATDD). That is OK though because there is a book on this list that covers ATDD.
 
 #### 8. Freeman, Steve. Growing Object-Oriented Software, Guided by Tests. Addison-Wesley, 2012.
+This has some overlap with Kent Beck's TDD book in that it also talks about TDD for unit tests. However, this book also talks about using TDD for acceptance tests (ATDD). It talks about combining TDD for unit tests and acceptance tests in something referred to as 'double loop TDD.' I felt that this book did a very good job explaining how to come up with acceptance test cases and strategies for making the acceptance tests pass. 
+
 #### 9. Craig Larman and Bas Vodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012.
+
+
 #### 10. Catlin, Karen. Vijayashanker, Poornima. Present! A techies guide to public speaking. 2015.
 #### 11. Bloch, Joshua. Effective Java. Pearson Education, 2018.
