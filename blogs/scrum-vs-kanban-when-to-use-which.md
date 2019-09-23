@@ -1,1 +1,2 @@
 ## Scrum vs Kanban: When to use which?
+Scrum and Kanban are two popular frameworks that some of the software development teams out there use. Scrum is currently used a little bit more than Kanban in software development but that does not necessarily mean that Scrum is inherently better than Kanban. There are some scenarios in which Scrum is the better fit for a development team and some scenarios in which Kanban is the better fit for the development team.
