@@ -133,7 +133,9 @@ Kent Beck is considered to be the founder of test driven development. So who bet
 This has some overlap with Kent Beck's TDD book in that it also talks about TDD for unit tests. However, this book also talks about using TDD for acceptance tests (ATDD). It talks about combining TDD for unit tests and acceptance tests in something referred to as 'double loop TDD.' I felt that this book did a very good job explaining how to come up with acceptance test cases and strategies for making the acceptance tests pass. 
 
 #### 9. Craig Larman and Bas Vodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012.
-
+This book talks about large scale software development which is something that there is not a lot of books on. It talks about effective ways to take large organizations that have many teams working on the same product and maximize the amount of value delivered. It talks about taking a large feature and breaking it down to smaller features and assigning features to feature teams. It also talks about cross-team dependencies and when to combine sprint retros/sprint reviews with other teams. It also talks about how many people of which role there need to be.
 
 #### 10. Catlin, Karen. Vijayashanker, Poornima. Present! A techies guide to public speaking. 2015.
+
+
 #### 11. Bloch, Joshua. Effective Java. Pearson Education, 2018.
