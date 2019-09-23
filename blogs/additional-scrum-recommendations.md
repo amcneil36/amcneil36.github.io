@@ -13,4 +13,4 @@ Sprints are generally 2-4 weeks in length. I tend to prefer the 2 week sprint th
 ### Demos
 Team members should spend no more than 2 hours each sprint preparing for the demos. Demos are intentionally held informally to make sure that team members have more time to work on the tasks that they pulled into the sprint.
 
-Team members should only demo user stories that satisfy the team's definition of done. This should be some sort of end to end functionality where the team members can start the application and show something of value to customers. 
+Team members should only demo user stories that satisfy the team's definition of done. This should be some sort of end to end functionality where the team members can start the application and show something of value to customers. Some teams will attempt to demo some partially complete funcdtionality where they kick off some test from the back-end. Or maybe they demo the design. Don't do this. Only demo completed end to end functionality that can be expressed in terms of business value and can be functionally understood by customers.
