@@ -46,6 +46,7 @@
   <li><a href="https://amcneil36.github.io/blogs/defect-management-recommendations">Defect Management Recommendations</a></li>
   <li><a href="https://amcneil36.github.io/blogs/technical-debt-recommendations">Technical Debt Recommendations</a></li>
   <li><a href="https://amcneil36.github.io/blogs/scrum-vs-kanban-when-to-use-which">Scrum vs Kanban: When to use which?</a></li>
+  <li><a href="https://amcneil36.github.io/blogs/additional-scrum-recommendations">Additional Scrum Recommendations</a></li>
   <li><a href="https://amcneil36.github.io/blogs/completed-reading-list-and-recommended-readings">Completed Reading List and Recommended Readings</a></li>
 </ul>
 </details>
