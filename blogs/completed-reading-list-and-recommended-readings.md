@@ -124,7 +124,11 @@ Despite the title not mentioning continuous integration, this book is heavy on c
 This is a book that anyone on a development team could read. I would not say that it has everything that you need to know about estimation and planning. I would recommend reading multiple books on estimation and planning. However, I consider this to be the best book on estimation and planning that I have read. This book talks about how to plan your sprints as well as how to plan your releases. It also talks about different ways to estimate, including a comparison of story points versus ideal days.  Mike Cohn is one of the original contributors to the scrum framework and really knows his stuff.
 
 #### 6. Carnegie, Dale. How To Win Friends and Influence People. 1936.
+This is one of those books that will indrectly help anyone who is working in software development. In fact, it will pretty much help anyone in any industry. It mentions ways to talk to people in such a way that will make it easier to become friends with people. I think that a lot of software engineers struggle with communication skills and I think this book makes a lot of great points that they could benefit from. Having effective communication skills can allow for a team to be significantly more productive.
+
 #### 7. Beck, Kent. Test-Driven Development By Example. Addison-Wesley, 2003.
+Kent Beck is considered to be the founder of test driven development. So who better to read a book on TDD from than him? This book contains a lot of high quality information on how to use TDD. It includes writing test scenarios, choosing which scenarios to test first, and different strategies for making a test pass. The only downside of this book is that it is primarily just talking about using TDD for unit testing and does not cover Acceptance Test Driven Development (ATDD). That is OK though because there is a book on this list that covers ATDD.
+
 #### 8. Freeman, Steve. Growing Object-Oriented Software, Guided by Tests. Addison-Wesley, 2012.
 #### 9. Craig Larman and Bas Vodde. Practices for Scaling Lean & Agile Development: Large, Multisite, and Offshore Product Development with Large-Scale Scrum. Addison-Wesley, 2012.
 #### 10. Catlin, Karen. Vijayashanker, Poornima. Present! A techies guide to public speaking. 2015.
