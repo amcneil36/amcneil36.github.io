@@ -1,5 +1,5 @@
 ## Additional Scrum Recommendations
-In this blog post, I'll include small tidbits of information useful for Scrum.
+In this blog post, I'll include small tidbits of information useful for Scrum. There may be other blog posts that go further in-depth of some of these topics but this at least will provide a high-level overview of many important areas.
 
 ### Sprint goal
 Each sprint should have a sprint goal which is the goal of what you want to accomplish this sprint.
@@ -30,5 +30,8 @@ Leave most of the tasks in sprint planning unassigned. Since some tasks may take
 ### Let the product owner prioritize work
 In traditional environements, a manager would choose which work to do. In Scrum, it is the product owner who chooses which work should be donne. The product owner will have a business background as well as domain knowledge and understanding of the customers so that he or she can determine which work needs to be done in which order.
 
-### Recommended development team length
-Development teams should typically have aroudn 5-7 team members.
+### Recommended development team size
+Development teams should typically have aroudn 5-7 team members. Too few people results in not much room for specialization and too many people results in stepping on each other's toes.
+
+### Recommended day to start and end the sprint
+A lot of people like Monday - Friday sprints because they are easy to visualize. The only downside of that is that sprints have the planning at the start of the sprint and the demos/reviews at the end of the sprint. Mondays and Fridays are the days where people are more likely to be on vacation since they are near the weekend. As a result, I personally like the Wednesday to Wednesday sprints. 
