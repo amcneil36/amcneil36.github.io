@@ -8,3 +8,15 @@ The best way to build up confidence when speaking to others is to start small an
 People really like to talk about themselves. Ask people about themself and let them talk about themself. They should be talking about themself for more than half of the conversation. Also show that you are a good listener.
 
 Another thing that is good to do is to say the person's name as you are talking to them. People like to hear their name. You can say "hey ___ how are you doing?" followed by "that is very interesting ___ ." This will also help you remember the person's name after you are done talking to them.
+
+### Ending conversations
+The easiest way to end a conversation is to just say something like "I gotta run, it was nice talking to you." If they ask where you are going, it is completely fine to just make something up.
+
+If you went up to talk to someone and they had to stop what you are doing to talk to you, you can end the conversation by saying "I'll let you get back to ___ . It was nice talking to you."
+
+###
+
+	• Awkward silence
+		○ "looks like we have said everything we have to say about that. So did you hear…
+	• Networking
+		○ Attempt to help others before they help you. Start talking to them well before you need them
