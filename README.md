@@ -41,6 +41,13 @@
 </details>
 
 <details>
+  <summary>Soft Skills</summary>  
+<ul>
+  <li><a href="https://amcneil36.github.io/blogs/professionalism">Professionalism</a></li>
+</ul>
+</details>
+
+<details>
   <summary>Miscellaneous</summary>  
 <ul>
   <li><a href="https://amcneil36.github.io/blogs/defect-management-recommendations">Defect Management Recommendations</a></li>
