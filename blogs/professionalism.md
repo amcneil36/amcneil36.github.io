@@ -40,3 +40,11 @@ It may appear to be a good idea to hoard knowledge in an attempt to make yoursel
 
 ### Don't threaten to quit
 Some people who are unsatisfied at work will threaten to quit their job in an attempt to try to get their manager to succumb to pressure and improve the state of things. This is a bad idea. If you do this, your manager will most likely start looking for your replacement and then fire you as soon as the replacement is found. Nobody likes negativity. If things at your job are unsatisfactory, try to talk to your manager in a professional way about potential improvements. If no improvements are able to be made, you can accept the situation and peacefully stay or you can start looking for jobs elsewhere. In either case, you should remain positive because being negative will only make the situation worse.
+
+## Sources
+1. Sonmez, John. Soft Skills: The software devleoper’s life manual. Manning Publications, 2015. Highsmith, Jim. Agile Project Management, Creating Innovative Products. Addison-Wesley, 2004.  
+1. Klaus, Peggy. The Hard Truth About Soft Skills: Workplace Lessons Smart People Wish They’d Learned Sooner. 2010.  
+1. Coleman, Mark. Emotional Intelligence Practical Guide: How to Retrain Your Brain to Win Friends, Influence People, Improve your Social Skills, Achieve Happier Relationships, and Raise Your EQ . 2019.  
+1. Cummings, Glenn. Emotional Intelligence: The Most Complete Blueprint to Develop And Boost Your EQ. Improve Your Social Skills, Emotional Agility and Discover Why it Can Matter More Than IQ. Carol Brown, 2019.  
+1. Goleman, Brandon. Emotional Intelligence: For a Better Life, success at work, and happier relationships. Improve Your Social Skills, Emotional Agility and Discover Why it Can Matter More Than IQ. 2019.  
+1.  Coleman, Dan. Emotional Intelligence : Improve Your EQ For Business And Relationships. 2018.
