@@ -44,6 +44,7 @@
   <summary>Soft Skills</summary>  
 <ul>
   <li><a href="https://amcneil36.github.io/blogs/professionalism">Professionalism</a></li>
+  <li><a href="https://amcneil36.github.io/blogs/social-skills">Social Skills</a></li>
 </ul>
 </details>
 
