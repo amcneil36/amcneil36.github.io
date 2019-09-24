@@ -15,3 +15,7 @@ Sometimes your manager will ask something like "hey will you be able to have thi
 
 ### Stay out of drama
 Don't go around starting drama, especially in public places with people around. If you have a problem with someone, it is generally better to address the issue with them 1 on 1 in a private area than in a public area like a meeting. When you try to address them in a meeting, it can come across more along the lines of trying to assert your dominance. If you still have issues after having a 1 on 1 meeting with a person, try speaking with your manager for advice. If that doesn't get you farther, consider having a conversation with HR.
+
+
+
+There is really not much of a benefit to ranting or complaining. If there is something out of your control, thinking about it or talking about it won't do anything. If something is in your control, you should brainstorm which steps would be appropriate to address the issue you are having. If you are not willing to take steps to address the issue, then don't think about it.
