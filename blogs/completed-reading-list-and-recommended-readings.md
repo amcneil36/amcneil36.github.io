@@ -59,8 +59,8 @@ In this post I am keeping track of all the books I have read and am documenting 
 1. Leffingwell, Dean. Agile Software Requirements, Lean Requirements Practices for Teams, Programs, and the Enterprise. Addison-Wesley, 2011.
 1. Sonmez, John. The Complete Software Developer's Career Guide. Simple Programmer, 2015.
 1. Catlin, Karen. Vijayashanker, Poornima. Present! A techies guide to public speaking. 2015.
-1. Sonmez, John. Soft Skills: The software devleoper's life manual. Manning Publications, 2015.
-	Highsmith, Jim. Agile Project Management, Creating Innovative Products. Addison-Wesley, 2004.
+1. Sonmez, John. Soft Skills: The software devleoper's life manual. Manning Publications, 2015.  
+1. Highsmith, Jim. Agile Project Management, Creating Innovative Products. Addison-Wesley, 2004.
 1. Cote, Michael. Monolithic Transformation: Using DevOps, Agile, and Cloud Platforms to Execute a Digital Transformation Strategy. Pivotal Software, 2019.
 1. Crockford, Douglas. JavaScript: The Good Parts, Yahoo! Inc. 2008.
 1. Sefanov, Stoyan. JavaScript Patterns: build Better Applications with Codign and Design Patterns. Yahoo!, Inc. 2010.
