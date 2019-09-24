@@ -24,3 +24,6 @@ If you are sitting at your desk and some people in the vicinity are starting som
 If it turns out that you are doing the majority of the talking, give some of the others an opportunity to speak if they would like to.  Do not finish the sentences of others as they are talking. Let them finish their sentences without interupting them.
 
 If someone brings up a nice idea in the meeting and you want talk in favor of that idea at a later point in time, reference the person who initially spoke about the idea so it doesn't look like you are trying to take credit for something they came up with. For example, you can say "I really like the idea that ___ came up with. That sounds to me like a good approach because ___ ."
+
+### Present potential alternatives when unsure about someone else's idea
+Earlier, we talked about not spending much time arguing or discussing something that is very minor. If there is a minor concern, it would still be OK to attempt to discuss it briefly. You just wouldn't try to discuss it for a long time. For bigger concerns, it would be OK to be willing to discuss it for a little longer. Any time that you do not like an idea that someone has or the way that some thing is done, you should present a potential alternative.
