@@ -14,9 +14,11 @@ The easiest way to end a conversation is to just say something like "I gotta run
 
 If you went up to talk to someone and they had to stop what you are doing to talk to you, you can end the conversation by saying "I'll let you get back to ___ . It was nice talking to you."
 
-###
+### How to deal with awkward silence
+If you are in a meeting and a lengthy silence appears out of no where, you can say "looks like we have said everything we have to say about that. So did you hear ___ ."
 
-	• Awkward silence
-		○ "looks like we have said everything we have to say about that. So did you hear…
-	• Networking
+### Networking
+
+
+• Networking
 		○ Attempt to help others before they help you. Start talking to them well before you need them
