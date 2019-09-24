@@ -47,4 +47,5 @@ Some people who are unsatisfied at work will threaten to quit their job in an at
 1. Coleman, Mark. Emotional Intelligence Practical Guide: How to Retrain Your Brain to Win Friends, Influence People, Improve your Social Skills, Achieve Happier Relationships, and Raise Your EQ . 2019.  
 1. Cummings, Glenn. Emotional Intelligence: The Most Complete Blueprint to Develop And Boost Your EQ. Improve Your Social Skills, Emotional Agility and Discover Why it Can Matter More Than IQ. Carol Brown, 2019.  
 1. Goleman, Brandon. Emotional Intelligence: For a Better Life, success at work, and happier relationships. Improve Your Social Skills, Emotional Agility and Discover Why it Can Matter More Than IQ. 2019.  
-1.  Coleman, Dan. Emotional Intelligence : Improve Your EQ For Business And Relationships. 2018.  
+1. Coleman, Dan. Emotional Intelligence : Improve Your EQ For Business And Relationships. 2018.  
+1. Carnegie, Dale. How To Win Friends and Influence People. 1936.
