@@ -18,7 +18,4 @@ If you went up to talk to someone and they had to stop what you are doing to tal
 If you are in a meeting and a lengthy silence appears out of no where, you can say "looks like we have said everything we have to say about that. So did you hear ___ ."
 
 ### Networking
-
-
-• Networking
-		○ Attempt to help others before they help you. Start talking to them well before you need them
+When it comes to networking, most people do not attempt to network with others until there is something they need. This makes it a lot more superficial and less likely that you will get help from others because it looks to them like you are only talking to them in an attempt to receive something from them. What you want to do is start networking with people well before you need help from them. In fact, you should attempt to help these people before attempting to get help from them. This approach will help you get a much bigger network than you would otherwise be able to get and you would also have each individual in the network more likely to help you.
