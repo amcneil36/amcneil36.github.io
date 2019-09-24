@@ -41,6 +41,9 @@ It may appear to be a good idea to hoard knowledge in an attempt to make yoursel
 ### Don't threaten to quit
 Some people who are unsatisfied at work will threaten to quit their job in an attempt to try to get their manager to succumb to pressure and improve the state of things. This is a bad idea. If you do this, your manager will most likely start looking for your replacement and then fire you as soon as the replacement is found. Nobody likes negativity. If things at your job are unsatisfactory, try to talk with your manager  or HR in a professional way about potential improvements. If no improvements are able to be made, you can accept the situation and peacefully stay or you can start looking for jobs elsewhere. In either case, you should remain positive because being negative will only make the situation worse.
 
+### How to deal with haters
+Don't. Haters are just looking for a reaction out of you. The more you think about them or the more you reply to them, the more you are doing what they want. Your best move is to just ignore them and keep going about your business.
+
 ## Sources
 1. Sonmez, John. Soft Skills: The software developer’s life manual. Manning Publications, 2015.  
 1. Klaus, Peggy. The Hard Truth About Soft Skills: Workplace Lessons Smart People Wish They’d Learned Sooner. 2010.  
