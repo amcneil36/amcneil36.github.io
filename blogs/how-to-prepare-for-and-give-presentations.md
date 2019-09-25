@@ -45,7 +45,7 @@ Sometimes you will get asked a complicated question that you know the answer to 
 ### How to become more confident at giving presentations
 We talked about how to prepare for a presentation and how to give a presentation. We briefly touched on building confidence earlier by recommending that you practice your presentation more times if you are less comfortable. This will build confidence. However, I don't think that is enough alone. I believe that most people who are thrown in front of thousands of people to give a presentation would be incredibly uncomfortable, even if they practiced many times.
 
-You can practice all you want but there is no substitution for the real thing. Some presentation skills will come through practice reps. Other presentation skills will come from doing the real thing.  
+You can practice all you want but there is no substitution for the real thing. Some presentation skills will come through practice reps. Other presentation skills will come from doing the real thing. I believe that you have to get up there for the real thing in order to fully develop your presentation skills. This means that the more presentations you give, the more comfortable you should become at giving presentations. 
 
 	slowly build confidence up through presenting in front of larger people
 	how to build confidence. work your way up presenting in front of more people. start with decent number of words on your slides and then slowly take some down. having a lot of slides makes people read your slides and not listen to you
