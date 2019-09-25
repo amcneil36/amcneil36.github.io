@@ -16,9 +16,8 @@ Create an outline before polishing your presentation. If you try to polish first
 
 For your title slide, you want to include your name, contact information, website, talk name, event name, and date. You can create an appendix at the end of your presentation if you want to give additional information.
 
+If you know anyone who will be in attendance, ask them what they want to get out of the presentation. There are two benefits of this. One benefit is that this information can help you make a presentation that will do a better job covering areas that the audience might be interested in.
 
-	• Title slide includes your name, contact information, website, talk name, event name, date
-	• Create appendix if you want to give additional information
 	• If you know anyone who will be in attendance, ask them what they want to get out of the presentation
 	• Practice your presentation many times
 	• don't memorize the presentation
