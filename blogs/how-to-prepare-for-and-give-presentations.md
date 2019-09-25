@@ -3,7 +3,7 @@ This blog post is going to cover my recommendations for how to go about preparin
 1. Some speakers might be nervous but do a better job at hiding it than others  
 1. Suppose the average comfort level of presenters that you have watched is 5/10. This does not mean that the average person has a comfort level of 5/10 when presenting. Most people who are giving presentations have volunteered to do so. People who are less comfortable presenting are less likely to volunteer to present. The average person is going to be quite a bit less comfortable giving presentations than the average person who volunteers to give a presentation.
 
-So if you feel very uncomfortable about presenting, you probably aren't much more uncomfortable than the average person.
+So if you feel very uncomfortable about presenting, you probably aren't near as much uncomfortable relative to other people as you might think.
 
 
 
