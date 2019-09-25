@@ -45,6 +45,7 @@
 <ul>
   <li><a href="https://amcneil36.github.io/blogs/professionalism">Professionalism</a></li>
   <li><a href="https://amcneil36.github.io/blogs/social-skills">Social Skills</a></li>
+  <li><a href="https://amcneil36.github.io/blogs/how-to-prepare-for-and-give-presentations">How to prepare for and give presentations</a></li>
 </ul>
 </details>
 
