@@ -5,7 +5,7 @@ This blog post is going to cover my recommendations for how to go about preparin
 
 So if you feel very uncomfortable about presenting, you probably aren't near as much uncomfortable relative to other people as you might think. Even if you happen to be pretty uncomfortable relative to others, there are still many things you can do to become more comfortable at giving presentations. We will talk about those.
 
-### How to prepare for giving a presentation
+### Preparing for the presentation
 You should view the presentation you are giving as a conversation with the audience. You have studied a topic that interests you and you are interested to have a conversation with others on the topic. That's it. Let's talk about how to prepare the powerpoint.
 
 Create an outline before polishing your presentation. If you try to polish first, you risk needing to throw away a lot of your work in the event that you change your mind about which points you want to make. Your outline can start out as
@@ -18,14 +18,15 @@ For your title slide, you want to include your name, contact information, websit
 
 If you know anyone who will be in attendance, ask them what they want to get out of the presentation. This information can help you make a presentation that will do a better job covering areas that the audience might be interested in. 
 
-The more uncomfortable you feel about giving the presentation, the more you should practice giving the presentation. Give your presentation out loud when you are practicing to better simulate the real environment. You should avoid trying to memorize the presentation that you are giving. Instead, you should be able to talk freely as you are giving the presentation. 
+The more uncomfortable you feel about giving the presentation, the more you should practice giving the presentation. Give your presentation out loud when you are practicing to better simulate the real environment. 
 
-	• If you know anyone who will be in attendance, ask them what they want to get out of the presentation
-	• Practice your presentation many times
-	• don't memorize the presentation
-		○ only memorize the first 10 - 15 seconds of the presentation because that is the toughest on people's nerves
-	• practice giving a presentation in the room days in advance if possible
-	right before presentation ask peeps in front row. this will reveal q and a questions
+You should avoid trying to memorize the presentation that you are giving. Instead, you should be able to talk freely as you are giving the presentation. The only exception to this is the first portion of your presentation. You should memorize the first 10-15 seconds of the presentation because this part is usually toughest on people's nerves.
+
+When it is closer to the day of the presentation, practice giving a presentation in the room that you will be presenting in. One reason for doing this is to make sure that you are comfortable with the technology and getting your computer screen projected on the wall. Another reason that this will give more valuable practice reps since the practice is being done in the same room that the presentation will be given in.
+
+### The day of the presentation
+
+
 	• When presenting
 		○ We want body language to be open, not closed. This can be done through body language, eye contact, walking, tone.
 		○ Do not cross your arms, put hands in your pockets, or hide behind a computer/desk
