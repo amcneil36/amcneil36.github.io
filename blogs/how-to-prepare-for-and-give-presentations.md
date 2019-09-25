@@ -3,7 +3,7 @@ This blog post is going to cover my recommendations for how to go about preparin
 1. Some speakers might be nervous but do a better job at hiding it than others  
 1. Suppose the average comfort level of presenters that you have watched is 5/10. This does not mean that the average person has a comfort level of 5/10 when presenting. Most people who are giving presentations have volunteered to do so. People who are less comfortable presenting are less likely to volunteer to present. The average person is going to be quite a bit less comfortable giving presentations than the average person who volunteers to give a presentation.
 
-So if you feel very uncomfortable about presenting, you probably aren't near as much uncomfortable relative to other people as you might think.
+So if you feel very uncomfortable about presenting, you probably aren't near as much uncomfortable relative to other people as you might think. Even if you happen to be pretty uncomfortable relative to others, there are still many things you can do to become more comfortable at giving presentations. We will talk about those.
 
 
 
@@ -28,4 +28,5 @@ So if you feel very uncomfortable about presenting, you probably aren't near as 
 		○ do not look at the slides much when presenting
 		○ We want to be able to walk around freely
 		○ If you don't know the answer to a question someone asks, you can ask the crowd. If someone asks a really complicated question, you can tell them to see you afterwards
+	slowly build confidence up through presenting in front of larger people
 when something going wrong with technology and a tech person is fixing it, ask people stuff like where they traveled from
