@@ -43,4 +43,5 @@ A lot of people like Monday - Friday sprints because they are easy to visualize.
 
 ## Sources
 1. Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013.  
-2. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.
+2. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.  
+3. Derby, Esther and Larsen, Diana. Agile Retrospectives: Making Good Teams Great. The Pragmatic Programmers, 2006.
