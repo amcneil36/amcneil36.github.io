@@ -6,7 +6,13 @@ This blog post is going to cover my recommendations for how to go about preparin
 So if you feel very uncomfortable about presenting, you probably aren't near as much uncomfortable relative to other people as you might think. Even if you happen to be pretty uncomfortable relative to others, there are still many things you can do to become more comfortable at giving presentations. We will talk about those.
 
 ### How to prepare for giving a presentation
-You should view the presentation you are giving as a conversation with the audience. You have studied a topic that interests you and you are interested to have a conversation with others on the topic. Other people can give you their take on the topic and you can learn together.
+You should view the presentation you are giving as a conversation with the audience. You have studied a topic that interests you and you are interested to have a conversation with others on the topic. That's it. Let's talk about how to prepare the powerpoint.
+
+Create an outline before polishing your presentation. If you try to polish first, you risk needing to throw away a lot of your work in the event that you change your mind about which points you want to make. Your outline can start out as
+* Introduction
+* Motiveation
+* Takeaways (main point, meat of the talk)
+* Conclusion (re-hash of takeaways, optionally give audience an action item)
 
 
 
