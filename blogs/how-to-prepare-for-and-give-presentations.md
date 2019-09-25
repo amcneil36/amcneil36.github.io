@@ -12,17 +12,11 @@ Create an outline before polishing your presentation. If you try to polish first
 * Introduction
 * Motiveation
 * Takeaways (main point, meat of the talk)
-* Conclusion (re-hash of takeaways, optionally give audience an action item)
+* Conclusion (re-hash of takeaways, optionally give audience an action item)  
+
+For your title slide, you want to include your name, contact information, website, talk name, event name, and date. You can create an appendix at the end of your presentation if you want to give additional information.
 
 
-
-	• view the presentation as a conversation
-	• create an outline before polishing
-	• Outline:
-		○ Introduction
-		○ Motivation
-		○ Takeaways (main points, the meat of the talk)
-		○ Conclusion-re-hash takeaways, give audience an action item
 	• Title slide includes your name, contact information, website, talk name, event name, date
 	• Create appendix if you want to give additional information
 	• If you know anyone who will be in attendance, ask them what they want to get out of the presentation
