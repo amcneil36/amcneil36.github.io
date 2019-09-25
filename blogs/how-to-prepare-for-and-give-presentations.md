@@ -47,5 +47,7 @@ We talked about how to prepare for a presentation and how to give a presentation
 
 You can practice all you want but there is no substitution for the real thing. Some presentation skills will come through practice reps. Other presentation skills will come from doing the real thing. I believe that you have to get up there for the real thing in order to fully develop your presentation skills. This means that the more presentations you give, the more comfortable you should become at giving presentations. 
 
+Suppose you have the goal of eventually becoming good at giving a presentation in front of thousands of people. Should you try to start out by giving presentations in front of thousands of people and keep doing that? Or should you start giving presentations in front of a few people and gradually increase the amount of people you give presentations from as you become more comfortable? I tried starting out by giving a presentation in front of many people and it didn't work well for me. 
+
 	slowly build confidence up through presenting in front of larger people
 	how to build confidence. work your way up presenting in front of more people. start with decent number of words on your slides and then slowly take some down. having a lot of slides makes people read your slides and not listen to you
