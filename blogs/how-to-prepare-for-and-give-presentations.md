@@ -16,13 +16,14 @@ Create an outline before polishing your presentation. If you try to polish first
 
 For your title slide, you want to include your name, contact information, website, talk name, event name, and date. You can create an appendix at the end of your presentation if you want to give additional information.
 
-If you know anyone who will be in attendance, ask them what they want to get out of the presentation. There are two benefits of this. One benefit is that this information can help you make a presentation that will do a better job covering areas that the audience might be interested in. The second benefit is that this will help reveal the questions that might be asked in the Q&A session at the end of your presentation. 
+If you know anyone who will be in attendance, ask them what they want to get out of the presentation. This information can help you make a presentation that will do a better job covering areas that the audience might be interested in. 
 
 	• If you know anyone who will be in attendance, ask them what they want to get out of the presentation
 	• Practice your presentation many times
 	• don't memorize the presentation
 		○ only memorize the first 10 - 15 seconds of the presentation because that is the toughest on people's nerves
 	• practice giving a presentation in the room days in advance if possible
+	right before presentation ask peeps in front row. this will reveal q and a questions
 	• When presenting
 		○ We want body language to be open, not closed. This can be done through body language, eye contact, walking, tone.
 		○ Do not cross your arms, put hands in your pockets, or hide behind a computer/desk
