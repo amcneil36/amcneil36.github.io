@@ -5,6 +5,9 @@ This blog post is going to cover my recommendations for how to go about preparin
 
 So if you feel very uncomfortable about presenting, you probably aren't near as much uncomfortable relative to other people as you might think. Even if you happen to be pretty uncomfortable relative to others, there are still many things you can do to become more comfortable at giving presentations. We will talk about those.
 
+### How to prepare for giving a presentation
+You should view the presentation you are giving as a conversation with the audience. You have studied a topic that interests you and you are interested to have a conversation with others on the topic. Other people can give you their take on the topic and you can learn together.
+
 
 
 	• view the presentation as a conversation
