@@ -1,7 +1,11 @@
 ## How to prepare for and give presentations
 This blog post is going to cover my recommendations for how to go about preparing for and giving a presentation, presumably in front of a decent amount of people. Almost everyone feels a little uncomfortable getting up in front of a large group of people to give a presentation. If you see a lot of people giving presentations and do not feel that the presenters are nervous, think about the following:
 1. Some speakers might be nervous but do a better job at hiding it than others  
-1. Most people who give presentations have volunteered to do so. People who are less comfortable presenting are less likely to volunteer. 
+1. Suppose the average comfort level of presenters that you have watched is 5/10. This does not mean that the average person has a comfort level of 5/10 when presenting. Most people who are giving presentations have volunteered to do so. People who are less comfortable presenting are less likely to volunteer to present. 
+
+So if you feel very uncomfortable about presenting, it doesn't necessarily mean that you are quite a bit less comfortable than most people are.
+
+
 
 	• view the presentation as a conversation
 	• create an outline before polishing
