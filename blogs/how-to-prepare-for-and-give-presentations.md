@@ -33,6 +33,8 @@ When giving the presentation, your body language should be open. You do not want
 
 If the technology starts messing up in the middle of the presentation, do an ice breaker while the technology person is fixing the technology. Ask people where they came from or if they have any questions so far. If it has been a few minutes and the technology still hasn't been fixed, you can communicate that you will give the presentation without the slides.
 
+At the end of the presentation is the Q&A session. This is something many people are concerned about because someone in the audience could ask 
+
 		○ If you don't know the answer to a question someone asks, you can ask the crowd. If someone asks a really complicated question, you can tell them to see you afterwards
 	slowly build confidence up through presenting in front of larger people
 	how to build confidence. work your way up presenting in front of more people. start with decent number of words on your slides and then slowly take some down. having a lot of slides makes people read your slides and not listen to you
