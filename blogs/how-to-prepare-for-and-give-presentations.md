@@ -31,6 +31,8 @@ Around ten minutes before starting the presentation, walk down to the people in 
 
 When giving the presentation, your body language should be open. You do not want to cross your arms, put your hands in your pockets, or hide behind your desk. You especially don't want to be turning your back to the audience.  You should primarily be looking into the audience and not looking at your computer screen. If you are presenting in a large auditorium, look 2/3 of the way deep and towards the center. You should also be able to walk around freely as you are presenting.
 
+If the technology starts messing up in the middle of the presentation, do an ice breaker while the technology person is fixing the technology. Ask people where they came from or if they have any questions so far. If it has been a few minutes and the technology still hasn't been fixed, you can communicate that you will give the presentation without the slides. This is part of why you didn't memorize the presentation earlier when preparing.
+
 	• When presenting
 		○ We want body language to be open, not closed. This can be done through body language, eye contact, walking, tone.
 		○ Do not cross your arms, put hands in your pockets, or hide behind a computer/desk
@@ -39,5 +41,5 @@ When giving the presentation, your body language should be open. You do not want
 		○ We want to be able to walk around freely
 		○ If you don't know the answer to a question someone asks, you can ask the crowd. If someone asks a really complicated question, you can tell them to see you afterwards
 	slowly build confidence up through presenting in front of larger people
-	how to build confidence. work your way up presenting in front of more people. start with decent number of words on your slides and then slowly take some down
+	how to build confidence. work your way up presenting in front of more people. start with decent number of words on your slides and then slowly take some down. having a lot of slides makes people read your slides and not listen to you
 when something going wrong with technology and a tech person is fixing it, ask people stuff like where they traveled from
