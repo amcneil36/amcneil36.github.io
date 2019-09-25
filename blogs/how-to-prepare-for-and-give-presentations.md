@@ -16,7 +16,7 @@ Create an outline before polishing your presentation. If you try to polish first
 
 For your title slide, you want to include your name, contact information, website, talk name, event name, and date. You can create an appendix at the end of your presentation if you want to give additional information.
 
-If you know anyone who will be in attendance, ask them what they want to get out of the presentation. This information can help you make a presentation that will do a better job covering areas that the audience might be interested in. 
+If you know anyone who will be in attendance, ask them what they want to get out of the presentation. This information can help you make a presentation that will do a better job covering areas that the audience might be interested in. Depending on what extent you cover these areas, this information may also help reveal what the future questions in the Q&A session are going to be.
 
 The more uncomfortable you feel about giving the presentation, the more you should practice giving the presentation. Give your presentation out loud when you are practicing to better simulate the real environment. 
 
@@ -25,7 +25,7 @@ You should avoid trying to memorize the presentation that you are giving. Instea
 When it is closer to the day of the presentation, practice giving a presentation in the room that you will be presenting in. One reason for doing this is to make sure that you are comfortable with the technology and getting your computer screen projected on the wall. Another reason that this will give more valuable practice reps since the practice is being done in the same room that the presentation will be given in.
 
 ### The day of the presentation
-
+Show up early so you have some time to get the technology set up and can call someone if the technology isn't working. Around ten minutes before starting the presentation, walk down to the people in the front row and start having a conversation with them. Ask them what they want to get out of the presentation to again help reveal what might be asked in the Q&A session. Unlike when you asked this question many days ago, this time you don't need to change your presentation to account for what they want to get out of the presentation. Changing your presentation ten minutes before giving it generally does more harm than good.
 
 	• When presenting
 		○ We want body language to be open, not closed. This can be done through body language, eye contact, walking, tone.
