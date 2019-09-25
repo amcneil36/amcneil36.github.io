@@ -42,6 +42,10 @@ However, there is always a chance that you will get asked a question you are uns
 
 Sometimes you will get asked a complicated question that you know the answer to but it will take extremely long to explain and there is not sufficient time for the explanation. In that scenario, you can request that the person who asked the question come up to you afterwards when the Q&A session is done and people are filing out.
 
-		
+### How to become more confident at giving presentations
+We talked about how to prepare for a presentation and how to give a presentation. We briefly touched on building confidence earlier by recommending that you practice your presentation more times if you are less comfortable. This will build confidence. However, I don't think that is enough alone. I believe that most people who are thrown in front of thousands of people to give a presentation would be incredibly uncomfortable, even if they practiced many times.
+
+When it comes to practice and confidence, there is no substitution for 
+
 	slowly build confidence up through presenting in front of larger people
 	how to build confidence. work your way up presenting in front of more people. start with decent number of words on your slides and then slowly take some down. having a lot of slides makes people read your slides and not listen to you
