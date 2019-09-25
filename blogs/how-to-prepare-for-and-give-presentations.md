@@ -18,6 +18,8 @@ For your title slide, you want to include your name, contact information, websit
 
 If you know anyone who will be in attendance, ask them what they want to get out of the presentation. This information can help you make a presentation that will do a better job covering areas that the audience might be interested in. 
 
+The more uncomfortable you feel about giving the presentation, the more you should practice giving the presentation. Give your presentation out loud when you are practicing to better simulate the real environment. You should avoid trying to memorize the presentation that you are giving. Instead, you should be able to talk freely as you are giving the presentation. 
+
 	• If you know anyone who will be in attendance, ask them what they want to get out of the presentation
 	• Practice your presentation many times
 	• don't memorize the presentation
@@ -32,4 +34,5 @@ If you know anyone who will be in attendance, ask them what they want to get out
 		○ We want to be able to walk around freely
 		○ If you don't know the answer to a question someone asks, you can ask the crowd. If someone asks a really complicated question, you can tell them to see you afterwards
 	slowly build confidence up through presenting in front of larger people
+	how to build confidence. work your way up presenting in front of more people. start with decent number of words on your slides and then slowly take some down
 when something going wrong with technology and a tech person is fixing it, ask people stuff like where they traveled from
