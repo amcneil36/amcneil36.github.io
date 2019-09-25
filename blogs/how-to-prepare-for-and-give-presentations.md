@@ -25,7 +25,11 @@ You should avoid trying to memorize the presentation that you are giving. Instea
 When it is closer to the day of the presentation, practice giving a presentation in the room that you will be presenting in. One reason for doing this is to make sure that you are comfortable with the technology and getting your computer screen projected on the wall. Another reason that this will give more valuable practice reps since the practice is being done in the same room that the presentation will be given in.
 
 ### The day of the presentation
-Show up early so you have some time to get the technology set up and can call someone if the technology isn't working. Around ten minutes before starting the presentation, walk down to the people in the front row and start having a conversation with them. Ask them what they want to get out of the presentation to again help reveal what might be asked in the Q&A session. Unlike when you asked this question many days ago, this time you don't need to change your presentation to account for what they want to get out of the presentation. Changing your presentation ten minutes before giving it generally does more harm than good.
+Show up early so you have some time to get the technology set up and can call someone if the technology isn't working. 
+
+Around ten minutes before starting the presentation, walk down to the people in the front row and start having a conversation with them. Ask them what they want to get out of the presentation to again help reveal what might be asked in the Q&A session. Unlike when you asked this question many days ago, this time you don't need to change your presentation to account for what they want to get out of the presentation. Changing your presentation ten minutes before giving it generally does more harm than good.  
+
+When giving the presentation, your body language should be open. You do not want to cross your arms, put your hands in your pockets, or hide behind your desk. You especially don't want to be turning your back to the audience.  You should primarily be looking into the audience and not looking at your computer screen. If you are presenting in a large auditorium, look 2/3 of the way deep and towards the center. You should also be able to walk around freely as you are presenting.
 
 	• When presenting
 		○ We want body language to be open, not closed. This can be done through body language, eye contact, walking, tone.
