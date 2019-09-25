@@ -20,7 +20,7 @@ If you know anyone who will be in attendance, ask them what they want to get out
 
 The more uncomfortable you feel about giving the presentation, the more you should practice giving the presentation. Give your presentation out loud when you are practicing to better simulate the real environment. 
 
-You should avoid trying to memorize the presentation that you are giving. Instead, you should be able to talk freely as you are giving the presentation. The only exception to this is the first portion of your presentation. You should memorize the first 10-15 seconds of the presentation because this part is usually toughest on people's nerves.
+You should avoid trying to memorize the presentation that you are giving. Instead, you should be able to talk freely as you are giving the presentation. The only exception to this is the first portion of your presentation. You should memorize the first 10-15 seconds of the presentation because this part is usually toughest on people's nerves. You should also avoid putting a lot of text on the slides as that will cause people to be reading the powerpoint instead of listening to you.
 
 When it is closer to the day of the presentation, practice giving a presentation in the room that you will be presenting in. One reason for doing this is to make sure that you are comfortable with the technology and getting your computer screen projected on the wall. Another reason that this will give more valuable practice reps since the practice is being done in the same room that the presentation will be given in.
 
