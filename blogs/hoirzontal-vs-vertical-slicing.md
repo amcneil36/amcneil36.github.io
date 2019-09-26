@@ -4,6 +4,11 @@ In order to complete a feature for a customer, code changes must be made in one 
 
 When planning out a project, there are two different approaches that teams might take to plan out the order of the work to be done. One approach is **horizontal slicing** where a team will attempt to complete all work in one component before moving on to another component. This might involve trying to do the whole back-end before starting the back-end. It might involve trying to do the whole front-end before starting the back-end. Or, it might involve completing one component in the back-end and then completing one component in the front-end followed by returning to the back-end. The second approach is **vertical slicing** where a team will code up a portion of multiple components at a time in order to produce a small amount of end to end functionality.
 
+Suppose you are working on a feature that needs front-end and back-end code changes. Perhaps the front-end has multiple components and the back-end has multiple components. Should we do horizontal slicing or vertical slicing? Let's look at one at a time to see how it would look.
+
+### Horizontal Slicing
+As stated previously, horizontal slicing involves completing all code in one component before moving on to another component. start off tlaking about only front  end and only back end   
+
 
 
 
