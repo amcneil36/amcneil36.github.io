@@ -10,8 +10,7 @@ Suppose you are working on a feature that needs front-end and back-end code chan
 As stated previously, horizontal slicing involves completing all code in one component before moving on to another component. We will start off by discussing a simple example.
 
 #### Coding all of the back-end followed by coding all of the front-end
-In this scenario, we will start off by coding up all of the back-end for the next release. When it comes to demo'ing for feedback, we won't have much of anything to show at the demo because there is no front-end. We might end up showing some back-end tests that run
-
+In this scenario, we will start off by coding up all of the back-end for the next release. When it comes to demo'ing we won't get much feedback because there will be very little to show.
 
 
 
