@@ -33,10 +33,13 @@ Horizontal vs vertical slicing
 	• Explain difference between horizontal and vertical slicing
 	• Horizontal slicing examples
 		○ Do all back-end before all front-end
+		- code is not usable because it is stubbed
 		○ Do all front-end before all back-end
 	• Vertical slicing example
 		○ Can talk how some code might be stubbed out
 		○ Tracer bullet development
+		-code that is working and usable
+		-can release when behind schedule
 	• Which one should we do?
 	• Stategies for going vertical
 		○ User stories
