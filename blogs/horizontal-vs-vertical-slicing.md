@@ -10,8 +10,9 @@ Suppose you are working on a feature that needs front-end and back-end code chan
 As stated previously, horizontal slicing involves completing all code in one component before moving on to another component. We will start off by discussing a simple example.
 
 #### Coding all of the back-end followed by coding all of the front-end
-In this scenario, we will start off by coding up all of the back-end for the next release. When it comes to demo'ing we won't get much feedback because there is no front-end. You will be half way through the project with no working software to show in the demo. Stakeholders will become concerned that the project is not on target. Once the front-end starts coming along, you will finally start getting feedback at the demos since there will be usable functionality that the consumer can see in a demo. 
+In this scenario, we will start off by coding up all of the back-end for the next release. When it comes to demo'ing we won't get much feedback because there is no front-end. You will be half way through the project with no working software to show in the demo. Stakeholders will become concerned that the project is not on target. Once the front-end starts coming along, you will finally start getting feedback at the demos since there will be usable functionality that the customer can see in a demo. However, we don't want to wait until half way through the project to start getting feedback at the demo. The later you get feedback, the more code that gets tossed in the event that you adjust the code to the feedback. It is also more difficult to make changes later in plans since the release date is closer.
 
+Another issue with doing all of the back-end before all of the front-end is that the layers may not communicate together when you finally get around to integrating them. As you code up the back-end, you will need to make some assumptions about which information the front-end will be able to pass to the back-end. If these assumptions turn out to be wrong, you won't find out until after all of the back-end code has been written. This creates for more code getting tossed when there are integration issues.
 
 
 
