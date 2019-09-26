@@ -1,6 +1,6 @@
 ## Horizontal vs Vertical Slicing
 
-
+In order to complete a feature for a customer, code changes must be made in one or more components. Most of the time, there will be more than one components. The term 'component' just refers to a re-usable asset that is used to complete a portion of a feature. The front-end and back-end are both considered components. Within the back-end there could be multiple components such as a data retrieval component and a data insertion component. So the term 'component' could be used at different levels of granularity. When planning out a project, there are two different approaches that teams might take to plan out the order of the work to be done.
 
 
 
