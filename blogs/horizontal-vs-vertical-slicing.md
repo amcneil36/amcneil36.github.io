@@ -37,7 +37,9 @@ This user story is expressed in terms of business value. This is something that 
 
 This story expressed along technical boundaries provides no business value when completed because the SQL query has to be fully integrated with the rest of the software in order to provide business value. This would require writing some code that calls into the SQL query.
 
-----------------------------------------------------------------------------------
+#### Tracer Bullet Development
+	
+---------------------------------------------------------------------------------
 Horizontal vs vertical slicing
 	• Explain difference between horizontal and vertical slicing
 	• Horizontal slicing examples
