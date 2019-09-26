@@ -28,11 +28,14 @@ We should do vertical slicing. Horizontal slicing suffers tremendous risk in tha
 Vertical slicing fixes all of the issues seen by horizontal slicing without having much of any drawbacks. Vertical slicing results in frequently inntegrating layers which leads to less integration issues and less time spent doing re-work. It results in more frequent feedback and more frequent usable software that could be shipped out.
 
 ### Recommendations for vertical slicing
+#### Use user stories expressed in terms of business value
 The easiest way to start thinking in terms of vertical slices is to make user stories and to express them in terms of business value. Let's look at the following user story:
 >As a homeowner, I want to be able to register my house to the homeowner’s association so that my house can be placed on the market.
+
 This user story is expressed in terms of business value. This is something that would likely require front-end and back-end code changes and would result in producing usable software. Teams that do horizontal slicing tend to have stories expressed along technical boundaries like
 >Create SQL query for inserting into House table
 
+This story expressed along technical boundaries provides no business value when completed because the SQL query has to be fully integrated with the rest of the software in order to provide business value. This would require writing some code that calls into the SQL query.
 
 ----------------------------------------------------------------------------------
 Horizontal vs vertical slicing
