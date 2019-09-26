@@ -25,7 +25,7 @@ In this scenario, your team would make code changes in a little bit of each comp
 ### Should we do horizontal slicing or vertical slicing?
 We should do vertical slicing. Horizontal slicing suffers tremendous risk in that components aren't integrated until very late and this integration could lead to unforeseen issues that may cause code to have to get thrown away. In addition to that, horizontal slicing doesn't result in usable software until far later in the project. It might look like you get usable software early in horizontal slicing if you do all of the front-end before all of the back-end. While it is true that you can click on stuff, the software isn't truly useable because it is stubbing out the back-end.
 
-Vertical slicing 
+Vertical slicing fixes all of the issues seen by horizontal slicing without having much of any drawbacks. Vertical slicing results in frequently inntegrating layers which leads to less integration issues and less time spent doing re-work. It results in more frequent feedback and more frequent usable software that could be shipped out.
 
 
 
