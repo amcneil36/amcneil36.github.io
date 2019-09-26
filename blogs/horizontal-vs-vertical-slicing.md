@@ -22,7 +22,10 @@ Unfortunately, this approach suffers the same issue as the previous approach in 
 ### Vertical Slicing
 In this scenario, your team would make code changes in a little bit of each component each sprint. The team would produce a small amount of fully integrated usable software each sprint. This is because most working software requires code changes in multiple components. The team would be able to get feedback from customers every sprint since working software is delivered frequently. If there are any issues discovered when integrating components, these issues will be discovered early since we are frequently integrating. If the project becomes behind schedule, the we still might be able to release despite not having finished all of the work that we previously intended to include in our release. This is because we made sure to create usable software each sprint with code that was fully integrated and truly considered done.
 
+### Should we do horizontal slicing or vertical slicing?
+We should do vertical slicing. Horizontal slicing suffers tremendous risk in that components aren't integrated until very late and this integration could lead to unforeseen issues that may cause code to have to get thrown away. In addition to that, horizontal slicing doesn't result in usable software until far later in the project. It might look like you get usable software early in horizontal slicing if you do all of the front-end before all of the back-end. While it is true that you can click on stuff, the software isn't truly useable because it is stubbing out the back-end.
 
+Vertical slicing 
 
 
 
