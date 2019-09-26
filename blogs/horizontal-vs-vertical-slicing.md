@@ -43,7 +43,7 @@ With tracer bullet development you start out by getting some working end to end 
 1. The user presses a submit button
 1. A report is generated and is somehow affected by the input that the user selected 
 
-Furthermore, suppose that behind the scenes there is tons of business logic with reads and writes to the database after the user presses the submit button. With tracer bullet development, we would work like this:
+Furthermore, suppose that behind the scenes there is tons of business logic with reads and writes to the database after the user presses the submit button. With tracer bullet development, we might work like this:
 1. Make button and have clicking on that button display a report that says “hello world”  
 1. Add an input field and have clicking on the button generate a report that uses some information from the input field
 1. Repeat step 2 with a different input field. Keep doing this until all input fields are done
@@ -51,18 +51,7 @@ Furthermore, suppose that behind the scenes there is tons of business logic with
 
 When completing the first step, we have some working end to end functionality where the calls to the database are stubbed out. For the second step, we add a new input field and then add any code that interacts with the database thas is needed so that the report we generate can be updated to have whichever information needed that is dependent on the answer to that question. As you can see, each step requires a little bit of code in each layer and produces a little bit more fully integrated functionality. This is what we want.
 
----------------------------------------------------------------------------------
-Horizontal vs vertical slicing
-	• Explain difference between horizontal and vertical slicing
-	• Horizontal slicing examples
-		○ Do all back-end before all front-end
-		- code is not usable because it is stubbed
-		○ Do all front-end before all back-end
-	• Vertical slicing example
-		○ Can talk how some code might be stubbed out
-		○ Tracer bullet development
-		-code that is working and usable
-		-can release when behind schedule
-	• Which one should we do?
-	• Stategies for going vertical
-		○ User stories
+### Summary
+We want to be working on vertical slices so that we increase the amount of feedback we get from demos as well as reduce the number of integration issues. One of the easiest ways to get into this is to start making user stories that are expressed in terms of business value. Code changes in each layer are generally required to add value to the customer. As we carry out these user stories, we want to be using tracer bullet development to quickly get working end to end functionality.
+
+## Sources
