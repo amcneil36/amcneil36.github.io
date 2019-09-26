@@ -20,6 +20,12 @@ In this scenario, we will start off by coding up all of the front-end for the ne
 Unfortunately, this approach suffers the same issue as the previous approach in that the layers are not being frequently integrated together. As we code up the front-end, there are some assumptions that we have to make about how the back-end will look. When we integrate this code later, we may find these assumptions were wrong. Perhaps there are some unforeseen performance issues when we finally integrate everything. As a result, we might need to change our code to improve the performance. The later we integrate, the more code that gets tossed.
 
 ### Vertical Slicing
+In this scenario, your team would make code changes in a little bit of each component each sprint. 
+
+
+
+
+
 
 
 ----------------------------------------------------------------------------------
