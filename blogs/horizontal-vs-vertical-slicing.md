@@ -49,7 +49,7 @@ Furthermore, suppose that behind the scenes there is tons of business logic with
 1. Repeat step 2 with a different input field. Keep doing this until all input fields are done
 1. Add any additional text to the report that is not determined from input
 
-When completing the first step, we have some working end to end functionality where the calls to the database are stubbed out.
+When completing the first step, we have some working end to end functionality where the calls to the database are stubbed out. For the second step, we add a new input field and then add any code that interacts with the database thas is needed so that the report we generate can be updated to have whichever information needed that is dependent on the answer to that question. As you can see, each step requires a little bit of code in each layer and produces a little bit more fully integrated functionality. This is what we want.
 
 ---------------------------------------------------------------------------------
 Horizontal vs vertical slicing
