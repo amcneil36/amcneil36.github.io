@@ -14,6 +14,8 @@ In this scenario, we will start off by coding up all of the back-end for the nex
 
 Another issue with doing all of the back-end before all of the front-end is that the layers may not communicate together when you finally get around to integrating them. As you code up the back-end, you will need to make some assumptions about which information the front-end will be able to pass to the back-end. If these assumptions turn out to be wrong, you won't find out until after all of the back-end code has been written. This creates for more code getting tossed when there are integration issues.
 
+#### Coding all of the front-end before all of the back-end
+In this scenario, we will start off by coding up all of the front-end for the next release. When we demo our code, we should be able to get a lot of feedback in terms of how everything is coming along. One downside is that more work will appear done than what is actually done since the call to the back-end will be stubbed out. This could confuse the customer. However, this downside is manageable. So in terms of getting feedback in a demo, this approach is not so bad.
 
 
 
