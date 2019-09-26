@@ -38,7 +38,16 @@ This user story is expressed in terms of business value. This is something that 
 This story expressed along technical boundaries provides no business value when completed because the SQL query has to be fully integrated with the rest of the software in order to provide business value. This would require writing some code that calls into the SQL query.
 
 #### Tracer Bullet Development
-With tracer bullet development you start out by getting some working end to end functionality as soon as possible where most of the stuff happening in-between is stubbed out. 
+With tracer bullet development you start out by getting some working end to end functionality as soon as possible where most of the stuff happening in-between is stubbed out. Suppose you are starting a project where you want the following functionality:
+1. The user fills in some input  
+1. The user presses a submit button
+1. A report is generated and is somehow affected by the input that the user selected 
+
+Furthermore, suppose that behind the scenes there is tons of business logic with reads and writes to the database after the user presses the submit button. With tracer bullet development, we would work like this:
+1. Make button and have clicking on that button display a report that says “hello world”  
+1. Add an input field and have clicking on the button generate a report that uses some information from the input field
+1. Repeat 2) with a different input field. Keep doing this until all input fields are done
+1. Add any additional text to the report that is not determined from input
 
 ---------------------------------------------------------------------------------
 Horizontal vs vertical slicing
