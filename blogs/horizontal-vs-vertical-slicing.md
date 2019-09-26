@@ -38,7 +38,7 @@ This user story is expressed in terms of business value. This is something that 
 This story expressed along technical boundaries provides no business value when completed because the SQL query has to be fully integrated with the rest of the software in order to provide business value. This would require writing some code that calls into the SQL query.
 
 #### Tracer Bullet Development
-With tracer bullet development you start out by getting some working end to end functionality as soon as possible where most of the stuff happening in-between is stubbed out. You then slowly replace stubs with real calls until you no longer have stubs and now have fully usable software. Suppose you are starting a project where you want the following functionality:
+With tracer bullet development you start out by getting some working end to end functionality as soon as possible where most of the stuff happening in-between is stubbed out.<sup>1</sup> You then slowly replace stubs with real calls until you no longer have stubs and now have fully usable software. Suppose you are starting a project where you want the following functionality:
 1. The user fills in some input  
 1. The user presses a submit button
 1. A report is generated and is somehow affected by the input that the user selected 
@@ -55,3 +55,4 @@ When completing the first step, we have some working end to end functionality wh
 We want to be working on vertical slices so that we increase the amount of feedback we get from demos as well as reduce the number of integration issues. One of the easiest ways to get into this is to start making user stories that are expressed in terms of business value. Code changes in each layer are generally required to add value to the customer. As we carry out these user stories, we want to be using tracer bullet development to quickly get working end to end functionality.
 
 ## Sources
+1. Freeman, Steve. Growing Object-Oriented Software, Guided by Tests. Addison-Wesley, 2012.
