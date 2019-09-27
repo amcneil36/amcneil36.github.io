@@ -15,4 +15,4 @@ Suppose a user story A has twice as much business value as user story B. We shou
 
 So the developers can take a look at the user stories and assign story points to the work based on how long they think the work will take. If story A is predicted to take twice as long as story B, then that means that story A is going to be twice as many story points as story B.
 
-
+Now that the stories are story pointed, the product owner is a lot better equipped to prioritize the stories.
