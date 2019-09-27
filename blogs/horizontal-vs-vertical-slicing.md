@@ -32,8 +32,8 @@ Vertical slicing fixes all of the issues seen by horizontal slicing without havi
 The easiest way to start thinking in terms of vertical slices is to make user stories and to express them in terms of business value. Let's look at the following user story:
 >As a homeowner, I want to be able to register my house to the homeowner’s association so that my house can be placed on the market.
 
-This user story is expressed in terms of business value. This is something that would likely require front-end and back-end code changes and would result in producing usable software. Teams that do horizontal slicing tend to have stories expressed along technical boundaries like
->Create SQL query for inserting into House table
+This user story is expressed in terms of business value. This is something that would likely require front-end and back-end code changes and would result in producing usable software. Teams that do horizontal slicing tend to have stories expressed along technical boundaries, for example:
+>Create SQL query for inserting into the House table
 
 This story expressed along technical boundaries provides no business value when completed because the SQL query has to be fully integrated with the rest of the software in order to provide business value. This would require writing some code that calls into the SQL query.
 
