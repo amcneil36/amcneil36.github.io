@@ -35,6 +35,7 @@
   <summary>Planning</summary>
 <ul>
   <li><a href="https://amcneil36.github.io/blogs/horizontal-vs-vertical-slicing">Horizontal vs Vertical Slicing</a></li>
+  <li><a href="https://amcneil36.github.io/blogs/prioritization">Prioritization</a></li>
 </ul>
 </details>
 
