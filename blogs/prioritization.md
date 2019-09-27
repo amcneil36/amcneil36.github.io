@@ -26,3 +26,8 @@ In this scenario, the business value points divided by the story points comes ou
 In both of these scenarios, we have the same amount of work done in a 4 month time period (everything released). However, in scenario 2, we already have something released after 1 month whereas in scenario 1, nothing gets released until the second month. So going off business value points divided by story points is sub-optimal. So there is still some benefit to favoring shorter user stories, even if the business value points divided by the story points are equal. Regardless of whether or not you come up with a formula, having the business value points and story point estimates help out a lot in prioritization.
 
 ### Risk
+Let's return to the previous example:
+* user story A: 4 business value points, 8 story points
+* user story B: 2 business value points, 4 story points
+* user story C: 2 business value points, 4 story points
+We previously stated that it felt like a good idea to do user story A last. However, we cannot infer that doing user story A last is the best approach just by going off business value and estimates alone. Stories have some amount of risk associated to them. 
