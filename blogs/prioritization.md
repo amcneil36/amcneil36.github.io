@@ -1,6 +1,8 @@
 ## Prioritization
 
-Suppose you are on a team that is working on a product. Let's say that your team has a backlog of user stories. The team needs to have some technique for prioritizing which user stories will be done in which order. This prioritization is done by the product owner because the product owner. How does the product owner do this prioritization?
+Suppose you are on a team that is working on a product. Let's say that your team has a backlog of user stories. It is the responsibility of the product owner to determine which user stories to work on in which order. However, the product owner will need some help from the development team in order to feel more certain about how to do the prioritization. How does the product owner do this prioritization? 
+
+### Business value
 
 The prioritization is done by the product owner. The product owner has the domain knowledge and understands the business value that each user story gives. One thing the product owner might do is to take each user story and assign points to each story based on business value. Perhaps one user story is considered a 5 business value points and another user story is 10 business value points. This would mean that the user story that is 10 business value points is twice as valuable as the 5. The product owner could then look at each user story and prioritize based on which user stories have the highest business value points.
 
