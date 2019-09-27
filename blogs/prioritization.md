@@ -15,4 +15,12 @@ Suppose a user story A has twice as much business value as user story B. We shou
 
 So the developers can take a look at the user stories and assign story points to the work based on how long they think the work will take. If story A is predicted to take twice as long as story B, then that means that story A is going to be twice as many story points as story B.
 
-Now that the stories are story pointed, the product owner is a lot better equipped to prioritize the stories. One thing the product owner could try to do is come up with some formula for prioritizing user stories such as business_value_points divided by story points. 
+Now that the stories are story pointed, the product owner is a lot better equipped to prioritize the stories. One thing the product owner might try to do is come up with some formula for prioritizing user stories such as business value points divided by story points. This would be an OK approach. However, suppose you have the follow situation:
+* user story A: 4 business value points, 8 story points
+* user story B: 2 business value points, 4 story points
+* user story C: 2 business value points, 4 story points
+In this scenario, the business value points divided by the story points comes out to the same number. However, it looks like we would want to do user stories B and C before user story A since user stories B and C lead to quicker releases. Suppose user stories B and C might take one month each and user story A might take two months. Let's compare the following two scenarios:
+1. We complete user story B then release it, complete user story C then release it, complete user story A then release it
+1. We complete usre story A then release it, complete user story B then release it, complete user story B then release it
+
+In both of these scenarios, we have the same amount of work done in a 4 month time period (everything released). However, in scenario 2, we already have something released after 1 month whereas in scenario 1, nothing gets released until the second month.
