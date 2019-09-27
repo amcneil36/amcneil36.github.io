@@ -36,4 +36,5 @@ We previously stated that it felt like a good idea to do user story A last. Howe
 
 Suppose user stories B and C are considered incredibly likely to fail but user story A has minimal risk associated to it. We might want to go with user story A. So having information about risk is helpful to determine what to do in which order.
 
-### Prioritizing between independently releaseable work and work that is not independently releaseable
+### Prioritizing between independently releaseable work vs prioritizing between work that is not independently releaseable
+For the most part, we have talked about prioritizing between independently releaseable work so far. If you have some stories, you place business value points at the epic level and prioritize the epic against other independently releaseable stories which may or may not be epics. 
