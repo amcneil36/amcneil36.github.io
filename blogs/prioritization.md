@@ -23,4 +23,4 @@ In this scenario, the business value points divided by the story points comes ou
 1. We complete user story B then release it, complete user story C then release it, complete user story A then release it
 1. We complete usre story A then release it, complete user story B then release it, complete user story B then release it
 
-In both of these scenarios, we have the same amount of work done in a 4 month time period (everything released). However, in scenario 2, we already have something released after 1 month whereas in scenario 1, nothing gets released until the second month.
+In both of these scenarios, we have the same amount of work done in a 4 month time period (everything released). However, in scenario 2, we already have something released after 1 month whereas in scenario 1, nothing gets released until the second month. So going off business value points divided by story points is sub-optimal. So there is still some benefit to favoring shorter user stories, even if the business value points divided by the story points are equal.
