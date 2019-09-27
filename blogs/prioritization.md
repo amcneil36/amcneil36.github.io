@@ -11,4 +11,4 @@ There are some problems with this. One problem is that some of these user storie
 Now, the product owner is able to look at the business value points of the work that needs to be done. The product owner could go off of these business value points to determine which work to work on in which order. However, going off of business value points alone is not enough information for the product owner to be able to prioritize work.
 
 ## Estimates
-Suppose a user story A has twice as much business value as user story B. We should do user story A first, right? Not necessarily. What if user story A is predicted to take four times longer than user story B?
+Suppose a user story A has twice as much business value as user story B. We should do user story A first, right? Not necessarily. What if user story A is predicted to take four times longer than user story B? We may want to do user story B first in that case. 
