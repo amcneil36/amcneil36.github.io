@@ -19,6 +19,7 @@ Now that the stories are story pointed, the product owner is a lot better equipp
 * user story A: 4 business value points, 8 story points
 * user story B: 2 business value points, 4 story points
 * user story C: 2 business value points, 4 story points
+
 In this scenario, the business value points divided by the story points comes out to the same number. However, it looks like we would want to do user stories B and C before user story A since user stories B and C lead to quicker releases. Suppose user stories B and C might take one month each and user story A might take two months. Let's compare the following two scenarios:
 1. We complete user story B then release it, complete user story C then release it, complete user story A then release it
 1. We complete usre story A then release it, complete user story B then release it, complete user story B then release it
@@ -30,4 +31,5 @@ Let's return to the previous example:
 * user story A: 4 business value points, 8 story points
 * user story B: 2 business value points, 4 story points
 * user story C: 2 business value points, 4 story points
+
 We previously stated that it felt like a good idea to do user story A last. However, we cannot infer that doing user story A last is the best approach just by going off business value and estimates alone. Stories have some amount of risk associated to them. The risk would be the chance that the project does not meet it's objectives. Maybe the project begins getting coded up and the developers learn something unfortunate. Maybe they determine the project is no longer possible. Perhaps the objective was to take A, B, an C as input and return back D, E and F but it was later determined that A, B, and C is not enough information to get D, E, and F. Or the more common scenario when things go wrong is that the project is still possible but it will take significantly longer than predicted due to an assumption that turned out to be incorrect. Maybe there was a 3rd party library that was going to do the bulk of the work for our project. Perhaps we learn in the middle of the project that this 3rd party library doesn't quite do what we need. We either make the change in the library or we completely re-invent the wheel and produce everything from scratch. We talk to the people overseeing the 3rd party library and they reject our change. We estimate that writing everything from scratch will add 5 years to the project. Perhaps we have to end up throwing away the project we were in the middle of working on.
