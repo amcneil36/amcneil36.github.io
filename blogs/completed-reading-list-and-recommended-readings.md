@@ -16,11 +16,11 @@ In this post I am keeping track of all the books I have read and am documenting 
 1. Bain, Scott. Emergent Design, The Evolutionary Nature of Professional Software Development. Addison-Wesley, 2008.
 1. Sterling, Christ and Barton, Brent. Managing Software Debt. Addison-Wesley, 2011.
 1. Cohn, Mike. Succeeding With Agile: Software Development Using Scrum. Addison-Wesley, 2013.
-1. Cohn, Mike. User Stories Applied For Agile Software Development. Addison-Wesley, 2004
+1. Cohn, Mike. User Stories Applied For Agile Software Development. Addison-Wesley, 2004.
 1. Beck, Kent. Extreme Programming Explained, Embrace Change. Addison-Wesley, 2012.
 1. Rubin, Kenneth. Essential Scrum: A Practical Guide To The Most Popular Agile Process. Addison-Wesley, 2013. 
 1. Brechner, Eric. Agile Project Management with Kanban. Microsoft Press, 2015.
-1. Axelrod, Arnon. Complete Guide to Test Automation, Techniques, Practices, and Patterns for Building and Maintaining Effective Software Projects. Apress, 2018
+1. Axelrod, Arnon. Complete Guide to Test Automation, Techniques, Practices, and Patterns for Building and Maintaining Effective Software Projects. Apress, 2018.
 1. Humble, Jez and Farley, David. Continuous Delivery: Reliable Software Releases Through Build, Test And Deployment Automation. Addison-Wesley, 2010.
 1. Fowler, Martin. Patterns of Enterprise Application Architecture. Addison-Wesley, 2003.
 1. Ingeno, Jospeh. Software Architect’s Handbook, Become a successful software architect by implementing effective architecture concepts. Packt, 2018.
@@ -32,7 +32,7 @@ In this post I am keeping track of all the books I have read and am documenting 
 1. Kim, Gene, et al. The DevOps Handbook: How to Create World-Class Agility, Reliability, and Security in Technology Organizations. IT Revolution, 2016.
 1. Forsgren, Nicole, et al. Accelerate, The Science of Lean Software and DevOps: Building and Scaling High Performing Technology Organizations. IT Revolution, 2018. 
 1. Wolff, Eberhard. A Practical Guide to Continuous Delivery. Addison-Wesley, 2017.
-1. Learning Continuous Integration with Jenkins, A beginner's guide to implementing Continuous Integration and Continuous Delivery using Jenkins 2, 2nd Edition – Nikhil Pathania
+1. Pathania, Nikhil. Learning Continuous Integration with Jenkins: A Beginner's Guide to Implementing Continuous Integration and Continuous Delivery Using Jenkins 2. Packt, 2016.
 1. Gruver, Gary, et al. A Practical Approach to Large-Scale Agile Development: How HP Transformed LaserJet FutureSmart Firmway. Addison-Wesley, 2015.
 1. Swartout, Paul. Continuous Delivery and DevOps – A Quickstart Guide, Start your journey to successful adoption of CD and DevOps. Packt, 2018.
 1. Crispin, Lisa and Gregory, Janet. Agile Testing, A Practical Guide for Testers and Agile Teams. Addison-Wesley, 2008.
