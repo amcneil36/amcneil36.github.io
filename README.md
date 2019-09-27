@@ -32,6 +32,13 @@
 </details>
 
 <details>
+  <summary>Planning</summary>
+<ul>
+  <li><a href="https://amcneil36.github.io/blogs/horizontal-vs-vertical-slicing">Horizontal vs Vertical Slicing</a></li>
+</ul>
+</details>
+
+<details>
   <summary>Teams</summary>  
 <ul>
   <li><a href="https://amcneil36.github.io/blogs/feature-teams-vs-component-teams-which-one-is-better">Feature teams vs component teams-which one is better?</a></li>
