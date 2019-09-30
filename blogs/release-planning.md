@@ -35,6 +35,12 @@ The concern that arises the most with fixed date releases is the deadline. What 
 ### Whole development team works on the same release
 We should have the whole development team work on the release the same release which is the release that we have planned. Having a development team work on two releases at once produces additional waste because it adds more work that is not released at any given time. Since work only adds value when it is released, we want to swarm the same release in order to release earlier. There are some exceptions to this. If there is an incoming defect found in production, it is OK for a team member to switch to working on that defect, release it, and then come back to the release that everyone else is working on. This is because the incoming defect might be more important. If a development team is too large, then it might appear to make sense to work on multiple releases at the same time. However, a development team that is too large can be split into two development teams that are working on different releases. Or, if the product they are working on is a big one, there could be one or more development teams working on different features for the same release.
 
+### MVP vs MMF
+We talked earlier about doing the MVP or MMF depending on business needs. The MVP (Minimum Viable Product) represents the minimum amount of work that must be done to take something to market and learn something. The MMF (Minimum Marketable Features) is the minimum amount of work needed to be done in order to add significant value to the customer. The MVP makes more sense for products with less certainty such as being very uncertain about how popular the product might be or how the product will respond to being used by customers. The MMF makes more sense in all other scenarios.
+
+### Flexibility of the release plan
+The release plan is is very flexible. Some teams will take a look at the release plan once a sprint during the backlog refinement meeting. We can make adjustments to the release plan for many reasons such as changing of the market, customers changing their mind, work taking longer than predicted, work being completed in a different way than predicted, etc.
+
 -----------------------------------------------------------------
 
 	• Do not make assumptions about who will do what
@@ -42,8 +48,3 @@ We should have the whole development team work on the release the same release w
 		○ Not very
 		○ Can be changed every sprint
 	•mmf vs mvp 
-	Whole team works on the next release
-		○ Some peeps might get pulled into defects
-		○ Otherwise don't need to be working on two different releases unless your team is large at which point your 
-		
-		team can be broken down further
