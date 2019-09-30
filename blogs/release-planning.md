@@ -13,6 +13,25 @@ For defect fixes and minor enhancements, I like the idea of a fixed scope releas
 
 Customers also like the idea of receiving dates for major releases because major releases might be something that they need to make plans around. Perhaps your team is interested in starting a new Java project but the next major Java version is going to be released soon so you are thinking of waiting for that to come out before starting the project. Since Java communicates the dates they plan to release their major versions, you can use this information to determine if you want to start now with the current Java version or wait until the next Java version.. Knowing when the next minor Java version is going to come out probably won't be information you need to know in order to prioritize when to start on this new Java project.
 
+### Planning a Fixed Scope Release
+Planning a fixed scope release can be done by:
+1. Identify your MVP or MMF depending on business needs
+1. Add up the number of story points the work 
+1. Use team's past velocity to provide a range of dates that the release is predicted to be done by
+    * this is commonly done by taking the team's lowest velocity in the past few sprints for the lower bound estimate and the team's highest velocity in the past few sprints as the upper bound
+
+If the fixed scope release is being used for a minor enhancement or defect fix, you don't need to go through all this work. You can simply just do the task or story and then release it when it is done.
+
+### Planning a Fixed Date Release
+Planning a fixed date release can be done by:
+1. Identify your MVP or MMF depending on business needs
+1. Add up the number of story points the work 
+1. Add another 25-40% story points of work depending on risk, uncertainty, and consequences of not meeting the deadline
+1. Add up team's velocity
+1. 
+
+
+
 -----------------------------------------------------------------
 Release Planning
 	• How to plan a fixed date release
@@ -26,6 +45,9 @@ Release Planning
 	• How flexible is the release plan?
 		○ Not very
 		○ Can be changed every sprint
-	• Whole team works on the next release
+	•mmf vs mvp 
+	Whole team works on the next release
 		○ Some peeps might get pulled into defects
-		○ Otherwise don't need to be working on two different releases unless your team is large at which point your team can be broken down further
+		○ Otherwise don't need to be working on two different releases unless your team is large at which point your 
+		
+		team can be broken down further
