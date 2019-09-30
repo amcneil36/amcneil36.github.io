@@ -27,8 +27,8 @@ Planning a fixed date release can be done by:
 1. Identify your MVP or MMF depending on business needs
 1. Add up the number of story points the work 
 1. Add another 25-40% story points of work depending on risk, uncertainty, and consequences of not meeting the deadline
-1. Add up team's velocity
-1. 
+1. Add this to the amount of story points of work
+1. Use team's velocity to calculate a relase date based on the amount of story points of work
 
 
 
