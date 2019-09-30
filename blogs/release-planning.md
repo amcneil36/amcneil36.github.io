@@ -15,13 +15,6 @@ Customers also like the idea of receiving dates for major releases because major
 
 -----------------------------------------------------------------
 Release Planning
-	• For new projects this is generally planning 3-6 months of work. 
-	• Since releasing is the only thing that adds value, it makes sense to have some sort of planning around releases
-	• Fixed scope release
-		○ Bad because market could change or customer could change their mind
-	• Fixed date release
-		○ Allows for negotiable scope
-	-which ones is better
 	• How to plan a fixed date release
 		○ Determine if your release will be an mvp or mmf
 			§ Mvp = release done with least amount of effort needed to learn something
