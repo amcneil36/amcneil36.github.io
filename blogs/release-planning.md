@@ -30,7 +30,7 @@ Planning a fixed date release can be done by:
 1. Add this to the amount of story points of work
 1. Use team's velocity to calculate a relase date based on the amount of story points of work
 
-
+The concern that arises the most with fixed date releases is the deadline. What do we do if we are behind schedule when we get to the deadline? We should be able to reduce scope. The 25-40% additional story points of work should be nice to have work that is not mandatory. Our definition of the MVP or MMF may even become reduced throughout the project as well. The scope in the fixed date release is very flexible.
 
 -----------------------------------------------------------------
 Release Planning
