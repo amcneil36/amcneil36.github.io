@@ -42,12 +42,7 @@ We talked earlier about doing the MVP or MMF depending on business needs. The MV
 The release plan is is very flexible. Some teams will take a look at the release plan once a sprint during the backlog refinement meeting. We can make adjustments to the release plan for many reasons such as changing of the market, customers changing their mind, work taking longer than predicted, work being completed in a different way than predicted, etc.
 
 ### Assumptions about who will do the work
-Do not make any assumptions about who will do which work when planning a release. It is very hard to know far in advance who will do what since many tasks could take longer or shorter than predicted which could affect who we would want to work on them. Perhaps there is a very important set of tasks that are taking one person longer than predicted so we have someone else help out there.
+Do not make any assumptions about who will do which work when planning a release. It is very hard to know far in advance who will do what since many tasks could take longer or shorter than predicted which could affect who we would want to work on them. Perhaps there is a very important set of tasks that is taking one person longer than predicted so we have someone else help out there.
 
------------------------------------------------------------------
-
-	• Do not make assumptions about who will do what
-	• How flexible is the release plan?
-		○ Not very
-		○ Can be changed every sprint
-	•mmf vs mvp 
+#### Summary
+I like the fixed scope releases for minor enhancements and defect fixes since they are quick and small fixes 
