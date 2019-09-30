@@ -28,7 +28,7 @@ Planning a fixed date release can be done by:
 1. Add up the number of story points the work 
 1. Add another 25-40% story points of work depending on risk, uncertainty, and consequences of not meeting the deadline
 1. Add this to the amount of story points of work
-1. Use team's velocity to calculate a relase date based on the amount of story points of work
+1. Use team's velocity to calculate a release date based on the amount of story points of work
 
 The concern that arises the most with fixed date releases is the deadline. What do we do if we are behind schedule when we get to the deadline? We should be able to reduce scope. The 25-40% additional story points of work should be nice to have work that is not mandatory. Our definition of the MVP or MMF may even become reduced throughout the project as well. The scope in the fixed date release is very flexible.
 
@@ -39,7 +39,7 @@ We should have the whole development team work on the release the same release w
 We talked earlier about doing the MVP or MMF depending on business needs. The MVP (Minimum Viable Product) represents the minimum amount of work that must be done to take something to market and learn something. The MMF (Minimum Marketable Features) is the minimum amount of work needed to be done in order to add significant value to the customer. The MVP makes more sense for products with less certainty such as being very uncertain about how popular the product might be or how the product will respond to being used by customers. The MMF makes more sense in all other scenarios.
 
 ### Flexibility of the release plan
-The release plan is is very flexible.<sup>2</sup> Some teams will take a look at the release plan once a sprint during the backlog refinement meeting. We can make adjustments to the release plan for many reasons such as changing of the market, customers changing their mind, work taking longer than predicted, work being completed in a different way than predicted, etc.
+The release plan is very flexible.<sup>2</sup> Some teams will take a look at the release plan once a sprint during the backlog refinement meeting. We can make adjustments to the release plan for many reasons such as changing of the market, customers changing their mind, work taking longer than predicted, work being completed in a different way than predicted, etc.
 
 ### Assumptions about who will do the work
 Do not make any assumptions about who will do which work when planning a release. It is very hard to know far in advance who will do what since many tasks could take longer or shorter than predicted which could affect who we would want to work on them. Perhaps there is a very important set of tasks that is taking one person longer than predicted so we have someone else help out there.
