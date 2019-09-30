@@ -32,15 +32,11 @@ Planning a fixed date release can be done by:
 
 The concern that arises the most with fixed date releases is the deadline. What do we do if we are behind schedule when we get to the deadline? We should be able to reduce scope. The 25-40% additional story points of work should be nice to have work that is not mandatory. Our definition of the MVP or MMF may even become reduced throughout the project as well. The scope in the fixed date release is very flexible.
 
+### Whole development team works on the same release
+We should have the whole development team work on the release the same release which is the release that we have planned. Having a development team work on two releases at once produces additional waste because it adds more work that is not released at any given time. Since work only adds value when it is released, we want to swarm the same release in order to release earlier. There are some exceptions to this. If there is an incoming defect found in production, it is OK for a team member to switch to working on that defect, release it, and then come back to the release that everyone else is working on. This is because the incoming defect might be more important. If a development team is too large, then it might appear to make sense to work on multiple releases at the same time. However, a development team that is too large can be split into two development teams that are working on different releases. Or, if the product they are working on is a big one, there could be one or more development teams working on different features for the same release.
+
 -----------------------------------------------------------------
-Release Planning
-	• How to plan a fixed date release
-		○ Determine if your release will be an mvp or mmf
-			§ Mvp = release done with least amount of effort needed to learn something
-			§ Mmf = smallest amount of features that deliver significant value to the customer
-		○ Add up the number of story points this entails
-		○ Add another 25-40% more story points of work depending on risk, uncertainty, and consequences of not meeting the deadline. 
-		○ Choose a release date based on the amount of story points this sums up to and your velocity
+
 	• Do not make assumptions about who will do what
 	• How flexible is the release plan?
 		○ Not very
