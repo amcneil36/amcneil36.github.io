@@ -45,4 +45,4 @@ The release plan is is very flexible. Some teams will take a look at the release
 Do not make any assumptions about who will do which work when planning a release. It is very hard to know far in advance who will do what since many tasks could take longer or shorter than predicted which could affect who we would want to work on them. Perhaps there is a very important set of tasks that is taking one person longer than predicted so we have someone else help out there.
 
 #### Summary
-I like the fixed scope releases for minor enhancements and defect fixes since they are quick and small fixes 
+I like the fixed scope releases for minor enhancements and defect fixes since they are quick and small fixes. There is not much room to reduce scope in such small releases and it is unlikely for there to be many changes in priorities in such a small time period. For major releases, I prefer the fixed date release as they allow for us to change scope when market changes and when there is customer feedback. Knowing release dates for major releases can be helpful to customers because they might be interested in making plans around a particular release date for a major release.
