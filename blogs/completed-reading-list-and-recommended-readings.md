@@ -103,7 +103,8 @@ In this post I am keeping track of all the books I have read and am documenting 
 1. Tuhovsky, Ian. Communication Skills Training: A Practical Guide to Improving Your Social Intelligence, Presentation, Persuasion and Public Speaking. 2015.
 1. MacLeod, Chris. The Social Skills Guidebook: Manage Shyness, Improve Your Conversations, and Make Friends, Without Giving Up Who You Are. 2016.
 1. McConnell, Steve. Software Estimation: Demystifying the Black Art. Microsoft Press, 2006.
-1. Fournier, Camille. The Manager's Path. A Guide for Tech Leaders Navigating Growth & Change. O'Reilly Media, 2017.
+1. Fournier, Camille. The Manager's Path. A Guide for Tech Leaders Navigating Growth & Change. O'Reilly Media, 2017.  
+1. Bentley, Jon. Programing Pearls. Addison-Wesley, 1986.
 
 ### Recommended Readings
 This list will be sorted from best to worst in terms of how much I recommend reading it. That being said, any book that makes this list is terrific. Many of the books that did not make this list were also very good but I wanted to keep this list small because throwing too many books at people might discourage them. 
