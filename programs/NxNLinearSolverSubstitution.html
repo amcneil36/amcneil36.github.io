@@ -1,0 +1,538 @@
+<html> 
+<head><title> NxN Linear Solver </title></head><body>
+<h3> NxN Linear Solver </h3>
+<form id = "formInput"  action = "" method = "post">
+<table border = "0">
+<tr style = "position:absolute; top: 20px; left:200px;"><td><input type = "button" name = "changeDimension" tabindex = "1" value = "Choose Dimension" /> &nbsp; <input type = "button" name = "compute" value = "Calculate Solutions" />  &nbsp; <input type = "reset" value = "Clear" /> &nbsp; <input type = "button" name = "decimal" id = "decimal" value = "Click Me for Decimal Solutions" /> &nbsp; First time using this? &nbsp; <input type = "button" id = "helpMe" name = "helpMe" value = "Click me for instructions!" /> </td> </tr>
+<div id = "MyDiv">
+</div>
+<tr style = "position:absolute;"><td>Solutions: <input type = "text" name = "sols" id = "sols" size = "120"/> <br> <br> <br> <br><br> Step by step procedure to solve this system of linear equations (using subsitution method): <br><br> <textarea rows = "48" cols = "187" name = "work" id = "work"> </textarea> </td></tr><tr style = "position:absolute; top: 48px; left: 1085px;"></tr>
+</table>
+</form>
+</body>
+</html>
+</script>
+<script> // where our calculations will be done
+
+var decVal = -1; // -1 if user wants fraction
+var elt = document.getElementById("formInput");
+var Dimension = 0;
+var isInputValid;
+var noSolution;
+var solSet = new Array(); // used for values of all variables
+var tbl  = document.createElement('table');
+document.getElementById("formInput").changeDimension.style.background='#4dff4d';
+document.getElementById("formInput").helpMe.onclick = help;
+document.getElementById("formInput").compute.onclick = main;
+document.getElementById("formInput").decimal.onclick = changeFormatOfSolution;
+document.getElementById("formInput").changeDimension.onclick = changeDimension; // add dimensions for the input
+
+function help(){ // telling user how to use this program
+ alert("This calculator will solve any system of linear equations (provided that there is a unique solution). \n\nFirst, click on the button that says \"Choose Dimension\" and type in a number (ex: if 3 equations and 3 unknowns, type in 3 in this box) and press Enter.\n\nAfter that, go to the boxes that were generated and type in all of the constants (ex: if you are in one dimension and have the problem 2x = 3, type in 2 in the first box and 3 in the next box.\n\nOnce you are finished, press Calculate Solutions and you will have your answer and the step by step procedure.\n\nYou can choose whether or not you want your solutions and steps in decimal or fraction form.");
+} // help
+
+function simplestForm(fraction){ // puts a fraction in simplest form
+	var num = getNumerator(fraction);
+	var den = getDenominator(fraction); 
+	if (num == 0 && den == 0){
+	 noSolution = 1; // setting flag to indicate no solution in the system
+	} 
+	if (num == 0){
+	 return String(0);
+	} 
+	var greatestCommonDivisor = GCD(num, den);
+	var num = num/greatestCommonDivisor;
+	var den = den/greatestCommonDivisor;
+	if (Math.abs(den) == 1){
+	 return String(num/den);
+	} 
+	if (Math.abs(num)==Math.abs(den)){ 
+	 return String(num/den);
+	} 
+	if ((num>0 && den<0) || (num<0 && den<0)){  
+	 return String(num*-1).concat("/").concat(String(den*-1));
+	}
+	return String(num).concat("/").concat(String(den));
+} // simplestForm
+
+function divideFractions(fraction1, fraction2){ // divides two fractions
+	var num = getNumerator(fraction1)*getDenominator(fraction2); 
+	var den = getDenominator(fraction1)*getNumerator(fraction2);
+ return simplestForm(String(num).concat("/").concat(String(den)));
+} // divideFractions
+
+function multiplyFractions(fraction1, fraction2){ // multiplies two fractions
+	var num = getNumerator(fraction1)*getNumerator(fraction2); 
+	var den = getDenominator(fraction1)*getDenominator(fraction2);
+ return simplestForm(String(num).concat("/").concat(String(den)));
+} // multiplyFractions
+
+
+function addFractions(fraction1, fraction2){ // adds two fractions
+	var num = getNumerator(fraction1)*getDenominator(fraction2)+getNumerator(fraction2)*getDenominator(fraction1);
+	var den = getDenominator(fraction1)*getDenominator(fraction2);
+ return simplestForm(String(num).concat("/").concat(String(den)));
+} // addFractions
+
+function subtractFractions(fraction1, fraction2){ // subtracts two fractions
+	var num = getNumerator(fraction1)*getDenominator(fraction2)-getNumerator(fraction2)*getDenominator(fraction1);
+	var den = getDenominator(fraction1)*getDenominator(fraction2);
+ return simplestForm(String(num).concat("/").concat(String(den)));
+} // subtractFractions
+
+function getNumerator(fraction){ // returns the numerator of a fraction
+ var fraction = String(fraction);
+ if (fraction.indexOf("/") == -1){
+	 return parseFloat(fraction);
+	}
+ return parseFloat(fraction.substring(0, fraction.indexOf("/")));
+} // getNumerator
+
+function getDenominator(fraction){ // returns the denominator of a fraction
+	var fraction = String(fraction);
+	if (fraction.indexOf("/") == -1){
+		return 1;
+	}
+ return parseFloat(fraction.substring(fraction.indexOf("/")+1, fraction.length));
+} // getDenominator
+
+function GCD(x, y){ // greatest common divisor function used to find simplest form
+	if (x > y){
+		var a = x;
+		var b = y;
+	}
+	else{
+		var a = y;
+		var b = x; 
+	}  
+	var r = a%b;
+	while (r!=0){
+		var a = b;
+		var b = r;
+		var r = a%b;
+	} // while
+ return Math.abs(b);
+} // GCD
+
+function copyMatrix(inputtedMatrix){ // creates a new matrix that is a copy of the matrix passed and returns it
+	var b = new Array();
+	for (var i = 0; i < inputtedMatrix.length; i++){
+		var c = new Array();
+		for (var j = 0; j < inputtedMatrix.length+1; j++){
+			c.push(inputtedMatrix[i][j]);
+		} // inner for
+		b.push(c);
+	} // outer for
+ return b;
+	} // copyMatrix
+
+function stringOfMatrixValue(val){ // returns string representation of a single value in the matrix (helpful with fractions or decimal)
+	if (decVal != -1){ // if user wants a decimal value
+	 return (parseFloat((getNumerator(val)/getDenominator(val)).toFixed(decVal)));
+	} 
+	if (getDenominator(val) == 1){ // if user wants fraction formatting
+	 return String(getNumerator(val));
+	} 
+ return "(".concat(val).concat(")");
+} // stringOfMatrixValue
+
+function stringOfMatrix(inputtedMatrix){ // making one string of all matrix equations
+	var elt = document.getElementById("addForm");
+	var rows = parseFloat(inputtedMatrix.length);
+	var strOfMatrix = "";
+	for (var i = 0; i < rows; i++){
+		for (var j = 0; j < rows+1; j++){
+			if (getNumerator(inputtedMatrix[i][j])==0 && j != rows){
+			 continue;
+			}
+			if (j == 0 && getNumerator(inputtedMatrix[i][j])!=0){
+			 strOfMatrix = strOfMatrix.concat(stringOfMatrixValue(inputtedMatrix[i][j])).concat("(x").concat((1+Dimension-rows).toString()).concat(")");
+			}
+			if (j > 0 && j < rows){ // not in the first or last entry of the row
+				if(getNumerator(inputtedMatrix[i][j-1])!=0){ // previous entry was not zero
+			 	strOfMatrix = strOfMatrix.concat(" + ").concat(stringOfMatrixValue(inputtedMatrix[i][j])).concat("(x").concat((j+1+Dimension-rows).toString()).concat(")");
+    } 
+				else{		 
+					if (getNumerator(inputtedMatrix[i][0])!=0){ // first entry in the row wasn't 0
+						strOfMatrix = strOfMatrix.concat(" + ").concat(stringOfMatrixValue(inputtedMatrix[i][j])).concat("(x").concat((j+1+Dimension-rows).toString()).concat(")");
+					} 
+					else{
+						strOfMatrix = strOfMatrix.concat(stringOfMatrixValue(inputtedMatrix[i][j])).concat("(x").concat((j+1+Dimension-rows).toString()).concat(")");
+					}
+				}
+			}
+			if (j == rows) { // in the last row
+				if (decVal == -1) { // user wants right hand side of equal sign in decimal value
+					strOfMatrix = strOfMatrix.concat(" = ").concat((inputtedMatrix[i][j])); 
+				} 
+				else{ 			// user wants right hand side of equal sign in fraction form
+				 strOfMatrix = strOfMatrix.concat(" = ").concat(stringOfMatrixValue(inputtedMatrix[i][j]));
+    }		
+			}
+		} // inner for
+		strOfMatrix = strOfMatrix.concat('\n');
+	} // outer for
+	return strOfMatrix;
+} // stringOfMatrix
+
+function checkPivot(inputtedMatrix){ // checks to make sure the leading coefficient of the row is non-zero (otherwise we row swap our row with the closest row that has a non-zero leading coefficient) 
+	if (getNumerator(inputtedMatrix[0][0]) != 0){ // if leading coefficient is non-zero, our entry does not need to be row-swapped
+	 return;
+	}
+	if (inputtedMatrix.length == 1){ // if only one equation, we have no other row to check so we can just return
+	 return;
+	}
+	alert(inputtedMatrix.length);
+	alert(inputtedMatrix);
+	for (var i = 0; i <= inputtedMatrix.length; i++){
+		if (parseFloat(getNumerator(inputtedMatrix[i][0])) != 0){ // if our row has a non-zero candidate for a pivot...
+			var b = copyMatrix(inputtedMatrix); 
+			rowSwap(inputtedMatrix, 0, i); // swapping with our working row
+			document.getElementById("work").value = document.getElementById("work").value.concat("Found a 0 in (x".concat((1+Dimension-inputtedMatrix.length).toString()).concat(") of equation 1. Swapping equations 1 and ").concat((i+1).toString()).concat(" of \n\n").concat(stringOfMatrix(b)).concat("\nwill give us \n\n").concat(stringOfMatrix(inputtedMatrix)).concat("\n").concat("-".repeat(184)).concat("\n\n")); 
+		 return;
+		}
+	} // for
+} // done with check Pivot 
+
+function rowSwap(inputtedMatrix, row1, row2){ // swap row 1 with row2 in the matrix
+	for (i = 0; i <= Dimension; i++){
+		var temp = inputtedMatrix[row1][i];
+		inputtedMatrix[row1][i] = inputtedMatrix[row2][i];
+		inputtedMatrix[row2][i] = temp;
+	} // for
+} // rowSwap
+
+function changeFormatOfSolution(){ // converting fraction to decimal or vice versa depending on what user wants
+	var startIdx = 1;
+	if (decVal == -1){ // user wants to round
+	 decVal = prompt("Enter amount of decimals to round to: "); 
+		if (!decVal){
+		 decVal = -1;
+			return;
+		}
+		while(isNaN(decVal) || decVal <= 0 || decVal%1 != 0){ // validating input
+			decVal = prompt("Wrong format. Enter amount of decimals to round to: ");
+			if (!decVal){
+				decVal = -1;
+				return;
+			}
+		}
+		var strSols = ""; 
+		for (var i = solSet.length-1; i>=0; i--){
+			strSols = strSols.concat("x".concat(startIdx).concat(" = ").concat(parseFloat((getNumerator(solSet[i])/getDenominator(solSet[i])).toFixed(decVal))));
+			if (i!=0){
+				strSols = strSols.concat(", ");
+			}
+			startIdx++;
+		} // for
+
+		document.getElementById("decimal").value = "Click Me For Fraction Solutions";
+		if (elt.sols.value != ""){ // re-writing the steps if this has been previously worked out
+		 main(); 
+		} 
+	} // done with decimal conversion
+	else{ // user wants to use fractions
+		var strSols = "";
+		for (var i = solSet.length-1; i>=0; i--){
+			strSols = strSols.concat("x").concat(startIdx).concat(" = ").concat(solSet[i]);
+			if (i!=0){
+			 strSols = strSols.concat(", ");
+			}
+			startIdx++;
+		} // for
+		decVal = -1;
+		if (elt.sols.value != ""){ // re-writing the steps if this has been previously worked out
+			elt.sols.value = ""; 
+			main(); 
+		} 
+		document.getElementById("decimal").value = "Click Me For Decimal Solutions";
+	}
+	elt.sols.value = strSols;
+} // changeFormatOfSolution
+
+function changeDimension(){ // dynamically generates all text input fields
+	var tempDim = parseInt(prompt("Enter how many dimensions you want: "));	
+	if (tempDim > 100){
+		var response = prompt("You entered a dimension value bigger than 100. Are you sure you want to continue (yes/no)?");
+		if (response == "no"){
+		 return;
+		}  
+	}
+	if (isNaN(tempDim) || tempDim < 1) { // if user hit cancel
+	 return; 
+	}
+	Dimension = tempDim;
+	elt.sols.value = "";
+	elt.work.value = "";
+	document.getElementById("formInput").changeDimension.value = "Change Dimension";
+	document.getElementById("formInput").changeDimension.style.background=document.getElementById("formInput").compute.style.background;
+	var body = document.body;
+	var dv = document.getElementById("MyDiv");   
+	while(tbl.hasChildNodes()){ // deleting the table
+	 tbl.removeChild(tbl.firstChild);
+	} // while
+	dv.appendChild(tbl);
+	tbl.style.width  = '100px';
+	tbl.style.border = '0px solid black';
+	tbl.tabindex = "2";
+	var varStr = "";
+	for(var i = 0; i < Dimension; i++){
+		var tr = tbl.insertRow();
+		for(var j = 0; j < Dimension+1; j++){
+			var td = tr.insertCell();
+			var element1 = document.createElement('input'); // creating text input field
+			element1.type="text";
+			element1.size = "1";
+			element1.id = "a".concat(i.toString()).concat(",").concat(j.toString());
+			if (j == Dimension){
+			 element1.style = "text-align: center";
+			}
+			else{
+			 element1.style = "text-align: right";
+			}
+			td.appendChild(element1);
+			if (j == Dimension){
+			 break;
+			}
+			else if (j == Dimension - 1){
+			 varStr = "x".concat((j+1).toString()).concat("\u00A0\u00A0=\u00A0"); // putting the letter in the table
+			}
+			else{
+			 varStr = "x".concat((j+1).toString()).concat("\u00A0+\u00A0");
+			}
+			var t = document.createTextNode(varStr);
+			td = tr.insertCell();
+			td.appendChild(t);
+			td.style.border = '0px solid black';
+		} // inner for
+	} // outer for
+	dv.appendChild(tbl); // placin this table where our div was in the html code
+} // done with changeDimension
+
+function reduceMatrix(inputtedMatrix){ // solves for leading variable and plugs it into that variable for all remaining equations to reduce dimension by 1
+	var b = new Array(); // our new matrix that will represent the reduction of the first matrix
+	for (var i = 0; i < inputtedMatrix.length-1; i ++){
+		var rowValues = new Array(); 
+		for (var j = 0; j < inputtedMatrix.length; j++){        
+		 rowValues.push(subtractFractions(inputtedMatrix[i+1][j+1], divideFractions(multiplyFractions(inputtedMatrix[i+1][0], inputtedMatrix[0][j+1]), inputtedMatrix[0][0]))); // computing new value for the matrix entry
+		} // inner for
+		b.push(rowValues);
+	} // outer for	
+	return b;
+} // reduceMatrix
+
+function computeSol(rowEq, solSet){ // backsolves to get the solution and return the solution in an array
+	if(rowEq.length==2){ // for a situation with two constants, ex: 3(x2) = 5
+	 solSet.push(divideFractions(rowEq[1],rowEq[0])); // divide right constant by the left constant
+	 return solSet;
+	}
+	arrayValue = rowEq[rowEq.length-1]; // will be used to store the value we are going to use to update the array
+	var j = rowEq.length-2;
+	for (var colIdx = 0; colIdx < rowEq.length-2; colIdx++){ // backsolving one row in total by iterating through each column of the row
+		arrayValue = subtractFractions(arrayValue, multiplyFractions(rowEq[j],solSet[colIdx])); // subtracting off the product of the value of the variable and it's coefficient
+		j--;
+	} // for
+	arrayValue = divideFractions(arrayValue, rowEq[0]); // dividing our final value by the coefficient of the variable we are solving for
+	solSet.push(arrayValue); // pushing our solution
+	return solSet;
+} // computeSol
+
+function stringOfRow(inputtedMatrix){ // returns the string of one row of the matrix
+	if (inputtedMatrix.length == 2 && inputtedMatrix[0][0] != "x"){ // if only two elements
+		var strVals = "";
+		strVals = strVals.concat(stringOfMatrixValue(inputtedMatrix[0])).concat("(x").concat((2+Dimension- inputtedMatrix.length).toString()).concat(") = ").concat(stringOfMatrixValue(inputtedMatrix[1]));
+		return strVals;
+	} 
+	var strVals = "x".concat((2+Dimension- inputtedMatrix.length).toString()).concat(" = (").concat(inputtedMatrix[inputtedMatrix.length-1]).concat(" - ");
+	for (var i = inputtedMatrix.length-2; i >= 1; i--){
+		if (i == 1){ // last element doesn't need subtraction sign after it
+		 strVals = strVals.concat(stringOfMatrixValue(inputtedMatrix[i])).concat("(x").concat((i+2+Dimension-inputtedMatrix.length).toString()).concat(")");
+		} 
+		else if (i > 1){ // more elements left
+		 strVals = strVals.concat(stringOfMatrixValue(inputtedMatrix[i])).concat("(x").concat((i+2+Dimension-inputtedMatrix.length).toString()).concat(") - ");
+		} 
+	} // for
+	strVals = strVals.concat(")")
+	if (getNumerator(inputtedMatrix[0])!=1 || getDenominator(inputtedMatrix[0])!=1){ // checking if we have a fraction
+	 strVals = strVals.concat("/").concat(stringOfMatrixValue(inputtedMatrix[0]));
+	} 
+	return strVals;
+} // stringOfRow 
+
+function strOfSols(sols){ // takes the array of solutions and converts them to a nicely formatted string
+	var strsols = ""
+	for (var i = sols.length-2 ; i >= 0; i--){
+		if (decVal != -1){
+		 strsols = strsols.concat("x").concat((Dimension-i).toString()).concat(" = ").concat((stringOfMatrixValue(sols[i])).toString());
+		}
+		else {
+		 strsols = strsols.concat("x").concat((Dimension - i).toString()).concat(" = ").concat((sols[i]).toString());
+		}
+		if (i != 0){
+		 strsols = strsols.concat(", ");
+		}
+	} // for
+ return strsols;
+} // strOfSols
+
+function checkCols(inputtedMatrix){ // making sure an inputted column doesn't have all zeroes
+	for (var i = 0; i < Dimension; i++){
+		for (var j = 0; j < Dimension; j++){
+			if (getNumerator(inputtedMatrix[j][i]) != 0){ // if a column entry isn't zero, we are done
+				break;
+			} 
+			if (j == Dimension-1) { // returning which column had all zeros
+				return i+1;
+			} 
+		} // inner for
+	} // outer for
+ return 0;
+} // checkCols
+
+function checkDimension(inputtedMatrix){ // making sure a row doesn't have the coefficients of all of it's variables equal to zero
+	for (var i = 0; i < Dimension; i++){
+		for (var j = 0; j < Dimension; j++){
+			if (getNumerator(inputtedMatrix[i][j]) != 0){ // if there's a non-zero coefficient, we are done
+			 break;
+			} 
+			if (j == Dimension-1){ // returning which row didn't have a non-zero coefficient in front of any variable
+			 return i+1;
+			} 
+		} // inner for
+	} // outer for
+	return 0;
+} // checkDimension
+
+function readInput(inputtedMatrix){ // stores all input in the 2d array inputtedMatrix
+	var idx;
+	for (var i = 0; i < Dimension; i++){ // reading matrix input as well as making sure it's in a valid format
+		var rowValues = new Array(); // array that will get one row of input at a time to push to our 2d array shortly after
+		for (var j = 0; j < Dimension+1; j++){
+			idx = "a".concat((i).toString()).concat(",").concat((j).toString());
+			if (document.getElementById(idx).value == ""){ // if user left an input box blank, we will assume he/she wants a 0 there
+			 document.getElementById(idx).value = "0"
+			} 
+			if (isNaN(getNumerator(document.getElementById(idx).value))){ 
+			 alert("One or more input values is not a number");
+			 document.getElementById("work").value = ""; elt.sols.value = "";
+				return;
+			} 		  
+			rowValues.push(document.getElementById(idx).value); // adding to our collection of values in the row
+		} // inner for
+		if (document.getElementById(idx).value == ""){
+		 document.getElementById(idx).value = "0";
+		} 
+		if (isNaN(getNumerator(document.getElementById(idx).value))){
+		 alert("One or more input values is not a number"); document.getElementById("work").value = ""; elt.sols.value = "";
+			return;
+		} 
+		inputtedMatrix.push(rowValues); // adding an entire row of matrix values to our 2d matrix
+	} // outer for
+	if (checkCols(inputtedMatrix) != 0 ){ // making sure we don't have a column of all 0's
+	 alert("Column ".concat(checkCols(inputtedMatrix).toString()).concat(" has all zeroes")); 
+	 document.getElementById("work").value = ""; elt.sols.value = "";
+	 return;
+	} 
+	if (checkDimension(inputtedMatrix) != 0 ){ // making sure we don't have a row with all non-zero coefficients to variables
+	 alert("Row ".concat(checkDimension(inputtedMatrix).toString()).concat(" needs a non-zero variable")); document.getElementById("work").value = ""; elt.sols.value = "";
+	 return;
+	} 
+	isInputValid = 1;
+} // readInput
+
+function solveMatrix(inputtedMatrix){ // computes the solutions from the matrix
+	noSolution = 0;
+	if (inputtedMatrix.length == 1){ // if user entered 1 equation 1 unknown, the answer will be done separately as a simple division
+		if (decVal != -1){ // storing solution in decimal form
+		 solSet[0] = stringOfMatrixValue(divideFractions(inputtedMatrix[0][1],inputtedMatrix[0][0]));
+		} 
+		else{ // storing solution in fraction form
+		 solSet[0] = divideFractions(inputtedMatrix[0][1],inputtedMatrix[0][0]);
+		}
+		elt.sols.value = "x2 = ".concat(solSet[0]); // writing out result
+		document.getElementById("work").value = "You entered the following system of linear equations: \n\n".concat(stringOfMatrix(inputtedMatrix)).concat("\n").concat("-".repeat(184)).concat("\n\nThus x1 = ").concat(stringOfMatrixValue(divideFractions(inputtedMatrix[0][1], inputtedMatrix[0][0])));
+		return;
+	}
+	// now solving matrix for n dimension (n>1)
+	document.getElementById("work").value = "You entered the following system of linear equations: \n\n".concat(stringOfMatrix(inputtedMatrix)).concat("\n").concat("-".repeat(184)).concat("\n\n");
+	checkPivot(inputtedMatrix); // making sure the pivot is non-zero
+	var b = new Array(); // new array will help us print our step
+	var reducedEquations = new Array(); // array to extract the top row each time we reduce our matrix by a dimension so we can use it to backsolve later
+	solSet = new Array(); // array for our answers for each variable
+	reducedEquations.push(inputtedMatrix[0]); // the top equation will be used to backsolve later
+
+	// preparing to print our step
+	b = copyMatrix(inputtedMatrix); // we want to be able to show multiple matrices in the same string
+	var c = new Array();
+	c = copyMatrix(b);
+	for (var i = 0; i < inputtedMatrix.length-1; i++){ // iterating to get our matrix reduced to 1 by 1
+		checkPivot(b); // making sure non-zero pivot
+		b = reduceMatrix(b); // reducing our matrix by 1 dimension by plugging in a variable in for that variable in the rest of the equations and simplifying
+		document.getElementById("work").value = document.getElementById("work").value.concat("[Step ").concat(String.fromCharCode(65+Dimension-c.length)).concat("] ").concat("Solving for (x".concat((Dimension+1-c.length).toString()).concat(") in the top equation of our system:\n\n").concat(stringOfMatrix(c)).concat("\nGives us ").concat(stringOfRow(c[0])).concat("      [Equation ").concat(String.fromCharCode(65+Dimension-c.length)).concat("]").concat("\n\nPlugging in [Equation ").concat(String.fromCharCode(65+Dimension-c.length)).concat("] for x").concat((Dimension+1-c.length).toString()).concat(" in the remaining equations of our system and simplifying leaves us with:\n\n").concat(stringOfMatrix(b))); // printing out what we did
+		if (c.length == 2){
+	 	document.getElementById("work").value = document.getElementById("work").value.slice(0, -1); // we have the last equation before backsolving
+		 document.getElementById("work").value = document.getElementById("work").value.concat("      [Equation ").concat(String.fromCharCode(66+Dimension-c.length)).concat("]\n");
+		}
+		document.getElementById("work").value = document.getElementById("work").value.concat("\n").concat("-".repeat(184)).concat("\n\n"); // preparing to print next step
+		c = reduceMatrix(c);
+		reducedEquations.push(b[0]); // pushing the top of our reduced equations so we can use it later for backsolving
+	} // for
+
+	// we have now reduced our matrix to 1by1 and it is now backsolving time
+
+	document.getElementById("work").value = document.getElementById("work").value.concat("Now it is time to backsolve\n\n".concat("-".repeat(184)).concat("\n\n"));
+	for (var i = inputtedMatrix.length-1; i >= 0; i--){ // backsolving one variable at a time, starting with the last variable
+		solSet = computeSol(reducedEquations[i], solSet); // backsolving one row
+		if (i == inputtedMatrix.length - 1) { // if it's our first backsolve, we print out to the user showing that this was a simple division
+			if (decVal != -1) { // printing in decimal form
+			 document.getElementById("work").value = document.getElementById("work").value.concat("Backsolving for x".concat((i + 1).toString()).concat(" using [Equation ").concat(String.fromCharCode(65 + Dimension - c.length)).concat("] from [Step ").concat(String.fromCharCode(64 + Dimension - c.length)).concat("] now...\n\n").concat(stringOfRow(reducedEquations[i])).concat("\n\nImmediately gives us \n\nx").concat((i + 1).toString()).concat(" = ").concat(stringOfMatrixValue(divideFractions(b[0][1], b[0][0]))).concat("\n\n").concat("-".repeat(184)).concat("\n\n"));
+			}
+			else { //  printing in fraction form
+		 	document.getElementById("work").value = document.getElementById("work").value.concat("Backsolving for x".concat((i + 1).toString()).concat(" using [Equation ").concat(String.fromCharCode(65 + Dimension - c.length)).concat("] from [Step ").concat(String.fromCharCode(64 + Dimension - c.length)).concat("] now...\n\n").concat(stringOfMatrix(b)).concat("\nImmediately gives us \n\nx").concat((i + 1).toString()).concat(" = ").concat(divideFractions(b[0][1], b[0][0])).concat("\n\n").concat("-".repeat(184)).concat("\n\n"));
+			}
+		}
+		else if (decVal == -1) { // not our first back solve and printing in fraction form
+		 document.getElementById("work").value = document.getElementById("work").value.concat("Backsolving for x".concat((i + 1).toString()).concat(" using [Equation ").concat(String.fromCharCode(65 + i)).concat("] from [Step ").concat(String.fromCharCode(65 + i)).concat("] now...\n\n").concat(stringOfRow(reducedEquations[i])).concat("\n\nnow plugging into this equation the previously computed solution(s) of ").concat(strOfSols(solSet)).concat(" gives us \n\nx").concat((1 + 1 + Dimension - reducedEquations[i].length).toString()).concat(" = ").concat((solSet[solSet.length - 1])).concat("\n\n").concat("-".repeat(184)).concat("\n\n"));
+		}
+		else { // not our first back solve and printing in decimal form 
+		 document.getElementById("work").value = document.getElementById("work").value.concat("Backsolving for x".concat((i + 1).toString()).concat(" using [Equation ").concat(String.fromCharCode(65 + i)).concat("] from [Step ").concat(String.fromCharCode(65 + i)).concat("] now...\n\n").concat(stringOfRow(reducedEquations[i])).concat("\n\nnow plugging into this equation the previously computed solution(s) of ").concat(strOfSols(solSet)).concat(" gives us \n\nx").concat((1 + 1 + Dimension - reducedEquations[i].length).toString()).concat(" = ").concat(stringOfMatrixValue(solSet[solSet.length - 1])).concat("\n\n").concat("-".repeat(184)).concat("\n\n"));
+		}
+	} // for
+	var strsols = ""; // will be used to make a nice string of the solutions
+	var startIdx = 1;
+	for (var i = solSet.length-1; i>=0; i--){ // forming our one string of all solutions
+		if (decVal != -1){ // decimal form
+		 strsols = strsols.concat("x").concat((startIdx).toString()).concat(" = ").concat(stringOfMatrixValue(solSet[i]));
+		} 
+		else{ // fraction form
+		 strsols = strsols.concat("x").concat((startIdx).toString()).concat(" = ").concat(solSet[i]);
+		} 
+		if (i!=0){ // if this is not our last variable, set up to print out the next variable with a comma and a space
+		 strsols = strsols.concat(", ");
+		} 
+		startIdx++;
+	} // for
+	elt.sols.value = strsols; // writing our result to the top textarea
+
+	document.getElementById("work").value = document.getElementById("work").value.concat("Thus the solution set is:\n\n").concat(strsols).concat("\n\n");
+	if (noSolution == 1){ // finishing off writing our solution to the bottom textarea
+	 elt.sols.value = ""; document.getElementById("work").value = ""; alert("One or more equations are parallel to another equation. Please enter equations that intersect."); isInputValid = 0;
+	} 
+} // solveMatrix
+
+function main(){ // reads input, does computations, and stores output
+	isInputValid = 0; // initializing flag for whether or not there is a solution 
+	if (Dimension == 0 || Dimension < 0 || isNaN(Dimension) || Dimension == "" || !Dimension){
+		alert("Invalid dimension value. Please click Choose Dimension and type a value.");
+		return;
+	}
+	var inputtedMatrix = new Array(); // will be used to store our inputted matrix
+	readInput(inputtedMatrix); // stores the input in a
+	if (isInputValid){
+		solveMatrix(inputtedMatrix); // solves the system of linear equations
+	}
+} // done with main
+
+</script>
+</html>
+
