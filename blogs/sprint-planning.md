@@ -17,3 +17,9 @@ In scrum, there is an emphasis on completing user stories. Code corresponding to
 Suppose that we have one large user story that we pull into the sprint and that's it. Maybe we feel there is a 70% chance that this user story can be completed in a sprint. We either finish the user story and everyone is happy or we do not finish the user story and have nothing truly completed by the end of the sprint. This is a huge risk. We can decrease the risk by taking this large user story and breaking it down into many small user stories. This way, even if we don't finish every user story that was pulled into the sprint, we still have some user stories that were truly completed in the sprint.
 
 So the smaller your user stories are, the more likely it is that you will have some fully completed user stories that can be demoed for feedback and optionally released. So it could be said that the smaller the user story, the better. However, we don't want to go all out making the user stories as small as possible because doing that would increase the overhead of managing the product backlog. Aiming to have the user stories be small enough such that the team completes 1-1.3 user stories per person each sprint is a good number for a two week sprint. So for a team of 7, this would mean completing 7-9 user stories each sprint.
+
+### Should all tasks be assigned to people during sprint planning?
+When it comes to when to sign up for tasks, one of three approaches are typically taken:
+1. 100% of the tasks are assigned to people during sprint planning. No change in assigness are allowed.
+1. 100% of the tasks are assigned to people during sprint planning. Assignees can be changed as needed throughout the sprint.
+1. Each team member signs up for one task during sprint planning which is their first task. The rest of the work pulled into the sprint will be unassigned and can be picked up as people become free
