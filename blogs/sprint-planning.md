@@ -33,4 +33,6 @@ One option is to have one programmer per story. This person would just keep work
 
 The situation above makes coordination a lot easier but it suffers from two problems. One problem is that it causes there to be many user stories in progress at the same time. We run into the risk of finishing the sprint with many partially completed user stories but no fully completed user stories. One way around this is to put every programmer on the same user story. If you have every programmer on the same user story, then you minimize the chance of ending the sprint with no fully completed user stories. However, putting many people on the same user story could lead to people stepping on each other's toes.
 
-So just having one person per user story might result in having many partially completed user stories but putting everyone on the same user story could result in people stepping on each other's toes. So what do we do? Do we go somewhere in the middle?
+Another option is to just go somewhere in the middle to try to get the best of both worlds. Is that what we should do? Sometimes. Not always. Let's discuss how to determine when to use which setup.
+
+It is generally more efficient to have more than one programmer per user story so that team members can sign up for tasks that suit their specialization. User stories generally have both a front-end and back-end component so this would allow for a front-end developer to sign up for the front-end work and a back-end developer to sign up for the back-end work.
