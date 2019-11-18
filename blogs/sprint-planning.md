@@ -22,4 +22,6 @@ So the smaller your user stories are, the more likely it is that you will have s
 When it comes to when to sign up for tasks, one of three approaches are typically taken:
 1. 100% of the tasks are assigned to people during sprint planning. No change in assigness are allowed.
 1. 100% of the tasks are assigned to people during sprint planning. Assignees can be changed as needed throughout the sprint.
-1. Each team member signs up for one task during sprint planning which is their first task. The rest of the work pulled into the sprint will be unassigned and can be picked up as people become free
+1. Each team member signs up for one task during sprint planning which is their first task. The rest of the work pulled into the sprint will be unassigned and can be picked up as people become free.
+
+
