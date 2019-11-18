@@ -35,4 +35,4 @@ The situation above makes coordination a lot easier but it suffers from two prob
 
 Another option is to just go somewhere in the middle to try to get the best of both worlds. Is that what we should do? Sometimes. Not always. Let's discuss how to determine when to use which setup.
 
-It is generally more efficient to have more than one programmer per user story so that team members can sign up for tasks that suit their specialization. User stories generally have both a front-end and back-end component so this would allow for a front-end developer to sign up for the front-end work and a back-end developer to sign up for the back-end work.
+It is generally more efficient to have more than one programmer per user story so that team members can sign up for tasks that suit their specialization. User stories generally have both a front-end and back-end component so this would allow for someone stronger in front-end to sign up for the front-end work and someone stronger in back-end to sign up for the back-end work.
