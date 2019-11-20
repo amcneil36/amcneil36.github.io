@@ -50,10 +50,10 @@ A good rule of thumb is to aim to complete everything that gets pulled into the 
 ### Summary
 
 To outline the most important parts of sprint planning:
- -Use a pull system to determine who does which work
- -Have everyone sign up for one task during sprint planning and have the rest unassigned. Let team members assign tasks to themself as they finish their tasks
- -For every easy and very small user stories, it is OK to have only one programmer work on the story. For all other stories, it makes sense to have more than one programmer work on the same story so that they can sign up for tasks that suit their specializations
- -Aim to complete all user stories that were pulled into the sprint 80% of the time
+ - Use a pull system to determine who does which work
+ - Have everyone sign up for one task during sprint planning and have the rest unassigned. Let team members assign tasks to themself as they finish their tasks
+ - For every easy and very small user stories, it is OK to have only one programmer work on the story. For all other stories, it makes sense to have more than one programmer work on the same story so that they can sign up for tasks that suit their specializations
+ - Aim to complete all user stories that were pulled into the sprint 80% of the time
  
  ## Sources
  1. Cohn, Mike. User Stories Applied For Agile Software Development. Addison-Wesley, 2004.  
