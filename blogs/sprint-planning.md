@@ -46,3 +46,16 @@ Any remaining user stories (perhaps those of medium difficulty) might be fine wi
 A team won't always complete everything that is pulled into a sprint and that is OK. Maybe something outside of your team's control goes wrong like losing internet connection. Maybe another team's code that you depend on happens to break all of a sudden. Perhaps you took the correct steps when estimating how long a story would take but due to unknown unknowns, the story took longer than predicted. That is OK. So we won't complete everything every time. How often should be complete everything that was pulled into the sprint? It is good to know the answer to this question because it will help you determine your capacity at the start of your sprint. Should the team sign up for very few story points worth of work so there is a super high chance that you finish everything? Should the team be more aggressive and sign up for a bit more story points of work with a decent risk that some of the work won't finish?
 
 A good rule of thumb is to aim to complete everything that gets pulled into the sprint 80% of the time. Whatever percentage your team is going with, make sure every developer on the team knows this number. Knowing this number will help team members determine the amount of story points worth of work that might make sense for the team to pull into the sprint.
+
+### Summary
+
+To outline the most important parts of sprint planning:
+ -Use a pull system to determine who does which work
+ -Have everyone sign up for one task during sprint planning and have the rest unassigned. Let team members assign tasks to themself as they finish their tasks
+ -For every easy and very small user stories, it is OK to have only one programmer work on the story. For all other stories, it makes sense to have more than one programmer work on the same story so that they can sign up for tasks that suit their specializations
+ -Aim to complete all user stories that were pulled into the sprint 80% of the time
+ 
+ ## Sources
+ 1. Cohn, Mike. User Stories Applied For Agile Software Development. Addison-Wesley, 2004.  
+ 1. Cohn, Mike. Agile Estimation and Planning. Pearson Education, 2006.  
+ 1. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.
