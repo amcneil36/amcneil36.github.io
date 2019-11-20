@@ -45,7 +45,7 @@ Any remaining user stories (perhaps those of medium difficulty) might be fine wi
 
 A team won't always complete everything that is pulled into a sprint and that is OK. Maybe something outside of your team's control goes wrong like losing internet connection. Maybe another team's code that you depend on happens to break all of a sudden. Perhaps you took the correct steps when estimating how long a story would take but due to unknown unknowns, the story took longer than predicted. That is OK. So we won't complete everything every time. How often should be complete everything that was pulled into the sprint? It is good to know the answer to this question because it will help you determine your capacity at the start of your sprint. Should the team sign up for very few story points worth of work so there is a super high chance that you finish everything? Should the team be more aggressive and sign up for a bit more story points of work with a decent risk that some of the work won't finish?
 
-A good rule of thumb is to aim to complete everything that gets pulled into the sprint 80% of the time. Whatever percentage your team is going with, make sure every developer on the team knows this number. Knowing this number will help team members determine the amount of story points worth of work that might make sense for the team to pull into the sprint.
+A good rule of thumb is to aim to complete everything that gets pulled into the sprint 80% of the time. Whatever percentage your team is going with, make sure every developer on the team knows this number. Knowing this number will help team members determine the amount of story points worth of work that might make sense for the team to pull into the sprint. During the 20% of the time where the user stories do not get all finished in the sprint, discuss in the retro as to what may have caused the stories to not get finished and whether or not any adjustments should be made for upcoming sprints. The intention is to not put blame on others. The intention is to improve. 
 
 ### Summary
 
@@ -54,6 +54,8 @@ To outline the most important parts of sprint planning:
  - Have everyone sign up for one task during sprint planning and have the rest unassigned. Let team members assign tasks to themself as they finish their tasks
  - For every easy and very small user stories, it is OK to have only one programmer work on the story. For all other stories, it makes sense to have more than one programmer work on the same story so that they can sign up for tasks that suit their specializations
  - Aim to complete all user stories that were pulled into the sprint 80% of the time
+ 
+We want our team to be getting in a team mindset. The product owner identifies the work that needs to be done but then individual team members sign up for which of those tasks they prefer. We leave most of the work un-assigned at the start of the sprint so team members can pick up work as needed. This helps combat the scenario in which some work takes longer than predicted and some work takes shorter than predicted. We understand that we won't always finish all work in the sprint and we don't aim to finish all work in the sprint every time anyway. We then take a blameless approach in the retros to discuss potential improvement actions that could help us with sprint planning (and other areas) next time.
  
  ## Sources
  1. Cohn, Mike. User Stories Applied For Agile Software Development. Addison-Wesley, 2004.  
