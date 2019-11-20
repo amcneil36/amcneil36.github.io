@@ -40,3 +40,6 @@ It is generally more efficient to have more than one programmer per user story s
 Depending on how many programmers there are on a scrum team, there may or may not ever be a scenario where you want every programmer on the same user story. Good user stories are broken down to be very small so the max amount of programmers that might make sense on a user story would be around 4 where they are all pair programming. This would make sense for user stories that are considered to be very difficult.
 
 Any remaining user stories (perhaps those of medium difficulty) might be fine with having 2-3 programmers.
+
+### How often should teams complete every story that was pulled into the sprint? In other words, how aggressive should teams be when determining what to pull into the sprint?
+
