@@ -35,4 +35,8 @@ The situation above makes coordination a lot easier but it suffers from two prob
 
 Another option is to just go somewhere in the middle to try to get the best of both worlds. Is that what we should do? Sometimes. Not always. Let's discuss how to determine when to use which setup.
 
-It is generally more efficient to have more than one programmer per user story so that team members can sign up for tasks that suit their specialization. User stories generally have both a front-end and back-end component so this would allow for someone stronger in front-end to sign up for the front-end work and someone stronger in back-end to sign up for the back-end work.
+It is generally more efficient to have more than one programmer per user story so that team members can sign up for tasks that suit their specialization. User stories generally have both a front-end and back-end component so this would allow for someone stronger in front-end to sign up for the front-end work and someone stronger in back-end to sign up for the back-end work. For user stories that are smaller than normal and easy, it would be OK to have one programmer.
+
+Depending on how many programmers there are on a scrum team, there may or may not ever be a scenario where you want every programmer on the same user story. Good user stories are broken down to be very small so the max amount of programmers that might make sense on a user story would be around 4 where they are all pair programming. This would make sense for user stories that are considered to be very difficult.
+
+Any remaining user stories (perhaps those of medium difficulty) might be fine with having 2-3 programmers.
