@@ -41,5 +41,8 @@ Depending on how many programmers there are on a scrum team, there may or may no
 
 Any remaining user stories (perhaps those of medium difficulty) might be fine with having 2-3 programmers.
 
-### How often should teams complete every story that was pulled into the sprint? In other words, how aggressive should teams be when determining what to pull into the sprint?
+### What percentage of the time should the team complete every story that was pulled into the sprint?
 
+Some teams have the mindset of needing to complete every story that was pulled into the sprint 100% of the time. There are a few problems with this. The first problem is that there are many things that could go wrong during a sprint, some of which might be outside the contrl of the scrum team. Perhaps internet goes down in the office for a long time. Perhaps something that your team depends on that is owned by another team happens to break. So we won't complete everything that was pulled into the sprint 100% of the time.
+
+We could try to set a slightly more conservative goal. We could aim to complete everything that was pulled into the sprint 100% of the time with the exception that we are OK with unfinished stories if something out of our control is what prevented us from finishing those stories. So if we lose internet connection or something owned by another team messes up, we are still OK with that. This is better but still probably not the right idea. What would your team do if they were told they had to do this? They would break down the stories as small as possible (even smaller than what is optimal) such that they are all less than 1 day to complete. They would then pull in exactly one story to the sprint. Yeah. Any more than that risks us completing everything in the sprint 100% of the time.
