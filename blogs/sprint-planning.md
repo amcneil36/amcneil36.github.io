@@ -57,7 +57,7 @@ To outline the most important parts of sprint planning:
  
 We want our team to be getting in a team mindset. The product owner identifies the work that needs to be done but then individual team members sign up for which of those tasks they prefer. We leave most of the work un-assigned at the start of the sprint so team members can pick up work as needed. This helps combat the scenario in which some work takes longer than predicted and some work takes shorter than predicted. We understand that we won't always finish all work in the sprint and we don't aim to finish all work in the sprint every time anyway. We then take a blameless approach in the retros to discuss potential improvement actions that could help us with sprint planning (and other areas) next time.
  
- ## Sources
+## Sources
  1. Cohn, Mike. User Stories Applied For Agile Software Development. Addison-Wesley, 2004.  
  1. Cohn, Mike. Agile Estimation and Planning. Pearson Education, 2006.  
  1. Beck, Kent and Fowler, Martin. Planning Extreme Programming. Addison-Wesley, 2004.
