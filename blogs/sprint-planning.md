@@ -20,9 +20,9 @@ So the smaller your user stories are, the more likely it is that you will have s
 
 ### Should all tasks be assigned to people during sprint planning?
 When it comes to when to sign up for tasks, one of three approaches are typically taken:
-1. 100% of the tasks are assigned to people during sprint planning. No change in assigness are allowed.
-1. 100% of the tasks are assigned to people during sprint planning. Assignees can be changed as needed throughout the sprint.
-1. Each team member signs up for one task during sprint planning which is their first task. The rest of the work pulled into the sprint will be unassigned and can be picked up as people become free.
+1. 100% of the tasks are assigned to people during sprint planning. No change in assigness are allowed
+1. 100% of the tasks are assigned to people during sprint planning. Assignees can be changed as needed throughout the sprint
+1. Each team member signs up for one task during sprint planning which is their first task. The rest of the work pulled into the sprint will be unassigned and can be picked up as people become free
 
 Option 1 should be avoided. This option typically results in more of an individual mindset rather than a team mindset. You might feel less inclined to help a teammate because helping that teammate would decrease the chance that you finish all work assigned to you for the sprint. This is a sub-optimal way to work. Secondly, option 1 assumes that we have a good idea about how long each task will take. What if someone's tasks end up taking way less time than predicted and the other person's tasks end up taking way longer than predicted? The person who finishes early would end up working on some less important task that never got pulled into the sprint since this option states we can't change assignees.
 
