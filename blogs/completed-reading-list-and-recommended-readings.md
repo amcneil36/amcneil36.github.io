@@ -105,7 +105,8 @@ In this post I am keeping track of all the books I have read and am documenting 
 1. McConnell, Steve. Software Estimation: Demystifying the Black Art. Microsoft Press, 2006.
 1. Fournier, Camille. The Manager's Path. A Guide for Tech Leaders Navigating Growth & Change. O'Reilly Media, 2017.  
 1. Bentley, Jon. Programing Pearls. Addison-Wesley, 1986.  
-1. Dorch, Patricia. Professionalism: New Rules for Workplace Career Success. 2012.
+1. Dorch, Patricia. Professionalism: New Rules for Workplace Career Success. 2012.  
+1. White, Paul. The Vibrant Workplace: Overcoming the Obstacles to Building a Culture of Appreciation. Northfield Publishing, 2017.
 
 ### Recommended Readings
 This list will be sorted from best to worst in terms of how much I recommend reading it. That being said, any book that makes this list is terrific. Many of the books that did not make this list were also very good but I wanted to keep this list small because throwing too many books at people might discourage them. 
