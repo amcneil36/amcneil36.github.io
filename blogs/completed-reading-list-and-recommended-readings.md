@@ -107,7 +107,8 @@ In this post I am keeping track of all the books I have read and am documenting 
 1. Bentley, Jon. Programing Pearls. Addison-Wesley, 1986.  
 1. Dorch, Patricia. Professionalism: New Rules for Workplace Career Success. 2012.  
 1. White, Paul. The Vibrant Workplace: Overcoming the Obstacles to Building a Culture of Appreciation. Northfield Publishing, 2017.  
-1. Perez, Patti. The Drama-free Workplace: How you can prevent unconscious bias, sexual harassment, ethics lapses, and inspire a healthy culture. 2019.
+1. Perez, Patti. The Drama-free Workplace: How you can prevent unconscious bias, sexual harassment, ethics lapses, and inspire a healthy culture. 2019.  
+1. Mcintyre, Marie G. Secrets To Winning At Office Politics: How to Achieve Your Goals and Increase Your Influence at Work. 2005.
 
 ### Recommended Readings
 This list will be sorted from best to worst in terms of how much I recommend reading it. That being said, any book that makes this list is terrific. Many of the books that did not make this list were also very good but I wanted to keep this list small because throwing too many books at people might discourage them. 
