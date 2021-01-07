@@ -20,7 +20,7 @@ Property tax <input type="text" name="propertyTax" value="0.78" size="1" style="
 Monthly HoA fees $<input type="text" name="monthlyHoaFees" value="200" size="7"><br>
 Monthly Homeowners insurance $<input type="text" name="monthlyHomeownersInsurance" value="280" size="7"><br>
 Yearly home appreciation: <input type="text" name="annualHomeAppreciation" value="2.5" size="1" style="text-align: right">%<br>
-Yearly maintenance cost $<input type="text" name="yearlyMaintenanceCost" value="9,000" size="7"><br>
+Yearly maintenance cost $<input type="text" name="yearlyMaintenanceCost" value="3,067" size="7"><br>
 <!-- add in yearly maintenance repairs and inflation -->
 <input type="button" name="addBtn" value="Calculate"> <input type="reset" value="Clear"> <input type = "button" name = "explanationOfCalculator" value = "Explanation of Calculator">
 </div>
@@ -64,7 +64,7 @@ document.getElementById("addForm").addBtn.onclick = main;
 document.getElementById("addForm").explanationOfCalculator.onclick = explanationOfCalculator;
 
 function explanationOfCalculator(){
- alert("This calculator compares whether buying or renting is more profitable, assuming the difference in cost is invested each month. For example, if a buyer spends $3,000 one month and a renter spends $2,000 that same month, then the renter will invest $1,000 that month while the buyer invests $0 that month. If a buyer spends $3,000 one month and a renter spends $5,000 that month, then the buyer will invest $2,000 that month and the renter will invest $0. The annual cost of repair is done at the end of each year. The HoA fees, renters insurance fees, homewoners insurance fees, and maintenance costs all increase at the end of each year by the inflation amount. The value of the house increases by the appreciation at the end of the year and thus makes the property tax payments more expensive. The rent increases at the end of each year by the apartment appreciation amount. To simulate paying cash for a house, enter a down payment equal to the sale price while leaving the mortgage duration at 30 years or whichever length of time you want to compare the results of buying vs renting after.");
+ alert("This calculator compares whether buying or renting is more profitable, assuming the difference in cost is invested each month. For example, if a buyer spends $3,000 one month and a renter spends $2,000 that same month, then the renter will invest $1,000 that month while the buyer invests $0 that month. If a buyer spends $3,000 one month and a renter spends $5,000 that month, then the buyer will invest $2,000 that month and the renter will invest $0. The HoA fees, renters insurance fees, homewoners insurance fees, and maintenance costs all increase at the end of each year by the inflation amount. The value of the house increases by the appreciation at the end of the year and thus makes the property tax payments more expensive. The rent increases at the end of each year by the apartment appreciation amount. To simulate paying cash for a house, enter a down payment equal to the sale price while leaving the mortgage duration at 30 years or whichever length of time you want to compare the results of buying vs renting after.");
 }
 
 function main(){
@@ -86,6 +86,7 @@ function main(){
    var annualHomeAppreciation = convertInputToFloat(elt.annualHomeAppreciation.value)/100;
    var annualInflation = convertInputToFloat(elt.annualInflation.value)/100;
    var monthlyMortgageCost = calculateMonthlyMortgageCost(salePrice-downPayment, durationOfMortgageInYears, annualInterestRate);
+
    var valueOfHouse = salePrice;
    
    var monthlyRentCost = convertInputToFloat(elt.monthlyRentCost.value);
@@ -97,9 +98,11 @@ function main(){
    
    var totalMoneyFromInvestmentsRenter = 0;
    var totalMoneyFromInvestmentsBuyer = 0;
-   totalMoneyFromInvestmentsRenter += calculateCompoundInterest(downPayment, annualReturn, durationOfMortgageInYears);
+   var totalMoneyInInvestmentsFromInvestingDownPayment = calculateCompoundInterest(downPayment, annualReturn, durationOfMortgageInYears); 
+   totalMoneyFromInvestmentsRenter += totalMoneyInInvestmentsFromInvestingDownPayment;
    totalMoneySpentOnInvestmentsRenter += downPayment;
-   totalMoneyFromInvestmentsRenter += calculateCompoundInterest(closingCostPercent*salePrice, annualReturn, durationOfMortgageInYears);
+   var totalMoneyInInvestmentsFromInvestingClosingClost = calculateCompoundInterest(closingCostPercent*salePrice, annualReturn, durationOfMortgageInYears);
+   totalMoneyFromInvestmentsRenter += totalMoneyInInvestmentsFromInvestingClosingClost;
    totalMoneySpentOnInvestmentsRenter += closingCostPercent*salePrice;
    var totalMonthlyCostForBuyer = 0;
    var totalMonthlyCostForRenter = 0;
@@ -114,11 +117,13 @@ function main(){
    if (!arePMIPaymentsStillNeeded){
      monthlyPMICost = 0;
    }
+   var totalMoneyInInvestmentsFromMonthlyInvestmentsRenter = 0;
    for (var yearsRemaining = durationOfMortgageInYears-1; yearsRemaining >= 0; yearsRemaining--){
-    totalMonthlyCostForBuyer = monthlyMortgageCost + monthlyPMICost + valueOfHouse*propertyTax/12 + monthlyHoaFees + monthlyHomeownersInsurance;
+    totalMonthlyCostForBuyer = monthlyMortgageCost + monthlyPMICost + valueOfHouse*propertyTax/12 + monthlyHoaFees + monthlyHomeownersInsurance + yearlyMaintenanceCost/12;
 	totalMonthlyCostForRenter = monthlyRentCost + monthlyRentersInsuranceCost;
     for (var monthsRemainingInYear = 11; monthsRemainingInYear >= 0; monthsRemainingInYear--){
 	  if (totalMonthlyCostForBuyer > totalMonthlyCostForRenter){
+	    totalMoneyInInvestmentsFromMonthlyInvestmentsRenter += calculateCompoundInterest(totalMonthlyCostForBuyer-totalMonthlyCostForRenter, annualReturn, yearsRemaining + monthsRemainingInYear);
 	    totalMoneyFromInvestmentsRenter += calculateCompoundInterest(totalMonthlyCostForBuyer-totalMonthlyCostForRenter, annualReturn, yearsRemaining + monthsRemainingInYear);
 		totalMoneySpentOnInvestmentsRenter += totalMonthlyCostForBuyer-totalMonthlyCostForRenter;
 	  }
@@ -138,24 +143,29 @@ function main(){
 	valueOfHouse = valueOfHouse + valueOfHouse*annualHomeAppreciation;
 	monthlyHoaFees += monthlyHoaFees*annualInflation;
 	monthlyHomeownersInsurance += monthlyHomeownersInsurance*annualInflation;
-	totalMoneyFromInvestmentsRenter += calculateCompoundInterest(yearlyMaintenanceCost, annualReturn, yearsRemaining + monthsRemainingInYear);
-	totalMoneySpentOnInvestmentsRenter += yearlyMaintenanceCost;
-	totalCostForBuyer += yearlyMaintenanceCost;
 	yearlyMaintenanceCost = yearlyMaintenanceCost + yearlyMaintenanceCost*annualInflation;
    }
 
   var outputString = "";
   outputString += "Summary of buyer after " + durationOfMortgageInYears + " years:<br>";
-  outputString += "<ul><li>Total money in investments: " + formatter.format(totalMoneyFromInvestmentsBuyer) + "</li>";
+  outputString += "<ul><li>Total money in investments: " + formatter.format(totalMoneyFromInvestmentsBuyer) + "</li><ul><li>" + formatter.format(totalMoneyFromInvestmentsBuyer) + " from investing the difference in fees each month</li></ul>";
   outputString += "<li>Total value of the house: " + formatter.format(valueOfHouse) + "</li>";
   outputString += "<li>Total money spent on fees: " + formatter.format(totalCostForBuyer) + "</li>";
-  outputString += "<li>Total money spent on investments: " + formatter.format(totalMoneySpentOnInvestmentsBuyer) + "</li>";
+  outputString += "<li>Total money spent on investments: " + formatter.format(totalMoneySpentOnInvestmentsBuyer) + "</li><ul><li>" + formatter.format(totalMoneySpentOnInvestmentsBuyer) + " from investing the difference in fees each month</li></ul>";
   outputString += "<li>Total money spent (fees + investments): " + formatter.format(totalMoneySpentOnInvestmentsBuyer + totalCostForBuyer) + "</li>";
-  outputString += "<li>Buyer's total cost for next year: " + formatter.format((monthlyMortgageCost + monthlyPMICost + valueOfHouse*propertyTax/12 + monthlyHoaFees + monthlyHomeownersInsurance)*12 + yearlyMaintenanceCost) + "</li></ul>";
+  outputString += "<li>Buyer's total cost for next year: " + formatter.format((valueOfHouse*propertyTax/12 + monthlyHoaFees + monthlyHomeownersInsurance)*12 + yearlyMaintenanceCost) + "</li></ul>";
   outputString += "Summary of renter after " + durationOfMortgageInYears + " years:<br>";  
-  outputString += "<ul><li>Total money in investments: " + formatter.format(totalMoneyFromInvestmentsRenter) + "</li>";
+  outputString += "<ul><li>Total money in investments: " + formatter.format(totalMoneyFromInvestmentsRenter) + "</li><ul>";
+  outputString += "<li>" + formatter.format(totalMoneyInInvestmentsFromInvestingDownPayment) + " from investing the down payment</li>";
+  outputString += "<li>" + formatter.format(totalMoneyInInvestmentsFromInvestingClosingClost) + " from investing the closting cost</li>";
+  outputString += "<li>" + formatter.format(totalMoneyInInvestmentsFromMonthlyInvestmentsRenter) + " from investing the difference in monthly payment costs</li>";
+  outputString += "</ul>";
   outputString += "<li>Total money spent on fees: " + formatter.format(totalCostForRenter) + "</li>";
-  outputString += "<li>Total money spent on investments: " + formatter.format(totalMoneySpentOnInvestmentsRenter) + "</li>";
+  outputString += "<li>Total money spent on investments: " + formatter.format(totalMoneySpentOnInvestmentsRenter) + "</li><ul>";
+  outputString += "<li>" + formatter.format(downPayment) + " from investing the down payment</li>";
+  outputString += "<li>" + formatter.format(closingCostPercent*salePrice) + " from investing the closting cost</li>";
+  outputString += "<li>" + formatter.format(totalMoneySpentOnInvestmentsRenter-downPayment - closingCostPercent*salePrice) + " from investing the difference in monthly payment costs</li>";
+  outputString += "</ul>";
   outputString += "<li>Total money spent (fees + investments): " + formatter.format(totalMoneySpentOnInvestmentsRenter + totalCostForRenter) + "</li>";
   outputString += "<li>Renter's total cost for next year: " + formatter.format((monthlyRentCost + monthlyRentersInsuranceCost)*12) + "</li></ul>";
    
