@@ -39,7 +39,7 @@ function createSecondElement(){
 
 function createFirstElement(){
   var myDiv = document.getElementById("extraRows");
-  var array = ["August high","December high"];
+  var array = ["August high (F)","December high (F)"];
   var selectList = document.createElement("select");
   selectList.setAttribute('id', 'fieldName' + idx);
   myDiv.appendChild(selectList);
@@ -59,11 +59,15 @@ function doesObjQualify(obj){
 	
     var value = parseFloat(document.getElementById("value" + i).value);
 	var symbol = document.getElementById("symbols" + i).value;
-	if (fieldId == "August high"){
+	if (fieldId == "August high (F)"){
 	    fieldName = obj.augHi;
 	}
-	else{
+	else if (fieldId == "December high (F)"){
 	    fieldName = obj.decHi;
+	}
+	else{
+		alert("something went wrong");
+		return false;
 	}
 	var flag = false;
 	if (symbol == ">"){
@@ -110,16 +114,24 @@ function main(){
 				td.appendChild(bold);
                 td.style.border = '1px solid black';
 				
-		        var td = tr.insertCell();
+				var td = tr.insertCell();
 				bold = document.createElement('strong');
-                bold.appendChild(document.createTextNode('August high'));
+                bold.appendChild(document.createTextNode('State'));
                 td.appendChild(bold);
 				td.style.border = '1px solid black';
 				td.style.whiteSpace = 'nowrap';
 				
-								                var td = tr.insertCell();
+		        var td = tr.insertCell();
 				bold = document.createElement('strong');
-                bold.appendChild(document.createTextNode('December high'));
+                bold.appendChild(document.createTextNode('August high (F)'));
+                td.appendChild(bold);
+				td.style.border = '1px solid black';
+				td.style.whiteSpace = 'nowrap';
+				
+				
+				var td = tr.insertCell();
+				bold = document.createElement('strong');
+                bold.appendChild(document.createTextNode('December high (F)'));
                 td.appendChild(bold);
 				td.style.border = '1px solid black';
 	td.style.whiteSpace = 'nowrap';
@@ -127,7 +139,11 @@ function main(){
       if (doesObjQualify(arr[i])){
 		          tr = tbl.insertRow();
                 var td = tr.insertCell();
-                td.appendChild(document.createTextNode(arr[i].siteName));
+                td.appendChild(document.createTextNode(arr[i].cityName));
+                td.style.border = '1px solid black';
+				
+				var td = tr.insertCell();
+                td.appendChild(document.createTextNode(arr[i].stateName));
                 td.style.border = '1px solid black';
 				
 				                var td = tr.insertCell();
