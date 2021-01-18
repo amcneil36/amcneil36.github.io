@@ -88,13 +88,56 @@ function doesObjQualify(obj){
 	return true;
 }
 
+
+
+
 function main(){
-	var outputString = "";
-	
+	    var element = document.getElementById('table');
+		if (element != null){
+		    element.parentNode.removeChild(element);	
+		}
+    var body = document.body,
+        tbl  = document.createElement('table');
+    tbl.style.width  = '100px';
+    tbl.style.border = '1px solid black';
+	    tbl.setAttribute("id", 'table');
+
+        var tr = tbl.insertRow();
+
+                var td = tr.insertCell();
+				var bold = document.createElement('strong');
+                bold.appendChild(document.createTextNode('City'));
+				td.appendChild(bold);
+                td.style.border = '1px solid black';
+				
+		        var td = tr.insertCell();
+				bold = document.createElement('strong');
+                bold.appendChild(document.createTextNode('August high'));
+                td.appendChild(bold);
+				td.style.border = '1px solid black';
+				td.style.whiteSpace = 'nowrap';
+				
+								                var td = tr.insertCell();
+				bold = document.createElement('strong');
+                bold.appendChild(document.createTextNode('December high'));
+                td.appendChild(bold);
+				td.style.border = '1px solid black';
+	td.style.whiteSpace = 'nowrap';
 	for (var i = 0; i < arr.length; i++){
       if (doesObjQualify(arr[i])){
-		outputString += arr[i].siteName + ", aug_hi = " + arr[i].augHi + ", dec_hi = " + arr[i].decHi + "<br>";
+		          tr = tbl.insertRow();
+                var td = tr.insertCell();
+                td.appendChild(document.createTextNode(arr[i].siteName));
+                td.style.border = '1px solid black';
+				
+				                var td = tr.insertCell();
+                td.appendChild(document.createTextNode(arr[i].augHi));
+                td.style.border = '1px solid black';
+				
+								                var td = tr.insertCell();
+                td.appendChild(document.createTextNode(arr[i].decHi));
+                td.style.border = '1px solid black';
 	  }
 	}
-	document.getElementById("output").innerHTML  = outputString;
+    body.appendChild(tbl);
 }
