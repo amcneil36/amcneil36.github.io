@@ -53,6 +53,12 @@ function createFirstElement(){
 }
 
 function doesObjQualify(obj){
+	var state = document.getElementById("State").value;
+	if (state != "any"){
+	 if (obj.stateName != state){
+       return false;
+     }	   
+	}
 	for (var i = 0; i < idx; i++){
 		var fieldId = document.getElementById("fieldName" + i).value;
 	var fieldName = null;
