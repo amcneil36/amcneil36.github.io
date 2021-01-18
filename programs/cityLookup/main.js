@@ -8,7 +8,21 @@ createFirstElement();
 createSecondElement();
 createThirdElement();
 var myDiv = document.getElementById("extraRows");
+if (idx != 0){
+  var button = document.createElement('button');
+  button.innerHTML = 'Remove row';
+  button.setAttribute('id', 'button' + idx);
+  var tempIdx = idx;
+  button.onclick = function(){
+    removeElement(tempIdx);
+  };
+  // where do we want to have the button to appear?
+  // you can append it to another element just by doing something like
+  // document.getElementById('foobutton').appendChild(button);
+  myDiv.appendChild(button);	
+}
 var f = document.createElement('br');
+f.setAttribute("id", 'br'+idx);
 myDiv.appendChild(f);
 idx++;
 }
@@ -60,10 +74,20 @@ function doesObjQualify(obj){
      }	   
 	}
 	for (var i = 0; i < idx; i++){
-		var fieldId = document.getElementById("fieldName" + i).value;
+		var fieldId2 = document.getElementById("fieldName" + i);
+		// element may not exist because it may have been deleted by that remove row button
+        if (fieldId2 == null){
+		 continue;	
+		}
+		var fieldId = fieldId2.value;
 	var fieldName = null;
 	
     var value = parseFloat(document.getElementById("value" + i).value);
+	if (isNaN(value)){
+	 alert("fill in all input boxes");
+	 throw new Error("fill in all input boxes");
+     return;	 
+	}
 	var symbol = document.getElementById("symbols" + i).value;
 	if (fieldId == "August high (F)"){
 	    fieldName = obj.augHi;
@@ -99,9 +123,16 @@ function doesObjQualify(obj){
 }
 
 
-
+function removeElement(index){
+document.getElementById("value"+index).remove();
+document.getElementById("fieldName"+index).remove();
+document.getElementById("symbols"+index).remove();	
+document.getElementById("button"+index).remove();	
+document.getElementById("br"+index).remove();	
+}
 
 function main(){
+
 	    var element = document.getElementById('table');
 		if (element != null){
 		    element.parentNode.removeChild(element);	
