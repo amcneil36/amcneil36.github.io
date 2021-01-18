@@ -112,8 +112,8 @@ public class SperlingReader {
 				continue;
 			}
 			tempCounter++;
-			if (tempCounter == 15) {
-				return sb.toString();
+			if (tempCounter == 50) {
+				//return sb.toString();
 			}
 			int newStartIdx = text3.indexOf("gets ", text3.indexOf("climate in")) + "gets ".length();
 

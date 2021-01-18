@@ -11,12 +11,12 @@ function createMap(obj){
   return map;
 }
 
-function insertColumnBodies(tr, obj){
-  insertColumnBody(tr, obj.cityName);
-  insertColumnBody(tr, obj.stateName);
-  insertColumnBody(tr, obj.augHi);
-  insertColumnBody(tr, obj.decHi);
-  insertColumnBody(tr, obj.numInchesOfRain);	
+function createRow(tr, obj){
+  createColumn(tr, obj.cityName);
+  createColumn(tr, obj.stateName);
+  createColumn(tr, obj.augHi);
+  createColumn(tr, obj.decHi);
+  createColumn(tr, obj.numInchesOfRain);	
 }
 
 class Data {

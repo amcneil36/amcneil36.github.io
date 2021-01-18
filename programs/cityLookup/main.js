@@ -122,45 +122,55 @@ function removeElement(index){
   document.getElementById("br"+index).remove();	
 }
 
-function insertColumnHeader(tr, name){
-  var td = tr.insertCell();
-  var bold = document.createElement('strong');
-  bold.appendChild(document.createTextNode(name));
-  td.appendChild(bold);
-  td.style.border = '1px solid black';	
-  td.style.whiteSpace = 'nowrap';
-}
-
-function insertColumnBody(tr, val){
-  var td = tr.insertCell();
-  td.appendChild(document.createTextNode(val));
-  td.style.border = '1px solid black';	
-}
-
 function main(){
-
+  let body = document.getElementsByTagName('body')[0];
   var element = document.getElementById('table');
   if (element != null){
     element.parentNode.removeChild(element);	
   }
-  var body = document.body,
-  tbl  = document.createElement('table');
-  tbl.style.width  = '100px';
-  tbl.style.border = '1px solid black';
+  let tbl = document.createElement('table');
+      tbl.className = "sortable";
   tbl.setAttribute("id", 'table');
+  let thead = document.createElement('thead');
+  let thr = document.createElement('tr');
+  createColumnHeader(thr, 'City');
+  createColumnHeader(thr, 'State');
+      for (var i = 0; i < arrayOfFields.length; i++){
+	  createColumnHeader(thr, arrayOfFields[i]);
+  }
+  thead.appendChild(thr);
+  tbl.appendChild(thead);
 
-  var tr = tbl.insertRow();
-  insertColumnHeader(tr, 'City');
-  insertColumnHeader(tr, 'State');
-  for (var i = 0; i < arrayOfFields.length; i++){
-    insertColumnHeader(tr, arrayOfFields[i]);
-  }
-				
-  for (var i = 0; i < arr.length; i++){
-    if (doesObjQualify(arr[i])){
-      tr = tbl.insertRow();
-      insertColumnBodies(tr, arr[i]);		
-	}
-  }
+  let tbdy = document.createElement('tbody');
+  let tr = document.createElement('tr');
+  createRows(tbdy);
+  tbl.appendChild(tbdy);
   body.appendChild(tbl);
+  sorttable.makeSortable(document.getElementById('table'));
 }
+
+function createColumnHeader(thr, fieldTitle){
+    let th = document.createElement('th');
+	th.style.border = '1px solid black';
+    th.appendChild(document.createTextNode(fieldTitle));
+    thr.appendChild(th);	
+}
+
+function createColumn(tr, val){
+	      var td = document.createElement('td');
+      td.appendChild(document.createTextNode(val));
+	  td.style.border = '1px solid black';
+      tr.appendChild(td);	
+}
+
+function createRows(tbdy){
+    arr.forEach((obj) => {
+		if (doesObjQualify(obj)){
+	  let tr = document.createElement('tr');
+      createRow(tr, obj);
+	  tbdy.appendChild(tr);   	
+		}
+    });
+    
+}
+
