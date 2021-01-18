@@ -1,5 +1,8 @@
 var idx = 0;
-var arrayOfFields = ["August high (F)","December high (F)", "Annual rainfall (in)"];
+var augustHigh = "August high (F)";
+var decHigh = "December high (F)";
+var annualRainfall = "Annual rainfall (in)";
+var arrayOfFields = [augustHigh,decHigh, annualRainfall];
 addRow();
 
 function addRow(){
@@ -61,6 +64,13 @@ function createFirstElement(){
   }	
 }
 
+function setFieldNameIfApplicable(fieldId, copmareString, fieldName, val){
+ if (fieldId == compareString){
+  fieldName = val;
+ }	 
+   return fieldName;
+}
+
 function doesObjQualify(obj){
 	var state = document.getElementById("State").value;
 	if (state != "any"){
@@ -84,19 +94,18 @@ function doesObjQualify(obj){
      return;	 
 	}
 	var symbol = document.getElementById("symbols" + i).value;
-	if (fieldId == "August high (F)"){
-	    fieldName = obj.augHi;
+	let map = new Map();
+
+map.set(augustHigh, obj.augHi);
+map.set(decHigh, obj.decHi);
+map.set(annualRainfall, obj.numInchesOfRain);
+
+fieldName = map.get(fieldId);
+	if (fieldName == undefined){
+	 alert("something went wrong");	
+	 	 throw new Error("fill in all input boxes");
 	}
-	else if (fieldId == "December high (F)"){
-	    fieldName = obj.decHi;
-	}
-	else if (fieldId == "Annual rainfall (in)"){
-	    fieldName = obj.numInchesOfRain;	
-	}
-	else{
-		alert("something went wrong");
-		return false;
-	}
+
 	var flag = false;
 	if (symbol == ">"){
 		flag = fieldName > value;
