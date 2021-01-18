@@ -1,39 +1,35 @@
-//alert (arr[0].siteName); // alerts `#fff`
-
 var idx = 0;
+var arrayOfFields = ["August high (F)","December high (F)", "Annual rainfall (in)"];
 addRow();
-function addRow(){
 
-createFirstElement();
-createSecondElement();
-createThirdElement();
-var myDiv = document.getElementById("extraRows");
-if (idx != 0){
-  var button = document.createElement('button');
-  button.innerHTML = 'Remove row';
-  button.setAttribute('id', 'button' + idx);
-  var tempIdx = idx;
-  button.onclick = function(){
+function addRow(){
+  createFirstElement();
+  createSecondElement();
+  createThirdElement();
+  var myDiv = document.getElementById("extraRows");
+  if (idx != 0){
+    var button = document.createElement('button');
+    button.innerHTML = 'Remove row';
+    button.setAttribute('id', 'button' + idx);
+    var tempIdx = idx;
+    button.onclick = function(){
     removeElement(tempIdx);
-  };
-  // where do we want to have the button to appear?
-  // you can append it to another element just by doing something like
-  // document.getElementById('foobutton').appendChild(button);
-  myDiv.appendChild(button);	
-}
-var f = document.createElement('br');
-f.setAttribute("id", 'br'+idx);
-myDiv.appendChild(f);
-idx++;
+    };
+    myDiv.appendChild(button);	
+  }
+  var f = document.createElement('br');
+  f.setAttribute("id", 'br'+idx);
+  myDiv.appendChild(f);
+  idx++;
 }
 
 function createThirdElement(){
-	var input = document.createElement("input");
-input.setAttribute('type', 'text');
-input.setAttribute('size', '1');
-input.setAttribute('id', 'value' + idx);
+  var input = document.createElement("input");
+  input.setAttribute('type', 'text');
+  input.setAttribute('size', '1');
+  input.setAttribute('id', 'value' + idx);
   var myDiv = document.getElementById("extraRows");
-    myDiv.appendChild(input);
+  myDiv.appendChild(input);
 }
 
 function createSecondElement(){
@@ -53,15 +49,14 @@ function createSecondElement(){
 
 function createFirstElement(){
   var myDiv = document.getElementById("extraRows");
-  var array = ["August high (F)","December high (F)", "Annual rainfall (in)"];
   var selectList = document.createElement("select");
   selectList.setAttribute('id', 'fieldName' + idx);
   myDiv.appendChild(selectList);
 
-  for (var i = 0; i < array.length; i++) {
+  for (var i = 0; i < arrayOfFields.length; i++) {
     var option = document.createElement("option");
-    option.setAttribute("value", array[i]);
-    option.text = array[i];
+    option.setAttribute("value", arrayOfFields[i]);
+    option.text = arrayOfFields[i];
     selectList.appendChild(option);
   }	
 }
@@ -127,57 +122,56 @@ function doesObjQualify(obj){
 
 
 function removeElement(index){
-document.getElementById("value"+index).remove();
-document.getElementById("fieldName"+index).remove();
-document.getElementById("symbols"+index).remove();	
-document.getElementById("button"+index).remove();	
-document.getElementById("br"+index).remove();	
+  document.getElementById("value"+index).remove();
+  document.getElementById("fieldName"+index).remove();
+  document.getElementById("symbols"+index).remove();	
+  document.getElementById("button"+index).remove();	
+  document.getElementById("br"+index).remove();	
 }
 
 function insertColumnHeader(tr, name){
-                var td = tr.insertCell();
-				var bold = document.createElement('strong');
-                bold.appendChild(document.createTextNode(name));
-				td.appendChild(bold);
-                td.style.border = '1px solid black';	
-				td.style.whiteSpace = 'nowrap';
+  var td = tr.insertCell();
+  var bold = document.createElement('strong');
+  bold.appendChild(document.createTextNode(name));
+  td.appendChild(bold);
+  td.style.border = '1px solid black';	
+  td.style.whiteSpace = 'nowrap';
 }
 
 function insertColumnBody(tr, val){
-                var td = tr.insertCell();
-                td.appendChild(document.createTextNode(val));
-                td.style.border = '1px solid black';	
+  var td = tr.insertCell();
+  td.appendChild(document.createTextNode(val));
+  td.style.border = '1px solid black';	
 }
 
 function main(){
 
-	    var element = document.getElementById('table');
-		if (element != null){
-		    element.parentNode.removeChild(element);	
-		}
-    var body = document.body,
-        tbl  = document.createElement('table');
-    tbl.style.width  = '100px';
-    tbl.style.border = '1px solid black';
-	    tbl.setAttribute("id", 'table');
+  var element = document.getElementById('table');
+  if (element != null){
+    element.parentNode.removeChild(element);	
+  }
+  var body = document.body,
+  tbl  = document.createElement('table');
+  tbl.style.width  = '100px';
+  tbl.style.border = '1px solid black';
+  tbl.setAttribute("id", 'table');
 
-        var tr = tbl.insertRow();
-
-        insertColumnHeader(tr, 'City');
-        insertColumnHeader(tr, 'State');
-        insertColumnHeader(tr, 'August high (F)');
-        insertColumnHeader(tr, 'December high (F)');
-        insertColumnHeader(tr, 'Annual rainfall (in)');
+  var tr = tbl.insertRow();
+  insertColumnHeader(tr, 'City');
+  insertColumnHeader(tr, 'State');
+  for (var i = 0; i < arrayOfFields.length; i++){
+    insertColumnHeader(tr, arrayOfFields[i]);
+  }
 				
-	for (var i = 0; i < arr.length; i++){
-      if (doesObjQualify(arr[i])){
-	    tr = tbl.insertRow();
-		insertColumnBody(tr, arr[i].cityName);
-		insertColumnBody(tr, arr[i].stateName);
-		insertColumnBody(tr, arr[i].augHi);
-		insertColumnBody(tr, arr[i].decHi);
-		insertColumnBody(tr, arr[i].numInchesOfRain);				
-	  }
+  for (var i = 0; i < arr.length; i++){
+    if (doesObjQualify(arr[i])){
+      tr = tbl.insertRow();
+      insertColumnBody(tr, arr[i].cityName);
+	  insertColumnBody(tr, arr[i].stateName);
+	  insertColumnBody(tr, arr[i].augHi);
+	  insertColumnBody(tr, arr[i].decHi);
+	  insertColumnBody(tr, arr[i].numInchesOfRain);				
 	}
-    body.appendChild(tbl);
+  }
+  body.appendChild(tbl);
 }
