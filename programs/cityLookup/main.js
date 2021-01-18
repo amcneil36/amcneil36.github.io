@@ -53,7 +53,7 @@ function createSecondElement(){
 
 function createFirstElement(){
   var myDiv = document.getElementById("extraRows");
-  var array = ["August high (F)","December high (F)"];
+  var array = ["August high (F)","December high (F)", "Annual rainfall (in)"];
   var selectList = document.createElement("select");
   selectList.setAttribute('id', 'fieldName' + idx);
   myDiv.appendChild(selectList);
@@ -95,6 +95,9 @@ function doesObjQualify(obj){
 	else if (fieldId == "December high (F)"){
 	    fieldName = obj.decHi;
 	}
+	else if (fieldId == "Annual rainfall (in)"){
+	    fieldName = obj.numInchesOfRain;	
+	}
 	else{
 		alert("something went wrong");
 		return false;
@@ -131,6 +134,21 @@ document.getElementById("button"+index).remove();
 document.getElementById("br"+index).remove();	
 }
 
+function insertColumnHeader(tr, name){
+                var td = tr.insertCell();
+				var bold = document.createElement('strong');
+                bold.appendChild(document.createTextNode(name));
+				td.appendChild(bold);
+                td.style.border = '1px solid black';	
+				td.style.whiteSpace = 'nowrap';
+}
+
+function insertColumnBody(tr, val){
+                var td = tr.insertCell();
+                td.appendChild(document.createTextNode(val));
+                td.style.border = '1px solid black';	
+}
+
 function main(){
 
 	    var element = document.getElementById('table');
@@ -145,51 +163,20 @@ function main(){
 
         var tr = tbl.insertRow();
 
-                var td = tr.insertCell();
-				var bold = document.createElement('strong');
-                bold.appendChild(document.createTextNode('City'));
-				td.appendChild(bold);
-                td.style.border = '1px solid black';
+        insertColumnHeader(tr, 'City');
+        insertColumnHeader(tr, 'State');
+        insertColumnHeader(tr, 'August high (F)');
+        insertColumnHeader(tr, 'December high (F)');
+        insertColumnHeader(tr, 'Annual rainfall (in)');
 				
-				var td = tr.insertCell();
-				bold = document.createElement('strong');
-                bold.appendChild(document.createTextNode('State'));
-                td.appendChild(bold);
-				td.style.border = '1px solid black';
-				td.style.whiteSpace = 'nowrap';
-				
-		        var td = tr.insertCell();
-				bold = document.createElement('strong');
-                bold.appendChild(document.createTextNode('August high (F)'));
-                td.appendChild(bold);
-				td.style.border = '1px solid black';
-				td.style.whiteSpace = 'nowrap';
-				
-				
-				var td = tr.insertCell();
-				bold = document.createElement('strong');
-                bold.appendChild(document.createTextNode('December high (F)'));
-                td.appendChild(bold);
-				td.style.border = '1px solid black';
-	td.style.whiteSpace = 'nowrap';
 	for (var i = 0; i < arr.length; i++){
       if (doesObjQualify(arr[i])){
-		          tr = tbl.insertRow();
-                var td = tr.insertCell();
-                td.appendChild(document.createTextNode(arr[i].cityName));
-                td.style.border = '1px solid black';
-				
-				var td = tr.insertCell();
-                td.appendChild(document.createTextNode(arr[i].stateName));
-                td.style.border = '1px solid black';
-				
-				                var td = tr.insertCell();
-                td.appendChild(document.createTextNode(arr[i].augHi));
-                td.style.border = '1px solid black';
-				
-								                var td = tr.insertCell();
-                td.appendChild(document.createTextNode(arr[i].decHi));
-                td.style.border = '1px solid black';
+	    tr = tbl.insertRow();
+		insertColumnBody(tr, arr[i].cityName);
+		insertColumnBody(tr, arr[i].stateName);
+		insertColumnBody(tr, arr[i].augHi);
+		insertColumnBody(tr, arr[i].decHi);
+		insertColumnBody(tr, arr[i].numInchesOfRain);				
 	  }
 	}
     body.appendChild(tbl);
