@@ -1,6 +1,8 @@
 var idx = 0;
 addRow();
 
+var BORDER = '1px solid black';
+
 function addRow(){
   createFirstElement();
   createSecondElement();
@@ -151,7 +153,7 @@ function main(){
 
 function createColumnHeader(thr, fieldTitle){
     let th = document.createElement('th');
-	th.style.border = '1px solid black';
+	th.style.border = BORDER;
     th.appendChild(document.createTextNode(fieldTitle));
     thr.appendChild(th);	
 }
@@ -159,7 +161,7 @@ function createColumnHeader(thr, fieldTitle){
 function createColumn(tr, val){
 	      var td = document.createElement('td');
       td.appendChild(document.createTextNode(val));
-	  td.style.border = '1px solid black';
+	  td.style.border = BORDER;
       tr.appendChild(td);	
 }
 
