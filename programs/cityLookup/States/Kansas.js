@@ -1,0 +1,14 @@
+arr.push(new Data("Abbyville", "Kansas", 90, 43, 30));
+arr.push(new Data("Abilene", "Kansas", 91, 42, 32));
+arr.push(new Data("Ada", "Kansas", 91, 41, 30));
+arr.push(new Data("Admire", "Kansas", 88, 41, 38));
+arr.push(new Data("Afton", "Kansas", 91, 44, 33));
+arr.push(new Data("Agency", "Kansas", 89, 42, 39));
+arr.push(new Data("Agenda", "Kansas", 88, 39, 31));
+arr.push(new Data("Agnes City", "Kansas", 88, 41, 36));
+arr.push(new Data("Agra", "Kansas", 91, 41, 25));
+arr.push(new Data("Albert", "Kansas", 91, 44, 27));
+arr.push(new Data("Albion township (Barton Cnty)", "Kansas", 91, 44, 26));
+arr.push(new Data("Albion township (Reno Cnty)", "Kansas", 91, 44, 32));
+arr.push(new Data("Alden", "Kansas", 91, 43, 29));
+arr.push(new Data("Alexander", "Kansas", 91, 44, 24));
