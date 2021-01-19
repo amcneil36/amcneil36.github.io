@@ -1,0 +1,14 @@
+arr.push(new Data("Ahuimanu", "Hawaii", 84, 79, 68));
+arr.push(new Data("Aiea", "Hawaii", 85, 79, 61));
+arr.push(new Data("Ainaloa", "Hawaii", 81, 77, 101));
+arr.push(new Data("Anahola", "Hawaii", 85, 79, 61));
+arr.push(new Data("Captain Cook", "Hawaii", 79, 77, 31));
+arr.push(new Data("Discovery Harbour", "Hawaii", 79, 76, 40));
+arr.push(new Data("East Honolulu", "Hawaii", 84, 79, 44));
+arr.push(new Data("Eden Roc", "Hawaii", 79, 75, 202));
+arr.push(new Data("Eleele", "Hawaii", 87, 81, 22));
+arr.push(new Data("Ewa Beach", "Hawaii", 89, 82, 17));
+arr.push(new Data("Ewa Gentry", "Hawaii", 89, 82, 17));
+arr.push(new Data("Ewa Villages", "Hawaii", 89, 82, 17));
+arr.push(new Data("Fern Acres", "Hawaii", 79, 75, 202));
+arr.push(new Data("Fern Forest", "Hawaii", 79, 75, 200));

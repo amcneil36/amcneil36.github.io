@@ -42,11 +42,16 @@ public class SperlingReader {
 	}
 
 	public static void main(String[] args) throws Exception {
-	    runThread("wa", "Washington");
-	    runThread("tx", "Texas");
+	    runThread("ak", "Alaska");
+	    runThread("ca", "California");
+	    runThread("fl", "Florida");
+	    runThread("hi", "Hawaii");
 	    runThread("ks", "Kansas");
 	    runThread("mo", "Missouri");
-	    runThread("ca", "California");
+	    runThread("or", "Oregon");
+	    runThread("tx", "Texas");
+	    runThread("wa", "Washington");
+	    
 	}
 	
 	public static boolean isNumeric(String strNum) {
@@ -112,8 +117,8 @@ public class SperlingReader {
 				continue;
 			}
 			tempCounter++;
-			if (tempCounter == 50) {
-				//return sb.toString();
+			if (tempCounter == 15) {
+				return sb.toString();
 			}
 			int newStartIdx = text3.indexOf("gets ", text3.indexOf("climate in")) + "gets ".length();
 
