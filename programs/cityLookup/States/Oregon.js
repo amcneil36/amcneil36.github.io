@@ -1,4 +1,1 @@
-arr.push(new Data("Adair Village", "Oregon", 83, 46, 51));
-arr.push(new Data("Adams", "Oregon", 87, 40, 20));
-arr.push(new Data("Adrian", "Oregon", 92, 38, 10));
-arr.push(new Data("Albany", "Oregon", 83, 46, 44));
+arr.push(new Data("Adair Village", "Oregon", 83, 46, 51, 6, 155, 162, 1040, 2385, 58542, 250400, 32, 9, 18, 79, 41, 8, 46, 39, 22));

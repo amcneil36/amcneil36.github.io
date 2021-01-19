@@ -1,4 +1,1 @@
-arr.push(new Data("Acworth", "New Hampshire", 79, 34, 45));
-arr.push(new Data("Alexandria", "New Hampshire", 79, 34, 46));
-arr.push(new Data("Allenstown", "New Hampshire", 81, 38, 42));
-arr.push(new Data("Alstead", "New Hampshire", 78, 34, 47));
+arr.push(new Data("Acworth", "New Hampshire", 79, 34, 45, 63, 199, 133, 1031, 27, 52589, 148200, 53, 8, 21, 87, 43, 6, 22, 5, 32));

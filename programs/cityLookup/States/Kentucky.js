@@ -1,4 +1,1 @@
-arr.push(new Data("Adairville", "Kentucky", 88, 47, 50));
-arr.push(new Data("Albany", "Kentucky", 86, 47, 52));
-arr.push(new Data("Alexandria", "Kentucky", 85, 43, 42));
-arr.push(new Data("Allen", "Kentucky", 85, 46, 44));
+arr.push(new Data("Adairville", "Kentucky", 88, 47, 50, 6, 207, 113, 890, 757, 31111, 88700, 40, 8, 10, 71, 57, 0, 15, 11, 28));

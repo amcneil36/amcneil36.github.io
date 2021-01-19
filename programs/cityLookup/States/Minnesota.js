@@ -1,4 +1,1 @@
-arr.push(new Data("Aastad", "Minnesota", 81, 24, 25));
-arr.push(new Data("Acoma", "Minnesota", 80, 26, 30));
-arr.push(new Data("Ada", "Minnesota", 81, 22, 23));
-arr.push(new Data("Adams", "Minnesota", 79, 26, 35));
+arr.push(new Data("Aastad", "Minnesota", 81, 24, 25, 47, 197, 78, 150, 4, 78750, 152500, 47, 5, 13, 90, 43, 5, 29, 37, 21));

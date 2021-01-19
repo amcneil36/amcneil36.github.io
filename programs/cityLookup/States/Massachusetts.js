@@ -1,4 +1,1 @@
-arr.push(new Data("Abington", "Massachusetts", 81, 42, 50));
-arr.push(new Data("Acton", "Massachusetts", 82, 40, 48));
-arr.push(new Data("Acushnet", "Massachusetts", 81, 43, 51));
-arr.push(new Data("Adams", "Massachusetts", 78, 36, 45));
+arr.push(new Data("Abington", "Massachusetts", 81, 42, 50, 45, 201, 129, 16275, 1636, 81500, 375300, 40, 14, 26, 75, 56, 4, 35, 23, 33));

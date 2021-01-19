@@ -1,4 +1,1 @@
-arr.push(new Data("Albany village", "Vermont", 76, 29, 44));
-arr.push(new Data("Alburgh", "Vermont", 78, 33, 35));
-arr.push(new Data("Alburgh village", "Vermont", 78, 33, 35));
-arr.push(new Data("Andover", "Vermont", 79, 34, 46));
+arr.push(new Data("Albany village", "Vermont", 76, 29, 44, 102, 163, 180, 159, 103, 52917, 133000, 39, 6, 20, 92, 78, 2, 10, 0, 24));

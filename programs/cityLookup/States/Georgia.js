@@ -1,4 +1,1 @@
-arr.push(new Data("Abbeville", "Georgia", 91, 61, 46));
-arr.push(new Data("Acworth", "Georgia", 88, 53, 52));
-arr.push(new Data("Adairsville", "Georgia", 90, 54, 49));
-arr.push(new Data("Adel", "Georgia", 91, 65, 51));
+arr.push(new Data("Abbeville", "Georgia", 91, 61, 46, 0, 219, 92, 2812, 920, 21618, 40900, 38, 12, 15, 56, 39, 6, 28, 2, 27));

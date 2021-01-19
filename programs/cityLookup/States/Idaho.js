@@ -1,4 +1,1 @@
-arr.push(new Data("Aberdeen", "Idaho", 86, 33, 11));
-arr.push(new Data("Acequia", "Idaho", 86, 35, 10));
-arr.push(new Data("Albion", "Idaho", 86, 35, 10));
-arr.push(new Data("American Falls", "Idaho", 87, 33, 11));
+arr.push(new Data("Aberdeen", "Idaho", 86, 33, 11, 33, 203, 83, 2202, 2138, 38578, 153700, 25, 7, 16, 91, 54, 8, 51, 38, 14));

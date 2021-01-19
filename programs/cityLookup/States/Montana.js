@@ -1,4 +1,1 @@
-arr.push(new Data("Absarokee", "Montana", 85, 37, 16));
-arr.push(new Data("Alberton", "Montana", 82, 31, 20));
-arr.push(new Data("Alder", "Montana", 79, 32, 16));
-arr.push(new Data("Alzada", "Montana", 86, 33, 15));
+arr.push(new Data("Absarokee", "Montana", 85, 37, 16, 56, 200, 72, 1022, 480, 39028, 152100, 52, 13, 20, 96, 45, 6, 24, 23, 24));

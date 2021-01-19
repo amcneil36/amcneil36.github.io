@@ -1,4 +1,1 @@
-arr.push(new Data("Aberdeen", "South Dakota", 82, 26, 22));
-arr.push(new Data("Aberdeen township", "South Dakota", 82, 26, 22));
-arr.push(new Data("Adrian", "South Dakota", 82, 26, 21));
-arr.push(new Data("Afton township (Brookings Cnty)", "South Dakota", 80, 26, 26));
+arr.push(new Data("Aberdeen", "South Dakota", 82, 26, 22, 38, 199, 91, 27925, 1741, 47540, 143900, 34, 16, 33, 83, 48, 3, 23, 34, 11));

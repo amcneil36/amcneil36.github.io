@@ -1,4 +1,1 @@
-arr.push(new Data("Aberdeen", "North Carolina", 88, 55, 47));
-arr.push(new Data("Advance", "North Carolina", 87, 52, 45));
-arr.push(new Data("Ahoskie", "North Carolina", 87, 53, 47));
-arr.push(new Data("Alamance", "North Carolina", 88, 52, 45));
+arr.push(new Data("Aberdeen", "North Carolina", 88, 55, 47, 2, 213, 110, 7265, 742, 38721, 166200, 33, 17, 59, 62, 23, 5, 20, 9, 20));

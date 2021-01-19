@@ -1,4 +1,1 @@
-arr.push(new Data("Abbotsford", "Wisconsin", 77, 25, 33));
-arr.push(new Data("Abrams", "Wisconsin", 78, 29, 31));
-arr.push(new Data("Adams", "Wisconsin", 80, 30, 34));
-arr.push(new Data("Adams (Green Cnty)", "Wisconsin", 82, 32, 37));
+arr.push(new Data("Abbotsford", "Wisconsin", 77, 25, 33, 48, 190, 121, 2103, 682, 40683, 115000, 40, 11, 29, 88, 43, 4, 20, 17, 21));

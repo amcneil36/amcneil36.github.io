@@ -1,4 +1,1 @@
-arr.push(new Data("Andover", "Connecticut", 80, 40, 50));
-arr.push(new Data("Ansonia", "Connecticut", 82, 42, 50));
-arr.push(new Data("Ashford", "Connecticut", 79, 39, 50));
-arr.push(new Data("Avon", "Connecticut", 81, 40, 55));
+arr.push(new Data("Andover", "Connecticut", 80, 40, 50, 33, 190, 122, 3179, 206, 97426, 241500, 45, 6, 13, 78, 44, 2, 6, -5, 27));

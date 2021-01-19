@@ -1,4 +1,1 @@
-arr.push(new Data("Achille", "Oklahoma", 93, 53, 43));
-arr.push(new Data("Ada", "Oklahoma", 94, 52, 42));
-arr.push(new Data("Adair", "Oklahoma", 92, 49, 45));
-arr.push(new Data("Addington", "Oklahoma", 96, 54, 35));
+arr.push(new Data("Achille", "Oklahoma", 93, 53, 43, 2, 232, 82, 386, 1024, 33214, 72100, 43, 5, 7, 67, 37, 9, 21, 30, 20));

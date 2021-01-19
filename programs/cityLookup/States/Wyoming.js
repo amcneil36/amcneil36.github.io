@@ -1,4 +1,1 @@
-arr.push(new Data("Afton", "Wyoming", 80, 28, 19));
-arr.push(new Data("Albany", "Wyoming", 79, 34, 12));
-arr.push(new Data("Albin", "Wyoming", 85, 39, 16));
-arr.push(new Data("Alpine", "Wyoming", 80, 28, 19));
+arr.push(new Data("Albany", "Wyoming", 79, 34, 12, 64, 230, 93, 24, 2, 66750, 324200, 64, 10, 13, 97, 16, 3, 12, 12, 12));

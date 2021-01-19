@@ -1,4 +1,1 @@
-arr.push(new Data("Accord", "New York", 82, 39, 49));
-arr.push(new Data("Adams", "New York", 78, 34, 44));
-arr.push(new Data("Adams Center", "New York", 78, 34, 44));
-arr.push(new Data("Addison", "New York", 79, 35, 34));
+arr.push(new Data("Accord", "New York", 82, 39, 49, 46, 202, 118, 586, 172, 141902, 160600, 48, 7, 18, 87, 57, 6, 18, 0, 28));

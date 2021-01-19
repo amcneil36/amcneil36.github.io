@@ -1,4 +1,1 @@
-arr.push(new Data("Abercrombie", "North Dakota", 82, 24, 24));
-arr.push(new Data("Abercrombie township", "North Dakota", 82, 24, 24));
-arr.push(new Data("Adams", "North Dakota", 78, 18, 20));
-arr.push(new Data("Addison", "North Dakota", 81, 22, 23));
+arr.push(new Data("Abercrombie", "North Dakota", 82, 24, 24, 35, 194, 87, 261, 806, 62321, 119000, 44, 6, 12, 90, 49, 1, 12, 46, 18));

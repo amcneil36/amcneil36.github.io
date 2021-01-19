@@ -1,4 +1,1 @@
-arr.push(new Data("Alpine", "Utah", 88, 38, 22));
-arr.push(new Data("Alta", "Utah", 88, 38, 22));
-arr.push(new Data("Altamont", "Utah", 83, 33, 11));
-arr.push(new Data("Alton", "Utah", 79, 38, 15));
+arr.push(new Data("Alpine", "Utah", 88, 38, 22, 70, 222, 93, 10197, 1282, 98589, 684500, 29, 6, 19, 83, 23, 8, 44, 17, 26));

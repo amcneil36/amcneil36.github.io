@@ -1,4 +1,1 @@
-arr.push(new Data("Ackley", "Iowa", 81, 29, 36));
-arr.push(new Data("Ackworth", "Iowa", 83, 34, 36));
-arr.push(new Data("Adair", "Iowa", 83, 33, 35));
-arr.push(new Data("Adel", "Iowa", 83, 33, 35));
+arr.push(new Data("Ackley", "Iowa", 81, 29, 36, 31, 198, 102, 1729, 705, 42019, 74600, 46, 13, 15, 88, 65, 3, 19, 24, 18));

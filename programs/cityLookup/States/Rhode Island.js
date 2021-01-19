@@ -1,4 +1,1 @@
-arr.push(new Data("Ashaway", "Rhode Island", 80, 43, 50));
-arr.push(new Data("Barrington", "Rhode Island", 82, 42, 48));
-arr.push(new Data("Bradford", "Rhode Island", 80, 43, 50));
-arr.push(new Data("Bristol", "Rhode Island", 81, 43, 47));
+arr.push(new Data("Ashaway", "Rhode Island", 80, 43, 50, 27, 209, 121, 1118, 470, 85147, 248000, 50, 6, 27, 82, 78, 5, 28, 14, 25));

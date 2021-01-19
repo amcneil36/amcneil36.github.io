@@ -1,4 +1,1 @@
-arr.push(new Data("Abbeville", "South Carolina", 90, 55, 45));
-arr.push(new Data("Aiken", "South Carolina", 90, 58, 48));
-arr.push(new Data("Alcolu", "South Carolina", 90, 58, 49));
-arr.push(new Data("Allendale", "South Carolina", 91, 61, 47));
+arr.push(new Data("Abbeville", "South Carolina", 90, 55, 45, 1, 220, 95, 5103, 821, 19869, 90900, 46, 34, 56, 61, 53, 7, 20, 6, 23));
