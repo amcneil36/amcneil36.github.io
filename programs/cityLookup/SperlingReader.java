@@ -141,7 +141,7 @@ public class SperlingReader {
 		try {
 			// C:\Users\anmcneil\Desktop\myproject
 			//FileWriter myWriter = new FileWriter("datapoints.js");
-			String filePath = "C:\\Users\\anmcneil\\Desktop\\myproject\\" + stateName + ".js";
+			String filePath = "C:\\Users\\anmcneil\\Desktop\\myproject\\States\\" + stateName + ".js";
 			FileWriter myWriter = new FileWriter(filePath);
 			myWriter.write(stringToWrite);
 			myWriter.close();
