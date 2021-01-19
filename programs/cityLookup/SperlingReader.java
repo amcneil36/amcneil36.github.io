@@ -19,7 +19,7 @@ import org.apache.commons.io.IOUtils;
 
 public class SperlingReader {
 	
-	public static boolean debug = false;
+	public static boolean debug = true;
 	
 	public static void log(String str) {
 		if (debug) {
@@ -34,6 +34,14 @@ public class SperlingReader {
 		String augHi;
 		String decHi;
 		String numInchesOfRain;
+		String numInchesOfSnow;
+		String numSunnyDays;
+		String numDaysOfRain;
+		String population;
+		String populationDensity;
+		String medianIncome;
+		String medianHomePrice;
+		String medianAge;
 
 	}
 	
@@ -47,7 +55,7 @@ public class SperlingReader {
 	}
 
 	public static void main(String[] args) throws Exception {
-	    runThread("al", "Alabama");
+	  /*  runThread("al", "Alabama");
 	    runThread("ak", "Alaska");
 	    runThread("az", "Arizona");
 	    runThread("ar", "Arkansas");
@@ -96,7 +104,7 @@ public class SperlingReader {
 	    runThread("wa", "Washington");
 	    runThread("wv", "West Virginia");
 	    runThread("wi", "Wisconsin");
-	    runThread("wy", "Wyoming");
+	  */  runThread("wy", "Wyoming");
 	    
 	}
 	
@@ -144,18 +152,93 @@ public class SperlingReader {
 		obj.decHi = decHi;
 	}
 	
+	private static String getNumbersBeforeText(String stringToSearch, String pattern) {
+		StringBuilder st = new StringBuilder();
+		int idx = stringToSearch.indexOf(pattern);
+		idx -= 2;
+		int counter = 0;
+		while (stringToSearch.charAt(idx) != ' ') {
+			char c= stringToSearch.charAt(idx);
+			if (c!= ',') {
+				st.append(c);	
+			}
+			idx--;
+			if (counter > 30) {
+				throw new RuntimeException("while loop too long");
+			}
+			counter++;
+		}
+		
+		st.reverse();
+		String st2 = st.toString();
+		if (!isNumeric(st2)) {
+			throw new RuntimeException("this text didn't come back as numeric: " + pattern);
+		}
+		return st2;
+	}
+	
 	private static void addClimateDataToObj(DataObject obj, String stateFullName, String mySiteName) {
 		String text3 = ReadTextFromPage(
 				"https://www.bestplaces.net/climate/city/" + stateFullName + "/" + mySiteName + "/");
-		int newStartIdx = text3.indexOf("gets ", text3.indexOf("climate in")) + "gets ".length();
-
-		int newEndIdx = text3.indexOf(" ", newStartIdx);
-		String numInchesOfRain = text3.substring(newStartIdx, newEndIdx);
-		if (!isNumeric(numInchesOfRain)) {
-			log("inches of rain didn't come as numeric for: https://www.bestplaces.net/climate/city/" + stateFullName + "/" + mySiteName + "/");
-			throw new RuntimeException();
-		}
+		String numInchesOfRain = getNumbersBeforeText(text3, "inches of rain");
 		obj.numInchesOfRain = numInchesOfRain;
+		String numInchesOfSnow = getNumbersBeforeText(text3, "inches of snow");
+		obj.numInchesOfSnow = numInchesOfSnow;
+		String numSunnyDays = getNumbersBeforeText(text3, "sunny days per");
+		obj.numSunnyDays = numSunnyDays;
+		String numDaysOfRain = getNumbersBeforeText(text3, "days per year. Precipitation");
+		obj.numDaysOfRain = numDaysOfRain;
+	}
+	
+	private static void addPeopleDataToObj(DataObject obj, String stateFullName, String mySiteName) {
+		String text3 = ReadTextFromPage(
+				"https://www.bestplaces.net/people/city/" + stateFullName + "/" + mySiteName + "/");
+		String population = getNextNumberAfterText(text3, "The population in");
+		obj.population = population;
+		String populationDensity = getNumbersBeforeText(text3, "people per square mile");
+		obj.populationDensity = populationDensity;
+	}
+	
+	private static void addOverviewDataToObj(DataObject obj, String stateFullName, String mySiteName) {
+		String text3 = ReadTextFromPage(
+				"https://www.bestplaces.net/city/" + stateFullName + "/" + mySiteName + "/");
+		String medianIncome = getNextNumberAfterText(text3, "Median Income");
+		obj.medianIncome = medianIncome;
+		String medianHomePrice = getNextNumberAfterText(text3, "Home Price");
+		obj.medianHomePrice = medianHomePrice;
+		String medianAge = getNextNumberAfterText(text3, "Median Age");
+		obj.medianAge = medianAge;
+	}
+
+	private static String getNextNumberAfterText(String text3, String pattern) {
+		int idx = text3.indexOf(pattern) + pattern.length();
+		if (idx == -1) {
+			throw new RuntimeException("didnt find pattern: " + pattern);
+		}
+		char c = text3.charAt(idx);
+		int counter = 0;
+		while (!Character.isDigit(c)) {
+			idx++;
+			c = text3.charAt(idx);
+			counter++;
+			if (counter > 700) {
+				throw new RuntimeException("never found pattern after 700 tries: " + pattern);
+			}
+		}
+		counter = 0;
+		StringBuilder sb = new StringBuilder();
+		while(Character.isDigit(c) || c == ','){
+			counter++;
+			if (c != ',') {
+				sb.append(c);
+			}
+			idx++;
+			c = text3.charAt(idx);
+			if (counter > 80) {
+				throw new RuntimeException("number is apparently more than 80 characters for this pattern: " + pattern);
+			}
+		}
+		return sb.toString();
 	}
 
 	private static String GetStringForState(String stateAbbreviation, String stateFullName) {
@@ -167,9 +250,12 @@ public class SperlingReader {
 		StringBuilder sb = new StringBuilder("");
 		for (DataObject obj : siteNames) {
 			String mySiteName = obj.siteName;
+			int counter = 0;
 			try {
             addWeatherDataToObj(obj, stateFullName, mySiteName);
             addClimateDataToObj(obj, stateFullName, mySiteName);
+            addPeopleDataToObj(obj, stateFullName, mySiteName);
+            addOverviewDataToObj(obj, stateFullName, mySiteName);
 			}
 			catch (Exception ex) {
 				continue;
@@ -179,7 +265,11 @@ public class SperlingReader {
 				stateFullName = stateFullName.replace("_", " ");
 			}
 			sb.append("arr.push(new Data(\"").append(obj.cityName).append("\", \"").append(stateFullName).append("\", ")
-					.append(obj.augHi).append(", ").append(obj.decHi).append(", ").append(obj.numInchesOfRain).append("));\n");
+					.append(obj.augHi).append(", ").append(obj.decHi).append(", ").append(obj.numInchesOfRain).append(", ").append(obj.numInchesOfSnow).append(", ").append(obj.numSunnyDays).append(", ").append(obj.numDaysOfRain).append(", ").append(obj.population).append(", ").append(obj.populationDensity).append(", ").append(obj.medianIncome).append(", ").append(obj.medianHomePrice).append(", ").append(obj.medianAge).append("));\n");
+		    counter++;
+		    if (counter == 1) {
+		    	return sb.toString();
+		    }
 		}
 		return sb.toString();
 
@@ -251,6 +341,7 @@ public class SperlingReader {
 		} catch (IOException e) {
 			log("I/O Error: " + e.getMessage());
 			log("failed to read " + urlParam);
+			e.printStackTrace();
 			throw new RuntimeException();
 		}
 		return sb.toString();
