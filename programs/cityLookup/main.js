@@ -166,10 +166,15 @@ function createColumn(tr, val){
 }
 
 function createRows(tbdy){
+	var i = 0;
     arr.forEach((obj) => {
 		if (doesObjQualify(obj)){
+			i++;
 	  let tr = document.createElement('tr');
       createRow(tr, obj);
+	  if (i%2==0){
+		  tr.style.backgroundColor = "#f2f2f2";
+	  }
 	  tbdy.appendChild(tr);   	
 		}
     });
