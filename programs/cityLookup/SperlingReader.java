@@ -18,6 +18,14 @@ import org.apache.commons.io.IOUtils;
 //
 
 public class SperlingReader {
+	
+	public static boolean debug = false;
+	
+	public static void log(String str) {
+		if (debug) {
+			System.out.println(str);
+		}
+	}
 
 	public static class DataObject {
 		String siteName;
@@ -31,9 +39,6 @@ public class SperlingReader {
 	
 	public static void ProcessState(String stateAbbreviation, String stateFullName) throws Exception {
 		String text = GetStringForState(stateAbbreviation, stateFullName);
-		if (text == null) {
-			return;
-		}
 		WriteTextToFile(text, stateFullName);
 	}
 	
@@ -101,15 +106,8 @@ public class SperlingReader {
 	    }
 	    return  Pattern.compile("-?\\d+(\\.\\d+)?").matcher(strNum).matches();
 	}
-
-	private static String GetStringForState(String stateAbbreviation, String stateFullName) throws Exception {
-		if (stateFullName.contains(" ")) {
-			stateFullName = stateFullName.replace(" ", "_");
-		}
-		String text = ReadHtmlCode("https://www.bestplaces.net/find/state.aspx?state=" + stateAbbreviation + "/");
-        if (text == null) {
-        	return null;
-        }
+	
+	private static List<DataObject> getSiteNames(String text, String stateAbbreviation) {
 		int length = ("<a href=../city/" + stateAbbreviation + "//").length();
 		int endIdx = 0;
 		List<DataObject> siteNames = new ArrayList<DataObject>();
@@ -128,52 +126,55 @@ public class SperlingReader {
 			String cityName = text.substring(startIdx + "<u>".length(), endIdx);
 			obj.cityName = cityName;
 		}
-		int tempCounter = 0;
-		int numFailedAttempts = 0;
+		return siteNames;
+	}
+	
+	private static void addWeatherDataToObj(DataObject obj, String stateFullName, String mySiteName) {
+		String text2 = ReadTextFromPage(
+				"https://www.bestplaces.net/weather/city/" + stateFullName + "/" + mySiteName + "/");
+
+		int startIdx3 = text2.indexOf("August ", text2.indexOf("(°F)")) + "August ".length();
+		int endIdx3 = text2.indexOf("°", startIdx3);
+		String augHi = text2.substring(startIdx3, endIdx3);
+		obj.augHi = augHi;
+
+		int startIdx2 = text2.indexOf("December ", text2.indexOf("(°F)")) + "December ".length();
+		int endIdx2 = text2.indexOf("°", startIdx2);
+		String decHi = text2.substring(startIdx2, endIdx2);
+		obj.decHi = decHi;
+	}
+	
+	private static void addClimateDataToObj(DataObject obj, String stateFullName, String mySiteName) {
+		String text3 = ReadTextFromPage(
+				"https://www.bestplaces.net/climate/city/" + stateFullName + "/" + mySiteName + "/");
+		int newStartIdx = text3.indexOf("gets ", text3.indexOf("climate in")) + "gets ".length();
+
+		int newEndIdx = text3.indexOf(" ", newStartIdx);
+		String numInchesOfRain = text3.substring(newStartIdx, newEndIdx);
+		if (!isNumeric(numInchesOfRain)) {
+			log("inches of rain didn't come as numeric for: https://www.bestplaces.net/climate/city/" + stateFullName + "/" + mySiteName + "/");
+			throw new RuntimeException();
+		}
+		obj.numInchesOfRain = numInchesOfRain;
+	}
+
+	private static String GetStringForState(String stateAbbreviation, String stateFullName) {
+		if (stateFullName.contains(" ")) {
+			stateFullName = stateFullName.replace(" ", "_");
+		}
+		String text = ReadHtmlCode("https://www.bestplaces.net/find/state.aspx?state=" + stateAbbreviation + "/");
+		List<DataObject> siteNames = getSiteNames(text, stateAbbreviation);
 		StringBuilder sb = new StringBuilder("");
 		for (DataObject obj : siteNames) {
 			String mySiteName = obj.siteName;
-			String text2 = ReadTextFromPage(
-					"https://www.bestplaces.net/weather/city/" + stateFullName + "/" + mySiteName + "/");
-			if (text2 == null) {
-				numFailedAttempts++;
-				if (numFailedAttempts > 50) {
-					return sb.toString();
-				}
+			try {
+            addWeatherDataToObj(obj, stateFullName, mySiteName);
+            addClimateDataToObj(obj, stateFullName, mySiteName);
+			}
+			catch (Exception ex) {
 				continue;
 			}
-			int startIdx3 = text2.indexOf("August ", text2.indexOf("(°F)")) + "August ".length();
-			int endIdx3 = text2.indexOf("°", startIdx3);
-			String augHi = text2.substring(startIdx3, endIdx3);
-			obj.augHi = augHi;
 
-			int startIdx2 = text2.indexOf("December ", text2.indexOf("(°F)")) + "December ".length();
-			int endIdx2 = text2.indexOf("°", startIdx2);
-			String decHi = text2.substring(startIdx2, endIdx2);
-			obj.decHi = decHi;
-			String text3 = ReadTextFromPage(
-					"https://www.bestplaces.net/climate/city/" + stateFullName + "/" + mySiteName + "/");
-			if (text3 == null) {
-				numFailedAttempts++;
-				if (numFailedAttempts > 50) {
-					return sb.toString();
-				}
-				continue;
-			}
-			tempCounter++;
-			if (tempCounter == 5) {
-				return sb.toString();
-			}
-			int newStartIdx = text3.indexOf("gets ", text3.indexOf("climate in")) + "gets ".length();
-
-			int newEndIdx = text3.indexOf(" ", newStartIdx);
-			String numInchesOfRain = text3.substring(newStartIdx, newEndIdx);
-			if (!isNumeric(numInchesOfRain)) {
-				System.out.println("inches of rain didn't come as numeric for: https://www.bestplaces.net/climate/city/" + stateFullName + "/" + mySiteName + "/");
-				numFailedAttempts++;
-				continue;
-			}
-			obj.numInchesOfRain = numInchesOfRain;
 			if (stateFullName.contains("_")) {
 				stateFullName = stateFullName.replace("_", " ");
 			}
@@ -194,24 +195,24 @@ public class SperlingReader {
 			myWriter.close();
 			System.out.println("Successfully wrote to the file for: " + stateName);
 		} catch (IOException e) {
-			System.out.println("An error occurred.");
+			log("An error occurred.");
 			e.printStackTrace();
 		}
 
 	}
 
-	private static String ReadTextFromPage(String url) throws IOException {
+	private static String ReadTextFromPage(String url) {
 		try {
 			return JsoupStuff(url);	
 		}
 		catch(Exception ex) {
-			System.out.println("An error occurred from jsoup. Retrying: " + url);
+			log("An error occurred from jsoup. Retrying: " + url);
 			try {
 				return JsoupStuff(url);
 			}
 			catch(Exception ex2) {
-				System.out.println("An error occurred from jsoup. Giving up on: " + url);
-				return null;
+				log("An error occurred from jsoup. Giving up on: " + url);
+				throw new RuntimeException();
 			}
 		}
 	}
@@ -221,8 +222,8 @@ public class SperlingReader {
 		Document doc = conn.get();
 		String text = doc.body().text();
 		if (text.contains("Oops. This is embarrassing.")) {
-			System.out.println("couldn't find information for: " + url);
-			return null;
+			log("couldn't find information for: " + url);
+			throw new RuntimeException();
 		}
 		return text;
 	}
@@ -244,13 +245,13 @@ public class SperlingReader {
 			in.close();
 
 		} catch (MalformedURLException e) {
-			System.out.println("Malformed URL: " + e.getMessage());
-			System.out.println("failed to read " + urlParam);
-			return null;
+			log("Malformed URL: " + e.getMessage());
+			log("failed to read " + urlParam);
+			throw new RuntimeException();
 		} catch (IOException e) {
-			System.out.println("I/O Error: " + e.getMessage());
-			System.out.println("failed to read " + urlParam);
-			return null;
+			log("I/O Error: " + e.getMessage());
+			log("failed to read " + urlParam);
+			throw new RuntimeException();
 		}
 		return sb.toString();
 	}
