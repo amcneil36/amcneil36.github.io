@@ -42,15 +42,56 @@ public class SperlingReader {
 	}
 
 	public static void main(String[] args) throws Exception {
+	    runThread("al", "Alabama");
 	    runThread("ak", "Alaska");
+	    runThread("az", "Arizona");
+	    runThread("ar", "Arkansas");
 	    runThread("ca", "California");
+	    runThread("co", "Colorado");
+	    runThread("ct", "Connecticut");
+	    runThread("de", "Delaware");
 	    runThread("fl", "Florida");
+	    runThread("ga", "Georgia");
 	    runThread("hi", "Hawaii");
+	    runThread("id", "Idaho");
+	    runThread("il", "Illinois");
+	    runThread("in", "Indiana");
+	    runThread("ia", "Iowa");
 	    runThread("ks", "Kansas");
+	    runThread("ky", "Kentucky");
+	    runThread("la", "Louisiana");
+	    runThread("me", "Maine");
+	    runThread("md", "Maryland");
+	    runThread("ma", "Massachusetts");
+	    runThread("mi", "Michigan");
+	    runThread("mn", "Minnesota");
+	    runThread("ms", "Mississippi");
 	    runThread("mo", "Missouri");
+	    runThread("mt", "Montana");
+	    runThread("ne", "Nebraska");
+	    runThread("nv", "Nevada");
+	    runThread("nh", "New Hampshire");
+	    runThread("nj", "New Jersey");
+	    runThread("nm", "New Mexico");
+	    runThread("ny", "New York");
+	    runThread("nc", "North Carolina");
+	    runThread("nd", "North Dakota");
+	    runThread("oh", "Ohio");
+	    runThread("ok", "Oklahoma");
 	    runThread("or", "Oregon");
+	    runThread("pa", "Pennsylvania");
+	    runThread("ri", "Rhode Island");
+	    runThread("sc", "South Carolina");
+	    runThread("sd", "South Dakota");
+	    runThread("tn", "Tennessee");
 	    runThread("tx", "Texas");
+	    runThread("ut", "Utah");
+	    runThread("vt", "Vermont");
+	    runThread("va", "Virginia");
 	    runThread("wa", "Washington");
+	    runThread("wv", "West Virginia");
+	    runThread("wi", "Wisconsin");
+	    runThread("wy", "Wyoming");
 	    
 	}
 	
@@ -62,6 +103,9 @@ public class SperlingReader {
 	}
 
 	private static String GetStringForState(String stateAbbreviation, String stateFullName) throws Exception {
+		if (stateFullName.contains(" ")) {
+			stateFullName = stateFullName.replace(" ", "_");
+		}
 		String text = ReadHtmlCode("https://www.bestplaces.net/find/state.aspx?state=" + stateAbbreviation + "/");
         if (text == null) {
         	return null;
@@ -117,7 +161,7 @@ public class SperlingReader {
 				continue;
 			}
 			tempCounter++;
-			if (tempCounter == 15) {
+			if (tempCounter == 5) {
 				return sb.toString();
 			}
 			int newStartIdx = text3.indexOf("gets ", text3.indexOf("climate in")) + "gets ".length();
@@ -130,6 +174,9 @@ public class SperlingReader {
 				continue;
 			}
 			obj.numInchesOfRain = numInchesOfRain;
+			if (stateFullName.contains("_")) {
+				stateFullName = stateFullName.replace("_", " ");
+			}
 			sb.append("arr.push(new Data(\"").append(obj.cityName).append("\", \"").append(stateFullName).append("\", ")
 					.append(obj.augHi).append(", ").append(obj.decHi).append(", ").append(obj.numInchesOfRain).append("));\n");
 		}
