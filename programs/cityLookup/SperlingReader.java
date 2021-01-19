@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.IOUtils;
 
 // C:\Users\anmcneil\eclipse-workspace\com.hey
 
@@ -18,9 +17,9 @@ import org.apache.commons.io.IOUtils;
 //
 
 public class SperlingReader {
-	
+
 	public static boolean debug = true;
-	
+
 	public static void log(String str) {
 		if (debug) {
 			System.out.println(str);
@@ -42,79 +41,87 @@ public class SperlingReader {
 		String medianIncome;
 		String medianHomePrice;
 		String medianAge;
+		String violentCrime;
+		String propertyCrime;
+		String airQualityIndex;
+		String medianHomeAge;
+		String homeAppreciationLastYear;
+		String homeAppreciationLastFiveYears;
+		String homeAppreciationLastTenYears;
+		String averageOneWayCommuteTime;
 
 	}
-	
+
 	public static void ProcessState(String stateAbbreviation, String stateFullName) throws Exception {
 		String text = GetStringForState(stateAbbreviation, stateFullName);
 		WriteTextToFile(text, stateFullName);
 	}
-	
+
 	public static void runThread(String stateAbbreviation, String stateFullName) throws Exception {
 		new RunnableDemo(stateAbbreviation, stateFullName).start();
 	}
 
 	public static void main(String[] args) throws Exception {
-	  /*  runThread("al", "Alabama");
-	    runThread("ak", "Alaska");
-	    runThread("az", "Arizona");
-	    runThread("ar", "Arkansas");
-	    runThread("ca", "California");
-	    runThread("co", "Colorado");
-	    runThread("ct", "Connecticut");
-	    runThread("de", "Delaware");
-	    runThread("fl", "Florida");
-	    runThread("ga", "Georgia");
-	    runThread("hi", "Hawaii");
-	    runThread("id", "Idaho");
-	    runThread("il", "Illinois");
-	    runThread("in", "Indiana");
-	    runThread("ia", "Iowa");
-	    runThread("ks", "Kansas");
-	    runThread("ky", "Kentucky");
-	    runThread("la", "Louisiana");
-	    runThread("me", "Maine");
-	    runThread("md", "Maryland");
-	    runThread("ma", "Massachusetts");
-	    runThread("mi", "Michigan");
-	    runThread("mn", "Minnesota");
-	    runThread("ms", "Mississippi");
-	    runThread("mo", "Missouri");
-	    runThread("mt", "Montana");
-	    runThread("ne", "Nebraska");
-	    runThread("nv", "Nevada");
-	    runThread("nh", "New Hampshire");
-	    runThread("nj", "New Jersey");
-	    runThread("nm", "New Mexico");
-	    runThread("ny", "New York");
-	    runThread("nc", "North Carolina");
-	    runThread("nd", "North Dakota");
-	    runThread("oh", "Ohio");
-	    runThread("ok", "Oklahoma");
-	    runThread("or", "Oregon");
-	    runThread("pa", "Pennsylvania");
-	    runThread("ri", "Rhode Island");
-	    runThread("sc", "South Carolina");
-	    runThread("sd", "South Dakota");
-	    runThread("tn", "Tennessee");
-	    runThread("tx", "Texas");
-	    runThread("ut", "Utah");
-	    runThread("vt", "Vermont");
-	    runThread("va", "Virginia");
-	    runThread("wa", "Washington");
-	    runThread("wv", "West Virginia");
-	    runThread("wi", "Wisconsin");
-	  */  runThread("wy", "Wyoming");
-	    
+		runThread("al", "Alabama");
+		runThread("ak", "Alaska");
+		runThread("az", "Arizona");
+		runThread("ar", "Arkansas");
+		runThread("ca", "California");
+		runThread("co", "Colorado");
+		runThread("ct", "Connecticut");
+		runThread("de", "Delaware");
+		runThread("fl", "Florida");
+		runThread("ga", "Georgia");
+		runThread("hi", "Hawaii");
+		runThread("id", "Idaho");
+		runThread("il", "Illinois");
+		runThread("in", "Indiana");
+		runThread("ia", "Iowa");
+		runThread("ks", "Kansas");
+		runThread("ky", "Kentucky");
+		runThread("la", "Louisiana");
+		runThread("me", "Maine");
+		runThread("md", "Maryland");
+		runThread("ma", "Massachusetts");
+		runThread("mi", "Michigan");
+		runThread("mn", "Minnesota");
+		runThread("ms", "Mississippi");
+		runThread("mo", "Missouri");
+		runThread("mt", "Montana");
+		runThread("ne", "Nebraska");
+		runThread("nv", "Nevada");
+		runThread("nh", "New Hampshire");
+		runThread("nj", "New Jersey");
+		runThread("nm", "New Mexico");
+		runThread("ny", "New York");
+		runThread("nc", "North Carolina");
+		runThread("nd", "North Dakota");
+		runThread("oh", "Ohio");
+		runThread("ok", "Oklahoma");
+		runThread("or", "Oregon");
+		runThread("pa", "Pennsylvania");
+		runThread("ri", "Rhode Island");
+		runThread("sc", "South Carolina");
+		runThread("sd", "South Dakota");
+		runThread("tn", "Tennessee");
+		runThread("tx", "Texas");
+		runThread("ut", "Utah");
+		runThread("vt", "Vermont");
+		runThread("va", "Virginia");
+		runThread("wa", "Washington");
+		runThread("wv", "West Virginia");
+		runThread("wi", "Wisconsin");
+		runThread("wy", "Wyoming");
+
 	}
-	
+
 	public static boolean isNumeric(String strNum) {
-	    if (strNum == null) {
-	        return false; 
-	    }
-	    return  Pattern.compile("-?\\d+(\\.\\d+)?").matcher(strNum).matches();
+		if (strNum == null) {
+			return false;
+		}
+		return Pattern.compile("-?\\d+(\\.\\d+)?").matcher(strNum).matches();
 	}
-	
+
 	private static List<DataObject> getSiteNames(String text, String stateAbbreviation) {
 		int length = ("<a href=../city/" + stateAbbreviation + "//").length();
 		int endIdx = 0;
@@ -136,7 +143,7 @@ public class SperlingReader {
 		}
 		return siteNames;
 	}
-	
+
 	private static void addWeatherDataToObj(DataObject obj, String stateFullName, String mySiteName) {
 		String text2 = ReadTextFromPage(
 				"https://www.bestplaces.net/weather/city/" + stateFullName + "/" + mySiteName + "/");
@@ -151,16 +158,16 @@ public class SperlingReader {
 		String decHi = text2.substring(startIdx2, endIdx2);
 		obj.decHi = decHi;
 	}
-	
+
 	private static String getNumbersBeforeText(String stringToSearch, String pattern) {
 		StringBuilder st = new StringBuilder();
 		int idx = stringToSearch.indexOf(pattern);
 		idx -= 2;
 		int counter = 0;
 		while (stringToSearch.charAt(idx) != ' ') {
-			char c= stringToSearch.charAt(idx);
-			if (c!= ',') {
-				st.append(c);	
+			char c = stringToSearch.charAt(idx);
+			if (c != ',') {
+				st.append(c);
 			}
 			idx--;
 			if (counter > 30) {
@@ -168,7 +175,7 @@ public class SperlingReader {
 			}
 			counter++;
 		}
-		
+
 		st.reverse();
 		String st2 = st.toString();
 		if (!isNumeric(st2)) {
@@ -176,7 +183,7 @@ public class SperlingReader {
 		}
 		return st2;
 	}
-	
+
 	private static void addClimateDataToObj(DataObject obj, String stateFullName, String mySiteName) {
 		String text3 = ReadTextFromPage(
 				"https://www.bestplaces.net/climate/city/" + stateFullName + "/" + mySiteName + "/");
@@ -189,7 +196,7 @@ public class SperlingReader {
 		String numDaysOfRain = getNumbersBeforeText(text3, "days per year. Precipitation");
 		obj.numDaysOfRain = numDaysOfRain;
 	}
-	
+
 	private static void addPeopleDataToObj(DataObject obj, String stateFullName, String mySiteName) {
 		String text3 = ReadTextFromPage(
 				"https://www.bestplaces.net/people/city/" + stateFullName + "/" + mySiteName + "/");
@@ -198,16 +205,50 @@ public class SperlingReader {
 		String populationDensity = getNumbersBeforeText(text3, "people per square mile");
 		obj.populationDensity = populationDensity;
 	}
-	
+
 	private static void addOverviewDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text3 = ReadTextFromPage(
-				"https://www.bestplaces.net/city/" + stateFullName + "/" + mySiteName + "/");
+		String text3 = ReadTextFromPage("https://www.bestplaces.net/city/" + stateFullName + "/" + mySiteName + "/");
 		String medianIncome = getNextNumberAfterText(text3, "Median Income");
 		obj.medianIncome = medianIncome;
 		String medianHomePrice = getNextNumberAfterText(text3, "Home Price");
 		obj.medianHomePrice = medianHomePrice;
 		String medianAge = getNextNumberAfterText(text3, "Median Age");
 		obj.medianAge = medianAge;
+	}
+
+	private static void addCrimeDataToObj(DataObject obj, String stateFullName, String mySiteName) {
+		String text3 = ReadTextFromPage(
+				"https://www.bestplaces.net/crime/city/" + stateFullName + "/" + mySiteName + "/");
+		String violentCrime = getNextNumberAfterText(text3, "violent crime is");
+		obj.violentCrime = violentCrime;
+		String propertyCrime = getNextNumberAfterText(text3, "property crime is");
+		obj.propertyCrime = propertyCrime;
+	}
+
+	private static void addHealthDataToObj(DataObject obj, String stateFullName, String mySiteName) {
+		String text3 = ReadTextFromPage(
+				"https://www.bestplaces.net/health/city/" + stateFullName + "/" + mySiteName + "/");
+		String airQualityIndex = getNextNumberAfterText(text3, "Air Quality Index ");
+		obj.airQualityIndex = airQualityIndex;
+	}
+
+	private static void addHousingDataToObj(DataObject obj, String stateFullName, String mySiteName) {
+		String text3 = ReadTextFromPage(
+				"https://www.bestplaces.net/housing/city/" + stateFullName + "/" + mySiteName + "/");
+		// Median Home Age
+		String medianHomeAge = getNextNumberAfterText(text3, "Median Home Age");
+		obj.medianHomeAge = medianHomeAge;
+		obj.homeAppreciationLastYear = getNextNumberAfterText(text3, "Home Appr. Last 12 months");
+		obj.homeAppreciationLastFiveYears = getNextNumberAfterText(text3, "Home Appr. Last 5 yrs");
+		obj.homeAppreciationLastTenYears = getNextNumberAfterText(text3, "Home Appr. Last 10 yrs");
+
+	}
+
+	private static void addCommuteDataToObj(DataObject obj, String stateFullName, String mySiteName) {
+		String text3 = ReadTextFromPage(
+				"https://www.bestplaces.net/transportation/city/" + stateFullName + "/" + mySiteName + "/");
+		obj.averageOneWayCommuteTime = getNextNumberAfterText(text3, "one-way commute in");
+
 	}
 
 	private static String getNextNumberAfterText(String text3, String pattern) {
@@ -217,7 +258,7 @@ public class SperlingReader {
 		}
 		char c = text3.charAt(idx);
 		int counter = 0;
-		while (!Character.isDigit(c)) {
+		while (!Character.isDigit(c) && !(c == '-' && Character.isDigit(text3.charAt(idx + 1)))) {
 			idx++;
 			c = text3.charAt(idx);
 			counter++;
@@ -227,7 +268,7 @@ public class SperlingReader {
 		}
 		counter = 0;
 		StringBuilder sb = new StringBuilder();
-		while(Character.isDigit(c) || c == ','){
+		while (Character.isDigit(c) || c == ',' || c == '-') {
 			counter++;
 			if (c != ',') {
 				sb.append(c);
@@ -252,12 +293,15 @@ public class SperlingReader {
 			String mySiteName = obj.siteName;
 			int counter = 0;
 			try {
-            addWeatherDataToObj(obj, stateFullName, mySiteName);
-            addClimateDataToObj(obj, stateFullName, mySiteName);
-            addPeopleDataToObj(obj, stateFullName, mySiteName);
-            addOverviewDataToObj(obj, stateFullName, mySiteName);
-			}
-			catch (Exception ex) {
+				addWeatherDataToObj(obj, stateFullName, mySiteName);
+				addClimateDataToObj(obj, stateFullName, mySiteName);
+				addPeopleDataToObj(obj, stateFullName, mySiteName);
+				addOverviewDataToObj(obj, stateFullName, mySiteName);
+				addCrimeDataToObj(obj, stateFullName, mySiteName);
+				addHealthDataToObj(obj, stateFullName, mySiteName);
+				addHousingDataToObj(obj, stateFullName, mySiteName);
+				addCommuteDataToObj(obj, stateFullName, mySiteName);
+			} catch (Exception ex) {
 				continue;
 			}
 
@@ -265,11 +309,20 @@ public class SperlingReader {
 				stateFullName = stateFullName.replace("_", " ");
 			}
 			sb.append("arr.push(new Data(\"").append(obj.cityName).append("\", \"").append(stateFullName).append("\", ")
-					.append(obj.augHi).append(", ").append(obj.decHi).append(", ").append(obj.numInchesOfRain).append(", ").append(obj.numInchesOfSnow).append(", ").append(obj.numSunnyDays).append(", ").append(obj.numDaysOfRain).append(", ").append(obj.population).append(", ").append(obj.populationDensity).append(", ").append(obj.medianIncome).append(", ").append(obj.medianHomePrice).append(", ").append(obj.medianAge).append("));\n");
-		    counter++;
-		    if (counter == 1) {
-		    	return sb.toString();
-		    }
+					.append(obj.augHi).append(", ").append(obj.decHi).append(", ").append(obj.numInchesOfRain)
+					.append(", ").append(obj.numInchesOfSnow).append(", ").append(obj.numSunnyDays).append(", ")
+					.append(obj.numDaysOfRain).append(", ").append(obj.population).append(", ")
+					.append(obj.populationDensity).append(", ").append(obj.medianIncome).append(", ")
+					.append(obj.medianHomePrice).append(", ").append(obj.medianAge).append(", ")
+					.append(obj.violentCrime).append(", ").append(obj.propertyCrime).append(", ")
+					.append(obj.airQualityIndex).append(", ").append(obj.medianHomeAge).append(", ")
+					.append(obj.homeAppreciationLastYear).append(", ").append(obj.homeAppreciationLastFiveYears)
+					.append(", ").append(obj.homeAppreciationLastTenYears).append(", ")
+					.append(obj.averageOneWayCommuteTime).append("));\n");
+			counter++;
+			if (counter == 5) {
+				return sb.toString();
+			}
 		}
 		return sb.toString();
 
@@ -278,44 +331,38 @@ public class SperlingReader {
 	private static void WriteTextToFile(String stringToWrite, String stateName) {
 		try {
 			// C:\Users\anmcneil\Desktop\myproject
-			//FileWriter myWriter = new FileWriter("datapoints.js");
+			// FileWriter myWriter = new FileWriter("datapoints.js");
 			String filePath = "C:\\Users\\anmcneil\\Desktop\\myproject\\States\\" + stateName + ".js";
 			FileWriter myWriter = new FileWriter(filePath);
 			myWriter.write(stringToWrite);
 			myWriter.close();
 			System.out.println("Successfully wrote to the file for: " + stateName);
 		} catch (IOException e) {
-			log("An error occurred.");
+			log("An error occurred trying to write to file for: " + stateName);
 			e.printStackTrace();
 		}
 
 	}
 
 	private static String ReadTextFromPage(String url) {
-		try {
-			return JsoupStuff(url);	
-		}
-		catch(Exception ex) {
-			log("An error occurred from jsoup. Retrying: " + url);
-			try {
-				return JsoupStuff(url);
-			}
-			catch(Exception ex2) {
-				log("An error occurred from jsoup. Giving up on: " + url);
-				throw new RuntimeException();
-			}
-		}
+		return JsoupStuff(url);
 	}
 
-	private static String JsoupStuff(String url) throws IOException {
+	private static String JsoupStuff(String url) {
 		Connection conn = Jsoup.connect(url);
-		Document doc = conn.get();
-		String text = doc.body().text();
-		if (text.contains("Oops. This is embarrassing.")) {
-			log("couldn't find information for: " + url);
+		try {
+			Document doc = conn.get();
+			String text = doc.body().text();
+			if (text.contains("Oops. This is embarrassing.")) {
+				log("jsoup connected to this page but it said oops this is embarassing: " + url);
+				throw new RuntimeException();
+			}
+			return text;
+		} catch (IOException ex) {
+			log("jsoup couldn't connect to: " + url);
 			throw new RuntimeException();
 		}
-		return text;
+
 	}
 
 	private static String ReadHtmlCode(String urlParam) {
@@ -350,28 +397,28 @@ public class SperlingReader {
 }
 
 class RunnableDemo implements Runnable {
-	   private Thread t;
-	   private String stateAbbreviation;
-	   private String stateFullName;
-	   
-	   RunnableDemo(String stateAbbreviation, String stateFullName) {
-	      this.stateAbbreviation = stateAbbreviation;
-	      this.stateFullName = stateFullName;
-	   }
-	   
-	   public void run() {
-		   try {
+	private Thread t;
+	private String stateAbbreviation;
+	private String stateFullName;
+
+	RunnableDemo(String stateAbbreviation, String stateFullName) {
+		this.stateAbbreviation = stateAbbreviation;
+		this.stateFullName = stateFullName;
+	}
+
+	public void run() {
+		try {
 			SperlingReader.ProcessState(stateAbbreviation, stateFullName);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	   }
-	   
-	   public void start () {
-	      if (t == null) {
-	         t = new Thread (this);
-	         t.start ();
-	      }
-	   }
 	}
+
+	public void start() {
+		if (t == null) {
+			t = new Thread(this);
+			t.start();
+		}
+	}
+}
