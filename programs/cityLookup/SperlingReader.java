@@ -76,53 +76,53 @@ public class SperlingReader {
 		runThread("ak", "Alaska");
 		runThread("az", "Arizona");
 		runThread("ar", "Arkansas");
-	*/	runThread("ca", "California"); // overnight
-/*		runThread("co", "Colorado");
-	//	runThread("ct", "Connecticut");
-	//	runThread("de", "Delaware");
-//		runThread("fl", "Florida"); // success
-//		runThread("ga", "Georgia"); // success
-//	runThread("hi", "Hawaii");
-		runThread("id", "Idaho");
+	//	runThread("ca", "California"); // overnight
+		runThread("co", "Colorado");
+		runThread("ct", "Connecticut");
+		runThread("de", "Delaware");
+		runThread("fl", "Florida"); // success
+		runThread("ga", "Georgia"); // success
+	runThread("hi", "Hawaii");
+	*///	runThread("id", "Idaho");
 		runThread("il", "Illinois");
 		runThread("in", "Indiana");
-		runThread("ia", "Iowa");
+	//	runThread("ia", "Iowa");
 		runThread("ks", "Kansas");
-		runThread("ky", "Kentucky");
-		runThread("la", "Louisiana");
-		runThread("me", "Maine");
-		runThread("md", "Maryland");
-		runThread("ma", "Massachusetts");
+	//	runThread("ky", "Kentucky");
+	//	runThread("la", "Louisiana");
+	//	runThread("me", "Maine");
+//		runThread("md", "Maryland");
+	/*runThread("ma", "Massachusetts");
 		runThread("mi", "Michigan");
 		runThread("mn", "Minnesota");
 		runThread("ms", "Mississippi");
 		runThread("mo", "Missouri");
 		runThread("mt", "Montana");
 		runThread("ne", "Nebraska");
-	//	runThread("nv", "Nevada");
-//		runThread("nh", "New Hampshire");
+		runThread("nv", "Nevada");
+		runThread("nh", "New Hampshire");
 		runThread("nj", "New Jersey");
 		runThread("nm", "New Mexico");
 		runThread("ny", "New York");
-//		runThread("nc", "North Carolina"); // success
+		runThread("nc", "North Carolina"); // success
 		runThread("nd", "North Dakota");
 		runThread("oh", "Ohio");
 		runThread("ok", "Oklahoma");
-	//	runThread("or", "Oregon"); // success
+		runThread("or", "Oregon"); // success
 		runThread("pa", "Pennsylvania");
-//		runThread("ri", "Rhode Island");
-	//	runThread("sc", "South Carolina"); // success
+		runThread("ri", "Rhode Island");
+		runThread("sc", "South Carolina"); // success
 		runThread("sd", "South Dakota");
 		runThread("tn", "Tennessee");
-*/	runThread("tx", "Texas"); // overnight
-/*		runThread("ut", "Utah");
+	   // runThread("tx", "Texas"); // overnight
+		runThread("ut", "Utah");
 		runThread("vt", "Vermont");
 		runThread("va", "Virginia");
-	//	runThread("wa", "Washington"); // success
+		runThread("wa", "Washington"); // success
 		runThread("wv", "West Virginia");
 		runThread("wi", "Wisconsin");
-	//	runThread("wy", "Wyoming");
-	*/	
+		runThread("wy", "Wyoming");
+*/		
 
 	}
 
