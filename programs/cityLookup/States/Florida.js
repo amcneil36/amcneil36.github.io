@@ -1,1 +1,1 @@
-arr.push(new Data("Acacia Villas", "Florida", 90, 76, 62, 0, 234, 139, 459, 6375, 34458, 218000, 19, 24, 46, 72, 58, 10, 56, 25, 25));
+arr.push(new Data("Acacia Villas", "Florida", 90, 76, 62, 0, 234, 139, 459, 6375, 34458, 218000, 19, 24, 46, 72, 58, 10, 56, 25, 25, "Palm Beach County", 14));
