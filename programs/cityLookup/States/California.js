@@ -192,6 +192,7 @@ arr.push(new Data("Campo", "California", 94, 63, 18, 2, 263, 51, 2971, 126, 5929
 arr.push(new Data("Cantua Creek", "California", 95, 55, 9, 0, 267, 36, 386, 102, 31181, 155800, 27, 25, 49, 74, 33, 6, 41, 25, 22, "Fresno County", 40));
 arr.push(new Data("Canyon Lake", "California", 99, 67, 12, 0, 269, 31, 11043, 2816, 74682, 442200, 44, 8, 21, 61, 32, 5, 36, 57, 43, "Riverside County", 32));
 arr.push(new Data("Capitola", "California", 74, 61, 25, 0, 263, 68, 10158, 6377, 56607, 888000, 42, 15, 87, 66, 44, 6, 48, 47, 24, "Santa Cruz County", 13));
+arr.push(new Data("Carlsbad", "California", 75, 64, 12, 0, 263, 38, 113147, 2997, 87416, 875000, 42, 14, 28, 66, 30, 4, 35, 51, 28, "San Diego County", 11));
 arr.push(new Data("Carmel Valley Village", "California", 73, 60, 21, 0, 265, 70, 4011, 211, 95444, 1018200, 53, 15, 26, 91, 50, 7, 53, 49, 22, "Monterey County", 13));
 arr.push(new Data("Carmel-by-the-Sea", "California", 68, 59, 18, 0, 269, 69, 3876, 3636, 62460, 1438100, 55, 12, 40, 75, 63, 8, 40, 42, 22, "Monterey County", 9));
 arr.push(new Data("Carmichael", "California", 92, 54, 20, 0, 266, 60, 65091, 4839, 54598, 416700, 42, 20, 39, 31, 46, 5, 40, 49, 26, "Sacramento County", 38));
