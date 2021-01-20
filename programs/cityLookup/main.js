@@ -35,7 +35,7 @@ function createThirdElement(){
 
 function createSecondElement(){
   var myDiv = document.getElementById("extraRows");
-  var array = [">", ">=", "<", "<=", "="];
+  var array = [">", ">=", "<", "<=", "=", "!="];
   var selectList = document.createElement("select");
   selectList.setAttribute("id", "symbols" + idx);
   myDiv.appendChild(selectList);
@@ -62,13 +62,34 @@ function createFirstElement(){
   }	
 }
 
-function doesObjQualify(obj){
-	var state = document.getElementById("State").value;
-	if (state != "any"){
-	 if (obj.stateName != state){
-       return false;
-     }	   
+function compareToSymbol(symbol, fieldName, value){
+	var flag = false;
+	if (symbol == ">"){
+		flag = fieldName > value;
 	}
+	else if (symbol == ">="){
+	  flag = fieldName >= value;	
+	}
+	else if (symbol == "<"){
+	  flag = fieldName < value;	
+	}
+	else if (symbol == "<="){
+	  flag = fieldName <= value;	
+	}
+	else if (symbol == "="){
+	  flag = fieldName == value;	
+	}
+	else if(symbol == "!="){
+	 flag = fieldName != value;	
+	}
+	else{
+		alert("something went really wrong!");
+	}
+	return flag;
+}
+
+function doesObjQualify(obj){
+   
 	for (var i = 0; i < idx; i++){
 		var fieldId2 = document.getElementById("fieldName" + i);
 		// element may not exist because it may have been deleted by that remove row button
@@ -87,8 +108,8 @@ function doesObjQualify(obj){
 	}
 	var valueString = document.getElementById("value" + i).value; // what the user typed
 
-	if (fieldId == "County"){
-	  if(fieldName == valueString){
+	if (fieldId == "County" || fieldId == "City" || fieldId == "State"){
+	  if(compareToSymbol(symbol, fieldName, valueString)){
 		  continue;
 	  }
 	  else{
@@ -102,22 +123,7 @@ function doesObjQualify(obj){
      return;	 
 	}
 
-	var flag = false;
-	if (symbol == ">"){
-		flag = fieldName > value;
-	}
-	else if (symbol == ">="){
-	  flag = fieldName >= value;	
-	}
-	else if (symbol == "<"){
-	  flag = fieldName < value;	
-	}
-	else if (symbol == "<="){
-	  flag = fieldName <= value;	
-	}
-	else if (symbol == "="){
-	  flag = fieldName == value;	
-	}
+    var flag = compareToSymbol(symbol, fieldName, value);
     if (flag == false){
      return false;		
 	}
@@ -145,8 +151,6 @@ function main(){
   tbl.setAttribute("id", 'table');
   let thead = document.createElement('thead');
   let thr = document.createElement('tr');
-  createColumnHeader(thr, 'City');
-  createColumnHeader(thr, 'State');
       for (var i = 0; i < arrayOfFields.length; i++){
 	  createColumnHeader(thr, arrayOfFields[i]);
   }

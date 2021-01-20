@@ -1,3 +1,5 @@
+var city = "City";
+var state = "State";
 var augustHigh = "August high (F)";
 var decHigh = "December high (F)";
 var annualRainfall = "Annual rainfall (in)";
@@ -19,9 +21,11 @@ var homeAppreciationLastTenYears = "Home Appreciation Last 10 Years";
 var averageCommuteTime = "Average one-way commute time";
 var countyName = "County";
 var augHiMinusDecHi = "Aug Hi Minus Dec Hi";
-var arrayOfFields = [countyName,population,populationDensity,augustHigh,decHigh,augHiMinusDecHi,annualRainfall,numDaysOfRain,numSunnyDays,annualSnowfall,violentCrime,propertyCrime,medianAge,medianIncome,medianHomePrice,medianHomeAge,homeAppreciationLastYear,homeAppreciationLastFiveYears,homeAppreciationLastTenYears,airQuality,averageCommuteTime];
+var arrayOfFields = [city, state,countyName,population,populationDensity,augustHigh,decHigh,augHiMinusDecHi,annualRainfall,numDaysOfRain,numSunnyDays,annualSnowfall,violentCrime,propertyCrime,medianAge,medianIncome,medianHomePrice,medianHomeAge,homeAppreciationLastYear,homeAppreciationLastFiveYears,homeAppreciationLastTenYears,airQuality,averageCommuteTime];
 function createMap(obj){
   let map = new Map();
+  map.set(city, obj.cityName);
+  map.set(state, obj.stateName);
   map.set(countyName, obj.countyName);
   map.set(population, obj.population);
   map.set(populationDensity, obj.populationDensity);
