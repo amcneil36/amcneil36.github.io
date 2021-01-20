@@ -10,15 +10,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-
 // C:\Users\anmcneil\eclipse-workspace\com.hey
 
 //C:\Users\anmcneil\eclipse-workspace\com.hey\src\main\java\com\hey
 //
 
+// shutdown /s /t 4500
+// ^ shutdown in 4500 seconds
+// finished cali but not texas
+
 public class SperlingReader {
 
-	public static boolean debug = true;
+	public static boolean debug = false;
 
 	public static void log(String str) {
 		if (debug) {
@@ -49,6 +52,8 @@ public class SperlingReader {
 		String homeAppreciationLastFiveYears;
 		String homeAppreciationLastTenYears;
 		String averageOneWayCommuteTime;
+		public String countyName;
+		public int augHiMinusDecHi;
 
 	}
 
@@ -62,17 +67,22 @@ public class SperlingReader {
 	}
 
 	public static void main(String[] args) throws Exception {
-		runThread("al", "Alabama");
+		
+		// maybe have it write to files every so often and can also add in a startCity option for starting again after terminating
+		
+	//	SperlingReader.ProcessState("ca", "California");
+		
+/*	runThread("al", "Alabama");
 		runThread("ak", "Alaska");
 		runThread("az", "Arizona");
 		runThread("ar", "Arkansas");
-		runThread("ca", "California");
-		runThread("co", "Colorado");
-		runThread("ct", "Connecticut");
-		runThread("de", "Delaware");
-		runThread("fl", "Florida");
-		runThread("ga", "Georgia");
-		runThread("hi", "Hawaii");
+	*/	runThread("ca", "California"); // overnight
+/*		runThread("co", "Colorado");
+	//	runThread("ct", "Connecticut");
+	//	runThread("de", "Delaware");
+//		runThread("fl", "Florida"); // success
+//		runThread("ga", "Georgia"); // success
+//	runThread("hi", "Hawaii");
 		runThread("id", "Idaho");
 		runThread("il", "Illinois");
 		runThread("in", "Indiana");
@@ -89,29 +99,30 @@ public class SperlingReader {
 		runThread("mo", "Missouri");
 		runThread("mt", "Montana");
 		runThread("ne", "Nebraska");
-		runThread("nv", "Nevada");
-		runThread("nh", "New Hampshire");
+	//	runThread("nv", "Nevada");
+//		runThread("nh", "New Hampshire");
 		runThread("nj", "New Jersey");
 		runThread("nm", "New Mexico");
 		runThread("ny", "New York");
-		runThread("nc", "North Carolina");
+//		runThread("nc", "North Carolina"); // success
 		runThread("nd", "North Dakota");
 		runThread("oh", "Ohio");
 		runThread("ok", "Oklahoma");
-		runThread("or", "Oregon");
+	//	runThread("or", "Oregon"); // success
 		runThread("pa", "Pennsylvania");
-		runThread("ri", "Rhode Island");
-		runThread("sc", "South Carolina");
+//		runThread("ri", "Rhode Island");
+	//	runThread("sc", "South Carolina"); // success
 		runThread("sd", "South Dakota");
 		runThread("tn", "Tennessee");
-		runThread("tx", "Texas");
-		runThread("ut", "Utah");
+*/	runThread("tx", "Texas"); // overnight
+/*		runThread("ut", "Utah");
 		runThread("vt", "Vermont");
 		runThread("va", "Virginia");
-		runThread("wa", "Washington");
+	//	runThread("wa", "Washington"); // success
 		runThread("wv", "West Virginia");
 		runThread("wi", "Wisconsin");
-		runThread("wy", "Wyoming");
+	//	runThread("wy", "Wyoming");
+	*/	
 
 	}
 
@@ -157,6 +168,7 @@ public class SperlingReader {
 		int endIdx2 = text2.indexOf("°", startIdx2);
 		String decHi = text2.substring(startIdx2, endIdx2);
 		obj.decHi = decHi;
+		obj.augHiMinusDecHi = Integer.parseInt(obj.augHi) - Integer.parseInt(obj.decHi);
 	}
 
 	private static String getNumbersBeforeText(String stringToSearch, String pattern) {
@@ -214,6 +226,7 @@ public class SperlingReader {
 		obj.medianHomePrice = medianHomePrice;
 		String medianAge = getNextNumberAfterText(text3, "Median Age");
 		obj.medianAge = medianAge;
+		obj.countyName = text3.substring(text3.indexOf("County: ") + "County: ".length(), text3.indexOf(" Metro Area: "));
 	}
 
 	private static void addCrimeDataToObj(DataObject obj, String stateFullName, String mySiteName) {
@@ -289,9 +302,12 @@ public class SperlingReader {
 		String text = ReadHtmlCode("https://www.bestplaces.net/find/state.aspx?state=" + stateAbbreviation + "/");
 		List<DataObject> siteNames = getSiteNames(text, stateAbbreviation);
 		StringBuilder sb = new StringBuilder("");
+		int counter = 0;
+		long initTime = System.currentTimeMillis();
+		int size = siteNames.size();
+		int numToUpdateOn = 20;
 		for (DataObject obj : siteNames) {
 			String mySiteName = obj.siteName;
-			int counter = 0;
 			try {
 				addWeatherDataToObj(obj, stateFullName, mySiteName);
 				addClimateDataToObj(obj, stateFullName, mySiteName);
@@ -318,14 +334,29 @@ public class SperlingReader {
 					.append(obj.airQualityIndex).append(", ").append(obj.medianHomeAge).append(", ")
 					.append(obj.homeAppreciationLastYear).append(", ").append(obj.homeAppreciationLastFiveYears)
 					.append(", ").append(obj.homeAppreciationLastTenYears).append(", ")
-					.append(obj.averageOneWayCommuteTime).append("));\n");
+					.append(obj.averageOneWayCommuteTime).append(", \"").append(obj.countyName).append("\", ").append(obj.augHiMinusDecHi).append("));\n");
 			counter++;
-			if (counter == 5) {
-				return sb.toString();
+			if (counter % numToUpdateOn == 0) {
+				long secondsTakenForLastTen = (System.currentTimeMillis() - initTime)/1000;
+				int numRemainingCities = size - counter;
+				long minRemaining = secondsTakenForLastTen*numRemainingCities/(numToUpdateOn*60);
+				System.out.println(stateFullName + " time remaining: " + minToString((int)minRemaining));
+				initTime = System.currentTimeMillis();
 			}
 		}
 		return sb.toString();
 
+	}
+	
+	private static String minToString(int minRemaining) {
+		String st = "";
+		int hrRemaining = (int)Math.floor(minRemaining/60);
+		minRemaining = minRemaining%60;
+		if (hrRemaining > 0) {
+			st += hrRemaining + "hr ";
+		}
+		st += minRemaining + "min";
+		return st;
 	}
 
 	private static void WriteTextToFile(String stringToWrite, String stateName) {
@@ -336,7 +367,7 @@ public class SperlingReader {
 			FileWriter myWriter = new FileWriter(filePath);
 			myWriter.write(stringToWrite);
 			myWriter.close();
-			System.out.println("Successfully wrote to the file for: " + stateName);
+			System.out.println(stateName + " has been successfully written to===================================");
 		} catch (IOException e) {
 			log("An error occurred trying to write to file for: " + stateName);
 			e.printStackTrace();
