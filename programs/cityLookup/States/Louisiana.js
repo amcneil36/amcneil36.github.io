@@ -1,1 +1,0 @@
-arr.push(new Data("Abbeville", "Louisiana", 92, 64, 61, 0, 212, 98, 12350, 2042, 28939, 69500, 32, 49, 61, 52, 46, -2, 12, 13, 24, "Vermilion County", 28));

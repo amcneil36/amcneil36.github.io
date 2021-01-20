@@ -1,1 +1,0 @@
-arr.push(new Data("Aastad", "Minnesota", 81, 24, 25, 47, 197, 78, 150, 4, 78750, 152500, 47, 5, 13, 90, 43, 5, 29, 37, 21, "Otter Tail County", 57));
