@@ -1,7 +1,13 @@
 var idx = 0;
 addRow();
+initializeFirstRow();
 
 var BORDER = '1px solid black';
+
+function initializeFirstRow(){
+	document.getElementById("fieldName0").value = "Population";
+	document.getElementById("value0").value = 10000;
+}
 
 function addRow(){
   createFirstElement();
