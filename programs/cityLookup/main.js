@@ -27,7 +27,7 @@ function addRow(){
 function createThirdElement(){
   var input = document.createElement("input");
   input.setAttribute('type', 'text');
-  input.setAttribute('size', '1');
+  input.setAttribute('size', '12');
   input.setAttribute('id', 'value' + idx);
   var myDiv = document.getElementById("extraRows");
   myDiv.appendChild(input);
@@ -78,18 +78,28 @@ function doesObjQualify(obj){
 		var fieldId = fieldId2.value;
 	var fieldName = null;
 	
-    var value = parseFloat(document.getElementById("value" + i).value);
-	if (isNaN(value)){
-	 alert("fill in all input boxes");
-	 throw new Error("fill in all input boxes");
-     return;	 
-	}
 	var symbol = document.getElementById("symbols" + i).value;
 	let map = createMap(obj);
     fieldName = map.get(fieldId);
 	if (fieldName == undefined){
 	 alert("something went wrong");	
-	 	 throw new Error("fill in all input boxes");
+	 throw new Error("fill in all input boxes");
+	}
+	var valueString = document.getElementById("value" + i).value; // what the user typed
+
+	if (fieldId == "County"){
+	  if(fieldName == valueString){
+		  continue;
+	  }
+	  else{
+		  return false;
+	  }
+	}
+    var value = parseFloat(document.getElementById("value" + i).value);
+	if (isNaN(value)){
+	 alert("fill in all input boxes");
+	 throw new Error("fill in all input boxes");
+     return;	 
 	}
 
 	var flag = false;
