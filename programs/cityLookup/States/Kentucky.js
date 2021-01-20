@@ -1,0 +1,1 @@
+arr.push(new Data("Adairville", "Kentucky", 88, 47, 50, 6, 207, 113, 890, 757, 31111, 88700, 40, 8, 10, 71, 57, 0, 15, 11, 28, "Logan County", 41));
