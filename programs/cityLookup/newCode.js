@@ -17,7 +17,9 @@ var homeAppreciationLastYear = "Home Appreciation Last Year";
 var homeAppreciationLastFiveYears = "Home Appreciation Last 5 Years";
 var homeAppreciationLastTenYears = "Home Appreciation Last 10 Years";
 var averageCommuteTime = "Average one-way commute time";
-var arrayOfFields = [augustHigh,decHigh, annualRainfall, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime];
+var countyName = "County";
+var augHiMinusDecHi = "Aug Hi Minus Dec Hi";
+var arrayOfFields = [augustHigh,decHigh, annualRainfall, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime, countyName, augHiMinusDecHi];
 
 function createMap(obj){
   let map = new Map();
@@ -40,6 +42,8 @@ function createMap(obj){
   map.set(homeAppreciationLastFiveYears, obj.homeAppreciationLastFiveYears);
   map.set(homeAppreciationLastTenYears, obj.homeAppreciationLastTenYears);
   map.set(averageCommuteTime, obj.averageCommuteTime);
+  map.set(countyName, obj.countyName);
+  map.set(augHiMinusDecHi, obj.augHiMinusDecHi);
   return map;
  
 }
@@ -66,6 +70,8 @@ function createRow(tr, obj){
   createColumn(tr, obj.homeAppreciationLastFiveYears + '%');
   createColumn(tr, obj.homeAppreciationLastTenYears + '%');
   createColumn(tr, obj.averageCommuteTime + ' mins');
+  createColumn(tr, obj.countyName);
+  createColumn(tr, obj.augHiMinusDecHi);
   
 
 }
@@ -80,7 +86,7 @@ var formatter = new Intl.NumberFormat('en-US', {
 });
 
 class Data {
-  constructor(cityName, stateName, augHi, decHi, numInchesOfRain, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime) {
+  constructor(cityName, stateName, augHi, decHi, numInchesOfRain, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime, countyName, augHiMinusDecHi) {
     this.cityName = cityName;
 	this.stateName = stateName;
     this.augHi = augHi;
@@ -102,5 +108,7 @@ class Data {
 	this.homeAppreciationLastFiveYears = homeAppreciationLastFiveYears;
 	this.homeAppreciationLastTenYears = homeAppreciationLastTenYears;
 	this.averageCommuteTime = averageCommuteTime;
+	this.countyName = countyName;
+	this.augHiMinusDecHi = augHiMinusDecHi;
   }
 }
