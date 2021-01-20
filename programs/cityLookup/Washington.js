@@ -1,0 +1,1 @@
+arr.push(new Data("Aberdeen", "Washington", 68, 47, 76, 1, 127, 193, 16281, 1500, 39735, 147300, 35, 33, 71, 75, 68, 17, 48, 19, 20, "Grays Harbor County", 21));

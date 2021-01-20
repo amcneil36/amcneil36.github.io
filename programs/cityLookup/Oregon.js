@@ -1,0 +1,1 @@
+arr.push(new Data("Adair Village", "Oregon", 83, 46, 51, 6, 155, 162, 1040, 2385, 58542, 250400, 32, 9, 18, 79, 41, 8, 46, 39, 22, "Benton County", 37));
