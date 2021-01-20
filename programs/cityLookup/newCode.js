@@ -19,31 +19,30 @@ var homeAppreciationLastTenYears = "Home Appreciation Last 10 Years";
 var averageCommuteTime = "Average one-way commute time";
 var countyName = "County";
 var augHiMinusDecHi = "Aug Hi Minus Dec Hi";
-var arrayOfFields = [augustHigh,decHigh, annualRainfall, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime, countyName, augHiMinusDecHi];
-
+var arrayOfFields = [countyName,population,populationDensity,augustHigh,decHigh,augHiMinusDecHi,annualRainfall,numDaysOfRain,numSunnyDays,annualSnowfall,violentCrime,propertyCrime,medianAge,medianIncome,medianHomePrice,medianHomeAge,homeAppreciationLastYear,homeAppreciationLastFiveYears,homeAppreciationLastTenYears,airQuality,averageCommuteTime];
 function createMap(obj){
   let map = new Map();
-  map.set(augustHigh, obj.augHi);
-  map.set(decHigh, obj.decHi);
-  map.set(annualRainfall, obj.numInchesOfRain);
-  map.set(annualSnowfall, obj.annualSnowfall);
-  map.set(numSunnyDays, obj.numSunnyDays);
-  map.set(numDaysOfRain, obj.numDaysOfRain);
+  map.set(countyName, obj.countyName);
   map.set(population, obj.population);
   map.set(populationDensity, obj.populationDensity);
-  map.set(medianIncome, obj.medianIncome);
-  map.set(medianHomePrice, obj.medianHomePrice);
-  map.set(medianAge, obj.medianAge);
+  map.set(augustHigh, obj.augHi);
+  map.set(decHigh, obj.decHi);
+  map.set(augHiMinusDecHi, obj.augHiMinusDecHi);
+  map.set(annualRainfall, obj.numInchesOfRain);
+  map.set(numDaysOfRain, obj.numDaysOfRain);
+  map.set(numSunnyDays, obj.numSunnyDays);
+  map.set(annualSnowfall, obj.annualSnowfall);
   map.set(violentCrime, obj.violentCrime);
   map.set(propertyCrime, obj.propertyCrime);
-  map.set(airQuality, obj.airQuality);
+  map.set(medianAge, obj.medianAge);
+  map.set(medianIncome, obj.medianIncome);
+  map.set(medianHomePrice, obj.medianHomePrice);
   map.set(medianHomeAge, obj.medianHomeAge);
   map.set(homeAppreciationLastYear, obj.homeAppreciationLastYear);
   map.set(homeAppreciationLastFiveYears, obj.homeAppreciationLastFiveYears);
   map.set(homeAppreciationLastTenYears, obj.homeAppreciationLastTenYears);
+  map.set(airQuality, obj.airQuality);
   map.set(averageCommuteTime, obj.averageCommuteTime);
-  map.set(countyName, obj.countyName);
-  map.set(augHiMinusDecHi, obj.augHiMinusDecHi);
   return map;
  
 }
@@ -51,27 +50,27 @@ function createMap(obj){
 function createRow(tr, obj){
   createColumn(tr, obj.cityName);
   createColumn(tr, obj.stateName);
-  createColumn(tr, obj.augHi);
-  createColumn(tr, obj.decHi);
-  createColumn(tr, obj.numInchesOfRain);
-  createColumn(tr, obj.annualSnowfall);  
-  createColumn(tr, obj.numSunnyDays);
-  createColumn(tr, obj.numDaysOfRain);
+  createColumn(tr, obj.countyName);
   createColumn(tr, numberWithCommas(obj.population));
   createColumn(tr, numberWithCommas(obj.populationDensity));
-  createColumn(tr, formatter.format(obj.medianIncome));
-  createColumn(tr, formatter.format(obj.medianHomePrice));
-  createColumn(tr, obj.medianAge);
+  createColumn(tr, obj.augHi);
+  createColumn(tr, obj.decHi);
+  createColumn(tr, obj.augHiMinusDecHi);
+  createColumn(tr, obj.numInchesOfRain);
+  createColumn(tr, obj.numDaysOfRain);
+  createColumn(tr, obj.numSunnyDays);
+  createColumn(tr, obj.annualSnowfall);  
   createColumn(tr, obj.violentCrime);
   createColumn(tr, obj.propertyCrime);
-  createColumn(tr, obj.airQuality);
+  createColumn(tr, obj.medianAge);
+  createColumn(tr, formatter.format(obj.medianIncome));
+  createColumn(tr, formatter.format(obj.medianHomePrice));
   createColumn(tr, obj.medianHomeAge);
   createColumn(tr, obj.homeAppreciationLastYear + '%');
   createColumn(tr, obj.homeAppreciationLastFiveYears + '%');
   createColumn(tr, obj.homeAppreciationLastTenYears + '%');
+  createColumn(tr, obj.airQuality);
   createColumn(tr, obj.averageCommuteTime + ' mins');
-  createColumn(tr, obj.countyName);
-  createColumn(tr, obj.augHiMinusDecHi);
   
 
 }
