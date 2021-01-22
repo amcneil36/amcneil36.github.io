@@ -99,7 +99,6 @@ public class WeatherWxReader {
 			String cityName = extractCityName(line);
 			String url = "https://www.weatherwx.com/hazardoutlook/" + stateAbbreviation + "/" + cityName.replace(" ", "+").replace("-", "+") + ".html";
 			String webPageText = SperlingReader.ReadTextFromPage(url);
-			System.out.println(webPageText);
 			windSpeed = getAverageYearlyWindspeed(webPageText);
 			stats = getHumidityStats(webPageText);
 			}

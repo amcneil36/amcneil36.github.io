@@ -70,7 +70,7 @@ public class SperlingReader {
 
 	public static void main(String[] args) throws Exception {
 		for (int i = 0; i< 1000; i++) {
-			System.out.println(ReadTextFromPage("https://www.weatherwx.com/hazardoutlook/ca/san+diego.html"));	
+		//	System.out.println(ReadTextFromPage("https://www.weatherwx.com/hazardoutlook/ca/san+diego.html"));	
 		}
 		
 		// maybe have it write to files every so often and can also add in a startCity option for starting again after terminating
