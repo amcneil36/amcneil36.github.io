@@ -2,6 +2,8 @@ package com.hey;
 
 import java.io.*;
 import java.io.IOException;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -67,6 +69,9 @@ public class SperlingReader {
 	}
 
 	public static void main(String[] args) throws Exception {
+		for (int i = 0; i< 1000; i++) {
+			System.out.println(ReadTextFromPage("https://www.weatherwx.com/hazardoutlook/ca/san+diego.html"));	
+		}
 		
 		// maybe have it write to files every so often and can also add in a startCity option for starting again after terminating
 		
@@ -84,45 +89,45 @@ public class SperlingReader {
 		runThread("ga", "Georgia"); // success
 	runThread("hi", "Hawaii");
 	*///	runThread("id", "Idaho");
-		runThread("il", "Illinois");
-		runThread("in", "Indiana");
+	//	runThread("il", "Illinois");
+	//	runThread("in", "Indiana");
 	//	runThread("ia", "Iowa");
-		runThread("ks", "Kansas");
+	//	runThread("ks", "Kansas");
 	//	runThread("ky", "Kentucky");
 	//	runThread("la", "Louisiana");
 	//	runThread("me", "Maine");
 //		runThread("md", "Maryland");
-	/*runThread("ma", "Massachusetts");
-		runThread("mi", "Michigan");
-		runThread("mn", "Minnesota");
-		runThread("ms", "Mississippi");
-		runThread("mo", "Missouri");
-		runThread("mt", "Montana");
-		runThread("ne", "Nebraska");
-		runThread("nv", "Nevada");
-		runThread("nh", "New Hampshire");
-		runThread("nj", "New Jersey");
-		runThread("nm", "New Mexico");
-		runThread("ny", "New York");
-		runThread("nc", "North Carolina"); // success
-		runThread("nd", "North Dakota");
-		runThread("oh", "Ohio");
-		runThread("ok", "Oklahoma");
-		runThread("or", "Oregon"); // success
+//	runThread("ma", "Massachusetts");
+//		runThread("mi", "Michigan");
+	//	runThread("mn", "Minnesota");
+//		runThread("ms", "Mississippi");
+//		runThread("mo", "Missouri");
+//		runThread("mt", "Montana");
+//		runThread("ne", "Nebraska");
+//		runThread("nv", "Nevada");
+//		runThread("nh", "New Hampshire");
+	//	runThread("nj", "New Jersey");
+//		runThread("nm", "New Mexico");
+//		runThread("ny", "New York");
+//		runThread("nc", "North Carolina");
+//		runThread("nd", "North Dakota");
+	//	runThread("oh", "Ohio");
+/*		runThread("ok", "Oklahoma");
+		runThread("or", "Oregon"); 
 		runThread("pa", "Pennsylvania");
 		runThread("ri", "Rhode Island");
-		runThread("sc", "South Carolina"); // success
+		runThread("sc", "South Carolina");
 		runThread("sd", "South Dakota");
 		runThread("tn", "Tennessee");
 	   // runThread("tx", "Texas"); // overnight
 		runThread("ut", "Utah");
 		runThread("vt", "Vermont");
 		runThread("va", "Virginia");
-		runThread("wa", "Washington"); // success
+		runThread("wa", "Washington"); 
 		runThread("wv", "West Virginia");
 		runThread("wi", "Wisconsin");
 		runThread("wy", "Wyoming");
-*/		
+	*/
 
 	}
 
@@ -171,10 +176,35 @@ public class SperlingReader {
 		obj.augHiMinusDecHi = Integer.parseInt(obj.augHi) - Integer.parseInt(obj.decHi);
 	}
 
-	private static String getNumbersBeforeText(String stringToSearch, String pattern) {
+	public static String getNumbersBeforeText(String stringToSearch, String pattern) {
 		StringBuilder st = new StringBuilder();
 		int idx = stringToSearch.indexOf(pattern);
 		idx -= 2;
+		int counter = 0;
+		while (stringToSearch.charAt(idx) != ' ') {
+			char c = stringToSearch.charAt(idx);
+			if (c != ',') {
+				st.append(c);
+			}
+			idx--;
+			if (counter > 30) {
+				throw new RuntimeException("while loop too long");
+			}
+			counter++;
+		}
+
+		st.reverse();
+		String st2 = st.toString();
+		if (!isNumeric(st2)) {
+			throw new RuntimeException("this text didn't come back as numeric: " + pattern);
+		}
+		return st2;
+	}
+	
+	public static String getNumbersImmediatelyBeforeText(String stringToSearch, String pattern) {
+		StringBuilder st = new StringBuilder();
+		int idx = stringToSearch.indexOf(pattern);
+		idx -= 1;
 		int counter = 0;
 		while (stringToSearch.charAt(idx) != ' ') {
 			char c = stringToSearch.charAt(idx);
@@ -264,7 +294,7 @@ public class SperlingReader {
 
 	}
 
-	private static String getNextNumberAfterText(String text3, String pattern) {
+	public static String getNextNumberAfterText(String text3, String pattern) {
 		int idx = text3.indexOf(pattern) + pattern.length();
 		if (idx == -1) {
 			throw new RuntimeException("didnt find pattern: " + pattern);
@@ -348,7 +378,7 @@ public class SperlingReader {
 
 	}
 	
-	private static String minToString(int minRemaining) {
+	public static String minToString(int minRemaining) {
 		String st = "";
 		int hrRemaining = (int)Math.floor(minRemaining/60);
 		minRemaining = minRemaining%60;
@@ -359,7 +389,7 @@ public class SperlingReader {
 		return st;
 	}
 
-	private static void WriteTextToFile(String stringToWrite, String stateName) {
+	public static void WriteTextToFile(String stringToWrite, String stateName) {
 		try {
 			// C:\Users\anmcneil\Desktop\myproject
 			// FileWriter myWriter = new FileWriter("datapoints.js");
@@ -375,7 +405,7 @@ public class SperlingReader {
 
 	}
 
-	private static String ReadTextFromPage(String url) {
+	public static String ReadTextFromPage(String url) {
 		return JsoupStuff(url);
 	}
 
@@ -390,13 +420,17 @@ public class SperlingReader {
 			}
 			return text;
 		} catch (IOException ex) {
+			String stacktrace = ExceptionUtils.getStackTrace(ex);
+			if (stacktrace.contains("Status=403")) {
+				throw new SecurityException("you are banned from the website");
+			}
 			log("jsoup couldn't connect to: " + url);
 			throw new RuntimeException();
 		}
 
 	}
 
-	private static String ReadHtmlCode(String urlParam) {
+	public static String ReadHtmlCode(String urlParam) {
 		StringBuilder sb = new StringBuilder("");
 		try {
 
