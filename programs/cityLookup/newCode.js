@@ -4,24 +4,28 @@ var augustHigh = "August high (F)";
 var decHigh = "December high (F)";
 var annualRainfall = "Annual rainfall (in)";
 var annualSnowfall = "Annual snowfall (in)";
-var numSunnyDays = "Annual number of sunny days";
-var numDaysOfRain = "Annual number of days of precipitation";
+var numSunnyDays = "Annual days of sunshine";
+var numDaysOfRain = "Annual days of precipitation";
 var population = "Population";
 var populationDensity = "People per sq mi";
 var medianIncome = "Median income";
 var medianHomePrice = "Median home price";
 var medianAge = "Median age";
-var violentCrime = "Violent Crime index";
-var propertyCrime = "Property Crime index";
-var airQuality = "Air Quality Index";
+var violentCrime = "Violent crime index";
+var propertyCrime = "Property crime index";
+var airQuality = "Air quality Index";
 var medianHomeAge = "Median home age";
-var homeAppreciationLastYear = "Home Appreciation Last Year";
-var homeAppreciationLastFiveYears = "Home Appreciation Last 5 Years";
-var homeAppreciationLastTenYears = "Home Appreciation Last 10 Years";
+var homeAppreciationLastYear = "Home appreciation Last Year";
+var homeAppreciationLastFiveYears = "Home appreciation Last 5 Years";
+var homeAppreciationLastTenYears = "Home appreciation Last 10 Years";
 var averageCommuteTime = "Average one-way commute time";
 var countyName = "County";
 var augHiMinusDecHi = "Aug Hi Minus Dec Hi";
-var arrayOfFields = [city, state,countyName,population,populationDensity,augustHigh,decHigh,augHiMinusDecHi,annualRainfall,numDaysOfRain,numSunnyDays,annualSnowfall,violentCrime,propertyCrime,medianAge,medianIncome,medianHomePrice,medianHomeAge,homeAppreciationLastYear,homeAppreciationLastFiveYears,homeAppreciationLastTenYears,airQuality,averageCommuteTime];
+var avgYearlyWindspeed = "Average yearly windspeed (mph)";
+var avgAugustHumidity = "Average August humidity";
+var avgDecemberHumidity = "Average December humidity";
+var avgHumidity = "Average yearly humidity";
+var arrayOfFields = [city, state,countyName,population,populationDensity,augustHigh,decHigh,augHiMinusDecHi,annualRainfall,numDaysOfRain,numSunnyDays,annualSnowfall,avgAugustHumidity, avgDecemberHumidity, avgHumidity, avgYearlyWindspeed,violentCrime,propertyCrime,medianAge,medianIncome,medianHomePrice,medianHomeAge,homeAppreciationLastYear,homeAppreciationLastFiveYears,homeAppreciationLastTenYears,airQuality,averageCommuteTime];
 function createMap(obj){
   let map = new Map();
   map.set(city, obj.cityName);
@@ -47,6 +51,10 @@ function createMap(obj){
   map.set(homeAppreciationLastTenYears, obj.homeAppreciationLastTenYears);
   map.set(airQuality, obj.airQuality);
   map.set(averageCommuteTime, obj.averageCommuteTime);
+  map.set(avgYearlyWindspeed, obj.avgYearlyWindspeed);
+  map.set(avgAugustHumidity, obj.avgAugustHumidity);
+  map.set(avgDecemberHumidity, obj.avgDecemberHumidity);
+  map.set(avgHumidity, obj.avgHumidity);
   return map;
  
 }
@@ -63,7 +71,11 @@ function createRow(tr, obj){
   createColumn(tr, obj.numInchesOfRain);
   createColumn(tr, obj.numDaysOfRain);
   createColumn(tr, obj.numSunnyDays);
-  createColumn(tr, obj.annualSnowfall);  
+  createColumn(tr, obj.annualSnowfall);
+  createColumn(tr, formatHumidity(obj.avgAugustHumidity));
+  createColumn(tr, formatHumidity(obj.avgDecemberHumidity));
+  createColumn(tr, formatHumidity(obj.avgHumidity));
+  createColumn(tr, obj.avgYearlyWindspeed);  
   createColumn(tr, obj.violentCrime);
   createColumn(tr, obj.propertyCrime);
   createColumn(tr, obj.medianAge);
@@ -79,6 +91,13 @@ function createRow(tr, obj){
 
 }
 
+function formatHumidity(humidity){
+ if (humidity == "N/A"){
+  return humidity;
+ }
+  return humidity + "%";	
+}
+
 function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
@@ -89,7 +108,7 @@ var formatter = new Intl.NumberFormat('en-US', {
 });
 
 class Data {
-  constructor(cityName, stateName, augHi, decHi, numInchesOfRain, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime, countyName, augHiMinusDecHi) {
+  constructor(cityName, stateName, augHi, decHi, numInchesOfRain, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime, countyName, augHiMinusDecHi, avgYearlyWindspeed, avgAugustHumidity, avgDecemberHumidity, avgHumidity) {
     this.cityName = cityName;
 	this.stateName = stateName;
     this.augHi = augHi;
@@ -113,5 +132,9 @@ class Data {
 	this.averageCommuteTime = averageCommuteTime;
 	this.countyName = countyName;
 	this.augHiMinusDecHi = augHiMinusDecHi;
+	this.avgYearlyWindspeed = avgYearlyWindspeed;
+	this.avgAugustHumidity = avgAugustHumidity;
+	this.avgDecemberHumidity = avgDecemberHumidity;
+	this.avgHumidity = avgHumidity;
   }
 }

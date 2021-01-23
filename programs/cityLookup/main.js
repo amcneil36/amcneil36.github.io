@@ -113,8 +113,8 @@ function doesObjQualify(obj){
 	 throw new Error("fill in all input boxes");
 	}
 	var valueString = document.getElementById("value" + i).value; // what the user typed
-
-	if (fieldId == "County" || fieldId == "City" || fieldId == "State"){
+    valueString = valueString.replace("$", "").replace(" mph", "").replace("mph", "").replace("%", "").replace(" mins", "").replace("mins", "").replace(",", "");
+	if (fieldId == "County" || fieldId == "City" || fieldId == "State" || valueString == "N/A"){
 	  if(compareToSymbol(symbol, fieldName, valueString)){
 		  continue;
 	  }
@@ -122,7 +122,7 @@ function doesObjQualify(obj){
 		  return false;
 	  }
 	}
-    var value = parseFloat(document.getElementById("value" + i).value);
+    var value = parseFloat(valueString);
 	if (isNaN(value)){
 	 alert("fill in all input boxes");
 	 throw new Error("fill in all input boxes");
