@@ -19,7 +19,7 @@ public class Reader {
 	}
 
 	public static void main(String[] args) throws Exception {
-		runThread("hi", "Hawaii");
+		runThread("al", "Alabama");
 
 	}
 
@@ -52,6 +52,9 @@ public class Reader {
 					.append(result.percentHispanic).append("\", \"").append(result.medianRent).append("\", \"")
 					.append(result.percentWithAtleastBachelors).append("\"));\n");
 			counter++;
+			if (counter == 5) {
+				break;
+			}
 			if (counter % numToUpdateOn == 0) {
 				long secondsTakenForLastTen = (System.currentTimeMillis() - initTime) / 1000;
 				int numRemainingCities = size - counter;
