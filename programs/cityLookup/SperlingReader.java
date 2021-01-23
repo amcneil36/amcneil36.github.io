@@ -69,10 +69,8 @@ public class SperlingReader {
 	}
 
 	public static void main(String[] args) throws Exception {
-		for (int i = 0; i< 1000; i++) {
-		//	System.out.println(ReadTextFromPage("https://www.weatherwx.com/hazardoutlook/ca/san+diego.html"));	
-		}
-		
+		String txt = ReadHtmlCode("https://www.bestplaces.net/education/city/california/oceanside");
+		System.out.println(txt);
 		// maybe have it write to files every so often and can also add in a startCity option for starting again after terminating
 		
 	//	SperlingReader.ProcessState("ca", "California");
@@ -181,7 +179,7 @@ public class SperlingReader {
 		int idx = stringToSearch.indexOf(pattern);
 		idx -= 2;
 		int counter = 0;
-		while (stringToSearch.charAt(idx) != ' ') {
+		while (stringToSearch.charAt(idx) != ' ' && stringToSearch.charAt(idx) != '$') {
 			char c = stringToSearch.charAt(idx);
 			if (c != ',') {
 				st.append(c);
@@ -335,7 +333,7 @@ public class SperlingReader {
 		int counter = 0;
 		long initTime = System.currentTimeMillis();
 		int size = siteNames.size();
-		int numToUpdateOn = 100;
+		int numToUpdateOn = 20;
 		for (DataObject obj : siteNames) {
 			String mySiteName = obj.siteName;
 			try {
