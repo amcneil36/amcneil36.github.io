@@ -1,5 +1,6 @@
 package com.hey;
 
+import java.awt.Toolkit;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.LinkedList;
@@ -18,7 +19,7 @@ public class WeatherWxReader {
 
 	public static void main(String[] args) throws Exception {
 			runThread("al", "Alabama");
-	/*	runThread("ak", "Alaska");
+		runThread("ak", "Alaska");
 		runThread("az", "Arizona");
 		runThread("ar", "Arkansas");
 		runThread("ca", "California"); // overnight
@@ -30,7 +31,7 @@ public class WeatherWxReader {
 	runThread("hi", "Hawaii");
 		runThread("id", "Idaho");
 		runThread("il", "Illinois");
-	//	runThread("in", "Indiana");
+		runThread("in", "Indiana");
 		runThread("ia", "Iowa");
 		runThread("ks", "Kansas");
 		runThread("ky", "Kentucky");
@@ -66,7 +67,7 @@ public class WeatherWxReader {
 		runThread("wa", "Washington"); 
 		runThread("wv", "West Virginia");
 		runThread("wi", "Wisconsin");
-		runThread("wy", "Wyoming"); */
+		runThread("wy", "Wyoming"); 
     
 
 	}
@@ -79,7 +80,7 @@ public class WeatherWxReader {
 		List<String> list = readFileToList(stateName);
 		StringBuilder sb = new StringBuilder();
 		int counter = 0;
-		int numToUpdateOn = 20;
+		int numToUpdateOn = 100;
 		int size = list.size();
 		long initTime = System.currentTimeMillis();
 		boolean isBanned = false;
@@ -106,6 +107,7 @@ public class WeatherWxReader {
 				System.out.println("banned!");
 				isBanned = true;
 				sb.append(line).append("\n");
+				Toolkit.getDefaultToolkit().beep();
 				continue;
 			}
 			catch(Exception ex) {
@@ -134,14 +136,14 @@ public class WeatherWxReader {
 				webPageText = webPageText.substring(webPageText.indexOf("%") + 1, webPageText.length());
 				int humidity = Integer.parseInt(webPageText.substring(1, webPageText.indexOf("%")));
 				if (i == 6) {
-					stats.augustHumidity = String.valueOf(humidity) + "%";
+					stats.augustHumidity = String.valueOf(humidity);
 				}
 				if (i == 10) {
-					stats.decemberHumidity = String.valueOf(humidity) + "%";
+					stats.decemberHumidity = String.valueOf(humidity);
 				}
 				humidityTotal += humidity;
 			}
-			stats.averageHumidity = humidityTotal / 12 + "%";
+			stats.averageHumidity = String.valueOf(humidityTotal / 12);
 			return stats;
 		} catch (Exception ex) {
 			HumidityStats stats = new HumidityStats();
@@ -160,7 +162,7 @@ public class WeatherWxReader {
 				webPageText = webPageText.substring(webPageText.indexOf(" mph") + 1, webPageText.length());
 				totalWindSpeed += Integer.parseInt(SperlingReader.getNextNumberAfterText(webPageText, "mph"));
 			}
-			String retVal = String.valueOf(totalWindSpeed / 12) + "mph";
+			String retVal = String.valueOf(totalWindSpeed / 12);
 			return retVal;
 		} catch (Exception ex) {
 			return "N/A";

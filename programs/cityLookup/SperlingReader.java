@@ -335,7 +335,7 @@ public class SperlingReader {
 		int counter = 0;
 		long initTime = System.currentTimeMillis();
 		int size = siteNames.size();
-		int numToUpdateOn = 20;
+		int numToUpdateOn = 100;
 		for (DataObject obj : siteNames) {
 			String mySiteName = obj.siteName;
 			try {
