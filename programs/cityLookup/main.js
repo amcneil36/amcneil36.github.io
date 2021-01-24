@@ -149,6 +149,7 @@ function removeElement(index){
 }
 
 function main(){
+	  document.getElementById("numResults").innerHTML = "";
   let body = document.getElementsByTagName('body')[0];
   var element = document.getElementById('table');
   if (element != null){
@@ -169,12 +170,15 @@ function main(){
   let tr = document.createElement('tr');
   var numRows = createRows(tbdy);
   if (numRows > searchResultLimit){
-   alert("Too many search results. Enter a more specific query. There must be " + searchResultLimit + " search results or less.");
+   document.getElementById("numResults").innerHTML = "<center>Too many search results. Enter a more specific query. There must be " + searchResultLimit + " search results or less.<center>";
    return;
   }
   if (numRows == 0){
-	 alert("No search results found for the query. Make the query less specific to get search results.");
+	 document.getElementById("numResults").innerHTML = "<center>No search results found for the query. Make the query less specific to get search results.<center>";
      return;	 
+  }
+  else{
+	  document.getElementById("numResults").innerHTML = "<center>Number of results: " + numRows + "<center>";  
   }
   tbl.appendChild(tbdy);
   body.appendChild(tbl);
