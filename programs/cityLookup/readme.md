@@ -9,3 +9,12 @@ For example, here is how it would look if you want to generate a list of all cit
 
 
 This tool does let you enter in a city if you are only interested in seeing results for that city but that's not really the way that this tool is intended to be used.
+
+| Comparison operator | Meaning |
+| ----------- | ----------- |
+| >      | Greater than       |
+| >=   | Greater than or equal to   |
+| <   | Less than |
+| <= | Less than or equal to |
+| = | Equal to |
+| != | Not equal to |
