@@ -108,7 +108,7 @@ var formatter = new Intl.NumberFormat('en-US', {
 });
 
 class Data {
-  constructor(cityName, stateName, augHi, decHi, numInchesOfRain, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime, countyName, augHiMinusDecHi, avgYearlyWindspeed, avgAugustHumidity, avgDecemberHumidity, avgHumidity, percentDemocrat, percentRepublican, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010) {
+  constructor(cityName, stateName, augHi, decHi, numInchesOfRain, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime, countyName, augHiMinusDecHi, avgYearlyWindspeed, avgAugustHumidity, avgDecemberHumidity, avgHumidity, percentDemocrat, percentRepublican, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentAsian, percentBlack, percentWhite, percentHispanic, medianRent, percentWithAtleastBachelors) {
     this.cityName = cityName;
 	this.stateName = stateName;
     this.augHi = augHi;
@@ -141,5 +141,12 @@ class Data {
 	this.unemploymentRate;
 	this.jobGrowthLastYear;
 	this.populationGrowthSince2010;
+	//percentAsian, percentBlack, percentWhite, percentHispanic, medianRent, percentWithAtleastBachelors
+	this.percentAsian = percentAsian;
+	this.percentBlack = percentBlack;
+	this.percentWhite = percentWhite;
+	this.percentHispanic = percentHispanic;
+	this.medianRent = medianRent;
+	this.percentWithAtleastBachelors = percentWithAtleastBachelors;
   }
 }
