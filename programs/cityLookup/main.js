@@ -18,7 +18,7 @@ function addRow(){
   var myDiv = document.getElementById("extraRows");
   if (idx != 0){
     var button = document.createElement('button');
-    button.innerHTML = 'Remove row';
+    button.innerHTML = 'Remove input';
     button.setAttribute('id', 'button' + idx);
     var tempIdx = idx;
     button.onclick = function(){
