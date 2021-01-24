@@ -19,6 +19,16 @@ This tool does let you enter in a city if you are only interested in seeing resu
 | Population |  |
 | People per sq mi |  |
 | August high (F) | Average high for the month of August based on historical data |
+| December high (F) | Average high for the month of December based on historical data |
+| Aug Hi Minus Dec Hi | The average high for the month of August minus the average high for the month of December |
+| Annual rainfall (in) | The amount of inches of rain per year based on historical data |
+| Annual days of precipitation | |
+| Annual days of sunshin | Number of sunny days |
+| Annual snowfall (in) | |
+| Average August Humidity | The average absolute humidity for the month of August based on historical data |
+| Average December Humidity | The average absolute humidity for the month of December based on historical data |
+| Average yearly humidity | The average absolute humidity from taking the averages of all 12 months |
+| Average yearly windspeed (mph) | The average windspeed from averaging the average windspeeds for all 12 months |
 
 
 | Comparison operator | Meaning |
