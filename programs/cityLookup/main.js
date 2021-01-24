@@ -2,6 +2,8 @@ var idx = 0;
 addRow();
 initializeFirstRow();
 
+var searchResultLimit = 1000;
+
 var BORDER = '1px solid black';
 
 function initializeFirstRow(){
@@ -166,8 +168,8 @@ function main(){
   let tbdy = document.createElement('tbody');
   let tr = document.createElement('tr');
   var numRows = createRows(tbdy);
-  if (numRows > 1000){
-   alert("Too many search results. Enter a more specific query.");
+  if (numRows > searchResultLimit){
+   alert("Too many search results. Enter a more specific query. There must be " + searchResultLimit + " search results or less.");
    return;
   }
   tbl.appendChild(tbdy);
@@ -194,7 +196,7 @@ function createRows(tbdy){
     arr.forEach((obj) => {
 		if (doesObjQualify(obj)){
 			i++;
-			if (i > 1000){
+			if (i > searchResultLimit){
 				return i;
 			}
 	  let tr = document.createElement('tr');
