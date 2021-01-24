@@ -172,6 +172,10 @@ function main(){
    alert("Too many search results. Enter a more specific query. There must be " + searchResultLimit + " search results or less.");
    return;
   }
+  if (numRows == 0){
+	 alert("No search results found for the query. Make the query less specific to get search results.");
+     return;	 
+  }
   tbl.appendChild(tbdy);
   body.appendChild(tbl);
   sorttable.makeSortable(document.getElementById('table'));
