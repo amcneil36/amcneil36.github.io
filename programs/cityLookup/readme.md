@@ -9,6 +9,17 @@ For example, here is how it would look if you want to generate a list of all cit
 
 
 This tool does let you enter in a city if you are only interested in seeing results for that city but that's not really the way that this tool is intended to be used.
+![image info](./images/screenie2.png)
+
+| Field name | description (if necessary) |
+| ----------- | ----------- |
+| City      |        |
+| State   |    |
+| County   |  |
+| Population |  |
+| People per sq mi |  |
+| August high (F) | Average high for the month of August based on historical data |
+
 
 | Comparison operator | Meaning |
 | ----------- | ----------- |
