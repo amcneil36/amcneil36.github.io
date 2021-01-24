@@ -18,16 +18,17 @@ public class Reader {
 
 	public static void main(String[] args) throws Exception {
 		runThread("al", "Alabama");
+
 		runThread("ak", "Alaska");
 		runThread("az", "Arizona");
 		runThread("ar", "Arkansas");
-		runThread("ca", "California"); // overnight
+		runThread("ca", "California");
 		runThread("co", "Colorado");
 		runThread("ct", "Connecticut");
 		runThread("de", "Delaware");
-		runThread("fl", "Florida"); // success
-		runThread("ga", "Georgia"); // success
-	runThread("hi", "Hawaii");
+		runThread("fl", "Florida");
+		runThread("ga", "Georgia");
+		runThread("hi", "Hawaii");
 		runThread("id", "Idaho");
 		runThread("il", "Illinois");
 		runThread("in", "Indiana");
@@ -37,7 +38,7 @@ public class Reader {
 		runThread("la", "Louisiana");
 		runThread("me", "Maine");
 		runThread("md", "Maryland");
-	runThread("ma", "Massachusetts");
+		runThread("ma", "Massachusetts");
 		runThread("mi", "Michigan");
 		runThread("mn", "Minnesota");
 		runThread("ms", "Mississippi");
@@ -53,17 +54,17 @@ public class Reader {
 		runThread("nd", "North Dakota");
 		runThread("oh", "Ohio");
 		runThread("ok", "Oklahoma");
-		runThread("or", "Oregon"); 
+		runThread("or", "Oregon");
 		runThread("pa", "Pennsylvania");
 		runThread("ri", "Rhode Island");
 		runThread("sc", "South Carolina");
 		runThread("sd", "South Dakota");
 		runThread("tn", "Tennessee");
-	    runThread("tx", "Texas"); // overnight
+		runThread("tx", "Texas");
 		runThread("ut", "Utah");
 		runThread("vt", "Vermont");
 		runThread("va", "Virginia");
-		runThread("wa", "Washington"); 
+		runThread("wa", "Washington");
 		runThread("wv", "West Virginia");
 		runThread("wi", "Wisconsin");
 		runThread("wy", "Wyoming");
@@ -84,17 +85,25 @@ public class Reader {
 		for (String line : list) {
 			int count = StringUtils.countMatches(line, ",");
 			if (count > 31) {
-				sb.append(line).append("\n");
-				continue;
+				line = line.replace("\"1,", "\"1").replace("\"2,", "\"2").replace("\"3,", "\"3").replace("\"4,", "\"4")
+						.replace("\"5,", "\"5").replace("\"6,", "\"6").replace("\"7,", "\"7").replace("\"8,", "\"8")
+						.replace("\"9,", "\"9");
+				count = StringUtils.countMatches(line, ",");
+				if (count > 31) {
+					sb.append(line).append("\n");
+					continue;
+				} else {
+					System.out.println("fixing: " + line);
+				}
 			}
 			Result result = new Result();
 			String cityName = WeatherWxReader.extractCityName(line);
 			populateResultWithHispanicData(result, stateFullName, cityName);
 			populateResultWithOtherData(result, stateAbbreviation, cityName);
 			line = line.substring(0, line.length() - 3);
-			sb.append(line).append(", \"").append(result.percentAsian).append("\", \"")
-					.append(result.percentBlack).append("\", \"").append(result.percentWhite).append("\", \"")
-					.append(result.percentHispanic).append("\", \"").append(result.medianRent).append("\", \"")
+			sb.append(line).append(", \"").append(result.percentAsian).append("\", \"").append(result.percentBlack)
+					.append("\", \"").append(result.percentWhite).append("\", \"").append(result.percentHispanic)
+					.append("\", \"").append(result.medianRent).append("\", \"")
 					.append(result.percentWithAtleastBachelors).append("\"));\n");
 			counter++;
 			if (counter % numToUpdateOn == 0) {
@@ -114,7 +123,8 @@ public class Reader {
 			cityName = cityName.replace(" ", "_");
 			String url = "https://www.bestplaces.net/people/city/" + stateFullName + "/" + cityName;
 			String webPageText = SperlingReader.ReadTextFromPage(url);
-			result.percentHispanic = returnValidValue(SperlingReader.getNumbersBeforeText(webPageText, " claim Hispanic"));
+			result.percentHispanic = returnValidValue(
+					SperlingReader.getNumbersBeforeText(webPageText, " claim Hispanic"));
 			if (result.percentHispanic.charAt(0) == '0') {
 				result.percentHispanic = "N/A";
 			}
@@ -122,7 +132,7 @@ public class Reader {
 
 		}
 	}
-	
+
 	private static String returnValidValue(String st) {
 		if ("N/A".equals(st)) {
 			return st;
@@ -134,10 +144,9 @@ public class Reader {
 			return "N/A";
 		}
 		try {
-		Float.parseFloat(st);
-		return st;
-		}
-		catch (Exception ex) {
+			Float.parseFloat(st);
+			return st;
+		} catch (Exception ex) {
 			return "N/A";
 		}
 	}
@@ -147,8 +156,7 @@ public class Reader {
 		String url = "";
 		try {
 			cityName = cityName.replace(" ", "-");
-			url = "https://worldpopulationreview.com/us-cities/" + cityName + "-" + stateAbbreviation
-					+ "-population";
+			url = "https://worldpopulationreview.com/us-cities/" + cityName + "-" + stateAbbreviation + "-population";
 			webPageText = SperlingReader.ReadTextFromPage(url);
 			result.percentAsian = returnValidValue(getTextFromRaceString(webPageText, "Asian: "));
 			result.percentBlack = returnValidValue(getTextFromRaceString(webPageText, "Black or African American: "));
@@ -157,9 +165,9 @@ public class Reader {
 			float bachelorsDegreePercent = getDegreeRate(webPageText, "Bachelors Degree ");
 			float graduateDegreePercent = getDegreeRate(webPageText, "Graduate Degree ");
 			float d = bachelorsDegreePercent + graduateDegreePercent;
-		    BigDecimal bd = new BigDecimal(Float.toString(d));
-		    bd = bd.setScale(2, BigDecimal.ROUND_HALF_UP);
-		    result.percentWithAtleastBachelors =  returnValidValue(String.valueOf(bd.floatValue()));
+			BigDecimal bd = new BigDecimal(Float.toString(d));
+			bd = bd.setScale(2, BigDecimal.ROUND_HALF_UP);
+			result.percentWithAtleastBachelors = returnValidValue(String.valueOf(bd.floatValue()));
 		} catch (Exception ex) {
 		}
 	}
@@ -175,7 +183,6 @@ public class Reader {
 		int startIdx = fullText.indexOf(raceString) + raceString.length();
 		return fullText.substring(startIdx, fullText.indexOf("%", startIdx));
 	}
-
 
 }
 
