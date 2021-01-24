@@ -6,7 +6,7 @@ var BORDER = '1px solid black';
 
 function initializeFirstRow(){
 	document.getElementById("fieldName0").value = "Population";
-	document.getElementById("value0").value = 10000;
+	document.getElementById("value0").value = 50000;
 }
 
 function addRow(){
@@ -165,7 +165,11 @@ function main(){
 
   let tbdy = document.createElement('tbody');
   let tr = document.createElement('tr');
-  createRows(tbdy);
+  var numRows = createRows(tbdy);
+  if (numRows > 1000){
+   alert("Too many search results. Enter a more specific query.");
+   return;
+  }
   tbl.appendChild(tbdy);
   body.appendChild(tbl);
   sorttable.makeSortable(document.getElementById('table'));
@@ -190,6 +194,9 @@ function createRows(tbdy){
     arr.forEach((obj) => {
 		if (doesObjQualify(obj)){
 			i++;
+			if (i > 1000){
+				return i;
+			}
 	  let tr = document.createElement('tr');
       createRow(tr, obj);
 	  if (i%2==0){
@@ -198,6 +205,6 @@ function createRows(tbdy){
 	  tbdy.appendChild(tr);   	
 		}
     });
-    
+    return i;
 }
 
