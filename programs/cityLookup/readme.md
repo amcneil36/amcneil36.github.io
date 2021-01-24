@@ -29,6 +29,8 @@ This tool does let you enter in a city if you are only interested in seeing resu
 | Average December Humidity | The average absolute humidity for the month of December based on historical data |
 | Average yearly humidity | The average absolute humidity from taking the averages of all 12 months |
 | Average yearly windspeed (mph) | The average windspeed from averaging the average windspeeds for all 12 months |
+| Violent crime index | On a scale of 1 (lowest) to 100 (highest). This composes of causing physical harm. The US average is 23. |
+| Property crime index | On a scale of 1 (lowest) to 100 (highest). This composes of theft. The US average is 35.|
 
 
 | Comparison operator | Meaning |
