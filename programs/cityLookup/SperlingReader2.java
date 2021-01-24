@@ -160,8 +160,10 @@ public class SperlingReader2 {
 
 	private static String getJobGrowth(String webPageText) {
 		try {
-		int initialIdx = webPageText.indexOf("job growth");
+		int initialIdx = webPageText.indexOf("Recent job growth");
 		int numTries = 0;
+		webPageText = webPageText.substring(initialIdx, webPageText.length());
+		initialIdx = webPageText.indexOf("jobs have");
 		webPageText = webPageText.substring(initialIdx, webPageText.length());
 		int idx =0;
 		while (!Character.isDigit(webPageText.charAt(idx))) {

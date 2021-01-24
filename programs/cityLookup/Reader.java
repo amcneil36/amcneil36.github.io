@@ -8,8 +8,6 @@ import org.apache.commons.lang3.StringUtils;
 public class Reader {
 
 	static class Result {
-		String percentVotedDemocrat = "N/A";
-		String percentVotedRepublican = "N/A";
 		String percentAsian = "N/A";
 		String percentBlack = "N/A";
 		String percentWhite = "N/A";
@@ -19,7 +17,55 @@ public class Reader {
 	}
 
 	public static void main(String[] args) throws Exception {
-		runThread("al", "Alabama");
+		runThread("ak", "Alaska");
+		runThread("az", "Arizona");
+		runThread("ar", "Arkansas");
+		runThread("ca", "California"); // overnight
+		runThread("co", "Colorado");
+		runThread("ct", "Connecticut");
+		runThread("de", "Delaware");
+		runThread("fl", "Florida"); // success
+		runThread("ga", "Georgia"); // success
+	runThread("hi", "Hawaii");
+		runThread("id", "Idaho");
+		runThread("il", "Illinois");
+		runThread("in", "Indiana");
+		runThread("ia", "Iowa");
+		runThread("ks", "Kansas");
+		runThread("ky", "Kentucky");
+		runThread("la", "Louisiana");
+		runThread("me", "Maine");
+		runThread("md", "Maryland");
+	runThread("ma", "Massachusetts");
+		runThread("mi", "Michigan");
+		runThread("mn", "Minnesota");
+		runThread("ms", "Mississippi");
+		runThread("mo", "Missouri");
+		runThread("mt", "Montana");
+		runThread("ne", "Nebraska");
+		runThread("nv", "Nevada");
+		runThread("nh", "New Hampshire");
+		runThread("nj", "New Jersey");
+		runThread("nm", "New Mexico");
+		runThread("ny", "New York");
+		runThread("nc", "North Carolina");
+		runThread("nd", "North Dakota");
+		runThread("oh", "Ohio");
+		runThread("ok", "Oklahoma");
+		runThread("or", "Oregon"); 
+		runThread("pa", "Pennsylvania");
+		runThread("ri", "Rhode Island");
+		runThread("sc", "South Carolina");
+		runThread("sd", "South Dakota");
+		runThread("tn", "Tennessee");
+	    runThread("tx", "Texas"); // overnight
+		runThread("ut", "Utah");
+		runThread("vt", "Vermont");
+		runThread("va", "Virginia");
+		runThread("wa", "Washington"); 
+		runThread("wv", "West Virginia");
+		runThread("wi", "Wisconsin");
+		runThread("wy", "Wyoming");
 
 	}
 
@@ -36,25 +82,20 @@ public class Reader {
 		long initTime = System.currentTimeMillis();
 		for (String line : list) {
 			int count = StringUtils.countMatches(line, ",");
-			if (count > 26) {
+			if (count > 31) {
 				sb.append(line).append("\n");
 				continue;
 			}
 			Result result = new Result();
 			String cityName = WeatherWxReader.extractCityName(line);
-			populateResultWithVotingData(result, stateFullName, cityName);
 			populateResultWithHispanicData(result, stateFullName, cityName);
 			populateResultWithOtherData(result, stateAbbreviation, cityName);
 			line = line.substring(0, line.length() - 3);
-			sb.append(line).append(", \"").append(result.percentVotedDemocrat).append("\", \"")
-					.append(result.percentVotedRepublican).append("\", \"").append(result.percentAsian).append("\", \"")
+			sb.append(line).append(", \"").append(result.percentAsian).append("\", \"")
 					.append(result.percentBlack).append("\", \"").append(result.percentWhite).append("\", \"")
 					.append(result.percentHispanic).append("\", \"").append(result.medianRent).append("\", \"")
 					.append(result.percentWithAtleastBachelors).append("\"));\n");
 			counter++;
-			if (counter == 5) {
-				break;
-			}
 			if (counter % numToUpdateOn == 0) {
 				long secondsTakenForLastTen = (System.currentTimeMillis() - initTime) / 1000;
 				int numRemainingCities = size - counter;
@@ -72,9 +113,31 @@ public class Reader {
 			cityName = cityName.replace(" ", "_");
 			String url = "https://www.bestplaces.net/people/city/" + stateFullName + "/" + cityName;
 			String webPageText = SperlingReader.ReadTextFromPage(url);
-			result.percentHispanic = SperlingReader.getNumbersBeforeText(webPageText, " claim Hispanic");
+			result.percentHispanic = returnValidValue(SperlingReader.getNumbersBeforeText(webPageText, " claim Hispanic"));
+			if (result.percentHispanic.charAt(0) == '0') {
+				result.percentHispanic = "N/A";
+			}
 		} catch (Exception ex) {
 
+		}
+	}
+	
+	private static String returnValidValue(String st) {
+		if ("N/A".equals(st)) {
+			return st;
+		}
+		if (st.charAt(0) == '0') {
+			return "N/A";
+		}
+		if (st.length() > 14) {
+			return "N/A";
+		}
+		try {
+		Float.parseFloat(st);
+		return st;
+		}
+		catch (Exception ex) {
+			return "N/A";
 		}
 	}
 
@@ -86,16 +149,16 @@ public class Reader {
 			url = "https://worldpopulationreview.com/us-cities/" + cityName + "-" + stateAbbreviation
 					+ "-population";
 			webPageText = SperlingReader.ReadTextFromPage(url);
-			result.percentAsian = getTextFromRaceString(webPageText, "Asian: ");
-			result.percentBlack = getTextFromRaceString(webPageText, "Black or African American: ");
-			result.percentWhite = getTextFromRaceString(webPageText, "White: ");
-			result.medianRent = SperlingReader.getNumbersBeforeText(webPageText, "per month");
+			result.percentAsian = returnValidValue(getTextFromRaceString(webPageText, "Asian: "));
+			result.percentBlack = returnValidValue(getTextFromRaceString(webPageText, "Black or African American: "));
+			result.percentWhite = returnValidValue(getTextFromRaceString(webPageText, "White: "));
+			result.medianRent = returnValidValue(SperlingReader.getNumbersBeforeText(webPageText, "per month"));
 			float bachelorsDegreePercent = getDegreeRate(webPageText, "Bachelors Degree ");
 			float graduateDegreePercent = getDegreeRate(webPageText, "Graduate Degree ");
 			float d = bachelorsDegreePercent + graduateDegreePercent;
 		    BigDecimal bd = new BigDecimal(Float.toString(d));
 		    bd = bd.setScale(2, BigDecimal.ROUND_HALF_UP);
-		    result.percentWithAtleastBachelors =  String.valueOf(bd.floatValue());
+		    result.percentWithAtleastBachelors =  returnValidValue(String.valueOf(bd.floatValue()));
 		} catch (Exception ex) {
 		}
 	}
@@ -112,18 +175,6 @@ public class Reader {
 		return fullText.substring(startIdx, fullText.indexOf("%", startIdx));
 	}
 
-	private static void populateResultWithVotingData(Result result, String stateFullName, String cityName) {
-		try {
-			cityName = cityName.replace(" ", "_");
-			String url = "https://www.bestplaces.net/voting/city/" + stateFullName + "/" + cityName;
-			String webPageText = SperlingReader.ReadTextFromPage(url);
-			result.percentVotedDemocrat = SperlingReader.getNumbersBeforeText(webPageText,
-					" of the people voted Democrat");
-			result.percentVotedRepublican = SperlingReader.getNumbersBeforeText(webPageText, " voted for the Republi");
-		} catch (Exception ex) {
-
-		}
-	}
 
 }
 
