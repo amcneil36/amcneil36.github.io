@@ -17,6 +17,7 @@ public class Reader {
 	}
 
 	public static void main(String[] args) throws Exception {
+		runThread("al", "Alabama");
 		runThread("ak", "Alaska");
 		runThread("az", "Arizona");
 		runThread("ar", "Arkansas");

@@ -111,7 +111,7 @@ function doesObjQualify(obj){
 	let map = createMap(obj);
     fieldName = map.get(fieldId);
 	if (fieldName == undefined){
-	 alert("something went wrong");	
+	 alert("something went wrong\nfieldId: " + fieldId + "\ncity: " + obj.cityName + "\nstate: " + obj.stateName);	
 	 throw new Error("fill in all input boxes");
 	}
 	var valueString = document.getElementById("value" + i).value; // what the user typed

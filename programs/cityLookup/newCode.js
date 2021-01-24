@@ -25,7 +25,20 @@ var avgYearlyWindspeed = "Average yearly windspeed (mph)";
 var avgAugustHumidity = "Average August humidity";
 var avgDecemberHumidity = "Average December humidity";
 var avgHumidity = "Average yearly humidity";
-var arrayOfFields = [city, state,countyName,population,populationDensity,augustHigh,decHigh,augHiMinusDecHi,annualRainfall,numDaysOfRain,numSunnyDays,annualSnowfall,avgAugustHumidity, avgDecemberHumidity, avgHumidity, avgYearlyWindspeed,violentCrime,propertyCrime,medianAge,medianIncome,medianHomePrice,medianHomeAge,homeAppreciationLastYear,homeAppreciationLastFiveYears,homeAppreciationLastTenYears,airQuality,averageCommuteTime];
+
+var percentDemocrat = "% Democrat";
+var percentRepublican = "% Republican";
+var unemploymentRate = "Unemployment rate";
+var jobGrowthLastYear = "Job growth last year";
+var populationGrowthSince2010 = "Population growth since 2010";
+var percentAsian = "% Asian";
+var percentBlack = "% Black";
+var percentWhite = "% White";
+var percentHispanic = "% Hispanic";
+var medianRent = "Median rent";
+var percentWithAtleastBachelors = "% with at least bachelors degree";
+var arrayOfFields = [city, state,countyName,population,populationDensity,augustHigh,decHigh,augHiMinusDecHi,annualRainfall,numDaysOfRain,numSunnyDays,annualSnowfall,avgAugustHumidity, avgDecemberHumidity, avgHumidity, avgYearlyWindspeed,violentCrime,propertyCrime,medianAge,percentWithAtleastBachelors,medianIncome,medianRent,medianHomePrice,medianHomeAge,homeAppreciationLastYear,homeAppreciationLastFiveYears,homeAppreciationLastTenYears,airQuality,
+averageCommuteTime, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentDemocrat, percentRepublican, percentAsian, percentBlack, percentWhite,percentHispanic];
 function createMap(obj){
   let map = new Map();
   map.set(city, obj.cityName);
@@ -55,8 +68,18 @@ function createMap(obj){
   map.set(avgAugustHumidity, obj.avgAugustHumidity);
   map.set(avgDecemberHumidity, obj.avgDecemberHumidity);
   map.set(avgHumidity, obj.avgHumidity);
-  return map;
- 
+  map.set(medianRent, obj.medianRent);
+  map.set(percentDemocrat, obj.percentDemocrat);
+  map.set(percentRepublican, obj.percentRepublican);
+  map.set(unemploymentRate, obj.unemploymentRate);
+  map.set(jobGrowthLastYear, obj.jobGrowthLastYear);
+  map.set(populationGrowthSince2010,obj.populationGrowthSince2010);
+  map.set(percentAsian,obj.percentAsian);
+  map.set(percentBlack,obj.percentBlack);
+  map.set(percentWhite,obj.percentWhite);
+  map.set(percentHispanic,obj.percentHispanic);
+  map.set(percentWithAtleastBachelors,obj.percentWithAtleastBachelors);
+  return map; 
 }
 
 function createRow(tr, obj){
@@ -72,30 +95,49 @@ function createRow(tr, obj){
   createColumn(tr, obj.numDaysOfRain);
   createColumn(tr, obj.numSunnyDays);
   createColumn(tr, obj.annualSnowfall);
-  createColumn(tr, formatHumidity(obj.avgAugustHumidity));
-  createColumn(tr, formatHumidity(obj.avgDecemberHumidity));
-  createColumn(tr, formatHumidity(obj.avgHumidity));
+  createColumn(tr, formatPercent(obj.avgAugustHumidity));
+  createColumn(tr, formatPercent(obj.avgDecemberHumidity));
+  createColumn(tr, formatPercent(obj.avgHumidity));
   createColumn(tr, obj.avgYearlyWindspeed);  
   createColumn(tr, obj.violentCrime);
   createColumn(tr, obj.propertyCrime);
   createColumn(tr, obj.medianAge);
-  createColumn(tr, formatter.format(obj.medianIncome));
-  createColumn(tr, formatter.format(obj.medianHomePrice));
+  createColumn(tr, formatPercent(obj.percentWithAtleastBachelors));
+  createColumn(tr, formatCurrency(obj.medianIncome));
+  createColumn(tr, formatCurrency(obj.medianRent));
+  createColumn(tr, formatCurrency(obj.medianHomePrice));
   createColumn(tr, obj.medianHomeAge);
   createColumn(tr, obj.homeAppreciationLastYear + '%');
   createColumn(tr, obj.homeAppreciationLastFiveYears + '%');
   createColumn(tr, obj.homeAppreciationLastTenYears + '%');
   createColumn(tr, obj.airQuality);
   createColumn(tr, obj.averageCommuteTime + ' mins');
+  createColumn(tr, formatPercent(obj.unemploymentRate));
+  createColumn(tr, formatPercent(obj.jobGrowthLastYear));
+  createColumn(tr, formatPercent(obj.populationGrowthSince2010));
+  createColumn(tr, formatPercent(obj.percentDemocrat));
+  createColumn(tr, formatPercent(obj.percentRepublican));
+  createColumn(tr, formatPercent(obj.percentAsian));
+  createColumn(tr, formatPercent(obj.percentBlack));
+  createColumn(tr, formatPercent(obj.percentWhite));
+  createColumn(tr, formatPercent(obj.percentHispanic));
+  //jobGrowthLastYear, populationGrowthSince2010, percentDemocrat, percentRepublican, percentAsian, percentBlack, percentWhite,percentHispanic
   
 
 }
 
-function formatHumidity(humidity){
- if (humidity == "N/A"){
-  return humidity;
+function formatCurrency(inp){
+ if (inp == "N/A" || isNaN(inp)){
+  return "N/A";
  }
-  return humidity + "%";	
+return formatter.format(inp); 
+}
+
+function formatPercent(val){
+ if (val == "N/A"){
+  return val;
+ }
+  return val + "%";	
 }
 
 function numberWithCommas(x) {
@@ -138,10 +180,9 @@ class Data {
 	this.avgHumidity = avgHumidity;
 	this.percentDemocrat = percentDemocrat;
 	this.percentRepublican = percentRepublican;
-	this.unemploymentRate;
-	this.jobGrowthLastYear;
-	this.populationGrowthSince2010;
-	//percentAsian, percentBlack, percentWhite, percentHispanic, medianRent, percentWithAtleastBachelors
+	this.unemploymentRate = unemploymentRate;
+	this.jobGrowthLastYear = jobGrowthLastYear;
+	this.populationGrowthSince2010 = populationGrowthSince2010;
 	this.percentAsian = percentAsian;
 	this.percentBlack = percentBlack;
 	this.percentWhite = percentWhite;
