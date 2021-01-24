@@ -108,7 +108,7 @@ var formatter = new Intl.NumberFormat('en-US', {
 });
 
 class Data {
-  constructor(cityName, stateName, augHi, decHi, numInchesOfRain, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime, countyName, augHiMinusDecHi, avgYearlyWindspeed, avgAugustHumidity, avgDecemberHumidity, avgHumidity) {
+  constructor(cityName, stateName, augHi, decHi, numInchesOfRain, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime, countyName, augHiMinusDecHi, avgYearlyWindspeed, avgAugustHumidity, avgDecemberHumidity, avgHumidity, percentDemocrat, percentRepublican, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010) {
     this.cityName = cityName;
 	this.stateName = stateName;
     this.augHi = augHi;
@@ -136,5 +136,10 @@ class Data {
 	this.avgAugustHumidity = avgAugustHumidity;
 	this.avgDecemberHumidity = avgDecemberHumidity;
 	this.avgHumidity = avgHumidity;
+	this.percentDemocrat = percentDemocrat;
+	this.percentRepublican = percentRepublican;
+	this.unemploymentRate;
+	this.jobGrowthLastYear;
+	this.populationGrowthSince2010;
   }
 }
