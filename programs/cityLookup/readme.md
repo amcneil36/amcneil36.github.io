@@ -32,7 +32,7 @@ Clicking on that column's header again will sort the results in descending order
 | Aug Hi Minus Dec Hi | The average high for the month of August minus the average high for the month of December |
 | Annual rainfall (in) | The amount of inches of rain per year based on historical data |
 | Annual days of precipitation | |
-| Annual days of sunshin | Number of sunny days |
+| Annual days of sunshine | Number of sunny days |
 | Annual snowfall (in) | |
 | Average August Humidity | The average absolute humidity for the month of August based on historical data |
 | Average December Humidity | The average absolute humidity for the month of December based on historical data |
@@ -41,7 +41,7 @@ Clicking on that column's header again will sort the results in descending order
 | Violent crime index | On a scale of 1 (lowest) to 100 (highest). This composes of causing physical harm. The US average is 23. |
 | Property crime index | On a scale of 1 (lowest) to 100 (highest). This composes of theft. The US average is 35.|
 | Median age | |
-| % with at least bachelors | Percent of residents over the age of 25 with a bachelors degree. Includes those who have a graduate degree. |
+| % with at least Bachelor's | Percent of residents over the age of 25 with a Bachelor's degree. Includes those who have a graduate degree. |
 | Median household income | |
 | Median rent | Median monthly cost of all rentals in the city. This includes apartments, houses, and all other forms of rentals. |
 | Median home price | |
@@ -56,10 +56,10 @@ Clicking on that column's header again will sort the results in descending order
 | Population growth since 2010 | |
 | % Democrat | The percent of residents who are democrat. Tracked at the county level. |
 | % Republican | The percent of residents who are republican. Tracked at the county level. |
-| % Asian | The percent of residents who identified as asian only. This includes hispanic and non-hispanic asian residents. |
-| % Black | The percent of residents who identified as black only. This includes hispanic and non-hispanic black residents. |
-| % White | The percent of residents who identified as white only. This includes hispanic and non-hispanic white residents. |
-| % Hispanic | The percent of residents who identified as hispanic. This includes hispanic residents of any race. |
+| % Asian | The percent of residents who identified as Asian only. This includes Hispanic and non-hispanic Asian residents. |
+| % Black | The percent of residents who identified as Black only. This includes Hispanic and non-hispanic Black residents. |
+| % White | The percent of residents who identified as White only. This includes Hispanic and non-hispanic White residents. |
+| % Hispanic | The percent of residents who identified as Hispanic. This includes Hispanic residents of any race. |
 
 ### Comparison operator
 | Comparison operator | Meaning |
