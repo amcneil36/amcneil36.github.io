@@ -6,10 +6,11 @@ Instead of entering in a city you are interested in and then finding out weather
 
 For example, here is how it would look if you want to generate a list of all cities in the USA that have a population greater than 10000, average August High less than 86F, average December high greater than 50F, and an average annual rainfall less than 48 inches:
 ![image info](./images/screenie.png)
-
+You can scroll to the right to see for of the columns
+![image info](./images/screenie2.png)
 
 This tool does let you enter in a city if you are only interested in seeing results for that city but that's not really the way that this tool is intended to be used.
-![image info](./images/screenie2.png)
+![image info](./images/screenie3.png)
 
 | Field name | description (if necessary) |
 | ----------- | ----------- |
