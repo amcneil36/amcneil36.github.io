@@ -12,6 +12,8 @@ You can scroll to the right to see for of the columns
 This tool does let you enter in a city if you are only interested in seeing results for that city but that's not really the way that this tool is intended to be used since there are many websites already out there that work that way.
 ![image info](./images/screenie3.png)
 
+#### Field name descriptions
+
 | Field name | description (if necessary) |
 | ----------- | ----------- |
 | City      |        |
@@ -53,7 +55,7 @@ This tool does let you enter in a city if you are only interested in seeing resu
 | % White | The percent of residents who identified as white only. This includes hispanic and non-hispanic white residents. |
 | % Hispanic | The percent of residents who identified as hispanic. This includes hispanic residents of any race. |
 
-
+#### Comparison operator
 | Comparison operator | Meaning |
 | ----------- | ----------- |
 | >      | Greater than       |
