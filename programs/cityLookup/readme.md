@@ -34,7 +34,24 @@ This tool does let you enter in a city if you are only interested in seeing resu
 | Property crime index | On a scale of 1 (lowest) to 100 (highest). This composes of theft. The US average is 35.|
 | Median age | |
 | % with at least bachelors | Percent of residents over the age of 25 with a bachelors degree. Includes those who have a graduate degree. |
-| Median income
+| Median household income | |
+| Median rent | Median monthly cost of all rentals in the city. This includes apartments, houses, and all other forms of rentals. |
+| Median home price | |
+| Median home age | |
+| Home appreciation last year | |
+| Home appreciation last 5 years | |
+| Home appreciation last 10 years |
+| Air quality index | The quality of the air. The higher score is better. The score can go up to 100. |
+| Average one-way commute time | |
+| Unemployment rate | |
+| Job growth last year | |
+| Population growth since 2010 | |
+| % Democrat | The percent of residents who are democrat. Tracked at the county level. |
+| % Republican | The percent of residents who are republican. Tracked at the county level. |
+| % Asian | The percent of residents who identified as asian only. This includes hispanic and non-hispanic asian residents. |
+| % Black | The percent of residents who identified as black only. This includes hispanic and non-hispanic black residents. |
+| % White | The percent of residents who identified as white only. This includes hispanic and non-hispanic white residents. |
+| % Hispanic | The percent of residents who identified as hispanic. This includes hispanic residents of any race. |
 
 
 | Comparison operator | Meaning |
