@@ -36,7 +36,7 @@ var percentBlack = "% Black";
 var percentWhite = "% White";
 var percentHispanic = "% Hispanic";
 var medianRent = "Median rent";
-var percentWithAtleastBachelors = "% with at least bachelors degree";
+var percentWithAtleastBachelors = "% with at least Bachelor's degree";
 var arrayOfFields = [city, state,countyName,population,populationDensity,augustHigh,decHigh,augHiMinusDecHi,annualRainfall,numDaysOfRain,numSunnyDays,annualSnowfall,avgAugustHumidity, avgDecemberHumidity, avgHumidity, avgYearlyWindspeed,violentCrime,propertyCrime,medianAge,percentWithAtleastBachelors,medianIncome,medianRent,medianHomePrice,medianHomeAge,homeAppreciationLastYear,homeAppreciationLastFiveYears,homeAppreciationLastTenYears,airQuality,
 averageCommuteTime, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentDemocrat, percentRepublican, percentAsian, percentBlack, percentWhite,percentHispanic];
 function createMap(obj){
