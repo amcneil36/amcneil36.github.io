@@ -9,7 +9,7 @@ For example, here is how it would look if you want to generate a list of all cit
 You can scroll to the right to see for of the columns
 ![image info](./images/screenie2.png)
 
-This tool does let you enter in a city if you are only interested in seeing results for that city but that's not really the way that this tool is intended to be used.
+This tool does let you enter in a city if you are only interested in seeing results for that city but that's not really the way that this tool is intended to be used since there are many websites already out there that work that way.
 ![image info](./images/screenie3.png)
 
 | Field name | description (if necessary) |
@@ -32,6 +32,9 @@ This tool does let you enter in a city if you are only interested in seeing resu
 | Average yearly windspeed (mph) | The average windspeed from averaging the average windspeeds for all 12 months |
 | Violent crime index | On a scale of 1 (lowest) to 100 (highest). This composes of causing physical harm. The US average is 23. |
 | Property crime index | On a scale of 1 (lowest) to 100 (highest). This composes of theft. The US average is 35.|
+| Median age | |
+| % with at least bachelors | Percent of residents over the age of 25 with a bachelors degree. Includes those who have a graduate degree. |
+| Median income
 
 
 | Comparison operator | Meaning |
