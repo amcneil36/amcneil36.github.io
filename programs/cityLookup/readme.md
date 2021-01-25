@@ -12,6 +12,12 @@ You can scroll to the right to see for of the columns
 This tool does let you enter in a city if you are only interested in seeing results for that city but that's not really the way that this tool is intended to be used since there are many websites already out there that work that way.
 ![image info](./images/screenie3.png)
 
+### Sorting results
+Clicking on a column's header will sort the results in decending order:
+![image info](./images/screenie4.png)
+Clickong on that column's header again will sort the results in ascending order:
+![image info](./images/screenie5.png)
+
 ### Field name descriptions
 
 | Field name | description (if necessary) |
