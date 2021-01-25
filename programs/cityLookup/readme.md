@@ -1,6 +1,6 @@
 
 ## City lookup
-This tool is used to find which cities you might be interested in moving to.
+This tool is used to find which cities you might be interested in moving to. It is also useful or people just looking to learn more about different cities for scientific purposes.
 
 Instead of entering in a city you are interested in and then finding out weather/demographics information for that city, you enter in weather/demographics information that you are interested in and then this tool will generate a list of all cities/towns/CDPs in the USA that satisfy that criteria.
 
