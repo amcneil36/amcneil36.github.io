@@ -13,9 +13,9 @@ This tool does let you enter in a city if you are only interested in seeing resu
 ![image info](./images/screenie3.png)
 
 ### Sorting results
-Clicking on a column's header will sort the results in decending order:  
+Clicking on a column's header will sort the results in ascending order:  
 ![image info](./images/screenie4.png)
-Clickong on that column's header again will sort the results in ascending order:  
+Clickong on that column's header again will sort the results in descending order:  
 ![image info](./images/screenie5.png)
 
 ### Field name descriptions
