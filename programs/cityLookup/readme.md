@@ -14,7 +14,7 @@ This tool does let you enter in a city if you are only interested in seeing resu
 
 ### Sorting results
 Clicking on a column's header will sort the results in ascending order:  
-![image info](./images/screenie4.png)
+![image info](./images/screenie4.png)  
 Clicking on that column's header again will sort the results in descending order:    
 ![image info](./images/screenie5.png)
 
