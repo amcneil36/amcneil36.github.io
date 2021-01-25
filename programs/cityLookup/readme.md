@@ -1,5 +1,5 @@
 
-### City lookup
+## City lookup
 This tool is used to find which cities you might be interested in moving to.
 
 Instead of entering in a city you are interested in and then finding out weather/demographics information for that city, you enter in weather/demographics information that you are interested in and then this tool will generate a list of all cities/towns/CDPs in the USA that satisfy that criteria.
@@ -12,7 +12,7 @@ You can scroll to the right to see for of the columns
 This tool does let you enter in a city if you are only interested in seeing results for that city but that's not really the way that this tool is intended to be used since there are many websites already out there that work that way.
 ![image info](./images/screenie3.png)
 
-#### Field name descriptions
+### Field name descriptions
 
 | Field name | description (if necessary) |
 | ----------- | ----------- |
@@ -55,7 +55,7 @@ This tool does let you enter in a city if you are only interested in seeing resu
 | % White | The percent of residents who identified as white only. This includes hispanic and non-hispanic white residents. |
 | % Hispanic | The percent of residents who identified as hispanic. This includes hispanic residents of any race. |
 
-#### Comparison operator
+### Comparison operator
 | Comparison operator | Meaning |
 | ----------- | ----------- |
 | >      | Greater than       |
