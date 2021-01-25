@@ -2,8 +2,6 @@ var idx = 0;
 addRow();
 initializeFirstRow();
 
-var searchResultLimit = 1000;
-
 var BORDER = '1px solid black';
 
 function initializeFirstRow(){
@@ -149,6 +147,12 @@ function removeElement(index){
 }
 
 function main(){
+   var maxNumResults = document.getElementById("maxNumResults").value;
+   if (isNaN(maxNumResults)){
+	   alert("Search result limit must be a number.");
+	   return;
+   }
+   maxNumResults = parseFloat(maxNumResults);
 	  document.getElementById("numResults").innerHTML = "";
   let body = document.getElementsByTagName('body')[0];
   var element = document.getElementById('table');
@@ -168,9 +172,9 @@ function main(){
 
   let tbdy = document.createElement('tbody');
   let tr = document.createElement('tr');
-  var numRows = createRows(tbdy);
-  if (numRows > searchResultLimit){
-   document.getElementById("numResults").innerHTML = "<center>Too many search results. Enter a more specific query. There must be " + searchResultLimit + " search results or less.<center>";
+  var numRows = createRows(tbdy, maxNumResults);
+  if (numRows > maxNumResults){
+   document.getElementById("numResults").innerHTML = "<center>Exceeded the search result limit. Enter a more specific query or increase the search result limit.<br><b>Note:</b> increasing the search result limit may make it take longer for the results to be retrieved and displayed.<center>";
    return;
   }
   if (numRows == 0){
@@ -199,12 +203,12 @@ function createColumn(tr, val){
       tr.appendChild(td);	
 }
 
-function createRows(tbdy){
+function createRows(tbdy, maxNumResults){
 	var i = 0;
     arr.forEach((obj) => {
 		if (doesObjQualify(obj)){
 			i++;
-			if (i > searchResultLimit){
+			if (i > maxNumResults){
 				return i;
 			}
 	  let tr = document.createElement('tr');
