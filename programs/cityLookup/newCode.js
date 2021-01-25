@@ -83,7 +83,7 @@ function createMap(obj){
 }
 
 function createRow(tr, obj){
-  createColumn(tr, obj.cityName);
+  createColumn1(tr, obj.cityName);
   createColumn(tr, obj.stateName);
   createColumn(tr, obj.countyName);
   createColumn(tr, numberWithCommas(obj.population));
