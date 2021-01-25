@@ -160,7 +160,7 @@ function main(){
     element.parentNode.removeChild(element);	
   }
   let tbl = document.createElement('table');
-      tbl.className = "sortable";
+      tbl.className = "table-container";
   tbl.setAttribute("id", 'table');
   let thead = document.createElement('thead');
   let thr = document.createElement('tr');
@@ -213,9 +213,9 @@ function createRows(tbdy, maxNumResults){
 			}
 	  let tr = document.createElement('tr');
       createRow(tr, obj);
-	  if (i%2==0){
-		  tr.style.backgroundColor = "#f2f2f2";
-	  }
+	//  if (i%2==0){ tried making every other row a color but it interferred with the css
+		//  tr.style.backgroundColor = "#f2f2f2";
+	//  }
 	  tbdy.appendChild(tr);   	
 		}
     });
