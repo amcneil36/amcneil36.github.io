@@ -34,6 +34,48 @@ Yearly apartment appreciation: <input type="text" name="yearlyApartmentAppreciat
 </form>
 <script type="text/javascript">
 
+var BORDER = '1px solid black';
+
+function createColumnHeader(thr, fieldTitle){
+    let th = document.createElement('th');
+	th.style.border = BORDER;
+    th.appendChild(document.createTextNode(fieldTitle));
+    thr.appendChild(th);	
+}
+
+function createColumn(tr, val){
+	      var td = document.createElement('td');
+      td.appendChild(document.createTextNode(val));
+	  td.style.border = BORDER;
+      tr.appendChild(td);	
+}
+
+function createRow(tr, buyNetworth, rentNetWorth, i){
+  createColumn(tr, i+1);
+  createColumn(tr, formatter.format(buyNetworth[i]));
+  if (i == 0){
+     createColumn(tr, "N/A");
+  }
+  else{
+    createColumn(tr, formatter.format(buyNetworth[i]-buyNetworth[i-1]));
+  }
+  createColumn(tr, formatter.format(rentNetWorth[i]));
+  if (i == 0){
+     createColumn(tr, "N/A");
+  }
+  else{
+    createColumn(tr, formatter.format(rentNetWorth[i]-rentNetWorth[i-1]));
+  }
+}
+
+function createRows(tbdy, buyNetworth, rentNetWorth){
+ for (var i = 0; i < buyNetworth.length; i++){
+   	  let tr = document.createElement('tr');
+	  createRow(tr, buyNetworth, rentNetWorth, i);
+	  tbdy.appendChild(tr); 
+ }
+}
+
 function convertInputToFloat(st){
  var st2 = st.replace(/,/g, '');
  if (isNaN(st2)){
@@ -100,10 +142,10 @@ function main(){
    var totalMoneyFromInvestmentsRenter = 0;
    var totalMoneyFromInvestmentsBuyer = 0;
    var totalMoneyInInvestmentsFromInvestingDownPayment = calculateCompoundInterest(downPayment, annualReturn, durationOfMortgageInYears); 
-   totalMoneyFromInvestmentsRenter += totalMoneyInInvestmentsFromInvestingDownPayment;
+   totalMoneyFromInvestmentsRenter += downPayment;
    totalMoneySpentOnInvestmentsRenter += downPayment;
    var totalMoneyInInvestmentsFromInvestingClosingClost = calculateCompoundInterest(closingCostPercent*salePrice, annualReturn, durationOfMortgageInYears);
-   totalMoneyFromInvestmentsRenter += totalMoneyInInvestmentsFromInvestingClosingClost;
+   totalMoneyFromInvestmentsRenter += closingCostPercent*salePrice;
    totalMoneySpentOnInvestmentsRenter += closingCostPercent*salePrice;
    var totalMonthlyCostForBuyer = 0;
    var totalMonthlyCostForRenter = 0;
@@ -123,27 +165,34 @@ function main(){
    var totalSpentOnMaintenance = 0;
    var totalMoneyInInvestmentsFromMonthlyInvestmentsRenter = 0;
    var monthlyPropertyTaxCost = valueOfHouse*propertyTax/12;
+var buyNetworth = [];
+   var rentNetWorth = [];
+   var totalMoneyInInvestmentsFromMonthlyInvestmentsRenter= 0;
+ 
    for (var yearsRemaining = durationOfMortgageInYears-1; yearsRemaining >= 0; yearsRemaining--){
     totalMonthlyCostForBuyer = monthlyMortgageCost + monthlyPMICost + monthlyPropertyTaxCost + monthlyHoaFees + monthlyHomeownersInsurance + yearlyMaintenanceCost/12;
 	totalMonthlyCostForRenter = monthlyRentCost + monthlyRentersInsuranceCost;
     for (var monthsRemainingInYear = 11; monthsRemainingInYear >= 0; monthsRemainingInYear--){
+	  totalMoneyFromInvestmentsRenter = calculateCompoundInterest(totalMoneyFromInvestmentsRenter, annualReturn, 1/12);
+	  totalMoneyFromInvestmentsBuyer = calculateCompoundInterest(totalMoneyFromInvestmentsBuyer, annualReturn, 1/12);
 	  if (totalMonthlyCostForBuyer > totalMonthlyCostForRenter){
-	    totalMoneyInInvestmentsFromMonthlyInvestmentsRenter += calculateCompoundInterest(totalMonthlyCostForBuyer-totalMonthlyCostForRenter, annualReturn, yearsRemaining + monthsRemainingInYear/12);
-	    totalMoneyFromInvestmentsRenter += calculateCompoundInterest(totalMonthlyCostForBuyer-totalMonthlyCostForRenter, annualReturn, yearsRemaining + monthsRemainingInYear/12);
+	    totalMoneyFromInvestmentsRenter += totalMonthlyCostForBuyer-totalMonthlyCostForRenter;
+        totalMoneyInInvestmentsFromMonthlyInvestmentsRenter += calculateCompoundInterest(totalMonthlyCostForBuyer-totalMonthlyCostForRenter, annualReturn, yearsRemaining + monthsRemainingInYear/12);
 		totalMoneySpentOnInvestmentsRenter += totalMonthlyCostForBuyer-totalMonthlyCostForRenter;
 	  }
 	  else{
-	    totalMoneyFromInvestmentsBuyer += calculateCompoundInterest(totalMonthlyCostForRenter-totalMonthlyCostForBuyer, annualReturn, yearsRemaining + monthsRemainingInYear/12);
+	    totalMoneyFromInvestmentsBuyer += totalMonthlyCostForRenter-totalMonthlyCostForBuyer;
 		totalMoneySpentOnInvestmentsBuyer += totalMonthlyCostForRenter-totalMonthlyCostForBuyer;
 	  }
 	  amountOfLoanPaidBackForPMITracking += nonInterestPerMonth;
 	  totalCostForRenter += totalMonthlyCostForRenter;
 	  totalSpentOnPMI += monthlyPMICost;
-	  totalSpentOnPropertyTax += monthlyPropertyTaxCost;
+      totalSpentOnPropertyTax += monthlyPropertyTaxCost;
 	  totalSpentOnHoaFees += monthlyHoaFees;
 	  totalSpentOnHomeownersInsurance += monthlyHomeownersInsurance;
 	  totalSpentOnMaintenance += yearlyMaintenanceCost/12;
-      if ((downPayment+amountOfLoanPaidBackForPMITracking)/salePrice >= 0.2){
+      if (monthlyPMICost != 0 && (downPayment+amountOfLoanPaidBackForPMITracking)/salePrice >= 0.2){
+	      totalMonthlyCostForBuyer -= monthlyPMICost;
 		   monthlyPMICost = 0;
       }
 	}
@@ -154,8 +203,11 @@ function main(){
 	monthlyHomeownersInsurance += monthlyHomeownersInsurance*annualInflation;
 	yearlyMaintenanceCost = yearlyMaintenanceCost + yearlyMaintenanceCost*annualInflation;
 	monthlyPropertyTaxCost = monthlyPropertyTaxCost*(1+propertyTaxIncrease);
+    buyNetworth.push(valueOfHouse+totalMoneyFromInvestmentsBuyer - (salePrice - amountOfLoanPaidBackForPMITracking) + downPayment);
+	rentNetWorth.push(totalMoneyFromInvestmentsRenter);
    }
-
+   var buyersCostNextYear = (monthlyPropertyTaxCost  + monthlyHoaFees + monthlyHomeownersInsurance)*12 + yearlyMaintenanceCost;
+   var rentersCostNextYear = (monthlyRentCost + monthlyRentersInsuranceCost)*12;
   var outputString = "<h3>Results</h3>";
   outputString += "Summary of the buyer after " + durationOfMortgageInYears + " years:<br>";
   outputString += "<ul><li>Total money in investments: " + formatter.format(totalMoneyFromInvestmentsBuyer) + "</li><ul><li>" + formatter.format(totalMoneyFromInvestmentsBuyer) + " from investing the difference in fees each month</li></ul>";
@@ -172,7 +224,7 @@ function main(){
   outputString += "<li>" + formatter.format(totalSpentOnMaintenance) + " spent on maintenance</li>";    
   outputString += "</ul><li>Total money spent on investments: " + formatter.format(totalMoneySpentOnInvestmentsBuyer) + "</li><ul><li>" + formatter.format(totalMoneySpentOnInvestmentsBuyer) + " from investing the difference in fees each month</li></ul>";
   outputString += "<li>Total money spent (fees + investments): " + formatter.format(totalMoneySpentOnInvestmentsBuyer + totalCostForBuyer) + "</li>";
-  outputString += "<li>Buyer's total cost for next year: " + formatter.format((monthlyPropertyTaxCost + monthlyHoaFees + monthlyHomeownersInsurance)*12 + yearlyMaintenanceCost) + "</li></ul>";
+  outputString += "<li>Buyer's total cost for next year: " + formatter.format(buyersCostNextYear) + "</li></ul>";
   
   
   outputString += "Summary of the renter after " + durationOfMortgageInYears + " years:<br>";  
@@ -188,9 +240,59 @@ function main(){
   outputString += "<li>" + formatter.format(totalMoneySpentOnInvestmentsRenter-downPayment - closingCostPercent*salePrice) + " from investing the difference in monthly payment costs</li>";
   outputString += "</ul>";
   outputString += "<li>Total money spent (fees + investments): " + formatter.format(totalMoneySpentOnInvestmentsRenter + totalCostForRenter) + "</li>";
-  outputString += "<li>Renter's total cost for next year: " + formatter.format((monthlyRentCost + monthlyRentersInsuranceCost)*12) + "</li></ul>";
+  outputString += "<li>Renter's total cost for next year: " + formatter.format(rentersCostNextYear) + "</li></ul>";
    
   document.getElementById("outputText").innerHTML  = outputString;
+  
+  ////////////////////////////////////////////////////////////////////////////////////
+     for (var yearsRemaining = durationOfMortgageInYears-1; yearsRemaining >= 0; yearsRemaining--){
+    totalMonthlyCostForBuyer = monthlyPropertyTaxCost + monthlyHoaFees + monthlyHomeownersInsurance + yearlyMaintenanceCost/12;
+	totalMonthlyCostForRenter = monthlyRentCost + monthlyRentersInsuranceCost;
+    for (var monthsRemainingInYear = 11; monthsRemainingInYear >= 0; monthsRemainingInYear--){
+	  totalMoneyFromInvestmentsRenter = calculateCompoundInterest(totalMoneyFromInvestmentsRenter, annualReturn, 1/12);
+	  totalMoneyFromInvestmentsBuyer = calculateCompoundInterest(totalMoneyFromInvestmentsBuyer, annualReturn, 1/12);
+	  if (totalMonthlyCostForBuyer > totalMonthlyCostForRenter){
+	    totalMoneyFromInvestmentsRenter += totalMonthlyCostForBuyer-totalMonthlyCostForRenter;
+	  }
+	  else{
+	    totalMoneyFromInvestmentsBuyer += totalMonthlyCostForRenter-totalMonthlyCostForBuyer;
+	  }
+	}
+	monthlyRentCost = monthlyRentCost + monthlyRentCost*yearlyApartmentAppreciation;
+    monthlyRentersInsuranceCost = monthlyRentersInsuranceCost + monthlyRentersInsuranceCost*annualInflation;	
+	valueOfHouse = valueOfHouse + valueOfHouse*annualHomeAppreciation;
+	monthlyHoaFees += monthlyHoaFees*annualInflation;
+	monthlyHomeownersInsurance += monthlyHomeownersInsurance*annualInflation;
+	yearlyMaintenanceCost = yearlyMaintenanceCost + yearlyMaintenanceCost*annualInflation;
+	monthlyPropertyTaxCost = monthlyPropertyTaxCost*(1+propertyTaxIncrease);
+    buyNetworth.push(valueOfHouse+totalMoneyFromInvestmentsBuyer);
+	rentNetWorth.push(totalMoneyFromInvestmentsRenter);
+   }
+   /////////////////////////////////////////////////////////////////////////////////////
+  
+  let body = document.getElementsByTagName('body')[0];
+  var element = document.getElementById('table');
+  if (element != null){
+    element.parentNode.removeChild(element);	
+  }
+  let tbl = document.createElement('table');
+  tbl.setAttribute("id", 'table');
+  tbl.style.cssFloat = "left";
+  let thead = document.createElement('thead');
+  let thr = document.createElement('tr');
+  var arrayOfFields = ["Year", "Buy net worth", "Increase", "Rent net worth", "Increase"];
+  for (var i = 0; i < arrayOfFields.length; i++){
+	  createColumnHeader(thr, arrayOfFields[i]);
+  }
+
+  thead.appendChild(thr);
+  tbl.appendChild(thead);
+
+  let tbdy = document.createElement('tbody');
+  let tr = document.createElement('tr');
+  createRows(tbdy, buyNetworth, rentNetWorth);
+  tbl.appendChild(tbdy);
+  body.appendChild(tbl);
 }
 </script>
 
