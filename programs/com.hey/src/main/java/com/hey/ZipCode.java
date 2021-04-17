@@ -77,28 +77,39 @@ public class ZipCode {
 			}
 		}
 		data = null;
-		List<DataObject2> list = retrieveAllData(stateName, data2);
-		writeOutput(list);
+		System.out.println("num zip codes in " + stateName + ": " + data2.size());
+		List<DataObject2> obj = retrieveOutputAsync(stateName, data2, 2, 0);
+		List<DataObject2> obj2 = retrieveOutputAsync(stateName, data2, 2, 1);
+		//writeOutput(list);
 
 	}
 
-	private static List<DataObject2> retrieveAllData(String stateName, List<String> data2) {
+	private static List<DataObject2> retrieveOutputAsync(String stateName, List<String> data2, int divisor, int remainder) {
+		RunnableDemo rd = new RunnableDemo(stateName, data2, divisor, remainder);
+		rd.start();
+		return rd.getOutput();
+	}
+
+	private static List<DataObject2> retrieveAllData(String stateName, List<String> data2, int divisor, int remainder) {
 		List<DataObject2> list = new ArrayList<DataObject2>();
-		int numCompletedZipCodes = 0;
-		int numZipCodes = data2.size();
-		System.out.println("num zip codes in " + stateName + ": " + numZipCodes);
+		float numCompletedZipCodes = 0;
+		float numZipCodes = data2.size();
 		long startTime = System.currentTimeMillis();
 		for (String st : data2) {
-			if (numCompletedZipCodes > 5) {
+			if (numCompletedZipCodes%divisor != remainder) {
+				numCompletedZipCodes++;
+				continue;
+			}
+			if (numCompletedZipCodes > 50) {
 				break;
 			}
 			DataObject2 obj = populateDataObject(stateName, st);
 			list.add(obj);
 			numCompletedZipCodes++;
 			long secondsSinceStart = (System.currentTimeMillis() - startTime) / 1000;
-			int numRemainingZipCodes = numZipCodes - numCompletedZipCodes;
-			long minRemaining = (numRemainingZipCodes * secondsSinceStart / numCompletedZipCodes) / 60;
-			System.out.println("completed zip code " + obj.zipCode + ". " + numCompletedZipCodes + " of " + numZipCodes
+			float numRemainingZipCodes = (numZipCodes - numCompletedZipCodes)/divisor;
+			float minRemaining = (numRemainingZipCodes * secondsSinceStart / (numCompletedZipCodes/divisor)) / 60;
+			System.out.println("thread id: " + Thread.currentThread().getId() + ". completed zip code " + obj.zipCode + ". " + (int)numCompletedZipCodes + " of " + (int)(numZipCodes/divisor)
 					+ " zip codes have been completed for " + stateName + ". Time remaining: "
 					+ SperlingReader.minToString((int) minRemaining));
 
@@ -246,4 +257,40 @@ public class ZipCode {
 			obj.propertyCrime = propertyCrime;
 		}
 	}
+	static class RunnableDemo implements Runnable {
+		private Thread t;
+		private String stateName;
+		private List<String> data2;
+		private int divisor;
+		private int remainder;
+		private List<DataObject2> output = new ArrayList<DataObject2>();
+
+		RunnableDemo(String stateName, List<String> data2, int divisor, int remainder) {
+			this.stateName = stateName;
+			this.data2 = data2;
+			this.divisor = divisor;
+			this.remainder = remainder;
+		}
+
+		public void run() {
+			try {
+				output = ZipCode.retrieveAllData(stateName, data2, divisor, remainder);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		public void start() {
+			if (t == null) {
+				t = new Thread(this);
+				t.start();
+			}
+		}
+		
+		public List<DataObject2> getOutput(){
+			return output;
+		}
+	}
 }
+
