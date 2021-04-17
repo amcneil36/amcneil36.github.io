@@ -78,13 +78,22 @@ public class ZipCode {
 		}
 		data = null;
 		System.out.println("num zip codes in " + stateName + ": " + data2.size());
-		RunnableDemo rd1 = retrieveOutputAsync(stateName, data2, 2, 0);
-		RunnableDemo rd2 = retrieveOutputAsync(stateName, data2, 2, 1);
-		System.out.println("hi");
-		rd1.t.join();
-		rd2.t.join();
-		System.out.println("hey");
-		//writeOutput(list);
+		int numThreads = 30;
+		List<RunnableDemo> demos = new ArrayList<RunnableDemo>();
+		List<DataObject2> list = new ArrayList<DataObject2>();
+		for (int i = 0; i < numThreads; i++) {
+			demos.add(retrieveOutputAsync(stateName, data2, numThreads, i));
+		}
+		for (RunnableDemo demo : demos) {
+			demo.t.join();
+		}
+		for (RunnableDemo demo : demos) {
+			List<DataObject2> objs = demo.getOutput();
+			for (DataObject2 obj : objs) {
+				list.add(obj);
+			}
+		}
+		writeOutput(list);
 
 	}
 
@@ -97,23 +106,25 @@ public class ZipCode {
 	private static List<DataObject2> retrieveAllData(String stateName, List<String> data2, int divisor, int remainder) {
 		List<DataObject2> list = new ArrayList<DataObject2>();
 		float numCompletedZipCodes = 0;
-		float numZipCodes = data2.size();
+		float numZipCodes = data2.size()/divisor;
 		long startTime = System.currentTimeMillis();
+		int idx = 0;
 		for (String st : data2) {
-			if (numCompletedZipCodes%divisor != remainder) {
-				numCompletedZipCodes++;
+			if (idx%divisor != remainder) {
+				idx++;
 				continue;
 			}
-			if (numCompletedZipCodes > 50) {
+			if (numCompletedZipCodes > 2) {
 				break;
 			}
 			DataObject2 obj = populateDataObject(stateName, st);
 			list.add(obj);
 			numCompletedZipCodes++;
+			idx++;
 			long secondsSinceStart = (System.currentTimeMillis() - startTime) / 1000;
-			float numRemainingZipCodes = (numZipCodes - numCompletedZipCodes)/divisor;
-			float minRemaining = (numRemainingZipCodes * secondsSinceStart / (numCompletedZipCodes/divisor)) / 60;
-			System.out.println("thread id: " + Thread.currentThread().getId() + ". completed zip code " + obj.zipCode + ". " + (int)numCompletedZipCodes + " of " + (int)(numZipCodes/divisor)
+			float numRemainingZipCodes = (numZipCodes - numCompletedZipCodes);
+			float minRemaining = (numRemainingZipCodes * secondsSinceStart / (numCompletedZipCodes)) / 60;
+			System.out.println("thread id: " + Thread.currentThread().getId() + ". completed zip code " + obj.zipCode + ". " + (int)numCompletedZipCodes + " of " + (int)(numZipCodes)
 					+ " zip codes have been completed for " + stateName + ". Time remaining: "
 					+ SperlingReader.minToString((int) minRemaining));
 
