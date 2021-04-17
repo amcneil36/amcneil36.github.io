@@ -64,7 +64,7 @@ public class ZipCode {
 	// keytool -import -alias example4 -keystore "C:\Program Files
 	// (x86)\Java\jre1.8.0_281\lib\security\cacerts" -file myCer3.cer
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 		String stateName = "georgia";
 		String stateAbbreviation = "ga";
 		Element el = SperlingReader
@@ -78,16 +78,20 @@ public class ZipCode {
 		}
 		data = null;
 		System.out.println("num zip codes in " + stateName + ": " + data2.size());
-		List<DataObject2> obj = retrieveOutputAsync(stateName, data2, 2, 0);
-		List<DataObject2> obj2 = retrieveOutputAsync(stateName, data2, 2, 1);
+		RunnableDemo rd1 = retrieveOutputAsync(stateName, data2, 2, 0);
+		RunnableDemo rd2 = retrieveOutputAsync(stateName, data2, 2, 1);
+		System.out.println("hi");
+		rd1.t.join();
+		rd2.t.join();
+		System.out.println("hey");
 		//writeOutput(list);
 
 	}
 
-	private static List<DataObject2> retrieveOutputAsync(String stateName, List<String> data2, int divisor, int remainder) {
+	private static RunnableDemo retrieveOutputAsync(String stateName, List<String> data2, int divisor, int remainder) {
 		RunnableDemo rd = new RunnableDemo(stateName, data2, divisor, remainder);
 		rd.start();
-		return rd.getOutput();
+		return rd;
 	}
 
 	private static List<DataObject2> retrieveAllData(String stateName, List<String> data2, int divisor, int remainder) {
