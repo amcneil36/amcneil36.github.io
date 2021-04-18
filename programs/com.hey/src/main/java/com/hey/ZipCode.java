@@ -13,7 +13,7 @@ import org.jsoup.nodes.Element;
 public class ZipCode {
 
 	// too many threads makes a crash
-	private static final int NUM_THREADS = 30;
+	private static final int NUM_THREADS = 10;
 	private static final String STATE_NAME = "hawaii";
 	private static final String STATE_ABBREVIATION = "hi";
 
@@ -112,19 +112,25 @@ public class ZipCode {
 				idx++;
 				continue;
 			}
-			DataObject2 obj = populateDataObject(stateName, st);
-			if (!"0".equals(obj.population)) {
-				list.add(obj);	
+			try {
+				numCompletedZipCodes++;
+				idx++;
+				DataObject2 obj = populateDataObject(stateName, st);
+				if (!"0".equals(obj.population)) {
+					list.add(obj);	
+				}	
+				long secondsSinceStart = (System.currentTimeMillis() - startTime) / 1000;
+				float numRemainingZipCodes = (numZipCodes - numCompletedZipCodes);
+				float minRemaining = (numRemainingZipCodes * secondsSinceStart / (numCompletedZipCodes)) / 60;
+				System.out.println("thread id: " + Thread.currentThread().getId() + ". completed zip code " + obj.zipCode
+						+ ". " + (int) numCompletedZipCodes + " of " + (int) (numZipCodes)
+						+ " zip codes have been completed for " + stateName + ". Time remaining: "
+						+ SperlingReader.minToString((int) minRemaining));
 			}
-			numCompletedZipCodes++;
-			idx++;
-			long secondsSinceStart = (System.currentTimeMillis() - startTime) / 1000;
-			float numRemainingZipCodes = (numZipCodes - numCompletedZipCodes);
-			float minRemaining = (numRemainingZipCodes * secondsSinceStart / (numCompletedZipCodes)) / 60;
-			System.out.println("thread id: " + Thread.currentThread().getId() + ". completed zip code " + obj.zipCode
-					+ ". " + (int) numCompletedZipCodes + " of " + (int) (numZipCodes)
-					+ " zip codes have been completed for " + stateName + ". Time remaining: "
-					+ SperlingReader.minToString((int) minRemaining));
+			catch (Exception ex) {
+				System.out.println("something went wrong with: " + st);
+				System.out.println(ex.getMessage());
+			}
 
 		}
 		return list;
