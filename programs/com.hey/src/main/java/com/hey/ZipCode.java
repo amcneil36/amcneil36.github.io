@@ -13,9 +13,9 @@ import org.jsoup.nodes.Element;
 public class ZipCode {
 
 	// too many threads makes a crash
-	private static final int NUM_THREADS = 10;
-	private static final String STATE_NAME = "california";
-	private static final String STATE_ABBREVIATION = "ca";
+	private static final int NUM_THREADS = 30;
+	private static final String STATE_NAME = "hawaii";
+	private static final String STATE_ABBREVIATION = "hi";
 
 	public static class DataObject2 {
 		String zipCode;
