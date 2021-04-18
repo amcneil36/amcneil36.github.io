@@ -14,8 +14,8 @@ public class ZipCode {
 
 	// too many threads makes a crash
 	private static final int NUM_THREADS = 10;
-	private static final String STATE_NAME = "florida";
-	private static final String STATE_ABBREVIATION = "fl";
+	private static final String STATE_NAME = "washington";
+	private static final String STATE_ABBREVIATION = "wa";
 
 	public static class DataObject2 {
 		String zipCode;
@@ -113,7 +113,9 @@ public class ZipCode {
 				continue;
 			}
 			DataObject2 obj = populateDataObject(stateName, st);
-			list.add(obj);
+			if (!"0".equals(obj.population)) {
+				list.add(obj);	
+			}
 			numCompletedZipCodes++;
 			idx++;
 			long secondsSinceStart = (System.currentTimeMillis() - startTime) / 1000;
