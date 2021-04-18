@@ -3,18 +3,19 @@ package com.hey;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.jsoup.nodes.Element;
 
-import com.hey.SperlingReader.DataObject;
-
 public class ZipCode {
+
+	// too many threads makes a crash
+	private static final int NUM_THREADS = 10;
+	private static final String STATE_NAME = "florida";
+	private static final String STATE_ABBREVIATION = "fl";
 
 	public static class DataObject2 {
 		String zipCode;
@@ -65,10 +66,8 @@ public class ZipCode {
 	// (x86)\Java\jre1.8.0_281\lib\security\cacerts" -file myCer3.cer
 
 	public static void main(String[] args) throws InterruptedException {
-		String stateName = "georgia";
-		String stateAbbreviation = "ga";
 		Element el = SperlingReader
-				.RetrieveHtmlcodeFromPage("https://www.bestplaces.net/find/zip.aspx?st=" + stateAbbreviation);
+				.RetrieveHtmlcodeFromPage("https://www.bestplaces.net/find/zip.aspx?st=" + STATE_ABBREVIATION);
 		String[] data = el.getElementsByAttribute("href").toString().split("\n");
 		List<String> data2 = new ArrayList<String>();
 		for (String st : data) {
@@ -77,12 +76,11 @@ public class ZipCode {
 			}
 		}
 		data = null;
-		System.out.println("num zip codes in " + stateName + ": " + data2.size());
-		int numThreads = 30;
+		System.out.println("num zip codes in " + STATE_NAME + ": " + data2.size());
 		List<RunnableDemo> demos = new ArrayList<RunnableDemo>();
 		List<DataObject2> list = new ArrayList<DataObject2>();
-		for (int i = 0; i < numThreads; i++) {
-			demos.add(retrieveOutputAsync(stateName, data2, numThreads, i));
+		for (int i = 0; i < NUM_THREADS; i++) {
+			demos.add(retrieveOutputAsync(STATE_NAME, data2, NUM_THREADS, i));
 		}
 		for (RunnableDemo demo : demos) {
 			demo.t.join();
@@ -106,16 +104,13 @@ public class ZipCode {
 	private static List<DataObject2> retrieveAllData(String stateName, List<String> data2, int divisor, int remainder) {
 		List<DataObject2> list = new ArrayList<DataObject2>();
 		float numCompletedZipCodes = 0;
-		float numZipCodes = data2.size()/divisor;
+		float numZipCodes = data2.size() / divisor;
 		long startTime = System.currentTimeMillis();
 		int idx = 0;
 		for (String st : data2) {
-			if (idx%divisor != remainder) {
+			if (idx % divisor != remainder) {
 				idx++;
 				continue;
-			}
-			if (numCompletedZipCodes > 2) {
-				break;
 			}
 			DataObject2 obj = populateDataObject(stateName, st);
 			list.add(obj);
@@ -124,7 +119,8 @@ public class ZipCode {
 			long secondsSinceStart = (System.currentTimeMillis() - startTime) / 1000;
 			float numRemainingZipCodes = (numZipCodes - numCompletedZipCodes);
 			float minRemaining = (numRemainingZipCodes * secondsSinceStart / (numCompletedZipCodes)) / 60;
-			System.out.println("thread id: " + Thread.currentThread().getId() + ". completed zip code " + obj.zipCode + ". " + (int)numCompletedZipCodes + " of " + (int)(numZipCodes)
+			System.out.println("thread id: " + Thread.currentThread().getId() + ". completed zip code " + obj.zipCode
+					+ ". " + (int) numCompletedZipCodes + " of " + (int) (numZipCodes)
 					+ " zip codes have been completed for " + stateName + ". Time remaining: "
 					+ SperlingReader.minToString((int) minRemaining));
 
@@ -206,11 +202,12 @@ public class ZipCode {
 	private static void addRowDataToStringBuilder(AndrewStringBuilder sb, DataObject2 obj) {
 		sb.appendComma(obj.zipCode).appendComma(obj.cityName).appendComma(obj.stateName).appendComma(obj.countyName)
 				.appendComma(obj.population).appendComma(obj.populationDensity).appendComma(obj.augHi)
-				.appendComma(obj.decHi).appendComma(String.valueOf(obj.augHiMinusDecHi)).appendComma(obj.numInchesOfRain)
-				.appendComma(obj.numDaysOfRain).appendComma(obj.numSunnyDays).appendComma(obj.numInchesOfSnow)
-				.appendComma(obj.violentCrime).appendComma(obj.propertyCrime).appendComma(obj.medianAge)
-				.appendComma(obj.medianIncome).appendComma(obj.medianHomePrice).appendComma(obj.percentAsian)
-				.appendComma(obj.percentBlack).appendComma(obj.percentWhite).appendNewLine(obj.percentHispanic);
+				.appendComma(obj.decHi).appendComma(String.valueOf(obj.augHiMinusDecHi))
+				.appendComma(obj.numInchesOfRain).appendComma(obj.numDaysOfRain).appendComma(obj.numSunnyDays)
+				.appendComma(obj.numInchesOfSnow).appendComma(obj.violentCrime).appendComma(obj.propertyCrime)
+				.appendComma(obj.medianAge).appendComma(obj.medianIncome).appendComma(obj.medianHomePrice)
+				.appendComma(obj.percentAsian).appendComma(obj.percentBlack).appendComma(obj.percentWhite)
+				.appendNewLine(obj.percentHispanic);
 	}
 
 	private static void addTemperatureDataToObj2(DataObject2 obj) {
@@ -272,6 +269,7 @@ public class ZipCode {
 			obj.propertyCrime = propertyCrime;
 		}
 	}
+
 	static class RunnableDemo implements Runnable {
 		private Thread t;
 		private String stateName;
@@ -302,10 +300,9 @@ public class ZipCode {
 				t.start();
 			}
 		}
-		
-		public List<DataObject2> getOutput(){
+
+		public List<DataObject2> getOutput() {
 			return output;
 		}
 	}
 }
-

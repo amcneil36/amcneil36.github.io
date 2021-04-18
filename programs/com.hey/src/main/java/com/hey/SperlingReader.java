@@ -452,7 +452,7 @@ public class SperlingReader {
 				throw new SecurityException("you are banned from the website");
 			}
 			log("jsoup couldn't connect to: " + url);
-			throw new RuntimeException();
+			throw new RuntimeException("jsoup couldn't connect to: " + url);
 		}
 
 	}
