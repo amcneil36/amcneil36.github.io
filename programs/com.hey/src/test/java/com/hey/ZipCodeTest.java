@@ -6,7 +6,7 @@ import com.hey.ZipCode.DataObject2;
 
 import org.junit.*;
 
-public class CountyCreatorTest {
+public class ZipCodeTest {
 
 	@Test
 	public void testZipWithGoodData() {

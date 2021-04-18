@@ -73,61 +73,50 @@ public class SperlingReader {
 	public static void main(String[] args) throws Exception {
 		String txt = ReadHtmlCode("https://www.bestplaces.net/education/city/california/oceanside");
 		System.out.println(txt);
-		// maybe have it write to files every so often and can also add in a startCity option for starting again after terminating
-		
-	//	SperlingReader.ProcessState("ca", "California");
-		
-/*	runThread("al", "Alabama");
-		runThread("ak", "Alaska");
-		runThread("az", "Arizona");
-		runThread("ar", "Arkansas");
-	//	runThread("ca", "California"); // overnight
-		runThread("co", "Colorado");
-		runThread("ct", "Connecticut");
-		runThread("de", "Delaware");
-		runThread("fl", "Florida"); // success
-		runThread("ga", "Georgia"); // success
-	runThread("hi", "Hawaii");
-	*///	runThread("id", "Idaho");
-	//	runThread("il", "Illinois");
-	//	runThread("in", "Indiana");
-	//	runThread("ia", "Iowa");
-	//	runThread("ks", "Kansas");
-	//	runThread("ky", "Kentucky");
-	//	runThread("la", "Louisiana");
-	//	runThread("me", "Maine");
+		// maybe have it write to files every so often and can also add in a startCity
+		// option for starting again after terminating
+
+		// SperlingReader.ProcessState("ca", "California");
+
+		/*
+		 * runThread("al", "Alabama"); runThread("ak", "Alaska"); runThread("az",
+		 * "Arizona"); runThread("ar", "Arkansas"); // runThread("ca", "California"); //
+		 * overnight runThread("co", "Colorado"); runThread("ct", "Connecticut");
+		 * runThread("de", "Delaware"); runThread("fl", "Florida"); // success
+		 * runThread("ga", "Georgia"); // success runThread("hi", "Hawaii");
+		 */// runThread("id", "Idaho");
+			// runThread("il", "Illinois");
+			// runThread("in", "Indiana");
+			// runThread("ia", "Iowa");
+			// runThread("ks", "Kansas");
+			// runThread("ky", "Kentucky");
+			// runThread("la", "Louisiana");
+			// runThread("me", "Maine");
 //		runThread("md", "Maryland");
 //	runThread("ma", "Massachusetts");
 //		runThread("mi", "Michigan");
-	//	runThread("mn", "Minnesota");
+		// runThread("mn", "Minnesota");
 //		runThread("ms", "Mississippi");
 //		runThread("mo", "Missouri");
 //		runThread("mt", "Montana");
 //		runThread("ne", "Nebraska");
 //		runThread("nv", "Nevada");
 //		runThread("nh", "New Hampshire");
-	//	runThread("nj", "New Jersey");
+		// runThread("nj", "New Jersey");
 //		runThread("nm", "New Mexico");
 //		runThread("ny", "New York");
 //		runThread("nc", "North Carolina");
 //		runThread("nd", "North Dakota");
-	//	runThread("oh", "Ohio");
-/*		runThread("ok", "Oklahoma");
-		runThread("or", "Oregon"); 
-		runThread("pa", "Pennsylvania");
-		runThread("ri", "Rhode Island");
-		runThread("sc", "South Carolina");
-		runThread("sd", "South Dakota");
-		runThread("tn", "Tennessee");
-	   // runThread("tx", "Texas"); // overnight
-		runThread("ut", "Utah");
-		runThread("vt", "Vermont");
-		runThread("va", "Virginia");
-		runThread("wa", "Washington"); 
-		runThread("wv", "West Virginia");
-		runThread("wi", "Wisconsin");
-		runThread("wy", "Wyoming");
-	*/
+		// runThread("oh", "Ohio");
+		/*
+		 * runThread("ok", "Oklahoma"); runThread("or", "Oregon"); runThread("pa",
+		 * "Pennsylvania"); runThread("ri", "Rhode Island"); runThread("sc",
+		 * "South Carolina"); runThread("sd", "South Dakota"); runThread("tn",
+		 * "Tennessee"); // runThread("tx", "Texas"); // overnight runThread("ut",
+		 * "Utah"); runThread("vt", "Vermont"); runThread("va", "Virginia");
+		 * runThread("wa", "Washington"); runThread("wv", "West Virginia");
+		 * runThread("wi", "Wisconsin"); runThread("wy", "Wyoming");
+		 */
 
 	}
 
@@ -203,7 +192,7 @@ public class SperlingReader {
 		}
 		return st2;
 	}
-	
+
 	public static String getNumbersImmediatelyBeforeText(String stringToSearch, String pattern) {
 		StringBuilder st = new StringBuilder();
 		int idx = stringToSearch.indexOf(pattern);
@@ -259,7 +248,8 @@ public class SperlingReader {
 		obj.medianHomePrice = medianHomePrice;
 		String medianAge = getNextNumberAfterText(text3, "Median Age");
 		obj.medianAge = medianAge;
-		obj.countyName = text3.substring(text3.indexOf("County: ") + "County: ".length(), text3.indexOf(" Metro Area: "));
+		obj.countyName = text3.substring(text3.indexOf("County: ") + "County: ".length(),
+				text3.indexOf(" Metro Area: "));
 	}
 
 	private static void addCrimeDataToObj(DataObject obj, String stateFullName, String mySiteName) {
@@ -326,8 +316,8 @@ public class SperlingReader {
 			}
 		}
 		String st = sb.toString();
-		if (st.charAt(st.length()-1) == '.') {
-			st = st.substring(0, st.length()-1);
+		if (st.charAt(st.length() - 1) == '.') {
+			st = st.substring(0, st.length() - 1);
 		}
 		return st;
 	}
@@ -371,24 +361,25 @@ public class SperlingReader {
 					.append(obj.airQualityIndex).append(", ").append(obj.medianHomeAge).append(", ")
 					.append(obj.homeAppreciationLastYear).append(", ").append(obj.homeAppreciationLastFiveYears)
 					.append(", ").append(obj.homeAppreciationLastTenYears).append(", ")
-					.append(obj.averageOneWayCommuteTime).append(", \"").append(obj.countyName).append("\", ").append(obj.augHiMinusDecHi).append("));\n");
+					.append(obj.averageOneWayCommuteTime).append(", \"").append(obj.countyName).append("\", ")
+					.append(obj.augHiMinusDecHi).append("));\n");
 			counter++;
 			if (counter % numToUpdateOn == 0) {
-				long secondsTakenForLastTen = (System.currentTimeMillis() - initTime)/1000;
+				long secondsTakenForLastTen = (System.currentTimeMillis() - initTime) / 1000;
 				int numRemainingCities = size - counter;
-				long minRemaining = secondsTakenForLastTen*numRemainingCities/(numToUpdateOn*60);
-				System.out.println(stateFullName + " time remaining: " + minToString((int)minRemaining));
+				long minRemaining = secondsTakenForLastTen * numRemainingCities / (numToUpdateOn * 60);
+				System.out.println(stateFullName + " time remaining: " + minToString((int) minRemaining));
 				initTime = System.currentTimeMillis();
 			}
 		}
 		return sb.toString();
 
 	}
-	
+
 	public static String minToString(int minRemaining) {
 		String st = "";
-		int hrRemaining = (int)Math.floor(minRemaining/60);
-		minRemaining = minRemaining%60;
+		int hrRemaining = (int) Math.floor(minRemaining / 60);
+		minRemaining = minRemaining % 60;
 		if (hrRemaining > 0) {
 			st += hrRemaining + "hr ";
 		}
@@ -413,18 +404,20 @@ public class SperlingReader {
 	}
 
 	public static String ReadTextFromPage(String url) {
-	//	System.out.println(url);
+		// System.out.println(url);
 		return JsoupStuff(url);
 	}
-	
+
 	public static Element RetrieveHtmlcodeFromPage(String url) {
 		Connection conn = Jsoup.connect(url);
 		try {
-			Document doc = conn.userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36").referrer("http://www.google.com").get();
+			Document doc = conn.userAgent(
+					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36")
+					.referrer("http://www.google.com").get();
 			Element body = doc.body();
 			return body;
 		} catch (IOException ex) {
-		//	System.out.println("oh no!");
+			// System.out.println("oh no!");
 			ex.printStackTrace();
 			String stacktrace = ExceptionUtils.getStackTrace(ex);
 			if (stacktrace.contains("Status=403")) {
@@ -436,24 +429,29 @@ public class SperlingReader {
 	}
 
 	private static String JsoupStuff(String url) {
-		Connection conn = Jsoup.connect(url);
-		try {
-			Document doc = conn.get();
-			String text = doc.body().text();
-			if (text.contains("Oops. This is embarrassing.")) {
-				log("jsoup connected to this page but it said oops this is embarassing: " + url);
-				throw new RuntimeException();
+		for (int i = 0; i < 10; i++) {
+			Connection conn = Jsoup.connect(url);
+			try {
+				Document doc = conn.get();
+				String text = doc.body().text();
+				if (text.contains("Oops. This is embarrassing.")) {
+					log("jsoup connected to this page but it said oops this is embarassing: " + url);
+					throw new RuntimeException();
+				}
+				return text;
+			} catch (IOException ex) {
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if (i == 9) {
+					throw new RuntimeException("jsoup couldn't connect to: " + url, ex);
+				}
 			}
-			return text;
-		} catch (IOException ex) {
-		//	ex.printStackTrace();
-			String stacktrace = ExceptionUtils.getStackTrace(ex);
-			if (stacktrace.contains("Status=403")) {
-				throw new SecurityException("you are banned from the website");
-			}
-			log("jsoup couldn't connect to: " + url);
-			throw new RuntimeException("jsoup couldn't connect to: " + url);
 		}
+		throw new RuntimeException("jsoup couldn't connect to: " + url);
 
 	}
 
