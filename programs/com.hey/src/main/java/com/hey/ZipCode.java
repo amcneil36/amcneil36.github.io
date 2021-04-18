@@ -14,8 +14,8 @@ public class ZipCode {
 
 	// too many threads makes a crash
 	private static final int NUM_THREADS = 10;
-	private static final String STATE_NAME = "washington";
-	private static final String STATE_ABBREVIATION = "wa";
+	private static final String STATE_NAME = "texas";
+	private static final String STATE_ABBREVIATION = "tx";
 
 	public static class DataObject2 {
 		String zipCode;
