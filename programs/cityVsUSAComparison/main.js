@@ -55,6 +55,9 @@ function createRows(tbdy, cityData){
 	  let tr = document.createElement('tr');
       createRow(tr, "Population", populationAverage, populationMedian, cityData.populationMetric);
 	  tbdy.appendChild(tr);
+	  	  tr = document.createElement('tr');
+	  	  createRow(tr, "People per sq mi", populationDensityAverage, populationDensityMedian, cityData.populationDensityMetric);
+		  	  tbdy.appendChild(tr);
 }
 
 function main(){

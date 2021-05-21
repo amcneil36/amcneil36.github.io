@@ -1,6 +1,7 @@
 class CityData {
-  constructor(populationMetric) {
+  constructor(populationMetric, populationDensityMetric) {
     this.populationMetric = populationMetric;
+	this.populationDensityMetric = populationDensityMetric;
   }
 }
 	
