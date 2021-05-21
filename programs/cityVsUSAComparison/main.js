@@ -1,34 +1,7 @@
 document.getElementById("addForm").addBtn.onclick = main;
 
-var arrayOfTableHeaders = ["Metric Name", "Metric value", "USA Avg", "USA Median", "Higher than which % of cities?", "Higher than which % of people's city?"];
+var arrayOfTableHeaders = ["Metric Name", "Metric value", "USA Avg", "USA Median", "Higher than which % of other cities?", "Higher than which % of other people's city?"];
 var BORDER = '1px solid black';
-var populationAverage = 23244;
-var populationMedian = 432;
-
-class CityData {
-  constructor(populationMetric) {
-    this.populationMetric = populationMetric;
-  }
-}
-	
-
-class Metric {
-  constructor(value, cityPercentile, personPercentile) {
-    this.value = value;
-	this.cityPercentile = cityPercentile;
-	this.personPercentile = personPercentile;
-  }
-}
-
-let myMap = new Map();
-var populationMetric;
-var cityData;
-populationMetric = new Metric(800000, 54, 65);
-cityData = new CityData(populationMetric);
-myMap.set("seattle,washington", cityData);
-populationMetric = new Metric(1400000, 99, 97);
-cityData = new CityData(populationMetric);
-myMap.set("san diego,california", cityData);
 
 function tableCreate(){
     var body = document.body,
@@ -62,7 +35,7 @@ function createColumnHeader(thr, fieldTitle){
 }
 
 function createColumn(tr, val){
-	      var td = document.createElement('td');
+	  var td = document.createElement('td');
       td.appendChild(document.createTextNode(val));
 	  td.style.border = BORDER;
       tr.appendChild(td);	
