@@ -7,3 +7,5 @@ var augustHighAverage = 84;
 var augustHighMedian = 84;
 var decemberHighAverage = 42;
 var decemberHighMedian = 41;
+var augustHighMinusDecemberHighAverage = 42;
+var augustHighMinusDecemberHighMedian = 43;

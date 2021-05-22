@@ -20,6 +20,7 @@ public class CityVsUSAComparison {
 		int populationDensity;
 		int augustHigh;
 		int decemberHigh;
+		int augustHighMinusDecemberHigh;
 
 		@Override
 		public String toString() {
@@ -31,6 +32,7 @@ public class CityVsUSAComparison {
 	static Foo<Float> populationDensitySorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.populationDensity;}};	
 	static Foo<Float> augustHighSorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.augustHigh;}};	
 	static Foo<Float> decemberHighSorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.decemberHigh;}};	
+	static Foo<Float> augustHighMinusDecemberHighSorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.augustHighMinusDecemberHigh;}};	
 
 	static class AveragesAndMedians {
 		int populationAverage;
@@ -41,6 +43,8 @@ public class CityVsUSAComparison {
 		int augustHighMedian;
 		int decemberHighAverage;
 		int decemberHighMedian;
+		int augustHighMinusDecemberHighAverage;
+		int augustHighMinusDecemberHighMedian;
 	}
 
 	static class OutputData {
@@ -49,6 +53,7 @@ public class CityVsUSAComparison {
 		public Metric populationDensityMetric = new Metric();
 		public Metric augustHighMetric = new Metric();
 		public Metric decemberHighMetric = new Metric();
+		public Metric augustHighMinusDecemberHighMetric = new Metric();
 
 		@Override
 		public String toString() {
@@ -74,6 +79,7 @@ public class CityVsUSAComparison {
 				inputData.populationDensity = Integer.valueOf(arr[4]);
 				inputData.augustHigh = Integer.valueOf(arr[5]);
 				inputData.decemberHigh = Integer.valueOf(arr[6]);
+				inputData.augustHighMinusDecemberHigh = Integer.valueOf(arr[7]);
 				list.add(inputData);
 				if (idx > 10) {
 					// break;
@@ -102,6 +108,9 @@ public class CityVsUSAComparison {
 		List<Float> decemberHighs = decemberHighSorter.getGenericList(inputDataList);	
 		obj.decemberHighAverage = (int) findMean(decemberHighs);
 		obj.decemberHighMedian = (int) findMedian(decemberHighs);
+		List<Float> augHighMinusDecHighs = augustHighMinusDecemberHighSorter.getGenericList(inputDataList);	
+		obj.augustHighMinusDecemberHighAverage = (int) findMean(augHighMinusDecHighs);
+		obj.augustHighMinusDecemberHighMedian = (int) findMedian(augHighMinusDecHighs);
 		return obj;
 	}
 
@@ -116,6 +125,8 @@ public class CityVsUSAComparison {
 		sb.append(getString("augustHighMedian", averagesAndMedians.augustHighMedian));
 		sb.append(getString("decemberHighAverage", averagesAndMedians.decemberHighAverage));
 		sb.append(getString("decemberHighMedian", averagesAndMedians.decemberHighMedian));
+		sb.append(getString("augustHighMinusDecemberHighAverage", averagesAndMedians.augustHighMinusDecemberHighAverage));
+		sb.append(getString("augustHighMinusDecemberHighMedian", averagesAndMedians.augustHighMinusDecemberHighMedian));
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
 	}
 
@@ -125,6 +136,7 @@ public class CityVsUSAComparison {
 		List<Float> populationDensities = populationDensitySorter.getGenericList(inputDataList);
 		List<Float> augustHighs = augustHighSorter.getGenericList(inputDataList);	
 		List<Float> decemberHighs = decemberHighSorter.getGenericList(inputDataList);	
+		List<Float> augustHighMinusDecemberHighs = augustHighMinusDecemberHighSorter.getGenericList(inputDataList);
 		Bar<Integer> populationBar = new Bar<Integer>() { @Override Integer getData2(InputData inputData) {return inputData.population;}}; 
 		Bar<Integer> populationDensityBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.populationDensity;}}; 
 		Bar<Integer> augustHighBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.augustHigh;}}; 
@@ -149,6 +161,10 @@ public class CityVsUSAComparison {
 			outputData.decemberHighMetric.cityPercentile = getCityPercentile(inputData.decemberHigh, decemberHighs);
 		    outputData.decemberHighMetric.personPercentile = decemberHighBar.getPersonPercentile(inputData.decemberHigh, inputDataList);
 
+			outputData.augustHighMinusDecemberHighMetric.value = inputData.augustHighMinusDecemberHigh;
+			outputData.augustHighMinusDecemberHighMetric.cityPercentile = getCityPercentile(inputData.augustHighMinusDecemberHigh, decemberHighs);
+		    outputData.augustHighMinusDecemberHighMetric.personPercentile = decemberHighBar.getPersonPercentile(inputData.augustHighMinusDecemberHigh, inputDataList);
+		    
 			outputDataList.add(outputData);
 		}
 		return outputDataList;
@@ -161,6 +177,7 @@ public class CityVsUSAComparison {
 		sb.append("var populationDensityMetric;\n");
 		sb.append("var augustHighMetric;\n");
 		sb.append("var decemberHighMetric;\n");
+		sb.append("var augustHighMinusDecemberHighMetric;\n");
 		sb.append("var cityData;\n");
 		DecimalFormat df = new DecimalFormat("0.0");
 		for (OutputData outputData : outputDataList) {
@@ -168,7 +185,8 @@ public class CityVsUSAComparison {
 			appendMetric(sb, df, outputData.populationDensityMetric, "populationDensityMetric");
 			appendMetric(sb, df, outputData.augustHighMetric, "augustHighMetric");
 			appendMetric(sb, df, outputData.decemberHighMetric, "decemberHighMetric");
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric);\n").append("myMap.set(\"")
+			appendMetric(sb, df, outputData.augustHighMinusDecemberHighMetric, "augustHighMinusDecemberHighMetric");
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric);\n").append("myMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
 		}
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
