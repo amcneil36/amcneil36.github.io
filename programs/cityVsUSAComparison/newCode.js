@@ -12,8 +12,8 @@ class CityData {
 	this.averageYearlyHumidityMetric = averageYearlyHumidityMetric;
 	this.yearlyWindspeedMetric = yearlyWindspeedMetric;
 	this.violentCrimeMetric = violentCrimeMetric;
-	this.medianAgeMetric = medianAgeMetric;
 	this.propertyCrimeMetric = propertyCrimeMetric;
+	this.medianAgeMetric = medianAgeMetric;
   }
 }
 
