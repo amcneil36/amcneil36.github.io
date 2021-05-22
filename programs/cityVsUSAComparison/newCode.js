@@ -1,5 +1,5 @@
 class CityData {
-  constructor(populationMetric, populationDensityMetric, augustHighMetric, decemberHighMetric, augustHighMinusDecemberHighMetric, annualInchesOfRainMetric, daysOfRainMetric, sunnyDaysMetric, annualSnowfallMetric, averageYearlyHumidityMetric, yearlyWindspeedMetric) {
+  constructor(populationMetric, populationDensityMetric, augustHighMetric, decemberHighMetric, augustHighMinusDecemberHighMetric, annualInchesOfRainMetric, daysOfRainMetric, sunnyDaysMetric, annualSnowfallMetric, averageYearlyHumidityMetric, yearlyWindspeedMetric, violentCrimeMetric) {
     this.populationMetric = populationMetric;
 	this.populationDensityMetric = populationDensityMetric;
 	this.augustHighMetric = augustHighMetric;
@@ -11,6 +11,7 @@ class CityData {
 	this.annualSnowfallMetric = annualSnowfallMetric;
 	this.averageYearlyHumidityMetric = averageYearlyHumidityMetric;
 	this.yearlyWindspeedMetric = yearlyWindspeedMetric;
+	this.violentCrimeMetric = violentCrimeMetric;
   }
 }
 
@@ -27,5 +28,6 @@ function createRows(tbdy, cityData){
 	  insertRow(tbdy, "Annual snowfall(in)", annualSnowfallAverage, annualSnowfallMedian, cityData.annualSnowfallMetric);
 	  insertRow(tbdy, "Average yearly humidity (%)", averageYearlyHumidityAverage, averageYearlyHumidityMedian, cityData.averageYearlyHumidityMetric);
 	  insertRow(tbdy, "Average yearly windspeed (mph)", yearlyWindspeedAverage, yearlyWindspeedMedian, cityData.yearlyWindspeedMetric);
+	  insertRow(tbdy, "Violent crime index", violentCrimeAverage, violentCrimeMedian, cityData.violentCrimeMetric);
 		  
 }

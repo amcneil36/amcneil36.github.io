@@ -21,3 +21,5 @@ var averageYearlyHumidityAverage = 72;
 var averageYearlyHumidityMedian = 75;
 var yearlyWindspeedAverage = 7;
 var yearlyWindspeedMedian = 7;
+var violentCrimeAverage = 14;
+var violentCrimeMedian = 11;
