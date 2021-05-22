@@ -5,3 +5,5 @@ var populationDensityAverage = 1063;
 var populationDensityMedian = 511;
 var augustHighAverage = 84;
 var augustHighMedian = 84;
+var decemberHighAverage = 42;
+var decemberHighMedian = 41;

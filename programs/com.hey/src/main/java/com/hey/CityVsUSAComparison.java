@@ -13,9 +13,24 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
 public class CityVsUSAComparison {
 	
+	static class InputData {
+		String cityName;
+		String stateName;
+		int population;
+		int populationDensity;
+		int augustHigh;
+		int decemberHigh;
+
+		@Override
+		public String toString() {
+			return ReflectionToStringBuilder.toString(this);
+		}
+	}
+	
 	static Foo<Float> populationSorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.population;}};	
 	static Foo<Float> populationDensitySorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.populationDensity;}};	
 	static Foo<Float> augustHighSorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.augustHigh;}};	
+	static Foo<Float> decemberHighSorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.decemberHigh;}};	
 
 	static class AveragesAndMedians {
 		int populationAverage;
@@ -24,19 +39,8 @@ public class CityVsUSAComparison {
 		int populationDensityMedian;
 		int augustHighAverage;
 		int augustHighMedian;
-	}
-
-	static class InputData {
-		String cityName;
-		String stateName;
-		int population;
-		int populationDensity;
-		int augustHigh;
-
-		@Override
-		public String toString() {
-			return ReflectionToStringBuilder.toString(this);
-		}
+		int decemberHighAverage;
+		int decemberHighMedian;
 	}
 
 	static class OutputData {
@@ -44,6 +48,7 @@ public class CityVsUSAComparison {
 		public Metric populationMetric = new Metric();
 		public Metric populationDensityMetric = new Metric();
 		public Metric augustHighMetric = new Metric();
+		public Metric decemberHighMetric = new Metric();
 
 		@Override
 		public String toString() {
@@ -68,6 +73,7 @@ public class CityVsUSAComparison {
 				inputData.population = Integer.valueOf(arr[3]);
 				inputData.populationDensity = Integer.valueOf(arr[4]);
 				inputData.augustHigh = Integer.valueOf(arr[5]);
+				inputData.decemberHigh = Integer.valueOf(arr[6]);
 				list.add(inputData);
 				if (idx > 10) {
 					// break;
@@ -93,6 +99,9 @@ public class CityVsUSAComparison {
 		List<Float> augustHighs = augustHighSorter.getGenericList(inputDataList);	
 		obj.augustHighAverage = (int) findMean(augustHighs);
 		obj.augustHighMedian = (int) findMedian(augustHighs);
+		List<Float> decemberHighs = decemberHighSorter.getGenericList(inputDataList);	
+		obj.decemberHighAverage = (int) findMean(decemberHighs);
+		obj.decemberHighMedian = (int) findMedian(decemberHighs);
 		return obj;
 	}
 
@@ -105,6 +114,8 @@ public class CityVsUSAComparison {
 		sb.append(getString("populationDensityMedian", averagesAndMedians.populationDensityMedian));
 		sb.append(getString("augustHighAverage", averagesAndMedians.augustHighAverage));
 		sb.append(getString("augustHighMedian", averagesAndMedians.augustHighMedian));
+		sb.append(getString("decemberHighAverage", averagesAndMedians.decemberHighAverage));
+		sb.append(getString("decemberHighMedian", averagesAndMedians.decemberHighMedian));
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
 	}
 
@@ -113,9 +124,11 @@ public class CityVsUSAComparison {
 		List<Float> populations = populationSorter.getGenericList(inputDataList);	
 		List<Float> populationDensities = populationDensitySorter.getGenericList(inputDataList);
 		List<Float> augustHighs = augustHighSorter.getGenericList(inputDataList);	
+		List<Float> decemberHighs = decemberHighSorter.getGenericList(inputDataList);	
 		Bar<Integer> populationBar = new Bar<Integer>() { @Override Integer getData2(InputData inputData) {return inputData.population;}}; 
 		Bar<Integer> populationDensityBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.populationDensity;}}; 
 		Bar<Integer> augustHighBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.augustHigh;}}; 
+		Bar<Integer> decemberHighBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.decemberHigh;}}; 
 		for (InputData inputData : inputDataList) {
 			OutputData outputData = new OutputData();
 			outputData.key = inputData.cityName + "," + inputData.stateName;
@@ -131,6 +144,10 @@ public class CityVsUSAComparison {
 			outputData.augustHighMetric.value = inputData.augustHigh;
 			outputData.augustHighMetric.cityPercentile = getCityPercentile(inputData.augustHigh, augustHighs);
 		    outputData.augustHighMetric.personPercentile = augustHighBar.getPersonPercentile(inputData.augustHigh, inputDataList);
+		    
+			outputData.decemberHighMetric.value = inputData.decemberHigh;
+			outputData.decemberHighMetric.cityPercentile = getCityPercentile(inputData.decemberHigh, decemberHighs);
+		    outputData.decemberHighMetric.personPercentile = decemberHighBar.getPersonPercentile(inputData.decemberHigh, inputDataList);
 
 			outputDataList.add(outputData);
 		}
@@ -143,13 +160,15 @@ public class CityVsUSAComparison {
 		sb.append("var populationMetric;\n");
 		sb.append("var populationDensityMetric;\n");
 		sb.append("var augustHighMetric;\n");
+		sb.append("var decemberHighMetric;\n");
 		sb.append("var cityData;\n");
 		DecimalFormat df = new DecimalFormat("0.0");
 		for (OutputData outputData : outputDataList) {
 			appendMetric(sb, df, outputData.populationMetric, "populationMetric");
 			appendMetric(sb, df, outputData.populationDensityMetric, "populationDensityMetric");
 			appendMetric(sb, df, outputData.augustHighMetric, "augustHighMetric");
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric);\n").append("myMap.set(\"")
+			appendMetric(sb, df, outputData.decemberHighMetric, "decemberHighMetric");
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric);\n").append("myMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
 		}
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
