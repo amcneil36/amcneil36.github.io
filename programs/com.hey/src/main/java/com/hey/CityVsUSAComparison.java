@@ -30,6 +30,7 @@ public class CityVsUSAComparison {
 		int averageYearlyHumidity;
 		int yearlyWindspeed;
 		int violentCrime;
+		int medianAge;
 
 		@Override
 		public String toString() {
@@ -49,6 +50,7 @@ public class CityVsUSAComparison {
 	static Foo<Integer> averageYearlyHumidityFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.averageYearlyHumidity;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};	
 	static Foo<Integer> yearlyWindspeedFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.yearlyWindspeed;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};	
 	static Foo<Integer> violentCrimeFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.violentCrime;}};
+	static Foo<Integer> medianAgeFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.medianAge;}};	
 	
 	static class AveragesAndMedians {
 		int populationAverage;
@@ -75,6 +77,8 @@ public class CityVsUSAComparison {
 		int yearlyWindspeedMedian;
 		int violentCrimeAverage;
 		int violentCrimeMedian;
+		int medianAgeAverage;
+		int medianAgeMedian;
 	}
 
 	static class OutputData {
@@ -91,6 +95,7 @@ public class CityVsUSAComparison {
 		public Metric averageYearlyHumidityMetric = new Metric();
 		public Metric yearlyWindspeedMetric = new Metric();
 		public Metric violentCrimeMetric = new Metric();
+		public Metric medianAgeMetric = new Metric();
 
 		@Override
 		public String toString() {
@@ -124,7 +129,7 @@ public class CityVsUSAComparison {
 				inputData.averageYearlyHumidity = getValidIntegerFromPercent(arr[12]);
 				inputData.yearlyWindspeed = getValidInt(arr[13]);
 				inputData.violentCrime = Integer.valueOf(arr[14]);
-				
+				inputData.medianAge = Integer.valueOf(arr[16]);
 				list.add(inputData);
 				if (idx > 10) {
 					// break;
@@ -183,6 +188,10 @@ public class CityVsUSAComparison {
 		List<Integer> violentCrimeList = violentCrimeFoo.getGenericList(inputDataList);
 		obj.violentCrimeAverage = (int) findMean(violentCrimeList);
 		obj.violentCrimeMedian = (int) findMedian(violentCrimeList);
+		
+		List<Integer> medianAgeList = medianAgeFoo.getGenericList(inputDataList);
+		obj.medianAgeAverage = (int) findMean(medianAgeList);
+		obj.medianAgeMedian = (int) findMedian(medianAgeList);
 		return obj;
 	}
 
@@ -214,6 +223,9 @@ public class CityVsUSAComparison {
 		
 		sb.append(getString("violentCrimeAverage", averagesAndMedians.violentCrimeAverage));
 		sb.append(getString("violentCrimeMedian", averagesAndMedians.violentCrimeMedian));
+		
+		sb.append(getString("medianAgeAverage", averagesAndMedians.medianAgeAverage));
+		sb.append(getString("medianAgeMedian", averagesAndMedians.medianAgeMedian));
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
 	}
 
@@ -234,6 +246,7 @@ public class CityVsUSAComparison {
 			outputData.averageYearlyHumidityMetric = averageYearlyHumidityFoo.getMetric(inputData.averageYearlyHumidity, inputDataList);
 			outputData.yearlyWindspeedMetric = yearlyWindspeedFoo.getMetric(inputData.yearlyWindspeed, inputDataList);
 			outputData.violentCrimeMetric = violentCrimeFoo.getMetric(inputData.violentCrime, inputDataList);
+			outputData.medianAgeMetric = medianAgeFoo.getMetric(inputData.medianAge, inputDataList);
 		    
 			outputDataList.add(outputData);
 		}
@@ -256,6 +269,7 @@ public class CityVsUSAComparison {
 		sb.append("var averageYearlyHumidityMetric;\n");
 		sb.append("var yearlyWindspeedMetric;\n");
 		sb.append("var violentCrimeMetric;\n");
+		sb.append("var medianAgeMetric;\n");
 		sb.append("var cityData;\n");
 		int i = 0;
 		for (OutputData outputData : outputDataList) {
@@ -272,8 +286,9 @@ public class CityVsUSAComparison {
 			appendMetric(sb, outputData.averageYearlyHumidityMetric, "averageYearlyHumidityMetric");
 			appendMetric(sb, outputData.yearlyWindspeedMetric, "yearlyWindspeedMetric");
 			appendMetric(sb, outputData.violentCrimeMetric, "violentCrimeMetric");
+			appendMetric(sb, outputData.medianAgeMetric, "medianAgeMetric");
 			
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric);\n").append("myMap.set(\"")
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,medianAgeMetric);\n").append("myMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
 			if (i == 30003) {
 				writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
