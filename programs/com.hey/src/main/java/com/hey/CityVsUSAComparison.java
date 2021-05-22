@@ -25,6 +25,11 @@ public class CityVsUSAComparison {
 		int augustHigh;
 		int decemberHigh;
 		int augustHighMinusDecemberHigh;
+		int annualInchesOfRain;
+		int daysOfRain;
+		int sunnyDays;
+		int annualSnowfall;
+		
 
 		@Override
 		public String toString() {
@@ -37,6 +42,10 @@ public class CityVsUSAComparison {
 	static Foo<Integer> augustHighFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.augustHigh;}};	
 	static Foo<Integer> decemberHighFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.decemberHigh;}};	
 	static Foo<Integer> augustHighMinusDecemberHighFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.augustHighMinusDecemberHigh;}};	
+	static Foo<Integer> annualInchesOfRainFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.annualInchesOfRain;}};	
+	static Foo<Integer> daysOfRainFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.daysOfRain;}};	
+	static Foo<Integer> sunnyDaysFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.sunnyDays;}};	
+	static Foo<Integer> annualSnowfallFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.annualSnowfall;}};	
 
 	static class AveragesAndMedians {
 		int populationAverage;
@@ -49,6 +58,14 @@ public class CityVsUSAComparison {
 		int decemberHighMedian;
 		int augustHighMinusDecemberHighAverage;
 		int augustHighMinusDecemberHighMedian;
+		int annualInchesOfRainAverage;
+		int annualInchesOfRainMedian;
+		int daysOfRainAverage;
+		int daysOfRainMedian;
+		int sunnyDaysAverage;
+		int sunnyDaysMedian;
+		int annualSnowfallAverage;
+		int annualSnowfallMedian;
 	}
 
 	static class OutputData {
@@ -58,6 +75,10 @@ public class CityVsUSAComparison {
 		public Metric augustHighMetric = new Metric();
 		public Metric decemberHighMetric = new Metric();
 		public Metric augustHighMinusDecemberHighMetric = new Metric();
+		public Metric annualInchesOfRainMetric = new Metric();
+		public Metric daysOfRainMetric = new Metric();
+		public Metric sunnyDaysMetric = new Metric();
+		public Metric annualSnowfallMetric = new Metric();
 
 		@Override
 		public String toString() {
@@ -84,6 +105,10 @@ public class CityVsUSAComparison {
 				inputData.augustHigh = Integer.valueOf(arr[5]);
 				inputData.decemberHigh = Integer.valueOf(arr[6]);
 				inputData.augustHighMinusDecemberHigh = Integer.valueOf(arr[7]);
+				inputData.annualInchesOfRain = Integer.valueOf(arr[8]);
+				inputData.daysOfRain = Integer.valueOf(arr[9]);
+				inputData.sunnyDays = Integer.valueOf(arr[10]);
+				inputData.annualSnowfall = Integer.valueOf(arr[11]);
 				list.add(inputData);
 				if (idx > 10) {
 					// break;
@@ -115,6 +140,21 @@ public class CityVsUSAComparison {
 		List<Integer> augHighMinusDecHighs = augustHighMinusDecemberHighFoo.getGenericList(inputDataList);	
 		obj.augustHighMinusDecemberHighAverage = (int) findMean(augHighMinusDecHighs);
 		obj.augustHighMinusDecemberHighMedian = (int) findMedian(augHighMinusDecHighs);
+		List<Integer> inchesOfRainList = annualInchesOfRainFoo.getGenericList(inputDataList);
+		obj.annualInchesOfRainAverage = (int) findMean(inchesOfRainList);
+		obj.annualInchesOfRainMedian = (int) findMedian(inchesOfRainList);
+		
+		List<Integer> daysOfRainList = daysOfRainFoo.getGenericList(inputDataList);
+		obj.daysOfRainAverage = (int) findMean(daysOfRainList);
+		obj.daysOfRainMedian = (int) findMedian(daysOfRainList);
+		
+		List<Integer> sunnyDaysList = annualInchesOfRainFoo.getGenericList(inputDataList);
+		obj.sunnyDaysAverage = (int) findMean(sunnyDaysList);
+		obj.sunnyDaysMedian = (int) findMedian(sunnyDaysList);
+		
+		List<Integer> annualSnowfallList = annualInchesOfRainFoo.getGenericList(inputDataList);
+		obj.annualSnowfallAverage = (int) findMean(annualSnowfallList);
+		obj.annualSnowfallMedian = (int) findMedian(annualSnowfallList);
 		return obj;
 	}
 
@@ -131,6 +171,15 @@ public class CityVsUSAComparison {
 		sb.append(getString("decemberHighMedian", averagesAndMedians.decemberHighMedian));
 		sb.append(getString("augustHighMinusDecemberHighAverage", averagesAndMedians.augustHighMinusDecemberHighAverage));
 		sb.append(getString("augustHighMinusDecemberHighMedian", averagesAndMedians.augustHighMinusDecemberHighMedian));
+
+		sb.append(getString("annualInchesOfRainAverage", averagesAndMedians.annualInchesOfRainAverage));
+		sb.append(getString("annualInchesOfRainMedian", averagesAndMedians.annualInchesOfRainMedian));
+		sb.append(getString("daysOfRainAverage", averagesAndMedians.daysOfRainAverage));
+		sb.append(getString("daysOfRainMedian", averagesAndMedians.daysOfRainMedian));
+		sb.append(getString("sunnyDaysAverage", averagesAndMedians.sunnyDaysAverage));
+		sb.append(getString("sunnyDaysMedian", averagesAndMedians.sunnyDaysMedian));
+		sb.append(getString("annualSnowfallAverage", averagesAndMedians.annualSnowfallAverage));
+		sb.append(getString("annualSnowfallMedian", averagesAndMedians.annualSnowfallMedian));
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
 	}
 
@@ -139,16 +188,15 @@ public class CityVsUSAComparison {
 		for (InputData inputData : inputDataList) {
 			OutputData outputData = new OutputData();
 			outputData.key = inputData.cityName + "," + inputData.stateName;
-			
 			outputData.populationMetric = populationFoo.getMetric(inputData.population, inputDataList);
-			
 			outputData.populationDensityMetric = populationDensityFoo.getMetric(inputData.populationDensity, inputDataList);
-			
 			outputData.augustHighMetric = augustHighFoo.getMetric(inputData.augustHigh, inputDataList);
-		    
 			outputData.decemberHighMetric = decemberHighFoo.getMetric(inputData.decemberHigh, inputDataList);
-
 			outputData.augustHighMinusDecemberHighMetric = augustHighMinusDecemberHighFoo.getMetric(inputData.augustHighMinusDecemberHigh, inputDataList);
+			outputData.annualInchesOfRainMetric = annualInchesOfRainFoo.getMetric(inputData.annualInchesOfRain, inputDataList);
+			outputData.daysOfRainMetric = daysOfRainFoo.getMetric(inputData.daysOfRain, inputDataList);
+			outputData.sunnyDaysMetric = sunnyDaysFoo.getMetric(inputData.sunnyDays, inputDataList);
+			outputData.annualSnowfallMetric = annualSnowfallFoo.getMetric(inputData.annualSnowfall, inputDataList);
 		    
 		    // maybe have a create metric thing on the Foo class? so it's a one liner and i don't have to instantitae the map. maybe it internally has a singleton map
 		    
@@ -165,6 +213,11 @@ public class CityVsUSAComparison {
 		sb.append("var augustHighMetric;\n");
 		sb.append("var decemberHighMetric;\n");
 		sb.append("var augustHighMinusDecemberHighMetric;\n");
+		
+		sb.append("var annualInchesOfRainMetric;\n");
+		sb.append("var daysOfRainMetric;\n");
+		sb.append("var sunnyDaysMetric;\n");
+		sb.append("var annualSnowfallMetric;\n");
 		sb.append("var cityData;\n");
 		DecimalFormat df = new DecimalFormat("0.0");
 		for (OutputData outputData : outputDataList) {
@@ -173,7 +226,16 @@ public class CityVsUSAComparison {
 			appendMetric(sb, df, outputData.augustHighMetric, "augustHighMetric");
 			appendMetric(sb, df, outputData.decemberHighMetric, "decemberHighMetric");
 			appendMetric(sb, df, outputData.augustHighMinusDecemberHighMetric, "augustHighMinusDecemberHighMetric");
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric);\n").append("myMap.set(\"")
+			
+			
+			appendMetric(sb, df, outputData.annualInchesOfRainMetric, "annualInchesOfRainMetric");
+			appendMetric(sb, df, outputData.daysOfRainMetric, "daysOfRainMetric");
+			appendMetric(sb, df, outputData.sunnyDaysMetric, "sunnyDaysMetric");
+			appendMetric(sb, df, outputData.annualSnowfallMetric, "annualSnowfallMetric");
+			
+			
+			
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric);\n").append("myMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
 		}
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
@@ -234,16 +296,15 @@ public class CityVsUSAComparison {
 		Map<T, Float> mapOfValueToPersonPercentile = new HashMap<T, Float>();
 		Map<T, Float> mapOfValueToCityPercentile = new HashMap<T, Float>();
 		
-		public Metric getMetric(float value, List<InputData> inputDataList) {
+		public Metric getMetric(int value, List<InputData> inputDataList) {
 			Metric metric = new Metric();
 			metric.value = value;
 			if (mapOfValueToPersonPercentile.size() == 0) {
 				mapOfValueToPersonPercentile = createPersonPercentileMap2(inputDataList);
 				mapOfValueToCityPercentile = createCityPercentileMap2(inputDataList);
 			}
-			int v = (int) value;
-			metric.personPercentile = mapOfValueToPersonPercentile.get(v);
-			metric.cityPercentile = mapOfValueToCityPercentile.get(v);
+			metric.personPercentile = mapOfValueToPersonPercentile.get(value);
+			metric.cityPercentile = mapOfValueToCityPercentile.get(value);
 			return metric;
 		}
 
