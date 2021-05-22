@@ -258,7 +258,6 @@ public class CityVsUSAComparison {
 		sb.append("var violentCrimeMetric;\n");
 		sb.append("var cityData;\n");
 		int i = 0;
-		int k = 1;
 		for (OutputData outputData : outputDataList) {
 			i++;
 			appendMetric(sb, outputData.populationMetric, "populationMetric");
@@ -276,19 +275,14 @@ public class CityVsUSAComparison {
 			
 			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric);\n").append("myMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
-			if (i > 20003) {
-				writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map" + k + ".js", sb);
-				k++;
-				i = 0;
+			if (i == 30003) {
+				writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
 				sb = new StringBuilder();
 			}
 		}
-		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map" + k + ".js", sb);
-	//	writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
-
+		writeOutputAppend("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
 	}
 
-	// could create map of metric to percentile
 	
 	// no chages TODO
 	
@@ -449,9 +443,9 @@ public class CityVsUSAComparison {
 		}
 	}
 	
-	private static void writeOutput(String filePath, StringBuilder sb) {
+	private static void writeOutput(String filePath, StringBuilder sb, boolean append) {
 		try {
-			FileWriter myWriter = new FileWriter(filePath);
+			FileWriter myWriter = new FileWriter(filePath, append);
 			String st = sb.toString();
 			myWriter.write(st);
 			myWriter.close();
@@ -460,6 +454,15 @@ public class CityVsUSAComparison {
 			e.printStackTrace();
 		}
 
+	}
+	
+	private static void writeOutput(String filePath, StringBuilder sb) {
+		writeOutput(filePath, sb, false);
+
+	}
+	
+	private static void writeOutputAppend(String filePath, StringBuilder sb) {
+		writeOutput(filePath, sb, true);
 	}
 	
 	static class Meh<T extends Comparable<T>> implements Comparable<Meh<T>> {
