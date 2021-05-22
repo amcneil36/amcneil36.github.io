@@ -29,7 +29,7 @@ public class CityVsUSAComparison {
 		int daysOfRain;
 		int sunnyDays;
 		int annualSnowfall;
-		
+		int averageYearlyHumidity;
 
 		@Override
 		public String toString() {
@@ -46,6 +46,12 @@ public class CityVsUSAComparison {
 	static Foo<Integer> daysOfRainFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.daysOfRain;}};	
 	static Foo<Integer> sunnyDaysFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.sunnyDays;}};	
 	static Foo<Integer> annualSnowfallFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.annualSnowfall;}};	
+	static Foo<Integer> averageYearlyHumidityFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.averageYearlyHumidity;}
+
+	@Override
+	boolean isInvalidValue(Integer data) {
+		return data == -100;
+	}};	
 
 	static class AveragesAndMedians {
 		int populationAverage;
@@ -66,6 +72,8 @@ public class CityVsUSAComparison {
 		int sunnyDaysMedian;
 		int annualSnowfallAverage;
 		int annualSnowfallMedian;
+		int averageYearlyHumidityAverage;
+		int averageYearlyHumidityMedian;
 	}
 
 	static class OutputData {
@@ -79,6 +87,7 @@ public class CityVsUSAComparison {
 		public Metric daysOfRainMetric = new Metric();
 		public Metric sunnyDaysMetric = new Metric();
 		public Metric annualSnowfallMetric = new Metric();
+		public Metric averageYearlyHumidityMetric = new Metric();
 
 		@Override
 		public String toString() {
@@ -109,6 +118,7 @@ public class CityVsUSAComparison {
 				inputData.daysOfRain = Integer.valueOf(arr[9]);
 				inputData.sunnyDays = Integer.valueOf(arr[10]);
 				inputData.annualSnowfall = Integer.valueOf(arr[11]);
+				inputData.averageYearlyHumidity = getHimidity(arr[12]);
 				list.add(inputData);
 				if (idx > 10) {
 					// break;
@@ -122,7 +132,7 @@ public class CityVsUSAComparison {
 		}
 
 	}
-	
+
 	private static AveragesAndMedians getAveragesAndMedians(List<InputData> inputDataList) {
 		AveragesAndMedians obj = new AveragesAndMedians();
 		List<Integer> populations = populationFoo.getGenericList(inputDataList);	
@@ -155,6 +165,10 @@ public class CityVsUSAComparison {
 		List<Integer> annualSnowfallList = annualSnowfallFoo.getGenericList(inputDataList);
 		obj.annualSnowfallAverage = (int) findMean(annualSnowfallList);
 		obj.annualSnowfallMedian = (int) findMedian(annualSnowfallList);
+		
+		List<Integer> averageYearlyHumidityList = averageYearlyHumidityFoo.getGenericList(inputDataList);
+		obj.averageYearlyHumidityAverage = (int) findMean(averageYearlyHumidityList);
+		obj.averageYearlyHumidityMedian = (int) findMedian(averageYearlyHumidityList);
 		return obj;
 	}
 
@@ -180,6 +194,9 @@ public class CityVsUSAComparison {
 		sb.append(getString("sunnyDaysMedian", averagesAndMedians.sunnyDaysMedian));
 		sb.append(getString("annualSnowfallAverage", averagesAndMedians.annualSnowfallAverage));
 		sb.append(getString("annualSnowfallMedian", averagesAndMedians.annualSnowfallMedian));
+		
+		sb.append(getString("averageYearlyHumidityAverage", averagesAndMedians.averageYearlyHumidityAverage));
+		sb.append(getString("averageYearlyHumidityMedian", averagesAndMedians.averageYearlyHumidityMedian));
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
 	}
 
@@ -197,6 +214,7 @@ public class CityVsUSAComparison {
 			outputData.daysOfRainMetric = daysOfRainFoo.getMetric(inputData.daysOfRain, inputDataList);
 			outputData.sunnyDaysMetric = sunnyDaysFoo.getMetric(inputData.sunnyDays, inputDataList);
 			outputData.annualSnowfallMetric = annualSnowfallFoo.getMetric(inputData.annualSnowfall, inputDataList);
+			outputData.averageYearlyHumidityMetric = averageYearlyHumidityFoo.getMetric(inputData.averageYearlyHumidity, inputDataList);
 		    
 		    // maybe have a create metric thing on the Foo class? so it's a one liner and i don't have to instantitae the map. maybe it internally has a singleton map
 		    
@@ -265,6 +283,15 @@ public class CityVsUSAComparison {
 		writeOutput(outputDataList);
 
 	}
+	
+	private static int getHimidity(String string) {
+		int humidity = -100;
+		if (string.contains("%")) {
+			string = string.replace("%", "");
+			humidity = Integer.valueOf(string);
+		}
+		return humidity;
+	}
 
 	private static String getString(String varName, int varValue) {
 		return "var " + varName + " = " + varValue + ";\n";
@@ -296,6 +323,14 @@ public class CityVsUSAComparison {
 		Map<T, Float> mapOfValueToPersonPercentile = new HashMap<T, Float>();
 		Map<T, Float> mapOfValueToCityPercentile = new HashMap<T, Float>();
 		
+	//	boolean isInvalidValue(InputData inputData) {
+	//		return false;
+	//	}
+		
+		boolean isInvalidValue(T data) {
+			return false;
+		}
+		
 		public Metric getMetric(int value, List<InputData> inputDataList) {
 			Metric metric = new Metric();
 			metric.value = value;
@@ -303,8 +338,14 @@ public class CityVsUSAComparison {
 				mapOfValueToPersonPercentile = createPersonPercentileMap2(inputDataList);
 				mapOfValueToCityPercentile = createCityPercentileMap2(inputDataList);
 			}
-			metric.personPercentile = mapOfValueToPersonPercentile.get(value);
-			metric.cityPercentile = mapOfValueToCityPercentile.get(value);
+			if (mapOfValueToPersonPercentile.containsKey(value)) {
+				metric.personPercentile = mapOfValueToPersonPercentile.get(value);
+				metric.cityPercentile = mapOfValueToCityPercentile.get(value);
+			}
+			else {
+				metric.personPercentile = -1;
+				metric.cityPercentile = -1;
+			}
 			return metric;
 		}
 
@@ -313,26 +354,35 @@ public class CityVsUSAComparison {
 		List<T> getGenericList(List<InputData> inputDataList) {
 			List<T> list = new ArrayList<T>();
 			for (InputData inputData : inputDataList) {
-				list.add(getData(inputData));
+				T value = getData(inputData);
+				if (!isInvalidValue(value)) {
+					list.add(value);	
+				}
 			}
 			Collections.sort(list);
 			return list;
 		}
 		
 		private Map<T, Float> createPersonPercentileMap2(List<InputData> inputDataList){
+			// use invalid metric method
+			// could create inputDataList2 and ignore inputDataList after that.
+			// need to think
 			List<Meh<T>> values = new ArrayList<Meh<T>>();
 			Map<T, Float> map = new HashMap<T, Float>();
 			for (InputData inputData : inputDataList) {
-				Meh<T> meh = new Meh<T>();
-				meh.value = getData(inputData);
-				meh.population = inputData.population;
-				values.add(meh);
+				T value = getData(inputData);
+				if (!isInvalidValue(value)) {
+					Meh<T> meh = new Meh<T>();
+					meh.value = value;
+					meh.population = inputData.population;
+					values.add(meh);	
+				}
 			}
 			Collections.sort(values);
 			float totalPeopleWeHaveMoreThan = 0;
 			float totalPopulation = 0;
-			for (InputData inputData : inputDataList) {
-				totalPopulation += inputData.population;
+			for (Meh<T> meh : values) {
+				totalPopulation += meh.population;
 			}
 			for (int i = 0; i < values.size(); i++) {
 				T val = values.get(i).value;
@@ -349,7 +399,10 @@ public class CityVsUSAComparison {
 			List<T> values = new ArrayList<T>();
 			Map<T, Float> map = new HashMap<T, Float>();
 			for (InputData inputData : inputDataList) {
-				values.add(getData(inputData));
+				T value = getData(inputData);
+				if (!isInvalidValue(value)) {
+					values.add(getData(inputData));	
+				}
 			}
 			Collections.sort(values);
 			for (int i = 0; i < values.size(); i++) {

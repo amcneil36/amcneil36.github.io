@@ -17,3 +17,5 @@ var sunnyDaysAverage = 202;
 var sunnyDaysMedian = 201;
 var annualSnowfallAverage = 27;
 var annualSnowfallMedian = 22;
+var averageYearlyHumidityAverage = 72;
+var averageYearlyHumidityMedian = 75;
