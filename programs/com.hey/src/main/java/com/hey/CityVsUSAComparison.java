@@ -29,6 +29,7 @@ public class CityVsUSAComparison {
 		int annualSnowfall;
 		int averageYearlyHumidity;
 		int yearlyWindspeed;
+		int violentCrime;
 
 		@Override
 		public String toString() {
@@ -45,20 +46,10 @@ public class CityVsUSAComparison {
 	static Foo<Integer> daysOfRainFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.daysOfRain;}};	
 	static Foo<Integer> sunnyDaysFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.sunnyDays;}};	
 	static Foo<Integer> annualSnowfallFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.annualSnowfall;}};	
-	static Foo<Integer> averageYearlyHumidityFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.averageYearlyHumidity;}
-
-	@Override
-	boolean isInvalidValue(Integer data) {
-		return data == -100;
-	}};	
+	static Foo<Integer> averageYearlyHumidityFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.averageYearlyHumidity;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};	
+	static Foo<Integer> yearlyWindspeedFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.yearlyWindspeed;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};	
+	static Foo<Integer> violentCrimeFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.violentCrime;}};
 	
-	static Foo<Integer> yearlyWindspeedFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.yearlyWindspeed;}
-
-	@Override
-	boolean isInvalidValue(Integer data) {
-		return data == -100;
-	}};	
-
 	static class AveragesAndMedians {
 		int populationAverage;
 		int populationMedian;
@@ -82,6 +73,8 @@ public class CityVsUSAComparison {
 		int averageYearlyHumidityMedian;
 		int yearlyWindspeedAverage;
 		int yearlyWindspeedMedian;
+		int violentCrimeAverage;
+		int violentCrimeMedian;
 	}
 
 	static class OutputData {
@@ -97,6 +90,7 @@ public class CityVsUSAComparison {
 		public Metric annualSnowfallMetric = new Metric();
 		public Metric averageYearlyHumidityMetric = new Metric();
 		public Metric yearlyWindspeedMetric = new Metric();
+		public Metric violentCrimeMetric = new Metric();
 
 		@Override
 		public String toString() {
@@ -129,6 +123,8 @@ public class CityVsUSAComparison {
 				inputData.annualSnowfall = Integer.valueOf(arr[11]);
 				inputData.averageYearlyHumidity = getValidIntegerFromPercent(arr[12]);
 				inputData.yearlyWindspeed = getValidInt(arr[13]);
+				inputData.violentCrime = Integer.valueOf(arr[14]);
+				
 				list.add(inputData);
 				if (idx > 10) {
 					// break;
@@ -183,6 +179,10 @@ public class CityVsUSAComparison {
 		List<Integer> yearlyWindspeedList = yearlyWindspeedFoo.getGenericList(inputDataList);
 		obj.yearlyWindspeedAverage = (int) findMean(yearlyWindspeedList);
 		obj.yearlyWindspeedMedian = (int) findMedian(yearlyWindspeedList);
+		
+		List<Integer> violentCrimeList = violentCrimeFoo.getGenericList(inputDataList);
+		obj.violentCrimeAverage = (int) findMean(violentCrimeList);
+		obj.violentCrimeMedian = (int) findMedian(violentCrimeList);
 		return obj;
 	}
 
@@ -199,7 +199,6 @@ public class CityVsUSAComparison {
 		sb.append(getString("decemberHighMedian", averagesAndMedians.decemberHighMedian));
 		sb.append(getString("augustHighMinusDecemberHighAverage", averagesAndMedians.augustHighMinusDecemberHighAverage));
 		sb.append(getString("augustHighMinusDecemberHighMedian", averagesAndMedians.augustHighMinusDecemberHighMedian));
-
 		sb.append(getString("annualInchesOfRainAverage", averagesAndMedians.annualInchesOfRainAverage));
 		sb.append(getString("annualInchesOfRainMedian", averagesAndMedians.annualInchesOfRainMedian));
 		sb.append(getString("daysOfRainAverage", averagesAndMedians.daysOfRainAverage));
@@ -209,10 +208,12 @@ public class CityVsUSAComparison {
 		sb.append(getString("annualSnowfallAverage", averagesAndMedians.annualSnowfallAverage));
 		sb.append(getString("annualSnowfallMedian", averagesAndMedians.annualSnowfallMedian));	
 		sb.append(getString("averageYearlyHumidityAverage", averagesAndMedians.averageYearlyHumidityAverage));
-		sb.append(getString("averageYearlyHumidityMedian", averagesAndMedians.averageYearlyHumidityMedian));
-		
+		sb.append(getString("averageYearlyHumidityMedian", averagesAndMedians.averageYearlyHumidityMedian));	
 		sb.append(getString("yearlyWindspeedAverage", averagesAndMedians.yearlyWindspeedAverage));
 		sb.append(getString("yearlyWindspeedMedian", averagesAndMedians.yearlyWindspeedMedian));
+		
+		sb.append(getString("violentCrimeAverage", averagesAndMedians.violentCrimeAverage));
+		sb.append(getString("violentCrimeMedian", averagesAndMedians.violentCrimeMedian));
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
 	}
 
@@ -232,6 +233,7 @@ public class CityVsUSAComparison {
 			outputData.annualSnowfallMetric = annualSnowfallFoo.getMetric(inputData.annualSnowfall, inputDataList);
 			outputData.averageYearlyHumidityMetric = averageYearlyHumidityFoo.getMetric(inputData.averageYearlyHumidity, inputDataList);
 			outputData.yearlyWindspeedMetric = yearlyWindspeedFoo.getMetric(inputData.yearlyWindspeed, inputDataList);
+			outputData.violentCrimeMetric = violentCrimeFoo.getMetric(inputData.violentCrime, inputDataList);
 		    
 			outputDataList.add(outputData);
 		}
@@ -253,8 +255,12 @@ public class CityVsUSAComparison {
 		sb.append("var annualSnowfallMetric;\n");
 		sb.append("var averageYearlyHumidityMetric;\n");
 		sb.append("var yearlyWindspeedMetric;\n");
+		sb.append("var violentCrimeMetric;\n");
 		sb.append("var cityData;\n");
+		int i = 0;
+		int k = 1;
 		for (OutputData outputData : outputDataList) {
+			i++;
 			appendMetric(sb, outputData.populationMetric, "populationMetric");
 			appendMetric(sb, outputData.populationDensityMetric, "populationDensityMetric");
 			appendMetric(sb, outputData.augustHighMetric, "augustHighMetric");
@@ -266,13 +272,19 @@ public class CityVsUSAComparison {
 			appendMetric(sb, outputData.annualSnowfallMetric, "annualSnowfallMetric");
 			appendMetric(sb, outputData.averageYearlyHumidityMetric, "averageYearlyHumidityMetric");
 			appendMetric(sb, outputData.yearlyWindspeedMetric, "yearlyWindspeedMetric");
+			appendMetric(sb, outputData.violentCrimeMetric, "violentCrimeMetric");
 			
-			
-			
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric);\n").append("myMap.set(\"")
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric);\n").append("myMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
+			if (i > 20003) {
+				writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map" + k + ".js", sb);
+				k++;
+				i = 0;
+				sb = new StringBuilder();
+			}
 		}
-		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
+		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map" + k + ".js", sb);
+	//	writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
 
 	}
 
@@ -440,7 +452,8 @@ public class CityVsUSAComparison {
 	private static void writeOutput(String filePath, StringBuilder sb) {
 		try {
 			FileWriter myWriter = new FileWriter(filePath);
-			myWriter.write(sb.toString());
+			String st = sb.toString();
+			myWriter.write(st);
 			myWriter.close();
 			System.out.println("wrote to file " + filePath);
 		} catch (IOException e) {
