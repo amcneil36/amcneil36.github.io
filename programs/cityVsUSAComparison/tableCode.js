@@ -44,8 +44,8 @@ function createRow(tr, metricName, average, median, metric){
   createColumn(tr, metric.value);
   createColumn(tr, average);
   createColumn(tr, median);
-  createColumn(tr, metric.cityPercentile + "%");
-  createColumn(tr, metric.personPercentile + "%");
+  createColumn(tr, metric.cityPercentile);
+  createColumn(tr, metric.personPercentile);
 }
 
 function insertRow(tbdy, metricName, average, median, metric){

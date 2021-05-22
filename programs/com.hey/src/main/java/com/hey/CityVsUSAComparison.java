@@ -236,24 +236,23 @@ public class CityVsUSAComparison {
 		sb.append("var daysOfRainMetric;\n");
 		sb.append("var sunnyDaysMetric;\n");
 		sb.append("var annualSnowfallMetric;\n");
+		sb.append("var averageYearlyHumidityMetric;\n");
 		sb.append("var cityData;\n");
-		DecimalFormat df = new DecimalFormat("0.0");
 		for (OutputData outputData : outputDataList) {
-			appendMetric(sb, df, outputData.populationMetric, "populationMetric");
-			appendMetric(sb, df, outputData.populationDensityMetric, "populationDensityMetric");
-			appendMetric(sb, df, outputData.augustHighMetric, "augustHighMetric");
-			appendMetric(sb, df, outputData.decemberHighMetric, "decemberHighMetric");
-			appendMetric(sb, df, outputData.augustHighMinusDecemberHighMetric, "augustHighMinusDecemberHighMetric");
+			appendMetric(sb, outputData.populationMetric, "populationMetric");
+			appendMetric(sb, outputData.populationDensityMetric, "populationDensityMetric");
+			appendMetric(sb, outputData.augustHighMetric, "augustHighMetric");
+			appendMetric(sb, outputData.decemberHighMetric, "decemberHighMetric");
+			appendMetric(sb, outputData.augustHighMinusDecemberHighMetric, "augustHighMinusDecemberHighMetric");
+			appendMetric(sb, outputData.annualInchesOfRainMetric, "annualInchesOfRainMetric");
+			appendMetric(sb, outputData.daysOfRainMetric, "daysOfRainMetric");
+			appendMetric(sb, outputData.sunnyDaysMetric, "sunnyDaysMetric");
+			appendMetric(sb, outputData.annualSnowfallMetric, "annualSnowfallMetric");
+			appendMetric(sb, outputData.averageYearlyHumidityMetric, "averageYearlyHumidityMetric");
 			
 			
-			appendMetric(sb, df, outputData.annualInchesOfRainMetric, "annualInchesOfRainMetric");
-			appendMetric(sb, df, outputData.daysOfRainMetric, "daysOfRainMetric");
-			appendMetric(sb, df, outputData.sunnyDaysMetric, "sunnyDaysMetric");
-			appendMetric(sb, df, outputData.annualSnowfallMetric, "annualSnowfallMetric");
 			
-			
-			
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric);\n").append("myMap.set(\"")
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric);\n").append("myMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
 		}
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
@@ -263,6 +262,8 @@ public class CityVsUSAComparison {
 	// could create map of metric to percentile
 	
 	// no chages TODO
+	
+	static DecimalFormat df = new DecimalFormat("0.0");
 	
 	static class Metric {
 		float value;
@@ -322,10 +323,6 @@ public class CityVsUSAComparison {
 		
 		Map<T, Float> mapOfValueToPersonPercentile = new HashMap<T, Float>();
 		Map<T, Float> mapOfValueToCityPercentile = new HashMap<T, Float>();
-		
-	//	boolean isInvalidValue(InputData inputData) {
-	//		return false;
-	//	}
 		
 		boolean isInvalidValue(T data) {
 			return false;
@@ -437,10 +434,25 @@ public class CityVsUSAComparison {
 
 	}
 	
-	private static void appendMetric(StringBuilder sb, DecimalFormat df, Metric metric, String varName) {
-		sb.append(varName).append(" = new Metric(").append((int) metric.value).append(",")
-				.append(df.format(100 * metric.cityPercentile)).append(", ")
-				.append(df.format(100 * metric.personPercentile)).append(");\n");
+	private static void appendMetric(StringBuilder sb, Metric metric, String varName) {
+		sb.append(varName).append(" = new Metric(").append(getSafeMetricValue(metric.value)).append(",")
+				.append(getPercent(metric.cityPercentile)).append(", ")
+				.append(getPercent(metric.personPercentile)).append(");\n");
+	}
+	
+	private static String getPercent(float f) {
+		if (f < 0) {
+			String st = "\"N/A\"";
+			return st;
+		}
+		return "\"" + df.format(100 * f) + "%\"";
+	}
+	
+	private static String getSafeMetricValue (float f) {
+		if (f < -99) {
+			return "\"N/A\"";
+		}
+		return String.valueOf((int) f);
 	}
 	
 /*
