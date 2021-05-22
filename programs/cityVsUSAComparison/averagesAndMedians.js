@@ -23,5 +23,7 @@ var yearlyWindspeedAverage = 7;
 var yearlyWindspeedMedian = 7;
 var violentCrimeAverage = 14;
 var violentCrimeMedian = 11;
+var propertyCrimeAverage = 28;
+var propertyCrimeMedian = 24;
 var medianAgeAverage = 41;
 var medianAgeMedian = 41;
