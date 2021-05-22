@@ -116,9 +116,9 @@ public class CityVsUSAComparison {
 		List<Float> populations = populationSorter.getGenericList(inputDataList);	
 		obj.populationAverage = (int) findMean(populations);
 		obj.populationMedian = (int) findMedian(populations);
-		List<Float> populationsDensities = populationDensitySorter.getGenericList(inputDataList);
-		obj.populationDensityAverage = (int) findMean(populationsDensities);
-		obj.populationDensityMedian = (int) findMedian(populationsDensities);
+		List<Float> populationDensities = populationDensitySorter.getGenericList(inputDataList);
+		obj.populationDensityAverage = (int) findMean(populationDensities);
+		obj.populationDensityMedian = (int) findMedian(populationDensities);
 		List<Float> augustHighs = augustHighSorter.getGenericList(inputDataList);	
 		obj.augustHighAverage = (int) findMean(augustHighs);
 		obj.augustHighMedian = (int) findMedian(augustHighs);
@@ -176,58 +176,59 @@ public class CityVsUSAComparison {
 
 	private static List<OutputData> generateOutputData(List<InputData> inputDataList) {
 		List<OutputData> outputDataList = new ArrayList<OutputData>();
-		float totalPopulation = getTotalPopulation(inputDataList);
-		List<Float> populations =  populationSorter.getGenericList(inputDataList);	
-		List<Float> populationDensities = populationDensitySorter.getGenericList(inputDataList);	
+		List<Float> populations = populationSorter.getGenericList(inputDataList);	
+		List<Float> populationDensities = populationDensitySorter.getGenericList(inputDataList);
 		for (InputData inputData : inputDataList) {
 			OutputData outputData = new OutputData();
 			outputData.key = inputData.cityName + "," + inputData.stateName;
 			outputData.populationMetric.value = inputData.population;
 			outputData.populationMetric.cityPercentile = getCityPercentile(inputData.population, populations);
-			outputData.populationMetric.personPercentile = getPersonPercentile(inputData.population, populations,
-					totalPopulation);
+			
+			Bar<Integer> populationBar = new Bar<Integer>() {
 
+				@Override
+				Integer getData2(InputData inputData) {
+					return inputData.population;
+				}
+				
+			}; 
+			
+			Bar<Integer> populationDensityBar = new Bar<Integer>() {
+
+				@Override
+				Integer getData2(InputData inputData) {
+					return inputData.populationDensity;
+				}
+				
+			}; 
+			
+			outputData.populationMetric.personPercentile = populationBar.getPersonPercentile(inputData.population, inputDataList);
+			outputData.populationDensityMetric.personPercentile = populationDensityBar.getPersonPercentile(inputData.populationDensity, inputDataList);
+			
 			outputData.populationDensityMetric.value = inputData.populationDensity;
 			outputData.populationDensityMetric.cityPercentile = getCityPercentile(inputData.populationDensity,
 					populationDensities);
-			outputData.populationDensityMetric.personPercentile = getPopulationDensityPersonPercentile(
-					inputData.populationDensity, inputDataList); // wrong
 
 			outputDataList.add(outputData);
 		}
 		return outputDataList;
 	}
+	
+	abstract static class Bar<T extends Comparable<T>> {
 
-	private static float getPopulationDensityPersonPercentile(int populationDensity, List<InputData> inputDataList) {
-		float totalPeopleWeHaveMoreThan = 0;
-		float totalPopulation = 0;
-		for (InputData inputData : inputDataList) {
-			if (populationDensity > inputData.populationDensity) {
-				totalPeopleWeHaveMoreThan += inputData.population;
+		abstract T getData2(InputData inputData);
+
+		float getPersonPercentile(T value, List<InputData> inputDataList) {
+			float totalPeopleWeHaveMoreThan = 0;
+			float totalPopulation = 0;
+			for (InputData inputData : inputDataList) {
+				if (value.compareTo(getData2(inputData)) > 0) {
+					totalPeopleWeHaveMoreThan += inputData.population;
+				}
+				totalPopulation += inputData.population;
 			}
-			totalPopulation += inputData.population;
+			return totalPeopleWeHaveMoreThan / totalPopulation;
 		}
-		return totalPeopleWeHaveMoreThan / totalPopulation;
-	}
-
-	private static float getPersonPercentile(int population, List<Float> populations, float totalPopulation) {
-		float totalPeopleWeHaveMoreThan = 0;
-		for (int i = 0; i < populations.size(); i++) {
-			Float val = populations.get(i);
-			if (population <= val) {
-				return totalPeopleWeHaveMoreThan / totalPopulation;
-			}
-			totalPeopleWeHaveMoreThan += val;
-		}
-		throw new RuntimeException("hi");
-	}
-
-	private static float getTotalPopulation(List<InputData> inputDataList) {
-		float totalPopulation = 0;
-		for (InputData inputData : inputDataList) {
-			totalPopulation += inputData.population;
-		}
-		return totalPopulation;
 	}
 
 	private static float getCityPercentile(int population, List<Float> populations) {
