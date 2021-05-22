@@ -136,39 +136,19 @@ public class CityVsUSAComparison {
 
 	private static List<OutputData> generateOutputData(List<InputData> inputDataList) {
 		List<OutputData> outputDataList = new ArrayList<OutputData>();
-		Map<Integer, Float> mapOfPopulationToCityPercentile = populationFoo.createCityPercentileMap(inputDataList);
-		Map<Integer, Float> mapOfPopulationToPersonPercentile = populationFoo.createPersonPercentileMap(inputDataList);
-		Map<Integer, Float> mapOfPopulationDensityToCityPercentile = populationDensityFoo.createCityPercentileMap(inputDataList);
-		Map<Integer, Float> mapOfPopulationDensityToPersonPercentile = populationDensityFoo.createPersonPercentileMap(inputDataList);
-		Map<Integer, Float> mapOfAugustHighToCityPercentile = augustHighFoo.createCityPercentileMap(inputDataList);
-		Map<Integer, Float> mapOfAugustHighToPersonPercentile = augustHighFoo.createPersonPercentileMap(inputDataList);
-		Map<Integer, Float> mapOfDecemberHighToCityPercentile = decemberHighFoo.createCityPercentileMap(inputDataList);
-		Map<Integer, Float> mapOfDecemberHighToPersonPercentile = decemberHighFoo.createPersonPercentileMap(inputDataList);
-		Map<Integer, Float> mapOfAugustHighMinusDecemberHighCityPercentile = augustHighMinusDecemberHighFoo.createCityPercentileMap(inputDataList);
-		Map<Integer, Float> mapOfAugustHighMinusDecemberHighPersonPercentile = augustHighMinusDecemberHighFoo.createPersonPercentileMap(inputDataList);
 		for (InputData inputData : inputDataList) {
 			OutputData outputData = new OutputData();
 			outputData.key = inputData.cityName + "," + inputData.stateName;
 			
-			outputData.populationMetric.value = inputData.population;
-			outputData.populationMetric.cityPercentile = mapOfPopulationToCityPercentile.get(inputData.population);
-		    outputData.populationMetric.personPercentile = mapOfPopulationToPersonPercentile.get(inputData.population);
+			outputData.populationMetric = populationFoo.getMetric(inputData.population, inputDataList);
 			
-		    outputData.populationDensityMetric.personPercentile = mapOfPopulationDensityToPersonPercentile.get(inputData.populationDensity);
-			outputData.populationDensityMetric.value = inputData.populationDensity;
-			outputData.populationDensityMetric.cityPercentile = mapOfPopulationDensityToCityPercentile.get(inputData.populationDensity);
+			outputData.populationDensityMetric = populationDensityFoo.getMetric(inputData.populationDensity, inputDataList);
 			
-			outputData.augustHighMetric.value = inputData.augustHigh;
-			outputData.augustHighMetric.cityPercentile = mapOfAugustHighToCityPercentile.get(inputData.augustHigh);
-		    outputData.augustHighMetric.personPercentile = mapOfAugustHighToPersonPercentile.get(inputData.augustHigh);
+			outputData.augustHighMetric = augustHighFoo.getMetric(inputData.augustHigh, inputDataList);
 		    
-			outputData.decemberHighMetric.value = inputData.decemberHigh;
-			outputData.decemberHighMetric.cityPercentile = mapOfDecemberHighToCityPercentile.get(inputData.decemberHigh);
-		    outputData.decemberHighMetric.personPercentile = mapOfDecemberHighToPersonPercentile.get(inputData.decemberHigh);
+			outputData.decemberHighMetric = decemberHighFoo.getMetric(inputData.decemberHigh, inputDataList);
 
-			outputData.augustHighMinusDecemberHighMetric.value = inputData.augustHighMinusDecemberHigh;
-			outputData.augustHighMinusDecemberHighMetric.cityPercentile = mapOfAugustHighMinusDecemberHighCityPercentile.get(inputData.augustHighMinusDecemberHigh);
-		    outputData.augustHighMinusDecemberHighMetric.personPercentile = mapOfAugustHighMinusDecemberHighPersonPercentile.get(inputData.augustHighMinusDecemberHigh);
+			outputData.augustHighMinusDecemberHighMetric = augustHighMinusDecemberHighFoo.getMetric(inputData.augustHighMinusDecemberHigh, inputDataList);
 		    
 		    // maybe have a create metric thing on the Foo class? so it's a one liner and i don't have to instantitae the map. maybe it internally has a singleton map
 		    
@@ -250,6 +230,22 @@ public class CityVsUSAComparison {
 	}
 	
 	abstract static class Foo<T extends Comparable<T>> {
+		
+		Map<T, Float> mapOfValueToPersonPercentile = new HashMap<T, Float>();
+		Map<T, Float> mapOfValueToCityPercentile = new HashMap<T, Float>();
+		
+		public Metric getMetric(float value, List<InputData> inputDataList) {
+			Metric metric = new Metric();
+			metric.value = value;
+			if (mapOfValueToPersonPercentile.size() == 0) {
+				mapOfValueToPersonPercentile = createPersonPercentileMap2(inputDataList);
+				mapOfValueToCityPercentile = createCityPercentileMap2(inputDataList);
+			}
+			int v = (int) value;
+			metric.personPercentile = mapOfValueToPersonPercentile.get(v);
+			metric.cityPercentile = mapOfValueToCityPercentile.get(v);
+			return metric;
+		}
 
 		abstract T getData(InputData inputData);
 
@@ -262,7 +258,7 @@ public class CityVsUSAComparison {
 			return list;
 		}
 		
-		public Map<T, Float> createPersonPercentileMap(List<InputData> inputDataList){
+		private Map<T, Float> createPersonPercentileMap2(List<InputData> inputDataList){
 			List<Meh<T>> values = new ArrayList<Meh<T>>();
 			Map<T, Float> map = new HashMap<T, Float>();
 			for (InputData inputData : inputDataList) {
@@ -288,7 +284,7 @@ public class CityVsUSAComparison {
 			return map;
 		}
 		
-		public Map<T, Float> createCityPercentileMap(List<InputData> inputDataList){
+		private Map<T, Float> createCityPercentileMap2(List<InputData> inputDataList){
 			List<T> values = new ArrayList<T>();
 			Map<T, Float> map = new HashMap<T, Float>();
 			for (InputData inputData : inputDataList) {
