@@ -7,11 +7,9 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
@@ -30,6 +28,7 @@ public class CityVsUSAComparison {
 		int sunnyDays;
 		int annualSnowfall;
 		int averageYearlyHumidity;
+		int yearlyWindspeed;
 
 		@Override
 		public String toString() {
@@ -47,6 +46,13 @@ public class CityVsUSAComparison {
 	static Foo<Integer> sunnyDaysFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.sunnyDays;}};	
 	static Foo<Integer> annualSnowfallFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.annualSnowfall;}};	
 	static Foo<Integer> averageYearlyHumidityFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.averageYearlyHumidity;}
+
+	@Override
+	boolean isInvalidValue(Integer data) {
+		return data == -100;
+	}};	
+	
+	static Foo<Integer> yearlyWindspeedFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.yearlyWindspeed;}
 
 	@Override
 	boolean isInvalidValue(Integer data) {
@@ -74,6 +80,8 @@ public class CityVsUSAComparison {
 		int annualSnowfallMedian;
 		int averageYearlyHumidityAverage;
 		int averageYearlyHumidityMedian;
+		int yearlyWindspeedAverage;
+		int yearlyWindspeedMedian;
 	}
 
 	static class OutputData {
@@ -88,6 +96,7 @@ public class CityVsUSAComparison {
 		public Metric sunnyDaysMetric = new Metric();
 		public Metric annualSnowfallMetric = new Metric();
 		public Metric averageYearlyHumidityMetric = new Metric();
+		public Metric yearlyWindspeedMetric = new Metric();
 
 		@Override
 		public String toString() {
@@ -118,7 +127,8 @@ public class CityVsUSAComparison {
 				inputData.daysOfRain = Integer.valueOf(arr[9]);
 				inputData.sunnyDays = Integer.valueOf(arr[10]);
 				inputData.annualSnowfall = Integer.valueOf(arr[11]);
-				inputData.averageYearlyHumidity = getHimidity(arr[12]);
+				inputData.averageYearlyHumidity = getValidIntegerFromPercent(arr[12]);
+				inputData.yearlyWindspeed = getValidInt(arr[13]);
 				list.add(inputData);
 				if (idx > 10) {
 					// break;
@@ -169,6 +179,10 @@ public class CityVsUSAComparison {
 		List<Integer> averageYearlyHumidityList = averageYearlyHumidityFoo.getGenericList(inputDataList);
 		obj.averageYearlyHumidityAverage = (int) findMean(averageYearlyHumidityList);
 		obj.averageYearlyHumidityMedian = (int) findMedian(averageYearlyHumidityList);
+		
+		List<Integer> yearlyWindspeedList = yearlyWindspeedFoo.getGenericList(inputDataList);
+		obj.yearlyWindspeedAverage = (int) findMean(yearlyWindspeedList);
+		obj.yearlyWindspeedMedian = (int) findMedian(yearlyWindspeedList);
 		return obj;
 	}
 
@@ -193,10 +207,12 @@ public class CityVsUSAComparison {
 		sb.append(getString("sunnyDaysAverage", averagesAndMedians.sunnyDaysAverage));
 		sb.append(getString("sunnyDaysMedian", averagesAndMedians.sunnyDaysMedian));
 		sb.append(getString("annualSnowfallAverage", averagesAndMedians.annualSnowfallAverage));
-		sb.append(getString("annualSnowfallMedian", averagesAndMedians.annualSnowfallMedian));
-		
+		sb.append(getString("annualSnowfallMedian", averagesAndMedians.annualSnowfallMedian));	
 		sb.append(getString("averageYearlyHumidityAverage", averagesAndMedians.averageYearlyHumidityAverage));
 		sb.append(getString("averageYearlyHumidityMedian", averagesAndMedians.averageYearlyHumidityMedian));
+		
+		sb.append(getString("yearlyWindspeedAverage", averagesAndMedians.yearlyWindspeedAverage));
+		sb.append(getString("yearlyWindspeedMedian", averagesAndMedians.yearlyWindspeedMedian));
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
 	}
 
@@ -215,8 +231,7 @@ public class CityVsUSAComparison {
 			outputData.sunnyDaysMetric = sunnyDaysFoo.getMetric(inputData.sunnyDays, inputDataList);
 			outputData.annualSnowfallMetric = annualSnowfallFoo.getMetric(inputData.annualSnowfall, inputDataList);
 			outputData.averageYearlyHumidityMetric = averageYearlyHumidityFoo.getMetric(inputData.averageYearlyHumidity, inputDataList);
-		    
-		    // maybe have a create metric thing on the Foo class? so it's a one liner and i don't have to instantitae the map. maybe it internally has a singleton map
+			outputData.yearlyWindspeedMetric = yearlyWindspeedFoo.getMetric(inputData.yearlyWindspeed, inputDataList);
 		    
 			outputDataList.add(outputData);
 		}
@@ -237,6 +252,7 @@ public class CityVsUSAComparison {
 		sb.append("var sunnyDaysMetric;\n");
 		sb.append("var annualSnowfallMetric;\n");
 		sb.append("var averageYearlyHumidityMetric;\n");
+		sb.append("var yearlyWindspeedMetric;\n");
 		sb.append("var cityData;\n");
 		for (OutputData outputData : outputDataList) {
 			appendMetric(sb, outputData.populationMetric, "populationMetric");
@@ -249,10 +265,11 @@ public class CityVsUSAComparison {
 			appendMetric(sb, outputData.sunnyDaysMetric, "sunnyDaysMetric");
 			appendMetric(sb, outputData.annualSnowfallMetric, "annualSnowfallMetric");
 			appendMetric(sb, outputData.averageYearlyHumidityMetric, "averageYearlyHumidityMetric");
+			appendMetric(sb, outputData.yearlyWindspeedMetric, "yearlyWindspeedMetric");
 			
 			
 			
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric);\n").append("myMap.set(\"")
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric);\n").append("myMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
 		}
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
@@ -285,13 +302,20 @@ public class CityVsUSAComparison {
 
 	}
 	
-	private static int getHimidity(String string) {
-		int humidity = -100;
+	private static int getValidInt(String string) {
+		if (string.contains("N/A")) {
+			return -100;
+		}
+		return Integer.valueOf(string);
+	}
+	
+	private static int getValidIntegerFromPercent(String string) {
+		int val = -100;
 		if (string.contains("%")) {
 			string = string.replace("%", "");
-			humidity = Integer.valueOf(string);
+			val = Integer.valueOf(string);
 		}
-		return humidity;
+		return val;
 	}
 
 	private static String getString(String varName, int varValue) {

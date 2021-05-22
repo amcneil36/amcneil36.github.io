@@ -19,3 +19,5 @@ var annualSnowfallAverage = 27;
 var annualSnowfallMedian = 22;
 var averageYearlyHumidityAverage = 72;
 var averageYearlyHumidityMedian = 75;
+var yearlyWindspeedAverage = 7;
+var yearlyWindspeedMedian = 7;
