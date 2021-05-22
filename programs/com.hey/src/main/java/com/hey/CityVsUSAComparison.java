@@ -148,11 +148,11 @@ public class CityVsUSAComparison {
 		obj.daysOfRainAverage = (int) findMean(daysOfRainList);
 		obj.daysOfRainMedian = (int) findMedian(daysOfRainList);
 		
-		List<Integer> sunnyDaysList = annualInchesOfRainFoo.getGenericList(inputDataList);
+		List<Integer> sunnyDaysList = sunnyDaysFoo.getGenericList(inputDataList);
 		obj.sunnyDaysAverage = (int) findMean(sunnyDaysList);
 		obj.sunnyDaysMedian = (int) findMedian(sunnyDaysList);
 		
-		List<Integer> annualSnowfallList = annualInchesOfRainFoo.getGenericList(inputDataList);
+		List<Integer> annualSnowfallList = annualSnowfallFoo.getGenericList(inputDataList);
 		obj.annualSnowfallAverage = (int) findMean(annualSnowfallList);
 		obj.annualSnowfallMedian = (int) findMedian(annualSnowfallList);
 		return obj;
