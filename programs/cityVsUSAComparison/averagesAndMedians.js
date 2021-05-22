@@ -1,4 +1,7 @@
 var populationAverage = 8066;
+var populationAverage = 8066;
 var populationMedian = 1297;
 var populationDensityAverage = 1063;
 var populationDensityMedian = 511;
+var augustHighAverage = 84;
+var augustHighMedian = 84;

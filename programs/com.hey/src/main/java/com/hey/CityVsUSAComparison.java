@@ -15,12 +15,18 @@ import com.hey.ZipCode.AndrewStringBuilder;
 import com.hey.ZipCode.DataObject2;
 
 public class CityVsUSAComparison {
+	
+	static Foo<Float> populationSorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.population;}};	
+	static Foo<Float> populationDensitySorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.populationDensity;}};	
+	static Foo<Float> augustHighSorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.augustHigh;}};	
 
 	static class AveragesAndMedians {
 		int populationAverage;
 		int populationMedian;
 		int populationDensityAverage;
 		int populationDensityMedian;
+		int augustHighAverage;
+		int augustHighMedian;
 	}
 
 	static class InputData {
@@ -28,6 +34,7 @@ public class CityVsUSAComparison {
 		String stateName;
 		int population;
 		int populationDensity;
+		int augustHigh;
 
 		@Override
 		public String toString() {
@@ -50,6 +57,7 @@ public class CityVsUSAComparison {
 		public String key;
 		public Metric populationMetric = new Metric();
 		public Metric populationDensityMetric = new Metric();
+		public Metric augustHighMetric = new Metric();
 
 		@Override
 		public String toString() {
@@ -59,22 +67,27 @@ public class CityVsUSAComparison {
 
 	public static void main(String[] args) {
 		List<InputData> inputDataList = readInput();
-//		 AveragesAndMedians averagesAndMedians = getAveragesAndMedians(inputDataList);
-//		 printAveragesAndMedians(averagesAndMedians);
+		AveragesAndMedians averagesAndMedians = getAveragesAndMedians(inputDataList);
+		writeAveragesAndMedians(averagesAndMedians);
 		List<OutputData> outputDataList = generateOutputData(inputDataList);
 		writeOutput(outputDataList);
 
 	}
 
-	private static void printString(String varName, int varValue) {
-		System.out.println("var " + varName + " = " + varValue + ";");
+	private static String getString(String varName, int varValue) {
+		return "var " + varName + " = " + varValue + ";\n";
 	}
 
-	private static void printAveragesAndMedians(AveragesAndMedians averagesAndMedians) {
-		printString("populationAverage", averagesAndMedians.populationAverage);
-		printString("populationMedian", averagesAndMedians.populationMedian);
-		printString("populationDensityAverage", averagesAndMedians.populationDensityAverage);
-		printString("populationDensityMedian", averagesAndMedians.populationDensityMedian);
+	private static void writeAveragesAndMedians(AveragesAndMedians averagesAndMedians) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(getString("populationAverage", averagesAndMedians.populationAverage));
+		sb.append(getString("populationAverage", averagesAndMedians.populationAverage));
+		sb.append(getString("populationMedian", averagesAndMedians.populationMedian));
+		sb.append(getString("populationDensityAverage", averagesAndMedians.populationDensityAverage));
+		sb.append(getString("populationDensityMedian", averagesAndMedians.populationDensityMedian));
+		sb.append(getString("augustHighAverage", averagesAndMedians.augustHighAverage));
+		sb.append(getString("augustHighMedian", averagesAndMedians.augustHighMedian));
+		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
 	}
 
 	public static float findMean(List<Float> a) {
@@ -100,38 +113,34 @@ public class CityVsUSAComparison {
 
 	private static AveragesAndMedians getAveragesAndMedians(List<InputData> inputDataList) {
 		AveragesAndMedians obj = new AveragesAndMedians();
-		List<Float> populations = createSortedPopulationsList(inputDataList);
+		List<Float> populations = populationSorter.getGenericList(inputDataList);	
 		obj.populationAverage = (int) findMean(populations);
 		obj.populationMedian = (int) findMedian(populations);
-
-		List<Float> populationsDensities = createSortedPopulationDensitiesList(inputDataList);
+		List<Float> populationsDensities = populationDensitySorter.getGenericList(inputDataList);
 		obj.populationDensityAverage = (int) findMean(populationsDensities);
 		obj.populationDensityMedian = (int) findMedian(populationsDensities);
+		List<Float> augustHighs = augustHighSorter.getGenericList(inputDataList);	
+		obj.augustHighAverage = (int) findMean(augustHighs);
+		obj.augustHighMedian = (int) findMedian(augustHighs);
 		return obj;
 	}
 
-	private static List<Float> createSortedPopulationDensitiesList(List<InputData> inputDataList) {
-		List<Float> populationsDensities = new ArrayList<Float>();
-		for (InputData inputData : inputDataList) {
-			populationsDensities.add((float) inputData.populationDensity);
-		}
-		Collections.sort(populationsDensities);
-		return populationsDensities;
-	}
+	abstract static class Foo<T extends Comparable<T>> {
 
-	private static List<Float> createSortedPopulationsList(List<InputData> inputDataList) {
-		List<Float> populations = new ArrayList<Float>();
-		for (InputData inputData : inputDataList) {
-			populations.add((float) inputData.population);
-		}
-		Collections.sort(populations);
-		return populations;
-	}
+		abstract T getData(InputData inputData);
 
-	private static void writeOutput(StringBuilder sb) {
+		List<T> getGenericList(List<InputData> inputDataList) {
+			List<T> list = new ArrayList<T>();
+			for (InputData inputData : inputDataList) {
+				list.add(getData(inputData));
+			}
+			Collections.sort(list);
+			return list;
+		}
+	}
+	
+	private static void writeOutput(String filePath, StringBuilder sb) {
 		try {
-
-			String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js";
 			FileWriter myWriter = new FileWriter(filePath);
 			myWriter.write(sb.toString());
 			myWriter.close();
@@ -152,10 +161,10 @@ public class CityVsUSAComparison {
 		for (OutputData outputData : outputDataList) {
 			appendMetric(sb, df, outputData.populationMetric, "populationMetric");
 			appendMetric(sb, df, outputData.populationDensityMetric, "populationDensityMetric");
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric);\n").append("myMap.set(\"").append(outputData.key)
-					.append("\", cityData);\n");
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric);\n").append("myMap.set(\"")
+					.append(outputData.key).append("\", cityData);\n");
 		}
-		writeOutput(sb);
+		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
 
 	}
 
@@ -168,8 +177,8 @@ public class CityVsUSAComparison {
 	private static List<OutputData> generateOutputData(List<InputData> inputDataList) {
 		List<OutputData> outputDataList = new ArrayList<OutputData>();
 		float totalPopulation = getTotalPopulation(inputDataList);
-		List<Float> populations = createSortedPopulationsList(inputDataList);
-		List<Float> populationDensities = createSortedPopulationDensitiesList(inputDataList);
+		List<Float> populations =  populationSorter.getGenericList(inputDataList);	
+		List<Float> populationDensities = populationDensitySorter.getGenericList(inputDataList);	
 		for (InputData inputData : inputDataList) {
 			OutputData outputData = new OutputData();
 			outputData.key = inputData.cityName + "," + inputData.stateName;
@@ -181,14 +190,14 @@ public class CityVsUSAComparison {
 			outputData.populationDensityMetric.value = inputData.populationDensity;
 			outputData.populationDensityMetric.cityPercentile = getCityPercentile(inputData.populationDensity,
 					populationDensities);
-			outputData.populationDensityMetric.personPercentile = getPopulationDensityPersonPercentile(inputData.populationDensity,
-					inputDataList); // wrong
+			outputData.populationDensityMetric.personPercentile = getPopulationDensityPersonPercentile(
+					inputData.populationDensity, inputDataList); // wrong
 
 			outputDataList.add(outputData);
 		}
 		return outputDataList;
 	}
-	
+
 	private static float getPopulationDensityPersonPercentile(int populationDensity, List<InputData> inputDataList) {
 		float totalPeopleWeHaveMoreThan = 0;
 		float totalPopulation = 0;
@@ -198,7 +207,7 @@ public class CityVsUSAComparison {
 			}
 			totalPopulation += inputData.population;
 		}
-		return totalPeopleWeHaveMoreThan/totalPopulation;
+		return totalPeopleWeHaveMoreThan / totalPopulation;
 	}
 
 	private static float getPersonPercentile(int population, List<Float> populations, float totalPopulation) {
@@ -247,6 +256,7 @@ public class CityVsUSAComparison {
 				inputData.stateName = arr[1].toLowerCase();
 				inputData.population = Integer.valueOf(arr[3]);
 				inputData.populationDensity = Integer.valueOf(arr[4]);
+				inputData.augustHigh = Integer.valueOf(arr[5]);
 				list.add(inputData);
 				if (idx > 10) {
 					// break;
