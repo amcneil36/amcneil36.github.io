@@ -16,8 +16,6 @@ public class CityVsUSAComparison {
 	static Foo<Float> populationSorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.population;}};	
 	static Foo<Float> populationDensitySorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.populationDensity;}};	
 	static Foo<Float> augustHighSorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.augustHigh;}};	
-	static Bar<Integer> populationBar = new Bar<Integer>() { @Override Integer getData2(InputData inputData) {return inputData.population;}}; 
-	static Bar<Integer> populationDensityBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.populationDensity;}}; 
 
 	static class AveragesAndMedians {
 		int populationAverage;
@@ -114,19 +112,25 @@ public class CityVsUSAComparison {
 		List<OutputData> outputDataList = new ArrayList<OutputData>();
 		List<Float> populations = populationSorter.getGenericList(inputDataList);	
 		List<Float> populationDensities = populationDensitySorter.getGenericList(inputDataList);
+		List<Float> augustHighs = augustHighSorter.getGenericList(inputDataList);	
+		Bar<Integer> populationBar = new Bar<Integer>() { @Override Integer getData2(InputData inputData) {return inputData.population;}}; 
+		Bar<Integer> populationDensityBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.populationDensity;}}; 
+		Bar<Integer> augustHighBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.augustHigh;}}; 
 		for (InputData inputData : inputDataList) {
 			OutputData outputData = new OutputData();
 			outputData.key = inputData.cityName + "," + inputData.stateName;
+			
 			outputData.populationMetric.value = inputData.population;
 			outputData.populationMetric.cityPercentile = getCityPercentile(inputData.population, populations);
-		
+		    outputData.populationMetric.personPercentile = populationBar.getPersonPercentile(inputData.population, inputDataList);
 			
-			outputData.populationMetric.personPercentile = populationBar.getPersonPercentile(inputData.population, inputDataList);
-			outputData.populationDensityMetric.personPercentile = populationDensityBar.getPersonPercentile(inputData.populationDensity, inputDataList);
-			
+		    outputData.populationDensityMetric.personPercentile = populationDensityBar.getPersonPercentile(inputData.populationDensity, inputDataList);
 			outputData.populationDensityMetric.value = inputData.populationDensity;
-			outputData.populationDensityMetric.cityPercentile = getCityPercentile(inputData.populationDensity,
-					populationDensities);
+			outputData.populationDensityMetric.cityPercentile = getCityPercentile(inputData.populationDensity, populationDensities);
+			
+			outputData.augustHighMetric.value = inputData.augustHigh;
+			outputData.augustHighMetric.cityPercentile = getCityPercentile(inputData.augustHigh, augustHighs);
+		    outputData.augustHighMetric.personPercentile = augustHighBar.getPersonPercentile(inputData.augustHigh, inputDataList);
 
 			outputDataList.add(outputData);
 		}
@@ -138,12 +142,14 @@ public class CityVsUSAComparison {
 		sb.append("var myMap = new Map();\n");
 		sb.append("var populationMetric;\n");
 		sb.append("var populationDensityMetric;\n");
+		sb.append("var augustHighMetric;\n");
 		sb.append("var cityData;\n");
 		DecimalFormat df = new DecimalFormat("0.0");
 		for (OutputData outputData : outputDataList) {
 			appendMetric(sb, df, outputData.populationMetric, "populationMetric");
 			appendMetric(sb, df, outputData.populationDensityMetric, "populationDensityMetric");
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric);\n").append("myMap.set(\"")
+			appendMetric(sb, df, outputData.augustHighMetric, "augustHighMetric");
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric);\n").append("myMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
 		}
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
