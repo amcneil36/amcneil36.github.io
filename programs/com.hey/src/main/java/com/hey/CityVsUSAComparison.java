@@ -6,8 +6,12 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
@@ -141,12 +145,15 @@ public class CityVsUSAComparison {
 		Bar<Integer> populationDensityBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.populationDensity;}}; 
 		Bar<Integer> augustHighBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.augustHigh;}}; 
 		Bar<Integer> decemberHighBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.decemberHigh;}}; 
+		Bar<Integer> augustHighMinusDecemberHighBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.augustHighMinusDecemberHigh;}}; 
+		Map<Integer, Float> mapOfPopulationToCityPercentile = createMapOfPopulationToCityPercentile(inputDataList);
 		for (InputData inputData : inputDataList) {
 			OutputData outputData = new OutputData();
 			outputData.key = inputData.cityName + "," + inputData.stateName;
 			
 			outputData.populationMetric.value = inputData.population;
-			outputData.populationMetric.cityPercentile = getCityPercentile(inputData.population, populations);
+		//	outputData.populationMetric.cityPercentile = getCityPercentile(inputData.population, populations);
+			outputData.populationMetric.cityPercentile = mapOfPopulationToCityPercentile.get(inputData.population);
 		    outputData.populationMetric.personPercentile = populationBar.getPersonPercentile(inputData.population, inputDataList);
 			
 		    outputData.populationDensityMetric.personPercentile = populationDensityBar.getPersonPercentile(inputData.populationDensity, inputDataList);
@@ -162,14 +169,31 @@ public class CityVsUSAComparison {
 		    outputData.decemberHighMetric.personPercentile = decemberHighBar.getPersonPercentile(inputData.decemberHigh, inputDataList);
 
 			outputData.augustHighMinusDecemberHighMetric.value = inputData.augustHighMinusDecemberHigh;
-			outputData.augustHighMinusDecemberHighMetric.cityPercentile = getCityPercentile(inputData.augustHighMinusDecemberHigh, decemberHighs);
-		    outputData.augustHighMinusDecemberHighMetric.personPercentile = decemberHighBar.getPersonPercentile(inputData.augustHighMinusDecemberHigh, inputDataList);
+			outputData.augustHighMinusDecemberHighMetric.cityPercentile = getCityPercentile(inputData.augustHighMinusDecemberHigh, augustHighMinusDecemberHighs);
+		    outputData.augustHighMinusDecemberHighMetric.personPercentile = augustHighMinusDecemberHighBar.getPersonPercentile(inputData.augustHighMinusDecemberHigh, inputDataList);
 		    
 			outputDataList.add(outputData);
 		}
 		return outputDataList;
 	}
 	
+	private static Map<Integer, Float> createMapOfPopulationToCityPercentile(List<InputData> inputDataList) {
+		List<Integer> populations = new ArrayList<Integer>();
+		Map<Integer, Float> map = new HashMap<Integer, Float>();
+		for (InputData inputData : inputDataList) {
+			populations.add(inputData.population);
+		}
+		Collections.sort(populations);
+		for (int i = 0; i < populations.size(); i++) {
+			int val = populations.get(i);
+			if (!map.containsKey(val)) {
+				float percentile = ((float) (i + 1)) / ((float) (populations.size() - 1));
+				map.put(val, percentile);
+			}
+		}
+		return map;
+	}
+
 	private static void writeOutput(List<OutputData> outputDataList) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("var myMap = new Map();\n");
@@ -193,6 +217,8 @@ public class CityVsUSAComparison {
 
 	}
 
+	// could create map of metric to percentile
+	
 	// no chages TODO
 	static class Metric {
 		float value;
