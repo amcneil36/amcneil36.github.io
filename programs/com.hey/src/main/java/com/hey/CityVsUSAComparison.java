@@ -32,11 +32,11 @@ public class CityVsUSAComparison {
 		}
 	}
 	
-	static Foo<Float> populationSorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.population;}};	
-	static Foo<Float> populationDensitySorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.populationDensity;}};	
-	static Foo<Float> augustHighSorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.augustHigh;}};	
-	static Foo<Float> decemberHighSorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.decemberHigh;}};	
-	static Foo<Float> augustHighMinusDecemberHighSorter = new Foo<Float>() { @Override Float getData(InputData inputData) { return (float) inputData.augustHighMinusDecemberHigh;}};	
+	static Foo<Integer> populationFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return  inputData.population;}};	
+	static Foo<Integer> populationDensityFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.populationDensity;}};	
+	static Foo<Integer> augustHighFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.augustHigh;}};	
+	static Foo<Integer> decemberHighFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.decemberHigh;}};	
+	static Foo<Integer> augustHighMinusDecemberHighFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.augustHighMinusDecemberHigh;}};	
 
 	static class AveragesAndMedians {
 		int populationAverage;
@@ -100,19 +100,19 @@ public class CityVsUSAComparison {
 	
 	private static AveragesAndMedians getAveragesAndMedians(List<InputData> inputDataList) {
 		AveragesAndMedians obj = new AveragesAndMedians();
-		List<Float> populations = populationSorter.getGenericList(inputDataList);	
+		List<Integer> populations = populationFoo.getGenericList(inputDataList);	
 		obj.populationAverage = (int) findMean(populations);
 		obj.populationMedian = (int) findMedian(populations);
-		List<Float> populationDensities = populationDensitySorter.getGenericList(inputDataList);
+		List<Integer> populationDensities = populationDensityFoo.getGenericList(inputDataList);
 		obj.populationDensityAverage = (int) findMean(populationDensities);
 		obj.populationDensityMedian = (int) findMedian(populationDensities);
-		List<Float> augustHighs = augustHighSorter.getGenericList(inputDataList);	
+		List<Integer> augustHighs = augustHighFoo.getGenericList(inputDataList);	
 		obj.augustHighAverage = (int) findMean(augustHighs);
 		obj.augustHighMedian = (int) findMedian(augustHighs);
-		List<Float> decemberHighs = decemberHighSorter.getGenericList(inputDataList);	
+		List<Integer> decemberHighs = decemberHighFoo.getGenericList(inputDataList);	
 		obj.decemberHighAverage = (int) findMean(decemberHighs);
 		obj.decemberHighMedian = (int) findMedian(decemberHighs);
-		List<Float> augHighMinusDecHighs = augustHighMinusDecemberHighSorter.getGenericList(inputDataList);	
+		List<Integer> augHighMinusDecHighs = augustHighMinusDecemberHighFoo.getGenericList(inputDataList);	
 		obj.augustHighMinusDecemberHighAverage = (int) findMean(augHighMinusDecHighs);
 		obj.augustHighMinusDecemberHighMedian = (int) findMedian(augHighMinusDecHighs);
 		return obj;
@@ -136,47 +136,34 @@ public class CityVsUSAComparison {
 
 	private static List<OutputData> generateOutputData(List<InputData> inputDataList) {
 		List<OutputData> outputDataList = new ArrayList<OutputData>();
-		List<Float> populationDensities = populationDensitySorter.getGenericList(inputDataList);
-		List<Float> augustHighs = augustHighSorter.getGenericList(inputDataList);	
-		List<Float> decemberHighs = decemberHighSorter.getGenericList(inputDataList);	
-		List<Float> augustHighMinusDecemberHighs = augustHighMinusDecemberHighSorter.getGenericList(inputDataList);
-		Andrew<Integer> andrewPopulation = new Andrew<Integer>() {
-
-			@Override
-			Integer getData3(InputData inputData) {
-				return inputData.population;
-			}
-			
-		};
-		Bar<Integer> populationBar = new Bar<Integer>() { @Override Integer getData2(InputData inputData) {return inputData.population;}}; 
-		Bar<Integer> populationDensityBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.populationDensity;}}; 
-		Bar<Integer> augustHighBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.augustHigh;}}; 
-		Bar<Integer> decemberHighBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.decemberHigh;}}; 
-		Bar<Integer> augustHighMinusDecemberHighBar = new Bar<Integer>() {@Override Integer getData2(InputData inputData) {return inputData.augustHighMinusDecemberHigh;}}; 
-		Map<Integer, Float> mapOfPopulationToCityPercentile = andrewPopulation.createCityPercentileMap(inputDataList);
+		Map<Integer, Float> mapOfPopulationToCityPercentile = populationFoo.createCityPercentileMap(inputDataList);
+		Map<Integer, Float> mapOfPopulationDensityToCityPercentile = populationDensityFoo.createCityPercentileMap(inputDataList);
+		Map<Integer, Float> mapOfAugustHighToCityPercentile = augustHighFoo.createCityPercentileMap(inputDataList);
+		Map<Integer, Float> mapOfDecemberHighToCityPercentile = decemberHighFoo.createCityPercentileMap(inputDataList);
+		Map<Integer, Float> mapOfAugustHighMinusDecemberHighCityPercentile = augustHighMinusDecemberHighFoo.createCityPercentileMap(inputDataList);
 		for (InputData inputData : inputDataList) {
 			OutputData outputData = new OutputData();
 			outputData.key = inputData.cityName + "," + inputData.stateName;
 			
 			outputData.populationMetric.value = inputData.population;
 			outputData.populationMetric.cityPercentile = mapOfPopulationToCityPercentile.get(inputData.population);
-		    outputData.populationMetric.personPercentile = populationBar.getPersonPercentile(inputData.population, inputDataList);
+		    outputData.populationMetric.personPercentile = populationFoo.getPersonPercentile(inputData.population, inputDataList);
 			
-		    outputData.populationDensityMetric.personPercentile = populationDensityBar.getPersonPercentile(inputData.populationDensity, inputDataList);
+		    outputData.populationDensityMetric.personPercentile = populationDensityFoo.getPersonPercentile(inputData.populationDensity, inputDataList);
 			outputData.populationDensityMetric.value = inputData.populationDensity;
-			outputData.populationDensityMetric.cityPercentile = getCityPercentile(inputData.populationDensity, populationDensities);
+			outputData.populationDensityMetric.cityPercentile = mapOfPopulationDensityToCityPercentile.get(inputData.populationDensity);
 			
 			outputData.augustHighMetric.value = inputData.augustHigh;
-			outputData.augustHighMetric.cityPercentile = getCityPercentile(inputData.augustHigh, augustHighs);
-		    outputData.augustHighMetric.personPercentile = augustHighBar.getPersonPercentile(inputData.augustHigh, inputDataList);
+			outputData.augustHighMetric.cityPercentile = mapOfAugustHighToCityPercentile.get(inputData.augustHigh);
+		    outputData.augustHighMetric.personPercentile = augustHighFoo.getPersonPercentile(inputData.augustHigh, inputDataList);
 		    
 			outputData.decemberHighMetric.value = inputData.decemberHigh;
-			outputData.decemberHighMetric.cityPercentile = getCityPercentile(inputData.decemberHigh, decemberHighs);
-		    outputData.decemberHighMetric.personPercentile = decemberHighBar.getPersonPercentile(inputData.decemberHigh, inputDataList);
+			outputData.decemberHighMetric.cityPercentile = mapOfDecemberHighToCityPercentile.get(inputData.decemberHigh);
+		    outputData.decemberHighMetric.personPercentile = decemberHighFoo.getPersonPercentile(inputData.decemberHigh, inputDataList);
 
 			outputData.augustHighMinusDecemberHighMetric.value = inputData.augustHighMinusDecemberHigh;
-			outputData.augustHighMinusDecemberHighMetric.cityPercentile = getCityPercentile(inputData.augustHighMinusDecemberHigh, augustHighMinusDecemberHighs);
-		    outputData.augustHighMinusDecemberHighMetric.personPercentile = augustHighMinusDecemberHighBar.getPersonPercentile(inputData.augustHighMinusDecemberHigh, inputDataList);
+			outputData.augustHighMinusDecemberHighMetric.cityPercentile = mapOfAugustHighMinusDecemberHighCityPercentile.get(inputData.augustHighMinusDecemberHigh);
+		    outputData.augustHighMinusDecemberHighMetric.personPercentile = augustHighMinusDecemberHighFoo.getPersonPercentile(inputData.augustHighMinusDecemberHigh, inputDataList);
 		    
 			outputDataList.add(outputData);
 		}
@@ -210,26 +197,6 @@ public class CityVsUSAComparison {
 	
 	// no chages TODO
 	
-	static abstract class Andrew<T extends Comparable<T>>{
-		abstract T getData3(InputData inputData);
-		public Map<T, Float> createCityPercentileMap(List<InputData> inputDataList){
-			List<T> values = new ArrayList<T>();
-			Map<T, Float> map = new HashMap<T, Float>();
-			for (InputData inputData : inputDataList) {
-				values.add(getData3(inputData));
-			}
-			Collections.sort(values);
-			for (int i = 0; i < values.size(); i++) {
-				T val = values.get(i);
-				if (!map.containsKey(val)) {
-					float percentile = ((float) (i + 1)) / ((float) (values.size() - 1));
-					map.put(val, percentile);
-				}
-			}
-			return map;
-		}
-	}
-	
 	static class Metric {
 		float value;
 		float cityPercentile;
@@ -254,7 +221,7 @@ public class CityVsUSAComparison {
 		return "var " + varName + " = " + varValue + ";\n";
 	}
 	
-	public static float findMean(List<Float> a) {
+	public static <T> float findMean(List<Integer> a) {
 		int n = a.size();
 		int sum = 0;
 		for (int i = 0; i < n; i++)
@@ -263,7 +230,7 @@ public class CityVsUSAComparison {
 		return (float) sum / (float) n;
 	}
 
-	public static float findMedian(List<Float> a) {
+	public static float findMedian(List<Integer> a) {
 		int n = a.size();
 		// First we sort the array
 		Collections.sort(a);
@@ -287,6 +254,35 @@ public class CityVsUSAComparison {
 			Collections.sort(list);
 			return list;
 		}
+		
+		public float getPersonPercentile(T value, List<InputData> inputDataList) {
+			float totalPeopleWeHaveMoreThan = 0;
+			float totalPopulation = 0;
+			for (InputData inputData : inputDataList) {
+				if (value.compareTo(getData(inputData)) > 0) {
+					totalPeopleWeHaveMoreThan += inputData.population;
+				}
+				totalPopulation += inputData.population;
+			}
+			return totalPeopleWeHaveMoreThan / totalPopulation;
+		}
+		
+		public Map<T, Float> createCityPercentileMap(List<InputData> inputDataList){
+			List<T> values = new ArrayList<T>();
+			Map<T, Float> map = new HashMap<T, Float>();
+			for (InputData inputData : inputDataList) {
+				values.add(getData(inputData));
+			}
+			Collections.sort(values);
+			for (int i = 0; i < values.size(); i++) {
+				T val = values.get(i);
+				if (!map.containsKey(val)) {
+					float percentile = ((float) (i + 1)) / ((float) (values.size() - 1));
+					map.put(val, percentile);
+				}
+			}
+			return map;
+		}
 	}
 	
 	private static void writeOutput(String filePath, StringBuilder sb) {
@@ -307,31 +303,15 @@ public class CityVsUSAComparison {
 				.append(df.format(100 * metric.personPercentile)).append(");\n");
 	}
 	
-	abstract static class Bar<T extends Comparable<T>> {
-
-		abstract T getData2(InputData inputData);
-
-		float getPersonPercentile(T value, List<InputData> inputDataList) {
-			float totalPeopleWeHaveMoreThan = 0;
-			float totalPopulation = 0;
-			for (InputData inputData : inputDataList) {
-				if (value.compareTo(getData2(inputData)) > 0) {
-					totalPeopleWeHaveMoreThan += inputData.population;
-				}
-				totalPopulation += inputData.population;
-			}
-			return totalPeopleWeHaveMoreThan / totalPopulation;
-		}
-	}
-
-	private static float getCityPercentile(int value, List<Float> values) {
+/*
+	private static float getCityPercentile(int value, List<Integer> values) {
 		for (int i = 0; i < values.size(); i++) {
-			Float val = values.get(i);
+			int val = values.get(i);
 			if (value <= val) {
 				return ((float) (i + 1)) / ((float) (values.size() - 1));
 			}
 		}
 		throw new RuntimeException("hi");
 	}
-
+*/
 }
