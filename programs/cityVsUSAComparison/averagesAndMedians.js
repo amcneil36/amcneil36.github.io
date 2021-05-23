@@ -29,3 +29,5 @@ var medianAgeAverage = 41;
 var medianAgeMedian = 41;
 var bachelorsAverage = 23.46;
 var bachelorsMedian = 19.59;
+var medianHouseholdIncomeAverage = 52688;
+var medianHouseholdIncomeMedian = 48125;

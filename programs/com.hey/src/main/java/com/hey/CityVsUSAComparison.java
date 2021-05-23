@@ -33,6 +33,7 @@ public class CityVsUSAComparison {
 		int propertyCrime;
 		int medianAge;
 		float bachelors;
+		int medianHouseholdIncome;
 
 		@Override
 		public String toString() {
@@ -55,6 +56,7 @@ public class CityVsUSAComparison {
 	static Foo<Integer> propertyCrimeFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.propertyCrime;}};
 	static Foo<Integer> medianAgeFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.medianAge;}};	
 	static Foo<Float> bachelorsFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.bachelors;} @Override boolean isInvalidValue(Float data) {return data == -100;}};	
+	static Foo<Integer> medianHouseholdIncomeFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.medianHouseholdIncome;}};
 	
 	static class AveragesAndMedians {
 		int populationAverage;
@@ -87,6 +89,8 @@ public class CityVsUSAComparison {
 		int medianAgeMedian;
 		float bachelorsAverage;
 		float bachelorsMedian;
+		int medianHouseholdIncomeAverage;
+		int medianHouseholdIncomeMedian;
 	}
 
 	static class OutputData {
@@ -106,6 +110,7 @@ public class CityVsUSAComparison {
 		public Metric propertyCrimeMetric = new Metric();
 		public Metric medianAgeMetric = new Metric();
 		public Metric bachelorsMetric = new Metric();
+		public Metric medianHouseholdIncomeMetric = new Metric();
 
 		@Override
 		public String toString() {
@@ -142,6 +147,7 @@ public class CityVsUSAComparison {
 				inputData.propertyCrime = Integer.valueOf(arr[15]);
 				inputData.medianAge = Integer.valueOf(arr[16]);
 				inputData.bachelors = getValidFloatFromPercent(arr[17]);
+				inputData.medianHouseholdIncome = Integer.valueOf(arr[18]);
 				list.add(inputData);
 				if (idx > 10) {
 					// break;
@@ -212,6 +218,10 @@ public class CityVsUSAComparison {
 		List<Float> bachelorsList = bachelorsFoo.getGenericList(inputDataList);
 		obj.bachelorsAverage = findMeanFloat(bachelorsList);
 		obj.bachelorsMedian = findMedianFloat(bachelorsList);
+		
+		List<Integer> medianHouseholdIncomeList = medianHouseholdIncomeFoo.getGenericList(inputDataList);
+		obj.medianHouseholdIncomeAverage = (int)findMean(medianHouseholdIncomeList);
+		obj.medianHouseholdIncomeMedian = (int)findMedian(medianHouseholdIncomeList);
 		return obj;
 	}
 
@@ -240,18 +250,16 @@ public class CityVsUSAComparison {
 		sb.append(getString("averageYearlyHumidityMedian", averagesAndMedians.averageYearlyHumidityMedian));	
 		sb.append(getString("yearlyWindspeedAverage", averagesAndMedians.yearlyWindspeedAverage));
 		sb.append(getString("yearlyWindspeedMedian", averagesAndMedians.yearlyWindspeedMedian));
-		
 		sb.append(getString("violentCrimeAverage", averagesAndMedians.violentCrimeAverage));
 		sb.append(getString("violentCrimeMedian", averagesAndMedians.violentCrimeMedian));
-		
 		sb.append(getString("propertyCrimeAverage", averagesAndMedians.propertyCrimeAverage));
 		sb.append(getString("propertyCrimeMedian", averagesAndMedians.propertyCrimeMedian));
-		
 		sb.append(getString("medianAgeAverage", averagesAndMedians.medianAgeAverage));
 		sb.append(getString("medianAgeMedian", averagesAndMedians.medianAgeMedian));
-		
 		sb.append(getFloatString("bachelorsAverage", averagesAndMedians.bachelorsAverage));
 		sb.append(getFloatString("bachelorsMedian", averagesAndMedians.bachelorsMedian));
+		sb.append(getString("medianHouseholdIncomeAverage", averagesAndMedians.medianHouseholdIncomeAverage));
+		sb.append(getString("medianHouseholdIncomeMedian", averagesAndMedians.medianHouseholdIncomeMedian));
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
 	}
 
@@ -275,6 +283,7 @@ public class CityVsUSAComparison {
 			outputData.propertyCrimeMetric = propertyCrimeFoo.getMetric(inputData.propertyCrime, inputDataList);
 			outputData.medianAgeMetric = medianAgeFoo.getMetric(inputData.medianAge, inputDataList);
 			outputData.bachelorsMetric = bachelorsFoo.getMetricFloat(inputData.bachelors, inputDataList);
+			outputData.medianHouseholdIncomeMetric = medianHouseholdIncomeFoo.getMetric(inputData.medianHouseholdIncome, inputDataList);
 		    
 			outputDataList.add(outputData);
 		}
@@ -300,6 +309,7 @@ public class CityVsUSAComparison {
 		sb.append("var propertyCrimeMetric;\n");
 		sb.append("var medianAgeMetric;\n");
 		sb.append("var bachelorsMetric;\n");
+		sb.append("var medianHouseholdIncomeMetric;\n");
 		sb.append("var cityData;\n");
 		int i = 0;
 		for (OutputData outputData : outputDataList) {
@@ -319,8 +329,9 @@ public class CityVsUSAComparison {
 			appendMetric(sb, outputData.propertyCrimeMetric, "propertyCrimeMetric");
 			appendMetric(sb, outputData.medianAgeMetric, "medianAgeMetric");
 			appendFloatMetric(sb, outputData.bachelorsMetric, "bachelorsMetric");
+			appendMetric(sb, outputData.medianHouseholdIncomeMetric, "medianHouseholdIncomeMetric");
 			
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric);\n").append("myMap.set(\"")
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric,medianHouseholdIncomeMetric);\n").append("myMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
 			if (i == 18003) {
 				writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
