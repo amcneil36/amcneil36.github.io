@@ -1,5 +1,5 @@
 class CityData {
-  constructor(populationMetric, populationDensityMetric, augustHighMetric, decemberHighMetric, augustHighMinusDecemberHighMetric, annualInchesOfRainMetric, daysOfRainMetric, sunnyDaysMetric, annualSnowfallMetric, averageYearlyHumidityMetric, yearlyWindspeedMetric, violentCrimeMetric, propertyCrimeMetric, medianAgeMetric, bachelorsMetric, medianHouseholdIncomeMetric) {
+  constructor(populationMetric, populationDensityMetric, augustHighMetric, decemberHighMetric, augustHighMinusDecemberHighMetric, annualInchesOfRainMetric, daysOfRainMetric, sunnyDaysMetric, annualSnowfallMetric, averageYearlyHumidityMetric, yearlyWindspeedMetric, violentCrimeMetric, propertyCrimeMetric, medianAgeMetric, bachelorsMetric, medianHouseholdIncomeMetric, medianHomePriceMetric) {
     this.populationMetric = populationMetric;
 	this.populationDensityMetric = populationDensityMetric;
 	this.augustHighMetric = augustHighMetric;
@@ -16,6 +16,7 @@ class CityData {
 	this.medianAgeMetric = medianAgeMetric;
 	this.bachelorsMetric = bachelorsMetric;
 	this.medianHouseholdIncomeMetric = medianHouseholdIncomeMetric;
+	this.medianHomePriceMetric = medianHomePriceMetric;
   }
 }
 
@@ -37,5 +38,6 @@ function createRows(tbdy, cityData){
 	  insertRow(tbdy, "Median age", medianAgeAverage, medianAgeMedian, cityData.medianAgeMetric);
 	  insertRow(tbdy, "% with at least a Bachelor's degree", bachelorsAverage, bachelorsMedian, cityData.bachelorsMetric);
 	  insertRow(tbdy, "Median Household Income ($)", medianHouseholdIncomeAverage, medianHouseholdIncomeMedian, cityData.medianHouseholdIncomeMetric);
+	  insertRow(tbdy, "Median Home Price ($)", medianHomePriceAverage, medianHomePriceMedian, cityData.medianHomePriceMetric);
 		  
 }
