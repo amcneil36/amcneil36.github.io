@@ -39,3 +39,5 @@ var homeAppreciationAverage = 19;
 var homeAppreciationMedian = 18;
 var airQualityAverage = 73;
 var airQualityMedian = 76;
+var unemploymentRateAverage = 4.17;
+var unemploymentRateMedian = 3.9;

@@ -38,6 +38,7 @@ public class CityVsUSAComparison {
 		int medianHomeAge;
 		int homeAppreciation;
 		int airQuality;
+		float unemploymentRate;
 
 		@Override
 		public String toString() {
@@ -65,6 +66,7 @@ public class CityVsUSAComparison {
 	static Foo<Integer> medianHomeAgeFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.medianHomeAge;}};
 	static Foo<Integer> homeAppreciationFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.homeAppreciation;}};
 	static Foo<Integer> airQualityFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.airQuality;}};
+	static Foo<Float> unemploymentRateFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.unemploymentRate;} @Override boolean isInvalidValue(Float data) {return data == -100;}};	
 	
 	static class AveragesAndMedians {
 		int populationAverage;
@@ -107,6 +109,8 @@ public class CityVsUSAComparison {
 		int homeAppreciationMedian;
 		int airQualityAverage;
 		int airQualityMedian;
+		float unemploymentRateAverage;
+		float unemploymentRateMedian;
 	}
 
 	static class OutputData {
@@ -131,6 +135,7 @@ public class CityVsUSAComparison {
 		public Metric medianHomeAgeMetric = new Metric();
 		public Metric homeAppreciationMetric = new Metric();
 		public Metric airQualityMetric = new Metric();
+		public Metric unemploymentRateMetric = new Metric();
 
 		@Override
 		public String toString() {
@@ -172,6 +177,7 @@ public class CityVsUSAComparison {
 				inputData.medianHomeAge = Integer.valueOf(arr[20]);
 				inputData.homeAppreciation = getValidIntegerFromPercent(arr[23]);
 				inputData.airQuality = Integer.valueOf(arr[24]);
+				inputData.unemploymentRate = getValidFloatFromPercent(arr[25]);
 				list.add(inputData);
 				if (idx > 10) {
 					// break;
@@ -262,6 +268,10 @@ public class CityVsUSAComparison {
 		List<Integer> airQualityList = airQualityFoo.getGenericList(inputDataList);
 		obj.airQualityAverage = (int)findMean(airQualityList);
 		obj.airQualityMedian = (int)findMedian(airQualityList);
+		
+		List<Float> unemploymentRateList = unemploymentRateFoo.getGenericList(inputDataList);
+		obj.unemploymentRateAverage = findMeanFloat(unemploymentRateList);
+		obj.unemploymentRateMedian = findMedianFloat(unemploymentRateList);
 		return obj;
 	}
 
@@ -308,6 +318,8 @@ public class CityVsUSAComparison {
 		sb.append(getString("homeAppreciationMedian", averagesAndMedians.homeAppreciationMedian));
 		sb.append(getString("airQualityAverage", averagesAndMedians.airQualityAverage));
 		sb.append(getString("airQualityMedian", averagesAndMedians.airQualityMedian));
+		sb.append(getFloatString("unemploymentRateAverage", averagesAndMedians.unemploymentRateAverage));
+		sb.append(getFloatString("unemploymentRateMedian", averagesAndMedians.unemploymentRateMedian));
 		
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
 	}
@@ -337,6 +349,7 @@ public class CityVsUSAComparison {
 			outputData.medianHomeAgeMetric = medianHomeAgeFoo.getMetric(inputData.medianHomeAge, inputDataList);	    
 			outputData.homeAppreciationMetric = homeAppreciationFoo.getMetric(inputData.homeAppreciation, inputDataList);	
 			outputData.airQualityMetric = airQualityFoo.getMetric(inputData.airQuality, inputDataList);	
+			outputData.unemploymentRateMetric = unemploymentRateFoo.getMetricFloat(inputData.unemploymentRate, inputDataList);
 			outputDataList.add(outputData);
 		}
 		return outputDataList;
@@ -366,6 +379,7 @@ public class CityVsUSAComparison {
 		sb.append("var medianHomeAgeMetric;\n");
 		sb.append("var homeAppreciationMetric;\n");
 		sb.append("var airQualityMetric;\n");
+		sb.append("var unemploymentRateMetric;\n");
 		sb.append("var cityData;\n");
 		int i = 0;
 		for (OutputData outputData : outputDataList) {
@@ -390,8 +404,9 @@ public class CityVsUSAComparison {
 			appendMetric(sb, outputData.medianHomeAgeMetric, "medianHomeAgeMetric");
 			appendMetric(sb, outputData.homeAppreciationMetric, "homeAppreciationMetric");
 			appendMetric(sb, outputData.airQualityMetric, "airQualityMetric");
+			appendFloatMetric(sb, outputData.unemploymentRateMetric, "unemploymentRateMetric");
 			
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric,medianHouseholdIncomeMetric,medianHomePriceMetric,medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric);\n").append("myMap.set(\"")
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric,medianHouseholdIncomeMetric,medianHomePriceMetric,medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric);\n").append("myMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
 			if (i == 18003) {
 				writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
