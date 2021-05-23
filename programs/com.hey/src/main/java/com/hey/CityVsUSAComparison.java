@@ -32,6 +32,7 @@ public class CityVsUSAComparison {
 		int violentCrime;
 		int propertyCrime;
 		int medianAge;
+		float bachelors;
 
 		@Override
 		public String toString() {
@@ -53,6 +54,7 @@ public class CityVsUSAComparison {
 	static Foo<Integer> violentCrimeFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.violentCrime;}};
 	static Foo<Integer> propertyCrimeFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.propertyCrime;}};
 	static Foo<Integer> medianAgeFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.medianAge;}};	
+	static Foo<Float> bachelorsFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.bachelors;} @Override boolean isInvalidValue(Float data) {return data == -100;}};	
 	
 	static class AveragesAndMedians {
 		int populationAverage;
@@ -83,6 +85,8 @@ public class CityVsUSAComparison {
 		int propertyCrimeMedian;
 		int medianAgeAverage;
 		int medianAgeMedian;
+		float bachelorsAverage;
+		float bachelorsMedian;
 	}
 
 	static class OutputData {
@@ -101,6 +105,7 @@ public class CityVsUSAComparison {
 		public Metric violentCrimeMetric = new Metric();
 		public Metric propertyCrimeMetric = new Metric();
 		public Metric medianAgeMetric = new Metric();
+		public Metric bachelorsMetric = new Metric();
 
 		@Override
 		public String toString() {
@@ -136,6 +141,7 @@ public class CityVsUSAComparison {
 				inputData.violentCrime = Integer.valueOf(arr[14]);
 				inputData.propertyCrime = Integer.valueOf(arr[15]);
 				inputData.medianAge = Integer.valueOf(arr[16]);
+				inputData.bachelors = getValidFloatFromPercent(arr[17]);
 				list.add(inputData);
 				if (idx > 10) {
 					// break;
@@ -202,6 +208,10 @@ public class CityVsUSAComparison {
 		List<Integer> medianAgeList = medianAgeFoo.getGenericList(inputDataList);
 		obj.medianAgeAverage = (int) findMean(medianAgeList);
 		obj.medianAgeMedian = (int) findMedian(medianAgeList);
+		
+		List<Float> bachelorsList = bachelorsFoo.getGenericList(inputDataList);
+		obj.bachelorsAverage = findMeanFloat(bachelorsList);
+		obj.bachelorsMedian = findMedianFloat(bachelorsList);
 		return obj;
 	}
 
@@ -239,6 +249,9 @@ public class CityVsUSAComparison {
 		
 		sb.append(getString("medianAgeAverage", averagesAndMedians.medianAgeAverage));
 		sb.append(getString("medianAgeMedian", averagesAndMedians.medianAgeMedian));
+		
+		sb.append(getFloatString("bachelorsAverage", averagesAndMedians.bachelorsAverage));
+		sb.append(getFloatString("bachelorsMedian", averagesAndMedians.bachelorsMedian));
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
 	}
 
@@ -261,6 +274,7 @@ public class CityVsUSAComparison {
 			outputData.violentCrimeMetric = violentCrimeFoo.getMetric(inputData.violentCrime, inputDataList);
 			outputData.propertyCrimeMetric = propertyCrimeFoo.getMetric(inputData.propertyCrime, inputDataList);
 			outputData.medianAgeMetric = medianAgeFoo.getMetric(inputData.medianAge, inputDataList);
+			outputData.bachelorsMetric = bachelorsFoo.getMetricFloat(inputData.bachelors, inputDataList);
 		    
 			outputDataList.add(outputData);
 		}
@@ -285,6 +299,7 @@ public class CityVsUSAComparison {
 		sb.append("var violentCrimeMetric;\n");
 		sb.append("var propertyCrimeMetric;\n");
 		sb.append("var medianAgeMetric;\n");
+		sb.append("var bachelorsMetric;\n");
 		sb.append("var cityData;\n");
 		int i = 0;
 		for (OutputData outputData : outputDataList) {
@@ -303,10 +318,11 @@ public class CityVsUSAComparison {
 			appendMetric(sb, outputData.violentCrimeMetric, "violentCrimeMetric");
 			appendMetric(sb, outputData.propertyCrimeMetric, "propertyCrimeMetric");
 			appendMetric(sb, outputData.medianAgeMetric, "medianAgeMetric");
+			appendFloatMetric(sb, outputData.bachelorsMetric, "bachelorsMetric");
 			
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric);\n").append("myMap.set(\"")
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric);\n").append("myMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
-			if (i == 30003) {
+			if (i == 18003) {
 				writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
 				sb = new StringBuilder();
 			}
@@ -354,8 +370,21 @@ public class CityVsUSAComparison {
 		}
 		return val;
 	}
+	
+	private static float getValidFloatFromPercent(String string) {
+		float val = -100;
+		if (string.contains("%")) {
+			string = string.replace("%", "");
+			val = Float.valueOf(string);
+		}
+		return val;
+	}
 
 	private static String getString(String varName, int varValue) {
+		return "var " + varName + " = " + varValue + ";\n";
+	}
+	
+	private static String getFloatString(String varName, float varValue) {
 		return "var " + varName + " = " + varValue + ";\n";
 	}
 	
@@ -367,8 +396,33 @@ public class CityVsUSAComparison {
 
 		return (float) sum / (float) n;
 	}
+	
+	public static <T> float findMeanFloat(List<Float> a) {
+		int n = a.size();
+		int sum = 0;
+		for (int i = 0; i < n; i++)
+			sum += a.get(i);
+		
+		DecimalFormat df2 = new DecimalFormat("0.00");
+		float f = (float) sum / (float) n;
+		String st = df2.format(f);
+		f = Float.valueOf(st);
+		return f;
+	}
 
 	public static float findMedian(List<Integer> a) {
+		int n = a.size();
+		// First we sort the array
+		Collections.sort(a);
+
+		// check for even case
+		if (n % 2 != 0)
+			return a.get(n / 2);
+
+		return (float) ((a.get((n - 1) / 2) + a.get(n / 2)) / 2.0);
+	}
+	
+	public static float findMedianFloat(List<Float> a) {
 		int n = a.size();
 		// First we sort the array
 		Collections.sort(a);
@@ -387,6 +441,24 @@ public class CityVsUSAComparison {
 		
 		boolean isInvalidValue(T data) {
 			return false;
+		}
+		
+		public Metric getMetricFloat(float value, List<InputData> inputDataList) {
+			Metric metric = new Metric();
+			metric.value = value;
+			if (mapOfValueToPersonPercentile.size() == 0) {
+				mapOfValueToPersonPercentile = createPersonPercentileMap2(inputDataList);
+				mapOfValueToCityPercentile = createCityPercentileMap2(inputDataList);
+			}
+			if (mapOfValueToPersonPercentile.containsKey(value)) {
+				metric.personPercentile = mapOfValueToPersonPercentile.get(value);
+				metric.cityPercentile = mapOfValueToCityPercentile.get(value);
+			}
+			else {
+				metric.personPercentile = -1;
+				metric.cityPercentile = -1;
+			}
+			return metric;
 		}
 		
 		public Metric getMetric(int value, List<InputData> inputDataList) {
@@ -505,6 +577,12 @@ public class CityVsUSAComparison {
 
 	}
 	
+	private static void appendFloatMetric(StringBuilder sb, Metric metric, String varName) {
+		sb.append(varName).append(" = new Metric(").append(getSafeFloatMetricValue(metric.value)).append(",")
+				.append(getPercent(metric.cityPercentile)).append(", ")
+				.append(getPercent(metric.personPercentile)).append(");\n");
+	}
+	
 	private static void appendMetric(StringBuilder sb, Metric metric, String varName) {
 		sb.append(varName).append(" = new Metric(").append(getSafeMetricValue(metric.value)).append(",")
 				.append(getPercent(metric.cityPercentile)).append(", ")
@@ -517,6 +595,13 @@ public class CityVsUSAComparison {
 			return st;
 		}
 		return "\"" + df.format(100 * f) + "%\"";
+	}
+	
+	private static String getSafeFloatMetricValue (float f) {
+		if (f < -99) {
+			return "\"N/A\"";
+		}
+		return String.valueOf(f);
 	}
 	
 	private static String getSafeMetricValue (float f) {

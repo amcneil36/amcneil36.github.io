@@ -27,3 +27,5 @@ var propertyCrimeAverage = 28;
 var propertyCrimeMedian = 24;
 var medianAgeAverage = 41;
 var medianAgeMedian = 41;
+var bachelorsAverage = 23.46;
+var bachelorsMedian = 19.59;
