@@ -35,5 +35,5 @@ var medianHomePriceAverage = 194015;
 var medianHomePriceMedian = 142400;
 var medianHomeAgeAverage = 47;
 var medianHomeAgeMedian = 45;
-var homeAppreciationAverage = 47;
-var homeAppreciationMedian = 45;
+var homeAppreciationAverage = 19;
+var homeAppreciationMedian = 18;

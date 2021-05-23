@@ -62,7 +62,7 @@ public class CityVsUSAComparison {
 	static Foo<Integer> medianHouseholdIncomeFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.medianHouseholdIncome;}};
 	static Foo<Integer> medianHomePriceFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.medianHomePrice;}};
 	static Foo<Integer> medianHomeAgeFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.medianHomeAge;}};
-	static Foo<Integer> homeAppreciationFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.medianHomeAge;}};
+	static Foo<Integer> homeAppreciationFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.homeAppreciation;}};
 	
 	static class AveragesAndMedians {
 		int populationAverage;
