@@ -1,5 +1,5 @@
 class CityData {
-  constructor(populationMetric, populationDensityMetric, augustHighMetric, decemberHighMetric, augustHighMinusDecemberHighMetric, annualInchesOfRainMetric, daysOfRainMetric, sunnyDaysMetric, annualSnowfallMetric, averageYearlyHumidityMetric, yearlyWindspeedMetric, violentCrimeMetric, propertyCrimeMetric, medianAgeMetric, bachelorsMetric, medianHouseholdIncomeMetric, medianHomePriceMetric, medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric) {
+  constructor(populationMetric, populationDensityMetric, augustHighMetric, decemberHighMetric, augustHighMinusDecemberHighMetric, annualInchesOfRainMetric, daysOfRainMetric, sunnyDaysMetric, annualSnowfallMetric, averageYearlyHumidityMetric, yearlyWindspeedMetric, violentCrimeMetric, propertyCrimeMetric, medianAgeMetric, bachelorsMetric, medianHouseholdIncomeMetric, medianHomePriceMetric, medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric) {
     this.populationMetric = populationMetric;
 	this.populationDensityMetric = populationDensityMetric;
 	this.augustHighMetric = augustHighMetric;
@@ -21,6 +21,8 @@ class CityData {
 	this.homeAppreciationMetric = homeAppreciationMetric;
 	this.airQualityMetric = airQualityMetric;
 	this.unemploymentRateMetric = unemploymentRateMetric;
+	this.populationGrowthMetric = populationGrowthMetric;
+	this.percentDemocratMetric = percentDemocratMetric;
   }
 }
 
@@ -47,5 +49,7 @@ function createRows(tbdy, cityData){
 	  insertRow(tbdy, "Home appreciation last 10 yrs (%)", homeAppreciationAverage, homeAppreciationMedian, cityData.homeAppreciationMetric);
 	  insertRow(tbdy, "Air quality index", airQualityAverage, airQualityMedian, cityData.airQualityMetric);
 	  insertRow(tbdy, "Unemployment Rate (%)", unemploymentRateAverage, unemploymentRateMedian, cityData.unemploymentRateMetric);
+	  insertRow(tbdy, "Population growth last 10 yrs (%)", populationGrowthAverage, populationGrowthMedian, cityData.populationGrowthMetric);
+	  insertRow(tbdy, "Percent Democrat (%)", percentDemocratAverage, percentDemocratMedian, cityData.percentDemocratMetric);
 		  
 }

@@ -41,3 +41,7 @@ var airQualityAverage = 73;
 var airQualityMedian = 76;
 var unemploymentRateAverage = 4.17;
 var unemploymentRateMedian = 3.9;
+var populationGrowthAverage = 9.6;
+var populationGrowthMedian = 1.4;
+var percentDemocratAverage = 36.52;
+var percentDemocratMedian = 34.6;
