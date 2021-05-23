@@ -43,6 +43,7 @@ public class CityVsUSAComparison {
 		float percentDemocrat;
 		float percentRepublican;
 		float percentAsian;
+		float percentBlack;
 		
 		// TODO
 
@@ -77,6 +78,7 @@ public class CityVsUSAComparison {
 	static Foo<Float> percentDemocratFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.percentDemocrat;} @Override boolean isInvalidValue(Float data) {return data == -100;}};	
 	static Foo<Float> percentRepublicanFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.percentRepublican;} @Override boolean isInvalidValue(Float data) {return data == -100;}};	
 	static Foo<Float> percentAsianFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.percentAsian;} @Override boolean isInvalidValue(Float data) {return data == -100;}};	
+	static Foo<Float> percentBlackFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.percentBlack;} @Override boolean isInvalidValue(Float data) {return data == -100;}};	
 	
 	//TODO
 	
@@ -131,6 +133,8 @@ public class CityVsUSAComparison {
 		float percentRepublicanMedian;
 		float percentAsianAverage;
 		float percentAsianMedian;
+		float percentBlackAverage;
+		float percentBlackMedian;
 		
 		//TODO
 	}
@@ -162,6 +166,7 @@ public class CityVsUSAComparison {
 		public Metric percentDemocratMetric = new Metric();
 		public Metric percentRepublicanMetric = new Metric();
 		public Metric percentAsianMetric = new Metric();
+		public Metric percentBlackMetric = new Metric();
 		//TODO
 
 		@Override
@@ -209,6 +214,7 @@ public class CityVsUSAComparison {
 				inputData.percentDemocrat = getValidFloatFromPercent(arr[28]);
 				inputData.percentRepublican = getValidFloatFromPercent(arr[29]);		
 				inputData.percentAsian = getValidFloatFromPercent(arr[30]);		
+				inputData.percentBlack = getValidFloatFromPercent(arr[31]);		
 				// TODO
 				list.add(inputData);
 				if (idx > 10) {
@@ -320,6 +326,10 @@ public class CityVsUSAComparison {
 		List<Float> percentAsianList = percentAsianFoo.getGenericList(inputDataList);
 		obj.percentAsianAverage = findMeanFloat(percentAsianList);
 		obj.percentAsianMedian = findMedianFloat(percentAsianList);
+		
+		List<Float> percentBlackList = percentBlackFoo.getGenericList(inputDataList);
+		obj.percentBlackAverage = findMeanFloat(percentBlackList);
+		obj.percentBlackMedian = findMedianFloat(percentBlackList);
 		//TODO
 		return obj;
 	}
@@ -377,7 +387,8 @@ public class CityVsUSAComparison {
 		sb.append(getFloatString("percentRepublicanMedian", averagesAndMedians.percentRepublicanMedian));
 		sb.append(getFloatString("percentAsianAverage", averagesAndMedians.percentAsianAverage));
 		sb.append(getFloatString("percentAsianMedian", averagesAndMedians.percentAsianMedian));
-		
+		sb.append(getFloatString("percentBlackAverage", averagesAndMedians.percentBlackAverage));
+		sb.append(getFloatString("percentBlackMedian", averagesAndMedians.percentBlackMedian));
 		//TODO
 		
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
@@ -413,6 +424,7 @@ public class CityVsUSAComparison {
 			outputData.percentDemocratMetric = percentDemocratFoo.getMetricFloat(inputData.percentDemocrat, inputDataList);
 			outputData.percentRepublicanMetric = percentRepublicanFoo.getMetricFloat(inputData.percentRepublican, inputDataList);
 			outputData.percentAsianMetric = percentAsianFoo.getMetricFloat(inputData.percentAsian, inputDataList);
+			outputData.percentBlackMetric = percentBlackFoo.getMetricFloat(inputData.percentBlack, inputDataList);
 			
 			//TODO
 			outputDataList.add(outputData);
@@ -449,6 +461,7 @@ public class CityVsUSAComparison {
 		sb.append("var percentDemocratMetric;\n");
 		sb.append("var percentRepublicanMetric;\n");
 		sb.append("var percentAsianMetric;\n");
+		sb.append("var percentBlackMetric;\n");
 		
 		//TODO
 		sb.append("var cityData;\n");
@@ -482,9 +495,10 @@ public class CityVsUSAComparison {
 			appendFloatMetric(sb, outputData.percentDemocratMetric, "percentDemocratMetric");			
 			appendFloatMetric(sb, outputData.percentRepublicanMetric, "percentRepublicanMetric");	
 			appendFloatMetric(sb, outputData.percentAsianMetric, "percentAsianMetric");	
+			appendFloatMetric(sb, outputData.percentBlackMetric, "percentBlackMetric");	
 			//TODO
 			
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric,medianHouseholdIncomeMetric,medianHomePriceMetric,medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric);\n").append("myMap.set(\"")
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric,medianHouseholdIncomeMetric,medianHomePriceMetric,medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric);\n").append("myMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
 			if (i == 10003) {
 				writeOutputAppend("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);

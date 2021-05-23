@@ -49,3 +49,5 @@ var percentRepublicanAverage = 57.32;
 var percentRepublicanMedian = 59.5;
 var percentAsianAverage = 5.35;
 var percentAsianMedian = 2.75;
+var percentBlackAverage = 14.54;
+var percentBlackMedian = 5.41;
