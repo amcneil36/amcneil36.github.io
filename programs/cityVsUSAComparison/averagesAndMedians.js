@@ -53,3 +53,5 @@ var percentBlackAverage = 14.54;
 var percentBlackMedian = 5.41;
 var percentWhiteAverage = 85.22;
 var percentWhiteMedian = 93.19;
+var percentHispanicAverage = 12.42;
+var percentHispanicMedian = 5.2;

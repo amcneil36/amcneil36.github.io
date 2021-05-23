@@ -1,5 +1,5 @@
 class CityData {
-  constructor(populationMetric, populationDensityMetric, augustHighMetric, decemberHighMetric, augustHighMinusDecemberHighMetric, annualInchesOfRainMetric, daysOfRainMetric, sunnyDaysMetric, annualSnowfallMetric, averageYearlyHumidityMetric, yearlyWindspeedMetric, violentCrimeMetric, propertyCrimeMetric, medianAgeMetric, bachelorsMetric, medianHouseholdIncomeMetric, medianHomePriceMetric, medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric) {
+  constructor(populationMetric, populationDensityMetric, augustHighMetric, decemberHighMetric, augustHighMinusDecemberHighMetric, annualInchesOfRainMetric, daysOfRainMetric, sunnyDaysMetric, annualSnowfallMetric, averageYearlyHumidityMetric, yearlyWindspeedMetric, violentCrimeMetric, propertyCrimeMetric, medianAgeMetric, bachelorsMetric, medianHouseholdIncomeMetric, medianHomePriceMetric, medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric, percentHispanicMetric) {
     this.populationMetric = populationMetric;
 	this.populationDensityMetric = populationDensityMetric;
 	this.augustHighMetric = augustHighMetric;
@@ -27,6 +27,7 @@ class CityData {
 	this.percentAsianMetric = percentAsianMetric;
 	this.percentBlackMetric = percentBlackMetric;
 	this.percentWhiteMetric = percentWhiteMetric;
+	this.percentHispanicMetric = percentHispanicMetric;
   }
 }
 
@@ -59,5 +60,6 @@ function createRows(tbdy, cityData){
 	  insertRow(tbdy, "Percent Asian (%)", percentAsianAverage, percentAsianMedian, cityData.percentAsianMetric);
 	  insertRow(tbdy, "Percent Black (%)", percentBlackAverage, percentBlackMedian, cityData.percentBlackMetric);
 	  insertRow(tbdy, "Percent White (%)", percentWhiteAverage, percentWhiteMedian, cityData.percentWhiteMetric);
+	  insertRow(tbdy, "Percent Hispanic (%)", percentHispanicAverage, percentHispanicMedian, cityData.percentHispanicMetric);
 	  
 }
