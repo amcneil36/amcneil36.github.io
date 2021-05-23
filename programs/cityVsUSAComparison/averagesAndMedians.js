@@ -45,3 +45,5 @@ var populationGrowthAverage = 9.6;
 var populationGrowthMedian = 1.4;
 var percentDemocratAverage = 36.52;
 var percentDemocratMedian = 34.6;
+var percentRepublicanAverage = 57.32;
+var percentRepublicanMedian = 59.5;
