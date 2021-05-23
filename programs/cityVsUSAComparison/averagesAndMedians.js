@@ -51,3 +51,5 @@ var percentAsianAverage = 5.35;
 var percentAsianMedian = 2.75;
 var percentBlackAverage = 14.54;
 var percentBlackMedian = 5.41;
+var percentWhiteAverage = 85.22;
+var percentWhiteMedian = 93.19;
