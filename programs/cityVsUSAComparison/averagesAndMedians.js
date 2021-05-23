@@ -33,3 +33,5 @@ var medianHouseholdIncomeAverage = 52688;
 var medianHouseholdIncomeMedian = 48125;
 var medianHomePriceAverage = 194015;
 var medianHomePriceMedian = 142400;
+var medianHomeAgeAverage = 47;
+var medianHomeAgeMedian = 45;
