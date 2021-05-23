@@ -37,3 +37,5 @@ var medianHomeAgeAverage = 47;
 var medianHomeAgeMedian = 45;
 var homeAppreciationAverage = 19;
 var homeAppreciationMedian = 18;
+var airQualityAverage = 73;
+var airQualityMedian = 76;
