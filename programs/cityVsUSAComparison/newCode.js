@@ -1,5 +1,5 @@
 class CityData {
-  constructor(populationMetric, populationDensityMetric, augustHighMetric, decemberHighMetric, augustHighMinusDecemberHighMetric, annualInchesOfRainMetric, daysOfRainMetric, sunnyDaysMetric, annualSnowfallMetric, averageYearlyHumidityMetric, yearlyWindspeedMetric, violentCrimeMetric, propertyCrimeMetric, medianAgeMetric, bachelorsMetric, medianHouseholdIncomeMetric, medianHomePriceMetric, medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric) {
+  constructor(populationMetric, populationDensityMetric, augustHighMetric, decemberHighMetric, augustHighMinusDecemberHighMetric, annualInchesOfRainMetric, daysOfRainMetric, sunnyDaysMetric, annualSnowfallMetric, averageYearlyHumidityMetric, yearlyWindspeedMetric, violentCrimeMetric, propertyCrimeMetric, medianAgeMetric, bachelorsMetric, medianHouseholdIncomeMetric, medianHomePriceMetric, medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric) {
     this.populationMetric = populationMetric;
 	this.populationDensityMetric = populationDensityMetric;
 	this.augustHighMetric = augustHighMetric;
@@ -24,6 +24,7 @@ class CityData {
 	this.populationGrowthMetric = populationGrowthMetric;
 	this.percentDemocratMetric = percentDemocratMetric;
 	this.percentRepublicanMetric = percentRepublicanMetric;
+	this.percentAsianMetric = percentAsianMetric;
   }
 }
 
@@ -53,5 +54,6 @@ function createRows(tbdy, cityData){
 	  insertRow(tbdy, "Population growth last 10 yrs (%)", populationGrowthAverage, populationGrowthMedian, cityData.populationGrowthMetric);
 	  insertRow(tbdy, "Percent Democrat (%)", percentDemocratAverage, percentDemocratMedian, cityData.percentDemocratMetric);
 	  insertRow(tbdy, "Percent Republican (%)", percentRepublicanAverage, percentRepublicanMedian, cityData.percentRepublicanMetric);
+	  insertRow(tbdy, "Percent Asian (%)", percentAsianAverage, percentAsianMedian, cityData.percentAsianMetric);
 	  
 }
