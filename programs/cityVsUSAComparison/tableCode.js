@@ -8,12 +8,20 @@ var percentPercentileHelpText = "The % of Americans that are living in a city th
 var arrayOfHeaderHelpText = [metricNameHelpText, metricValueHelpText, usaAvgHelpText, usaMedianHelpText, cityPercentileHelpText, percentPercentileHelpText];
 var BORDER = '1px solid black';
 
+function myFunction(text){
+ alert(text);	
+}
 
 function createColumnHeader(thr, fieldTitle, text){
     let th = document.createElement('th');
 	th.style.border = BORDER;
 	th.style.backgroundColor = "#f2f2f2";
-	th.innerHTML = fieldTitle + "<div class='tooltip'>&#x1f6c8;<span class='tooltiptext'>" + text + "</span></div>";
+	let span = document.createElement('span');
+	span.innerHTML = "&#x1F6C8";
+	span.onclick = function() { alert(text); };
+th.innerHTML = fieldTitle;
+th.appendChild(span);
+	//th.onclick = function() { alert(text); }
     thr.appendChild(th);	
 }
 
@@ -27,7 +35,7 @@ function createColumn(tr, val){
 function createColumnWithInfoButton(tr, val, text){
 	  var td = document.createElement('td');
 	  td.style.border = BORDER;
-	  td.innerHTML = val + " <div class='tooltip'>heyyyyyy;<span class='tooltiptext'>" + text + "</span></div>";
+	  td.innerHTML = val;
       tr.appendChild(td);	
 }
 
