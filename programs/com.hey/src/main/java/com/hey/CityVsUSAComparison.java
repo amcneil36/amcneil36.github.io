@@ -701,9 +701,6 @@ public class CityVsUSAComparison {
 		}
 		
 		private Map<T, Float> createPersonPercentileMap2(List<InputData> inputDataList){
-			// use invalid metric method
-			// could create inputDataList2 and ignore inputDataList after that.
-			// need to think
 			List<Meh<T>> values = new ArrayList<Meh<T>>();
 			Map<T, Float> map = new HashMap<T, Float>();
 			for (InputData inputData : inputDataList) {
@@ -797,6 +794,9 @@ public class CityVsUSAComparison {
 	}
 	
 	private static String getPercent(float f) {
+		if (f >= 0.9995 && f < 1) {
+			f = 0.999f;
+		}
 		if (f < 0) {
 			String st = "\"N/A\"";
 			return st;
@@ -818,15 +818,4 @@ public class CityVsUSAComparison {
 		return String.valueOf((int) f);
 	}
 	
-/*
-	private static float getCityPercentile(int value, List<Integer> values) {
-		for (int i = 0; i < values.size(); i++) {
-			int val = values.get(i);
-			if (value <= val) {
-				return ((float) (i + 1)) / ((float) (values.size() - 1));
-			}
-		}
-		throw new RuntimeException("hi");
-	}
-*/
 }

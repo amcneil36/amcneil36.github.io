@@ -1,11 +1,22 @@
 document.getElementById("addForm").addBtn.onclick = main;
 
+function capitalizeFirstLetter(string) {
+  const words = string.split(" ");
+  for (let i = 0; i < words.length; i++) {
+    words[i] = words[i][0].toUpperCase() + words[i].substr(1);
+  }
+  words.join(" ");
+  return words;
+}
+
 function main(){
 	document.getElementById("numResults").innerHTML = "";
    var elt = document.getElementById("addForm");
    var cityName = elt.cityName.value;
    var stateName = elt.stateName.value;
    var key = cityName.toLowerCase() + "," + stateName.toLowerCase();
+   cityName = capitalizeFirstLetter(cityName);
+   stateName = capitalizeFirstLetter(stateName);
    var element = document.getElementById('table');
    if (element != null){
     element.parentNode.removeChild(element);	
