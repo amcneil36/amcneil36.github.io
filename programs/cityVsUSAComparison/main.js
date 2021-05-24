@@ -25,7 +25,7 @@ function main(){
 	   document.getElementById("numResults").innerHTML = "<center>City and state combination \"" + cityName + ", " + stateName + "\" was not found.<center>";
 	   return;
    }
-   document.getElementById("numResults").innerHTML = "<center>Showing comparison between " + cityName + ", " + stateName + " and the USA.<center>";
+   document.getElementById("numResults").innerHTML = "<center>Displaying results for " + cityName + ", " + stateName + ".<center>";
   let body = document.getElementsByTagName('body')[0];
   let tbl = document.createElement('table');
   tbl.className = "center";
