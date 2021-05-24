@@ -22,7 +22,7 @@ function main(){
   let thead = document.createElement('thead');
   let thr = document.createElement('tr');
   for (var i = 0; i < arrayOfTableHeaders.length; i++){
-	  createColumnHeader(thr, arrayOfTableHeaders[i]);
+	  createColumnHeader(thr, arrayOfTableHeaders[i], arrayOfHeaderHelpText[i]);
   }
   thead.appendChild(thr);
   tbl.appendChild(thead);
