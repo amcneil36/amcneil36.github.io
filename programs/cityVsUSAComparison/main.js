@@ -1,6 +1,7 @@
 document.getElementById("addForm").addBtn.onclick = main;
 
 function main(){
+	document.getElementById("numResults").innerHTML = "";
    var elt = document.getElementById("addForm");
    var cityName = elt.cityName.value;
    var stateName = elt.stateName.value;
@@ -10,12 +11,13 @@ function main(){
     element.parentNode.removeChild(element);	
    }
    if (!myMap.has(key)){
-	   alert ("City and State combination not found.");
+	   document.getElementById("numResults").innerHTML = "<center>City and state combination \"" + cityName + ", " + stateName + "\" was not found.<center>";
 	   return;
    }
+   document.getElementById("numResults").innerHTML = "<center>Showing comparison between " + cityName + ", " + stateName + " and the USA.<center>";
   let body = document.getElementsByTagName('body')[0];
   let tbl = document.createElement('table');
-  tbl.className = "table-container";
+  tbl.className = "center";
   tbl.setAttribute("id", 'table');
   let thead = document.createElement('thead');
   let thr = document.createElement('tr');
