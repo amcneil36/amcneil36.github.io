@@ -1,4 +1,4 @@
-var arrayOfTableHeaders = ["Metric Name!", "Metric value", "USA Avg", "USA Median", "Higher than which % of other cities?", "Higher than which % of other people's city?"];
+var arrayOfTableHeaders = ["Metric Name", "Metric value", "USA Avg", "USA Median", "Higher than which % of other cities?", "Higher than which % of other people's city?"];
 var metricNameHelpText = "The name of the metric that the row's data is going to correspond to";
 var metricValueHelpText = "The value of the metric for the city that was entered";
 var usaAvgHelpText = "The average calculated from all USA cities";
@@ -36,6 +36,10 @@ function createColumnWithInfoButton(tr, val, text){
 	  var td = document.createElement('td');
 	  td.style.border = BORDER;
 	  td.innerHTML = val;
+	  let span = document.createElement('span');
+	  span.innerHTML = "&#x24d8;";
+	  span.onclick = function() { alert(text); };
+	  td.appendChild(span);
       tr.appendChild(td);	
 }
 
