@@ -17,7 +17,7 @@ function createColumnHeader(thr, fieldTitle, text){
 	th.style.border = BORDER;
 	th.style.backgroundColor = "#f2f2f2";
 	let span = document.createElement('span');
-	span.innerHTML = "&#x1F6C8";
+	span.innerHTML = "&#9432;";
 	span.onclick = function() { alert(text); };
 th.innerHTML = fieldTitle;
 th.appendChild(span);
