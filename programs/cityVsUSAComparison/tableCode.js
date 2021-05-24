@@ -27,7 +27,7 @@ function createColumn(tr, val){
 function createColumnWithInfoButton(tr, val, text){
 	  var td = document.createElement('td');
 	  td.style.border = BORDER;
-	  td.innerHTML = val + " <div class='tooltip'>&#x1F6C8;<span class='tooltiptext'>" + text + "</span></div>";
+	  td.innerHTML = val + " <div class='tooltip'>heyyyyyy;<span class='tooltiptext'>" + text + "</span></div>";
       tr.appendChild(td);	
 }
 
