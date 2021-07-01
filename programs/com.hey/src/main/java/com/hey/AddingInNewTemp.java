@@ -50,7 +50,7 @@ public class AddingInNewTemp {
 		runThread("Oklahoma");
 		runThread("Oregon");
 		runThread("Pennsylvania");
-		runThread("Rhode Island");
+		//runThread("Rhode Island");
 		runThread("South Carolina");
 		runThread("South Dakota");
 		runThread("Tennessee");
