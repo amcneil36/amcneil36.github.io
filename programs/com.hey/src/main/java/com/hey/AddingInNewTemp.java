@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-
 public class AddingInNewTemp {
 
 	static String[] months = { "January", "February", "March", "April", "May", "June", "July", "August", "September",
@@ -23,7 +22,7 @@ public class AddingInNewTemp {
 		runThread("Delaware");
 		runThread("Florida");
 	}
-	
+
 	public static void runThread(String stateName) throws Exception {
 		new RunnableDemo5(stateName).start();
 	}
@@ -80,9 +79,8 @@ public class AddingInNewTemp {
 				}
 				sb.deleteCharAt(sb.lastIndexOf(","));
 				sb.append("));");
-				sb.append("\n");	
-			}
-			catch(Exception ex) {
+				sb.append("\n");
+			} catch (Exception ex) {
 				System.out.println("something went wrong! dumping stack trace!");
 				ex.printStackTrace();
 				System.out.println("stack trace is from this line: " + initialLine);
@@ -91,11 +89,9 @@ public class AddingInNewTemp {
 			}
 			numCompletedCities++;
 			if (numCompletedCities % 50 == 0) {
-
 				long secondsSinceStart = (System.currentTimeMillis() - startTime) / 1000;
-				float numRemainingZipCodes = (totalNumCities - numCompletedCities);
-				float minRemaining = (numRemainingZipCodes * secondsSinceStart / (numCompletedCities)) / 60;
-
+				float numRemainingCities = (totalNumCities - numCompletedCities);
+				float minRemaining = (numRemainingCities * secondsSinceStart / (numCompletedCities)) / 60;
 				System.out.println(stateName + ": " + numCompletedCities + " of " + totalNumCities
 						+ " cities complete. Time remaining: " + SperlingReader.minToString((int) minRemaining));
 			}
