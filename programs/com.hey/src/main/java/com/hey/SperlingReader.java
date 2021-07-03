@@ -435,7 +435,7 @@ public class SperlingReader {
 				Document doc = conn.get();
 				String text = doc.body().text();
 				if (text.contains("Oops. This is embarrassing.")) {
-					log("jsoup connected to this page but it said oops this is embarassing: " + url);
+					System.out.println("jsoup connected to this page but it said oops this is embarassing: " + url);
 					throw new RuntimeException();
 				}
 				return text;

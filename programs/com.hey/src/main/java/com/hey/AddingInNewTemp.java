@@ -12,14 +12,14 @@ public class AddingInNewTemp {
 			"October", "November", "December" };
 
 	public static void main(String[] args) throws Exception {
-	//	runThread("Alabama");
+		runThread("Alabama");
 		runThread("Alaska");
 		runThread("Arizona");
 		runThread("Arkansas");
 		runThread("California");
 		runThread("Colorado");
 		runThread("Connecticut");
-		runThread("Delaware");
+		//runThread("Delaware");
 		runThread("Florida");
 		runThread("Georgia");
 		runThread("Hawaii");
@@ -97,8 +97,8 @@ public class AddingInNewTemp {
 				line = line.substring(startSt.length());
 				line = line.substring(0, line.length() - 3);
 				String[] arr = line.split(",");
-				if (numCompletedCities == 0) {
-					int max = -1;
+				if (numCompletedCities > -1) {
+					int max = -1; // issue was that this was outside of the for loop
 					int min = 99999999;
 					String cityName = arr[0].substring(1, arr[0].length() - 1);
 					String url = "https://www.bestplaces.net/weather/city/" + stateName + "/" + cityName + "/";
