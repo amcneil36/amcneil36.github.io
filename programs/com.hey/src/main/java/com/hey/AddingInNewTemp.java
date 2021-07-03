@@ -12,14 +12,14 @@ public class AddingInNewTemp {
 			"October", "November", "December" };
 
 	public static void main(String[] args) throws Exception {
-		runThread("Alabama");
+	/*	runThread("Alabama");
 		runThread("Alaska");
 		runThread("Arizona");
 		runThread("Arkansas");
 		runThread("California");
 		runThread("Colorado");
 		runThread("Connecticut");
-		//runThread("Delaware");
+		*/runThread("Delaware");/*
 		runThread("Florida");
 		runThread("Georgia");
 		runThread("Hawaii");
@@ -61,7 +61,7 @@ public class AddingInNewTemp {
 		runThread("Washington");
 		runThread("West Virginia");
 		runThread("Wisconsin");
-		runThread("Wyoming");
+		runThread("Wyoming");*/
 		
 		
 		

@@ -1,7 +1,7 @@
 var city = "City";
 var state = "State";
-var augustHigh = "August high (F)";
-var decHigh = "December high (F)";
+var hottestMonthsHigh = "Hottest month's avg high (F)";
+var coldestMonthsHigh = "Coldest month's avg high (F)";
 var annualRainfall = "Annual rainfall (in)";
 var annualSnowfall = "Annual snowfall (in)";
 var numSunnyDays = "Annual days of sunshine";
@@ -20,7 +20,7 @@ var homeAppreciationLastFiveYears = "Home appreciation Last 5 Years";
 var homeAppreciationLastTenYears = "Home appreciation Last 10 Years";
 var averageCommuteTime = "Average one-way commute time";
 var countyName = "County";
-var augHiMinusDecHi = "Aug Hi Minus Dec Hi";
+var augHiMinusDecHi = "Hottest month minus coldest month";
 var avgYearlyWindspeed = "Average yearly windspeed (mph)";
 var avgAugustHumidity = "Average August humidity";
 var avgDecemberHumidity = "Average December humidity";
@@ -37,7 +37,7 @@ var percentWhite = "% White";
 var percentHispanic = "% Hispanic";
 var medianRent = "Median rent";
 var percentWithAtleastBachelors = "% with at least Bachelor's degree";
-var arrayOfFields = [city, state,countyName,population,populationDensity,augustHigh,decHigh,augHiMinusDecHi,annualRainfall,numDaysOfRain,numSunnyDays,annualSnowfall,avgAugustHumidity, avgDecemberHumidity, avgHumidity, avgYearlyWindspeed,violentCrime,propertyCrime,medianAge,percentWithAtleastBachelors,medianIncome,medianRent,medianHomePrice,medianHomeAge,homeAppreciationLastYear,homeAppreciationLastFiveYears,homeAppreciationLastTenYears,airQuality,
+var arrayOfFields = [city, state,countyName,population,populationDensity,hottestMonthsHigh,coldestMonthsHigh,augHiMinusDecHi,annualRainfall,numDaysOfRain,numSunnyDays,annualSnowfall,avgAugustHumidity, avgDecemberHumidity, avgHumidity, avgYearlyWindspeed,violentCrime,propertyCrime,medianAge,percentWithAtleastBachelors,medianIncome,medianRent,medianHomePrice,medianHomeAge,homeAppreciationLastYear,homeAppreciationLastFiveYears,homeAppreciationLastTenYears,airQuality,
 averageCommuteTime, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentDemocrat, percentRepublican, percentAsian, percentBlack, percentWhite,percentHispanic];
 function createMap(obj){
   let map = new Map();
@@ -46,8 +46,8 @@ function createMap(obj){
   map.set(countyName, obj.countyName);
   map.set(population, obj.population);
   map.set(populationDensity, obj.populationDensity);
-  map.set(augustHigh, obj.augHi);
-  map.set(decHigh, obj.decHi);
+  map.set(hottestMonthsHigh, obj.augHi);
+  map.set(coldestMonthsHigh, obj.decHi);
   map.set(augHiMinusDecHi, obj.augHiMinusDecHi);
   map.set(annualRainfall, obj.numInchesOfRain);
   map.set(numDaysOfRain, obj.numDaysOfRain);
