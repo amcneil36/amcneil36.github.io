@@ -187,7 +187,7 @@ public class CityVsUSAComparison {
 	
 	private static List<InputData> readInput() {
 		try {
-			File myObj = new File("citydatainput.csv");
+			File myObj = new File("citydatainput2.csv");
 			Scanner myReader = new Scanner(myObj);
 			myReader.nextLine();
 			int idx = 0;

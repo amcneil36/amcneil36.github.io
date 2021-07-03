@@ -27,8 +27,8 @@ Clicking on that column's header again will sort the results in descending order
 | County   |  |
 | Population |  |
 | People per sq mi |  |
-| August high (F) | Average high for the month of August based on historical data |
-| December high (F) | Average high for the month of December based on historical data |
+| Hottest month's avg high (F) | Average high for the hottest month based on historical data |
+| Coldest month's avg high (F) | Average high for the coldest month based on historical data |
 | Aug Hi Minus Dec Hi | The average high for the month of August minus the average high for the month of December |
 | Annual rainfall (in) | The amount of inches of rain per year based on historical data |
 | Annual days of precipitation | |

@@ -20,7 +20,7 @@ var homeAppreciationLastFiveYears = "Home appreciation Last 5 Years";
 var homeAppreciationLastTenYears = "Home appreciation Last 10 Years";
 var averageCommuteTime = "Average one-way commute time";
 var countyName = "County";
-var augHiMinusDecHi = "Hottest month minus coldest month";
+var hottestMonthMinusColdestMonth = "Hottest high minus coldest high";
 var avgYearlyWindspeed = "Average yearly windspeed (mph)";
 var avgAugustHumidity = "Average August humidity";
 var avgDecemberHumidity = "Average December humidity";
@@ -37,7 +37,7 @@ var percentWhite = "% White";
 var percentHispanic = "% Hispanic";
 var medianRent = "Median rent";
 var percentWithAtleastBachelors = "% with at least Bachelor's degree";
-var arrayOfFields = [city, state,countyName,population,populationDensity,hottestMonthsHigh,coldestMonthsHigh,augHiMinusDecHi,annualRainfall,numDaysOfRain,numSunnyDays,annualSnowfall,avgAugustHumidity, avgDecemberHumidity, avgHumidity, avgYearlyWindspeed,violentCrime,propertyCrime,medianAge,percentWithAtleastBachelors,medianIncome,medianRent,medianHomePrice,medianHomeAge,homeAppreciationLastYear,homeAppreciationLastFiveYears,homeAppreciationLastTenYears,airQuality,
+var arrayOfFields = [city, state,countyName,population,populationDensity,hottestMonthsHigh,coldestMonthsHigh,hottestMonthMinusColdestMonth,annualRainfall,numDaysOfRain,numSunnyDays,annualSnowfall,avgAugustHumidity, avgDecemberHumidity, avgHumidity, avgYearlyWindspeed,violentCrime,propertyCrime,medianAge,percentWithAtleastBachelors,medianIncome,medianRent,medianHomePrice,medianHomeAge,homeAppreciationLastYear,homeAppreciationLastFiveYears,homeAppreciationLastTenYears,airQuality,
 averageCommuteTime, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentDemocrat, percentRepublican, percentAsian, percentBlack, percentWhite,percentHispanic];
 function createMap(obj){
   let map = new Map();
@@ -46,9 +46,9 @@ function createMap(obj){
   map.set(countyName, obj.countyName);
   map.set(population, obj.population);
   map.set(populationDensity, obj.populationDensity);
-  map.set(hottestMonthsHigh, obj.augHi);
-  map.set(coldestMonthsHigh, obj.decHi);
-  map.set(augHiMinusDecHi, obj.augHiMinusDecHi);
+  map.set(hottestMonthsHigh, obj.hottestMonthsHigh);
+  map.set(coldestMonthsHigh, obj.coldestHigh);
+  map.set(hottestMonthMinusColdestMonth, obj.hottestMonthMinusColdestMonth);
   map.set(annualRainfall, obj.numInchesOfRain);
   map.set(numDaysOfRain, obj.numDaysOfRain);
   map.set(numSunnyDays, obj.numSunnyDays);
@@ -88,9 +88,9 @@ function createRow(tr, obj){
   createColumn(tr, obj.countyName);
   createColumn(tr, numberWithCommas(obj.population));
   createColumn(tr, numberWithCommas(obj.populationDensity));
-  createColumn(tr, obj.augHi);
-  createColumn(tr, obj.decHi);
-  createColumn(tr, obj.augHiMinusDecHi);
+  createColumn(tr, obj.hottestMonthsHigh);
+  createColumn(tr, obj.coldestHigh);
+  createColumn(tr, obj.hottestMonthMinusColdestMonth);
   createColumn(tr, obj.numInchesOfRain);
   createColumn(tr, obj.numDaysOfRain);
   createColumn(tr, obj.numSunnyDays);
@@ -150,11 +150,11 @@ var formatter = new Intl.NumberFormat('en-US', {
 });
 
 class Data {
-  constructor(cityName, stateName, augHi, decHi, numInchesOfRain, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime, countyName, augHiMinusDecHi, avgYearlyWindspeed, avgAugustHumidity, avgDecemberHumidity, avgHumidity, percentDemocrat, percentRepublican, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentAsian, percentBlack, percentWhite, percentHispanic, medianRent, percentWithAtleastBachelors) {
+  constructor(cityName, stateName, hottestMonthsHigh, coldestHigh, numInchesOfRain, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime, countyName, hottestMonthMinusColdestMonth, avgYearlyWindspeed, avgAugustHumidity, avgDecemberHumidity, avgHumidity, percentDemocrat, percentRepublican, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentAsian, percentBlack, percentWhite, percentHispanic, medianRent, percentWithAtleastBachelors) {
     this.cityName = cityName;
 	this.stateName = stateName;
-    this.augHi = augHi;
-	this.decHi = decHi;
+    this.hottestMonthsHigh = hottestMonthsHigh;
+	this.coldestHigh = coldestHigh;
 	this.numInchesOfRain = numInchesOfRain;
 	this.annualSnowfall = annualSnowfall;
 	this.numSunnyDays = numSunnyDays;
@@ -173,7 +173,7 @@ class Data {
 	this.homeAppreciationLastTenYears = homeAppreciationLastTenYears;
 	this.averageCommuteTime = averageCommuteTime;
 	this.countyName = countyName;
-	this.augHiMinusDecHi = augHiMinusDecHi;
+	this.hottestMonthMinusColdestMonth = hottestMonthMinusColdestMonth;
 	this.avgYearlyWindspeed = avgYearlyWindspeed;
 	this.avgAugustHumidity = avgAugustHumidity;
 	this.avgDecemberHumidity = avgDecemberHumidity;
