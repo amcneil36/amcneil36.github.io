@@ -77,7 +77,7 @@ public class AddingInNewTemp {
 				+ ".js";
 		File myObj = new File(filePath);
 		Scanner myReader = new Scanner(myObj);
-		myReader.nextLine();
+//		myReader.nextLine();
 		int numCompletedCities = 0;
 		String startSt = "arr.push(new Data(";
 		StringBuilder sb = new StringBuilder();
