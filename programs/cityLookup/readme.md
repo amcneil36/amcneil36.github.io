@@ -29,7 +29,7 @@ Clicking on that column's header again will sort the results in descending order
 | People per sq mi |  |
 | Hottest month's avg high (F) | Average high for the hottest month based on historical data |
 | Coldest month's avg high (F) | Average high for the coldest month based on historical data |
-| Aug Hi Minus Dec Hi | The average high for the month of August minus the average high for the month of December |
+| Hottest high minus coldest high | The average high for the hottest month minus the average high for the coldest month |
 | Annual rainfall (in) | The amount of inches of rain per year based on historical data |
 | Annual days of precipitation | |
 | Annual days of sunshine | Number of sunny days |
