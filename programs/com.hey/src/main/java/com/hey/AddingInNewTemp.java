@@ -12,7 +12,7 @@ public class AddingInNewTemp {
 			"October", "November", "December" };
 
 	public static void main(String[] args) throws Exception {
-	/*	runThread("Alabama");
+		runThread("Alabama");
 		runThread("Alaska");
 		runThread("Arizona");
 		runThread("Arkansas");
@@ -24,8 +24,8 @@ public class AddingInNewTemp {
 		runThread("Georgia");
 		runThread("Hawaii");
 		runThread("Idaho");
-		*/runThread("Illinois");
-	/*	runThread("Indiana");
+		runThread("Illinois");
+		runThread("Indiana");
 		runThread("Iowa");
 		runThread("Kansas");
 		runThread("Kentucky");
@@ -33,13 +33,13 @@ public class AddingInNewTemp {
 		runThread("Maine");
 		runThread("Maryland");
 		runThread("Massachusetts");
-		*/runThread("Michigan");
+		runThread("Michigan");
 		runThread("Minnesota");
-	/*	runThread("Mississippi");
+		runThread("Mississippi");
 		runThread("Missouri");
 		runThread("Montana");
 		runThread("Nebraska");
-		runThread("Nevada");*/
+		runThread("Nevada");
 		runThread("New Hampshire");
 		runThread("New Jersey");
 		runThread("New Mexico");
@@ -50,7 +50,7 @@ public class AddingInNewTemp {
 		runThread("Oklahoma");
 		runThread("Oregon");
 		runThread("Pennsylvania");
-		//runThread("Rhode Island");
+		runThread("Rhode Island");
 		runThread("South Carolina");
 		runThread("South Dakota");
 		runThread("Tennessee");
@@ -81,8 +81,6 @@ public class AddingInNewTemp {
 		int numCompletedCities = 0;
 		String startSt = "arr.push(new Data(";
 		StringBuilder sb = new StringBuilder();
-		int max = -1;
-		int min = 99999999;
 		List<String> lines = new ArrayList<String>();
 		while (myReader.hasNextLine()) {
 			String line = myReader.nextLine();
@@ -99,24 +97,12 @@ public class AddingInNewTemp {
 				line = line.substring(startSt.length());
 				line = line.substring(0, line.length() - 3);
 				String[] arr = line.split(",");
-				String cityName = arr[0].substring(1, arr[0].length() - 1);
-				String url = "https://www.bestplaces.net/weather/city/" + stateName + "/" + cityName + "/";
-				String text = SperlingReader.ReadTextFromPage(url);
-				text = text.substring(text.indexOf("Average Monthly High and Low"));
-				text = text.substring(text.indexOf("January"));
-				for (String month : months) {
-					int startIdx3 = text.indexOf(month + " ", text.indexOf("(°F)")) + month.length() + 1;
-					int endIdx3 = text.indexOf("°", startIdx3);
-					int high = Integer.valueOf(text.substring(startIdx3, endIdx3));
-					if (high > max) {
-						max = high;
-					}
-					if (high < min) {
-						min = high;
-					}
-				}
-				arr[2] = " " + String.valueOf(max);
-				arr[3] = " " + String.valueOf(min);
+                String high = arr[2].substring(1);
+                String low = arr[3].substring(1);
+                int highInt = Integer.valueOf(high);
+                int lowInt = Integer.valueOf(low);
+                int diff = highInt-lowInt;
+                arr[22] = " " + diff;
 				sb.append(startSt);
 				for (String st : arr) {
 					sb.append(st);
