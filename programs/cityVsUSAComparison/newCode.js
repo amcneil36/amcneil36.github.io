@@ -35,8 +35,8 @@ function createRows(tbdy, cityData){
 
       insertRow(tbdy, "Population", populationAverage, populationMedian, cityData.populationMetric);
 	  insertRowWithGrayBackground(tbdy, "People per sq mi", populationDensityAverage, populationDensityMedian, cityData.populationDensityMetric);
-	  insertRow(tbdy, "Hottest month's avg High(F)", augustHighAverage, augustHighMedian, cityData.augustHighMetric);
-	  insertRowWithGrayBackground(tbdy, "Coldest month's avg High(F)", decemberHighAverage, decemberHighMedian, cityData.decemberHighMetric);
+	  insertRow(tbdy, "Hottest month's avg high(F)", augustHighAverage, augustHighMedian, cityData.augustHighMetric);
+	  insertRowWithGrayBackground(tbdy, "Coldest month's avg high(F)", decemberHighAverage, decemberHighMedian, cityData.decemberHighMetric);
 	  insertRow(tbdy, "Hottest high minus coldest high", augustHighMinusDecemberHighAverage, augustHighMinusDecemberHighMedian, cityData.augustHighMinusDecemberHighMetric);
 	  insertRowWithGrayBackground(tbdy, "Annual rainfall(in)", annualInchesOfRainAverage, annualInchesOfRainMedian, cityData.annualInchesOfRainMetric);
 	  insertRow(tbdy, "Annual days of precipitation", daysOfRainAverage, daysOfRainMedian, cityData.daysOfRainMetric);
