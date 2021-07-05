@@ -114,7 +114,7 @@ function doesObjQualify(obj){
 	}
 	var valueString = document.getElementById("value" + i).value; // what the user typed
     valueString = valueString.replace("$", "").replace(" mph", "").replace("mph", "").replace("%", "").replace(" mins", "").replace("mins", "").replace(",", "");
-	if (fieldId == "County" || fieldId == "City" || fieldId == "State" || valueString == "N/A"){
+	if (fieldId == "County" || fieldId == "City" || fieldId == "State" || fieldId == "Metro" || valueString == "N/A"){
 	  if(compareToSymbol(symbol, fieldName.toLowerCase(), valueString.toLowerCase())){
 		  continue;
 	  }

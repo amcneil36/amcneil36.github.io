@@ -434,9 +434,9 @@ public class SperlingReader {
 			try {
 				Document doc = conn.get();
 				String text = doc.body().text();
-				if (text.contains("Oops. This is embarrassing.")) {
+				if (text.contains("Oops. This is embarrassing.") && i == 9) {
 					System.out.println("jsoup connected to this page but it said oops this is embarassing: " + url);
-					throw new RuntimeException();
+					continue;
 				}
 				return text;
 			} catch (IOException ex) {
