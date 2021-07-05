@@ -1,7 +1,9 @@
 package com.hey;
 
+import java.awt.Desktop;
 import java.io.File;
 import java.io.FileWriter;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -91,45 +93,18 @@ public class AddingInNewTemp {
 			}
 			lines.add(line);
 		}
-		int totalNumCities = lines.size();
-		long startTime = System.currentTimeMillis();
 		for (String line : lines) {
-			String initialLine = line;
-			String metroName = "None";
 			line = line.substring(startSt.length());
 			line = line.substring(0, line.length() - 3);
 			String[] arr = line.split(",");
-			String cityName = arr[0].substring(1, arr[0].length() - 1);
-			String url = "https://www.bestplaces.net/city/" + stateName.toLowerCase() + "/" + cityName.toLowerCase() + "/";
-			try {
-				String text = SperlingReader.ReadTextFromPage(url);
-				text = text.substring(text.indexOf("Metro Area: ") + "Metro Area: ".length());
-				text = text.substring(0, text.indexOf(" Metro Area"));
-				if (!"No".equals(text)) {
-					metroName = text;
-				}
-			} catch (Exception ex) {
-				System.out.println("something went wrong! dumping stack trace!");
-				ex.printStackTrace();
-				System.out.println("stack trace is from this line: " + initialLine);
-			}
 			sb.append(startSt);
 			for (String st : arr) {
 				sb.append(st);
 				sb.append(",");
 			}
-			sb.append(" \"" + metroName + "\"");
-			// sb.deleteCharAt(sb.lastIndexOf(","));
+			sb.append(" \"N/A\", \"N/A\"");
 			sb.append("));");
 			sb.append("\n");
-			numCompletedCities++;
-			if (numCompletedCities % 50 == 0) {
-				long secondsSinceStart = (System.currentTimeMillis() - startTime) / 1000;
-				float numRemainingCities = (totalNumCities - numCompletedCities);
-				float minRemaining = (numRemainingCities * secondsSinceStart / (numCompletedCities)) / 60;
-				System.out.println(stateName + ": " + numCompletedCities + " of " + totalNumCities
-						+ " cities complete. Time remaining: " + SperlingReader.minToString((int) minRemaining));
-			}
 		}
 		 FileWriter myWriter = new FileWriter(filePath);
 		 String st = sb.toString();
