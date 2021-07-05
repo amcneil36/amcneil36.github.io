@@ -18,7 +18,56 @@ public class RealtorWebPageOpener {
 	public static void main(String[] args) throws Exception {
 		populateMap();
 
+		runThread("Alabama");
+		runThread("Alaska");
+		runThread("Arizona");
+		runThread("Arkansas");
+		runThread("California");
+		runThread("Colorado");
+		runThread("Connecticut");
+		runThread("Delaware");
+		runThread("Florida");
+		runThread("Georgia");
+		runThread("Hawaii");
+		runThread("Idaho");
+		runThread("Illinois");
+		runThread("Indiana");
+		runThread("Iowa");
+		runThread("Kansas");
+		runThread("Kentucky");
+		runThread("Louisiana");
+		runThread("Maine");
+		runThread("Maryland");
+		runThread("Massachusetts");
+		runThread("Michigan");
+		runThread("Minnesota");
+		runThread("Mississippi");
+		runThread("Missouri");
+		runThread("Montana");
+		runThread("Nebraska");
+		runThread("Nevada");
+		runThread("New Hampshire");
+		runThread("New Jersey");
+		runThread("New Mexico");
+		runThread("New York");
+		runThread("North Carolina");
+		runThread("North Dakota");
+		runThread("Ohio");
+		runThread("Oklahoma");
+		runThread("Oregon");
+		runThread("Pennsylvania");
+		runThread("Rhode Island");
+		runThread("South Carolina");
+		runThread("South Dakota");
+		runThread("Tennessee");
 		runThread("Texas");
+		runThread("Utah");
+		runThread("Vermont");
+		runThread("Virginia");
+		runThread("Washington");
+		runThread("West Virginia");
+		runThread("Wisconsin");
+		runThread("Wyoming");
 	}
 
 	public static void runThread(String stateName) throws Exception {
@@ -53,6 +102,7 @@ public class RealtorWebPageOpener {
 				String url = "https://www.realtor.com/realestateandhomes-search/" + countyName + "_" + suffix.toUpperCase() + "/overview";
 				countiesUsed.add(countyName);
 				Desktop.getDesktop().browse(new URI(url));
+				Thread.sleep(1000);
 			}
 		}
 	}
