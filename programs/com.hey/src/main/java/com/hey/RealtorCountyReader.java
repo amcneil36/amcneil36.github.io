@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-public class RealtorReader {
+public class RealtorCountyReader {
 	
 	private static Map<String, String> map = new HashMap<String, String>();
 
@@ -20,7 +20,7 @@ public class RealtorReader {
 	
 	public static void main(String[] args) throws Exception {
 		populateMap();
-		String filePath = "realtorCopyPaste.txt";
+		String filePath = "realtorCountyCopyPaste.txt";
 		File myObj = new File(filePath);
 		Scanner myReader = new Scanner(myObj);
 		String line = "";

@@ -11,8 +11,10 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
-public class RealtorWebPageOpener {
-	
+import com.hey.RealtorWebPageCountyOpener.RunnableDemo6;
+
+public class RealtorWebPageCityOpener {
+
 	private static Map<String, String> map = new HashMap<String, String>();
 	
 	public static void main(String[] args) throws Exception {
@@ -93,40 +95,33 @@ public class RealtorWebPageOpener {
 			}
 			lines.add(line);
 		}
-		Set<String> countiesUsed = new HashSet<String>();
-		for (String line : lines) {
-			line = line.substring(startSt.length());
-			line = line.substring(0, line.length() - 3);
-			String[] arr = line.split(",");
-			String countyName = arr[21].substring(2, arr[21].length() - 1);	
-			String val = arr[arr.length - 2];
-			if (!val.contains("N/A")) {
-				countyName = countyName.replace(" ", "-");
-				countiesUsed.add(countyName);
-			}
-		}
 		int numTabsOpened = 0;
 		for (String line : lines) {
 			line = line.substring(startSt.length());
 			line = line.substring(0, line.length() - 3);
 			String[] arr = line.split(",");
-			String countyName = arr[21].substring(2, arr[21].length() - 1);
 			int population = Integer.valueOf(arr[8].substring(1));
 			String val = arr[arr.length - 2];
-			countyName = countyName.replace(" ", "-");
-			if (!val.contains("N/A")) {
-				countiesUsed.add(countyName);
+			if (!val.contains("N/A") || population < 1000) {
 				continue;
 			}
+			String metro = arr[arr.length - 3];
+			String city = arr[0];
+			city = city.replace("\"", "");
+			city = city.replace(" ", "-");
+			System.out.println(city);
+			System.out.println(city.length());
+			int x = 2;
 			// greater than 100k done. states with all counties done: california, florida, georgia, washington, hawaii, SC, NC, TN, TX, AZ, NM.
-			if (population > 0 && population < 100000 && !countiesUsed.contains(countyName)) {
-				System.out.println(countyName);
 				String suffix = map.get(stateName.toLowerCase());
-				String url = "https://www.realtor.com/realestateandhomes-search/" + countyName + "_" + suffix.toUpperCase() + "/overview";
-				countiesUsed.add(countyName);
-				//Desktop.getDesktop().browse(new URI(url));
+				// https://www.realtor.com/realestateandhomes-search/Round-Rock_TX/overview
+				// https://www.realtor.com/realestateandhomes-search/Harris-County_TX/overview
+				String url = "https://www.realtor.com/realestateandhomes-search/" + city + "_" + suffix.toUpperCase() + "/overview";
+				Desktop.getDesktop().browse(new URI(url));
 				numTabsOpened++;
-			}
+				while (x == 2) {
+					
+				}
 		}
 		System.out.println("number of tabs opened: " + numTabsOpened);
 	}
