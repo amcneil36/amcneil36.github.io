@@ -118,13 +118,13 @@ public class RealtorWebPageOpener {
 				countiesUsed.add(countyName);
 				continue;
 			}
-			// greater than 100k done. states with all counties done: california, florida, georgia, washington, hawaii, SC, NC, TN.
+			// greater than 100k done. states with all counties done: california, florida, georgia, washington, hawaii, SC, NC, TN, TX, AZ, NM.
 			if (population > 0 && population < 100000 && !countiesUsed.contains(countyName)) {
 				System.out.println(countyName);
 				String suffix = map.get(stateName.toLowerCase());
 				String url = "https://www.realtor.com/realestateandhomes-search/" + countyName + "_" + suffix.toUpperCase() + "/overview";
 				countiesUsed.add(countyName);
-				Desktop.getDesktop().browse(new URI(url));
+				//Desktop.getDesktop().browse(new URI(url));
 				numTabsOpened++;
 			}
 		}
