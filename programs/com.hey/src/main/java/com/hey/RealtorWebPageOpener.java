@@ -69,8 +69,12 @@ public class RealtorWebPageOpener {
 		runThread("Wisconsin");
 		runThread("Wyoming");
 	}
-
+	
 	public static void runThread(String stateName) throws Exception {
+		processState(stateName);
+	}
+
+	public static void runThread2(String stateName) throws Exception {
 		new RunnableDemo6(stateName).start();
 	}
 
@@ -95,14 +99,18 @@ public class RealtorWebPageOpener {
 			String[] arr = line.split(",");
 			String countyName = arr[21].substring(2, arr[21].length() - 1);
 			int population = Integer.valueOf(arr[8].substring(1));
-			
-			if (population > 300000 && !countiesUsed.contains(countyName)) {
+			String val = arr[arr.length - 2];
+			if (!val.contains("N/A")) {
+				countiesUsed.add(countyName);
+				continue;
+			}
+			// greater than 200k done
+			if (population > 100000 && population < 200000 && !countiesUsed.contains(countyName)) {
 				countyName = countyName.replace(" ", "-");
 				String suffix = map.get(stateName.toLowerCase());
 				String url = "https://www.realtor.com/realestateandhomes-search/" + countyName + "_" + suffix.toUpperCase() + "/overview";
 				countiesUsed.add(countyName);
 				Desktop.getDesktop().browse(new URI(url));
-				Thread.sleep(1000);
 			}
 		}
 	}
