@@ -18,11 +18,12 @@ public class RealtorWebPageOpener {
 	public static void main(String[] args) throws Exception {
 		populateMap();
 
+		runThread("Washington");
 /*		runThread("Alabama");
 		runThread("Alaska");
 		runThread("Arizona");
 		runThread("Arkansas");
-	*/	runThread("California");/*
+		runThread("California");
 		runThread("Colorado");
 		runThread("Connecticut");
 		runThread("Delaware");
@@ -117,7 +118,7 @@ public class RealtorWebPageOpener {
 				countiesUsed.add(countyName);
 				continue;
 			}
-			// greater than 100k done. all of california done
+			// greater than 100k done. states with all counties done: california, florida, georgia.
 			if (population > 0 && population < 100000 && !countiesUsed.contains(countyName)) {
 				System.out.println(countyName);
 				String suffix = map.get(stateName.toLowerCase());
