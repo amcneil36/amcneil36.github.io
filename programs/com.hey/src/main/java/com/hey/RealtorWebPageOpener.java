@@ -18,7 +18,7 @@ public class RealtorWebPageOpener {
 	public static void main(String[] args) throws Exception {
 		populateMap();
 
-		runThread("Tennessee");
+		runThread("Texas");
 /*		runThread("Alabama");
 		runThread("Alaska");
 		runThread("Arizona");
