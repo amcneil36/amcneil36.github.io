@@ -18,11 +18,11 @@ public class RealtorWebPageOpener {
 	public static void main(String[] args) throws Exception {
 		populateMap();
 
-		runThread("Alabama");
+/*		runThread("Alabama");
 		runThread("Alaska");
 		runThread("Arizona");
 		runThread("Arkansas");
-		runThread("California");
+	*/	runThread("California");/*
 		runThread("Colorado");
 		runThread("Connecticut");
 		runThread("Delaware");
@@ -67,7 +67,7 @@ public class RealtorWebPageOpener {
 		runThread("Washington");
 		runThread("West Virginia");
 		runThread("Wisconsin");
-		runThread("Wyoming");
+		runThread("Wyoming");*/
 	}
 	
 	public static void runThread(String stateName) throws Exception {
@@ -97,22 +97,37 @@ public class RealtorWebPageOpener {
 			line = line.substring(startSt.length());
 			line = line.substring(0, line.length() - 3);
 			String[] arr = line.split(",");
+			String countyName = arr[21].substring(2, arr[21].length() - 1);	
+			String val = arr[arr.length - 2];
+			if (!val.contains("N/A")) {
+				countyName = countyName.replace(" ", "-");
+				countiesUsed.add(countyName);
+			}
+		}
+		int numTabsOpened = 0;
+		for (String line : lines) {
+			line = line.substring(startSt.length());
+			line = line.substring(0, line.length() - 3);
+			String[] arr = line.split(",");
 			String countyName = arr[21].substring(2, arr[21].length() - 1);
 			int population = Integer.valueOf(arr[8].substring(1));
 			String val = arr[arr.length - 2];
+			countyName = countyName.replace(" ", "-");
 			if (!val.contains("N/A")) {
 				countiesUsed.add(countyName);
 				continue;
 			}
-			// greater than 200k done
-			if (population > 100000 && population < 200000 && !countiesUsed.contains(countyName)) {
-				countyName = countyName.replace(" ", "-");
+			// greater than 100k done. all of california done
+			if (population > 0 && population < 100000 && !countiesUsed.contains(countyName)) {
+				System.out.println(countyName);
 				String suffix = map.get(stateName.toLowerCase());
 				String url = "https://www.realtor.com/realestateandhomes-search/" + countyName + "_" + suffix.toUpperCase() + "/overview";
 				countiesUsed.add(countyName);
 				Desktop.getDesktop().browse(new URI(url));
+				numTabsOpened++;
 			}
 		}
+		System.out.println("number of tabs opened: " + numTabsOpened);
 	}
 	
 	private static void populateMap() {
