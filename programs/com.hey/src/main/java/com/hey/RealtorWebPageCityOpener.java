@@ -16,12 +16,12 @@ import com.hey.RealtorWebPageCountyOpener.RunnableDemo6;
 public class RealtorWebPageCityOpener {
 
 	private static Map<String, String> map = new HashMap<String, String>();
+	private static final String METRO_NAME = "Houston-The Woodlands-Sugar Land";
 	
 	public static void main(String[] args) throws Exception {
 		populateMap();
 
-		runThread("Texas");
-/*		runThread("Alabama");
+		runThread("Alabama");
 		runThread("Alaska");
 		runThread("Arizona");
 		runThread("Arkansas");
@@ -70,7 +70,7 @@ public class RealtorWebPageCityOpener {
 		runThread("Washington");
 		runThread("West Virginia");
 		runThread("Wisconsin");
-		runThread("Wyoming");*/
+		runThread("Wyoming");
 	}
 	
 	public static void runThread(String stateName) throws Exception {
@@ -106,24 +106,26 @@ public class RealtorWebPageCityOpener {
 				continue;
 			}
 			String metro = arr[arr.length - 3];
+			metro = metro.replace("\"", "");
+			metro = metro.substring(1);
+			if (!METRO_NAME.equals(metro)) {
+				continue;
+			}
 			String city = arr[0];
 			city = city.replace("\"", "");
 			city = city.replace(" ", "-");
-			System.out.println(city);
-			System.out.println(city.length());
 			int x = 2;
-			// greater than 100k done. states with all counties done: california, florida, georgia, washington, hawaii, SC, NC, TN, TX, AZ, NM.
+			// metros completed: houston
 				String suffix = map.get(stateName.toLowerCase());
 				// https://www.realtor.com/realestateandhomes-search/Round-Rock_TX/overview
 				// https://www.realtor.com/realestateandhomes-search/Harris-County_TX/overview
 				String url = "https://www.realtor.com/realestateandhomes-search/" + city + "_" + suffix.toUpperCase() + "/overview";
 				Desktop.getDesktop().browse(new URI(url));
 				numTabsOpened++;
-				while (x == 2) {
-					
-				}
 		}
-		System.out.println("number of tabs opened: " + numTabsOpened);
+		if (numTabsOpened > 0) {
+			System.out.println("number of tabs opened: " + numTabsOpened);	
+		}
 	}
 	
 	private static void populateMap() {
