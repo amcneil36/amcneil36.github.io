@@ -16,7 +16,11 @@ import com.hey.RealtorWebPageCountyOpener.RunnableDemo6;
 public class RealtorWebPageCityOpener {
 
 	private static Map<String, String> map = new HashMap<String, String>();
-	private static final String METRO_NAME = "Houston-The Woodlands-Sugar Land";
+	
+	// metros completed: houston, dallas, austin, SA, CC
+	// skipping NYC cuz 700 results
+    // LA, miami
+	private static final String METRO_NAME = "Miami-Fort Lauderdale-West Palm Beach";
 	
 	public static void main(String[] args) throws Exception {
 		populateMap();
@@ -115,7 +119,6 @@ public class RealtorWebPageCityOpener {
 			city = city.replace("\"", "");
 			city = city.replace(" ", "-");
 			int x = 2;
-			// metros completed: houston
 				String suffix = map.get(stateName.toLowerCase());
 				// https://www.realtor.com/realestateandhomes-search/Round-Rock_TX/overview
 				// https://www.realtor.com/realestateandhomes-search/Harris-County_TX/overview
