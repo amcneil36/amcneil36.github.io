@@ -22,7 +22,7 @@ public class RealtorWebPageCityOpener {
     // LA, miami, ATL, phoenix, SF, san bernardino, seattle, SD, tampa, charlotte
 	// orlando, las vegas, KC, san jose, nashville, raleigh, jacksonville
 	// NOLA
-	private static final String METRO_NAME = "New Orleans-Metairie";
+	private static final String METRO_NAME = "Fargo";
 	
 	public static void main(String[] args) throws Exception {
 		populateMap();
