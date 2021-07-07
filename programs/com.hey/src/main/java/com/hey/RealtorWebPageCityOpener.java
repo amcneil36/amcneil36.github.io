@@ -18,9 +18,11 @@ public class RealtorWebPageCityOpener {
 	private static Map<String, String> map = new HashMap<String, String>();
 	
 	// metros completed: houston, dallas, austin, SA, CC
-	// skipping NYC cuz 700 results
-    // LA, miami
-	private static final String METRO_NAME = "Miami-Fort Lauderdale-West Palm Beach";
+	// skipping NYC cuz 700 results. detroit had 170
+    // LA, miami, ATL, phoenix, SF, san bernardino, seattle, SD, tampa, charlotte
+	// orlando, las vegas, KC, san jose, nashville, raleigh, jacksonville
+	// NOLA
+	private static final String METRO_NAME = "New Orleans-Metairie";
 	
 	public static void main(String[] args) throws Exception {
 		populateMap();
