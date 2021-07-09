@@ -21,13 +21,13 @@ public class RealtorWebPageCityOpener {
 	// skipping NYC cuz 700 results. detroit had 170
     // LA, miami, ATL, phoenix, SF, san bernardino, seattle, SD, tampa, charlotte
 	// orlando, las vegas, KC, san jose, nashville, raleigh, jacksonville
-	// NOLA
-	private static final String METRO_NAME = "San Luis Obispo-Paso Robles-Arroyo Grande";
+	// NOLA, the valley
+	private static final String METRO_NAME = "New York-Newark-Jersey City";
 	
 	public static void main(String[] args) throws Exception {
 		populateMap();
 
-		runThread("Alabama");
+	/*	runThread("Alabama");
 		runThread("Alaska");
 		runThread("Arizona");
 		runThread("Arkansas");
@@ -58,7 +58,7 @@ public class RealtorWebPageCityOpener {
 		runThread("New Hampshire");
 		runThread("New Jersey");
 		runThread("New Mexico");
-		runThread("New York");
+	*/	runThread("New York");/*
 		runThread("North Carolina");
 		runThread("North Dakota");
 		runThread("Ohio");
@@ -76,7 +76,7 @@ public class RealtorWebPageCityOpener {
 		runThread("Washington");
 		runThread("West Virginia");
 		runThread("Wisconsin");
-		runThread("Wyoming");
+		runThread("Wyoming");*/
 	}
 	
 	public static void runThread(String stateName) throws Exception {
@@ -106,9 +106,15 @@ public class RealtorWebPageCityOpener {
 			line = line.substring(startSt.length());
 			line = line.substring(0, line.length() - 3);
 			String[] arr = line.split(",");
+			String city = arr[0];
+			city = city.replace("\"", "");
+			city = city.replace(" ", "-");
 			int population = Integer.valueOf(arr[8].substring(1));
 			String val = arr[arr.length - 2];
 			if (!val.contains("N/A") || population < 1000) {
+				continue;
+			}
+			if (population < 15000) {
 				continue;
 			}
 			String metro = arr[arr.length - 3];
@@ -117,15 +123,17 @@ public class RealtorWebPageCityOpener {
 			if (!METRO_NAME.equals(metro)) {
 				continue;
 			}
-			String city = arr[0];
-			city = city.replace("\"", "");
-			city = city.replace(" ", "-");
 			int x = 2;
+			
+		//	System.out.println(city);
 				String suffix = map.get(stateName.toLowerCase());
 				// https://www.realtor.com/realestateandhomes-search/Round-Rock_TX/overview
 				// https://www.realtor.com/realestateandhomes-search/Harris-County_TX/overview
 				String url = "https://www.realtor.com/realestateandhomes-search/" + city + "_" + suffix.toUpperCase() + "/overview";
-				Desktop.getDesktop().browse(new URI(url));
+				if (city.equals("Brooklyn")) {
+					Desktop.getDesktop().browse(new URI(url));
+				}
+			//	Desktop.getDesktop().browse(new URI(url));
 				numTabsOpened++;
 		}
 		if (numTabsOpened > 0) {
