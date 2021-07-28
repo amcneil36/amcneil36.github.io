@@ -22,7 +22,7 @@ public class RealtorWebPageCityOpener {
     // LA, miami, ATL, phoenix, SF, san bernardino, seattle, SD, tampa, charlotte
 	// orlando, las vegas, KC, san jose, nashville, raleigh, jacksonville
 	// NOLA, the valley
-	private static final String METRO_NAME = "New York-Newark-Jersey City";
+	private static final String METRO_NAME = "Houston-The Woodlands-Sugar Land";
 	
 	public static void main(String[] args) throws Exception {
 		populateMap();
@@ -58,7 +58,7 @@ public class RealtorWebPageCityOpener {
 		runThread("New Hampshire");
 		runThread("New Jersey");
 		runThread("New Mexico");
-	*/	runThread("New York");/*
+		runThread("New York");
 		runThread("North Carolina");
 		runThread("North Dakota");
 		runThread("Ohio");
@@ -69,7 +69,7 @@ public class RealtorWebPageCityOpener {
 		runThread("South Carolina");
 		runThread("South Dakota");
 		runThread("Tennessee");
-		runThread("Texas");
+		*/runThread("Texas");/*
 		runThread("Utah");
 		runThread("Vermont");
 		runThread("Virginia");
@@ -111,12 +111,12 @@ public class RealtorWebPageCityOpener {
 			city = city.replace(" ", "-");
 			int population = Integer.valueOf(arr[8].substring(1));
 			String val = arr[arr.length - 2];
-			if (!val.contains("N/A") || population < 1000) {
+			if (population < 1000) {
 				continue;
 			}
-			if (population < 15000) {
-				continue;
-			}
+//			if (!val.contains("N/A") || population < 1000) {
+//				continue;
+//			}
 			String metro = arr[arr.length - 3];
 			metro = metro.replace("\"", "");
 			metro = metro.substring(1);
@@ -130,9 +130,7 @@ public class RealtorWebPageCityOpener {
 				// https://www.realtor.com/realestateandhomes-search/Round-Rock_TX/overview
 				// https://www.realtor.com/realestateandhomes-search/Harris-County_TX/overview
 				String url = "https://www.realtor.com/realestateandhomes-search/" + city + "_" + suffix.toUpperCase() + "/overview";
-				if (city.equals("Brooklyn")) {
-					Desktop.getDesktop().browse(new URI(url));
-				}
+			Desktop.getDesktop().browse(new URI(url));
 			//	Desktop.getDesktop().browse(new URI(url));
 				numTabsOpened++;
 		}
