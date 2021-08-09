@@ -40,8 +40,10 @@ var percentWhite = "% White";
 var percentHispanic = "% Hispanic";
 var medianRent = "Median rent";
 var percentWithAtleastBachelors = "% with at least Bachelor's degree";
+var timeZone = "Timezone";
+var feetAboveSeaLevel = "Elevation (ft)";
 var arrayOfFields = [city, state,countyName,population,populationDensity,hottestMonthsHigh,coldestMonthsHigh,hottestMonthMinusColdestMonth,annualRainfall,numDaysOfRain,numSunnyDays,annualSnowfall,avgAugustHumidity, avgDecemberHumidity, avgHumidity, avgYearlyWindspeed,violentCrime,propertyCrime,medianAge,percentWithAtleastBachelors,medianIncome,medianRent,medianHomePrice,homeSquareFeet,costPerSquareFoot,medianHomeAge,homeAppreciationLastYear,homeAppreciationLastFiveYears,homeAppreciationLastTenYears,airQuality,
-averageCommuteTime, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentDemocrat, percentRepublican, percentAsian, percentBlack, percentWhite,percentHispanic, metro];
+averageCommuteTime, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentDemocrat, percentRepublican, percentAsian, percentBlack, percentWhite,percentHispanic, metro, timeZone, feetAboveSeaLevel];
 function createMap(obj){
   let map = new Map();
   map.set(city, obj.cityName);
@@ -85,6 +87,8 @@ function createMap(obj){
   map.set(percentHispanic,obj.percentHispanic);
   map.set(percentWithAtleastBachelors,obj.percentWithAtleastBachelors);
   map.set(metro,obj.metro);
+  map.set(timeZone, obj.timeZone);
+  map.set(feetAboveSeaLevel, obj.feetAboveSeaLevel);
   return map; 
 }
 
@@ -130,6 +134,8 @@ function createRow(tr, obj){
   createColumn(tr, formatPercent(obj.percentWhite));
   createColumn(tr, formatPercent(obj.percentHispanic));
   createColumn(tr, obj.metro);
+  createColumn(tr, obj.timeZone);
+  createColumn(tr, obj.feetAboveSeaLevel);
 }
 
 function formatCurrency(inp){
@@ -156,7 +162,8 @@ var formatter = new Intl.NumberFormat('en-US', {
 });
 
 class Data {
-  constructor(cityName, stateName, hottestMonthsHigh, coldestHigh, numInchesOfRain, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime, countyName, hottestMonthMinusColdestMonth, avgYearlyWindspeed, avgAugustHumidity, avgDecemberHumidity, avgHumidity, percentDemocrat, percentRepublican, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentAsian, percentBlack, percentWhite, percentHispanic, medianRent, percentWithAtleastBachelors, metro, homeSquareFeet, costPerSquareFoot) {
+  constructor(cityName, stateName, hottestMonthsHigh, coldestHigh, numInchesOfRain, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime, countyName, hottestMonthMinusColdestMonth, avgYearlyWindspeed, avgAugustHumidity, avgDecemberHumidity, avgHumidity, percentDemocrat, percentRepublican, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentAsian, percentBlack, percentWhite, percentHispanic, medianRent, percentWithAtleastBachelors, metro, 
+  homeSquareFeet, costPerSquareFoot, timeZone, feetAboveSeaLevel) {
     this.cityName = cityName;
 	this.stateName = stateName;
     this.hottestMonthsHigh = hottestMonthsHigh;
@@ -198,5 +205,7 @@ class Data {
 	this.metro = metro;
 	this.homeSquareFeet = homeSquareFeet;
 	this.costPerSquareFoot = costPerSquareFoot;
+	this.feetAboveSeaLevel = feetAboveSeaLevel;
+	this.timeZone = timeZone;
   }
 }
