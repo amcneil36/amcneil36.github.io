@@ -6,11 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import com.hey.AddingInNewTemp.RunnableDemo5;
+public abstract class GenericDataReadAndWriter {
 
-public final class GenericDataReadAndWriter {
-
-	static String startSt = "arr.push(new Data(";
+	private static final String startSt = "arr.push(new Data(";
 
 	static class Data {
 		String cityName = "N/A";
@@ -59,8 +57,8 @@ public final class GenericDataReadAndWriter {
 
 	}
 
-	static class AndrewStringWriter {
-		StringBuilder sb = new StringBuilder(startSt);
+	private static class AndrewStringWriter {
+		StringBuilder sb = new StringBuilder();
 
 		AndrewStringWriter appendWithComma(String st) {
 			sb.append(st).append(",");
@@ -83,91 +81,98 @@ public final class GenericDataReadAndWriter {
 			return sb.toString();
 		}
 	}
-	
-	public static void runAllStates() throws Exception {
-		runThread("Alabama");
-		runThread("Alaska");
-		runThread("Arizona");
-		runThread("Arkansas");
-		runThread("California");
-		runThread("Colorado");
-		runThread("Connecticut");
-		runThread("Delaware");
-		runThread("Florida");
-		runThread("Georgia");
-		runThread("Hawaii");
-		runThread("Idaho");
-		runThread("Illinois");
-		runThread("Indiana");
-		runThread("Iowa");
-		runThread("Kansas");
-		runThread("Kentucky");
-		runThread("Louisiana");
-		runThread("Maine");
-		runThread("Maryland");
-		runThread("Massachusetts");
-		runThread("Michigan");
-		runThread("Minnesota");
-		runThread("Mississippi");
-		runThread("Missouri");
-		runThread("Montana");
-		runThread("Nebraska");
-		runThread("Nevada");
-		runThread("New Hampshire");
-		runThread("New Jersey");
-		runThread("New Mexico");
-		runThread("New York");
-		runThread("North Carolina");
-		runThread("North Dakota");
-		runThread("Ohio");
-		runThread("Oklahoma");
-		runThread("Oregon");
-		runThread("Pennsylvania");
-		runThread("Rhode Island");
-		runThread("South Carolina");
-		runThread("South Dakota");
-		runThread("Tennessee");
-		runThread("Texas");
-		runThread("Utah");
-		runThread("Vermont");
-		runThread("Virginia");
-		runThread("Washington");
-		runThread("West Virginia");
-		runThread("Wisconsin");
-		runThread("Wyoming");
-	}
-	
-	public static void runThread(String stateName) throws Exception {
-		new RunnableDemo51(stateName).start();
+
+	public void runStatesAsyn() throws Exception {
+		runStateAsync("Alabama");
+		runStateAsync("Alaska");
+		runStateAsync("Arizona");
+		runStateAsync("Arkansas");
+		runStateAsync("California");
+		runStateAsync("Colorado");
+		runStateAsync("Connecticut");
+		runStateAsync("Delaware");
+		runStateAsync("Florida");
+		runStateAsync("Georgia");
+		runStateAsync("Hawaii");
+		runStateAsync("Idaho");
+		runStateAsync("Illinois");
+		runStateAsync("Indiana");
+		runStateAsync("Iowa");
+		runStateAsync("Kansas");
+		runStateAsync("Kentucky");
+		runStateAsync("Louisiana");
+		runStateAsync("Maine");
+		runStateAsync("Maryland");
+		runStateAsync("Massachusetts");
+		runStateAsync("Michigan");
+		runStateAsync("Minnesota");
+		runStateAsync("Mississippi");
+		runStateAsync("Missouri");
+		runStateAsync("Montana");
+		runStateAsync("Nebraska");
+		runStateAsync("Nevada");
+		runStateAsync("New Hampshire");
+		runStateAsync("New Jersey");
+		runStateAsync("New Mexico");
+		runStateAsync("New York");
+		runStateAsync("North Carolina");
+		runStateAsync("North Dakota");
+		runStateAsync("Ohio");
+		runStateAsync("Oklahoma");
+		runStateAsync("Oregon");
+		runStateAsync("Pennsylvania");
+		runStateAsync("Rhode Island");
+		runStateAsync("South Carolina");
+		runStateAsync("South Dakota");
+		runStateAsync("Tennessee");
+		runStateAsync("Texas");
+		runStateAsync("Utah");
+		runStateAsync("Vermont");
+		runStateAsync("Virginia");
+		runStateAsync("Washington");
+		runStateAsync("West Virginia");
+		runStateAsync("Wisconsin");
+		runStateAsync("Wyoming");
 	}
 
-	private static void processState(String stateName) throws Exception {
+	private void runStateAsync(String stateName) throws Exception {
+		new RunnableDemo51(stateName, this).start();
+	}
+
+	public void runStateSync(String stateName) throws Exception {
 		List<Data> dataList = readData(stateName);
 		updateData(dataList);
-		writeData(dataList);
+		writeData(dataList, stateName);
 	}
 
-	private static void writeData(List<Data> dataList) throws Exception {
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\"
-				+ dataList.get(0).stateName + ".js";
+	private static void writeData(List<Data> dataList, String stateName) throws Exception {
+		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\" + stateName
+				+ ".js";
 		FileWriter myWriter = new FileWriter(filePath);
 		AndrewStringWriter sb = new AndrewStringWriter();
 		for (Data data : dataList) {
 			sb.append(startSt).appendWithComma(data.cityName).appendWithComma(data.stateName)
-					.appendWithComma(data.hottestMonthsHigh).appendWithComma(data.coldestHigh).appendWithComma(data.numInchesOfRain)
-					.appendWithComma(data.annualSnowfall).appendWithComma(data.numSunnyDays).appendWithComma(data.numDaysOfRain)
-					.appendWithComma(data.numDaysOfRain).appendWithComma(data.population).appendWithComma(data.populationDensity)
-					.appendWithComma(data.medianIncome).appendWithComma(data.medianHomePrice).appendWithComma(data.medianAge)
-					.appendWithComma(data.violentCrime).appendWithComma(data.propertyCrime).appendWithComma(data.airQuality)
-					.appendWithComma(data.medianHomeAge).appendWithComma(data.homeAppreciationLastYear).appendWithComma(data.homeAppreciationLastFiveYears)
-					.appendWithComma(data.homeAppreciationLastTenYears).appendWithComma(data.averageCommuteTime).appendWithComma(data.countyName)
-					.appendWithComma(data.hottestMonthMinusColdestMonth).appendWithComma(data.avgYearlyWindspeed).appendWithComma(data.avgAugustHumidity)
-					.appendWithComma(data.avgDecemberHumidity).appendWithComma(data.avgHumidity).appendWithComma(data.percentDemocrat)
-					.appendWithComma(data.percentRepublican).appendWithComma(data.unemploymentRate).appendWithComma(data.jobGrowthLastYear)
-					.appendWithComma(data.populationGrowthSince2010).appendWithComma(data.percentAsian).appendWithComma(data.percentBlack)
-					.appendWithComma(data.percentWhite).appendWithComma(data.percentHispanic).appendWithComma(data.medianRent)
-					.appendWithComma(data.percentWithAtleastBachelors).appendWithComma(data.metro).appendWithComma(data.homeSquareFeet)
-					.appendWithComma(data.costPerSquareFoot).appendWithComma(data.timeZone).appendLastItem(data.feetAboveSeaLevel);
+					.appendWithComma(data.hottestMonthsHigh).appendWithComma(data.coldestHigh)
+					.appendWithComma(data.numInchesOfRain).appendWithComma(data.annualSnowfall)
+					.appendWithComma(data.numSunnyDays).appendWithComma(data.numDaysOfRain)
+					.appendWithComma(data.population).appendWithComma(data.populationDensity)
+					.appendWithComma(data.medianIncome).appendWithComma(data.medianHomePrice)
+					.appendWithComma(data.medianAge).appendWithComma(data.violentCrime)
+					.appendWithComma(data.propertyCrime).appendWithComma(data.airQuality)
+					.appendWithComma(data.medianHomeAge).appendWithComma(data.homeAppreciationLastYear)
+					.appendWithComma(data.homeAppreciationLastFiveYears)
+					.appendWithComma(data.homeAppreciationLastTenYears).appendWithComma(data.averageCommuteTime)
+					.appendWithComma(data.countyName).appendWithComma(data.hottestMonthMinusColdestMonth)
+					.appendWithComma(data.avgYearlyWindspeed).appendWithComma(data.avgAugustHumidity)
+					.appendWithComma(data.avgDecemberHumidity).appendWithComma(data.avgHumidity)
+					.appendWithComma(data.percentDemocrat).appendWithComma(data.percentRepublican)
+					.appendWithComma(data.unemploymentRate).appendWithComma(data.jobGrowthLastYear)
+					.appendWithComma(data.populationGrowthSince2010).appendWithComma(data.percentAsian)
+					.appendWithComma(data.percentBlack).appendWithComma(data.percentWhite)
+					.appendWithComma(data.percentHispanic).appendWithComma(data.medianRent)
+					.appendWithComma(data.percentWithAtleastBachelors).appendWithComma(data.metro)
+					.appendWithComma(data.homeSquareFeet).appendWithComma(data.costPerSquareFoot)
+					.appendWithComma(data.timeZone).appendLastItem(data.feetAboveSeaLevel);
 		}
 		String st = sb.getString();
 		myWriter.write(st);
@@ -175,15 +180,11 @@ public final class GenericDataReadAndWriter {
 		System.out.println("wrote to file " + filePath);
 	}
 
-	private static void updateData(List<Data> dataList) {
-		// TODO Auto-generated method stub
-
-	}
+	protected abstract void updateData(List<Data> dataList);
 
 	private static List<Data> readData(String stateName) throws Exception {
 		List<Data> dataList = new ArrayList<>();
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\" + stateName
-				+ ".js";
+		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\Delaware.js";
 		File myObj = new File(filePath);
 		Scanner myReader = new Scanner(myObj);
 		while (myReader.hasNextLine()) {
@@ -247,14 +248,16 @@ public final class GenericDataReadAndWriter {
 	static class RunnableDemo51 implements Runnable {
 		private Thread t;
 		private String stateName;
+		private GenericDataReadAndWriter g;
 
-		RunnableDemo51(String stateName) {
+		RunnableDemo51(String stateName, GenericDataReadAndWriter g) {
 			this.stateName = stateName;
+			this.g = g;
 		}
 
 		public void run() {
 			try {
-				processState(stateName);
+				g.runStateSync(stateName);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
