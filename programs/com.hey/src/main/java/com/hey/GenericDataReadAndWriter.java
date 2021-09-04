@@ -82,7 +82,7 @@ public abstract class GenericDataReadAndWriter {
 		}
 	}
 
-	public void runStatesAsyn() throws Exception {
+	public void processAllStates() throws Exception {
 		runStateAsync("Alabama");
 		runStateAsync("Alaska");
 		runStateAsync("Arizona");
@@ -135,11 +135,11 @@ public abstract class GenericDataReadAndWriter {
 		runStateAsync("Wyoming");
 	}
 
-	public void runStateAsync(String stateName) throws Exception {
+	private void runStateAsync(String stateName) throws Exception {
 		new RunnableDemo51(stateName, this).start();
 	}
 
-	public void runStateSync(String stateName) throws Exception {
+	public void processState(String stateName) throws Exception {
 		List<Data> dataList = readData(stateName);
 		updateData(dataList);
 		writeData(dataList, stateName);
@@ -184,7 +184,8 @@ public abstract class GenericDataReadAndWriter {
 
 	private static List<Data> readData(String stateName) throws Exception {
 		List<Data> dataList = new ArrayList<>();
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\Delaware.js";
+		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\" + stateName
+				+ ".js";
 		File myObj = new File(filePath);
 		Scanner myReader = new Scanner(myObj);
 		while (myReader.hasNextLine()) {
@@ -257,7 +258,7 @@ public abstract class GenericDataReadAndWriter {
 
 		public void run() {
 			try {
-				g.runStateSync(stateName);
+				g.processState(stateName);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

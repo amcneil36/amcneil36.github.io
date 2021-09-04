@@ -8,5 +8,12 @@ public class NoopGenericDataReadAndWriter extends GenericDataReadAndWriter {
 	protected void updateData(List<Data> dataList) {
 		
 	}
+	
+	public static void main(String[] args) throws Exception {
+
+		NoopGenericDataReadAndWriter n = new NoopGenericDataReadAndWriter();
+		n.processAllStates();
+
+	}
 
 }
