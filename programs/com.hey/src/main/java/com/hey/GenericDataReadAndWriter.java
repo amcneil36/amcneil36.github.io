@@ -135,7 +135,7 @@ public abstract class GenericDataReadAndWriter {
 		runStateAsync("Wyoming");
 	}
 
-	private void runStateAsync(String stateName) throws Exception {
+	public void runStateAsync(String stateName) throws Exception {
 		new RunnableDemo51(stateName, this).start();
 	}
 
