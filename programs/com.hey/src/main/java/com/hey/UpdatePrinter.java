@@ -16,10 +16,19 @@ public class UpdatePrinter {
 
 	public void printUpdateIfNeeded() {
 		counter++;
-		if (counter % numToUpdateOn == 0) {
+		if (counter % 3 == 0) {
 			long secondsTakenForLastTen = (System.currentTimeMillis() - initTime) / 1000;
+			if (secondsTakenForLastTen < 1) {
+				size -= counter;
+				counter = 0;
+				initTime = System.currentTimeMillis();
+				return;
+			}
+		}
+		if (counter % numToUpdateOn == 0) {
+			long secondsTakenSinceLastUpdate = (System.currentTimeMillis() - initTime) / 1000;
 			int numRemainingCities = size - counter;
-			long minRemaining = secondsTakenForLastTen * numRemainingCities / (numToUpdateOn * 60);
+			long minRemaining = secondsTakenSinceLastUpdate * numRemainingCities / (numToUpdateOn * 60);
 			System.out.println(stateName + " (" + counter + "/" + size + ") time remaining: "
 					+ Util.minToString((int) minRemaining));
 			initTime = System.currentTimeMillis();

@@ -58,7 +58,7 @@ public abstract class GenericDataReadAndWriter {
 
 	}
 
-	private static void writeData(List<Data> dataList, String stateName) throws Exception {
+	private static void writeData(List<Data> dataList, String stateName, boolean isLastWrite) throws Exception {
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\" + stateName
 				+ ".js";
 		FileWriter myWriter = new FileWriter(filePath);
@@ -91,7 +91,9 @@ public abstract class GenericDataReadAndWriter {
 		String st = sb.getString();
 		myWriter.write(st);
 		myWriter.close();
-		System.out.println("wrote to file " + filePath);
+		if (isLastWrite) {
+			System.out.println("wrote to file " + filePath);	
+		}
 	}
 
 	private static List<Data> readData(String stateName) throws Exception {
@@ -256,11 +258,11 @@ public abstract class GenericDataReadAndWriter {
 				updatePrinter.printUpdateIfNeeded();
 				idx++;
 				if (idx%30==0) {
-					writeData(dataList, stateName);
+					writeData(dataList, stateName, false);
 				}
 			}
 		} finally {
-			writeData(dataList, stateName);
+			writeData(dataList, stateName, true);
 		}
 	}
 
