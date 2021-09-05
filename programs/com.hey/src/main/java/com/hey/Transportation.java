@@ -18,26 +18,28 @@ public class Transportation  extends GenericDataReadAndWriter {
 			System.out.println("Transportation score not found for: " + url);
 			return;
 		}
-		data.walkScore = getScore("walk", text);
-		if (!text.contains("walk/score")) {
-			System.out.println("walk score not found for: " + url);
-			return;
+
+		if (text.contains("walk/score")) {
+			data.walkScore = getScore("walk", text);
 		}
-		data.walkScore = getScore("walk", text);
-		data.transitScore = getScore("transit", text);
-		data.bikeScore = getScore("bike", text);
+		if (text.contains("transit/score")) {
+			data.transitScore = getScore("transit", text);
+		}
+		if (text.contains("bike/score")) {
+			data.bikeScore = getScore("bike", text);
+		}
 	}
 	
 	private static String getScore(String prefix, String text) {
 		String pattern = prefix + "/score/";
 		int startIdx = text.indexOf(pattern) + pattern.length();
 		int endIdx = text.indexOf(".", startIdx);
-		return text.substring(startIdx, endIdx);
+		return " " + text.substring(startIdx, endIdx);
 	}
 	
 	public static void main(String[] args) throws Exception {
 		GenericDataReadAndWriter n = new Transportation();
-		n.processState("Delaware");
+		n.processAllStates();
 
 	}
 
