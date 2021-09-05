@@ -19,7 +19,7 @@ import java.net.UnknownHostException;
 
 import org.jsoup.nodes.Element;
 
-import com.hey.WebPageReader;
+import com.hey.Util;
 
 // update code to show banned ip address count. maybe clear after 5 ip addresses
 public class IndeedReader {
@@ -125,7 +125,7 @@ public class IndeedReader {
 
 	static boolean isInternetWorking() {
 		try {
-			WebPageReader.ReadTextFromPage("https://www.google.com");
+			Util.ReadTextFromPage("https://www.google.com");
 			return true;
 		} catch (Exception ex) {
 			return false;
@@ -228,7 +228,7 @@ public class IndeedReader {
 		Element element = null;
 		Element element2 = null;
 		try {
-			element = WebPageReader.RetrieveHtmlcodeFromPage(url);
+			element = Util.RetrieveHtmlcodeFromPage(url);
 			if (element.text().length() == 0) {
 				// System.out.println("no text for url: " + url);
 				return -1;

@@ -9,7 +9,7 @@ public class UVIndexGenericDataReadAndWriter extends GenericDataReadAndWriter {
 		}
 		String cityName = data.cityName.replace("\"", "");
 		String url = "https://www.bestplaces.net/climate/city/" + stateName + "/" + cityName;
-		String line = WebPageReader.ReadTextFromPage(url);
+		String line = Util.ReadTextFromPage(url);
 		line = line.substring(line.indexOf("UV Index ") + "UV Index ".length());
 		line = line.substring(0, line.indexOf(" "));
 		data.uvIndex = " " + line;

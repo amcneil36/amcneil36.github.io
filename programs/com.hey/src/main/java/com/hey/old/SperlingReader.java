@@ -9,7 +9,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import com.hey.WebPageReader;
+import com.hey.Util;
 
 import java.net.*;
 import java.util.ArrayList;
@@ -65,7 +65,7 @@ public class SperlingReader {
 
 	public static void ProcessState(String stateAbbreviation, String stateFullName) throws Exception {
 		String text = GetStringForState(stateAbbreviation, stateFullName);
-		WebPageReader.WriteTextToFile(text, stateFullName);
+		Util.WriteTextToFile(text, stateFullName);
 	}
 
 	public static void runThread(String stateAbbreviation, String stateFullName) throws Exception {
@@ -73,7 +73,7 @@ public class SperlingReader {
 	}
 
 	public static void main(String[] args) throws Exception {
-		String txt = WebPageReader.ReadHtmlCode("https://www.bestplaces.net/education/city/california/oceanside");
+		String txt = Util.ReadHtmlCode("https://www.bestplaces.net/education/city/california/oceanside");
 		System.out.println(txt);
 		// maybe have it write to files every so often and can also add in a startCity
 		// option for starting again after terminating
@@ -152,7 +152,7 @@ public class SperlingReader {
 	}
 
 	private static void addWeatherDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text2 = WebPageReader.ReadTextFromPage(
+		String text2 = Util.ReadTextFromPage(
 				"https://www.bestplaces.net/weather/city/" + stateFullName + "/" + mySiteName + "/");
 
 		int startIdx3 = text2.indexOf("August ", text2.indexOf("(°F)")) + "August ".length();
@@ -221,7 +221,7 @@ public class SperlingReader {
 	}
 
 	private static void addClimateDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text3 = WebPageReader.ReadTextFromPage(
+		String text3 = Util.ReadTextFromPage(
 				"https://www.bestplaces.net/climate/city/" + stateFullName + "/" + mySiteName + "/");
 		String numInchesOfRain = getNumbersBeforeText(text3, "inches of rain");
 		obj.numInchesOfRain = numInchesOfRain;
@@ -234,7 +234,7 @@ public class SperlingReader {
 	}
 
 	private static void addPeopleDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text3 = WebPageReader.ReadTextFromPage(
+		String text3 = Util.ReadTextFromPage(
 				"https://www.bestplaces.net/people/city/" + stateFullName + "/" + mySiteName + "/");
 		String population = getNextNumberAfterText(text3, "The population in");
 		obj.population = population;
@@ -243,7 +243,7 @@ public class SperlingReader {
 	}
 
 	private static void addOverviewDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text3 = WebPageReader.ReadTextFromPage("https://www.bestplaces.net/city/" + stateFullName + "/" + mySiteName + "/");
+		String text3 = Util.ReadTextFromPage("https://www.bestplaces.net/city/" + stateFullName + "/" + mySiteName + "/");
 		String medianIncome = getNextNumberAfterText(text3, "Median Income");
 		obj.medianIncome = medianIncome;
 		String medianHomePrice = getNextNumberAfterText(text3, "Home Price");
@@ -255,7 +255,7 @@ public class SperlingReader {
 	}
 
 	private static void addCrimeDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text3 = WebPageReader.ReadTextFromPage(
+		String text3 = Util.ReadTextFromPage(
 				"https://www.bestplaces.net/crime/city/" + stateFullName + "/" + mySiteName + "/");
 		String violentCrime = getNextNumberAfterText(text3, "violent crime is");
 		obj.violentCrime = violentCrime;
@@ -264,14 +264,14 @@ public class SperlingReader {
 	}
 
 	private static void addHealthDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text3 = WebPageReader.ReadTextFromPage(
+		String text3 = Util.ReadTextFromPage(
 				"https://www.bestplaces.net/health/city/" + stateFullName + "/" + mySiteName + "/");
 		String airQualityIndex = getNextNumberAfterText(text3, "Air Quality Index ");
 		obj.airQualityIndex = airQualityIndex;
 	}
 
 	private static void addHousingDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text3 = WebPageReader.ReadTextFromPage(
+		String text3 = Util.ReadTextFromPage(
 				"https://www.bestplaces.net/housing/city/" + stateFullName + "/" + mySiteName + "/");
 		// Median Home Age
 		String medianHomeAge = getNextNumberAfterText(text3, "Median Home Age");
@@ -283,7 +283,7 @@ public class SperlingReader {
 	}
 
 	private static void addCommuteDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text3 = WebPageReader.ReadTextFromPage(
+		String text3 = Util.ReadTextFromPage(
 				"https://www.bestplaces.net/transportation/city/" + stateFullName + "/" + mySiteName + "/");
 		obj.averageOneWayCommuteTime = getNextNumberAfterText(text3, "one-way commute in");
 
@@ -328,7 +328,7 @@ public class SperlingReader {
 		if (stateFullName.contains(" ")) {
 			stateFullName = stateFullName.replace(" ", "_");
 		}
-		String text = WebPageReader.ReadHtmlCode("https://www.bestplaces.net/find/state.aspx?state=" + stateAbbreviation + "/");
+		String text = Util.ReadHtmlCode("https://www.bestplaces.net/find/state.aspx?state=" + stateAbbreviation + "/");
 		List<DataObject> siteNames = getSiteNames(text, stateAbbreviation);
 		StringBuilder sb = new StringBuilder("");
 		int counter = 0;
@@ -370,7 +370,7 @@ public class SperlingReader {
 				long secondsTakenForLastTen = (System.currentTimeMillis() - initTime) / 1000;
 				int numRemainingCities = size - counter;
 				long minRemaining = secondsTakenForLastTen * numRemainingCities / (numToUpdateOn * 60);
-				System.out.println(stateFullName + " time remaining: " + WebPageReader.minToString((int) minRemaining));
+				System.out.println(stateFullName + " time remaining: " + Util.minToString((int) minRemaining));
 				initTime = System.currentTimeMillis();
 			}
 		}

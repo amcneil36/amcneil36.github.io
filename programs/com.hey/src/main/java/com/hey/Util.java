@@ -13,7 +13,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-public class WebPageReader {
+public class Util {
 	
 	public static boolean debug = false;
 	
