@@ -17,8 +17,8 @@ public class UpdatePrinter {
 	public void printUpdateIfNeeded() {
 		counter++;
 		if (counter % 3 == 0) {
-			long secondsTakenForLastTen = (System.currentTimeMillis() - initTime) / 1000;
-			if (secondsTakenForLastTen < 1) {
+			long secondsTakenForLastThree = (System.currentTimeMillis() - initTime) / 1000;
+			if (secondsTakenForLastThree < 0.1) {
 				size -= counter;
 				counter = 0;
 				initTime = System.currentTimeMillis();

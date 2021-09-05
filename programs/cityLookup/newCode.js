@@ -42,8 +42,9 @@ var medianRent = "Median rent";
 var percentWithAtleastBachelors = "% with at least Bachelor's degree";
 var timeZone = "Timezone";
 var feetAboveSeaLevel = "Elevation (ft)";
+var uvIndex = "UV Index";
 var arrayOfFields = [city, state,countyName,population,populationDensity,hottestMonthsHigh,coldestMonthsHigh,hottestMonthMinusColdestMonth,annualRainfall,numDaysOfRain,numSunnyDays,annualSnowfall,avgAugustHumidity, avgDecemberHumidity, avgHumidity, avgYearlyWindspeed,violentCrime,propertyCrime,medianAge,percentWithAtleastBachelors,medianIncome,medianRent,medianHomePrice,homeSquareFeet,costPerSquareFoot,medianHomeAge,homeAppreciationLastYear,homeAppreciationLastFiveYears,homeAppreciationLastTenYears,airQuality,
-averageCommuteTime, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentDemocrat, percentRepublican, percentAsian, percentBlack, percentWhite,percentHispanic, metro, timeZone, feetAboveSeaLevel];
+averageCommuteTime, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentDemocrat, percentRepublican, percentAsian, percentBlack, percentWhite,percentHispanic, metro, timeZone, feetAboveSeaLevel, uvIndex];
 function createMap(obj){
   let map = new Map();
   map.set(city, obj.cityName);
@@ -89,6 +90,7 @@ function createMap(obj){
   map.set(metro,obj.metro);
   map.set(timeZone, obj.timeZone);
   map.set(feetAboveSeaLevel, obj.feetAboveSeaLevel);
+  map.set(uvIndex, obj.uvIndex);
   return map; 
 }
 
@@ -136,6 +138,7 @@ function createRow(tr, obj){
   createColumn(tr, obj.metro);
   createColumn(tr, obj.timeZone);
   createColumn(tr, obj.feetAboveSeaLevel);
+  createColumn(tr, obj.uvIndex);
 }
 
 function formatCurrency(inp){
