@@ -5,7 +5,6 @@ public class UpdatePrinter {
 	int counter = 0;
 	int numToUpdateOn = 50;
 	long initTime;
-	long currentTime;
 	int size;
 	String stateName;
 	boolean hasBeen10Seconds = false;

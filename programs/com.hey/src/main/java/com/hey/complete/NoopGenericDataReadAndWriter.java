@@ -1,4 +1,6 @@
-package com.hey;
+package com.hey.complete;
+
+import com.hey.GenericDataReadAndWriter;
 
 public class NoopGenericDataReadAndWriter extends GenericDataReadAndWriter {
 
