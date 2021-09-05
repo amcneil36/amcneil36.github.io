@@ -45,9 +45,12 @@ var feetAboveSeaLevel = "Elevation (ft)";
 var uvIndex = "UV Index";
 var homeOwnerShipRate = "Home Ownership Rate";
 var singlePopulation = "Single Population";
+var walkScore = "Walk Score";
+var transitScore = "Transit Score";
+var bikeScore = "Bike Score";
 var arrayOfFields = [city, state,countyName,population,populationDensity,hottestMonthsHigh,coldestMonthsHigh,hottestMonthMinusColdestMonth,annualRainfall,numDaysOfRain,numSunnyDays,annualSnowfall,avgAugustHumidity, avgDecemberHumidity, avgHumidity, avgYearlyWindspeed,violentCrime,propertyCrime,medianAge,percentWithAtleastBachelors,medianIncome,medianRent,medianHomePrice,homeSquareFeet,costPerSquareFoot,medianHomeAge,homeAppreciationLastYear,homeAppreciationLastFiveYears,homeAppreciationLastTenYears,airQuality,
 averageCommuteTime, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentDemocrat, percentRepublican, percentAsian, percentBlack, percentWhite,percentHispanic, metro, timeZone, feetAboveSeaLevel, uvIndex, 
-homeOwnerShipRate, singlePopulation];
+homeOwnerShipRate, singlePopulation, walkScore, transitScore, bikeScore];
 
 function createMap(obj){
   let map = new Map();
@@ -97,6 +100,9 @@ function createMap(obj){
   map.set(uvIndex, obj.uvIndex);
   map.set(homeOwnerShipRate, obj.homeOwnerShipRate);
   map.set(singlePopulation, obj.singlePopulation);
+  map.set(walkScore, obj.walkScore);
+  map.set(transitScore, obj.transitScore);
+  map.set(bikeScore, obj.bikeScore);
   return map; 
 }
 
@@ -147,6 +153,9 @@ function createRow(tr, obj){
   createColumn(tr, obj.uvIndex);
   createColumn(tr, obj.homeOwnerShipRate);
   createColumn(tr, obj.singlePopulation);
+  createColumn(tr, obj.walkScore);
+  createColumn(tr, obj.transitScore);
+  createColumn(tr, obj.bikeScore);
 }
 
 function formatCurrency(inp){
@@ -174,7 +183,7 @@ var formatter = new Intl.NumberFormat('en-US', {
 
 class Data {
   constructor(cityName, stateName, hottestMonthsHigh, coldestHigh, numInchesOfRain, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime, countyName, hottestMonthMinusColdestMonth, avgYearlyWindspeed, avgAugustHumidity, avgDecemberHumidity, avgHumidity, percentDemocrat, percentRepublican, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentAsian, percentBlack, percentWhite, percentHispanic, medianRent, percentWithAtleastBachelors, metro, 
-  homeSquareFeet, costPerSquareFoot, timeZone, feetAboveSeaLevel, uvIndex, homeOwnerShipRate, singlePopulation) {
+  homeSquareFeet, costPerSquareFoot, timeZone, feetAboveSeaLevel, uvIndex, homeOwnerShipRate, singlePopulation, walkScore, transitScore, bikeScore) {
     this.cityName = cityName;
 	this.stateName = stateName;
     this.hottestMonthsHigh = hottestMonthsHigh;
@@ -221,5 +230,8 @@ class Data {
 	this.uvIndex = uvIndex;
 	this.homeOwnerShipRate = homeOwnerShipRate;
 	this.singlePopulation = singlePopulation;
+	this.walkScore = walkScore;
+	this.transitScore = transitScore;
+	this.bikeScore = bikeScore;
   }
 }

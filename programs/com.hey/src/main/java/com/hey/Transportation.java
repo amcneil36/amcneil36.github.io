@@ -15,7 +15,7 @@ public class Transportation  extends GenericDataReadAndWriter {
 			text = Util.RetrieveHtmlcodeFromPage(url).toString();
 		}
 		catch (Exception ex) {
-			System.out.println("Transportation score not found for: " + url);
+			//System.out.println("Transportation score not found for: " + url);
 			return;
 		}
 
