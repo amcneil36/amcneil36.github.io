@@ -55,6 +55,7 @@ public abstract class GenericDataReadAndWriter {
 		String timeZone = "N/A";
 		String feetAboveSeaLevel = "N/A";
 		String uvIndex = " \"N/A\"";
+		String homeOwnershipRate = " \"N/A\"";
 
 	}
 
@@ -86,7 +87,7 @@ public abstract class GenericDataReadAndWriter {
 					.appendWithComma(data.percentWithAtleastBachelors).appendWithComma(data.metro)
 					.appendWithComma(data.homeSquareFeet).appendWithComma(data.costPerSquareFoot)
 					.appendWithComma(data.timeZone).appendWithComma(data.feetAboveSeaLevel)
-					.appendLastItem(data.uvIndex);
+					.appendWithComma(data.uvIndex).appendLastItem(data.homeOwnershipRate);
 		}
 		String st = sb.getString();
 		myWriter.write(st);
@@ -154,8 +155,9 @@ public abstract class GenericDataReadAndWriter {
 			data.costPerSquareFoot = arr[40];
 			data.timeZone = arr[41];
 			data.feetAboveSeaLevel = arr[42];
-			if (arr.length > 43) {
-				data.uvIndex = arr[43];	
+			data.uvIndex = arr[43];	
+			if (arr.length > 44) {
+				data.homeOwnershipRate = arr[44];	
 			}
 			dataList.add(data);
 		}

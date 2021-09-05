@@ -13,7 +13,7 @@ public class UVIndexGenericDataReadAndWriter extends GenericDataReadAndWriter {
 		if (data.uvIndex.length() > 1 && !data.uvIndex.contains("N/A")) {
 			return;
 		}
-		String cityName = data.cityName.replace("\"", "");
+		String cityName = data.cityName.replace("\"", "").replace(" ", "_");
 		String url = "https://www.bestplaces.net/climate/city/" + stateName.replace(" ", "_") + "/" + cityName;
 		String line = Util.ReadTextFromPage(url);
 		if (!line.contains("UV Index")) {
