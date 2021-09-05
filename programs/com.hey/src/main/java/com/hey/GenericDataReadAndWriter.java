@@ -56,45 +56,8 @@ public abstract class GenericDataReadAndWriter {
 		String feetAboveSeaLevel = "N/A";
 		String uvIndex = " \"N/A\"";
 		String homeOwnershipRate = " \"N/A\"";
+		String singlePopulation = " \"N/A\"";
 
-	}
-
-	private static void writeData(List<Data> dataList, String stateName, boolean isLastWrite) throws Exception {
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\" + stateName
-				+ ".js";
-		FileWriter myWriter = new FileWriter(filePath);
-		AndrewStringWriter sb = new AndrewStringWriter();
-		for (Data data : dataList) {
-			sb.append(startSt).appendWithComma(data.cityName).appendWithComma(data.stateName)
-					.appendWithComma(data.hottestMonthsHigh).appendWithComma(data.coldestHigh)
-					.appendWithComma(data.numInchesOfRain).appendWithComma(data.annualSnowfall)
-					.appendWithComma(data.numSunnyDays).appendWithComma(data.numDaysOfRain)
-					.appendWithComma(data.population).appendWithComma(data.populationDensity)
-					.appendWithComma(data.medianIncome).appendWithComma(data.medianHomePrice)
-					.appendWithComma(data.medianAge).appendWithComma(data.violentCrime)
-					.appendWithComma(data.propertyCrime).appendWithComma(data.airQuality)
-					.appendWithComma(data.medianHomeAge).appendWithComma(data.homeAppreciationLastYear)
-					.appendWithComma(data.homeAppreciationLastFiveYears)
-					.appendWithComma(data.homeAppreciationLastTenYears).appendWithComma(data.averageCommuteTime)
-					.appendWithComma(data.countyName).appendWithComma(data.hottestMonthMinusColdestMonth)
-					.appendWithComma(data.avgYearlyWindspeed).appendWithComma(data.avgAugustHumidity)
-					.appendWithComma(data.avgDecemberHumidity).appendWithComma(data.avgHumidity)
-					.appendWithComma(data.percentDemocrat).appendWithComma(data.percentRepublican)
-					.appendWithComma(data.unemploymentRate).appendWithComma(data.jobGrowthLastYear)
-					.appendWithComma(data.populationGrowthSince2010).appendWithComma(data.percentAsian)
-					.appendWithComma(data.percentBlack).appendWithComma(data.percentWhite)
-					.appendWithComma(data.percentHispanic).appendWithComma(data.medianRent)
-					.appendWithComma(data.percentWithAtleastBachelors).appendWithComma(data.metro)
-					.appendWithComma(data.homeSquareFeet).appendWithComma(data.costPerSquareFoot)
-					.appendWithComma(data.timeZone).appendWithComma(data.feetAboveSeaLevel)
-					.appendWithComma(data.uvIndex).appendLastItem(data.homeOwnershipRate);
-		}
-		String st = sb.getString();
-		myWriter.write(st);
-		myWriter.close();
-		if (isLastWrite) {
-			System.out.println("wrote to file " + filePath);	
-		}
 	}
 
 	private static List<Data> readData(String stateName) throws Exception {
@@ -155,14 +118,54 @@ public abstract class GenericDataReadAndWriter {
 			data.costPerSquareFoot = arr[40];
 			data.timeZone = arr[41];
 			data.feetAboveSeaLevel = arr[42];
-			data.uvIndex = arr[43];	
-			if (arr.length > 44) {
-				data.homeOwnershipRate = arr[44];	
+			data.uvIndex = arr[43];
+			data.homeOwnershipRate = arr[44];
+			if (arr.length > 45) {
+				data.singlePopulation = arr[45];
 			}
 			dataList.add(data);
 		}
 		myReader.close();
 		return dataList;
+	}
+
+	private static void writeData(List<Data> dataList, String stateName, boolean isLastWrite) throws Exception {
+		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\" + stateName
+				+ ".js";
+		FileWriter myWriter = new FileWriter(filePath);
+		AndrewStringWriter sb = new AndrewStringWriter();
+		for (Data data : dataList) {
+			sb.append(startSt).appendWithComma(data.cityName).appendWithComma(data.stateName)
+					.appendWithComma(data.hottestMonthsHigh).appendWithComma(data.coldestHigh)
+					.appendWithComma(data.numInchesOfRain).appendWithComma(data.annualSnowfall)
+					.appendWithComma(data.numSunnyDays).appendWithComma(data.numDaysOfRain)
+					.appendWithComma(data.population).appendWithComma(data.populationDensity)
+					.appendWithComma(data.medianIncome).appendWithComma(data.medianHomePrice)
+					.appendWithComma(data.medianAge).appendWithComma(data.violentCrime)
+					.appendWithComma(data.propertyCrime).appendWithComma(data.airQuality)
+					.appendWithComma(data.medianHomeAge).appendWithComma(data.homeAppreciationLastYear)
+					.appendWithComma(data.homeAppreciationLastFiveYears)
+					.appendWithComma(data.homeAppreciationLastTenYears).appendWithComma(data.averageCommuteTime)
+					.appendWithComma(data.countyName).appendWithComma(data.hottestMonthMinusColdestMonth)
+					.appendWithComma(data.avgYearlyWindspeed).appendWithComma(data.avgAugustHumidity)
+					.appendWithComma(data.avgDecemberHumidity).appendWithComma(data.avgHumidity)
+					.appendWithComma(data.percentDemocrat).appendWithComma(data.percentRepublican)
+					.appendWithComma(data.unemploymentRate).appendWithComma(data.jobGrowthLastYear)
+					.appendWithComma(data.populationGrowthSince2010).appendWithComma(data.percentAsian)
+					.appendWithComma(data.percentBlack).appendWithComma(data.percentWhite)
+					.appendWithComma(data.percentHispanic).appendWithComma(data.medianRent)
+					.appendWithComma(data.percentWithAtleastBachelors).appendWithComma(data.metro)
+					.appendWithComma(data.homeSquareFeet).appendWithComma(data.costPerSquareFoot)
+					.appendWithComma(data.timeZone).appendWithComma(data.feetAboveSeaLevel)
+					.appendWithComma(data.uvIndex).appendWithComma(data.homeOwnershipRate)
+					.appendLastItem(data.singlePopulation);
+		}
+		String st = sb.getString();
+		myWriter.write(st);
+		myWriter.close();
+		if (isLastWrite) {
+			System.out.println("wrote to file " + filePath);
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////
@@ -256,10 +259,10 @@ public abstract class GenericDataReadAndWriter {
 			UpdatePrinter updatePrinter = new UpdatePrinter(dataList.size(), stateName);
 			int idx = 0;
 			for (Data data : dataList) {
-				updateData(data, stateName);	
+				updateData(data, stateName);
 				updatePrinter.printUpdateIfNeeded();
 				idx++;
-				if (idx%30==0) {
+				if (idx % 30 == 0) {
 					writeData(dataList, stateName, false);
 				}
 			}
