@@ -20,13 +20,9 @@ public class UVIndexGenericDataReadAndWriter extends GenericDataReadAndWriter {
 			System.out.println("uv index not found for: " + url);
 			return;
 		}
-		String line2 = line.substring(line.indexOf("UV Index ") + "UV Index ".length());
-		line2 = line2.substring(0, line2.indexOf(" "));
-		data.uvIndex = " " + line2;
-		if (data.uvIndex.length() == 1) {
-			System.out.println(url);
-			System.out.println(line);
-		}
+		line = line.substring(line.indexOf("UV Index ") + "UV Index ".length());
+		line = line.substring(0, line.indexOf(" "));
+		data.uvIndex = " " + line;
 	}
 
 	public static void main(String[] args) throws Exception {
