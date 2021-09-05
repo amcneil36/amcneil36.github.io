@@ -25,6 +25,7 @@ public class UpdatePrinter {
 			size -= counter;
 			counter = 0;
 			initTime = System.currentTimeMillis();
+			return;
 		}
 		if (hasBeen10Seconds && counter % numToUpdateOn == 0) {
 			long secondsTakenSinceLastUpdate = (System.currentTimeMillis() - initTime) / 1000;

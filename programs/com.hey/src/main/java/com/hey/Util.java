@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jsoup.Connection;
@@ -16,7 +18,6 @@ import org.jsoup.nodes.Element;
 public class Util {
 	
 	public static boolean debug = false;
-	
 	
 	public static String minToString(int minRemaining) {
 		String st = "";
@@ -60,7 +61,7 @@ public class Util {
 			return body;
 		} catch (IOException ex) {
 			// System.out.println("oh no!");
-			ex.printStackTrace();
+		//	ex.printStackTrace();
 			String stacktrace = ExceptionUtils.getStackTrace(ex);
 			if (stacktrace.contains("Status=403")) {
 				throw new SecurityException("you are banned from the website");
@@ -68,6 +69,12 @@ public class Util {
 			log("jsoup couldn't connect to: " + url);
 			throw new RuntimeException();
 		}
+	}
+	
+	public static Element getElement(String url) throws Exception {
+		Connection conn = Jsoup.connect(url);
+		Document doc = conn.get();
+		return doc.body();
 	}
 
 	private static String JsoupStuff(String url) {
@@ -131,4 +138,76 @@ public class Util {
 		}
 		return sb.toString();
 	}
+	
+	private static Map<String, String> map = new HashMap<String, String>();
+	
+	private static void populateMap() {
+		map = new HashMap<String, String>();
+		fillMapWithItem("al", "Alabama");
+		fillMapWithItem("ak", "Alaska");
+		fillMapWithItem("az", "Arizona");
+		fillMapWithItem("ar", "Arkansas");
+		fillMapWithItem("ca", "California"); // overnight
+		fillMapWithItem("co", "Colorado");
+		fillMapWithItem("ct", "Connecticut");
+		fillMapWithItem("de", "Delaware");
+		fillMapWithItem("fl", "Florida"); // success
+		fillMapWithItem("ga", "Georgia"); // success
+		fillMapWithItem("hi", "Hawaii");
+		fillMapWithItem("id", "Idaho");
+		fillMapWithItem("il", "Illinois");
+		fillMapWithItem("in", "Indiana");
+		fillMapWithItem("ia", "Iowa");
+		fillMapWithItem("ks", "Kansas");
+		fillMapWithItem("ky", "Kentucky");
+		fillMapWithItem("la", "Louisiana");
+		fillMapWithItem("me", "Maine");
+		fillMapWithItem("md", "Maryland");
+		fillMapWithItem("ma", "Massachusetts");
+		fillMapWithItem("mi", "Michigan");
+		fillMapWithItem("mn", "Minnesota");
+		fillMapWithItem("ms", "Mississippi");
+		fillMapWithItem("mo", "Missouri");
+		fillMapWithItem("mt", "Montana");
+		fillMapWithItem("ne", "Nebraska");
+		fillMapWithItem("nv", "Nevada");
+		fillMapWithItem("nh", "New Hampshire");
+		fillMapWithItem("nj", "New Jersey");
+		fillMapWithItem("nm", "New Mexico");
+		fillMapWithItem("ny", "New York");
+		fillMapWithItem("nc", "North Carolina");
+		fillMapWithItem("nd", "North Dakota");
+		fillMapWithItem("oh", "Ohio");
+		fillMapWithItem("ok", "Oklahoma");
+		fillMapWithItem("or", "Oregon");
+		fillMapWithItem("pa", "Pennsylvania");
+		fillMapWithItem("ri", "Rhode Island");
+		fillMapWithItem("sc", "South Carolina");
+		fillMapWithItem("sd", "South Dakota");
+		fillMapWithItem("tn", "Tennessee");
+		fillMapWithItem("tx", "Texas"); // overnight
+		fillMapWithItem("ut", "Utah");
+		fillMapWithItem("vt", "Vermont");
+		fillMapWithItem("va", "Virginia");
+		fillMapWithItem("wa", "Washington");
+		fillMapWithItem("wv", "West Virginia");
+		fillMapWithItem("wi", "Wisconsin");
+		fillMapWithItem("wy", "Wyoming");
+		fillMapWithItem("dc", "Washington DC");
+	}
+	
+	private static void fillMapWithItem(String string, String string2) {
+		map.put(string2.toLowerCase(), string.toLowerCase());
+
+	}
+	
+	public static String getStateAbbreviation(String stateName) {
+		if (map.isEmpty()) {
+			populateMap();
+		}
+		return map.get(stateName.toLowerCase());
+	}
+	
+	    
+
 }

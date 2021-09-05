@@ -57,6 +57,9 @@ public abstract class GenericDataReadAndWriter {
 		public String uvIndex = " \"N/A\"";
 		public String homeOwnershipRate = " \"N/A\"";
 		public String singlePopulation = " \"N/A\"";
+		public String walkScore = " \"N/A\"";
+		public String transitScore = " \"N/A\"";
+		public String bikeScore = " \"N/A\"";
 
 	}
 
@@ -118,10 +121,15 @@ public abstract class GenericDataReadAndWriter {
 			data.costPerSquareFoot = arr[40];
 			data.timeZone = arr[41];
 			data.feetAboveSeaLevel = arr[42];
-			data.uvIndex = arr[43];
-			data.homeOwnershipRate = arr[44];
-			if (arr.length > 45) {
+			try {
+				data.uvIndex = arr[43];
+				data.homeOwnershipRate = arr[44];
 				data.singlePopulation = arr[45];
+				data.walkScore = arr[46];
+				data.transitScore = arr[47];
+				data.bikeScore = arr[48];
+			} catch (Exception ex) {
+
 			}
 			dataList.add(data);
 		}
@@ -158,7 +166,8 @@ public abstract class GenericDataReadAndWriter {
 					.appendWithComma(data.homeSquareFeet).appendWithComma(data.costPerSquareFoot)
 					.appendWithComma(data.timeZone).appendWithComma(data.feetAboveSeaLevel)
 					.appendWithComma(data.uvIndex).appendWithComma(data.homeOwnershipRate)
-					.appendLastItem(data.singlePopulation);
+					.appendWithComma(data.singlePopulation).appendWithComma(data.walkScore)
+					.appendWithComma(data.transitScore).appendLastItem(data.bikeScore);
 		}
 		String st = sb.getString();
 		myWriter.write(st);
