@@ -1,9 +1,11 @@
-package com.hey;
+package com.hey.old;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+
+import com.hey.WebPageReader;
 
 public class Reader {
 
@@ -111,18 +113,18 @@ public class Reader {
 				int numRemainingCities = size - counter;
 				long minRemaining = secondsTakenForLastTen * numRemainingCities / (numToUpdateOn * 60);
 				System.out
-						.println(stateFullName + " time remaining: " + SperlingReader.minToString((int) minRemaining));
+						.println(stateFullName + " time remaining: " + WebPageReader.minToString((int) minRemaining));
 				initTime = System.currentTimeMillis();
 			}
 		}
-		SperlingReader.WriteTextToFile(sb.toString(), stateFullName);
+		WebPageReader.WriteTextToFile(sb.toString(), stateFullName);
 	}
 
 	private static void populateResultWithHispanicData(Result result, String stateFullName, String cityName) {
 		try {
 			cityName = cityName.replace(" ", "_");
 			String url = "https://www.bestplaces.net/people/city/" + stateFullName + "/" + cityName;
-			String webPageText = SperlingReader.ReadTextFromPage(url);
+			String webPageText = WebPageReader.ReadTextFromPage(url);
 			result.percentHispanic = returnValidValue(
 					SperlingReader.getNumbersBeforeText(webPageText, " claim Hispanic"));
 			if (result.percentHispanic.charAt(0) == '0') {
@@ -157,7 +159,7 @@ public class Reader {
 		try {
 			cityName = cityName.replace(" ", "-");
 			url = "https://worldpopulationreview.com/us-cities/" + cityName + "-" + stateAbbreviation + "-population";
-			webPageText = SperlingReader.ReadTextFromPage(url);
+			webPageText = WebPageReader.ReadTextFromPage(url);
 			result.percentAsian = returnValidValue(getTextFromRaceString(webPageText, "Asian: "));
 			result.percentBlack = returnValidValue(getTextFromRaceString(webPageText, "Black or African American: "));
 			result.percentWhite = returnValidValue(getTextFromRaceString(webPageText, "White: "));

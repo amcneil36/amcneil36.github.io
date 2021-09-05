@@ -1,4 +1,4 @@
-package com.hey;
+package com.hey.old;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -9,6 +9,8 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.jsoup.nodes.Element;
+
+import com.hey.WebPageReader;
 
 public class ZipCode {
 
@@ -66,7 +68,7 @@ public class ZipCode {
 	// (x86)\Java\jre1.8.0_281\lib\security\cacerts" -file myCer3.cer
 
 	public static void main(String[] args) throws InterruptedException {
-		Element el = SperlingReader
+		Element el = WebPageReader
 				.RetrieveHtmlcodeFromPage("https://www.bestplaces.net/find/zip.aspx?st=" + STATE_ABBREVIATION);
 		String[] data = el.getElementsByAttribute("href").toString().split("\n");
 		List<String> data2 = new ArrayList<String>();
@@ -125,7 +127,7 @@ public class ZipCode {
 				System.out.println("thread id: " + Thread.currentThread().getId() + ". completed zip code " + obj.zipCode
 						+ ". " + (int) numCompletedZipCodes + " of " + (int) (numZipCodes)
 						+ " zip codes have been completed for " + stateName + ". Time remaining: "
-						+ SperlingReader.minToString((int) minRemaining));
+						+ WebPageReader.minToString((int) minRemaining));
 			}
 			catch (Exception ex) {
 				System.out.println("something went wrong with: " + st);
@@ -155,7 +157,7 @@ public class ZipCode {
 
 	private static void addClimateDataToObj(DataObject2 obj) {
 		String url = "https://www.bestplaces.net/climate/zip-code/" + obj.getEndingUrl();
-		String text3 = SperlingReader.ReadTextFromPage(url);
+		String text3 = WebPageReader.ReadTextFromPage(url);
 		if (text3.contains("sunny days per")) {
 			obj.numInchesOfRain = SperlingReader.getNumbersBeforeText(text3, "inches of rain");
 			obj.numInchesOfSnow = SperlingReader.getNumbersBeforeText(text3, "inches of snow");
@@ -219,7 +221,7 @@ public class ZipCode {
 	}
 
 	private static void addTemperatureDataToObj2(DataObject2 obj) {
-		String text2 = SperlingReader
+		String text2 = WebPageReader
 				.ReadTextFromPage("https://www.bestplaces.net/weather/zip-code/" + obj.getEndingUrl());
 
 		int startIdx3 = text2.indexOf("August ", text2.indexOf("(°F)")) + "August ".length();
@@ -236,7 +238,7 @@ public class ZipCode {
 
 	private static void addPeopleDataToObj2(DataObject2 obj) {
 		String url = "https://www.bestplaces.net/people/zip-code/" + obj.getEndingUrl();
-		String text3 = SperlingReader.ReadTextFromPage(url);
+		String text3 = WebPageReader.ReadTextFromPage(url);
 		if (text3.contains("claim Hispanic")) {
 			obj.population = SperlingReader.getNumbersBeforeText(text3, " There are ");
 			obj.populationDensity = SperlingReader.getNumbersBeforeText(text3, "people per square mile");
@@ -256,7 +258,7 @@ public class ZipCode {
 	}
 
 	private static void addOverviewDataToObj2(DataObject2 obj) {
-		String text3 = SperlingReader.ReadTextFromPage("https://www.bestplaces.net/zip-code/" + obj.getEndingUrl());
+		String text3 = WebPageReader.ReadTextFromPage("https://www.bestplaces.net/zip-code/" + obj.getEndingUrl());
 		String medianIncome = SperlingReader.getNextNumberAfterText(text3, "Median Income");
 		obj.medianIncome = medianIncome;
 		String medianHomePrice = SperlingReader.getNextNumberAfterText(text3, "Home Price");
@@ -268,7 +270,7 @@ public class ZipCode {
 	}
 
 	private static void addCrimeDataToObj2(DataObject2 obj) {
-		String text3 = SperlingReader
+		String text3 = WebPageReader
 				.ReadTextFromPage("https://www.bestplaces.net/crime/zip-code/" + obj.getEndingUrl());
 		if (text3.contains("violent crime is")) {
 			String violentCrime = SperlingReader.getNextNumberAfterText(text3, "violent crime is");

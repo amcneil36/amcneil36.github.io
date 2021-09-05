@@ -162,7 +162,7 @@ public abstract class GenericDataReadAndWriter {
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////
-	protected abstract void updateData(List<Data> dataList, String stateName) throws Exception;
+	protected abstract void updateData(Data data, String stateName) throws Exception;
 
 	private static class AndrewStringWriter {
 		StringBuilder sb = new StringBuilder();
@@ -249,7 +249,16 @@ public abstract class GenericDataReadAndWriter {
 	public void processState(String stateName) throws Exception {
 		List<Data> dataList = readData(stateName);
 		try {
-			updateData(dataList, stateName);
+			UpdatePrinter updatePrinter = new UpdatePrinter(dataList.size(), stateName);
+			int idx = 0;
+			for (Data data : dataList) {
+				updateData(data, stateName);	
+				updatePrinter.printUpdateIfNeeded();
+				idx++;
+				if (idx%30==0) {
+					writeData(dataList, stateName);
+				}
+			}
 		} finally {
 			writeData(dataList, stateName);
 		}

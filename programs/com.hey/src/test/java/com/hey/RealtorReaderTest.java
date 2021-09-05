@@ -2,6 +2,8 @@ package com.hey;
 
 import org.junit.Test;
 
+import com.hey.old.RealtorCountyReader;
+
 import org.junit.Assert;
 
 public class RealtorReaderTest {

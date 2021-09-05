@@ -1,4 +1,4 @@
-package com.hey;
+package com.hey.old;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,6 +18,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import org.jsoup.nodes.Element;
+
+import com.hey.WebPageReader;
 
 // update code to show banned ip address count. maybe clear after 5 ip addresses
 public class IndeedReader {
@@ -123,7 +125,7 @@ public class IndeedReader {
 
 	static boolean isInternetWorking() {
 		try {
-			SperlingReader.ReadTextFromPage("https://www.google.com");
+			WebPageReader.ReadTextFromPage("https://www.google.com");
 			return true;
 		} catch (Exception ex) {
 			return false;
@@ -226,7 +228,7 @@ public class IndeedReader {
 		Element element = null;
 		Element element2 = null;
 		try {
-			element = SperlingReader.RetrieveHtmlcodeFromPage(url);
+			element = WebPageReader.RetrieveHtmlcodeFromPage(url);
 			if (element.text().length() == 0) {
 				// System.out.println("no text for url: " + url);
 				return -1;

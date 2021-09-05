@@ -1,4 +1,4 @@
-package com.hey;
+package com.hey.old;
 
 public class Num {
 	private double avg = 0;

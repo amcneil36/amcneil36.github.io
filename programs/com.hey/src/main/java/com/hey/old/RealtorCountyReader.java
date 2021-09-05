@@ -1,4 +1,4 @@
-package com.hey;
+package com.hey.old;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -8,10 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import com.hey.RealtorCountyReader.HouseData;
-
-public class RealtorCityReader {
-
+public class RealtorCountyReader {
+	
 	private static Map<String, String> map = new HashMap<String, String>();
 
 	static class HouseData {
@@ -22,36 +20,28 @@ public class RealtorCityReader {
 	
 	public static void main(String[] args) throws Exception {
 		populateMap();
-		String filePath = "realtorCityCopyPaste.txt";
+		String filePath = "realtorCountyCopyPaste.txt";
 		File myObj = new File(filePath);
 		Scanner myReader = new Scanner(myObj);
 		String line = "";
-		while (myReader.hasNextLine() && !line.startsWith("Home values in ")) {
+		while (myReader.hasNextLine() && !line.startsWith("All Neighborhoods in ")) {
 			line = myReader.nextLine();
 		}
-		String city = line.substring("Home values in ".length(), line.indexOf(", ")).toLowerCase();
+		String county = line.substring("All Neighborhoods in ".length(), line.indexOf(", ")).toLowerCase();
 		String state = map.get(line.substring(line.indexOf(", ") + 2).toLowerCase());
 		state = state.substring(0, 1).toUpperCase() + state.substring(1);
-		while (!line.startsWith("$") && myReader.hasNextLine()) {
-			line = myReader.nextLine();
-		}
+		Map<String, HouseData> houseDataMap = GetHouseDataMap(county, myReader, line);
 		
-		HouseData houseData = new HouseData();
-		houseData.homePrice = getIntFromString(line);
-		line = myReader.nextLine();
-		while (!line.startsWith("$") && myReader.hasNextLine()) {
-			line = myReader.nextLine();
-		}
-		houseData.costPerSqFt = getIntFromString(line);
-		houseData.medianSquareFootage = houseData.homePrice/houseData.costPerSqFt;
+		///////////
+		writeOutput(houseDataMap, county, state);
 		
-		writeOutput(houseData, city, state);
+		///////////
 		
 		
 		
 	}
 
-	private static void writeOutput(HouseData houseData, String cityInput, String state) throws Exception {
+	private static void writeOutput(Map<String, HouseData> houseDataMap, String county, String state) throws Exception {
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\" + state
 				+ ".js";
 		File myObj = new File(filePath);
@@ -66,22 +56,19 @@ public class RealtorCityReader {
 			}
 			lines.add(line);
 		}
-		boolean isCityFound = false;
 		for (String line : lines) {
 			line = line.substring(startSt.length());
 			line = line.substring(0, line.length() - 3);
 			String[] arr = line.split(",");
-			String city = arr[0].toLowerCase();
+			String city = arr[0];
 			city = city.substring(1, city.length()-1);
-			if (city.equals(cityInput) && isCityFound) {
-				throw new RuntimeException("two cities with the same name found: " + city);
-			}
-			if (city.equals(cityInput)) {
+			String key = getMapKey(city, county);
+			if (houseDataMap.containsKey(key)) {
+				HouseData houseData = houseDataMap.get(key);
 				arr[11] = " " + houseData.homePrice;
 				int len = arr.length;
 				arr[len-2] = " " + houseData.medianSquareFootage;
 				arr[len-1] = " " + houseData.costPerSqFt;
-				isCityFound = true;
 			}
 			sb.append(startSt);
 			for (String st : arr) {
@@ -92,18 +79,40 @@ public class RealtorCityReader {
 			sb.append("));");
 			sb.append("\n");
 		}
-		if (isCityFound) {
-			 FileWriter myWriter = new FileWriter(filePath);
-			 String st = sb.toString();
-			 myWriter.write(st);
-			 myWriter.close();
-			 System.out.println("wrote to file " + filePath);
-			 myReader.close();	
-		}
-		else {
-			System.out.println("city not found: " + cityInput);
-		}
+		 FileWriter myWriter = new FileWriter(filePath);
+		 String st = sb.toString();
+		 myWriter.write(st);
+		 myWriter.close();
+		 System.out.println("wrote to file " + filePath);
+		 myReader.close();
 		
+	}
+
+	private static Map<String, HouseData> GetHouseDataMap(String county, Scanner myReader, String line) {
+		Map<String, HouseData> houseDataMap = new HashMap<String, HouseData>();
+		while (!"For Rent".equals(line)) {
+			line = myReader.nextLine();
+		}
+		while (myReader.hasNextLine()) {
+			String cityName = myReader.nextLine().toLowerCase();
+			if (cityName.startsWith("©")) {
+				break;
+			}
+			String medianPrice = myReader.nextLine();
+			String costPerSqFt = myReader.nextLine();
+			myReader.nextLine();
+			myReader.nextLine();
+			if (!costPerSqFt.startsWith("$") || !medianPrice.startsWith("$")) {
+				continue;
+			}
+			HouseData houseData = new HouseData();
+			houseData.homePrice = getIntFromString(medianPrice);
+			houseData.costPerSqFt = getIntFromString(costPerSqFt);
+			houseData.medianSquareFootage = houseData.homePrice/houseData.costPerSqFt;
+			String mapKey = getMapKey(cityName, county);
+			houseDataMap.put(mapKey, houseData);
+		}
+		return houseDataMap;
 	}
 	
 	private static String getMapKey(String cityName, String county) {

@@ -21,7 +21,7 @@ public class UpdatePrinter {
 			int numRemainingCities = size - counter;
 			long minRemaining = secondsTakenForLastTen * numRemainingCities / (numToUpdateOn * 60);
 			System.out.println(stateName + " (" + counter + "/" + size + ") time remaining: "
-					+ SperlingReader.minToString((int) minRemaining));
+					+ WebPageReader.minToString((int) minRemaining));
 			initTime = System.currentTimeMillis();
 		}
 	}

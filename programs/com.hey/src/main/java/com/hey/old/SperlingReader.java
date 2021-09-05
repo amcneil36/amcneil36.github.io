@@ -1,4 +1,4 @@
-package com.hey;
+package com.hey.old;
 
 import java.io.*;
 import java.io.IOException;
@@ -8,6 +8,8 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+
+import com.hey.WebPageReader;
 
 import java.net.*;
 import java.util.ArrayList;
@@ -63,7 +65,7 @@ public class SperlingReader {
 
 	public static void ProcessState(String stateAbbreviation, String stateFullName) throws Exception {
 		String text = GetStringForState(stateAbbreviation, stateFullName);
-		WriteTextToFile(text, stateFullName);
+		WebPageReader.WriteTextToFile(text, stateFullName);
 	}
 
 	public static void runThread(String stateAbbreviation, String stateFullName) throws Exception {
@@ -71,7 +73,7 @@ public class SperlingReader {
 	}
 
 	public static void main(String[] args) throws Exception {
-		String txt = ReadHtmlCode("https://www.bestplaces.net/education/city/california/oceanside");
+		String txt = WebPageReader.ReadHtmlCode("https://www.bestplaces.net/education/city/california/oceanside");
 		System.out.println(txt);
 		// maybe have it write to files every so often and can also add in a startCity
 		// option for starting again after terminating
@@ -150,7 +152,7 @@ public class SperlingReader {
 	}
 
 	private static void addWeatherDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text2 = ReadTextFromPage(
+		String text2 = WebPageReader.ReadTextFromPage(
 				"https://www.bestplaces.net/weather/city/" + stateFullName + "/" + mySiteName + "/");
 
 		int startIdx3 = text2.indexOf("August ", text2.indexOf("(°F)")) + "August ".length();
@@ -219,7 +221,7 @@ public class SperlingReader {
 	}
 
 	private static void addClimateDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text3 = ReadTextFromPage(
+		String text3 = WebPageReader.ReadTextFromPage(
 				"https://www.bestplaces.net/climate/city/" + stateFullName + "/" + mySiteName + "/");
 		String numInchesOfRain = getNumbersBeforeText(text3, "inches of rain");
 		obj.numInchesOfRain = numInchesOfRain;
@@ -232,7 +234,7 @@ public class SperlingReader {
 	}
 
 	private static void addPeopleDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text3 = ReadTextFromPage(
+		String text3 = WebPageReader.ReadTextFromPage(
 				"https://www.bestplaces.net/people/city/" + stateFullName + "/" + mySiteName + "/");
 		String population = getNextNumberAfterText(text3, "The population in");
 		obj.population = population;
@@ -241,7 +243,7 @@ public class SperlingReader {
 	}
 
 	private static void addOverviewDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text3 = ReadTextFromPage("https://www.bestplaces.net/city/" + stateFullName + "/" + mySiteName + "/");
+		String text3 = WebPageReader.ReadTextFromPage("https://www.bestplaces.net/city/" + stateFullName + "/" + mySiteName + "/");
 		String medianIncome = getNextNumberAfterText(text3, "Median Income");
 		obj.medianIncome = medianIncome;
 		String medianHomePrice = getNextNumberAfterText(text3, "Home Price");
@@ -253,7 +255,7 @@ public class SperlingReader {
 	}
 
 	private static void addCrimeDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text3 = ReadTextFromPage(
+		String text3 = WebPageReader.ReadTextFromPage(
 				"https://www.bestplaces.net/crime/city/" + stateFullName + "/" + mySiteName + "/");
 		String violentCrime = getNextNumberAfterText(text3, "violent crime is");
 		obj.violentCrime = violentCrime;
@@ -262,14 +264,14 @@ public class SperlingReader {
 	}
 
 	private static void addHealthDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text3 = ReadTextFromPage(
+		String text3 = WebPageReader.ReadTextFromPage(
 				"https://www.bestplaces.net/health/city/" + stateFullName + "/" + mySiteName + "/");
 		String airQualityIndex = getNextNumberAfterText(text3, "Air Quality Index ");
 		obj.airQualityIndex = airQualityIndex;
 	}
 
 	private static void addHousingDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text3 = ReadTextFromPage(
+		String text3 = WebPageReader.ReadTextFromPage(
 				"https://www.bestplaces.net/housing/city/" + stateFullName + "/" + mySiteName + "/");
 		// Median Home Age
 		String medianHomeAge = getNextNumberAfterText(text3, "Median Home Age");
@@ -281,7 +283,7 @@ public class SperlingReader {
 	}
 
 	private static void addCommuteDataToObj(DataObject obj, String stateFullName, String mySiteName) {
-		String text3 = ReadTextFromPage(
+		String text3 = WebPageReader.ReadTextFromPage(
 				"https://www.bestplaces.net/transportation/city/" + stateFullName + "/" + mySiteName + "/");
 		obj.averageOneWayCommuteTime = getNextNumberAfterText(text3, "one-way commute in");
 
@@ -326,7 +328,7 @@ public class SperlingReader {
 		if (stateFullName.contains(" ")) {
 			stateFullName = stateFullName.replace(" ", "_");
 		}
-		String text = ReadHtmlCode("https://www.bestplaces.net/find/state.aspx?state=" + stateAbbreviation + "/");
+		String text = WebPageReader.ReadHtmlCode("https://www.bestplaces.net/find/state.aspx?state=" + stateAbbreviation + "/");
 		List<DataObject> siteNames = getSiteNames(text, stateAbbreviation);
 		StringBuilder sb = new StringBuilder("");
 		int counter = 0;
@@ -368,120 +370,12 @@ public class SperlingReader {
 				long secondsTakenForLastTen = (System.currentTimeMillis() - initTime) / 1000;
 				int numRemainingCities = size - counter;
 				long minRemaining = secondsTakenForLastTen * numRemainingCities / (numToUpdateOn * 60);
-				System.out.println(stateFullName + " time remaining: " + minToString((int) minRemaining));
+				System.out.println(stateFullName + " time remaining: " + WebPageReader.minToString((int) minRemaining));
 				initTime = System.currentTimeMillis();
 			}
 		}
 		return sb.toString();
 
-	}
-
-	public static String minToString(int minRemaining) {
-		String st = "";
-		int hrRemaining = (int) Math.floor(minRemaining / 60);
-		minRemaining = minRemaining % 60;
-		if (hrRemaining > 0) {
-			st += hrRemaining + "hr ";
-		}
-		st += minRemaining + "min";
-		return st;
-	}
-
-	public static void WriteTextToFile(String stringToWrite, String stateName) {
-		try {
-			// C:\Users\anmcneil\Desktop\myproject
-			// FileWriter myWriter = new FileWriter("datapoints.js");
-			String filePath = "C:\\Users\\anmcneil\\Desktop\\myproject\\States\\" + stateName + ".js";
-			FileWriter myWriter = new FileWriter(filePath);
-			myWriter.write(stringToWrite);
-			myWriter.close();
-			System.out.println(stateName + " has been successfully written to===================================");
-		} catch (IOException e) {
-			log("An error occurred trying to write to file for: " + stateName);
-			e.printStackTrace();
-		}
-
-	}
-
-	public static String ReadTextFromPage(String url) {
-		// System.out.println(url);
-		return JsoupStuff(url);
-	}
-
-	public static Element RetrieveHtmlcodeFromPage(String url) {
-		Connection conn = Jsoup.connect(url);
-		try {
-			Document doc = conn.userAgent(
-					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36")
-					.referrer("http://www.google.com").get();
-			Element body = doc.body();
-			return body;
-		} catch (IOException ex) {
-			// System.out.println("oh no!");
-			ex.printStackTrace();
-			String stacktrace = ExceptionUtils.getStackTrace(ex);
-			if (stacktrace.contains("Status=403")) {
-				throw new SecurityException("you are banned from the website");
-			}
-			log("jsoup couldn't connect to: " + url);
-			throw new RuntimeException();
-		}
-	}
-
-	private static String JsoupStuff(String url) {
-		for (int i = 0; i < 10; i++) {
-			Connection conn = Jsoup.connect(url);
-			try {
-				Document doc = conn.get();
-				String text = doc.body().text();
-				if (text.contains("Oops. This is embarrassing.") && i == 9) {
-					System.out.println("jsoup connected to this page but it said oops this is embarassing: " + url);
-					continue;
-				}
-				return text;
-			} catch (IOException ex) {
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				if (i == 9) {
-					throw new RuntimeException("jsoup couldn't connect to: " + url, ex);
-				}
-			}
-		}
-		throw new RuntimeException("jsoup couldn't connect to: " + url);
-
-	}
-
-	public static String ReadHtmlCode(String urlParam) {
-		StringBuilder sb = new StringBuilder("");
-		try {
-
-			URL url = new URL(urlParam);
-
-			// read text returned by server
-			BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
-			String line;
-			while ((line = in.readLine()) != null) {
-				// System.out.println(line);
-				sb.append(line);
-				sb.append("\n");
-			}
-			in.close();
-
-		} catch (MalformedURLException e) {
-			log("Malformed URL: " + e.getMessage());
-			log("failed to read " + urlParam);
-			throw new RuntimeException();
-		} catch (IOException e) {
-			log("I/O Error: " + e.getMessage());
-			log("failed to read " + urlParam);
-			e.printStackTrace();
-			throw new RuntimeException();
-		}
-		return sb.toString();
 	}
 
 }

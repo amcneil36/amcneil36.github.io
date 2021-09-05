@@ -1,9 +1,11 @@
-package com.hey;
+package com.hey.old;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+
+import com.hey.WebPageReader;
 
 public class SperlingReader2 {
 
@@ -100,11 +102,11 @@ public class SperlingReader2 {
 				int numRemainingCities = size - counter;
 				long minRemaining = secondsTakenForLastTen * numRemainingCities / (numToUpdateOn * 60);
 				System.out
-						.println(stateFullName + " time remaining: " + SperlingReader.minToString((int) minRemaining));
+						.println(stateFullName + " time remaining: " + WebPageReader.minToString((int) minRemaining));
 				initTime = System.currentTimeMillis();
 			}
 		}
-		SperlingReader.WriteTextToFile(sb.toString(), stateFullName);
+		WebPageReader.WriteTextToFile(sb.toString(), stateFullName);
 	}
 
 
@@ -112,7 +114,7 @@ public class SperlingReader2 {
 		try {
 			cityName = cityName.replace(" ", "_");
 			String url = "https://www.bestplaces.net/city/" + stateFullName + "/" + cityName;
-			String webPageText = SperlingReader.ReadTextFromPage(url);
+			String webPageText = WebPageReader.ReadTextFromPage(url);
 			result.unemploymentRate = getUnemploymentRate(webPageText);
 			result.jobGrowthLastYear = getJobGrowth(webPageText);
 			result.populationGrowthSince2010 = getPopulationGrowth(webPageText);
@@ -189,7 +191,7 @@ public class SperlingReader2 {
 		try {
 			cityName = cityName.replace(" ", "_");
 			String url = "https://www.bestplaces.net/voting/city/" + stateFullName + "/" + cityName;
-			String webPageText = SperlingReader.ReadTextFromPage(url);
+			String webPageText = WebPageReader.ReadTextFromPage(url);
 			result.percentVotedDemocrat = SperlingReader.getNumbersBeforeText(webPageText,
 					" of the people voted Democrat");
 			result.percentVotedRepublican = SperlingReader.getNumbersBeforeText(webPageText, " voted for the Republi");

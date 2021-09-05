@@ -1,4 +1,4 @@
-package com.hey;
+package com.hey.old;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Scanner;
 
 import org.apache.commons.lang3.StringUtils;
+
+import com.hey.WebPageReader;
 
 public class WeatherWxReader {
 
@@ -98,7 +100,7 @@ public class WeatherWxReader {
 			try {
 			String cityName = extractCityName(line);
 			String url = "https://www.weatherwx.com/hazardoutlook/" + stateAbbreviation + "/" + cityName.replace(" ", "+").replace("-", "+") + ".html";
-			String webPageText = SperlingReader.ReadTextFromPage(url);
+			String webPageText = WebPageReader.ReadTextFromPage(url);
 			windSpeed = getAverageYearlyWindspeed(webPageText);
 			stats = getHumidityStats(webPageText);
 			}
@@ -119,11 +121,11 @@ public class WeatherWxReader {
 				long secondsTakenForLastTen = (System.currentTimeMillis() - initTime)/1000;
 				int numRemainingCities = size - counter;
 				long minRemaining = secondsTakenForLastTen*numRemainingCities/(numToUpdateOn*60);
-				System.out.println(stateName + " time remaining: " + SperlingReader.minToString((int)minRemaining));
+				System.out.println(stateName + " time remaining: " + WebPageReader.minToString((int)minRemaining));
 				initTime = System.currentTimeMillis();
 			}
 		}
-		SperlingReader.WriteTextToFile(sb.toString(), stateName);
+		WebPageReader.WriteTextToFile(sb.toString(), stateName);
 	}
 
 	private static HumidityStats getHumidityStats(String webPageText) {

@@ -1,4 +1,4 @@
-package com.hey;
+package com.hey.old;
 
 import java.awt.Desktop;
 import java.io.File;
@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
-import com.hey.RealtorWebPageCountyOpener.RunnableDemo6;
+import com.hey.old.RealtorWebPageCountyOpener.RunnableDemo6;
 
 public class RealtorWebPageCityOpener {
 
