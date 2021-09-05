@@ -54,8 +54,115 @@ public abstract class GenericDataReadAndWriter {
 		String costPerSquareFoot = "N/A";
 		String timeZone = "N/A";
 		String feetAboveSeaLevel = "N/A";
+		String uvIndex = " \"N/A\"";
 
 	}
+
+	private static void writeData(List<Data> dataList, String stateName) throws Exception {
+		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\" + stateName
+				+ ".js";
+		FileWriter myWriter = new FileWriter(filePath);
+		AndrewStringWriter sb = new AndrewStringWriter();
+		for (Data data : dataList) {
+			sb.append(startSt).appendWithComma(data.cityName).appendWithComma(data.stateName)
+					.appendWithComma(data.hottestMonthsHigh).appendWithComma(data.coldestHigh)
+					.appendWithComma(data.numInchesOfRain).appendWithComma(data.annualSnowfall)
+					.appendWithComma(data.numSunnyDays).appendWithComma(data.numDaysOfRain)
+					.appendWithComma(data.population).appendWithComma(data.populationDensity)
+					.appendWithComma(data.medianIncome).appendWithComma(data.medianHomePrice)
+					.appendWithComma(data.medianAge).appendWithComma(data.violentCrime)
+					.appendWithComma(data.propertyCrime).appendWithComma(data.airQuality)
+					.appendWithComma(data.medianHomeAge).appendWithComma(data.homeAppreciationLastYear)
+					.appendWithComma(data.homeAppreciationLastFiveYears)
+					.appendWithComma(data.homeAppreciationLastTenYears).appendWithComma(data.averageCommuteTime)
+					.appendWithComma(data.countyName).appendWithComma(data.hottestMonthMinusColdestMonth)
+					.appendWithComma(data.avgYearlyWindspeed).appendWithComma(data.avgAugustHumidity)
+					.appendWithComma(data.avgDecemberHumidity).appendWithComma(data.avgHumidity)
+					.appendWithComma(data.percentDemocrat).appendWithComma(data.percentRepublican)
+					.appendWithComma(data.unemploymentRate).appendWithComma(data.jobGrowthLastYear)
+					.appendWithComma(data.populationGrowthSince2010).appendWithComma(data.percentAsian)
+					.appendWithComma(data.percentBlack).appendWithComma(data.percentWhite)
+					.appendWithComma(data.percentHispanic).appendWithComma(data.medianRent)
+					.appendWithComma(data.percentWithAtleastBachelors).appendWithComma(data.metro)
+					.appendWithComma(data.homeSquareFeet).appendWithComma(data.costPerSquareFoot)
+					.appendWithComma(data.timeZone).appendWithComma(data.feetAboveSeaLevel)
+					.appendLastItem(data.uvIndex);
+		}
+		String st = sb.getString();
+		myWriter.write(st);
+		myWriter.close();
+		System.out.println("wrote to file " + filePath);
+	}
+
+	private static List<Data> readData(String stateName) throws Exception {
+		List<Data> dataList = new ArrayList<>();
+		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\" + stateName
+				+ ".js";
+		File myObj = new File(filePath);
+		Scanner myReader = new Scanner(myObj);
+		while (myReader.hasNextLine()) {
+			String line = myReader.nextLine();
+			if (!line.contains(startSt)) {
+				continue;
+			}
+			line = line.substring(startSt.length());
+			line = line.substring(0, line.length() - 3);
+			String[] arr = line.split(",");
+			Data data = new Data();
+			data.cityName = arr[0];
+			data.stateName = arr[1];
+			data.hottestMonthsHigh = arr[2];
+			data.coldestHigh = arr[3];
+			data.numInchesOfRain = arr[4];
+			data.annualSnowfall = arr[5];
+			data.numSunnyDays = arr[6];
+			data.numDaysOfRain = arr[7];
+			data.population = arr[8];
+			data.populationDensity = arr[9];
+			data.medianIncome = arr[10];
+			data.medianHomePrice = arr[11];
+			data.medianAge = arr[12];
+			data.violentCrime = arr[13];
+			data.propertyCrime = arr[14];
+			data.airQuality = arr[15];
+			data.medianHomeAge = arr[16];
+			data.homeAppreciationLastYear = arr[17];
+			data.homeAppreciationLastFiveYears = arr[18];
+			data.homeAppreciationLastTenYears = arr[19];
+			data.averageCommuteTime = arr[20];
+			data.countyName = arr[21];
+			data.hottestMonthMinusColdestMonth = arr[22];
+			data.avgYearlyWindspeed = arr[23];
+			data.avgAugustHumidity = arr[24];
+			data.avgDecemberHumidity = arr[25];
+			data.avgHumidity = arr[26];
+			data.percentDemocrat = arr[27];
+			data.percentRepublican = arr[28];
+			data.unemploymentRate = arr[29];
+			data.jobGrowthLastYear = arr[30];
+			data.populationGrowthSince2010 = arr[31];
+			data.percentAsian = arr[32];
+			data.percentBlack = arr[33];
+			data.percentWhite = arr[34];
+			data.percentHispanic = arr[35];
+			data.medianRent = arr[36];
+			data.percentWithAtleastBachelors = arr[37];
+			data.metro = arr[38];
+			data.homeSquareFeet = arr[39];
+			data.costPerSquareFoot = arr[40];
+			data.timeZone = arr[41];
+			data.feetAboveSeaLevel = arr[42];
+			if (arr.length > 43) {
+				data.uvIndex = arr[43];	
+			}
+			dataList.add(data);
+		}
+		myReader.close();
+		return dataList;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////
+	protected abstract void updateData(List<Data> dataList, String stateName) throws Exception;
 
 	private static class AndrewStringWriter {
 		StringBuilder sb = new StringBuilder();
@@ -141,109 +248,11 @@ public abstract class GenericDataReadAndWriter {
 
 	public void processState(String stateName) throws Exception {
 		List<Data> dataList = readData(stateName);
-		updateData(dataList);
-		writeData(dataList, stateName);
-	}
-
-	private static void writeData(List<Data> dataList, String stateName) throws Exception {
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\" + stateName
-				+ ".js";
-		FileWriter myWriter = new FileWriter(filePath);
-		AndrewStringWriter sb = new AndrewStringWriter();
-		for (Data data : dataList) {
-			sb.append(startSt).appendWithComma(data.cityName).appendWithComma(data.stateName)
-					.appendWithComma(data.hottestMonthsHigh).appendWithComma(data.coldestHigh)
-					.appendWithComma(data.numInchesOfRain).appendWithComma(data.annualSnowfall)
-					.appendWithComma(data.numSunnyDays).appendWithComma(data.numDaysOfRain)
-					.appendWithComma(data.population).appendWithComma(data.populationDensity)
-					.appendWithComma(data.medianIncome).appendWithComma(data.medianHomePrice)
-					.appendWithComma(data.medianAge).appendWithComma(data.violentCrime)
-					.appendWithComma(data.propertyCrime).appendWithComma(data.airQuality)
-					.appendWithComma(data.medianHomeAge).appendWithComma(data.homeAppreciationLastYear)
-					.appendWithComma(data.homeAppreciationLastFiveYears)
-					.appendWithComma(data.homeAppreciationLastTenYears).appendWithComma(data.averageCommuteTime)
-					.appendWithComma(data.countyName).appendWithComma(data.hottestMonthMinusColdestMonth)
-					.appendWithComma(data.avgYearlyWindspeed).appendWithComma(data.avgAugustHumidity)
-					.appendWithComma(data.avgDecemberHumidity).appendWithComma(data.avgHumidity)
-					.appendWithComma(data.percentDemocrat).appendWithComma(data.percentRepublican)
-					.appendWithComma(data.unemploymentRate).appendWithComma(data.jobGrowthLastYear)
-					.appendWithComma(data.populationGrowthSince2010).appendWithComma(data.percentAsian)
-					.appendWithComma(data.percentBlack).appendWithComma(data.percentWhite)
-					.appendWithComma(data.percentHispanic).appendWithComma(data.medianRent)
-					.appendWithComma(data.percentWithAtleastBachelors).appendWithComma(data.metro)
-					.appendWithComma(data.homeSquareFeet).appendWithComma(data.costPerSquareFoot)
-					.appendWithComma(data.timeZone).appendLastItem(data.feetAboveSeaLevel);
+		try {
+			updateData(dataList, stateName);
+		} finally {
+			writeData(dataList, stateName);
 		}
-		String st = sb.getString();
-		myWriter.write(st);
-		myWriter.close();
-		System.out.println("wrote to file " + filePath);
-	}
-
-	protected abstract void updateData(List<Data> dataList);
-
-	private static List<Data> readData(String stateName) throws Exception {
-		List<Data> dataList = new ArrayList<>();
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\" + stateName
-				+ ".js";
-		File myObj = new File(filePath);
-		Scanner myReader = new Scanner(myObj);
-		while (myReader.hasNextLine()) {
-			String line = myReader.nextLine();
-			if (!line.contains(startSt)) {
-				continue;
-			}
-			line = line.substring(startSt.length());
-			line = line.substring(0, line.length() - 3);
-			String[] arr = line.split(",");
-			Data data = new Data();
-			data.cityName = arr[0];
-			data.stateName = arr[1];
-			data.hottestMonthsHigh = arr[2];
-			data.coldestHigh = arr[3];
-			data.numInchesOfRain = arr[4];
-			data.annualSnowfall = arr[5];
-			data.numSunnyDays = arr[6];
-			data.numDaysOfRain = arr[7];
-			data.population = arr[8];
-			data.populationDensity = arr[9];
-			data.medianIncome = arr[10];
-			data.medianHomePrice = arr[11];
-			data.medianAge = arr[12];
-			data.violentCrime = arr[13];
-			data.propertyCrime = arr[14];
-			data.airQuality = arr[15];
-			data.medianHomeAge = arr[16];
-			data.homeAppreciationLastYear = arr[17];
-			data.homeAppreciationLastFiveYears = arr[18];
-			data.homeAppreciationLastTenYears = arr[19];
-			data.averageCommuteTime = arr[20];
-			data.countyName = arr[21];
-			data.hottestMonthMinusColdestMonth = arr[22];
-			data.avgYearlyWindspeed = arr[23];
-			data.avgAugustHumidity = arr[24];
-			data.avgDecemberHumidity = arr[25];
-			data.avgHumidity = arr[26];
-			data.percentDemocrat = arr[27];
-			data.percentRepublican = arr[28];
-			data.unemploymentRate = arr[29];
-			data.jobGrowthLastYear = arr[30];
-			data.populationGrowthSince2010 = arr[31];
-			data.percentAsian = arr[32];
-			data.percentBlack = arr[33];
-			data.percentWhite = arr[34];
-			data.percentHispanic = arr[35];
-			data.medianRent = arr[36];
-			data.percentWithAtleastBachelors = arr[37];
-			data.metro = arr[38];
-			data.homeSquareFeet = arr[39];
-			data.costPerSquareFoot = arr[40];
-			data.timeZone = arr[41];
-			data.feetAboveSeaLevel = arr[42];
-			dataList.add(data);
-		}
-		myReader.close();
-		return dataList;
 	}
 
 	static class RunnableDemo51 implements Runnable {

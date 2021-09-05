@@ -163,7 +163,7 @@ var formatter = new Intl.NumberFormat('en-US', {
 
 class Data {
   constructor(cityName, stateName, hottestMonthsHigh, coldestHigh, numInchesOfRain, annualSnowfall, numSunnyDays, numDaysOfRain, population, populationDensity, medianIncome, medianHomePrice, medianAge, violentCrime, propertyCrime, airQuality, medianHomeAge, homeAppreciationLastYear, homeAppreciationLastFiveYears, homeAppreciationLastTenYears, averageCommuteTime, countyName, hottestMonthMinusColdestMonth, avgYearlyWindspeed, avgAugustHumidity, avgDecemberHumidity, avgHumidity, percentDemocrat, percentRepublican, unemploymentRate, jobGrowthLastYear, populationGrowthSince2010, percentAsian, percentBlack, percentWhite, percentHispanic, medianRent, percentWithAtleastBachelors, metro, 
-  homeSquareFeet, costPerSquareFoot, timeZone, feetAboveSeaLevel) {
+  homeSquareFeet, costPerSquareFoot, timeZone, feetAboveSeaLevel, uvIndex) {
     this.cityName = cityName;
 	this.stateName = stateName;
     this.hottestMonthsHigh = hottestMonthsHigh;
@@ -207,5 +207,6 @@ class Data {
 	this.costPerSquareFoot = costPerSquareFoot;
 	this.feetAboveSeaLevel = feetAboveSeaLevel;
 	this.timeZone = timeZone;
+	this.uvIndex = uvIndex;
   }
 }
