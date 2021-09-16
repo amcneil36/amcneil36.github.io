@@ -24,9 +24,9 @@ Download here: <a href="cityStats.csv" download>cityStats.csv</a>
 | Violent crime index | On a scale of 1 (lowest) to 100 (highest). This composes of causing physical harm. The US average is 23. | https://www.bestplaces.net/ |
 | Property crime index | On a scale of 1 (lowest) to 100 (highest). This composes of theft. The US average is 35.| https://www.bestplaces.net/ |
 | Median age | | https://www.bestplaces.net/ |
-| % with at least Bachelor's | Percent of residents over the age of 25 with a Bachelor's degree. Includes those who have a graduate degree. | worldpopulationreview.com |
+| % with at least Bachelor's | Percent of residents over the age of 25 with a Bachelor's degree. Includes those who have a graduate degree. | https://www.worldpopulationreview.com |
 | Median household income | | https://www.bestplaces.net/ |
-| Median rent | Median monthly cost of all rentals in the city. This includes apartments, houses, and all other forms of rentals. | |
+| Median rent | Median monthly cost of all rentals in the city. This includes apartments, houses, and all other forms of rentals. | https://www.worldpopulationreview.com |
 | Median home price | | |
 | Median home square feet | | |
 | Median home cost per sq ft | | |
@@ -41,10 +41,10 @@ Download here: <a href="cityStats.csv" download>cityStats.csv</a>
 | Population growth since 2010 | | https://www.bestplaces.net/ |
 | % Democrat | The percent of residents who are democrat. Tracked at the county level. | https://www.bestplaces.net/ |
 | % Republican | The percent of residents who are republican. Tracked at the county level. | https://www.bestplaces.net/ |
-| % Asian | The percent of residents who identified as Asian only. This includes Hispanic and non-hispanic Asian residents. | |
-| % Black | The percent of residents who identified as Black only. This includes Hispanic and non-hispanic Black residents. | |
-| % White | The percent of residents who identified as White only. This includes Hispanic and non-hispanic White residents. | |
-| % Hispanic | The percent of residents who identified as Hispanic. This includes Hispanic residents of any race. | |
+| % Asian | The percent of residents who identified as Asian only. This includes Hispanic and non-hispanic Asian residents. | https://www.worldpopulationreview.com |
+| % Black | The percent of residents who identified as Black only. This includes Hispanic and non-hispanic Black residents. | https://www.worldpopulationreview.com |
+| % White | The percent of residents who identified as White only. This includes Hispanic and non-hispanic White residents. | https://www.worldpopulationreview.com |
+| % Hispanic | The percent of residents who identified as Hispanic. This includes Hispanic residents of any race. | https://www.worldpopulationreview.com |
 | Metro | | https://www.bestplaces.net/ |
 | Timezone | | https://www.bestplaces.net/ |
 | Elevation (ft) | | https://www.bestplaces.net/ |
