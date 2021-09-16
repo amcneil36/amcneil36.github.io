@@ -3,7 +3,7 @@ Download here: <a href="cityStats.csv" download>cityStats.csv</a>
 
 ### Field name descriptions
 
-| Field name | description (if necessary) | Data source | Date updated |
+| Field name | Description (if necessary) | Data source | Date updated |
 | ----------- | ----------- | ----------- | ----------- |
 | City      |        | https://www.bestplaces.net/| Feb 2021 |
 | State   |    | https://www.bestplaces.net/ | Feb 2021 |
@@ -15,7 +15,7 @@ Download here: <a href="cityStats.csv" download>cityStats.csv</a>
 | Hottest high minus coldest high | The average high for the hottest month minus the average high for the coldest month | https://www.bestplaces.net/ | Oct 2021 |
 | Annual rainfall (in) | The amount of inches of rain per year based on historical data | https://www.bestplaces.net/ | Feb 2021 |
 | Annual days of precipitation | | https://www.bestplaces.net/ | Feb 2021 |
-| Annual days of sunshine | Number of sunny days | https://www.bestplaces.net/ | Feb 2021 |
+| Annual days of sunshine | | https://www.bestplaces.net/ | Feb 2021 |
 | Annual snowfall (in) | | https://www.bestplaces.net/ | Feb 2021 |
 | Average August Humidity | The average absolute humidity for the month of August based on historical data | https://www.weatherwx.com/ | Mar 2021 |
 | Average December Humidity | The average absolute humidity for the month of December based on historical data | https://www.weatherwx.com/ | Mar 2021 |
@@ -50,7 +50,7 @@ Download here: <a href="cityStats.csv" download>cityStats.csv</a>
 | Elevation (ft) | | https://www.bestplaces.net/ | Sep 2021 |
 | UV Index | | https://www.bestplaces.net/ | Sep 2021 |
 | Homeownership Rate | |https://www.bestplaces.net/ | Sep 2021 |
-| Single Population | | https://www.bestplaces.net/ | Sep 2021 |
-| Walk Score | | https://www.walkscore.com/ | Sep 2021 |
-| Transit Score | | https://www.walkscore.com/ | Sep 2021 |
-| Bike Score | | https://www.walkscore.com/ | Sep 2021 |
+| Single Population | The percent of residents who are single (not married) | https://www.bestplaces.net/ | Sep 2021 |
+| Walk Score | The walkability ranked from 0 (worst) to 100 (best) | https://www.walkscore.com/ | Sep 2021 |
+| Transit Score | How good the public transit is ranked from 0 (worst) to 100 (best) | https://www.walkscore.com/ | Sep 2021 |
+| Bike Score | How good an area is for biking ranked from 0 (worst) to 100 (best) | https://www.walkscore.com/ | Sep 2021 |
