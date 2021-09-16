@@ -27,9 +27,9 @@ Download here: <a href="cityStats.csv" download>cityStats.csv</a>
 | % with at least Bachelor's | Percent of residents over the age of 25 with a Bachelor's degree. Includes those who have a graduate degree. | https://www.worldpopulationreview.com |
 | Median household income | | https://www.bestplaces.net/ |
 | Median rent | Median monthly cost of all rentals in the city. This includes apartments, houses, and all other forms of rentals. | https://www.worldpopulationreview.com |
-| Median home price | | |
-| Median home square feet | | |
-| Median home cost per sq ft | | |
+| Median home price | | https://www.realtor.com/ |
+| Median home square feet | | https://www.realtor.com/ |
+| Median home cost per sq ft | | https://www.realtor.com/ |
 | Median home age | | https://www.bestplaces.net/ |
 | Home appreciation last year | | https://www.bestplaces.net/ |
 | Home appreciation last 5 years | | https://www.bestplaces.net/ |
