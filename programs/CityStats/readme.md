@@ -33,7 +33,7 @@ Download here: <a href="cityStats.csv" download>cityStats.csv</a>
 | Median home age | | https://www.bestplaces.net/ |
 | Home appreciation last year | | https://www.bestplaces.net/ |
 | Home appreciation last 5 years | | https://www.bestplaces.net/ |
-| Home appreciation last 10 years | https://www.bestplaces.net/ |
+| Home appreciation last 10 years | | https://www.bestplaces.net/ |
 | Air quality index | The quality of the air. The higher score is better. The score can go up to 100. | https://www.bestplaces.net/ |
 | Average one-way commute time | | https://www.bestplaces.net/ |
 | Unemployment rate | | https://www.bestplaces.net/ |
