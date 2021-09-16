@@ -7,14 +7,14 @@ import com.hey.CityStats.RunnableDemo52;
 
 public class CreateBigCsv {
 	
-	public void processState(List<CityStats.Data> dataList, String stateName) throws Exception {
+	public static void processState(List<CityStats.Data> dataList, String stateName) throws Exception {
 		List<CityStats.Data> list2 = CityStats.readData(stateName);
 		for (CityStats.Data data : list2) {
 			dataList.add(data);
 		}
 	}
 	
-	public void processAllStates() throws Exception {
+	public static void processAllStates() throws Exception {
 		List<CityStats.Data> dataList = new ArrayList<>();
 		processState(dataList, "Alabama");
 		processState(dataList, "Alaska");
@@ -70,9 +70,8 @@ public class CreateBigCsv {
 		CityStats.writeDataToPath(dataList, filePath, true);
 	}
 
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+	public static void main(String[] args) throws Exception {
+		processAllStates();
 	}
 
 }
