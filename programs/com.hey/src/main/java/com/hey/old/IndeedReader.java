@@ -19,6 +19,8 @@ import java.net.UnknownHostException;
 
 import org.jsoup.nodes.Element;
 
+import com.hey.GenericDataReadAndWriter;
+import com.hey.GenericDataReadAndWriter.Data;
 import com.hey.Util;
 
 // update code to show banned ip address count. maybe clear after 5 ip addresses
@@ -26,32 +28,62 @@ public class IndeedReader {
 
 	private static Map<String, String> map = new HashMap<String, String>();
 	private static Set<String> bannedIpAddresses = new HashSet<String>();
+//	private static final Set<String> searchTermsSet = new HashSet<String>(
+//			Arrays.asList("software engineer", "software development engineer", "software developer"));
 	private static final Set<String> searchTermsSet = new HashSet<String>(
-			Arrays.asList("software engineer", "software development engineer", "software developer"));
+			Arrays.asList("Computer Science"));
 
 	private static final int NUM_MATCHES_TO_LOOK_FOR = 3;
 
-	private static class Data {
-		String cityName;
-		String stateName;
-		double population;
+	
+	private static class Data2 {
+		Data data;
 		int numPostings;
 		double postingsper100k;
 	}
-
+	
 	// format csv to remove commas
+	
+	private static String fixString(String st) {
+		if (st.charAt(0) == ' ') {
+			return st.substring(1, st.length()).replace("\"", "");
+		}
+		return st.replace("\"", "");
+	}
+	
 	public static void main(String[] args) throws Exception {
 		populateMap();
 		Scanner scan = new Scanner(System.in);
 		long startTime = System.currentTimeMillis();
 		int numQueries = 0;
-		List<Data> input = readInput();
-		int numCities = input.size();
+		List<Data> input4 = GenericDataReadAndWriter.readData("Kansas");
+		List<Data> input3 = GenericDataReadAndWriter.readData("Missouri");
+		List<Data> input2 = new ArrayList<>();
+		for (Data input : input3) {
+			input2.add(input);
+		}
+		for (Data input : input4) {
+			input2.add(input);
+		}
 		int numCitiesComplete = 0;
+		List<Data2> data2List = new ArrayList<>();
+		List<Data> input = new ArrayList<>();
+		for (Data data: input2) {
+			data.cityName = fixString(data.cityName);
+			data.population = fixString(data.population);
+			data.stateName = fixString(data.stateName);
+			if (data.metro.contains("Kansas City") && Integer.valueOf(data.population) > 20000) {
+				input.add(data);
+			}
+		}
+		
+		int numCities = input.size();
 		for (Data data : input) {
 			String url = createUrl(data.cityName, data.stateName);
+			Data2 data2 = new Data2();
+			data2.data = data;;
 			Map<Integer, Integer> mapOfNumPostingsToNumOccurrences = new HashMap<Integer, Integer>();
-			data.numPostings = -1;
+			data2.numPostings = -1;
 			while (true) {
 				int numPostingsTemp = extractJobPostingsFromUrl(url);
 				numQueries++;
@@ -94,7 +126,7 @@ public class IndeedReader {
 				}
 				Integer numOccurrences = mapOfNumPostingsToNumOccurrences.get(numPostingsTemp);
 				if (numOccurrences == NUM_MATCHES_TO_LOOK_FOR - 1) {
-					data.numPostings = numPostingsTemp;
+					data2.numPostings = numPostingsTemp;
 					break;
 				} else {
 					numOccurrences++;
@@ -102,15 +134,16 @@ public class IndeedReader {
 				}
 			}
 
-			double postingsper100k = data.numPostings * 100000 / data.population;
-			data.postingsper100k = Math.round(postingsper100k * 100.0) / 100.0;
+			double postingsper100k = data2.numPostings * 100000 / Integer.valueOf(data.population);
+			data2.postingsper100k = Math.round(postingsper100k * 100.0) / 100.0;
 			numCitiesComplete++;
 			System.out.println("(" + numCitiesComplete + "/" + numCities + "); " + "city: " + data.cityName + "; "
-					+ "num postings: " + data.numPostings + "; " + "postings per 100k: " + data.postingsper100k
+					+ "num postings: " + data2.numPostings + "; " + "postings per 100k: " + data2.postingsper100k
 					+ " url: " + url);
+			data2List.add(data2);
 		}
 		scan.close();
-		writeTextToFile(input);
+		writeTextToFile(data2List);
 
 	}
 
@@ -144,7 +177,7 @@ public class IndeedReader {
 		}
 	}
 
-	private static List<Data> readInput() {
+	/*private static List<Data> readInput() {
 		try {
 			File myObj = new File("input.csv");
 			Scanner myReader = new Scanner(myObj);
@@ -157,6 +190,9 @@ public class IndeedReader {
 				data.cityName = arr[0];
 				data.stateName = arr[1];
 				data.population = Integer.valueOf(arr[3]);
+				if (data.population < 200000) {
+					continue;
+				}
 				output.add(data);
 			}
 			myReader.close();
@@ -164,7 +200,7 @@ public class IndeedReader {
 		} catch (Exception ex) {
 			throw new RuntimeException("issue in readInput");
 		}
-	}
+	}*/
 
 	private static String createUrl(String cityName, String stateName) {
 		String url = "https://www.indeed.com/jobs?q=";
@@ -183,9 +219,9 @@ public class IndeedReader {
 		return url;
 	}
 
-	static Comparator<Data> c1 = new Comparator<Data>() {
+	static Comparator<Data2> c1 = new Comparator<Data2>() {
 
-		public int compare(Data o1, Data o2) {
+		public int compare(Data2 o1, Data2 o2) {
 			if (o1.postingsper100k > o2.postingsper100k) {
 				return -1;
 			} else if (o1.postingsper100k < o2.postingsper100k) {
@@ -197,15 +233,15 @@ public class IndeedReader {
 
 	};
 
-	private static void writeTextToFile(List<Data> list) {
+	private static void writeTextToFile(List<Data2> list) {
 
 		Collections.sort(list, c1);
 		try {
 			StringBuilder sb = new StringBuilder();
 			sb.append("city,state,population,number of job postings,job postings per 100k people\n");
-			for (Data data : list) {
+			for (Data2 data : list) {
 
-				sb.append(data.cityName).append(",").append(data.stateName).append(",").append(data.population)
+				sb.append(data.data.cityName).append(",").append(data.data.stateName).append(",").append(data.data.population)
 						.append(",").append(data.numPostings).append(",").append(data.postingsper100k).append("\n");
 			}
 

@@ -63,7 +63,7 @@ public abstract class GenericDataReadAndWriter {
 
 	}
 
-	private static List<Data> readData(String stateName) throws Exception {
+	public static List<Data> readData(String stateName) throws Exception {
 		List<Data> dataList = new ArrayList<>();
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\" + stateName
 				+ ".js";
