@@ -1,5 +1,5 @@
 ## Weather and demographics information for all USA cities
-Download here: <a href="cityStats.csv" download>cityStats.csv</a>
+&#8594;Download here: <a href="cityStats.csv" download>cityStats.csv</a>&#8592;
 
 ### Field name descriptions
 
