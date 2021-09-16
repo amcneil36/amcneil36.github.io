@@ -160,11 +160,9 @@ public abstract class CityStats {
 		myReader.close();
 		return dataList;
 	}
-
-	private static void writeData(List<Data> dataList, String stateName, boolean isLastWrite) throws Exception {
-		String filePath3 = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\States\\" + stateName
-				+ ".csv";
-		FileWriter myWriter = new FileWriter(filePath3);
+	
+	public static void writeDataToPath(List<Data> dataList, String filePath, boolean isLastWrite) throws Exception {
+		FileWriter myWriter = new FileWriter(filePath);
 		AndrewStringWriter sb = new AndrewStringWriter();
 		sb.appendLastItem(startSt);
 		for (Data data : dataList) {
@@ -197,8 +195,14 @@ public abstract class CityStats {
 		myWriter.write(st);
 		myWriter.close();
 		if (isLastWrite) {
-			System.out.println("wrote to file " + filePath3);
+			System.out.println("wrote to file " + filePath);
 		}
+	}
+
+	private static void writeData(List<Data> dataList, String stateName, boolean isLastWrite) throws Exception {
+		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\States\\" + stateName
+				+ ".csv";
+		writeDataToPath(dataList, filePath, isLastWrite);
 	}
 
 	protected abstract void updateData(Data data, String stateName) throws Exception;
