@@ -3,8 +3,6 @@ package com.hey;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.hey.CityStats.RunnableDemo52;
-
 public class CreateBigCsv {
 	
 	public static void processState(List<CityStats.Data> dataList, String stateName) throws Exception {
@@ -14,7 +12,7 @@ public class CreateBigCsv {
 		}
 	}
 	
-	public static void processAllStates() throws Exception {
+	public static List<CityStats.Data> readInput() throws Exception {
 		List<CityStats.Data> dataList = new ArrayList<>();
 		processState(dataList, "Alabama");
 		processState(dataList, "Alaska");
@@ -66,6 +64,11 @@ public class CreateBigCsv {
 		processState(dataList, "West Virginia");
 		processState(dataList, "Wisconsin");
 		processState(dataList, "Wyoming");
+		return dataList;
+	}
+	
+	public static void processAllStates() throws Exception {
+		List<CityStats.Data> dataList = readInput();
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\cityStats.csv";
 		CityStats.writeDataToPath(dataList, filePath, true);
 	}

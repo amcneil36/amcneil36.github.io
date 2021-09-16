@@ -19,6 +19,8 @@ import java.net.UnknownHostException;
 
 import org.jsoup.nodes.Element;
 
+import com.hey.CityStats;
+import com.hey.CreateBigCsv;
 import com.hey.GenericDataReadAndWriter;
 import com.hey.GenericDataReadAndWriter.Data;
 import com.hey.Util;
@@ -30,62 +32,62 @@ public class IndeedReader {
 	private static Set<String> bannedIpAddresses = new HashSet<String>();
 //	private static final Set<String> searchTermsSet = new HashSet<String>(
 //			Arrays.asList("software engineer", "software development engineer", "software developer"));
-	private static final Set<String> searchTermsSet = new HashSet<String>(
-			Arrays.asList("Computer Science"));
 
+	/////////////////////////////////////////////////////////////////////////
+	private static final Set<String> searchTermsSet = new HashSet<String>(Arrays.asList("Computer Science"));
+
+	private static boolean isCityValid(CityStats.Data data) {
+		return Integer.valueOf(data.population) > 200000;
+	}
+
+	private static final String outputSt = "Data queried from an Indeed.com search of the text 'Computer Science' for all USA cities with a population greater than 200k. (0 mile search radius)";
+
+	/////////////////////////////////////////////////////////////////////////
 	private static final int NUM_MATCHES_TO_LOOK_FOR = 3;
 
-	
 	private static class Data2 {
-		Data data;
+		CityStats.Data data;
 		int numPostings;
 		double postingsper100k;
 	}
-	
+
 	// format csv to remove commas
-	
+
 	private static String fixString(String st) {
 		if (st.charAt(0) == ' ') {
 			return st.substring(1, st.length()).replace("\"", "");
 		}
 		return st.replace("\"", "");
 	}
-	
+
 	public static void main(String[] args) throws Exception {
 		populateMap();
 		Scanner scan = new Scanner(System.in);
 		long startTime = System.currentTimeMillis();
 		int numQueries = 0;
-		List<Data> input4 = GenericDataReadAndWriter.readData("Kansas");
-		List<Data> input3 = GenericDataReadAndWriter.readData("Missouri");
-		List<Data> input2 = new ArrayList<>();
-		for (Data input : input3) {
-			input2.add(input);
-		}
-		for (Data input : input4) {
-			input2.add(input);
-		}
+		List<CityStats.Data> inputTemp = CreateBigCsv.readInput();
+		List<CityStats.Data> input = new ArrayList<>();
 		int numCitiesComplete = 0;
-		List<Data2> data2List = new ArrayList<>();
-		List<Data> input = new ArrayList<>();
-		for (Data data: input2) {
+		for (CityStats.Data data : inputTemp) {
 			data.cityName = fixString(data.cityName);
 			data.population = fixString(data.population);
 			data.stateName = fixString(data.stateName);
-			if (data.metro.contains("Kansas City") && Integer.valueOf(data.population) > 20000) {
+			if (isCityValid(data)) {
 				input.add(data);
 			}
 		}
-		
+
 		int numCities = input.size();
-		for (Data data : input) {
+		List<Data2> data2List = new ArrayList<>();
+		for (CityStats.Data data : input) {
 			String url = createUrl(data.cityName, data.stateName);
 			Data2 data2 = new Data2();
-			data2.data = data;;
+			data2.data = data;
+			;
 			Map<Integer, Integer> mapOfNumPostingsToNumOccurrences = new HashMap<Integer, Integer>();
 			data2.numPostings = -1;
 			while (true) {
-				int numPostingsTemp = extractJobPostingsFromUrl(url);
+				int numPostingsTemp = 2;// extractJobPostingsFromUrl(url);
 				numQueries++;
 				if (numPostingsTemp == -1) {
 					if (bannedIpAddresses.size() > 5) {
@@ -177,31 +179,6 @@ public class IndeedReader {
 		}
 	}
 
-	/*private static List<Data> readInput() {
-		try {
-			File myObj = new File("input.csv");
-			Scanner myReader = new Scanner(myObj);
-			myReader.nextLine();
-			List<Data> output = new ArrayList<Data>();
-			while (myReader.hasNextLine()) {
-				String line = myReader.nextLine();
-				String[] arr = line.split(",");
-				Data data = new Data();
-				data.cityName = arr[0];
-				data.stateName = arr[1];
-				data.population = Integer.valueOf(arr[3]);
-				if (data.population < 200000) {
-					continue;
-				}
-				output.add(data);
-			}
-			myReader.close();
-			return output;
-		} catch (Exception ex) {
-			throw new RuntimeException("issue in readInput");
-		}
-	}*/
-
 	private static String createUrl(String cityName, String stateName) {
 		String url = "https://www.indeed.com/jobs?q=";
 
@@ -238,11 +215,13 @@ public class IndeedReader {
 		Collections.sort(list, c1);
 		try {
 			StringBuilder sb = new StringBuilder();
-			sb.append("city,state,population,number of job postings,job postings per 100k people\n");
+			sb.append(
+					"city,state,population,number of job postings,job postings per 100k people,,,," + outputSt + "\n");
 			for (Data2 data : list) {
 
-				sb.append(data.data.cityName).append(",").append(data.data.stateName).append(",").append(data.data.population)
-						.append(",").append(data.numPostings).append(",").append(data.postingsper100k).append("\n");
+				sb.append(data.data.cityName).append(",").append(data.data.stateName).append(",")
+						.append(data.data.population).append(",").append(data.numPostings).append(",")
+						.append(data.postingsper100k).append("\n");
 			}
 
 			String outputTitle = "output_";
@@ -271,8 +250,8 @@ public class IndeedReader {
 			}
 			Element element3 = element.getElementById("original_radius_result");
 			if (element3 != null) {
-		//		System.out.println("url found no jobs: " + url);
-	//			System.out.println(element3.text());
+				// System.out.println("url found no jobs: " + url);
+				// System.out.println(element3.text());
 				return 0;
 			}
 			element2 = element.getElementById("searchCountPages");
