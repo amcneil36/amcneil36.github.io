@@ -28,6 +28,8 @@ Download here: <a href="cityStats.csv" download>cityStats.csv</a>
 | Median household income | |
 | Median rent | Median monthly cost of all rentals in the city. This includes apartments, houses, and all other forms of rentals. |
 | Median home price | |
+| Median home square feet | |
+| Median home cost per sq ft | |
 | Median home age | |
 | Home appreciation last year | |
 | Home appreciation last 5 years | |
@@ -43,3 +45,12 @@ Download here: <a href="cityStats.csv" download>cityStats.csv</a>
 | % Black | The percent of residents who identified as Black only. This includes Hispanic and non-hispanic Black residents. |
 | % White | The percent of residents who identified as White only. This includes Hispanic and non-hispanic White residents. |
 | % Hispanic | The percent of residents who identified as Hispanic. This includes Hispanic residents of any race. |
+| Metro | |
+| Timezone | |
+| Elevation (ft) | |
+| UV Index | |
+| Homeownership Rate | |
+| Single Population | |
+| Walk Score | |
+| Transit Score | |
+| Bike Score | |
