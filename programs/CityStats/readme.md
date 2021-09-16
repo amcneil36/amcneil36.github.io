@@ -24,7 +24,7 @@ Download here: <a href="cityStats.csv" download>cityStats.csv</a>
 | Violent crime index | On a scale of 1 (lowest) to 100 (highest). This composes of causing physical harm. The US average is 23. | https://www.bestplaces.net/ |
 | Property crime index | On a scale of 1 (lowest) to 100 (highest). This composes of theft. The US average is 35.| https://www.bestplaces.net/ |
 | Median age | | https://www.bestplaces.net/ |
-| % with at least Bachelor's | Percent of residents over the age of 25 with a Bachelor's degree. Includes those who have a graduate degree. | |
+| % with at least Bachelor's | Percent of residents over the age of 25 with a Bachelor's degree. Includes those who have a graduate degree. | worldpopulationreview.com |
 | Median household income | | https://www.bestplaces.net/ |
 | Median rent | Median monthly cost of all rentals in the city. This includes apartments, houses, and all other forms of rentals. | |
 | Median home price | | |
