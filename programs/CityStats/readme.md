@@ -54,3 +54,5 @@ Download here: <a href="cityStats.csv" download>cityStats.csv</a>
 | Walk Score | The walkability ranked from 0 (worst) to 100 (best) | https://www.walkscore.com/ | Sep 2021 |
 | Transit Score | How good the public transit is ranked from 0 (worst) to 100 (best) | https://www.walkscore.com/ | Sep 2021 |
 | Bike Score | How good an area is for biking ranked from 0 (worst) to 100 (best) | https://www.walkscore.com/ | Sep 2021 |
+
+Fields will have a value of N/A if the data source did not have any data for that field for the given city.
