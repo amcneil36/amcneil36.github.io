@@ -1,4 +1,4 @@
-## Weather and demographics data by city .csv##
+## CSV file with weather and demographics information by city
 Latest download: <a href="cityStats.csv" download>cityStats.csv</a>
 
 ### Field name descriptions
