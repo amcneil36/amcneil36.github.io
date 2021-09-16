@@ -4,7 +4,7 @@ Download here: <a href="cityStats.csv" download>cityStats.csv</a>
 ### Field name descriptions
 
 | Field name | description (if necessary) | data source |
-| ----------- | ----------- |
+| ----------- | ----------- | ----------- |
 | City      |        | |
 | State   |    | |
 | County   |  | |
