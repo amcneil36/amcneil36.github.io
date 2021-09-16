@@ -67,7 +67,7 @@ public abstract class CityStats {
 		StringBuilder sb = new StringBuilder();
 
 		AndrewStringWriter appendDollar(String st) {
-			if (!st.contains("$") && !st.contains("N/A") && 2==4) {
+			if (!st.contains("$") && !st.contains("N/A")) {
 				sb.append("$").append(st).append(",");
 				return this;
 			}
@@ -178,7 +178,7 @@ public abstract class CityStats {
 					.appendWithComma(data.avgYearlyWindspeed).appendWithComma(data.violentCrime)
 					.appendWithComma(data.propertyCrime).appendWithComma(data.medianAge)
 					.appendWithComma(data.percentWithAtleastBachelors).appendDollar(data.medianIncome)
-					.appendWithComma(data.medianRent).appendDollar(data.medianHomePrice)
+					.appendDollar(data.medianRent).appendDollar(data.medianHomePrice)
 					.appendWithComma(data.homeSquareFeet).appendDollar(data.costPerSquareFoot)
 					.appendWithComma(data.medianHomeAge).appendWithComma(data.homeAppreciationLastYear)
 					.appendWithComma(data.homeAppreciationLastFiveYears)
