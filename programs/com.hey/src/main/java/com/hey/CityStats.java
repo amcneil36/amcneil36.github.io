@@ -67,7 +67,7 @@ public abstract class CityStats {
 		StringBuilder sb = new StringBuilder();
 
 		AndrewStringWriter appendDollar(String st) {
-			if (!st.contains("$") && !st.contains("N/A")) {
+			if (!st.contains("$") && !st.contains("N/A") && 2==4) {
 				sb.append("$").append(st).append(",");
 				return this;
 			}
