@@ -1,5 +1,5 @@
 ## Weather and demographics information for each city
-Latest download: <a href="cityStats.csv" download>cityStats.csv</a>
+Download here: <a href="cityStats.csv" download>cityStats.csv</a>
 
 ### Field name descriptions
 
