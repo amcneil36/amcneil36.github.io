@@ -9,7 +9,17 @@ import java.util.Map;
 public class RealtorWebPageCityOpener {
 
 	private static boolean shouldTabBeOpened(CityStats.Data data) {
-		return Integer.valueOf(data.population) > 30000 && data.stateName.equals("Texas") && data.metro.contains("Houston");
+		if (data.percentWithAtleastBachelors.contains("N/A")) {
+			return false;
+		}
+		if (!data.costPerSquareFoot.contains("N/A")) {
+			return false;
+		}
+		if (Integer.valueOf(data.population) < 30000) {
+			return false;
+		}
+		double percentBachelors = Double.valueOf(data.percentWithAtleastBachelors.replace("%", ""));
+		return percentBachelors > 50;
 	}
 
 	private static Map<String, String> map = new HashMap<String, String>();
