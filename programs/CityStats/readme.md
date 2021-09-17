@@ -1,9 +1,10 @@
 ## Weather and demographics information for all USA cities
-🠊Download here: <a href="cityStats.csv" download>cityStats.csv</a>🠈 
 
-### Field name descriptions
+### The .csv file can be found here: <a href="https://amcneil36.github.io/programs/CityStats/cityStats.csv" download>https://amcneil36.github.io/programs/CityStats/cityStats.csv</a>
 
-| Field name | Description (if necessary) | Data source | Date updated |
+### Column name descriptions
+
+| Column name | Description (if necessary) | Data source | Date updated |
 | ----------- | ----------- | ----------- | ----------- |
 | City      |        | [Best Places](https://www.bestplaces.net/)| Feb 2021 |
 | State   |    | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
@@ -55,4 +56,4 @@
 | Transit Score | How good the public transit is ranked from 0 (worst) to 100 (best) | [Walk Score](https://www.walkscore.com/) | Sep 2021 |
 | Bike Score | How good an area is for biking ranked from 0 (worst) to 100 (best) | [Walk Score](https://www.walkscore.com/) | Sep 2021 |
 
-Fields will have a value of N/A if the data source did not have any data for that field for the given city.
+A value of N/A in a cell means that the data source did not find the requested data for the city. This is more common in smaller cities.
