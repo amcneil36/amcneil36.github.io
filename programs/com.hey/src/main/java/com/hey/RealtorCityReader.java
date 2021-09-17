@@ -39,6 +39,9 @@ public class RealtorCityReader {
 		while (myReader.hasNextLine() && !line.startsWith("Home values in ")) {
 			line = myReader.nextLine();
 		}
+		String city = line.substring("Home values in ".length(), line.indexOf(", ")).toLowerCase();
+		String state = map.get(line.substring(line.indexOf(", ") + 2).toLowerCase());
+		state = state.substring(0, 1).toUpperCase() + state.substring(1);
 		while (!line.startsWith("$") && myReader.hasNextLine()) {
 			line = myReader.nextLine();
 		}
@@ -51,10 +54,6 @@ public class RealtorCityReader {
 		}
 		houseData.costPerSqFt = getIntFromString(line);
 		houseData.medianSquareFootage = houseData.homePrice/houseData.costPerSqFt;
-		
-		String city = line.substring("Home values in ".length(), line.indexOf(", ")).toLowerCase();
-		String state = map.get(line.substring(line.indexOf(", ") + 2).toLowerCase());
-		state = state.substring(0, 1).toUpperCase() + state.substring(1);
 		houseData.city = city;
 		houseData.state = state;
 		myReader.close();
@@ -68,7 +67,7 @@ public class RealtorCityReader {
 			if (data.cityName.equals(houseData.city) && isCityFound) {
 				throw new RuntimeException("two cities with the same name found: " + houseData.city);
 			}
-			if (data.cityName.equals(houseData.city)) {
+			if (data.cityName.toLowerCase().equals(houseData.city)) {
 				data.medianHomePrice = String.valueOf(houseData.homePrice);
 				data.homeSquareFeet = String.valueOf(houseData.medianSquareFootage);
 				data.costPerSquareFoot = String.valueOf(houseData.costPerSqFt);
@@ -127,7 +126,7 @@ public class RealtorCityReader {
 	}
 
 	private static void populateMap() {
-		if (map != null) {
+		if (!map.isEmpty()) {
 			return;
 		}
 		map = new HashMap<String, String>();
