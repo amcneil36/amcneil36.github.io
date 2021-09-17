@@ -19,7 +19,7 @@ public class RealtorWebPageCityOpener {
 			return false;
 		}
 		double percentBachelors = Double.valueOf(data.percentWithAtleastBachelors.replace("%", ""));
-		return percentBachelors > 50;
+		return percentBachelors > 40;
 	}
 
 	private static Map<String, String> map = new HashMap<String, String>();
