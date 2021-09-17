@@ -5,6 +5,10 @@ import java.util.List;
 
 public class CreateBigCsv {
 	
+	public static void main(String[] args) throws Exception {
+		processAllStates();
+	}
+	
 	public static void processState(List<CityStats.Data> dataList, String stateName) throws Exception {
 		List<CityStats.Data> list2 = CityStats.readData(stateName);
 		for (CityStats.Data data : list2) {
@@ -71,10 +75,6 @@ public class CreateBigCsv {
 		List<CityStats.Data> dataList = readInput();
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\cityStats.csv";
 		CityStats.writeDataToPath(dataList, filePath, true);
-	}
-
-	public static void main(String[] args) throws Exception {
-		processAllStates();
 	}
 
 }

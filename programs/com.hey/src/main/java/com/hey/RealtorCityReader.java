@@ -1,8 +1,6 @@
 package main.java.com.hey;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,10 +80,6 @@ public class RealtorCityReader {
 			System.out.println("city not found: " + houseData.city);
 		}
 		
-	}
-	
-	private static String getMapKey(String cityName, String county) {
-		return cityName.toLowerCase() + ", " + county.toLowerCase();
 	}
 
 	public static int getIntFromString(String st) {

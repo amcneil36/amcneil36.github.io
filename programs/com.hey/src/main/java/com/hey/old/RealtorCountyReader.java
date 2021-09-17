@@ -1,4 +1,4 @@
-package com.hey.old;
+package main.java.com.hey.old;
 
 import java.io.File;
 import java.io.FileWriter;

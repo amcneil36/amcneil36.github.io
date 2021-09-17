@@ -1,5 +1,9 @@
 package main.java.com.hey;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -8,22 +12,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.io.File; // Import the File class
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Scanner; // Import the Scanner class to read text files
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import org.jsoup.nodes.Element;
-
-import com.hey.CityStats;
-import com.hey.CreateBigCsv;
-import com.hey.GenericDataReadAndWriter;
-import com.hey.GenericDataReadAndWriter.Data;
-import com.hey.Util;
 
 // update code to show banned ip address count. maybe clear after 5 ip addresses
 public class IndeedReader {
