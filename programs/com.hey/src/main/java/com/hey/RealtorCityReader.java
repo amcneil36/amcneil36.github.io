@@ -1,4 +1,4 @@
-package com.hey.old;
+package main.java.com.hey;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import com.hey.old.RealtorCountyReader.HouseData;
+import main.java.com.hey.CityStats.Data;
 
 public class RealtorCityReader {
 
@@ -18,10 +18,20 @@ public class RealtorCityReader {
 		int homePrice;
 		int costPerSqFt;
 		int medianSquareFootage;
+		String city;
+		String state;
 	}
 	
 	public static void main(String[] args) throws Exception {
 		populateMap();
+        HouseData houseData = getHouseData();
+		writeOutput(houseData);
+		
+		
+		
+	}
+
+	private static HouseData getHouseData() throws Exception {
 		String filePath = "realtorCityCopyPaste.txt";
 		File myObj = new File(filePath);
 		Scanner myReader = new Scanner(myObj);
@@ -29,9 +39,6 @@ public class RealtorCityReader {
 		while (myReader.hasNextLine() && !line.startsWith("Home values in ")) {
 			line = myReader.nextLine();
 		}
-		String city = line.substring("Home values in ".length(), line.indexOf(", ")).toLowerCase();
-		String state = map.get(line.substring(line.indexOf(", ") + 2).toLowerCase());
-		state = state.substring(0, 1).toUpperCase() + state.substring(1);
 		while (!line.startsWith("$") && myReader.hasNextLine()) {
 			line = myReader.nextLine();
 		}
@@ -45,63 +52,35 @@ public class RealtorCityReader {
 		houseData.costPerSqFt = getIntFromString(line);
 		houseData.medianSquareFootage = houseData.homePrice/houseData.costPerSqFt;
 		
-		writeOutput(houseData, city, state);
-		
-		
-		
+		String city = line.substring("Home values in ".length(), line.indexOf(", ")).toLowerCase();
+		String state = map.get(line.substring(line.indexOf(", ") + 2).toLowerCase());
+		state = state.substring(0, 1).toUpperCase() + state.substring(1);
+		houseData.city = city;
+		houseData.state = state;
+		myReader.close();
+		return houseData;
 	}
 
-	private static void writeOutput(HouseData houseData, String cityInput, String state) throws Exception {
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\" + state
-				+ ".js";
-		File myObj = new File(filePath);
-		Scanner myReader = new Scanner(myObj);
-		String startSt = "arr.push(new Data(";
-		StringBuilder sb = new StringBuilder();
-		List<String> lines = new ArrayList<String>();
-		while (myReader.hasNextLine()) {
-			String line = myReader.nextLine();
-			if (!line.contains(startSt)) {
-				continue;
-			}
-			lines.add(line);
-		}
+	private static void writeOutput(HouseData houseData) throws Exception {
+		List<Data> dataList = CityStats.readData(houseData.state);
 		boolean isCityFound = false;
-		for (String line : lines) {
-			line = line.substring(startSt.length());
-			line = line.substring(0, line.length() - 3);
-			String[] arr = line.split(",");
-			String city = arr[0].toLowerCase();
-			city = city.substring(1, city.length()-1);
-			if (city.equals(cityInput) && isCityFound) {
-				throw new RuntimeException("two cities with the same name found: " + city);
+		for (Data data : dataList) {
+			if (data.cityName.equals(houseData.city) && isCityFound) {
+				throw new RuntimeException("two cities with the same name found: " + houseData.city);
 			}
-			if (city.equals(cityInput)) {
-				arr[11] = " " + houseData.homePrice;
-				int len = arr.length;
-				arr[len-2] = " " + houseData.medianSquareFootage;
-				arr[len-1] = " " + houseData.costPerSqFt;
+			if (data.cityName.equals(houseData.city)) {
+				data.medianHomePrice = String.valueOf(houseData.homePrice);
+				data.homeSquareFeet = String.valueOf(houseData.medianSquareFootage);
+				data.costPerSquareFoot = String.valueOf(houseData.costPerSqFt);
 				isCityFound = true;
 			}
-			sb.append(startSt);
-			for (String st : arr) {
-				sb.append(st);
-				sb.append(",");
-			}
-			sb.deleteCharAt(sb.lastIndexOf(","));
-			sb.append("));");
-			sb.append("\n");
+
 		}
 		if (isCityFound) {
-			 FileWriter myWriter = new FileWriter(filePath);
-			 String st = sb.toString();
-			 myWriter.write(st);
-			 myWriter.close();
-			 System.out.println("wrote to file " + filePath);
-			 myReader.close();	
+			CityStats.writeData(dataList, houseData.state, true);
 		}
 		else {
-			System.out.println("city not found: " + cityInput);
+			System.out.println("city not found: " + houseData.city);
 		}
 		
 	}
@@ -148,6 +127,9 @@ public class RealtorCityReader {
 	}
 
 	private static void populateMap() {
+		if (map != null) {
+			return;
+		}
 		map = new HashMap<String, String>();
 		fillMapWithItem("al", "Alabama");
 		fillMapWithItem("ak", "Alaska");

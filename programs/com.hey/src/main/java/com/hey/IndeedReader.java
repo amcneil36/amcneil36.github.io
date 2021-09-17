@@ -1,4 +1,4 @@
-package com.hey.old;
+package main.java.com.hey;
 
 import java.util.ArrayList;
 import java.util.Arrays;

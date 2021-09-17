@@ -1,4 +1,4 @@
-package com.hey.complete;
+package main.java.com.hey.complete;
 
 import com.hey.GenericDataReadAndWriter;
 import com.hey.Util;

@@ -1,4 +1,6 @@
-package com.hey;
+package main.java.com.hey;
+
+import main.java.com.hey.old.GenericDataReadAndWriter;
 
 public class Transportation  extends GenericDataReadAndWriter {
 

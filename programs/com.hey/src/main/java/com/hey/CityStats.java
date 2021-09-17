@@ -1,4 +1,4 @@
-package com.hey;
+package main.java.com.hey;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -199,7 +199,7 @@ public abstract class CityStats {
 		}
 	}
 
-	private static void writeData(List<Data> dataList, String stateName, boolean isLastWrite) throws Exception {
+	public static void writeData(List<Data> dataList, String stateName, boolean isLastWrite) throws Exception {
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\States\\" + stateName
 				+ ".csv";
 		writeDataToPath(dataList, filePath, isLastWrite);
