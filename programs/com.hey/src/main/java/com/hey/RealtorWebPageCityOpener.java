@@ -9,7 +9,7 @@ import java.util.Map;
 public class RealtorWebPageCityOpener {
 
 	private static boolean shouldTabBeOpened(CityStats.Data data) {
-		return Integer.valueOf(data.population) > 500000 && data.stateName.equals("Texas");
+		return Integer.valueOf(data.population) > 30000 && data.stateName.equals("Texas") && data.metro.contains("Houston");
 	}
 
 	private static Map<String, String> map = new HashMap<String, String>();
