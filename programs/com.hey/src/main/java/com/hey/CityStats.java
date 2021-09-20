@@ -54,13 +54,15 @@ public abstract class CityStats {
 		public String costPerSquareFoot = "N/A";
 		public String timeZone = "N/A";
 		public String feetAboveSeaLevel = "N/A";
-		public String uvIndex = " \"N/A\"";
-		public String homeOwnershipRate = " \"N/A\"";
-		public String singlePopulation = " \"N/A\"";
-		public String walkScore = " \"N/A\"";
-		public String transitScore = " \"N/A\"";
-		public String bikeScore = " \"N/A\"";
-
+		public String uvIndex = "N/A";
+		public String homeOwnershipRate = "N/A";
+		public String singlePopulation = "N/A";
+		public String walkScore = "N/A";
+		public String transitScore = "N/A";
+		public String bikeScore = "N/A";
+		public String povertyRate = "N/A";
+		public String percentOfIncomeLostToHousingCosts = "N/A";
+		public String foreignBornPercent = "N/A";
 	}
 
 	private static class AndrewStringWriter {
