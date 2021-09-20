@@ -88,6 +88,7 @@ public class SperlingCsvReader extends CityStats {
 		fillMap();
 		SperlingCsvReader s = new SperlingCsvReader();
 		s.processAllStates();
+		//s.processState("Delaware");
 	}
 
 	@Override
