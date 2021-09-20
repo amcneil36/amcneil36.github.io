@@ -8,7 +8,7 @@ import java.util.Scanner;
 
 public abstract class CityStats {
 
-	private static String startSt = "City,State,County,Population,People per sq mi,Hottest month's avg high (F),Coldest month's avg high (F),Hottest high minus coldest high,Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Average August humidity,Average December humidity,Average yearly humidity,Average yearly windspeed (mph),Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,Median household income,Median rent,Median home price,Median home square feet,Median home cost per sq ft,Median home age,Home appreciation Last Year,Home appreciation Last 5 Years,Home appreciation Last 10 Years,Air quality Index,Average one-way commute time,Unemployment rate,Job growth last year,Population growth since 2010,% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Metro,Timezone,Elevation (ft),UV Index,Home Ownership Rate,Single Population,Walk Score,Transit Score,Bike Score,Poverty Rate, % of income spent on housing costs (owners),Foreign Born %";
+	private static String startSt = "City,State,County,Population,People per sq mi,Hottest month's avg high (F),Coldest month's avg high (F),Hottest high minus coldest high,Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Average August humidity,Average December humidity,Average yearly humidity,Average yearly windspeed (mph),Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,Median household income,Median rent,Median home price,Median home square feet,Median home cost per sq ft,Median home age,Home appreciation Last Year,Home appreciation Last 5 Years,Home appreciation Last 10 Years,Air quality Index,Average one-way commute time,Unemployment rate,Job growth last year,Population growth since 2010,% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Metro,Timezone,Elevation (ft),UV Index,Home Ownership Rate,Single Population,Walk Score,Transit Score,Bike Score,Poverty Rate, % of income spent on housing costs (owners),Foreign Born %,Avg Summer Dew Point";
 
 	public static class Data {
 		public String cityName = "N/A";
@@ -63,6 +63,7 @@ public abstract class CityStats {
 		public String povertyRate = "N/A";
 		public String percentOfIncomeLostToHousingCosts = "N/A";
 		public String foreignBornPercent = "N/A";
+		public String avgSummerDewPoint = "N/A";
 	}
 
 	private static class AndrewStringWriter {
@@ -157,6 +158,7 @@ public abstract class CityStats {
 				data.povertyRate = arr[49];
 				data.percentOfIncomeLostToHousingCosts = arr[50];
 				data.foreignBornPercent = arr[51];
+				data.avgSummerDewPoint = arr[52];
 			} catch (Exception ex) {
 
 			}
@@ -196,7 +198,7 @@ public abstract class CityStats {
 					.appendWithComma(data.singlePopulation).appendWithComma(data.walkScore)
 					.appendWithComma(data.transitScore).appendWithComma(data.bikeScore)
 					.appendWithComma(data.povertyRate).appendWithComma(data.percentOfIncomeLostToHousingCosts)
-					.appendLastItem(data.foreignBornPercent);
+					.appendWithComma(data.foreignBornPercent).appendLastItem(data.avgSummerDewPoint);
 		}
 		String st = sb.getString();
 		myWriter.write(st);
