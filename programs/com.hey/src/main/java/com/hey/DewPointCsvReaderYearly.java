@@ -13,7 +13,10 @@ public class DewPointCsvReaderYearly extends CityStats{
 	
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
-		// TODO Auto-generated method stub
+		String key = SperlingCsvReader.getKey(data.cityName, data.stateName);
+		if (mapOfCityToData.containsKey(key)) {
+			data.avgAnnualDewPoint = mapOfCityToData.get(key);
+		}
 		
 	}
 	
