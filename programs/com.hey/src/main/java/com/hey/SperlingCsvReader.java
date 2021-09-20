@@ -67,7 +67,7 @@ public class SperlingCsvReader extends CityStats {
 			}
 			Sperling sperling = new Sperling();
 			if (arr[3].length() > 0 && arr[2].length() > 0 && !arr[2].equals("0")) {
-				sperling.povertyRate = String.valueOf(df.format(Double.valueOf(arr[3])/Double.valueOf(arr[2]))) + "%";
+				sperling.povertyRate = String.valueOf(df.format(100*Double.valueOf(arr[3])/Double.valueOf(arr[2]))) + "%";
 				
 			}
 			try {
@@ -76,7 +76,7 @@ public class SperlingCsvReader extends CityStats {
 			catch(Exception ex) {
 				
 			}
-			sperling.foreignBornPercent = String.valueOf(df.format(Double.valueOf(arr[5])/Double.valueOf(population))) + "%";
+			sperling.foreignBornPercent = String.valueOf(df.format(100*Double.valueOf(arr[5])/Double.valueOf(population))) + "%";
 			String key = getKey(cityName, stateName);
 			mapOfCityToData.put(key, sperling);
 			

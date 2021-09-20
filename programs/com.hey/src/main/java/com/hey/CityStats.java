@@ -154,6 +154,9 @@ public abstract class CityStats {
 				data.walkScore = arr[46];
 				data.transitScore = arr[47];
 				data.bikeScore = arr[48];
+				data.povertyRate = arr[49];
+				data.percentOfIncomeLostToHousingCosts = arr[50];
+				data.foreignBornPercent = arr[51];
 			} catch (Exception ex) {
 
 			}
