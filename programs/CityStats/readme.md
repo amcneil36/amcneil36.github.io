@@ -1,4 +1,4 @@
-## Weather and demographics information for all USA cities
+## Weather and demographics information for all USA cities in a .csv file
 
 ### The .csv file can be found here: <a href="https://amcneil36.github.io/programs/CityStats/cityStats.csv" download>https://amcneil36.github.io/programs/CityStats/cityStats.csv</a>
 
