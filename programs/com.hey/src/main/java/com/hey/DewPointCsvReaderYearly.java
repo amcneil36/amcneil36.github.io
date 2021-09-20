@@ -28,7 +28,7 @@ public class DewPointCsvReaderYearly extends CityStats{
 		while (myReader.hasNextLine()) {
 			String line = myReader.nextLine();
 			String[] arr = line.split(",");
-			if (arr.length != 5) {
+			if (arr.length != 4) {
 				continue;
 			}
 			String key = SperlingCsvReader.getKey(arr[0]);
@@ -53,7 +53,7 @@ public class DewPointCsvReaderYearly extends CityStats{
 		fillMap();
 		DewPointCsvReaderYearly s = new DewPointCsvReaderYearly();
 		s.processAllStates();
-		//s.processState("Delaware");
+		s.processState("Delaware");
 	}
 
 }
