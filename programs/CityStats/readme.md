@@ -61,4 +61,4 @@
 | Avg Summer Dew Point | The average summer dew point. This number is calculated by averaging the dew points from July, August, and September. | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | Avg Annual Dew Point | The average dew point for the year. | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 
-A value of N/A in a cell means that the data source did not find the requested data for the city. This is more common in smaller cities.
+A value of N/A in a cell means that the data source did not find the requested data for the city. This is more common in lesser populated cities.
