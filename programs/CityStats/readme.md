@@ -46,7 +46,7 @@
 | % Black | The percent of residents who identified as Black only. This includes Hispanic and non-hispanic Black residents. | [World Population Review](https://www.worldpopulationreview.com) | Mar 2021 |
 | % White | The percent of residents who identified as White only. This includes Hispanic and non-hispanic White residents. | [World Population Review](https://www.worldpopulationreview.com) | Mar 2021 |
 | % Hispanic | The percent of residents who identified as Hispanic. This includes Hispanic residents of any race. | [World Population Review](https://www.worldpopulationreview.com) | Mar 2021 |
-| Metro | | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
+| Metro | The Metropolitan Statistical Area (MSA). | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | Timezone | | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | Elevation (ft) | | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | UV Index | | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
