@@ -6,7 +6,7 @@
 
 | Column name | Description (if necessary) | Data source | Date updated |
 | ----------- | ----------- | ----------- | ----------- |
-| City      |        | [Best Places](https://www.bestplaces.net/)| Feb 2021 |
+| City      | The city/town/CDP that all of the data in the row corresponds to. | [Best Places](https://www.bestplaces.net/)| Feb 2021 |
 | State   |    | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
 | County   |  | [Best Places](https://www.bestplaces.net/)| Feb 2021 |
 | Population |  | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
