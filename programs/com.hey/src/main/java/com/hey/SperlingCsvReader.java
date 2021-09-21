@@ -1,4 +1,4 @@
-package main.java.com.hey;
+package com.hey;
 
 import java.io.File;
 import java.text.DecimalFormat;

@@ -1,4 +1,4 @@
-package main.java.com.hey;
+package com.hey;
 
 
 public class NoopCityStats extends CityStats {
