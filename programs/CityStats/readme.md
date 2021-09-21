@@ -57,5 +57,6 @@
 | Poverty Rate | The percent of families who are in poverty. | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 |  % of income spent on housing costs (owners) | The percent of income spent on housing costs among homeowners. | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | Foreign Born % | The percent of residents born outside of the United States. | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
+| Number of sex offenders per 10k residents | |[Home Facts](https://www.homefacts.com/) | Sep 2021 |
 
 A value of N/A in a cell means that the data source did not find the requested data for the city. This is more common in lesser populated cities.
