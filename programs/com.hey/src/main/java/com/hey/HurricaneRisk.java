@@ -21,13 +21,12 @@ public class HurricaneRisk extends CityStats {
 			data.hurricanes = String.valueOf(numHurricanes);
 		}
 		catch(Exception ex) {
-			System.out.println(text);	
 		}
 	}
 	
 	public static void main(String[] args) throws Exception {
 		CityStats s = new HurricaneRisk();
-		s.processState("Delaware");
+		s.processAllStates();
 
 	}
 
