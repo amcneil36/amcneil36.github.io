@@ -18,9 +18,8 @@
 | Annual days of precipitation | | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
 | Annual days of sunshine | | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
 | Annual snowfall (in) | | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
-| Average August Humidity | The average absolute humidity for the month of August based on historical data. | [weatherwx](https://www.weatherwx.com/) | Mar 2021 |
-| Average December Humidity | The average absolute humidity for the month of December based on historical data. | [weatherwx](https://www.weatherwx.com/) | Mar 2021 |
-| Average yearly humidity | The average absolute humidity from taking the averages of all 12 months. | [weatherwx](https://www.weatherwx.com/) | Mar 2021 |
+| Avg Summer Dew Point | The average summer dew point. This number is calculated by averaging the dew points from July, August, and September. | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
+| Avg Annual Dew Point | The average dew point for the year. | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | Average yearly windspeed (mph) | The average windspeed from averaging the average windspeeds for all 12 months. | [weatherwx](https://www.weatherwx.com/) | Mar 2021 |
 | Violent crime index | On a scale of 1 (lowest) to 100 (highest). This composes of causing physical harm. The US average is 23. | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
 | Property crime index | On a scale of 1 (lowest) to 100 (highest). This composes of theft. The US average is 35.| [Best Places](https://www.bestplaces.net/) | Feb 2021 |
@@ -35,7 +34,7 @@
 | Home appreciation last year | | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
 | Home appreciation last 5 years | | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
 | Home appreciation last 10 years | | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
-| Air quality index | The quality of the air. The higher score is better. The score can go up to 100. | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
+| Air quality index | The quality of the air. Ranked from 1 (worst quality) to 100 (best quality). | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
 | Average one-way commute time | | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
 | Unemployment rate | | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
 | Job growth last year | | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
@@ -58,7 +57,5 @@
 | Poverty Rate | The percent of families who are in poverty. | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 |  % of income spent on housing costs (owners) | The percent of income spent on housing costs among homeowners. | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | Foreign Born % | The percent of residents born outside of the United States. | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
-| Avg Summer Dew Point | The average summer dew point. This number is calculated by averaging the dew points from July, August, and September. | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
-| Avg Annual Dew Point | The average dew point for the year. | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 
 A value of N/A in a cell means that the data source did not find the requested data for the city. This is more common in lesser populated cities.
