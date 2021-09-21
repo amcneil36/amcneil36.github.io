@@ -8,7 +8,7 @@ import java.util.Scanner;
 
 public abstract class CityStats {
 
-	private static String startSt = "City,State,County,Population,People per sq mi,Hottest month's avg high (F),Coldest month's avg high (F),Hottest high minus coldest high,Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Average August humidity,Average December humidity,Average yearly humidity,Average yearly windspeed (mph),Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,Median household income,Median rent,Median home price,Median home square feet,Median home cost per sq ft,Median home age,Home appreciation Last Year,Home appreciation Last 5 Years,Home appreciation Last 10 Years,Air quality Index,Average one-way commute time,Unemployment rate,Job growth last year,Population growth since 2010,% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Metro,Timezone,Elevation (ft),UV Index,Home Ownership Rate,Single Population,Walk Score,Transit Score,Bike Score,Poverty Rate, % of income spent on housing costs (owners),Foreign Born %,Avg Summer Dew Point,Avg Annual Dew Point";
+	private static String startSt = "City,State,County,Population,People per sq mi,Hottest month's avg high (F),Coldest month's avg high (F),Hottest high minus coldest high,Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,Median household income,Median rent,Median home price,Median home square feet,Median home cost per sq ft,Median home age,Home appreciation Last Year,Home appreciation Last 5 Years,Home appreciation Last 10 Years,Air quality Index,Average one-way commute time,Unemployment rate,Job growth last year,Population growth since 2010,% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Metro,Timezone,Elevation (ft),UV Index,Home Ownership Rate,Single Population,Walk Score,Transit Score,Bike Score,Poverty Rate, % of income spent on housing costs (owners),Foreign Born %";
 
 	public static class Data {
 		public String cityName = "N/A";
@@ -180,12 +180,11 @@ public abstract class CityStats {
 					.appendWithComma(data.hottestMonthsHigh).appendWithComma(data.coldestHigh)
 					.appendWithComma(data.hottestMonthMinusColdestMonth).appendWithComma(data.numInchesOfRain)
 					.appendWithComma(data.numDaysOfRain).appendWithComma(data.numSunnyDays)
-					.appendWithComma(data.annualSnowfall).appendWithComma(data.avgAugustHumidity)
-					.appendWithComma(data.avgDecemberHumidity).appendWithComma(data.avgHumidity)
-					.appendWithComma(data.avgYearlyWindspeed).appendWithComma(data.violentCrime)
-					.appendWithComma(data.propertyCrime).appendWithComma(data.medianAge)
-					.appendWithComma(data.percentWithAtleastBachelors).appendDollar(data.medianIncome)
-					.appendDollar(data.medianRent).appendDollar(data.medianHomePrice)
+					.appendWithComma(data.annualSnowfall).appendWithComma(data.avgSummerDewPoint)
+					.appendWithComma(data.avgAnnualDewPoint).appendWithComma(data.avgYearlyWindspeed)
+					.appendWithComma(data.violentCrime).appendWithComma(data.propertyCrime)
+					.appendWithComma(data.medianAge).appendWithComma(data.percentWithAtleastBachelors)
+					.appendDollar(data.medianIncome).appendDollar(data.medianRent).appendDollar(data.medianHomePrice)
 					.appendWithComma(data.homeSquareFeet).appendDollar(data.costPerSquareFoot)
 					.appendWithComma(data.medianHomeAge).appendWithComma(data.homeAppreciationLastYear)
 					.appendWithComma(data.homeAppreciationLastFiveYears)
@@ -200,7 +199,7 @@ public abstract class CityStats {
 					.appendWithComma(data.singlePopulation).appendWithComma(data.walkScore)
 					.appendWithComma(data.transitScore).appendWithComma(data.bikeScore)
 					.appendWithComma(data.povertyRate).appendWithComma(data.percentOfIncomeLostToHousingCosts)
-					.appendWithComma(data.foreignBornPercent).appendWithComma(data.avgSummerDewPoint).appendLastItem(data.avgAnnualDewPoint);
+					.appendLastItem(data.foreignBornPercent);
 		}
 		String st = sb.getString();
 		myWriter.write(st);
