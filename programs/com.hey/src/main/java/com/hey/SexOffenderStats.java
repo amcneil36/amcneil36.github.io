@@ -1,4 +1,4 @@
-package com.hey;
+package main.java.com.hey;
 
 public class SexOffenderStats extends CityStats{
 
@@ -26,7 +26,7 @@ public class SexOffenderStats extends CityStats{
 	
 	public static void main(String[] args) throws Exception {
 		CityStats s = new SexOffenderStats();
-		s.processState("Delaware");
+		s.processAllStates();
 	}
 
 }

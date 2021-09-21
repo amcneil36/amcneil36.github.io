@@ -1,4 +1,4 @@
-package com.hey;
+package main.java.com.hey;
 
 public class UpdatePrinter {
 

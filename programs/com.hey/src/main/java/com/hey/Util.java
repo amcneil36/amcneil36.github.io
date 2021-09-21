@@ -1,4 +1,4 @@
-package com.hey;
+package main.java.com.hey;
 
 import java.io.BufferedReader;
 import java.io.FileWriter;

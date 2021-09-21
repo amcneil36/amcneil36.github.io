@@ -1,7 +1,5 @@
 package main.java.com.hey.complete;
 
-import com.hey.GenericDataReadAndWriter;
-import com.hey.Util;
 
 public class HomeOwnershipRate extends GenericDataReadAndWriter {
 
