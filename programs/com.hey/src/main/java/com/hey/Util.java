@@ -48,7 +48,18 @@ public class Util {
 
 	public static String ReadTextFromPage(String url) {
 		// System.out.println(url);
-		return JsoupStuff(url);
+		return JsoupStuffNoRetry(url);
+	}
+
+	private static String JsoupStuffNoRetry(String url) {
+			Connection conn = Jsoup.connect(url);
+			try {
+				Document doc = conn.get();
+				String text = doc.body().text();
+				return text;
+			} catch (IOException ex) {
+				return "";
+			}
 	}
 
 	public static Element RetrieveHtmlcodeFromPage(String url) {
