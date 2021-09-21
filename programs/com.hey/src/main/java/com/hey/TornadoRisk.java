@@ -15,7 +15,6 @@ public class TornadoRisk extends CityStats {
 			return;
 		}
 		int startIdx = text.indexOf(SEARCH_STRING)+SEARCH_STRING.length();
-		System.out.println("hey");
 		text = text.substring(startIdx);
 		text = text.substring(text.indexOf(", ") + 2);
 		text = text.substring(text.indexOf(" ") + 1);
