@@ -19,13 +19,14 @@ public class SexOffenderStats extends CityStats{
 			return;
 		}
 		startIdx = text.indexOf(SEARCH_STRING2)+SEARCH_STRING2.length();
-		text = text.substring(startIdx, text.indexOf("."));
+		text = text.substring(startIdx, text.indexOf(".")).replace(",", "");
+		System.out.println(text);
 		data.sexOffenderCount = text;
 	}
 	
 	public static void main(String[] args) throws Exception {
 		CityStats s = new SexOffenderStats();
-		s.processState("Texas");
+		s.processState("Delaware");
 	}
 
 }
