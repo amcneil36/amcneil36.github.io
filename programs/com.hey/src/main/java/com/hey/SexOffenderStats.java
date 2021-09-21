@@ -14,6 +14,7 @@ public class SexOffenderStats extends CityStats{
 			return;
 		}
 		int startIdx = text.indexOf(SEARCH_STRING)+SEARCH_STRING.length();
+		text = text.substring(startIdx);
 		text = text.substring(0, text.indexOf(" "));
 		System.out.println(text);
 		data.sexOffenderCount = text;
@@ -21,7 +22,7 @@ public class SexOffenderStats extends CityStats{
 	
 	public static void main(String[] args) throws Exception {
 		CityStats s = new SexOffenderStats();
-		s.processAllStates();
+		s.processState("Texas");
 	}
 
 }
