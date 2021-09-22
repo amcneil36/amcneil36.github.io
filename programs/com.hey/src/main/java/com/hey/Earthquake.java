@@ -26,7 +26,7 @@ public class Earthquake extends CityStats {
 
 	public static void main(String[] args) throws Exception {
 		CityStats s = new Earthquake();
-		s.processState("Delaware");
+		s.processAllStates();
 
 	}
 
