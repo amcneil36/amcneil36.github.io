@@ -8,7 +8,7 @@ import java.util.Scanner;
 
 public abstract class CityStats {
 
-	private static String startSt = "City,State,County,Population,People per sq mi,Hottest month's avg high (F),Coldest month's avg high (F),Hottest high minus coldest high,Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,Median household income,Median rent,Median home price,Median home square feet,Median home cost per sq ft,Median home age,Home appreciation Last Year,Home appreciation Last 5 Years,Home appreciation Last 10 Years,Air quality Index,Average one-way commute time,Unemployment rate,Job growth last year,Population growth since 2010,% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Metro,Timezone,Elevation (ft),UV Index,Home Ownership Rate,Single Population,Walk Score,Transit Score,Bike Score,Poverty Rate, % of income spent on housing costs (owners),Foreign Born %,Number of sex offenders per 10k residents,Number of hurricanes since 1930,Number of tornadoes per year,Number of earthquakes since 1931,Avg Apartment Monthly Rent,Avg Apartment Size,Metro population";
+	private static String startSt = "City,State,Population,People per sq mi,Metro,Metro population,Hottest month's avg high (F),Coldest month's avg high (F),Hottest high minus coldest high,Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,Median household income,Poverty Rate,Avg Apartment Monthly Rent,Avg Apartment Size,Median home price,Median home square feet,Median home cost per sq ft,Median home age,Home Ownership Rate,Home appreciation Last Year,Home appreciation Last 5 Years,Home appreciation Last 10 Years,Air quality Index,Average one-way commute time,Unemployment rate,Job growth last year,Population growth since 2010,County,% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Foreign Born %,Timezone,Elevation (ft),UV Index,Single Population,Walk Score,Transit Score,Bike Score, % of income spent on housing costs (owners),Number of sex offenders per 10k residents,Number of hurricanes since 1930,Number of tornadoes per year,Number of earthquakes since 1931,Metro population";
 
 	public static class Data {
 		public String cityName = "N/A";
@@ -186,33 +186,33 @@ public abstract class CityStats {
 		AndrewStringWriter sb = new AndrewStringWriter();
 		sb.appendLastItem(startSt);
 		for (Data data : dataList) {
-			sb.appendWithComma(data.cityName).appendWithComma(data.stateName).appendWithComma(data.countyName)
-					.appendWithComma(data.population).appendWithComma(data.populationDensity)
-					.appendWithComma(data.hottestMonthsHigh).appendWithComma(data.coldestHigh)
-					.appendWithComma(data.hottestMonthMinusColdestMonth).appendWithComma(data.numInchesOfRain)
-					.appendWithComma(data.numDaysOfRain).appendWithComma(data.numSunnyDays)
-					.appendWithComma(data.annualSnowfall).appendWithComma(data.avgSummerDewPoint)
-					.appendWithComma(data.avgAnnualDewPoint).appendWithComma(data.avgYearlyWindspeed)
-					.appendWithComma(data.violentCrime).appendWithComma(data.propertyCrime)
-					.appendWithComma(data.medianAge).appendWithComma(data.percentWithAtleastBachelors)
-					.appendDollar(data.medianIncome).appendDollar(data.medianRent).appendDollar(data.medianHomePrice)
+			sb.appendWithComma(data.cityName).appendWithComma(data.stateName).appendWithComma(data.population)
+					.appendWithComma(data.populationDensity).appendWithComma(data.metro)
+					.appendWithComma(data.metroPopulation).appendWithComma(data.hottestMonthsHigh)
+					.appendWithComma(data.coldestHigh).appendWithComma(data.hottestMonthMinusColdestMonth)
+					.appendWithComma(data.numInchesOfRain).appendWithComma(data.numDaysOfRain)
+					.appendWithComma(data.numSunnyDays).appendWithComma(data.annualSnowfall)
+					.appendWithComma(data.avgSummerDewPoint).appendWithComma(data.avgAnnualDewPoint)
+					.appendWithComma(data.avgYearlyWindspeed).appendWithComma(data.violentCrime)
+					.appendWithComma(data.propertyCrime).appendWithComma(data.medianAge)
+					.appendWithComma(data.percentWithAtleastBachelors).appendDollar(data.medianIncome)
+					.appendWithComma(data.povertyRate).appendWithComma(data.avgApartmentRent)
+					.appendWithComma(data.avgApartmentSize).appendDollar(data.medianHomePrice)
 					.appendWithComma(data.homeSquareFeet).appendDollar(data.costPerSquareFoot)
-					.appendWithComma(data.medianHomeAge).appendWithComma(data.homeAppreciationLastYear)
-					.appendWithComma(data.homeAppreciationLastFiveYears)
+					.appendWithComma(data.medianHomeAge).appendWithComma(data.homeOwnershipRate)
+					.appendWithComma(data.homeAppreciationLastYear).appendWithComma(data.homeAppreciationLastFiveYears)
 					.appendWithComma(data.homeAppreciationLastTenYears).appendWithComma(data.airQuality)
 					.appendWithComma(data.averageCommuteTime).appendWithComma(data.unemploymentRate)
 					.appendWithComma(data.jobGrowthLastYear).appendWithComma(data.populationGrowthSince2010)
-					.appendWithComma(data.percentDemocrat).appendWithComma(data.percentRepublican)
-					.appendWithComma(data.percentAsian).appendWithComma(data.percentBlack)
-					.appendWithComma(data.percentWhite).appendWithComma(data.percentHispanic)
-					.appendWithComma(data.metro).appendWithComma(data.timeZone).appendWithComma(data.feetAboveSeaLevel)
-					.appendWithComma(data.uvIndex).appendWithComma(data.homeOwnershipRate)
-					.appendWithComma(data.singlePopulation).appendWithComma(data.walkScore)
-					.appendWithComma(data.transitScore).appendWithComma(data.bikeScore)
-					.appendWithComma(data.povertyRate).appendWithComma(data.percentOfIncomeLostToHousingCosts)
-					.appendWithComma(data.foreignBornPercent).appendWithComma(data.sexOffenderCount)
-					.appendWithComma(data.hurricanes).appendWithComma(data.tornadoes).appendWithComma(data.earthQuakes)
-					.appendWithComma(data.avgApartmentRent).appendWithComma(data.avgApartmentSize).appendLastItem(data.metroPopulation);
+					.appendWithComma(data.countyName).appendWithComma(data.percentDemocrat)
+					.appendWithComma(data.percentRepublican).appendWithComma(data.percentAsian)
+					.appendWithComma(data.percentBlack).appendWithComma(data.percentWhite)
+					.appendWithComma(data.percentHispanic).appendWithComma(data.foreignBornPercent)
+					.appendWithComma(data.timeZone).appendWithComma(data.feetAboveSeaLevel)
+					.appendWithComma(data.uvIndex).appendWithComma(data.singlePopulation)
+					.appendWithComma(data.walkScore).appendWithComma(data.transitScore).appendWithComma(data.bikeScore)
+					.appendWithComma(data.percentOfIncomeLostToHousingCosts).appendWithComma(data.sexOffenderCount)
+					.appendWithComma(data.hurricanes).appendWithComma(data.tornadoes).appendLastItem(data.earthQuakes);
 		}
 		String st = sb.getString();
 		myWriter.write(st);
