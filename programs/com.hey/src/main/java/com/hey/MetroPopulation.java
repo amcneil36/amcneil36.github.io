@@ -10,6 +10,9 @@ public class MetroPopulation extends CityStats {
 	
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
+		if (data.metro.equals("None")) {
+			return;
+		}
 		String key = getKey(data);
 		if (mapOfMetroToPopulation.containsKey(key)) {
 			int metroPopulation = mapOfMetroToPopulation.get(key);
@@ -27,6 +30,9 @@ public class MetroPopulation extends CityStats {
 	private static void fillMap() throws Exception {
 		List<Data> dataList = CreateBigCsv.readInput();
 		for (Data data : dataList) {
+			if (data.metro.equals("None")) {
+				continue;
+			}
 			String key = getKey(data);
 			int cityPopulation = Integer.valueOf(data.population);
 			if (mapOfMetroToPopulation.containsKey(key)) {
@@ -42,7 +48,7 @@ public class MetroPopulation extends CityStats {
 	
 	public static void main(String[] args) throws Exception {
 		fillMap();
-		DewPointCsvReader s = new DewPointCsvReader();
+		MetroPopulation s = new MetroPopulation();
 		s.processAllStates();
 		//s.processState("Delaware");
 	}
