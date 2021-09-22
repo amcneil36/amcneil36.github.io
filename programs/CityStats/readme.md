@@ -10,7 +10,7 @@
 | State   |    | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
 | Population |  | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
 | People per sq mi |  | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
-| Metro | The Metropolitan Statistical Area (MSA). | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
+| Metro Name | The name of the Metropolitan Statistical Area (MSA). | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | Metro Population | The population of the Metropolitan Statistical Area (MSA). | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | Hottest month's avg high (F) | Average high for the hottest month based on historical data. | [Best Places](https://www.bestplaces.net/) | Oct 2021 |
 | Coldest month's avg high (F) | Average high for the coldest month based on historical data. | [Best Places](https://www.bestplaces.net/) | Oct 2021 |
@@ -28,6 +28,8 @@
 | % with at least Bachelor's | Percent of residents over the age of 25 with a Bachelor's degree. Includes those who have a graduate degree. | [World Population Review](https://www.worldpopulationreview.com) | Mar 2021 |
 | Median household income | | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
 | Poverty Rate | The percent of families who are in poverty. | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
+| Avg Apartment Monthly Rent | The average monthly cost of rent for apartments. | [Rent Cafe](https://www.rentcafe.com/) | Sep 2021 |
+| Avg Apartment Sqft | The average size of an apartment in square feet. | [Rent Cafe](https://www.rentcafe.com/) | Sep 2021 |
 | Median home price | | [realtor.com](https://www.realtor.com/) | Sep 2021 |
 | Median home square feet | | [realtor.com](https://www.realtor.com/) | Sep 2021 |
 | Median home cost per sq ft | | [realtor.com](https://www.realtor.com/) | Sep 2021 |
@@ -58,6 +60,9 @@
 | Bike Score | How good an area is for biking ranked from 0 (worst) to 100 (best). | [Walk Score](https://www.walkscore.com/) | Sep 2021 |
 |  % of income spent on housing costs (owners) | The percent of income spent on housing costs among homeowners. | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | Number of sex offenders per 10k residents | |[Home Facts](https://www.homefacts.com/) | Sep 2021 |
+| Number of hurricanes since 1930 | |[Home Facts](https://www.homefacts.com/) | Sep 2021 |
+| Number of tornadoes per year | |[Home Facts](https://www.homefacts.com/) | Sep 2021 |
+| Number of earthquakes since 1931 | |[Home Facts](https://www.homefacts.com/) | Sep 2021 |
 
 A value of N/A in a cell means that the data source did not find the requested data for the city. This is more common in lesser populated cities.
 
