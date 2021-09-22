@@ -1,14 +1,15 @@
 package main.java.com.hey;
 
-public class TornadoRisk extends CityStats {
 
-	private static final String SEARCH_STRING = "Yearly Avg. of Tornados in ";
+public class Earthquake extends CityStats{
+
+	private static final String SEARCH_STRING = "since 1931 within 30 miles ";
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
 		String city = data.cityName.replace(" ", "-");
 		// https://www.homefacts.com/offenders/Texas/Nueces-County/Corpus-Christi.html
-		String url = "https://www.homefacts.com/tornadoes/" + stateName + "/" + data.countyName.replace(" ", "-") + "/"
+		String url = "https://www.homefacts.com/earthquakes/" + stateName + "/" + data.countyName.replace(" ", "-") + "/"
 				+ city + ".html";
 		// String url =
 		// "https://www.homefacts.com/tornadoes/Missouri/Jackson-County/Kansas-City.html";
@@ -19,18 +20,16 @@ public class TornadoRisk extends CityStats {
 		try {
 			int startIdx = text.indexOf(SEARCH_STRING) + SEARCH_STRING.length();
 			text = text.substring(startIdx);
-			text = text.substring(text.indexOf(", ") + 2);
-			text = text.substring(text.indexOf(" ") + 1);
 			text = text.substring(0, text.indexOf(" "));
-			int numTornadoes = Integer.valueOf(text);
-			data.tornadoes = String.valueOf(numTornadoes);
+			text = text.replace(",", "");
+			int numEarthQuakes = Integer.valueOf(text);
 		} catch (Exception ex) {
 		}
 	}
 
 	public static void main(String[] args) throws Exception {
-		CityStats s = new TornadoRisk();
-		s.processAllStates();
+		CityStats s = new Earthquake();
+		s.processState("Delaware");
 
 	}
 
