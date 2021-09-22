@@ -31,7 +31,7 @@ public class Rent extends CityStats{
 
 	public static void main(String[] args) throws Exception {
 		CityStats s = new Rent();
-		s.processState("Delaware");
+		s.processAllStates();
 
 	}
 	
