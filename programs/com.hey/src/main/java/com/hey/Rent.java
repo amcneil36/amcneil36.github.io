@@ -20,10 +20,11 @@ public class Rent extends CityStats{
 			avgApartmentRent = avgApartmentRent.replace(",", "");
 			Integer.valueOf(avgApartmentRent);
 			avgApartmentRent = "$" + avgApartmentRent;
-			System.out.println(avgApartmentRent);
+			data.avgApartmentRent = avgApartmentRent;
 			text = text.substring(text.indexOf("average size for a ") + "average size for a ".length());
 			text = text.substring(text.indexOf("apartment is ") + "apartment is ".length());
 			String avgSqFt = text.substring(0, text.indexOf(" ")).replace(",", "");
+			data.avgApartmentSize = avgSqFt;
 		} catch (Exception ex) {
 		}
 	}
