@@ -127,7 +127,7 @@ public class CityVsUsaCodeWriter {
 	}
 	
 	private static final String VARIABLE_NAME = "avgSummerDewPoint";
-	private static final Type TYPE = Type.FLOAT_PERCENT; 
+	private static final Type TYPE = Type.INTEGER; 
 
 	public static void main(String[] args) throws Exception {
 		String inputFilepath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\com.hey\\src\\main\\java\\com\\hey\\old\\CityVsUSAComparison2.java";
@@ -136,9 +136,7 @@ public class CityVsUsaCodeWriter {
 		String tempText = "";
 		for (String st : inputText) {
 			if (st.contains("TODO1") && !st.contains("TODO10") && !st.contains("TODO11")){
-				if (TYPE == Type.FLOAT_PERCENT) {
-					sb.append("		").append(TYPE.getSmallType()).append(" " + VARIABLE_NAME + ";\n");
-				}
+			    sb.append("		").append(TYPE.getSmallType()).append(" " + VARIABLE_NAME + ";\n");
 			}
 			else if(st.contains("TODO2")) {
 				sb.append("	static Foo<").append(TYPE.getBigType()).append("> ");

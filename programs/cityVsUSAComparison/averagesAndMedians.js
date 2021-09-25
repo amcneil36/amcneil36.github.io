@@ -59,3 +59,5 @@ var metroPopulationAverage = 3504157;
 var metroPopulationMedian = 603851;
 var povertyRateAverage = 11.56;
 var povertyRateMedian = 8.6;
+var avgSummerDewPointAverage = 58;
+var avgSummerDewPointMedian = 60;
