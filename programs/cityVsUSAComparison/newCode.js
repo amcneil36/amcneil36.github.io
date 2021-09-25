@@ -1,6 +1,6 @@
 class CityData {
   constructor(populationMetric, populationDensityMetric, augustHighMetric, decemberHighMetric, augustHighMinusDecemberHighMetric, annualInchesOfRainMetric, daysOfRainMetric, sunnyDaysMetric, annualSnowfallMetric, averageYearlyHumidityMetric, yearlyWindspeedMetric, violentCrimeMetric, propertyCrimeMetric, medianAgeMetric, bachelorsMetric, medianHouseholdIncomeMetric, medianHomePriceMetric, medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric, percentHispanicMetric, metroPopulationMetric, povertyRateMetric, avgSummerDewPointMetric, 
-  avgApartmentRentMetric, avgApartmentSizeMetric, homeSquareFeetMetric, costPerSquareFootMetric) {
+  avgApartmentRentMetric, avgApartmentSizeMetric, homeSquareFeetMetric, costPerSquareFootMetric, homeOwnershipRateMetric) {
     this.populationMetric = populationMetric;
 	this.populationDensityMetric = populationDensityMetric;
 	this.augustHighMetric = augustHighMetric;
@@ -36,6 +36,7 @@ class CityData {
 	this.avgApartmentSizeMetric = avgApartmentSizeMetric;
 	this.homeSquareFeetMetric = homeSquareFeetMetric;
 	this.costPerSquareFootMetric = costPerSquareFootMetric;
+	this.homeOwnershipRateMetric = homeOwnershipRateMetric;
   }
 }
 
@@ -76,4 +77,5 @@ function createRows(tbdy, cityData){
 	  insertRow(tbdy, "Average apartment size", avgApartmentSizeAverage, avgApartmentSizeMedian, cityData.avgApartmentSizeMetric);
 	  insertRowWithGrayBackground(tbdy, "Median home size", homeSquareFeetAverage, homeSquareFeetMedian, cityData.homeSquareFeetMetric);
 	  insertRow(tbdy, "Median home cost per sq ft ($)", costPerSquareFootAverage, costPerSquareFootMedian, cityData.costPerSquareFootMetric);
+	  insertRowWithGrayBackground(tbdy, "Homeownership Rate (%)", homeOwnershipRateAverage, homeOwnershipRateMedian, cityData.homeOwnershipRateMetric);
 }

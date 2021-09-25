@@ -69,3 +69,5 @@ var homeSquareFeetAverage = 1801;
 var homeSquareFeetMedian = 1722;
 var costPerSquareFootAverage = 271;
 var costPerSquareFootMedian = 185;
+var homeOwnershipRateAverage = 62.53;
+var homeOwnershipRateMedian = 63.6;

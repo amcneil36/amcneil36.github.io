@@ -126,8 +126,8 @@ public class CityVsUsaCodeWriter {
 		abstract Object getInvalidValueText();
 	}
 	
-	private static final String VARIABLE_NAME = "costPerSquareFoot";
-	private static final Type TYPE = Type.INTEGER; 
+	private static final String VARIABLE_NAME = "homeOwnershipRate";
+	private static final Type TYPE = Type.FLOAT_PERCENT; 
 
 	public static void main(String[] args) throws Exception {
 		String inputFilepath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\com.hey\\src\\main\\java\\com\\hey\\old\\CityVsUSAComparison2.java";

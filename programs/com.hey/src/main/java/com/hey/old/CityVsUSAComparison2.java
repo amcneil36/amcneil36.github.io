@@ -54,6 +54,7 @@ public class CityVsUSAComparison2 {
 		int avgApartmentSize;
 		int homeSquareFeet;
 		int costPerSquareFoot;
+		float homeOwnershipRate;
 		//TODO1
 
 		@Override
@@ -97,6 +98,7 @@ public class CityVsUSAComparison2 {
 	static Foo<Integer> avgApartmentSizeFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.avgApartmentSize;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};
 	static Foo<Integer> homeSquareFeetFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.homeSquareFeet;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};
 	static Foo<Integer> costPerSquareFootFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.costPerSquareFoot;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};
+	static Foo<Float> homeOwnershipRateFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.homeOwnershipRate;} @Override boolean isInvalidValue(Float data) {return data == -100;}};
 	//TODO2
 	
 	static class AveragesAndMedians {
@@ -170,6 +172,8 @@ public class CityVsUSAComparison2 {
 		int homeSquareFeetMedian;
 		int costPerSquareFootAverage;
 		int costPerSquareFootMedian;
+		float homeOwnershipRateAverage;
+		float homeOwnershipRateMedian;
         //TODO3
 	}
 
@@ -210,6 +214,7 @@ public class CityVsUSAComparison2 {
 		public Metric avgApartmentSizeMetric = new Metric();
 		public Metric homeSquareFeetMetric = new Metric();
 		public Metric costPerSquareFootMetric = new Metric();
+		public Metric homeOwnershipRateMetric = new Metric();
 		//TODO4
 
 		@Override
@@ -263,6 +268,7 @@ public class CityVsUSAComparison2 {
 				inputData.avgApartmentSize = getValidInt(data.avgApartmentSize);
 				inputData.homeSquareFeet = getValidInt(data.homeSquareFeet);
 				inputData.costPerSquareFoot = getValidInt(data.costPerSquareFoot.replace("$", ""));
+				inputData.homeOwnershipRate = getValidFloatFromPercent(data.homeOwnershipRate);
 				//TODO5
 				list.add(inputData);
 	        }
@@ -404,6 +410,9 @@ public class CityVsUSAComparison2 {
 		List<Integer> costPerSquareFootList = costPerSquareFootFoo.getGenericList(inputDataList);
 		obj.costPerSquareFootAverage = (int) findMean(costPerSquareFootList);
 		obj.costPerSquareFootMedian = (int) findMedian(costPerSquareFootList);
+		List<Float> homeOwnershipRateList = homeOwnershipRateFoo.getGenericList(inputDataList);
+		obj.homeOwnershipRateAverage = findMeanFloat(homeOwnershipRateList);
+		obj.homeOwnershipRateMedian = findMedianFloat(homeOwnershipRateList);
 		//TODO6
 		return obj;
 	}
@@ -481,6 +490,8 @@ public class CityVsUSAComparison2 {
 		sb.append(getString("homeSquareFeetMedian", averagesAndMedians.homeSquareFeetMedian));
 		sb.append(getString("costPerSquareFootAverage", averagesAndMedians.costPerSquareFootAverage));
 		sb.append(getString("costPerSquareFootMedian", averagesAndMedians.costPerSquareFootMedian));
+		sb.append(getFloatString("homeOwnershipRateAverage", averagesAndMedians.homeOwnershipRateAverage));
+		sb.append(getFloatString("homeOwnershipRateMedian", averagesAndMedians.homeOwnershipRateMedian));
 		//TODO7
 		
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
@@ -526,6 +537,7 @@ public class CityVsUSAComparison2 {
 			outputData.avgApartmentSizeMetric = avgApartmentSizeFoo.getMetric(inputData.avgApartmentSize, inputDataList);
 			outputData.homeSquareFeetMetric = homeSquareFeetFoo.getMetric(inputData.homeSquareFeet, inputDataList);
 			outputData.costPerSquareFootMetric = costPerSquareFootFoo.getMetric(inputData.costPerSquareFoot, inputDataList);
+			outputData.homeOwnershipRateMetric = homeOwnershipRateFoo.getMetricFloat(inputData.homeOwnershipRate, inputDataList);
 			//TODO8
 			outputDataList.add(outputData);
 		}
@@ -571,6 +583,7 @@ public class CityVsUSAComparison2 {
 		sb.append("var avgApartmentSizeMetric;\n");
 		sb.append("var homeSquareFeetMetric;\n");
 		sb.append("var costPerSquareFootMetric;\n");
+		sb.append("var homeOwnershipRateMetric;\n");
 		//TODO9
 		sb.append("var cityData;\n");
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
@@ -613,13 +626,14 @@ public class CityVsUSAComparison2 {
 			appendMetric(sb, outputData.avgApartmentSizeMetric, "avgApartmentSizeMetric");
 			appendMetric(sb, outputData.homeSquareFeetMetric, "homeSquareFeetMetric");
 			appendMetric(sb, outputData.costPerSquareFootMetric, "costPerSquareFootMetric");
+			appendFloatMetric(sb, outputData.homeOwnershipRateMetric, "homeOwnershipRateMetric");
 			//TODO10
 			
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric,medianHouseholdIncomeMetric,medianHomePriceMetric,medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric, percentHispanicMetric, metroPopulationMetric, povertyRateMetric, avgSummerDewPointMetric, avgApartmentRentMetric, avgApartmentSizeMetric, homeSquareFeetMetric, costPerSquareFootMetric");
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric,medianHouseholdIncomeMetric,medianHomePriceMetric,medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric, percentHispanicMetric, metroPopulationMetric, povertyRateMetric, avgSummerDewPointMetric, avgApartmentRentMetric, avgApartmentSizeMetric, homeSquareFeetMetric, costPerSquareFootMetric, homeOwnershipRateMetric");
 			//TODO11
 			sb.append(");\nmyMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
-			if (i == 8000) {
+			if (i == 4000) {
 				writeOutputAppend("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
 				sb = new StringBuilder();
 				i = 0;
