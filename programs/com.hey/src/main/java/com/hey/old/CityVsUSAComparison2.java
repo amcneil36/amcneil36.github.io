@@ -699,7 +699,6 @@ public class CityVsUSAComparison2 {
 
 	private static void writeOutput(List<OutputData> outputDataList) {
 		StringBuilder sb = new StringBuilder();
-		sb.append("var myMap = new Map();\n");
 		sb.append("var populationMetric;\n");
 		sb.append("var populationDensityMetric;\n");
 		sb.append("var augustHighMetric;\n");
@@ -751,7 +750,12 @@ public class CityVsUSAComparison2 {
 		sb.append("var earthQuakesMetric;\n");
 		//TODO9
 		sb.append("var cityData;\n");
-		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
+		StringBuilder sb1 = new StringBuilder("function populateMap1(map1){\n");
+		sb1.append(sb.toString());
+		StringBuilder sb2 = new StringBuilder("function populateMap2(map1){\n");
+		sb2.append(sb.toString());
+		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\populationMap1.js", sb1);
+		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\populationMap2.js", sb2);
 		sb = new StringBuilder();
 		int i = 0;
 		for (OutputData outputData : outputDataList) {
@@ -808,15 +812,23 @@ public class CityVsUSAComparison2 {
 			
 			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric,medianHouseholdIncomeMetric,medianHomePriceMetric,medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric, percentHispanicMetric, metroPopulationMetric, povertyRateMetric, avgSummerDewPointMetric, avgApartmentRentMetric, avgApartmentSizeMetric, homeSquareFeetMetric, costPerSquareFootMetric, homeOwnershipRateMetric, foreignBornPercentMetric, feetAboveSeaLevelMetric, uvIndexMetric, singlePopulationMetric, walkScoreMetric, transitScoreMetric, bikeScoreMetric, percentOfIncomeLostToHousingCostsMetric, sexOffenderCountMetric, hurricanesMetric, tornadoesMetric, earthQuakesMetric");
 			//TODO11
-			sb.append(");\nmyMap.set(\"")
+			sb.append(");\nmap1.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
-			if (i == 4000) {
-				writeOutputAppend("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
+			if (i %4000 == 0 && i > 0 && i < 17000) {
+				writeOutputAppend("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\populationMap1.js", sb);
 				sb = new StringBuilder();
-				i = 0;
+			}
+			else if (i %4000 == 0 && i > 0 && i >= 17000) {
+				writeOutputAppend("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\populationMap2.js", sb);
+				sb = new StringBuilder();
 			}
 		}
-		writeOutputAppend("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
+		writeOutputAppend("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\populationMap2.js", sb);
+		
+		
+		sb = new StringBuilder("}"); // closing the function
+		writeOutputAppend("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\populationMap1.js", sb);
+		writeOutputAppend("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\populationMap2.js", sb);
 	}
 
 	
