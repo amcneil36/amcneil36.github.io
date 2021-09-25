@@ -55,3 +55,5 @@ var percentWhiteAverage = 85.2;
 var percentWhiteMedian = 93.18;
 var percentHispanicAverage = 12.42;
 var percentHispanicMedian = 5.2;
+var metroPopulationAverage = 3504157;
+var metroPopulationMedian = 603851;
