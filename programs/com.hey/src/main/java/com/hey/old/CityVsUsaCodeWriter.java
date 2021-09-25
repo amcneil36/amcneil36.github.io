@@ -7,7 +7,61 @@ import main.java.com.hey.Util;
 public class CityVsUsaCodeWriter {
 	
 	public enum Type {
-	    FLOAT_PERCENT {
+	    INTEGER {
+			@Override
+			String getSmallType() {
+				// TODO Auto-generated method stub
+				return "int";
+			}
+
+			@Override
+			String getBigType() {
+				// TODO Auto-generated method stub
+				return "Integer";
+			}
+
+			@Override
+			String getReadParsePrefix() {
+				// TODO Auto-generated method stub
+				return "getValidInt";
+			}
+
+			@Override
+			String findMeanText() {
+				// TODO Auto-generated method stub
+				return "(int) findMean";
+			}
+
+			@Override
+			String findMedianText() {
+				// TODO Auto-generated method stub
+				return "(int) findMedian";
+			}
+
+			@Override
+			String getSbAppendPrefix() {
+				// TODO Auto-generated method stub
+				return "getString";
+			}
+
+			@Override
+			String getMetricText() {
+				// TODO Auto-generated method stub
+				return "getMetric";
+			}
+
+			@Override
+			String getAppendMetricText() {
+				// TODO Auto-generated method stub
+				return "appendMetric";
+			}
+
+			@Override
+			Object getInvalidValueText() {
+				// TODO Auto-generated method stub
+				return " @Override boolean isInvalidValue(Integer data) {return data == -100;}";
+			}
+		}, FLOAT_PERCENT {
 			@Override
 			String getSmallType() {
 				// TODO Auto-generated method stub
@@ -72,7 +126,7 @@ public class CityVsUsaCodeWriter {
 		abstract Object getInvalidValueText();
 	}
 	
-	private static final String VARIABLE_NAME = "povertyRate";
+	private static final String VARIABLE_NAME = "avgSummerDewPoint";
 	private static final Type TYPE = Type.FLOAT_PERCENT; 
 
 	public static void main(String[] args) throws Exception {
