@@ -1,4 +1,4 @@
-package com.hey.old;
+package main.java.com.hey.old;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -12,6 +12,9 @@ import java.util.Map;
 import java.util.Scanner;
 
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+
+import main.java.com.hey.CityStats.Data;
+import main.java.com.hey.CreateBigCsv;
 
 public class CityVsUSAComparison {
 	
@@ -187,53 +190,43 @@ public class CityVsUSAComparison {
 	
 	private static List<InputData> readInput() {
 		try {
-			File myObj = new File("citydatainput2.csv");
-			Scanner myReader = new Scanner(myObj);
-			myReader.nextLine();
-			int idx = 0;
+
 			List<InputData> list = new ArrayList<InputData>();
-			while (myReader.hasNextLine()) {
-				idx++;
+
+	        List<Data> dataList = CreateBigCsv.readInput();
+	        for (Data data : dataList) {
 				InputData inputData = new InputData();
-				String line = myReader.nextLine();
-				String[] arr = line.split(",");
-				inputData.cityName = arr[0].toLowerCase();
-				inputData.stateName = arr[1].toLowerCase();
-				inputData.population = Integer.valueOf(arr[3]);
-				inputData.populationDensity = Integer.valueOf(arr[4]);
-				inputData.augustHigh = Integer.valueOf(arr[5]);
-				inputData.decemberHigh = Integer.valueOf(arr[6]);
-				inputData.augustHighMinusDecemberHigh = Integer.valueOf(arr[7]);
-				inputData.annualInchesOfRain = Integer.valueOf(arr[8]);
-				inputData.daysOfRain = Integer.valueOf(arr[9]);
-				inputData.sunnyDays = Integer.valueOf(arr[10]);
-				inputData.annualSnowfall = Integer.valueOf(arr[11]);
-				inputData.averageYearlyHumidity = getValidIntegerFromPercent(arr[12]);
-				inputData.yearlyWindspeed = getValidInt(arr[13]);
-				inputData.violentCrime = Integer.valueOf(arr[14]);
-				inputData.propertyCrime = Integer.valueOf(arr[15]);
-				inputData.medianAge = Integer.valueOf(arr[16]);
-				inputData.bachelors = getValidFloatFromPercent(arr[17]);
-				inputData.medianHouseholdIncome = Integer.valueOf(arr[18]);
-				inputData.medianHomePrice = Integer.valueOf(arr[19]);
-				inputData.medianHomeAge = Integer.valueOf(arr[20]);
-				inputData.homeAppreciation = getValidIntegerFromPercent(arr[23]);
-				inputData.airQuality = Integer.valueOf(arr[24]);
-				inputData.unemploymentRate = getValidFloatFromPercent(arr[25]);
-				inputData.populationGrowth = getValidFloatFromPercent(arr[27]);		
-				inputData.percentDemocrat = getValidFloatFromPercent(arr[28]);
-				inputData.percentRepublican = getValidFloatFromPercent(arr[29]);		
-				inputData.percentAsian = getValidFloatFromPercent(arr[30]);		
-				inputData.percentBlack = getValidFloatFromPercent(arr[31]);		
-				inputData.percentWhite = getValidFloatFromPercent(arr[32]);		
-				inputData.percentHispanic = getValidFloatFromPercent(arr[33]);		
-				// TODO
-				list.add(inputData);
-				if (idx > 10) {
-					// break;
-				}
-			}
-			myReader.close();
+				inputData.cityName = data.cityName.toLowerCase();
+				inputData.stateName = data.stateName.toLowerCase();
+				inputData.population = Integer.valueOf(data.population);
+				inputData.populationDensity = Integer.valueOf(data.populationDensity);
+				inputData.augustHigh = Integer.valueOf(data.hottestMonthsHigh);
+				inputData.decemberHigh = Integer.valueOf(data.coldestHigh);
+				inputData.augustHighMinusDecemberHigh = Integer.valueOf(data.hottestMonthMinusColdestMonth);
+				inputData.annualInchesOfRain = Integer.valueOf(data.numInchesOfRain);
+				inputData.daysOfRain = Integer.valueOf(data.numDaysOfRain);
+				inputData.sunnyDays = Integer.valueOf(data.numSunnyDays);
+				inputData.annualSnowfall = Integer.valueOf(data.numSunnyDays);
+				inputData.averageYearlyHumidity = getValidIntegerFromPercent(data.avgAnnualDewPoint); // swapped
+				inputData.yearlyWindspeed = getValidInt(data.avgYearlyWindspeed);
+				inputData.violentCrime = Integer.valueOf(data.violentCrime);
+				inputData.propertyCrime = Integer.valueOf(data.propertyCrime);
+				inputData.medianAge = Integer.valueOf(data.medianAge);
+				inputData.bachelors = getValidFloatFromPercent(data.percentWithAtleastBachelors);
+				inputData.medianHouseholdIncome = Integer.valueOf(data.medianIncome);
+				inputData.medianHomePrice = Integer.valueOf(data.medianHomePrice);
+				inputData.medianHomeAge = Integer.valueOf(data.medianHomeAge);
+				inputData.homeAppreciation = getValidIntegerFromPercent(data.homeAppreciationLastTenYears);
+				inputData.airQuality = Integer.valueOf(data.airQuality);
+				inputData.unemploymentRate = getValidFloatFromPercent(data.unemploymentRate);
+				inputData.populationGrowth = getValidFloatFromPercent(data.populationGrowthSince2010);		
+				inputData.percentDemocrat = getValidFloatFromPercent(data.percentDemocrat);
+				inputData.percentRepublican = getValidFloatFromPercent(data.percentRepublican);		
+				inputData.percentAsian = getValidFloatFromPercent(data.percentAsian);		
+				inputData.percentBlack = getValidFloatFromPercent(data.percentBlack);		
+				inputData.percentWhite = getValidFloatFromPercent(data.percentWhite);		
+				inputData.percentHispanic = getValidFloatFromPercent(data.percentHispanic);		
+	        }
 			return list;
 		} catch (Exception ex) {
 			ex.printStackTrace();
