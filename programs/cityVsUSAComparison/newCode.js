@@ -42,7 +42,7 @@ function createRows(tbdy, cityData){
 	  insertRow(tbdy, "Annual days of precipitation", daysOfRainAverage, daysOfRainMedian, cityData.daysOfRainMetric);
 	  insertRowWithGrayBackground(tbdy, "Annual days of sunshine", sunnyDaysAverage, sunnyDaysMedian, cityData.sunnyDaysMetric);
 	  insertRow(tbdy, "Annual snowfall(in)", annualSnowfallAverage, annualSnowfallMedian, cityData.annualSnowfallMetric);
-	  insertRowWithGrayBackgroundWithInfoButton(tbdy, "Average yearly humidity (%)", averageYearlyHumidityAverage, averageYearlyHumidityMedian, cityData.averageYearlyHumidityMetric ,"The average absolute humidity");
+	  insertRowWithGrayBackground(tbdy, "Average annual dew point", averageYearlyHumidityAverage, averageYearlyHumidityMedian, cityData.averageYearlyHumidityMetric);
 	  insertRow(tbdy, "Average yearly windspeed (mph)", yearlyWindspeedAverage, yearlyWindspeedMedian, cityData.yearlyWindspeedMetric);
 	  insertRowWithGrayBackgroundWithInfoButton(tbdy, "Violent crime index", violentCrimeAverage, violentCrimeMedian, cityData.violentCrimeMetric, "Crime is ranked from 1 (low) to 100 (high)");
 	  insertRowWithInfoButton(tbdy, "Property crime index", propertyCrimeAverage, propertyCrimeMedian, cityData.propertyCrimeMetric, "Crime is ranked from 1 (low) to 100 (high)");
