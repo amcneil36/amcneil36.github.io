@@ -61,3 +61,5 @@ var povertyRateAverage = 11.56;
 var povertyRateMedian = 8.6;
 var avgSummerDewPointAverage = 58;
 var avgSummerDewPointMedian = 60;
+var avgApartmentRentAverage = 1399;
+var avgApartmentRentMedian = 1309;
