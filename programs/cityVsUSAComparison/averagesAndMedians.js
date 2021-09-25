@@ -63,3 +63,5 @@ var avgSummerDewPointAverage = 58;
 var avgSummerDewPointMedian = 60;
 var avgApartmentRentAverage = 1399;
 var avgApartmentRentMedian = 1309;
+var avgApartmentSizeAverage = 911;
+var avgApartmentSizeMedian = 908;

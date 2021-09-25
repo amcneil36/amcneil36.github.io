@@ -51,6 +51,7 @@ public class CityVsUSAComparison2 {
 		float povertyRate;
 		int avgSummerDewPoint;
 		int avgApartmentRent;
+		int avgApartmentSize;
 		//TODO1
 
 		@Override
@@ -91,6 +92,7 @@ public class CityVsUSAComparison2 {
 	static Foo<Float> povertyRateFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.povertyRate;} @Override boolean isInvalidValue(Float data) {return data == -100;}};	
 	static Foo<Integer> avgSummerDewPointFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.avgSummerDewPoint;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};
 	static Foo<Integer> avgApartmentRentFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.avgApartmentRent;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};
+	static Foo<Integer> avgApartmentSizeFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.avgApartmentSize;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};
 	//TODO2
 	
 	static class AveragesAndMedians {
@@ -158,6 +160,8 @@ public class CityVsUSAComparison2 {
 		int avgSummerDewPointMedian;
 		int avgApartmentRentAverage;
 		int avgApartmentRentMedian;
+		int avgApartmentSizeAverage;
+		int avgApartmentSizeMedian;
         //TODO3
 	}
 
@@ -195,6 +199,7 @@ public class CityVsUSAComparison2 {
 		public Metric povertyRateMetric = new Metric();
 		public Metric avgSummerDewPointMetric = new Metric();
 		public Metric avgApartmentRentMetric = new Metric();
+		public Metric avgApartmentSizeMetric = new Metric();
 		//TODO4
 
 		@Override
@@ -245,6 +250,7 @@ public class CityVsUSAComparison2 {
 				inputData.povertyRate = getValidFloatFromPercent(data.povertyRate);
 				inputData.avgSummerDewPoint = getValidInt(data.avgSummerDewPoint);
 				inputData.avgApartmentRent = getValidInt(data.avgApartmentRent.replace("$", ""));
+				inputData.avgApartmentSize = getValidInt(data.avgApartmentSize);
 				//TODO5
 				list.add(inputData);
 	        }
@@ -377,6 +383,9 @@ public class CityVsUSAComparison2 {
 		List<Integer> avgApartmentRentList = avgApartmentRentFoo.getGenericList(inputDataList);
 		obj.avgApartmentRentAverage = (int) findMean(avgApartmentRentList);
 		obj.avgApartmentRentMedian = (int) findMedian(avgApartmentRentList);
+		List<Integer> avgApartmentSizeList = avgApartmentSizeFoo.getGenericList(inputDataList);
+		obj.avgApartmentSizeAverage = (int) findMean(avgApartmentSizeList);
+		obj.avgApartmentSizeMedian = (int) findMedian(avgApartmentSizeList);
 		//TODO6
 		return obj;
 	}
@@ -448,6 +457,8 @@ public class CityVsUSAComparison2 {
 		sb.append(getString("avgSummerDewPointMedian", averagesAndMedians.avgSummerDewPointMedian));
 		sb.append(getString("avgApartmentRentAverage", averagesAndMedians.avgApartmentRentAverage));
 		sb.append(getString("avgApartmentRentMedian", averagesAndMedians.avgApartmentRentMedian));
+		sb.append(getString("avgApartmentSizeAverage", averagesAndMedians.avgApartmentSizeAverage));
+		sb.append(getString("avgApartmentSizeMedian", averagesAndMedians.avgApartmentSizeMedian));
 		//TODO7
 		
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
@@ -490,6 +501,7 @@ public class CityVsUSAComparison2 {
 			outputData.povertyRateMetric = povertyRateFoo.getMetricFloat(inputData.povertyRate, inputDataList);
 			outputData.avgSummerDewPointMetric = avgSummerDewPointFoo.getMetric(inputData.avgSummerDewPoint, inputDataList);
 			outputData.avgApartmentRentMetric = avgApartmentRentFoo.getMetric(inputData.avgApartmentRent, inputDataList);
+			outputData.avgApartmentSizeMetric = avgApartmentSizeFoo.getMetric(inputData.avgApartmentSize, inputDataList);
 			//TODO8
 			outputDataList.add(outputData);
 		}
@@ -532,6 +544,7 @@ public class CityVsUSAComparison2 {
 		sb.append("var povertyRateMetric;\n");
 		sb.append("var avgSummerDewPointMetric;\n");
 		sb.append("var avgApartmentRentMetric;\n");
+		sb.append("var avgApartmentSizeMetric;\n");
 		//TODO9
 		sb.append("var cityData;\n");
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
@@ -571,9 +584,10 @@ public class CityVsUSAComparison2 {
 			appendFloatMetric(sb, outputData.povertyRateMetric, "povertyRateMetric");
 			appendMetric(sb, outputData.avgSummerDewPointMetric, "avgSummerDewPointMetric");
 			appendMetric(sb, outputData.avgApartmentRentMetric, "avgApartmentRentMetric");
+			appendMetric(sb, outputData.avgApartmentSizeMetric, "avgApartmentSizeMetric");
 			//TODO10
 			
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric,medianHouseholdIncomeMetric,medianHomePriceMetric,medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric, percentHispanicMetric, metroPopulationMetric, povertyRateMetric, avgSummerDewPointMetric, avgApartmentRentMetric");
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric,medianHouseholdIncomeMetric,medianHomePriceMetric,medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric, percentHispanicMetric, metroPopulationMetric, povertyRateMetric, avgSummerDewPointMetric, avgApartmentRentMetric, avgApartmentSizeMetric");
 			//TODO11
 			sb.append(");\nmyMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");

@@ -126,7 +126,7 @@ public class CityVsUsaCodeWriter {
 		abstract Object getInvalidValueText();
 	}
 	
-	private static final String VARIABLE_NAME = "avgApartmentRent";
+	private static final String VARIABLE_NAME = "avgApartmentSize";
 	private static final Type TYPE = Type.INTEGER; 
 
 	public static void main(String[] args) throws Exception {
@@ -186,8 +186,8 @@ public class CityVsUsaCodeWriter {
 			sb.append(st);
 			sb.append("\n");
 		}
-		String outputFilepath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\com.hey\\generatedCode.txt";
-		Util.writeTextToFile(outputFilepath, sb.toString());
+		//String outputFilepath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\com.hey\\generatedCode.txt";
+		Util.writeTextToFile(inputFilepath, sb.toString());
 		System.out.println("wrote to file");
 	}
 
