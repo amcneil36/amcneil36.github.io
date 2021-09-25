@@ -67,3 +67,5 @@
 A value of N/A in a cell means that the data source did not find the requested data for the city. This is more common in lesser populated cities.
 
 My data sources have indicated that their data may only be used for personal use and not commercial use. Thus, I have made this .csv for personal use only (I make no money from it in any way). Others may use this .csv for personal use as well but should not be using it for commercial use.
+
+If you would like to see the percentiles that each city's statistics fall under (in comparison to the rest of the USA cities), check out my other project [CityVsUSAComparison](https://amcneil36.github.io/programs/cityVsUSAComparison/cityVsUSAComparison.html). It uses the data from most of the columns from this CSV.
