@@ -48,8 +48,7 @@ public class CityVsUSAComparison2 {
 		float percentBlack;
 		float percentWhite;
 		float percentHispanic;
-		
-		// TODO
+		//TODO1
 
 		@Override
 		public String toString() {
@@ -86,8 +85,7 @@ public class CityVsUSAComparison2 {
 	static Foo<Float> percentWhiteFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.percentWhite;} @Override boolean isInvalidValue(Float data) {return data == -100;}};	
 	static Foo<Float> percentHispanicFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.percentHispanic;} @Override boolean isInvalidValue(Float data) {return data == -100;}};	
 	static Foo<Integer> metroPopulationFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.metroPopulation;}};
-	
-	//TODO
+	//TODO2
 	
 	static class AveragesAndMedians {
 		int populationAverage;
@@ -148,8 +146,7 @@ public class CityVsUSAComparison2 {
 		float percentHispanicMedian;
 		int metroPopulationAverage;
 		int metroPopulationMedian;
-		
-		//TODO
+        //TODO3
 	}
 
 	static class OutputData {
@@ -183,7 +180,7 @@ public class CityVsUSAComparison2 {
 		public Metric percentWhiteMetric = new Metric();
 		public Metric percentHispanicMetric = new Metric();
 		public Metric metroPopulationMetric = new Metric();
-		//TODO
+		//TODO4
 
 		@Override
 		public String toString() {
@@ -230,6 +227,7 @@ public class CityVsUSAComparison2 {
 				inputData.percentWhite = getValidFloatFromPercent(data.percentWhite);		
 				inputData.percentHispanic = getValidFloatFromPercent(data.percentHispanic);		
 				inputData.metroPopulation = getValidInt(data.metroPopulation);
+				//TODO5
 				list.add(inputData);
 	        }
 			return list;
@@ -352,7 +350,7 @@ public class CityVsUSAComparison2 {
 		List<Integer> metroPopulationList = metroPopulationFoo.getGenericList(inputDataList);
 		obj.metroPopulationAverage = (int)findMean(metroPopulationList);
 		obj.metroPopulationMedian = (int)findMedian(metroPopulationList);
-		//TODO
+		//TODO6
 		return obj;
 	}
 
@@ -417,7 +415,7 @@ public class CityVsUSAComparison2 {
 		sb.append(getFloatString("percentHispanicMedian", averagesAndMedians.percentHispanicMedian));
 		sb.append(getString("metroPopulationAverage", averagesAndMedians.metroPopulationAverage));
 		sb.append(getString("metroPopulationMedian", averagesAndMedians.metroPopulationMedian));
-		//TODO
+		//TODO7
 		
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
 	}
@@ -457,7 +455,7 @@ public class CityVsUSAComparison2 {
 			outputData.percentHispanicMetric = percentHispanicFoo.getMetricFloat(inputData.percentHispanic, inputDataList);
 			outputData.metroPopulationMetric = metroPopulationFoo.getMetric(inputData.metroPopulation, inputDataList);
 			
-			//TODO
+			//TODO8
 			outputDataList.add(outputData);
 		}
 		return outputDataList;
@@ -497,7 +495,7 @@ public class CityVsUSAComparison2 {
 		sb.append("var percentHispanicMetric;\n");
 		sb.append("var metroPopulationMetric;\n");
 		
-		//TODO
+		//TODO9
 		sb.append("var cityData;\n");
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
 		sb = new StringBuilder();
@@ -533,9 +531,11 @@ public class CityVsUSAComparison2 {
 			appendFloatMetric(sb, outputData.percentWhiteMetric, "percentWhiteMetric");	
 			appendFloatMetric(sb, outputData.percentHispanicMetric, "percentHispanicMetric");	
 			appendMetric(sb, outputData.metroPopulationMetric, "metroPopulationMetric");
-			//TODO
+			//TODO10
 			
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric,medianHouseholdIncomeMetric,medianHomePriceMetric,medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric, percentHispanicMetric, metroPopulationMetric);\n").append("myMap.set(\"")
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric,medianHouseholdIncomeMetric,medianHomePriceMetric,medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric, percentHispanicMetric, metroPopulationMetric");
+			//TODO11
+			sb.append(");\\n\"myMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
 			if (i == 10003) {
 				writeOutputAppend("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
