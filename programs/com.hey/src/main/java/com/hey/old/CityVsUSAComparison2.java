@@ -1,6 +1,5 @@
 package main.java.com.hey.old;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -9,14 +8,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
 import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.CreateBigCsv;
 
-public class CityVsUSAComparison {
+public class CityVsUSAComparison2 {
 	
 	static class InputData {
 		String cityName;
@@ -207,14 +205,14 @@ public class CityVsUSAComparison {
 				inputData.daysOfRain = Integer.valueOf(data.numDaysOfRain);
 				inputData.sunnyDays = Integer.valueOf(data.numSunnyDays);
 				inputData.annualSnowfall = Integer.valueOf(data.numSunnyDays);
-				inputData.averageYearlyHumidity = getValidIntegerFromPercent(data.avgAnnualDewPoint); // swapped
+				inputData.averageYearlyHumidity = getValidInt(data.avgAnnualDewPoint); // swapped
 				inputData.yearlyWindspeed = getValidInt(data.avgYearlyWindspeed);
 				inputData.violentCrime = Integer.valueOf(data.violentCrime);
 				inputData.propertyCrime = Integer.valueOf(data.propertyCrime);
 				inputData.medianAge = Integer.valueOf(data.medianAge);
 				inputData.bachelors = getValidFloatFromPercent(data.percentWithAtleastBachelors);
-				inputData.medianHouseholdIncome = Integer.valueOf(data.medianIncome);
-				inputData.medianHomePrice = Integer.valueOf(data.medianHomePrice);
+				inputData.medianHouseholdIncome = Integer.valueOf(data.medianIncome.replace("$", ""));
+				inputData.medianHomePrice = Integer.valueOf(data.medianHomePrice.replace("$", ""));
 				inputData.medianHomeAge = Integer.valueOf(data.medianHomeAge);
 				inputData.homeAppreciation = getValidIntegerFromPercent(data.homeAppreciationLastTenYears);
 				inputData.airQuality = Integer.valueOf(data.airQuality);
@@ -226,6 +224,7 @@ public class CityVsUSAComparison {
 				inputData.percentBlack = getValidFloatFromPercent(data.percentBlack);		
 				inputData.percentWhite = getValidFloatFromPercent(data.percentWhite);		
 				inputData.percentHispanic = getValidFloatFromPercent(data.percentHispanic);		
+				list.add(inputData);
 	        }
 			return list;
 		} catch (Exception ex) {
@@ -558,6 +557,10 @@ public class CityVsUSAComparison {
 	private static int getValidInt(String string) {
 		if (string.contains("N/A")) {
 			return -100;
+		}
+		if (string.contains(".")) {
+			float f = Float.valueOf(string);
+			return (int) f;
 		}
 		return Integer.valueOf(string);
 	}
