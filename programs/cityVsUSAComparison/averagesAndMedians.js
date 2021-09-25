@@ -67,3 +67,5 @@ var avgApartmentSizeAverage = 911;
 var avgApartmentSizeMedian = 908;
 var homeSquareFeetAverage = 1801;
 var homeSquareFeetMedian = 1722;
+var costPerSquareFootAverage = 271;
+var costPerSquareFootMedian = 185;
