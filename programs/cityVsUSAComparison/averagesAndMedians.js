@@ -57,3 +57,5 @@ var percentHispanicAverage = 12.42;
 var percentHispanicMedian = 5.2;
 var metroPopulationAverage = 3504157;
 var metroPopulationMedian = 603851;
+var povertyRateAverage = 11.56;
+var povertyRateMedian = 8.6;

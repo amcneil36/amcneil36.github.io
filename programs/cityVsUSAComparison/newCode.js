@@ -1,5 +1,5 @@
 class CityData {
-  constructor(populationMetric, populationDensityMetric, augustHighMetric, decemberHighMetric, augustHighMinusDecemberHighMetric, annualInchesOfRainMetric, daysOfRainMetric, sunnyDaysMetric, annualSnowfallMetric, averageYearlyHumidityMetric, yearlyWindspeedMetric, violentCrimeMetric, propertyCrimeMetric, medianAgeMetric, bachelorsMetric, medianHouseholdIncomeMetric, medianHomePriceMetric, medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric, percentHispanicMetric, metroPopulationMetric) {
+  constructor(populationMetric, populationDensityMetric, augustHighMetric, decemberHighMetric, augustHighMinusDecemberHighMetric, annualInchesOfRainMetric, daysOfRainMetric, sunnyDaysMetric, annualSnowfallMetric, averageYearlyHumidityMetric, yearlyWindspeedMetric, violentCrimeMetric, propertyCrimeMetric, medianAgeMetric, bachelorsMetric, medianHouseholdIncomeMetric, medianHomePriceMetric, medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric, percentHispanicMetric, metroPopulationMetric, povertyRateMetric) {
     this.populationMetric = populationMetric;
 	this.populationDensityMetric = populationDensityMetric;
 	this.augustHighMetric = augustHighMetric;
@@ -29,6 +29,7 @@ class CityData {
 	this.percentWhiteMetric = percentWhiteMetric;
 	this.percentHispanicMetric = percentHispanicMetric;
 	this.metroPopulationMetric = metroPopulationMetric;
+	this.povertyRateMetric = povertyRateMetric;
   }
 }
 
@@ -63,4 +64,5 @@ function createRows(tbdy, cityData){
 	  insertRowWithInfoButton(tbdy, "Percent White (%)", percentWhiteAverage, percentWhiteMedian, cityData.percentWhiteMetric, "Includes hispanic white and non-hispanic white residents");
 	  insertRowWithGrayBackgroundWithInfoButton(tbdy, "Percent Hispanic (%)", percentHispanicAverage, percentHispanicMedian, cityData.percentHispanicMetric, "% of residents who claim hispanic, regardless of race");
 	  insertRow(tbdy, "Metro Population", metroPopulationAverage, metroPopulationMedian, cityData.metroPopulationMetric);
+	  insertRowWithGrayBackground(tbdy, "Poverty Rate (%)", povertyRateAverage, povertyRateMedian, cityData.povertyRateMetric);
 }

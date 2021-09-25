@@ -1,6 +1,5 @@
 package main.java.com.hey.old;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import main.java.com.hey.Util;
@@ -55,6 +54,11 @@ public class CityVsUsaCodeWriter {
 			String getAppendMetricText() {
 				return "appendFloatMetric";
 			}
+
+			@Override
+			Object getInvalidValueText() {
+				return " @Override boolean isInvalidValue(Float data) {return data == -100;}";
+			}
 		};
 	    
 	    abstract String getSmallType();
@@ -65,6 +69,7 @@ public class CityVsUsaCodeWriter {
 	    abstract String getSbAppendPrefix();
 	    abstract String getMetricText();
 	    abstract String getAppendMetricText();
+		abstract Object getInvalidValueText();
 	}
 	
 	private static final String VARIABLE_NAME = "povertyRate";
@@ -85,7 +90,7 @@ public class CityVsUsaCodeWriter {
 				sb.append("	static Foo<").append(TYPE.getBigType()).append("> ");
 				sb.append(VARIABLE_NAME).append("Foo = new Foo<").append(TYPE.getBigType());
 				sb.append(">() { @Override ").append(TYPE.getBigType()).append(" getData(InputData inputData) { return inputData.");
-				sb.append(VARIABLE_NAME).append(";}};\n");
+				sb.append(VARIABLE_NAME).append(";}").append(TYPE.getInvalidValueText()).append("};\n");
 			}
 			else if(st.contains("TODO3")) {
 				sb.append("		").append(TYPE.getSmallType()).append(" ").append(VARIABLE_NAME).append("Average;\n");
@@ -112,7 +117,7 @@ public class CityVsUsaCodeWriter {
 				sb.append("			outputData.").append(VARIABLE_NAME).append("Metric = ").append(VARIABLE_NAME).append("Foo.").append(TYPE.getMetricText()).append("(inputData.").append(VARIABLE_NAME).append(", inputDataList);\n");
 			}
 			else if (st.contains("TODO9")) {
-				sb.append("		sb.append(\"var ").append(VARIABLE_NAME).append("Metric;\\n\");)\n");
+				sb.append("		sb.append(\"var ").append(VARIABLE_NAME).append("Metric;\\n\");\n");
 			}
 			else if (st.contains("TODO10")) {
 				sb.append("			").append(TYPE.getAppendMetricText()).append("(sb, outputData.").append(VARIABLE_NAME).append("Metric, \"").append(VARIABLE_NAME).append("Metric\");\n");
