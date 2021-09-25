@@ -454,7 +454,6 @@ public class CityVsUSAComparison2 {
 			outputData.percentWhiteMetric = percentWhiteFoo.getMetricFloat(inputData.percentWhite, inputDataList);
 			outputData.percentHispanicMetric = percentHispanicFoo.getMetricFloat(inputData.percentHispanic, inputDataList);
 			outputData.metroPopulationMetric = metroPopulationFoo.getMetric(inputData.metroPopulation, inputDataList);
-			
 			//TODO8
 			outputDataList.add(outputData);
 		}
@@ -494,7 +493,6 @@ public class CityVsUSAComparison2 {
 		sb.append("var percentWhiteMetric;\n");
 		sb.append("var percentHispanicMetric;\n");
 		sb.append("var metroPopulationMetric;\n");
-		
 		//TODO9
 		sb.append("var cityData;\n");
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);

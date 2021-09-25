@@ -1,13 +1,17 @@
 package main.java.com.hey;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jsoup.Connection;
@@ -217,6 +221,23 @@ public class Util {
 			populateMap();
 		}
 		return map.get(stateName.toLowerCase());
+	}
+	
+	public static List<String> readTextFromFile(String filePath) throws Exception {
+		File myObj = new File(filePath);
+		Scanner myReader = new Scanner(myObj);
+		List<String> list = new ArrayList<>();
+		while (myReader.hasNextLine()) {
+			list.add(myReader.nextLine());
+		}
+		myReader.close();
+		return list;
+	}
+	
+	public static void writeTextToFile(String filePath, String textToWrite) throws Exception {
+		FileWriter myWriter = new FileWriter(filePath);
+		myWriter.write(textToWrite);
+		myWriter.close();
 	}
 	
 	    
