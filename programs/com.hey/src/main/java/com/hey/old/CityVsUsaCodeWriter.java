@@ -126,7 +126,7 @@ public class CityVsUsaCodeWriter {
 		abstract Object getInvalidValueText();
 	}
 	
-	private static final String VARIABLE_NAME = "avgApartmentSize";
+	private static final String VARIABLE_NAME = "homeSquareFeet";
 	private static final Type TYPE = Type.INTEGER; 
 
 	public static void main(String[] args) throws Exception {

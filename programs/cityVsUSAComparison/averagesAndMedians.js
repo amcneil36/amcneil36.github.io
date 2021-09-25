@@ -65,3 +65,5 @@ var avgApartmentRentAverage = 1399;
 var avgApartmentRentMedian = 1309;
 var avgApartmentSizeAverage = 911;
 var avgApartmentSizeMedian = 908;
+var homeSquareFeetAverage = 1801;
+var homeSquareFeetMedian = 1722;

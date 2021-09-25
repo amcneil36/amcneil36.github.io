@@ -1,6 +1,6 @@
 class CityData {
   constructor(populationMetric, populationDensityMetric, augustHighMetric, decemberHighMetric, augustHighMinusDecemberHighMetric, annualInchesOfRainMetric, daysOfRainMetric, sunnyDaysMetric, annualSnowfallMetric, averageYearlyHumidityMetric, yearlyWindspeedMetric, violentCrimeMetric, propertyCrimeMetric, medianAgeMetric, bachelorsMetric, medianHouseholdIncomeMetric, medianHomePriceMetric, medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric, percentHispanicMetric, metroPopulationMetric, povertyRateMetric, avgSummerDewPointMetric, 
-  avgApartmentRentMetric, avgApartmentSizeMetric) {
+  avgApartmentRentMetric, avgApartmentSizeMetric, homeSquareFeetMetric) {
     this.populationMetric = populationMetric;
 	this.populationDensityMetric = populationDensityMetric;
 	this.augustHighMetric = augustHighMetric;
@@ -34,6 +34,7 @@ class CityData {
 	this.avgSummerDewPointMetric = avgSummerDewPointMetric;
 	this.avgApartmentRentMetric = avgApartmentRentMetric;
 	this.avgApartmentSizeMetric = avgApartmentSizeMetric;
+	this.homeSquareFeetMetric = homeSquareFeetMetric;
   }
 }
 
@@ -72,4 +73,5 @@ function createRows(tbdy, cityData){
 	  insertRow(tbdy, "Average summer dew point", avgSummerDewPointAverage, avgSummerDewPointMedian, cityData.avgSummerDewPointMetric);
 	  insertRowWithGrayBackground(tbdy, "Average Apartment Rent ($)", avgApartmentRentAverage, avgApartmentRentMedian, cityData.avgApartmentRentMetric);
 	  insertRow(tbdy, "Average apartment size", avgApartmentSizeAverage, avgApartmentSizeMedian, cityData.avgApartmentSizeMetric);
+	  insertRowWithGrayBackground(tbdy, "Median home size", homeSquareFeetAverage, homeSquareFeetMedian, cityData.homeSquareFeetMetric);
 }
