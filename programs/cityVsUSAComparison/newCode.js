@@ -1,6 +1,8 @@
 class CityData {
   constructor(populationMetric, populationDensityMetric, augustHighMetric, decemberHighMetric, augustHighMinusDecemberHighMetric, annualInchesOfRainMetric, daysOfRainMetric, sunnyDaysMetric, annualSnowfallMetric, averageYearlyHumidityMetric, yearlyWindspeedMetric, violentCrimeMetric, propertyCrimeMetric, medianAgeMetric, bachelorsMetric, medianHouseholdIncomeMetric, medianHomePriceMetric, medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric, percentHispanicMetric, metroPopulationMetric, povertyRateMetric, avgSummerDewPointMetric, 
-  avgApartmentRentMetric, avgApartmentSizeMetric, homeSquareFeetMetric, costPerSquareFootMetric, homeOwnershipRateMetric) {
+  avgApartmentRentMetric, avgApartmentSizeMetric, homeSquareFeetMetric, costPerSquareFootMetric, homeOwnershipRateMetric, foreignBornPercentMetric, feetAboveSeaLevelMetric, 
+  uvIndexMetric, singlePopulationMetric, walkScoreMetric, transitScoreMetric, bikeScoreMetric, percentOfIncomeLostToHousingCostsMetric, sexOffenderCountMetric, hurricanesMetric,
+  tornadoesMetric, earthQuakesMetric) {
     this.populationMetric = populationMetric;
 	this.populationDensityMetric = populationDensityMetric;
 	this.augustHighMetric = augustHighMetric;
@@ -37,6 +39,18 @@ class CityData {
 	this.homeSquareFeetMetric = homeSquareFeetMetric;
 	this.costPerSquareFootMetric = costPerSquareFootMetric;
 	this.homeOwnershipRateMetric = homeOwnershipRateMetric;
+	this.foreignBornPercentMetric = foreignBornPercentMetric;
+	this.feetAboveSeaLevelMetric = feetAboveSeaLevelMetric;
+	this.uvIndexMetric = uvIndexMetric;
+	this.singlePopulationMetric = singlePopulationMetric;
+	this.walkScoreMetric = walkScoreMetric;
+	this.transitScoreMetric = transitScoreMetric;
+	this.bikeScoreMetric = bikeScoreMetric;
+	this.percentOfIncomeLostToHousingCostsMetric = percentOfIncomeLostToHousingCostsMetric;
+	this.sexOffenderCountMetric = sexOffenderCountMetric;
+	this.hurricanesMetric = hurricanesMetric;
+	this.tornadoesMetric = tornadoesMetric;
+	this.earthQuakesMetric = earthQuakesMetric;
   }
 }
 
@@ -78,4 +92,16 @@ function createRows(tbdy, cityData){
 	  insertRowWithGrayBackground(tbdy, "Median home size", homeSquareFeetAverage, homeSquareFeetMedian, cityData.homeSquareFeetMetric);
 	  insertRow(tbdy, "Median home cost per sq ft ($)", costPerSquareFootAverage, costPerSquareFootMedian, cityData.costPerSquareFootMetric);
 	  insertRowWithGrayBackground(tbdy, "Homeownership Rate (%)", homeOwnershipRateAverage, homeOwnershipRateMedian, cityData.homeOwnershipRateMetric);
+	  insertRow(tbdy, "Foreign born %", foreignBornPercentAverage, foreignBornPercentMedian, cityData.foreignBornPercentMetric);
+	  insertRowWithGrayBackground(tbdy, "Elevation (ft)", feetAboveSeaLevelAverage, feetAboveSeaLevelMedian, cityData.feetAboveSeaLevelMetric);
+	  insertRow(tbdy, "UV Index", uvIndexAverage, uvIndexMedian, cityData.uvIndexMetric);
+	  insertRowWithGrayBackground(tbdy, "Single Population (%)", singlePopulationAverage, singlePopulationMedian, cityData.singlePopulationMetric);
+	  insertRow(tbdy, "Walk score", walkScoreAverage, walkScoreMedian, cityData.walkScoreMetric);
+	  insertRowWithGrayBackground(tbdy, "Transit Score", transitScoreAverage, transitScoreMedian, cityData.transitScoreMetric);
+	  insertRow(tbdy, "Bike score", bikeScoreAverage, bikeScoreMedian, cityData.bikeScoreMetric);
+	  insertRowWithGrayBackground(tbdy, "% of income lost to housing costs", percentOfIncomeLostToHousingCostsAverage, percentOfIncomeLostToHousingCostsMedian, cityData.percentOfIncomeLostToHousingCostsMetric);
+	  insertRow(tbdy, "Sex offenders per 10k residents", sexOffenderCountAverage, sexOffenderCountMedian, cityData.sexOffenderCountMetric);
+	  insertRowWithGrayBackground(tbdy, "Number of hurricanes since 1930", hurricanesAverage, hurricanesMedian, cityData.hurricanesMetric);
+	  insertRow(tbdy, "Number of tornadoes per year", tornadoesAverage, tornadoesMedian, cityData.tornadoesMetric);
+	  insertRowWithGrayBackground(tbdy, "Number of earthquakes since 1931", earthQuakesAverage, earthQuakesMedian, cityData.earthQuakesMetric);
 }

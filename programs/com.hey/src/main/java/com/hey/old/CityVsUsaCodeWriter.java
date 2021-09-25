@@ -7,7 +7,59 @@ import main.java.com.hey.Util;
 public class CityVsUsaCodeWriter {
 	
 	public enum Type {
-	    INTEGER {
+	    FLOAT_NOT_PERCENT {
+			@Override
+			String getSmallType() {
+				// TODO Auto-generated method stub
+				return "float";
+			}
+
+			@Override
+			String getBigType() {
+				// TODO Auto-generated method stub
+				return "Float";
+			}
+
+			@Override
+			String getReadParsePrefix() {
+				// TODO Auto-generated method stub
+				return "getValidFloat";
+			}
+
+			@Override
+			String findMeanText() {
+				// TODO Auto-generated method stub
+				return "findMeanFloat";
+			}
+
+			@Override
+			String findMedianText() {
+				// TODO Auto-generated method stub
+				return "findMedianFloat";
+			}
+
+			@Override
+			String getSbAppendPrefix() {
+				// TODO Auto-generated method stub
+				return "getFloatString";
+			}
+
+			@Override
+			String getMetricText() {
+				// TODO Auto-generated method stub
+				return "getMetricFloat";
+			}
+
+			@Override
+			String getAppendMetricText() {
+				return "appendFloatMetric";
+			}
+
+			@Override
+			Object getInvalidValueText() {
+				return " @Override boolean isInvalidValue(Float data) {return data == -100;}";
+			}
+		}, INTEGER {
 			@Override
 			String getSmallType() {
 				// TODO Auto-generated method stub
@@ -126,8 +178,8 @@ public class CityVsUsaCodeWriter {
 		abstract Object getInvalidValueText();
 	}
 	
-	private static final String VARIABLE_NAME = "homeOwnershipRate";
-	private static final Type TYPE = Type.FLOAT_PERCENT; 
+	private static final String VARIABLE_NAME = "earthQuakes";
+	private static final Type TYPE = Type.INTEGER; 
 
 	public static void main(String[] args) throws Exception {
 		String inputFilepath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\com.hey\\src\\main\\java\\com\\hey\\old\\CityVsUSAComparison2.java";

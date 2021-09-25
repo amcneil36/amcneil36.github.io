@@ -55,6 +55,18 @@ public class CityVsUSAComparison2 {
 		int homeSquareFeet;
 		int costPerSquareFoot;
 		float homeOwnershipRate;
+		float foreignBornPercent;
+		int feetAboveSeaLevel;
+		float uvIndex;
+		float singlePopulation;
+		int walkScore;
+		int transitScore;
+		int bikeScore;
+		float percentOfIncomeLostToHousingCosts;
+		float sexOffenderCount;
+		int hurricanes;
+		int tornadoes;
+		int earthQuakes;
 		//TODO1
 
 		@Override
@@ -99,6 +111,18 @@ public class CityVsUSAComparison2 {
 	static Foo<Integer> homeSquareFeetFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.homeSquareFeet;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};
 	static Foo<Integer> costPerSquareFootFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.costPerSquareFoot;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};
 	static Foo<Float> homeOwnershipRateFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.homeOwnershipRate;} @Override boolean isInvalidValue(Float data) {return data == -100;}};
+	static Foo<Float> foreignBornPercentFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.foreignBornPercent;} @Override boolean isInvalidValue(Float data) {return data == -100;}};
+	static Foo<Integer> feetAboveSeaLevelFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.feetAboveSeaLevel;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};
+	static Foo<Float> uvIndexFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.uvIndex;} @Override boolean isInvalidValue(Float data) {return data == -100;}};
+	static Foo<Float> singlePopulationFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.singlePopulation;} @Override boolean isInvalidValue(Float data) {return data == -100;}};
+	static Foo<Integer> walkScoreFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.walkScore;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};
+	static Foo<Integer> transitScoreFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.transitScore;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};
+	static Foo<Integer> bikeScoreFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.bikeScore;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};
+	static Foo<Float> percentOfIncomeLostToHousingCostsFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.percentOfIncomeLostToHousingCosts;} @Override boolean isInvalidValue(Float data) {return data == -100;}};
+	static Foo<Float> sexOffenderCountFoo = new Foo<Float>() { @Override Float getData(InputData inputData) { return inputData.sexOffenderCount;} @Override boolean isInvalidValue(Float data) {return data == -100;}};
+	static Foo<Integer> hurricanesFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.hurricanes;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};
+	static Foo<Integer> tornadoesFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.tornadoes;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};
+	static Foo<Integer> earthQuakesFoo = new Foo<Integer>() { @Override Integer getData(InputData inputData) { return inputData.earthQuakes;} @Override boolean isInvalidValue(Integer data) {return data == -100;}};
 	//TODO2
 	
 	static class AveragesAndMedians {
@@ -174,6 +198,30 @@ public class CityVsUSAComparison2 {
 		int costPerSquareFootMedian;
 		float homeOwnershipRateAverage;
 		float homeOwnershipRateMedian;
+		float foreignBornPercentAverage;
+		float foreignBornPercentMedian;
+		int feetAboveSeaLevelAverage;
+		int feetAboveSeaLevelMedian;
+		float uvIndexAverage;
+		float uvIndexMedian;
+		float singlePopulationAverage;
+		float singlePopulationMedian;
+		int walkScoreAverage;
+		int walkScoreMedian;
+		int transitScoreAverage;
+		int transitScoreMedian;
+		int bikeScoreAverage;
+		int bikeScoreMedian;
+		float percentOfIncomeLostToHousingCostsAverage;
+		float percentOfIncomeLostToHousingCostsMedian;
+		float sexOffenderCountAverage;
+		float sexOffenderCountMedian;
+		int hurricanesAverage;
+		int hurricanesMedian;
+		int tornadoesAverage;
+		int tornadoesMedian;
+		int earthQuakesAverage;
+		int earthQuakesMedian;
         //TODO3
 	}
 
@@ -215,6 +263,18 @@ public class CityVsUSAComparison2 {
 		public Metric homeSquareFeetMetric = new Metric();
 		public Metric costPerSquareFootMetric = new Metric();
 		public Metric homeOwnershipRateMetric = new Metric();
+		public Metric foreignBornPercentMetric = new Metric();
+		public Metric feetAboveSeaLevelMetric = new Metric();
+		public Metric uvIndexMetric = new Metric();
+		public Metric singlePopulationMetric = new Metric();
+		public Metric walkScoreMetric = new Metric();
+		public Metric transitScoreMetric = new Metric();
+		public Metric bikeScoreMetric = new Metric();
+		public Metric percentOfIncomeLostToHousingCostsMetric = new Metric();
+		public Metric sexOffenderCountMetric = new Metric();
+		public Metric hurricanesMetric = new Metric();
+		public Metric tornadoesMetric = new Metric();
+		public Metric earthQuakesMetric = new Metric();
 		//TODO4
 
 		@Override
@@ -269,6 +329,18 @@ public class CityVsUSAComparison2 {
 				inputData.homeSquareFeet = getValidInt(data.homeSquareFeet);
 				inputData.costPerSquareFoot = getValidInt(data.costPerSquareFoot.replace("$", ""));
 				inputData.homeOwnershipRate = getValidFloatFromPercent(data.homeOwnershipRate);
+				inputData.foreignBornPercent = getValidFloatFromPercent(data.foreignBornPercent);
+				inputData.feetAboveSeaLevel = getValidInt(data.feetAboveSeaLevel);
+				inputData.uvIndex = Float.valueOf(data.uvIndex);
+				inputData.singlePopulation = getValidFloatFromPercent(data.singlePopulation);
+				inputData.walkScore = getValidInt(data.walkScore);
+				inputData.transitScore = getValidInt(data.transitScore);
+				inputData.bikeScore = getValidInt(data.bikeScore);
+				inputData.percentOfIncomeLostToHousingCosts = getValidFloatFromPercent(data.percentOfIncomeLostToHousingCosts);
+				inputData.sexOffenderCount = getValidFloat(data.sexOffenderCount);
+				inputData.hurricanes = getValidInt(data.hurricanes);
+				inputData.tornadoes = getValidInt(data.tornadoes);
+				inputData.earthQuakes = getValidInt(data.earthQuakes);
 				//TODO5
 				list.add(inputData);
 	        }
@@ -278,6 +350,15 @@ public class CityVsUSAComparison2 {
 			throw new RuntimeException("issue in readInput");
 		}
 
+	}
+
+	private static float getValidFloat(String sexOffenderCount) {
+		if (sexOffenderCount.contains("N/A")) {
+			return -100;
+		}
+		else {
+			return Float.valueOf(sexOffenderCount);
+		}
 	}
 
 	private static AveragesAndMedians getAveragesAndMedians(List<InputData> inputDataList) {
@@ -413,6 +494,42 @@ public class CityVsUSAComparison2 {
 		List<Float> homeOwnershipRateList = homeOwnershipRateFoo.getGenericList(inputDataList);
 		obj.homeOwnershipRateAverage = findMeanFloat(homeOwnershipRateList);
 		obj.homeOwnershipRateMedian = findMedianFloat(homeOwnershipRateList);
+		List<Float> foreignBornPercentList = foreignBornPercentFoo.getGenericList(inputDataList);
+		obj.foreignBornPercentAverage = findMeanFloat(foreignBornPercentList);
+		obj.foreignBornPercentMedian = findMedianFloat(foreignBornPercentList);
+		List<Integer> feetAboveSeaLevelList = feetAboveSeaLevelFoo.getGenericList(inputDataList);
+		obj.feetAboveSeaLevelAverage = (int) findMean(feetAboveSeaLevelList);
+		obj.feetAboveSeaLevelMedian = (int) findMedian(feetAboveSeaLevelList);
+		List<Float> uvIndexList = uvIndexFoo.getGenericList(inputDataList);
+		obj.uvIndexAverage = findMeanFloat(uvIndexList);
+		obj.uvIndexMedian = findMedianFloat(uvIndexList);
+		List<Float> singlePopulationList = singlePopulationFoo.getGenericList(inputDataList);
+		obj.singlePopulationAverage = findMeanFloat(singlePopulationList);
+		obj.singlePopulationMedian = findMedianFloat(singlePopulationList);
+		List<Integer> walkScoreList = walkScoreFoo.getGenericList(inputDataList);
+		obj.walkScoreAverage = (int) findMean(walkScoreList);
+		obj.walkScoreMedian = (int) findMedian(walkScoreList);
+		List<Integer> transitScoreList = transitScoreFoo.getGenericList(inputDataList);
+		obj.transitScoreAverage = (int) findMean(transitScoreList);
+		obj.transitScoreMedian = (int) findMedian(transitScoreList);
+		List<Integer> bikeScoreList = bikeScoreFoo.getGenericList(inputDataList);
+		obj.bikeScoreAverage = (int) findMean(bikeScoreList);
+		obj.bikeScoreMedian = (int) findMedian(bikeScoreList);
+		List<Float> percentOfIncomeLostToHousingCostsList = percentOfIncomeLostToHousingCostsFoo.getGenericList(inputDataList);
+		obj.percentOfIncomeLostToHousingCostsAverage = findMeanFloat(percentOfIncomeLostToHousingCostsList);
+		obj.percentOfIncomeLostToHousingCostsMedian = findMedianFloat(percentOfIncomeLostToHousingCostsList);
+		List<Float> sexOffenderCountList = sexOffenderCountFoo.getGenericList(inputDataList);
+		obj.sexOffenderCountAverage = findMeanFloat(sexOffenderCountList);
+		obj.sexOffenderCountMedian = findMedianFloat(sexOffenderCountList);
+		List<Integer> hurricanesList = hurricanesFoo.getGenericList(inputDataList);
+		obj.hurricanesAverage = (int) findMean(hurricanesList);
+		obj.hurricanesMedian = (int) findMedian(hurricanesList);
+		List<Integer> tornadoesList = tornadoesFoo.getGenericList(inputDataList);
+		obj.tornadoesAverage = (int) findMean(tornadoesList);
+		obj.tornadoesMedian = (int) findMedian(tornadoesList);
+		List<Integer> earthQuakesList = earthQuakesFoo.getGenericList(inputDataList);
+		obj.earthQuakesAverage = (int) findMean(earthQuakesList);
+		obj.earthQuakesMedian = (int) findMedian(earthQuakesList);
 		//TODO6
 		return obj;
 	}
@@ -492,6 +609,30 @@ public class CityVsUSAComparison2 {
 		sb.append(getString("costPerSquareFootMedian", averagesAndMedians.costPerSquareFootMedian));
 		sb.append(getFloatString("homeOwnershipRateAverage", averagesAndMedians.homeOwnershipRateAverage));
 		sb.append(getFloatString("homeOwnershipRateMedian", averagesAndMedians.homeOwnershipRateMedian));
+		sb.append(getFloatString("foreignBornPercentAverage", averagesAndMedians.foreignBornPercentAverage));
+		sb.append(getFloatString("foreignBornPercentMedian", averagesAndMedians.foreignBornPercentMedian));
+		sb.append(getString("feetAboveSeaLevelAverage", averagesAndMedians.feetAboveSeaLevelAverage));
+		sb.append(getString("feetAboveSeaLevelMedian", averagesAndMedians.feetAboveSeaLevelMedian));
+		sb.append(getFloatString("uvIndexAverage", averagesAndMedians.uvIndexAverage));
+		sb.append(getFloatString("uvIndexMedian", averagesAndMedians.uvIndexMedian));
+		sb.append(getFloatString("singlePopulationAverage", averagesAndMedians.singlePopulationAverage));
+		sb.append(getFloatString("singlePopulationMedian", averagesAndMedians.singlePopulationMedian));
+		sb.append(getString("walkScoreAverage", averagesAndMedians.walkScoreAverage));
+		sb.append(getString("walkScoreMedian", averagesAndMedians.walkScoreMedian));
+		sb.append(getString("transitScoreAverage", averagesAndMedians.transitScoreAverage));
+		sb.append(getString("transitScoreMedian", averagesAndMedians.transitScoreMedian));
+		sb.append(getString("bikeScoreAverage", averagesAndMedians.bikeScoreAverage));
+		sb.append(getString("bikeScoreMedian", averagesAndMedians.bikeScoreMedian));
+		sb.append(getFloatString("percentOfIncomeLostToHousingCostsAverage", averagesAndMedians.percentOfIncomeLostToHousingCostsAverage));
+		sb.append(getFloatString("percentOfIncomeLostToHousingCostsMedian", averagesAndMedians.percentOfIncomeLostToHousingCostsMedian));
+		sb.append(getFloatString("sexOffenderCountAverage", averagesAndMedians.sexOffenderCountAverage));
+		sb.append(getFloatString("sexOffenderCountMedian", averagesAndMedians.sexOffenderCountMedian));
+		sb.append(getString("hurricanesAverage", averagesAndMedians.hurricanesAverage));
+		sb.append(getString("hurricanesMedian", averagesAndMedians.hurricanesMedian));
+		sb.append(getString("tornadoesAverage", averagesAndMedians.tornadoesAverage));
+		sb.append(getString("tornadoesMedian", averagesAndMedians.tornadoesMedian));
+		sb.append(getString("earthQuakesAverage", averagesAndMedians.earthQuakesAverage));
+		sb.append(getString("earthQuakesMedian", averagesAndMedians.earthQuakesMedian));
 		//TODO7
 		
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\averagesAndMedians.js", sb);
@@ -538,6 +679,18 @@ public class CityVsUSAComparison2 {
 			outputData.homeSquareFeetMetric = homeSquareFeetFoo.getMetric(inputData.homeSquareFeet, inputDataList);
 			outputData.costPerSquareFootMetric = costPerSquareFootFoo.getMetric(inputData.costPerSquareFoot, inputDataList);
 			outputData.homeOwnershipRateMetric = homeOwnershipRateFoo.getMetricFloat(inputData.homeOwnershipRate, inputDataList);
+			outputData.foreignBornPercentMetric = foreignBornPercentFoo.getMetricFloat(inputData.foreignBornPercent, inputDataList);
+			outputData.feetAboveSeaLevelMetric = feetAboveSeaLevelFoo.getMetric(inputData.feetAboveSeaLevel, inputDataList);
+			outputData.uvIndexMetric = uvIndexFoo.getMetricFloat(inputData.uvIndex, inputDataList);
+			outputData.singlePopulationMetric = singlePopulationFoo.getMetricFloat(inputData.singlePopulation, inputDataList);
+			outputData.walkScoreMetric = walkScoreFoo.getMetric(inputData.walkScore, inputDataList);
+			outputData.transitScoreMetric = transitScoreFoo.getMetric(inputData.transitScore, inputDataList);
+			outputData.bikeScoreMetric = bikeScoreFoo.getMetric(inputData.bikeScore, inputDataList);
+			outputData.percentOfIncomeLostToHousingCostsMetric = percentOfIncomeLostToHousingCostsFoo.getMetricFloat(inputData.percentOfIncomeLostToHousingCosts, inputDataList);
+			outputData.sexOffenderCountMetric = sexOffenderCountFoo.getMetricFloat(inputData.sexOffenderCount, inputDataList);
+			outputData.hurricanesMetric = hurricanesFoo.getMetric(inputData.hurricanes, inputDataList);
+			outputData.tornadoesMetric = tornadoesFoo.getMetric(inputData.tornadoes, inputDataList);
+			outputData.earthQuakesMetric = earthQuakesFoo.getMetric(inputData.earthQuakes, inputDataList);
 			//TODO8
 			outputDataList.add(outputData);
 		}
@@ -584,6 +737,18 @@ public class CityVsUSAComparison2 {
 		sb.append("var homeSquareFeetMetric;\n");
 		sb.append("var costPerSquareFootMetric;\n");
 		sb.append("var homeOwnershipRateMetric;\n");
+		sb.append("var foreignBornPercentMetric;\n");
+		sb.append("var feetAboveSeaLevelMetric;\n");
+		sb.append("var uvIndexMetric;\n");
+		sb.append("var singlePopulationMetric;\n");
+		sb.append("var walkScoreMetric;\n");
+		sb.append("var transitScoreMetric;\n");
+		sb.append("var bikeScoreMetric;\n");
+		sb.append("var percentOfIncomeLostToHousingCostsMetric;\n");
+		sb.append("var sexOffenderCountMetric;\n");
+		sb.append("var hurricanesMetric;\n");
+		sb.append("var tornadoesMetric;\n");
+		sb.append("var earthQuakesMetric;\n");
 		//TODO9
 		sb.append("var cityData;\n");
 		writeOutput("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityVsUSAComparison\\map.js", sb);
@@ -627,9 +792,21 @@ public class CityVsUSAComparison2 {
 			appendMetric(sb, outputData.homeSquareFeetMetric, "homeSquareFeetMetric");
 			appendMetric(sb, outputData.costPerSquareFootMetric, "costPerSquareFootMetric");
 			appendFloatMetric(sb, outputData.homeOwnershipRateMetric, "homeOwnershipRateMetric");
+			appendFloatMetric(sb, outputData.foreignBornPercentMetric, "foreignBornPercentMetric");
+			appendMetric(sb, outputData.feetAboveSeaLevelMetric, "feetAboveSeaLevelMetric");
+			appendFloatMetric(sb, outputData.uvIndexMetric, "uvIndexMetric");
+			appendFloatMetric(sb, outputData.singlePopulationMetric, "singlePopulationMetric");
+			appendMetric(sb, outputData.walkScoreMetric, "walkScoreMetric");
+			appendMetric(sb, outputData.transitScoreMetric, "transitScoreMetric");
+			appendMetric(sb, outputData.bikeScoreMetric, "bikeScoreMetric");
+			appendFloatMetric(sb, outputData.percentOfIncomeLostToHousingCostsMetric, "percentOfIncomeLostToHousingCostsMetric");
+			appendFloatMetric(sb, outputData.sexOffenderCountMetric, "sexOffenderCountMetric");
+			appendMetric(sb, outputData.hurricanesMetric, "hurricanesMetric");
+			appendMetric(sb, outputData.tornadoesMetric, "tornadoesMetric");
+			appendMetric(sb, outputData.earthQuakesMetric, "earthQuakesMetric");
 			//TODO10
 			
-			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric,medianHouseholdIncomeMetric,medianHomePriceMetric,medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric, percentHispanicMetric, metroPopulationMetric, povertyRateMetric, avgSummerDewPointMetric, avgApartmentRentMetric, avgApartmentSizeMetric, homeSquareFeetMetric, costPerSquareFootMetric, homeOwnershipRateMetric");
+			sb.append("cityData = new CityData(populationMetric,populationDensityMetric,augustHighMetric,decemberHighMetric,augustHighMinusDecemberHighMetric,annualInchesOfRainMetric,daysOfRainMetric,sunnyDaysMetric,annualSnowfallMetric,averageYearlyHumidityMetric,yearlyWindspeedMetric,violentCrimeMetric,propertyCrimeMetric,medianAgeMetric,bachelorsMetric,medianHouseholdIncomeMetric,medianHomePriceMetric,medianHomeAgeMetric, homeAppreciationMetric, airQualityMetric, unemploymentRateMetric, populationGrowthMetric, percentDemocratMetric, percentRepublicanMetric, percentAsianMetric, percentBlackMetric, percentWhiteMetric, percentHispanicMetric, metroPopulationMetric, povertyRateMetric, avgSummerDewPointMetric, avgApartmentRentMetric, avgApartmentSizeMetric, homeSquareFeetMetric, costPerSquareFootMetric, homeOwnershipRateMetric, foreignBornPercentMetric, feetAboveSeaLevelMetric, uvIndexMetric, singlePopulationMetric, walkScoreMetric, transitScoreMetric, bikeScoreMetric, percentOfIncomeLostToHousingCostsMetric, sexOffenderCountMetric, hurricanesMetric, tornadoesMetric, earthQuakesMetric");
 			//TODO11
 			sb.append(");\nmyMap.set(\"")
 					.append(outputData.key).append("\", cityData);\n");
