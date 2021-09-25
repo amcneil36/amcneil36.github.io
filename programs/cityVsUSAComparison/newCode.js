@@ -58,7 +58,7 @@ function createRows(tbdy, cityData){
 
       insertRow(tbdy, "Population", populationAverage, populationMedian, cityData.populationMetric);
 	  insertRowWithGrayBackground(tbdy, "People per sq mi", populationDensityAverage, populationDensityMedian, cityData.populationDensityMetric);
-	  insertRow(tbdy, "Metro Population", metroPopulationAverage, metroPopulationMedian, cityData.metroPopulationMetric);
+	  insertRow(tbdy, "Metro population", metroPopulationAverage, metroPopulationMedian, cityData.metroPopulationMetric);
 	  insertRowWithGrayBackground(tbdy, "Hottest month's avg high(F)", augustHighAverage, augustHighMedian, cityData.augustHighMetric);
 	  insertRow(tbdy, "Coldest month's avg high(F)", decemberHighAverage, decemberHighMedian, cityData.decemberHighMetric);
 	  insertRowWithGrayBackground(tbdy, "Hottest high minus coldest high", augustHighMinusDecemberHighAverage, augustHighMinusDecemberHighMedian, cityData.augustHighMinusDecemberHighMetric);
@@ -66,8 +66,8 @@ function createRows(tbdy, cityData){
 	  insertRowWithGrayBackground(tbdy, "Annual days of precipitation", daysOfRainAverage, daysOfRainMedian, cityData.daysOfRainMetric);
 	  insertRow(tbdy, "Annual days of sunshine", sunnyDaysAverage, sunnyDaysMedian, cityData.sunnyDaysMetric);
 	  insertRowWithGrayBackground(tbdy, "Annual snowfall(in)", annualSnowfallAverage, annualSnowfallMedian, cityData.annualSnowfallMetric);
-	  insertRow(tbdy, "Average summer dew point", avgSummerDewPointAverage, avgSummerDewPointMedian, cityData.avgSummerDewPointMetric);
-	  insertRowWithGrayBackground(tbdy, "Average annual dew point", averageYearlyHumidityAverage, averageYearlyHumidityMedian, cityData.averageYearlyHumidityMetric);
+	  insertRow(tbdy, "Avg Summer Dew Point", avgSummerDewPointAverage, avgSummerDewPointMedian, cityData.avgSummerDewPointMetric);
+	  insertRowWithGrayBackground(tbdy, "Avg Annual Dew Point", averageYearlyHumidityAverage, averageYearlyHumidityMedian, cityData.averageYearlyHumidityMetric);
 	  insertRow(tbdy, "Average yearly windspeed (mph)", yearlyWindspeedAverage, yearlyWindspeedMedian, cityData.yearlyWindspeedMetric);
 	  insertRowWithGrayBackgroundWithInfoButton(tbdy, "Violent crime index", violentCrimeAverage, violentCrimeMedian, cityData.violentCrimeMetric, "Crime is ranked from 1 (low) to 100 (high)");
 	  insertRowWithInfoButton(tbdy, "Property crime index", propertyCrimeAverage, propertyCrimeMedian, cityData.propertyCrimeMetric, "Crime is ranked from 1 (low) to 100 (high)");
@@ -75,11 +75,11 @@ function createRows(tbdy, cityData){
 	  insertRow(tbdy, "% with at least a Bachelor's degree", bachelorsAverage, bachelorsMedian, cityData.bachelorsMetric);
 	  insertRowWithGrayBackground(tbdy, "Median Household Income ($)", medianHouseholdIncomeAverage, medianHouseholdIncomeMedian, cityData.medianHouseholdIncomeMetric);
 	  insertRow(tbdy, "Poverty Rate (%)", povertyRateAverage, povertyRateMedian, cityData.povertyRateMetric);
-	  insertRowWithGrayBackground(tbdy, "Average Apartment Rent ($)", avgApartmentRentAverage, avgApartmentRentMedian, cityData.avgApartmentRentMetric);
-	  insertRow(tbdy, "Average apartment size", avgApartmentSizeAverage, avgApartmentSizeMedian, cityData.avgApartmentSizeMetric);
+	  insertRowWithGrayBackground(tbdy, "Average Apartment Monthly Rent ($)", avgApartmentRentAverage, avgApartmentRentMedian, cityData.avgApartmentRentMetric);
+	  insertRow(tbdy, "Average apartment sqft", avgApartmentSizeAverage, avgApartmentSizeMedian, cityData.avgApartmentSizeMetric);
 	  insertRowWithGrayBackground(tbdy, "Median Home Price ($)", medianHomePriceAverage, medianHomePriceMedian, cityData.medianHomePriceMetric);
-	  insertRow(tbdy, "Median home size", homeSquareFeetAverage, homeSquareFeetMedian, cityData.homeSquareFeetMetric);
-	  insertRowWithGrayBackground(tbdy, "Median home cost per sq ft ($)", costPerSquareFootAverage, costPerSquareFootMedian, cityData.costPerSquareFootMetric);
+	  insertRow(tbdy, "Median home sqft", homeSquareFeetAverage, homeSquareFeetMedian, cityData.homeSquareFeetMetric);
+	  insertRowWithGrayBackground(tbdy, "Median home cost per sqft ($)", costPerSquareFootAverage, costPerSquareFootMedian, cityData.costPerSquareFootMetric);
 	  insertRow(tbdy, "Median Home Age (yrs)", medianHomeAgeAverage, medianAgeMedian, cityData.medianHomeAgeMetric);
 	  insertRowWithGrayBackground(tbdy, "Homeownership Rate (%)", homeOwnershipRateAverage, homeOwnershipRateMedian, cityData.homeOwnershipRateMetric);
 	  insertRow(tbdy, "Home appreciation last 10 yrs (%)", homeAppreciationAverage, homeAppreciationMedian, cityData.homeAppreciationMetric);
@@ -92,15 +92,15 @@ function createRows(tbdy, cityData){
 	  insertRowWithGrayBackgroundWithInfoButton(tbdy, "Percent Black (%)", percentBlackAverage, percentBlackMedian, cityData.percentBlackMetric, "Includes hispanic black and non-hispanic black residents");
 	  insertRowWithInfoButton(tbdy, "Percent White (%)", percentWhiteAverage, percentWhiteMedian, cityData.percentWhiteMetric, "Includes hispanic white and non-hispanic white residents");
 	  insertRowWithGrayBackgroundWithInfoButton(tbdy, "Percent Hispanic (%)", percentHispanicAverage, percentHispanicMedian, cityData.percentHispanicMetric, "% of residents who claim hispanic, regardless of race");
-	  insertRow(tbdy, "Foreign born %", foreignBornPercentAverage, foreignBornPercentMedian, cityData.foreignBornPercentMetric);
+	  insertRow(tbdy, "Foreign Born %", foreignBornPercentAverage, foreignBornPercentMedian, cityData.foreignBornPercentMetric);
 	  insertRowWithGrayBackground(tbdy, "Elevation (ft)", feetAboveSeaLevelAverage, feetAboveSeaLevelMedian, cityData.feetAboveSeaLevelMetric);
 	  insertRow(tbdy, "UV Index", uvIndexAverage, uvIndexMedian, cityData.uvIndexMetric);
 	  insertRowWithGrayBackground(tbdy, "Single Population (%)", singlePopulationAverage, singlePopulationMedian, cityData.singlePopulationMetric);
 	  insertRow(tbdy, "Walk score", walkScoreAverage, walkScoreMedian, cityData.walkScoreMetric);
 	  insertRowWithGrayBackground(tbdy, "Transit Score", transitScoreAverage, transitScoreMedian, cityData.transitScoreMetric);
 	  insertRow(tbdy, "Bike score", bikeScoreAverage, bikeScoreMedian, cityData.bikeScoreMetric);
-	  insertRowWithGrayBackground(tbdy, "% of income lost to housing costs", percentOfIncomeLostToHousingCostsAverage, percentOfIncomeLostToHousingCostsMedian, cityData.percentOfIncomeLostToHousingCostsMetric);
-	  insertRow(tbdy, "Sex offenders per 10k residents", sexOffenderCountAverage, sexOffenderCountMedian, cityData.sexOffenderCountMetric);
+	  insertRowWithGrayBackground(tbdy, "% of income spent on housing costs (owners)", percentOfIncomeLostToHousingCostsAverage, percentOfIncomeLostToHousingCostsMedian, cityData.percentOfIncomeLostToHousingCostsMetric);
+	  insertRow(tbdy, "Number of sex offenders per 10k residents", sexOffenderCountAverage, sexOffenderCountMedian, cityData.sexOffenderCountMetric);
 	  insertRowWithGrayBackground(tbdy, "Number of hurricanes since 1930", hurricanesAverage, hurricanesMedian, cityData.hurricanesMetric);
 	  insertRow(tbdy, "Number of tornadoes per year", tornadoesAverage, tornadoesMedian, cityData.tornadoesMetric);
 	  insertRowWithGrayBackground(tbdy, "Number of earthquakes since 1931", earthQuakesAverage, earthQuakesMedian, cityData.earthQuakesMetric);
