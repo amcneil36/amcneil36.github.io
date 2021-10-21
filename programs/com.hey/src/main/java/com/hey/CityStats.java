@@ -281,6 +281,7 @@ public abstract class CityStats {
 		runStateAsync("West Virginia");
 		runStateAsync("Wisconsin");
 		runStateAsync("Wyoming");
+		runStateAsync("District of Columbia");
 	}
 
 	private void runStateAsync(String stateName) throws Exception {

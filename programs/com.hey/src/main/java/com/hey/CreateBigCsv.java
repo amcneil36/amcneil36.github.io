@@ -68,6 +68,7 @@ public class CreateBigCsv {
 		processState(dataList, "West Virginia");
 		processState(dataList, "Wisconsin");
 		processState(dataList, "Wyoming");
+		processState(dataList, "District of Columbia");
 		return dataList;
 	}
 	
