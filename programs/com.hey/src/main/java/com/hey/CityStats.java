@@ -107,6 +107,12 @@ public abstract class CityStats {
 			sb.append("\n");
 			return this;
 		}
+		
+		AndrewStringWriter appendEnding() {
+			sb.setLength(sb.length() - 1);
+			sb.append("\n");
+			return this;
+		}
 
 		String getString() {
 			return sb.toString();
