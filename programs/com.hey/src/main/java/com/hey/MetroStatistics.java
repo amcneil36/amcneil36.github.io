@@ -25,9 +25,9 @@ public class MetroStatistics {
 	static String startSt = "Metro Name,Metro Population,People Per Sq Mi,Hottest month's avg high (F)";
 
 	static void addToSb(AndrewStringWriter sb, Stats stat) {
-		sb.appendWithComma(stat.metroName).appendWithComma(stat.metroPopulation)
-				.appendWithComma(stat.peoplePerSqMi.getWeightedAverage())
-				.appendWithComma(stat.avgAugHi.getWeightedAverage()).appendEnding();
+		sb.appendWithComma(stat.metroName).appendWithComma(stat.metroPopulation);
+				sb.appendWA(stat.peoplePerSqMi);
+				sb.appendWA(stat.avgAugHi);
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -57,6 +57,7 @@ public class MetroStatistics {
 		sb.appendLastItem(startSt);
 		for (Stats stat : statsList) {
 			addToSb(sb, stat);
+			sb.appendEnding();
 		}
 		String st = sb.getString();
 		myWriter.write(st);
