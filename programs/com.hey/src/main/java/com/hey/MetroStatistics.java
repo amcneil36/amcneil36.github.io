@@ -12,26 +12,22 @@ import main.java.com.hey.CityStats.AndrewStringWriter;
 
 public class MetroStatistics {
 
-	static class Stats implements Comparable<Stats>{
-		String metroName = "";
-		int metroPopulation = 0;
-		//////////////////////////////////////////////////////////////////////
+	static class Stats extends Stats2 {
 		WeightedAverage peoplePerSqMi = new WeightedAverage();
 		WeightedAverage avgAugHi = new WeightedAverage();
-		
-		
-		
-		@Override
-		public int compareTo(Stats arg0) {
-			if (metroPopulation < arg0.metroPopulation) {
-				return -1;
-			}
-			else if (metroPopulation == arg0.metroPopulation) {
-				return 0;
-			}
-			return 1;
-		}
+	}
 
+	static void addStuffToStats(Stats stats, CityStats.Data data) {
+		stats.peoplePerSqMi.addCity(data.population, data.populationDensity);
+		stats.avgAugHi.addCity(data.population, data.hottestMonthsHigh);
+	}
+
+	static String startSt = "Metro Name,Metro Population,People Per Sq Mi,Hottest month's avg high (F)";
+
+	static void addToSb(AndrewStringWriter sb, Stats stat) {
+		sb.appendWithComma(stat.metroName).appendWithComma(stat.metroPopulation)
+				.appendWithComma(stat.peoplePerSqMi.getWeightedAverage())
+				.appendLastItem(stat.avgAugHi.getWeightedAverage());
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -46,9 +42,7 @@ public class MetroStatistics {
 					mapOfMetroNameToStats.put(data.metro, stats);
 				}
 				Stats stats = mapOfMetroNameToStats.get(data.metro);
-				/////////////////////////////////////////////////////////////////////////////
-				stats.peoplePerSqMi.addCity(data.population, data.populationDensity);
-				stats.avgAugHi.addCity(data.population, data.hottestMonthsHigh);
+				addStuffToStats(stats, data);
 			}
 		}
 		Set<String> keys = mapOfMetroNameToStats.keySet();
@@ -58,21 +52,18 @@ public class MetroStatistics {
 		}
 		Collections.sort(statsList, Collections.reverseOrder());
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\MetroStats\\MetroSummary.csv";
-		/////////////////////////////////////////////////////////////////////////////////////
-		String startSt = "Metro Name,Metro Population,People Per Sq Mi,Hottest month's avg high (F)";
 		FileWriter myWriter = new FileWriter(filePath);
 		AndrewStringWriter sb = new AndrewStringWriter();
 		sb.appendLastItem(startSt);
 		for (Stats stat : statsList) {
-			/////////////////////////////////////////////////////////////////////////////////
-			sb.appendWithComma(stat.metroName).appendWithComma(stat.metroPopulation).appendWithComma(stat.peoplePerSqMi.getWeightedAverage()).appendLastItem(stat.avgAugHi.getWeightedAverage());
+			addToSb(sb, stat);
 		}
 		String st = sb.getString();
 		myWriter.write(st);
 		myWriter.close();
 		System.out.println("wrote to file " + filePath);
 	}
-	
+
 	static class WeightedAverage {
 		private double totalSummedValue = 0;
 		private double totalPopulation = 0;
@@ -90,6 +81,26 @@ public class MetroStatistics {
 		public int getWeightedAverage() {
 			return (int) (totalSummedValue / totalPopulation);
 		}
+	}
+
+	static class Stats2 implements Comparable<Stats2> {
+		public String metroName = "";
+		public int metroPopulation = 0;
+
+		@Override
+		public int compareTo(Stats2 arg0) {
+			return compareTo2(this, arg0);
+		}
+
+	}
+
+	static int compareTo2(Stats2 self, Stats2 arg0) {
+		if (self.metroPopulation < arg0.metroPopulation) {
+			return -1;
+		} else if (self.metroPopulation == arg0.metroPopulation) {
+			return 0;
+		}
+		return 1;
 	}
 
 }
