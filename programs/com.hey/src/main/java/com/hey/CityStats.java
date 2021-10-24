@@ -74,7 +74,7 @@ public abstract class CityStats {
 		public String metroPopulation = "N/A";
 	}
 
-	private static class AndrewStringWriter {
+	public static class AndrewStringWriter {
 		StringBuilder sb = new StringBuilder();
 
 		AndrewStringWriter appendDollar(String st) {
@@ -90,8 +90,19 @@ public abstract class CityStats {
 			sb.append(st).append(",");
 			return this;
 		}
+		
+		AndrewStringWriter appendWithComma(int st) {
+			sb.append(st).append(",");
+			return this;
+		}
 
 		AndrewStringWriter appendLastItem(String st) {
+			sb.append(st);
+			sb.append("\n");
+			return this;
+		}
+		
+		AndrewStringWriter appendLastItem(int st) {
 			sb.append(st);
 			sb.append("\n");
 			return this;

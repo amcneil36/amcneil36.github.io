@@ -1,9 +1,14 @@
 package main.java.com.hey;
 
+import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import main.java.com.hey.CityStats.AndrewStringWriter;
 
 public class MetroStatistics {
 
@@ -26,8 +31,20 @@ public class MetroStatistics {
 		}
 	}
 
-	static class Stats {
+	static class Stats implements Comparable<Stats>{
+		String metroName = "";
+		int metroPopulation = 0;
 		WeightedAverage peoplePerSqMi = new WeightedAverage();
+		@Override
+		public int compareTo(Stats arg0) {
+			if (metroPopulation < arg0.metroPopulation) {
+				return -1;
+			}
+			else if (metroPopulation == arg0.metroPopulation) {
+				return 0;
+			}
+			return 1;
+		}
 
 	}
 
@@ -38,6 +55,8 @@ public class MetroStatistics {
 			if (Integer.valueOf(data.metroPopulation) > 999999 && !data.metro.contains("None")) {
 				if (!mapOfMetroNameToStats.containsKey(data.metro)) {
 					Stats stats = new Stats();
+					stats.metroName = data.metro;
+					stats.metroPopulation = Integer.valueOf(data.metroPopulation);
 					mapOfMetroNameToStats.put(data.metro, stats);
 				}
 				Stats stats = mapOfMetroNameToStats.get(data.metro);
@@ -45,11 +64,23 @@ public class MetroStatistics {
 			}
 		}
 		Set<String> keys = mapOfMetroNameToStats.keySet();
+		List<Stats> statsList = new ArrayList<>();
 		for (String key : keys) {
-			WeightedAverage wa = mapOfMetroNameToStats.get(key).peoplePerSqMi;
-			System.out.println(key + " population density: " + wa.getWeightedAverage());
+			statsList.add(mapOfMetroNameToStats.get(key));
 		}
-
+		Collections.sort(statsList, Collections.reverseOrder());
+		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\MetroStats\\MetroSummary.csv";
+		String startSt = "Metro Name,Metro Population,People Per Sq Mi";
+		FileWriter myWriter = new FileWriter(filePath);
+		AndrewStringWriter sb = new AndrewStringWriter();
+		sb.appendLastItem(startSt);
+		for (Stats stat : statsList) {
+			sb.appendWithComma(stat.metroName).appendWithComma(stat.metroPopulation).appendLastItem(stat.peoplePerSqMi.getWeightedAverage());
+		}
+		String st = sb.getString();
+		myWriter.write(st);
+		myWriter.close();
+		System.out.println("wrote to file " + filePath);
 	}
 
 }
