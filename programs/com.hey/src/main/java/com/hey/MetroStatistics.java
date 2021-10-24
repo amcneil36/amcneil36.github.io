@@ -14,22 +14,34 @@ public class MetroStatistics {
 
 	static class Stats extends Stats2 {
 		WeightedAverage peoplePerSqMi = new WeightedAverage();
-		WeightedAverage avgAugHi = new WeightedAverage();
+		WeightedAverage hottestMonthsHigh = new WeightedAverage();
+		WeightedAverage coldestHigh = new WeightedAverage();
 	}
 
 	static void addStuffToStats(Stats stats, CityStats.Data data) {
 		stats.peoplePerSqMi.addCity(data.population, data.populationDensity);
-		stats.avgAugHi.addCity(data.population, data.hottestMonthsHigh);
+		stats.hottestMonthsHigh.addCity(data.population, data.hottestMonthsHigh);
+		stats.coldestHigh.addCity(data.coldestHigh, data.coldestHigh);
 	}
 
-	static String startSt = "Metro Name,Metro Population,People Per Sq Mi,Hottest month's avg high (F)";
+	static String startSt = "Metro Name,Metro Population,People Per Sq Mi,Hottest month's avg high (F),Coldest month's avg high (F)";
 
 	static void addToSb(AndrewStringWriter sb, Stats stat) {
 		sb.appendWithComma(stat.metroName).appendWithComma(stat.metroPopulation);
 		sb.appendWA(stat.peoplePerSqMi);
-		sb.appendWA(stat.avgAugHi);
+		sb.appendWA(stat.hottestMonthsHigh);
+		sb.appendWA(stat.coldestHigh);
 	}
 
+	
+	
+	
+	
+	
+	
+	
+	
+	///////////////////////////////////////////////////////////////////////
 	public static void main(String[] args) throws Exception {
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
 		Map<String, Stats> mapOfMetroNameToStats = new HashMap<>();
