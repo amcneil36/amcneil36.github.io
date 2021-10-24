@@ -16,31 +16,65 @@ public class MetroStatistics {
 		WeightedAverage peoplePerSqMi = new WeightedAverage();
 		WeightedAverage hottestMonthsHigh = new WeightedAverage();
 		WeightedAverage coldestHigh = new WeightedAverage();
+		WeightedAverage numInchesOfRain = new WeightedAverage();
+		WeightedAverage annualSnowfall = new WeightedAverage();
+		WeightedAverage numSunnyDays = new WeightedAverage();
+		WeightedAverage numDaysOfRain = new WeightedAverage();
+		WeightedAverage avgSummerDewPoint = new WeightedAverage();
+		WeightedAverage avgAnnualDewPoint = new WeightedAverage();
+		WeightedAverage avgYearlyWindspeed = new WeightedAverage();
+		WeightedAverage violentCrime = new WeightedAverage();
+		WeightedAverage propertyCrime = new WeightedAverage();
+		WeightedAverage medianAge = new WeightedAverage();
+		WeightedAverage percentWithAtleastBachelors = new WeightedAverage();
+		WeightedAverage medianIncome = new WeightedAverage();
+		WeightedAverage povertyRate = new WeightedAverage();
+
 	}
 
 	static void addStuffToStats(Stats stats, CityStats.Data data) {
-		stats.peoplePerSqMi.addCity(data.population, data.populationDensity);
-		stats.hottestMonthsHigh.addCity(data.population, data.hottestMonthsHigh);
-		stats.coldestHigh.addCity(data.coldestHigh, data.coldestHigh);
+		stats.peoplePerSqMi.addCity(data, data.populationDensity);
+		stats.hottestMonthsHigh.addCity(data, data.hottestMonthsHigh);
+		stats.coldestHigh.addCity(data, data.coldestHigh);
+		stats.numInchesOfRain.addCity(data, data.numInchesOfRain);
+		stats.annualSnowfall.addCity(data, data.annualSnowfall);
+		stats.numSunnyDays.addCity(data, data.numSunnyDays);
+		stats.numDaysOfRain.addCity(data, data.numDaysOfRain);
+		stats.avgSummerDewPoint.addCity(data, data.avgSummerDewPoint);
+		stats.avgAnnualDewPoint.addCity(data, data.avgAnnualDewPoint);
+		stats.avgYearlyWindspeed.addCity(data, data.avgYearlyWindspeed);
+		stats.violentCrime.addCity(data, data.violentCrime);
+		stats.propertyCrime.addCity(data, data.propertyCrime);
+		stats.medianAge.addCity(data, data.medianAge);
+		stats.percentWithAtleastBachelors.addCity(data, data.percentWithAtleastBachelors);
+		stats.medianIncome.addCity(data, data.medianIncome);
+		stats.povertyRate.addCity(data, data.povertyRate);
+
 	}
 
-	static String startSt = "Metro Name,Metro Population,People Per Sq Mi,Hottest month's avg high (F),Coldest month's avg high (F)";
+	static String startSt = "Metro Name,Metro Population,People Per Sq Mi,Hottest month's avg high (F),Coldest month's avg high (F),Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),"
+			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
+			+ "Median household income,Poverty Rate";
 
 	static void addToSb(AndrewStringWriter sb, Stats stat) {
-		sb.appendWithComma(stat.metroName).appendWithComma(stat.metroPopulation);
 		sb.appendWA(stat.peoplePerSqMi);
 		sb.appendWA(stat.hottestMonthsHigh);
 		sb.appendWA(stat.coldestHigh);
+		sb.appendWA(stat.numInchesOfRain);
+		sb.appendWA(stat.numDaysOfRain);
+		sb.appendWA(stat.numSunnyDays);
+		sb.appendWA(stat.annualSnowfall);
+		sb.appendWA(stat.avgSummerDewPoint);
+		sb.appendWA(stat.avgAnnualDewPoint);
+		sb.appendWA(stat.avgYearlyWindspeed);
+		sb.appendWA(stat.violentCrime);
+		sb.appendWA(stat.propertyCrime);
+		sb.appendWA(stat.medianAge);
+		sb.appendWA(stat.percentWithAtleastBachelors);
+		sb.appendWA(stat.medianIncome);
+		sb.appendWA(stat.povertyRate);
 	}
 
-	
-	
-	
-	
-	
-	
-	
-	
 	///////////////////////////////////////////////////////////////////////
 	public static void main(String[] args) throws Exception {
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
@@ -68,6 +102,7 @@ public class MetroStatistics {
 		AndrewStringWriter sb = new AndrewStringWriter();
 		sb.appendLastItem(startSt);
 		for (Stats stat : statsList) {
+			sb.appendWithComma(stat.metroName).appendWithComma(stat.metroPopulation);
 			addToSb(sb, stat);
 			sb.appendEnding();
 		}
@@ -81,12 +116,12 @@ public class MetroStatistics {
 		private double totalSummedValue = 0;
 		private double totalPopulation = 0;
 
-		public void addCity(String population, String value) {
+		public void addCity(CityStats.Data data, String value) {
 			if (value.contains("N/A")) {
 				return;
 			}
-			double val = Double.valueOf(value);
-			int pop = Integer.valueOf(population);
+			double val = Double.valueOf(value.replace("%", "").replace("$", ""));
+			int pop = Integer.valueOf(data.population);
 			totalSummedValue += val * pop;
 			totalPopulation += pop;
 		}
