@@ -26,8 +26,8 @@ public class MetroStatistics {
 
 	static void addToSb(AndrewStringWriter sb, Stats stat) {
 		sb.appendWithComma(stat.metroName).appendWithComma(stat.metroPopulation);
-				sb.appendWA(stat.peoplePerSqMi);
-				sb.appendWA(stat.avgAugHi);
+		sb.appendWA(stat.peoplePerSqMi);
+		sb.appendWA(stat.avgAugHi);
 	}
 
 	public static void main(String[] args) throws Exception {
