@@ -14,12 +14,13 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import main.java.com.hey.CityStats.AndrewStringWriter;
 import main.java.com.hey.CityStats.Data;
 
 public class MetroTabs {
 
 	static String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\MetroStats\\MetroTabs.xlsx";
-	
+
 	static Comparator<List<CityStats.Data>> comparator = new Comparator<List<CityStats.Data>>() {
 
 		@Override
@@ -33,13 +34,15 @@ public class MetroTabs {
 			return -1;
 		}
 
-		
 	};
 
 	public static void main(String[] args) throws Exception {
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
 		Map<String, List<CityStats.Data>> mapOfMetroNameToData = new HashMap<>();
 		for (CityStats.Data data : dataList) {
+			if (Integer.valueOf(data.population) < 10000) {
+				continue;//otherwise java heap space issue. an alternative is one .csv per metro
+			}
 			if (Integer.valueOf(data.metroPopulation) > 999999 && !data.metro.contains("None")) {
 				if (!mapOfMetroNameToData.containsKey(data.metro)) {
 					mapOfMetroNameToData.put(data.metro, new ArrayList<CityStats.Data>());
@@ -54,26 +57,33 @@ public class MetroTabs {
 		for (String key : keys) {
 			dataListSorted.add(mapOfMetroNameToData.get(key));
 		}
-		Collections.sort(dataListSorted,comparator);
-		
-		
+		Collections.sort(dataListSorted, comparator);
+
 		XSSFWorkbook workbook = new XSSFWorkbook();
-		
+		String[] headers = CityStats.startSt.split(",");
 		for (List<CityStats.Data> metroStats : dataListSorted) {
 			XSSFSheet sheet = workbook.createSheet(metroStats.get(0).metro);
 			int rowNum = 0;
 			Row row = sheet.createRow(rowNum++);
 			int colNum = 0;
-			Cell cell = row.createCell(colNum++);
-			cell.setCellValue("City");
+			for (String header : headers) {
+				Cell cell = row.createCell(colNum++);
+				cell.setCellValue(header);
+			}
 			for (CityStats.Data data : metroStats) {
-				colNum = 0;
+				AndrewStringWriter sb = new AndrewStringWriter();
+				CityStats.appendRowToSb(sb, data);
+				String st = sb.getString().replace("\n", "");
+				String[] datas = st.split(",");
 				row = sheet.createRow(rowNum++);
-				cell = row.createCell(colNum++);
-				cell.setCellValue(data.cityName);
+				colNum = 0;
+				for (String dataSt : datas) {
+					Cell cell = row.createCell(colNum++);
+					cell.setCellValue(dataSt);
+				}
 			}
 		}
-		
+
 		FileOutputStream outputStream = new FileOutputStream(filePath);
 		workbook.write(outputStream);
 		workbook.close();

@@ -10,7 +10,7 @@ import main.java.com.hey.MetroStatistics.WeightedAverage;
 
 public abstract class CityStats {
 
-	private static String startSt = "City,State,Population,People per sq mi,Metro Name,Metro population,Hottest month's avg high (F),Coldest month's avg high (F),Hottest high minus coldest high,Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,Median household income,Poverty Rate,"
+	public static String startSt = "City,State,Population,People per sq mi,Metro Name,Metro population,Hottest month's avg high (F),Coldest month's avg high (F),Hottest high minus coldest high,Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,Median household income,Poverty Rate,"
 			+ "Avg Apartment Monthly Rent,Avg Apartment sqft,"
 			+ "Median home price,Median home sqft,Median home cost per sqft,Median home age,"
 			+ "Homeownership Rate,Home appreciation Last Year,Home appreciation Last 5 Years,Home appreciation Last 10 Years,Air quality Index,Average one-way commute time,Unemployment rate,Job growth last year,"
@@ -225,33 +225,7 @@ public abstract class CityStats {
 		AndrewStringWriter sb = new AndrewStringWriter();
 		sb.appendLastItem(startSt);
 		for (Data data : dataList) {
-			sb.appendWithComma(data.cityName).appendWithComma(data.stateName).appendWithComma(data.population)
-					.appendWithComma(data.populationDensity).appendWithComma(data.metro)
-					.appendWithComma(data.metroPopulation).appendWithComma(data.hottestMonthsHigh)
-					.appendWithComma(data.coldestHigh).appendWithComma(data.hottestMonthMinusColdestMonth)
-					.appendWithComma(data.numInchesOfRain).appendWithComma(data.numDaysOfRain)
-					.appendWithComma(data.numSunnyDays).appendWithComma(data.annualSnowfall)
-					.appendWithComma(data.avgSummerDewPoint).appendWithComma(data.avgAnnualDewPoint)
-					.appendWithComma(data.avgYearlyWindspeed).appendWithComma(data.violentCrime)
-					.appendWithComma(data.propertyCrime).appendWithComma(data.medianAge)
-					.appendWithComma(data.percentWithAtleastBachelors).appendDollar(data.medianIncome)
-					.appendWithComma(data.povertyRate).appendWithComma(data.avgApartmentRent)
-					.appendWithComma(data.avgApartmentSize).appendDollar(data.medianHomePrice)
-					.appendWithComma(data.homeSquareFeet).appendDollar(data.costPerSquareFoot)
-					.appendWithComma(data.medianHomeAge).appendWithComma(data.homeOwnershipRate)
-					.appendWithComma(data.homeAppreciationLastYear).appendWithComma(data.homeAppreciationLastFiveYears)
-					.appendWithComma(data.homeAppreciationLastTenYears).appendWithComma(data.airQuality)
-					.appendWithComma(data.averageCommuteTime).appendWithComma(data.unemploymentRate)
-					.appendWithComma(data.jobGrowthLastYear).appendWithComma(data.populationGrowthSince2010)
-					.appendWithComma(data.countyName).appendWithComma(data.percentDemocrat)
-					.appendWithComma(data.percentRepublican).appendWithComma(data.percentAsian)
-					.appendWithComma(data.percentBlack).appendWithComma(data.percentWhite)
-					.appendWithComma(data.percentHispanic).appendWithComma(data.foreignBornPercent)
-					.appendWithComma(data.timeZone).appendWithComma(data.feetAboveSeaLevel)
-					.appendWithComma(data.uvIndex).appendWithComma(data.singlePopulation)
-					.appendWithComma(data.walkScore).appendWithComma(data.transitScore).appendWithComma(data.bikeScore)
-					.appendWithComma(data.percentOfIncomeLostToHousingCosts).appendWithComma(data.sexOffenderCount)
-					.appendWithComma(data.hurricanes).appendWithComma(data.tornadoes).appendLastItem(data.earthQuakes);
+			appendRowToSb(sb, data);
 		}
 		String st = sb.getString();
 		myWriter.write(st);
@@ -259,6 +233,36 @@ public abstract class CityStats {
 		if (isLastWrite) {
 			System.out.println("wrote to file " + filePath);
 		}
+	}
+
+	public static void appendRowToSb(AndrewStringWriter sb, Data data) {
+		sb.appendWithComma(data.cityName).appendWithComma(data.stateName).appendWithComma(data.population)
+				.appendWithComma(data.populationDensity).appendWithComma(data.metro)
+				.appendWithComma(data.metroPopulation).appendWithComma(data.hottestMonthsHigh)
+				.appendWithComma(data.coldestHigh).appendWithComma(data.hottestMonthMinusColdestMonth)
+				.appendWithComma(data.numInchesOfRain).appendWithComma(data.numDaysOfRain)
+				.appendWithComma(data.numSunnyDays).appendWithComma(data.annualSnowfall)
+				.appendWithComma(data.avgSummerDewPoint).appendWithComma(data.avgAnnualDewPoint)
+				.appendWithComma(data.avgYearlyWindspeed).appendWithComma(data.violentCrime)
+				.appendWithComma(data.propertyCrime).appendWithComma(data.medianAge)
+				.appendWithComma(data.percentWithAtleastBachelors).appendDollar(data.medianIncome)
+				.appendWithComma(data.povertyRate).appendWithComma(data.avgApartmentRent)
+				.appendWithComma(data.avgApartmentSize).appendDollar(data.medianHomePrice)
+				.appendWithComma(data.homeSquareFeet).appendDollar(data.costPerSquareFoot)
+				.appendWithComma(data.medianHomeAge).appendWithComma(data.homeOwnershipRate)
+				.appendWithComma(data.homeAppreciationLastYear).appendWithComma(data.homeAppreciationLastFiveYears)
+				.appendWithComma(data.homeAppreciationLastTenYears).appendWithComma(data.airQuality)
+				.appendWithComma(data.averageCommuteTime).appendWithComma(data.unemploymentRate)
+				.appendWithComma(data.jobGrowthLastYear).appendWithComma(data.populationGrowthSince2010)
+				.appendWithComma(data.countyName).appendWithComma(data.percentDemocrat)
+				.appendWithComma(data.percentRepublican).appendWithComma(data.percentAsian)
+				.appendWithComma(data.percentBlack).appendWithComma(data.percentWhite)
+				.appendWithComma(data.percentHispanic).appendWithComma(data.foreignBornPercent)
+				.appendWithComma(data.timeZone).appendWithComma(data.feetAboveSeaLevel)
+				.appendWithComma(data.uvIndex).appendWithComma(data.singlePopulation)
+				.appendWithComma(data.walkScore).appendWithComma(data.transitScore).appendWithComma(data.bikeScore)
+				.appendWithComma(data.percentOfIncomeLostToHousingCosts).appendWithComma(data.sexOffenderCount)
+				.appendWithComma(data.hurricanes).appendWithComma(data.tornadoes).appendLastItem(data.earthQuakes);
 	}
 
 	public static void writeData(List<Data> dataList, String stateName, boolean isLastWrite) throws Exception {
