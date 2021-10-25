@@ -34,6 +34,14 @@ public class MetroStatistics {
 		WeightedAverage costPerSquareFoot = new WeightedAverage();
 		WeightedAverage homeOwnershipRate = new WeightedAverage();
 		WeightedAverage populationGrowthSince2010 = new WeightedAverage();
+		WeightedAverage percentDemocrat = new WeightedAverage();
+		WeightedAverage percentRepublican = new WeightedAverage();
+		WeightedAverage percentAsian = new WeightedAverage();
+		WeightedAverage percentBlack = new WeightedAverage();
+		WeightedAverage percentWhite = new WeightedAverage();
+		WeightedAverage percentHispanic = new WeightedAverage();
+		WeightedAverage foreignBornPercent = new WeightedAverage();
+		
 		
 
 	}
@@ -60,13 +68,21 @@ public class MetroStatistics {
 		stats.costPerSquareFoot.addCity(data, data.costPerSquareFoot);
 		stats.homeOwnershipRate.addCity(data, data.homeOwnershipRate);
 		stats.populationGrowthSince2010.addCity(data, data.populationGrowthSince2010);
+		stats.percentDemocrat.addCity(data, data.percentDemocrat);
+		stats.percentRepublican.addCity(data,  data.percentRepublican);
+		stats.percentAsian.addCity(data, data.percentAsian);
+		stats.percentBlack.addCity(data, data.percentBlack);
+		stats.percentWhite.addCity(data, data.percentWhite);
+		stats.percentHispanic.addCity(data, data.percentHispanic);
+		stats.foreignBornPercent.addCity(data, data.foreignBornPercent);
 
 	}
 
 	static String startSt = "Metro Name,Metro Population,People Per Sq Mi,Hottest month's avg high (F),Coldest month's avg high (F),Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),"
 			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
 			+ "Median household income,Poverty Rate,Median home price,Median home sqft,"+
-			"Median home cost per sqft,Homeownership Rate (%),Population growth since 2010,% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Foreign Born %";
+			"Median home cost per sqft,Homeownership Rate (%),Population growth since 2010,"+
+			"% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Foreign Born %";
 
 	static void addToSb(AndrewStringWriter sb, Stats stat) {
 		sb.appendWA(stat.peoplePerSqMi);
@@ -90,6 +106,13 @@ public class MetroStatistics {
 		sb.appendWA(stat.costPerSquareFoot);
 		sb.appendWA(stat.homeOwnershipRate);
 		sb.appendWA(stat.populationGrowthSince2010);
+		sb.appendWA(stat.percentDemocrat);
+		sb.appendWA(stat.percentRepublican);
+		sb.appendWA(stat.percentAsian);
+		sb.appendWA(stat.percentBlack);
+		sb.appendWA(stat.percentWhite);
+		sb.appendWA(stat.percentHispanic);
+		sb.appendWA(stat.foreignBornPercent);
 	}
 
 	///////////////////////////////////////////////////////////////////////
