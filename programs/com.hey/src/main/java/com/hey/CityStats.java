@@ -102,6 +102,17 @@ public abstract class CityStats {
 			sb.append(st).append(",");
 			return this;
 		}
+		
+		AndrewStringWriter appendWAPercent(WeightedAverage wa) {
+			sb.append(wa.getWeightedAverage());
+			sb.append("%,");
+			return this;
+		}
+		
+		AndrewStringWriter appendWADollar(WeightedAverage wa) {
+			sb.append("$");
+			return appendWA(wa);
+		}
 
 		AndrewStringWriter appendWA(WeightedAverage wa) {
 			return appendWithComma(wa.getWeightedAverage());

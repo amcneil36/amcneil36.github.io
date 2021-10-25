@@ -87,7 +87,7 @@ public class MetroStatistics {
 	static String startSt = "Metro Name,Metro Population,People Per Sq Mi,Hottest month's avg high (F),Coldest month's avg high (F),Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),"
 			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
 			+ "Median household income,Poverty Rate,Median home price,Median home sqft,"+
-			"Median home cost per sqft,Homeownership Rate (%),Population growth since 2010,"+
+			"Median home cost per sqft,Homeownership Rate,Population growth since 2010,"+
 			"% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Foreign Born %,UV Index,Single Population,% of income spent on housing costs (owners),Number of sex offenders per 10k residents";
 
 	static void addToSb(AndrewStringWriter sb, Stats stat) {
@@ -104,24 +104,24 @@ public class MetroStatistics {
 		sb.appendWA(stat.violentCrime);
 		sb.appendWA(stat.propertyCrime);
 		sb.appendWA(stat.medianAge);
-		sb.appendWA(stat.percentWithAtleastBachelors);
-		sb.appendWA(stat.medianIncome);
-		sb.appendWA(stat.povertyRate);
-		sb.appendWA(stat.medianHomePrice);
+		sb.appendWAPercent(stat.percentWithAtleastBachelors);
+		sb.appendWADollar(stat.medianIncome);
+		sb.appendWAPercent(stat.povertyRate);
+		sb.appendWADollar(stat.medianHomePrice);
 		sb.appendWA(stat.homeSquareFeet);
 		sb.appendWA(stat.costPerSquareFoot);
-		sb.appendWA(stat.homeOwnershipRate);
-		sb.appendWA(stat.populationGrowthSince2010);
-		sb.appendWA(stat.percentDemocrat);
-		sb.appendWA(stat.percentRepublican);
-		sb.appendWA(stat.percentAsian);
-		sb.appendWA(stat.percentBlack);
-		sb.appendWA(stat.percentWhite);
-		sb.appendWA(stat.percentHispanic);
-		sb.appendWA(stat.foreignBornPercent);
+		sb.appendWAPercent(stat.homeOwnershipRate);
+		sb.appendWAPercent(stat.populationGrowthSince2010);
+		sb.appendWAPercent(stat.percentDemocrat);
+		sb.appendWAPercent(stat.percentRepublican);
+		sb.appendWAPercent(stat.percentAsian);
+		sb.appendWAPercent(stat.percentBlack);
+		sb.appendWAPercent(stat.percentWhite);
+		sb.appendWAPercent(stat.percentHispanic);
+		sb.appendWAPercent(stat.foreignBornPercent);
 		sb.appendWA(stat.uvIndex);
-		sb.appendWA(stat.singlePopulation);
-		sb.appendWA(stat.percentOfIncomeLostToHousingCosts);
+		sb.appendWAPercent(stat.singlePopulation);
+		sb.appendWAPercent(stat.percentOfIncomeLostToHousingCosts);
 		sb.appendWA(stat.sexOffenderCount);
 	}
 
