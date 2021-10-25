@@ -32,6 +32,8 @@ public class MetroStatistics {
 		WeightedAverage medianHomePrice = new WeightedAverage();
 		WeightedAverage homeSquareFeet = new WeightedAverage();
 		WeightedAverage costPerSquareFoot = new WeightedAverage();
+		WeightedAverage homeOwnershipRate = new WeightedAverage();
+		WeightedAverage populationGrowthSince2010 = new WeightedAverage();
 		
 
 	}
@@ -56,12 +58,15 @@ public class MetroStatistics {
 		stats.medianHomePrice.addCity(data, data.medianHomePrice);
 		stats.homeSquareFeet.addCity(data, data.homeSquareFeet);
 		stats.costPerSquareFoot.addCity(data, data.costPerSquareFoot);
+		stats.homeOwnershipRate.addCity(data, data.homeOwnershipRate);
+		stats.populationGrowthSince2010.addCity(data, data.populationGrowthSince2010);
 
 	}
 
 	static String startSt = "Metro Name,Metro Population,People Per Sq Mi,Hottest month's avg high (F),Coldest month's avg high (F),Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),"
 			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
-			+ "Median household income,Poverty Rate,Median home price,Median home sqft,Median home cost per sqft";
+			+ "Median household income,Poverty Rate,Median home price,Median home sqft,"+
+			"Median home cost per sqft,Homeownership Rate (%),Population growth since 2010,% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Foreign Born %";
 
 	static void addToSb(AndrewStringWriter sb, Stats stat) {
 		sb.appendWA(stat.peoplePerSqMi);
@@ -83,6 +88,8 @@ public class MetroStatistics {
 		sb.appendWA(stat.medianHomePrice);
 		sb.appendWA(stat.homeSquareFeet);
 		sb.appendWA(stat.costPerSquareFoot);
+		sb.appendWA(stat.homeOwnershipRate);
+		sb.appendWA(stat.populationGrowthSince2010);
 	}
 
 	///////////////////////////////////////////////////////////////////////
