@@ -11,7 +11,9 @@ import main.java.com.hey.MetroStatistics.WeightedAverage;
 
 public abstract class CityStats {
 
-	private static String startSt = "City,State,Population,People per sq mi,Metro Name,Metro population,Hottest month's avg high (F),Coldest month's avg high (F),Hottest high minus coldest high,Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,Median household income,Poverty Rate,Avg Apartment Monthly Rent,Avg Apartment sqft,Median home price,Median home sqft,Median home cost per sqft,Median home age,Homeownership Rate,Home appreciation Last Year,Home appreciation Last 5 Years,Home appreciation Last 10 Years,Air quality Index,Average one-way commute time,Unemployment rate,Job growth last year,Population growth since 2010,County,% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Foreign Born %,Timezone,Elevation (ft),UV Index,Single Population,Walk Score,Transit Score,Bike Score, % of income spent on housing costs (owners),Number of sex offenders per 10k residents,Number of hurricanes since 1930,Number of tornadoes per year,Number of earthquakes since 1931";
+	private static String startSt = "City,State,Population,People per sq mi,Metro Name,Metro population,Hottest month's avg high (F),Coldest month's avg high (F),Hottest high minus coldest high,Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,Median household income,Poverty Rate,"
+			+ "Avg Apartment Monthly Rent,Avg Apartment sqft,"
+			+ "Median home price,Median home sqft,Median home cost per sqft,Median home age,Homeownership Rate,Home appreciation Last Year,Home appreciation Last 5 Years,Home appreciation Last 10 Years,Air quality Index,Average one-way commute time,Unemployment rate,Job growth last year,Population growth since 2010,County,% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Foreign Born %,Timezone,Elevation (ft),UV Index,Single Population,Walk Score,Transit Score,Bike Score, % of income spent on housing costs (owners),Number of sex offenders per 10k residents,Number of hurricanes since 1930,Number of tornadoes per year,Number of earthquakes since 1931";
 
 	public static class Data {
 		public String cityName = "N/A";
@@ -93,12 +95,12 @@ public abstract class CityStats {
 			sb.append(st).append(",");
 			return this;
 		}
-		
+
 		AndrewStringWriter appendWithComma(int st) {
 			sb.append(st).append(",");
 			return this;
 		}
-		
+
 		AndrewStringWriter appendWA(WeightedAverage wa) {
 			return appendWithComma(wa.getWeightedAverage());
 		}
@@ -108,13 +110,13 @@ public abstract class CityStats {
 			sb.append("\n");
 			return this;
 		}
-		
+
 		AndrewStringWriter appendLastItem(int st) {
 			sb.append(st);
 			sb.append("\n");
 			return this;
 		}
-		
+
 		AndrewStringWriter appendEnding() {
 			sb.setLength(sb.length() - 1);
 			sb.append("\n");

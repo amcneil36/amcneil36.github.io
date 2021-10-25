@@ -29,6 +29,8 @@ public class MetroStatistics {
 		WeightedAverage percentWithAtleastBachelors = new WeightedAverage();
 		WeightedAverage medianIncome = new WeightedAverage();
 		WeightedAverage povertyRate = new WeightedAverage();
+		WeightedAverage medianHomePrice = new WeightedAverage();
+		WeightedAverage homeSquareFeet = new WeightedAverage();
 
 	}
 
@@ -49,12 +51,14 @@ public class MetroStatistics {
 		stats.percentWithAtleastBachelors.addCity(data, data.percentWithAtleastBachelors);
 		stats.medianIncome.addCity(data, data.medianIncome);
 		stats.povertyRate.addCity(data, data.povertyRate);
+		stats.medianHomePrice.addCity(data, data.medianHomePrice);
+		stats.homeSquareFeet.addCity(data, data.homeSquareFeet);
 
 	}
 
 	static String startSt = "Metro Name,Metro Population,People Per Sq Mi,Hottest month's avg high (F),Coldest month's avg high (F),Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),"
 			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
-			+ "Median household income,Poverty Rate";
+			+ "Median household income,Poverty Rate,Median home price,Median home sqft";
 
 	static void addToSb(AndrewStringWriter sb, Stats stat) {
 		sb.appendWA(stat.peoplePerSqMi);
@@ -73,6 +77,8 @@ public class MetroStatistics {
 		sb.appendWA(stat.percentWithAtleastBachelors);
 		sb.appendWA(stat.medianIncome);
 		sb.appendWA(stat.povertyRate);
+		sb.appendWA(stat.medianHomePrice);
+		sb.appendWA(stat.homeSquareFeet);
 	}
 
 	///////////////////////////////////////////////////////////////////////
