@@ -71,7 +71,7 @@ public class MetroStatistics {
 		stats.homeOwnershipRate.addCity(data, data.homeOwnershipRate);
 		stats.populationGrowthSince2010.addCity(data, data.populationGrowthSince2010);
 		stats.percentDemocrat.addCity(data, data.percentDemocrat);
-		stats.percentRepublican.addCity(data,  data.percentRepublican);
+		stats.percentRepublican.addCity(data, data.percentRepublican);
 		stats.percentAsian.addCity(data, data.percentAsian);
 		stats.percentBlack.addCity(data, data.percentBlack);
 		stats.percentWhite.addCity(data, data.percentWhite);
@@ -86,9 +86,9 @@ public class MetroStatistics {
 
 	static String startSt = "Metro Name,Metro Population,People Per Sq Mi,Hottest month's avg high (F),Coldest month's avg high (F),Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),"
 			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
-			+ "Median household income,Poverty Rate,Median home price,Median home sqft,"+
-			"Median home cost per sqft,Homeownership Rate,Population growth since 2010,"+
-			"% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Foreign Born %,UV Index,Single Population,% of income spent on housing costs (owners),Number of sex offenders per 10k residents";
+			+ "Median household income,Poverty Rate,Median home price,Median home sqft,"
+			+ "Median home cost per sqft,Homeownership Rate,Population growth since 2010,"
+			+ "% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Foreign Born %,UV Index,Single Population,% of income spent on housing costs (owners),Number of sex offenders per 10k residents";
 
 	static void addToSb(AndrewStringWriter sb, Stats stat) {
 		sb.appendWA(stat.peoplePerSqMi);

@@ -24,8 +24,8 @@ public class MetroCsvs {
 		Set<String> keys = mapOfMetroNameToData.keySet();
 		for (String key : keys) {
 			List<CityStats.Data> metroDataList = mapOfMetroNameToData.get(key);
-			String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\MetroStats\\Metros\\"+
-					metroDataList.get(0).metro+".csv";
+			String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\MetroStats\\Metros\\"
+					+ metroDataList.get(0).metro + ".csv";
 			CityStats.writeDataToPath(metroDataList, filePath, true);
 		}
 	}
