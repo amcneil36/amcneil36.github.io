@@ -41,8 +41,10 @@ public class MetroStatistics {
 		WeightedAverage percentWhite = new WeightedAverage();
 		WeightedAverage percentHispanic = new WeightedAverage();
 		WeightedAverage foreignBornPercent = new WeightedAverage();
-		
-		
+		WeightedAverage uvIndex = new WeightedAverage();
+		WeightedAverage singlePopulation = new WeightedAverage();
+		WeightedAverage percentOfIncomeLostToHousingCosts = new WeightedAverage();
+		WeightedAverage sexOffenderCount = new WeightedAverage();
 
 	}
 
@@ -75,6 +77,10 @@ public class MetroStatistics {
 		stats.percentWhite.addCity(data, data.percentWhite);
 		stats.percentHispanic.addCity(data, data.percentHispanic);
 		stats.foreignBornPercent.addCity(data, data.foreignBornPercent);
+		stats.uvIndex.addCity(data, data.uvIndex);
+		stats.singlePopulation.addCity(data, data.singlePopulation);
+		stats.percentOfIncomeLostToHousingCosts.addCity(data, data.percentOfIncomeLostToHousingCosts);
+		stats.sexOffenderCount.addCity(data, data.sexOffenderCount);
 
 	}
 
@@ -82,7 +88,7 @@ public class MetroStatistics {
 			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
 			+ "Median household income,Poverty Rate,Median home price,Median home sqft,"+
 			"Median home cost per sqft,Homeownership Rate (%),Population growth since 2010,"+
-			"% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Foreign Born %";
+			"% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Foreign Born %,UV Index,Single Population,% of income spent on housing costs (owners),Number of sex offenders per 10k residents";
 
 	static void addToSb(AndrewStringWriter sb, Stats stat) {
 		sb.appendWA(stat.peoplePerSqMi);
@@ -113,6 +119,10 @@ public class MetroStatistics {
 		sb.appendWA(stat.percentWhite);
 		sb.appendWA(stat.percentHispanic);
 		sb.appendWA(stat.foreignBornPercent);
+		sb.appendWA(stat.uvIndex);
+		sb.appendWA(stat.singlePopulation);
+		sb.appendWA(stat.percentOfIncomeLostToHousingCosts);
+		sb.appendWA(stat.sexOffenderCount);
 	}
 
 	///////////////////////////////////////////////////////////////////////
