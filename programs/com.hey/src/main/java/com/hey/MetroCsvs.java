@@ -1,6 +1,5 @@
 package main.java.com.hey;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,10 +12,7 @@ public class MetroCsvs {
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
 		Map<String, List<CityStats.Data>> mapOfMetroNameToData = new HashMap<>();
 		for (CityStats.Data data : dataList) {
-			if (Integer.valueOf(data.population) < 10000) {
-				continue;// otherwise java heap space issue. an alternative is one .csv per metro
-			}
-			if (Integer.valueOf(data.metroPopulation) > 999999 && !data.metro.contains("None")) {
+			if (Integer.valueOf(data.metroPopulation) > 300000 && !data.metro.contains("None")) {
 				if (!mapOfMetroNameToData.containsKey(data.metro)) {
 					mapOfMetroNameToData.put(data.metro, new ArrayList<CityStats.Data>());
 				}
@@ -28,8 +24,8 @@ public class MetroCsvs {
 		Set<String> keys = mapOfMetroNameToData.keySet();
 		for (String key : keys) {
 			List<CityStats.Data> metroDataList = mapOfMetroNameToData.get(key);
-			String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\MetroStatsStats\\Metros\\"
-					+ metroDataList.get(0).metro + ".csv";
+			String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\MetroStats\\Metros\\"+
+					metroDataList.get(0).metro+".csv";
 			CityStats.writeDataToPath(metroDataList, filePath, true);
 		}
 	}
