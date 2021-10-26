@@ -64,9 +64,10 @@ public class MetroPopulationWithReadFromSperling extends CityStats {
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
 		if (data.metro.equals("None")) {
-			data.metroPopulation = "0";
+			data.metroPopulation = "N/A";
 			return;
 		}
+
 		String key = getKey(data);
 		if (!mapOfMetroToPopulation.containsKey(key)) {
 			System.out.println("key: " + key + " was not found.");
