@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import main.java.com.hey.CityStats.Data;
-
 public class MetroPopulationWithReadFromSperling extends CityStats {
 
 	static Map<String, Integer> mapOfMetroToPopulation = new HashMap<>();
@@ -18,24 +16,38 @@ public class MetroPopulationWithReadFromSperling extends CityStats {
 		List<Data> dataList = CreateBigCsv.readInput();
 		for (Data data : dataList) {
 			if (data.metro.equals("None")) {
+				System.out.println("hi");
 				continue;
 			}
 			String key = getKey(data);
 			if (mapOfMetroToPopulation.containsKey(key)) {
 				continue;
 			}
-			int population = getPopulationForMetro(key);
+			int population = getPopulationForMetro(key, data);
 			mapOfMetroToPopulation.put(key, population);
 		}
 	}
 
-	private static int getPopulationForMetro(String key) {
+	private static int getPopulationForMetro(String key, Data data) {
 		String url = "https://www.bestplaces.net/metro/" + key;
 		String text = Util.ReadTextFromPage(url);
-		text = text.substring(text.indexOf(" population is ") + " population is ".length());
+		String originalText = text;
+		if (!text.contains("s population is ")) {
+			return Integer.valueOf(data.population);
+		}
+		text = text.substring(text.indexOf("s population is ") + "s population is ".length());
+		if (!text.contains(" people")) {
+			return Integer.valueOf(data.population);
+		}
 		text = text.substring(0, text.indexOf(" people"));
 		text = text.replace(",", "");
-		return Integer.valueOf(text);
+		try {
+			return Integer.valueOf(text);
+		} catch (Exception ex) {
+			System.out.println("nothing found for: " + url);
+			System.out.println("original text: " + originalText);
+			throw new RuntimeException("hi");
+		}
 	}
 
 	private static String getKey(Data data) {
@@ -44,14 +56,23 @@ public class MetroPopulationWithReadFromSperling extends CityStats {
 
 	public static void main(String[] args) throws Exception {
 		fillMap();
-		MetroPopulation s = new MetroPopulation();
-		// s.processAllStates();
+		MetroPopulationWithReadFromSperling s = new MetroPopulationWithReadFromSperling();
+		s.processAllStates();
 
 	}
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
-		// TODO Auto-generated method stub
+		if (data.metro.equals("None")) {
+			data.metroPopulation = "0";
+			return;
+		}
+		String key = getKey(data);
+		if (!mapOfMetroToPopulation.containsKey(key)) {
+			System.out.println("key: " + key + " was not found.");
+			return;
+		}
+		data.metroPopulation = String.valueOf(mapOfMetroToPopulation.get(key));
 
 	}
 
