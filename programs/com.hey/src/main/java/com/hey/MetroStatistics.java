@@ -109,7 +109,7 @@ public class MetroStatistics {
 		sb.appendWAPercent(stat.povertyRate);
 		sb.appendWADollar(stat.medianHomePrice);
 		sb.appendWA(stat.homeSquareFeet);
-		sb.appendWA(stat.costPerSquareFoot);
+		sb.appendWADollar(stat.costPerSquareFoot);
 		sb.appendWAPercent(stat.homeOwnershipRate);
 		sb.appendWAPercent(stat.populationGrowthSince2010);
 		sb.appendWAPercent(stat.percentDemocrat);
