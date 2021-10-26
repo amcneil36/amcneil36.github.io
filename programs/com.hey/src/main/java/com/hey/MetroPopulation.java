@@ -3,7 +3,7 @@ package main.java.com.hey;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+// don't use this. use the sperling
 public class MetroPopulation extends CityStats {
 
 	static Map<String, Integer> mapOfMetroToPopulation = new HashMap<>();
@@ -45,11 +45,11 @@ public class MetroPopulation extends CityStats {
 			}
 		}
 	}
-	
+	// don't use this. use the sperling
 	public static void main(String[] args) throws Exception {
-		fillMap();
-		MetroPopulation s = new MetroPopulation();
-		s.processAllStates();
+	//	fillMap();
+		//MetroPopulation s = new MetroPopulation();
+		//s.processAllStates();
 		//s.processState("Delaware");
 	}
 

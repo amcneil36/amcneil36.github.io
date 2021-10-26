@@ -43,7 +43,7 @@ public class MetroTabs {
 			if (Integer.valueOf(data.population) < 10000) {
 				continue;//otherwise java heap space issue. an alternative is one .csv per metro
 			}
-			if (Integer.valueOf(data.metroPopulation) > 999999 && !data.metro.contains("None")) {
+			if (!data.metro.contains("None") && Integer.valueOf(data.metroPopulation) > 999999) {
 				if (!mapOfMetroNameToData.containsKey(data.metro)) {
 					mapOfMetroNameToData.put(data.metro, new ArrayList<CityStats.Data>());
 				}
