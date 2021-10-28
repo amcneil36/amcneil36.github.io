@@ -42,9 +42,6 @@ public abstract class CityStats {
 		public String countyName = "N/A";
 		public String hottestMonthMinusColdestMonth = "N/A";
 		public String avgYearlyWindspeed = "N/A";
-		public String avgAugustHumidity = "N/A";
-		public String avgDecemberHumidity = "N/A";
-		public String avgHumidity = "N/A";
 		public String percentDemocrat = "N/A";
 		public String percentRepublican = "N/A";
 		public String unemploymentRate = "N/A";
@@ -54,7 +51,6 @@ public abstract class CityStats {
 		public String percentBlack = "N/A";
 		public String percentWhite = "N/A";
 		public String percentHispanic = "N/A";
-		public String medianRent = "N/A";
 		public String percentWithAtleastBachelors = "N/A";
 		public String metro = "N/A";
 		public String homeSquareFeet = "N/A";
