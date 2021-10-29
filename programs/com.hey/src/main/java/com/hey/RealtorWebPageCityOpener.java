@@ -9,17 +9,10 @@ import java.util.Map;
 public class RealtorWebPageCityOpener {
 
 	private static boolean shouldTabBeOpened(CityStats.Data data) {
-		if (data.percentWithAtleastBachelors.contains("N/A")) {
-			return false;
+		if (data.metro.equals("Port St. Lucie")) {
+			return true;
 		}
-		if (!data.costPerSquareFoot.contains("N/A")) {
-			return false;
-		}
-		if (Integer.valueOf(data.population) < 30000) {
-			return false;
-		}
-		double percentBachelors = Double.valueOf(data.percentWithAtleastBachelors.replace("%", ""));
-		return percentBachelors > 40;
+		return false;
 	}
 
 	private static Map<String, String> map = new HashMap<String, String>();
