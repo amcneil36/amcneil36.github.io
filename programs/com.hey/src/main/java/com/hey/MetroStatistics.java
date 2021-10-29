@@ -130,7 +130,7 @@ public class MetroStatistics {
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
 		Map<String, Stats> mapOfMetroNameToStats = new HashMap<>();
 		for (CityStats.Data data : dataList) {
-			if (!data.metro.contains("None") && Integer.valueOf(data.metroPopulation) > 999999) {
+			if (!data.metro.contains("None") && Integer.valueOf(data.metroPopulation) > 99999) {
 				if (!mapOfMetroNameToStats.containsKey(data.metro)) {
 					Stats stats = new Stats();
 					stats.metroName = data.metro;
