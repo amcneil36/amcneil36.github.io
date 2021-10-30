@@ -19,9 +19,16 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import main.java.com.hey.CityStats.Data;
+
 public class Util {
 	
 	public static boolean debug = false;
+	
+	public static String getCityUniqueId(Data data) {
+		return data.cityName + "," + data.stateName + "," + data.countyName + "," + data.metro + ";";
+		
+	}
 	
 	public static String minToString(int minRemaining) {
 		String st = "";
