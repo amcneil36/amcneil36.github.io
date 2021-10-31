@@ -1,6 +1,5 @@
 package main.java.com.hey;
 
-import java.util.concurrent.CountDownLatch;
 
 public class UpdateEverything {
 

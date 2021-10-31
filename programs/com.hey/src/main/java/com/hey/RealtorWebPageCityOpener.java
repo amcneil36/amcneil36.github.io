@@ -9,7 +9,9 @@ import java.util.Map;
 public class RealtorWebPageCityOpener {
 
 	private static boolean shouldTabBeOpened(CityStats.Data data) throws Exception {
-		return !data.metroPopulation.contains("N/A") && data.metro.contains("Houston") && Util.getDaysSinceLastUpdated(data) > 10 && Integer.valueOf(data.population) > 1000;
+		return !data.metroPopulation.contains("N/A") && data.metro.contains("Miami")
+				&& Util.getDaysSinceLastUpdated(data) > 10 && Integer.valueOf(data.population) > 5000
+				&& data.stateName.equals("Florida");
 	}
 
 	private static Map<String, String> map = new HashMap<String, String>();
@@ -26,8 +28,8 @@ public class RealtorWebPageCityOpener {
 
 			if (shouldTabBeOpened(data)) {
 				String suffix = map.get(data.stateName.toLowerCase());
-				String url = "https://www.realtor.com/realestateandhomes-search/" + data.cityName.replace(" ", "-") + "_"
-						+ suffix.toUpperCase() + "/overview";
+				String url = "https://www.realtor.com/realestateandhomes-search/" + data.cityName.replace(" ", "-")
+						+ "_" + suffix.toUpperCase() + "/overview";
 				Desktop.getDesktop().browse(new URI(url));
 				numTabsOpened++;
 			}
