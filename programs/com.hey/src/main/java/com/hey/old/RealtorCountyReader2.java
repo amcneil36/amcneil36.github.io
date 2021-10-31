@@ -2,13 +2,18 @@ package main.java.com.hey.old;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-public class RealtorCountyReader {
+import main.java.com.hey.CityStats;
+import main.java.com.hey.Util;
+import main.java.com.hey.CityStats.Data;
+
+public class RealtorCountyReader2 {
 	
 	private static Map<String, String> map = new HashMap<String, String>();
 
@@ -42,49 +47,28 @@ public class RealtorCountyReader {
 	}
 
 	private static void writeOutput(Map<String, HouseData> houseDataMap, String county, String state) throws Exception {
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\cityLookup\\States\\" + state
-				+ ".js";
-		File myObj = new File(filePath);
-		Scanner myReader = new Scanner(myObj);
-		String startSt = "arr.push(new Data(";
-		StringBuilder sb = new StringBuilder();
-		List<String> lines = new ArrayList<String>();
-		while (myReader.hasNextLine()) {
-			String line = myReader.nextLine();
-			if (!line.contains(startSt)) {
-				continue;
-			}
-			lines.add(line);
-		}
-		for (String line : lines) {
-			line = line.substring(startSt.length());
-			line = line.substring(0, line.length() - 3);
-			String[] arr = line.split(",");
-			String city = arr[0];
-			city = city.substring(1, city.length()-1);
-			String key = getMapKey(city, county);
+		List<Data> dataList = CityStats.readData(state);
+		Map<String, LocalDate> map = Util.getMapOfKeyToDate();
+		boolean isCityFound = false;
+		for (Data data : dataList) {
+			String key = getMapKey(data.cityName, county);
 			if (houseDataMap.containsKey(key)) {
 				HouseData houseData = houseDataMap.get(key);
-				arr[11] = " " + houseData.homePrice;
-				int len = arr.length;
-				arr[len-2] = " " + houseData.medianSquareFootage;
-				arr[len-1] = " " + houseData.costPerSqFt;
+				data.medianHomePrice = String.valueOf(houseData.homePrice);
+				data.homeSquareFeet = String.valueOf(houseData.medianSquareFootage);
+				data.costPerSquareFoot = String.valueOf(houseData.costPerSqFt);
+				map.put(Util.getCityUniqueId(data), LocalDate.now());
+				isCityFound = true;
 			}
-			sb.append(startSt);
-			for (String st : arr) {
-				sb.append(st);
-				sb.append(",");
-			}
-			sb.deleteCharAt(sb.lastIndexOf(","));
-			sb.append("));");
-			sb.append("\n");
+
 		}
-		 FileWriter myWriter = new FileWriter(filePath);
-		 String st = sb.toString();
-		 myWriter.write(st);
-		 myWriter.close();
-		 System.out.println("wrote to file " + filePath);
-		 myReader.close();
+		if (isCityFound) {
+			CityStats.writeData(dataList, state, true);
+			Util.writeMapOfDateUpdatedToFile(map);
+		}
+		else {
+			System.out.println("no data found!");
+		}
 		
 	}
 

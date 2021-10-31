@@ -3,16 +3,18 @@ package main.java.com.hey;
 import java.awt.Desktop;
 import java.net.URI;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-public class RealtorWebPageCityOpener {
+public class RealtorWebPageCountyOpener2 {
 
 	private static boolean shouldTabBeOpened(CityStats.Data data) throws Exception {
-		if (data.metro.equals("Port St. Lucie") && Util.getDaysSinceLastUpdated(data) > 10) {
-			return true;
+		if (data.metroPopulation.contains("N/A")) {
+			return false;
 		}
-		return false;
+		return Integer.valueOf(data.metroPopulation) > 2000000 && data.stateName.equals("Florida");
 	}
 
 	private static Map<String, String> map = new HashMap<String, String>();
@@ -25,14 +27,17 @@ public class RealtorWebPageCityOpener {
 	private static void processStates() throws Exception {
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
 		int numTabsOpened = 0;
+		Set<String> countiesUsed = new HashSet<String>();
 		for (CityStats.Data data : dataList) {
-
+			if (countiesUsed.contains(data.countyName)) {
+				continue;
+			}
 			if (shouldTabBeOpened(data)) {
 				String suffix = map.get(data.stateName.toLowerCase());
-				String url = "https://www.realtor.com/realestateandhomes-search/" + data.cityName.replace(" ", "-") + "_"
-						+ suffix.toUpperCase() + "/overview";
+				String url = "https://www.realtor.com/realestateandhomes-search/" + data.countyName.replace(" ", "-") + "_" + suffix.toUpperCase() + "/overview";
 				Desktop.getDesktop().browse(new URI(url));
 				numTabsOpened++;
+				countiesUsed.add(data.countyName);
 			}
 		}
 		System.out.println("number of tabs opened: " + numTabsOpened);
