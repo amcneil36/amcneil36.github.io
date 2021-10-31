@@ -1,20 +1,16 @@
-package main.java.com.hey.old;
+package main.java.com.hey;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import main.java.com.hey.CityStats;
-import main.java.com.hey.Util;
 import main.java.com.hey.CityStats.Data;
 
-public class RealtorCountyReader2 {
-	
+public class RealtorCountyReader {
+
 	private static Map<String, String> map = new HashMap<String, String>();
 
 	static class HouseData {
@@ -22,7 +18,7 @@ public class RealtorCountyReader2 {
 		int costPerSqFt;
 		int medianSquareFootage;
 	}
-	
+
 	public static void main(String[] args) throws Exception {
 		populateMap();
 		String filePath = "realtorCountyCopyPaste.txt";
@@ -36,14 +32,12 @@ public class RealtorCountyReader2 {
 		String state = map.get(line.substring(line.indexOf(", ") + 2).toLowerCase());
 		state = state.substring(0, 1).toUpperCase() + state.substring(1);
 		Map<String, HouseData> houseDataMap = GetHouseDataMap(county, myReader, line);
-		
+
 		///////////
 		writeOutput(houseDataMap, county, state);
-		
+
 		///////////
-		
-		
-		
+
 	}
 
 	private static void writeOutput(Map<String, HouseData> houseDataMap, String county, String state) throws Exception {
@@ -65,11 +59,10 @@ public class RealtorCountyReader2 {
 		if (isCityFound) {
 			CityStats.writeData(dataList, state, true);
 			Util.writeMapOfDateUpdatedToFile(map);
-		}
-		else {
+		} else {
 			System.out.println("no data found!");
 		}
-		
+
 	}
 
 	private static Map<String, HouseData> GetHouseDataMap(String county, Scanner myReader, String line) {
@@ -92,13 +85,13 @@ public class RealtorCountyReader2 {
 			HouseData houseData = new HouseData();
 			houseData.homePrice = getIntFromString(medianPrice);
 			houseData.costPerSqFt = getIntFromString(costPerSqFt);
-			houseData.medianSquareFootage = houseData.homePrice/houseData.costPerSqFt;
+			houseData.medianSquareFootage = houseData.homePrice / houseData.costPerSqFt;
 			String mapKey = getMapKey(cityName, county);
 			houseDataMap.put(mapKey, houseData);
 		}
 		return houseDataMap;
 	}
-	
+
 	private static String getMapKey(String cityName, String county) {
 		return cityName.toLowerCase() + ", " + county.toLowerCase();
 	}
@@ -110,30 +103,23 @@ public class RealtorCountyReader2 {
 		for (char c : chars) {
 			if (c == '$') {
 				continue;
-			}
-			else if (Character.isDigit(c)) {
+			} else if (Character.isDigit(c)) {
 				num += c;
-			}
-			else if (c == '.') {
+			} else if (c == '.') {
 				wasDecimalSeen = true;
-			}
-			else if (c == 'K') {
+			} else if (c == 'K') {
 				if (wasDecimalSeen) {
 					num += "00";
-				}
-				else {
+				} else {
 					num += "000";
 				}
-			}
-			else if (c == 'M') {
+			} else if (c == 'M') {
 				if (wasDecimalSeen) {
-					num += "00000";	
-				}
-				else {
+					num += "00000";
+				} else {
 					num += "000000";
 				}
-			}
-			else {
+			} else {
 				throw new RuntimeException("failed to get int from this string: " + st);
 			}
 		}
@@ -194,7 +180,7 @@ public class RealtorCountyReader2 {
 		fillMapWithItem("wy", "Wyoming");
 		fillMapWithItem("dc", "Washington DC");
 	}
-	
+
 	private static void fillMapWithItem(String string, String string2) {
 		map.put(string.toLowerCase(), string2.toLowerCase());
 

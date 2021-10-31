@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class RealtorWebPageCountyOpener2 {
+public class RealtorWebPageCountyOpener {
 
 	private static boolean shouldTabBeOpened(CityStats.Data data) throws Exception {
 		if (data.metroPopulation.contains("N/A")) {
