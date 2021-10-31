@@ -2,8 +2,6 @@ package main.java.com.hey;
 
 import java.util.concurrent.CountDownLatch;
 
-import main.java.com.hey.old.CityVsUSAComparison2;
-
 public class UpdateEverything {
 
 	public static void main(String[] args) throws Exception {
@@ -14,7 +12,7 @@ public class UpdateEverything {
 		MetroCsvs.main(null);
 		MetroStatistics.main(null);
 		MetroTabs.main(null);
-		CityVsUSAComparison2.main(null);
+		CityVsUSAComparison.main(null);
 
 	}
 

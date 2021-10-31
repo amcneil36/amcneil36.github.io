@@ -1,8 +1,6 @@
 package main.java.com.hey;
 
-import main.java.com.hey.old.GenericDataReadAndWriter;
-
-public class Transportation  extends GenericDataReadAndWriter {
+public class Transportation  extends CityStats  {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
@@ -40,7 +38,7 @@ public class Transportation  extends GenericDataReadAndWriter {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		GenericDataReadAndWriter n = new Transportation();
+		CityStats n = new Transportation();
 		n.processAllStates();
 
 	}

@@ -1,4 +1,4 @@
-package main.java.com.hey.old;
+package main.java.com.hey;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,9 +12,8 @@ import java.util.Map;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
 import main.java.com.hey.CityStats.Data;
-import main.java.com.hey.CreateBigCsv;
 
-public class CityVsUSAComparison2 {
+public class CityVsUSAComparison {
 	
 	static class InputData {
 		String cityName;

@@ -1,10 +1,8 @@
-package main.java.com.hey.old;
+package main.java.com.hey;
 
 import java.util.List;
 
-import main.java.com.hey.Util;
-
-public class CityVsUsaCodeWriter {
+public class CityVsUsaCodeGenerator {
 	
 	public enum Type {
 	    FLOAT_NOT_PERCENT {
