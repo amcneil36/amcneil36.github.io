@@ -14,7 +14,7 @@ public class RealtorWebPageCountyOpener {
 		if (data.metroPopulation.contains("N/A")) {
 			return false;
 		}
-		return Integer.valueOf(data.metroPopulation) > 2000000 && data.stateName.equals("Florida");
+		return Integer.valueOf(data.metroPopulation) > 1000000 && data.stateName.equals("Texas");
 	}
 
 	private static Map<String, String> map = new HashMap<String, String>();
