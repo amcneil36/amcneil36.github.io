@@ -254,10 +254,10 @@ public class Util {
 	
 	public static Map<String, LocalDate> getMapOfKeyToDate() throws Exception {
 		if (mapOfKeyToDate.size() == 0) {
-			List<String> lines = readTextFromFile("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\internal\\DateLastUpdated.txt");
+			List<String> lines = readTextFromFile("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\internal\\DateHousingDataLastUpdated.txt");
 			for (String line : lines) {
 				String[] arr = line.split(";");
-				mapOfKeyToDate.put(arr[0], LocalDate.parse(arr[1]));
+				mapOfKeyToDate.put(arr[0] + ";", LocalDate.parse(arr[1]));
 			}
 		}
 		return mapOfKeyToDate;
@@ -267,6 +267,11 @@ public class Util {
 		Map<String, LocalDate> map = getMapOfKeyToDate();
 		LocalDate now = LocalDate.now();
 		String uniqueId = getCityUniqueId(data);
+		if (!map.containsKey(uniqueId)) {
+			System.out.println(uniqueId);
+			System.out.println(map.size());
+			System.out.println("huh?");
+		}
 		LocalDate prev = map.get(uniqueId);
 		long daysBetween = ChronoUnit.DAYS.between(prev, now);
 		return daysBetween;
@@ -278,7 +283,6 @@ public class Util {
 		Set<String> keys = map2.keySet();
 		for (String key : keys) {
 			sb.append(key);
-			sb.append(";");
 			LocalDate localDate = map2.get(key);
 			sb.append(localDate.toString());
 	    	sb.append("\n");

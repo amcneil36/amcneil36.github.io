@@ -266,22 +266,6 @@ public abstract class CityStats {
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\States\\" + stateName
 				+ ".csv";
 		writeDataToPath(dataList, filePath, isLastWrite);
-		writeDateLastUpdated(dataList);
-	}
-
-	private static void writeDateLastUpdated(List<Data> dataList) throws Exception {
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\internal\\DateHousingDataLastUpdated.txt";
-		StringBuilder sb = new StringBuilder();
-	    for (Data data : dataList) {
-	    	sb.append(Util.getCityUniqueId(data));
-	    	LocalDate localDate = LocalDate.now();
-	    	localDate = localDate.minusDays(30);
-	    	sb.append(localDate.toString());
-	    	sb.append("\n");
-	    }
-	    sb.setLength(sb.length() - 1);
-		Util.writeTextToFile(filePath, sb.toString());
-		
 	}
 
 	protected abstract void updateData(Data data, String stateName) throws Exception;
