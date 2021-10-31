@@ -7,11 +7,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
+import java.time.temporal.ChronoUnit;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jsoup.Connection;
@@ -245,6 +248,44 @@ public class Util {
 		FileWriter myWriter = new FileWriter(filePath);
 		myWriter.write(textToWrite);
 		myWriter.close();
+	}
+	
+	private static Map<String, LocalDate> mapOfKeyToDate = new HashMap<>();
+	
+	public static Map<String, LocalDate> getMapOfKeyToDate() throws Exception {
+		if (mapOfKeyToDate.size() == 0) {
+			List<String> lines = readTextFromFile("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\internal\\DateLastUpdated.txt");
+			for (String line : lines) {
+				String[] arr = line.split(";");
+				mapOfKeyToDate.put(arr[0], LocalDate.parse(arr[1]));
+			}
+		}
+		return mapOfKeyToDate;
+	}
+	
+	public static long getDaysSinceLastUpdated(Data data) throws Exception {
+		Map<String, LocalDate> map = getMapOfKeyToDate();
+		LocalDate now = LocalDate.now();
+		String uniqueId = getCityUniqueId(data);
+		LocalDate prev = map.get(uniqueId);
+		long daysBetween = ChronoUnit.DAYS.between(prev, now);
+		return daysBetween;
+	}
+
+	public static void writeMapOfDateUpdatedToFile(Map<String, LocalDate> map2) throws Exception {
+		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\internal\\DateHousingDataLastUpdated.txt";
+		StringBuilder sb = new StringBuilder();
+		Set<String> keys = map2.keySet();
+		for (String key : keys) {
+			sb.append(key);
+			sb.append(";");
+			LocalDate localDate = map2.get(key);
+			sb.append(localDate.toString());
+	    	sb.append("\n");
+		}
+	    sb.setLength(sb.length() - 1);
+		Util.writeTextToFile(filePath, sb.toString());
+		
 	}
 	
 	    

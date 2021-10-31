@@ -8,8 +8,8 @@ import java.util.Map;
 
 public class RealtorWebPageCityOpener {
 
-	private static boolean shouldTabBeOpened(CityStats.Data data) {
-		if (data.metro.equals("Port St. Lucie")) {
+	private static boolean shouldTabBeOpened(CityStats.Data data) throws Exception {
+		if (data.metro.equals("Port St. Lucie") && Util.getDaysSinceLastUpdated(data) > 10) {
 			return true;
 		}
 		return false;

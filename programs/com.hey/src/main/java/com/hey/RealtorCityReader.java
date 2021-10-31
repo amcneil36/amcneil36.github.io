@@ -1,6 +1,7 @@
 package main.java.com.hey;
 
 import java.io.File;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +62,7 @@ public class RealtorCityReader {
 	private static void writeOutput(HouseData houseData) throws Exception {
 		List<Data> dataList = CityStats.readData(houseData.state);
 		boolean isCityFound = false;
+		Map<String, LocalDate> map = Util.getMapOfKeyToDate();
 		for (Data data : dataList) {
 			if (data.cityName.equals(houseData.city) && isCityFound) {
 				throw new RuntimeException("two cities with the same name found: " + houseData.city);
@@ -70,11 +72,13 @@ public class RealtorCityReader {
 				data.homeSquareFeet = String.valueOf(houseData.medianSquareFootage);
 				data.costPerSquareFoot = String.valueOf(houseData.costPerSqFt);
 				isCityFound = true;
+				map.put(Util.getCityUniqueId(data), LocalDate.now());
 			}
 
 		}
 		if (isCityFound) {
 			CityStats.writeData(dataList, houseData.state, true);
+			Util.writeMapOfDateUpdatedToFile(map);
 		}
 		else {
 			System.out.println("city not found: " + houseData.city);
