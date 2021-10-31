@@ -2,7 +2,6 @@ package main.java.com.hey;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -15,8 +14,8 @@ public abstract class CityStats {
 			+ "Avg Apartment Monthly Rent,Avg Apartment sqft,"
 			+ "Median home price,Median home sqft,Median home cost per sqft,Median home age,"
 			+ "Homeownership Rate,Home appreciation Last Year,Home appreciation Last 5 Years,Home appreciation Last 10 Years,Air quality Index,Average one-way commute time,Unemployment rate,Job growth last year,"
-			+ "Population growth since 2010,County,% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Foreign Born %,Timezone,Elevation (ft),"+
-			"UV Index,Single Population,Walk Score,Transit Score,Bike Score,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Number of hurricanes since 1930,Number of tornadoes per year,Number of earthquakes since 1931";
+			+ "Population growth since 2010,County,% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Foreign Born %,Timezone,Elevation (ft),"
+			+ "UV Index,Single Population,Walk Score,Transit Score,Bike Score,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Number of hurricanes since 1930,Number of tornadoes per year,Number of earthquakes since 1931";
 
 	public static class Data {
 		public String cityName = "N/A";
@@ -99,13 +98,13 @@ public abstract class CityStats {
 			sb.append(st).append(",");
 			return this;
 		}
-		
+
 		AndrewStringWriter appendWAPercent(WeightedAverage wa) {
 			sb.append(wa.getWeightedAverage());
 			sb.append("%,");
 			return this;
 		}
-		
+
 		AndrewStringWriter appendWADollar(WeightedAverage wa) {
 			sb.append("$");
 			return appendWA(wa);
@@ -255,9 +254,9 @@ public abstract class CityStats {
 				.appendWithComma(data.percentRepublican).appendWithComma(data.percentAsian)
 				.appendWithComma(data.percentBlack).appendWithComma(data.percentWhite)
 				.appendWithComma(data.percentHispanic).appendWithComma(data.foreignBornPercent)
-				.appendWithComma(data.timeZone).appendWithComma(data.feetAboveSeaLevel)
-				.appendWithComma(data.uvIndex).appendWithComma(data.singlePopulation)
-				.appendWithComma(data.walkScore).appendWithComma(data.transitScore).appendWithComma(data.bikeScore)
+				.appendWithComma(data.timeZone).appendWithComma(data.feetAboveSeaLevel).appendWithComma(data.uvIndex)
+				.appendWithComma(data.singlePopulation).appendWithComma(data.walkScore)
+				.appendWithComma(data.transitScore).appendWithComma(data.bikeScore)
 				.appendWithComma(data.percentOfIncomeLostToHousingCosts).appendWithComma(data.sexOffenderCount)
 				.appendWithComma(data.hurricanes).appendWithComma(data.tornadoes).appendLastItem(data.earthQuakes);
 	}
