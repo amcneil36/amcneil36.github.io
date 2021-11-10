@@ -342,8 +342,13 @@ public abstract class CityStats {
 			}
 		} finally {
 			writeData(dataList, stateName, true);
+			runCleanup();
 		}
 	}
+
+	protected void runCleanup() {
+		
+	};
 
 	static class RunnableDemo52 implements Runnable {
 		private Thread t;

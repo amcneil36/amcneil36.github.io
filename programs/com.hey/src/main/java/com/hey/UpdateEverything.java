@@ -5,8 +5,17 @@ public class UpdateEverything {
 
 	public static void main(String[] args) throws Exception {
 		
-		NoopCityStats.main(null);
-		Thread.sleep(1000*10); //sleep 10s so NoopCityStats can finish
+		NoopCityStats n = new NoopCityStats();
+		//n.processAllStates();
+		n.processAllStates();
+		int totalMsSlept = 0;
+		while(n.numStatesComplete < 51) {
+			if (totalMsSlept > 10000) {
+				throw new RuntimeException("took too long for NoopCityStats");
+			}
+			Thread.sleep(100);
+			totalMsSlept+=100;
+		}
 		CreateBigCsv.main(null);
 		MetroCsvs.main(null);
 		MetroStatistics.main(null);
