@@ -7,18 +7,23 @@ import java.util.Map;
 import java.util.Set;
 
 public class MetroCsvs {
+	
+	public static String getMetroKey(CityStats.Data data) {
+		return data.metro + "," + data.metroPopulation;
+	}
 
 	public static void main(String[] args) throws Exception {
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
 		Map<String, List<CityStats.Data>> mapOfMetroNameToData = new HashMap<>();
 		for (CityStats.Data data : dataList) {
-			if (!data.metro.contains("None") && Integer.valueOf(data.metroPopulation) > 300000) {
-				if (!mapOfMetroNameToData.containsKey(data.metro)) {
-					mapOfMetroNameToData.put(data.metro, new ArrayList<CityStats.Data>());
+			String metroKey = getMetroKey(data);
+			if (!data.metro.contains("None") && Integer.valueOf(data.metroPopulation) > 100000) {
+				if (!mapOfMetroNameToData.containsKey(metroKey)) {
+					mapOfMetroNameToData.put(metroKey, new ArrayList<CityStats.Data>());
 				}
-				List<CityStats.Data> dataListFromMap = mapOfMetroNameToData.get(data.metro);
+				List<CityStats.Data> dataListFromMap = mapOfMetroNameToData.get(metroKey);
 				dataListFromMap.add(data);
-				mapOfMetroNameToData.put(data.metro, dataListFromMap);
+				mapOfMetroNameToData.put(metroKey, dataListFromMap);
 			}
 		}
 		Set<String> keys = mapOfMetroNameToData.keySet();

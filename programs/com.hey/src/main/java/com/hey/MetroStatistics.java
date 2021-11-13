@@ -216,8 +216,11 @@ public class MetroStatistics {
 			totalPopulation += pop;
 		}
 
-		public int getWeightedAverage() {
-			return (int) (totalSummedValue / totalPopulation);
+		public String getWeightedAverage() {
+			if (totalPopulation == 0) {
+				return "N/A";
+			}
+			return String.valueOf((int)(totalSummedValue / totalPopulation));
 		}
 	}
 

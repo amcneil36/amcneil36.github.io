@@ -106,7 +106,9 @@ public abstract class CityStats {
 		}
 
 		AndrewStringWriter appendWADollar(WeightedAverage wa) {
-			sb.append("$");
+			if (!wa.getWeightedAverage().equals("N/A")) {
+				sb.append("$");	
+			}
 			return appendWA(wa);
 		}
 
