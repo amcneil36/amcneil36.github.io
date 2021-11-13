@@ -77,7 +77,7 @@ public class CreateBigCsv {
 	
 	public static void processAllStates() throws Exception {
 		List<CityStats.Data> dataList = readInput();
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\cityStats.csv";
+		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\CityStats.csv";
 		CityStats.writeDataToPath(dataList, filePath, true);
 	}
 
