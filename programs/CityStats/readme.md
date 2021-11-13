@@ -80,4 +80,4 @@ Data is retrieved for all USA cities, towns, and CDPs (Census Designated Places)
 
 A value of N/A in a cell means that the data source did not find the requested data for the city. This is more common in lesser populated cities.
 
-My data sources have indicated that their data may only be used for personal use and not commercial use. Thus, I have made these files for personal use only (I make no money from it in any way). Others may use these files for personal use as well. Please do not use any of these files for commercial use since my data sources prohibit people from using the data for commercial use.
+Most of my data sources have indicated that their data may only be used for personal use and not commercial use. Thus, I have made these files for personal use only (I make no money from it in any way). Others may use these files for personal use as well. Please do not use any of these files for commercial use since my data sources prohibit people from using the data for commercial use.
