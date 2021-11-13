@@ -1,3 +1,5 @@
+# USA Weather and Demographics Information
+
 ## One .csv file with weather and demographics information for all USA cities
 
 ### The .csv file can be found here: <a href="https://amcneil36.github.io/programs/CityStats/cityStats.csv" download>https://amcneil36.github.io/programs/CityStats/cityStats.csv</a>
@@ -68,4 +70,11 @@ A value of N/A in a cell means that the data source did not find the requested d
 
 My data sources have indicated that their data may only be used for personal use and not commercial use. Thus, I have made this .csv for personal use only (I make no money from it in any way). Others may use this .csv for personal use as well but should not be using it for commercial use.
 
-If you would like to see the percentiles that each city's statistics fall under (in comparison to the rest of the USA cities), check out my other project [CityVsUSAComparison](https://amcneil36.github.io/programs/cityVsUSAComparison/cityVsUSAComparison.html). It uses the data from most of the columns from this CSV.
+## City vs USA Comparison
+[CityVsUSAComparison](https://amcneil36.github.io/programs/cityVsUSAComparison/cityVsUSAComparison.html) shows which percentiles that each city's weather and demographics data fall under (in comparison to the rest of the USA cities). It uses the data from most of the columns from this CSV.
+
+## Weather and Demographics data calculated on the metro level
+This is a .csv file with weather and demographics data for all USA metros that have a population greater than 100k. All data is on the metro level. This means that you can see things like the average summer high for the metro. All numbers in this .csv are calculated from using a weighted average except for the metro population column. The weighted average is used so that a city of 10 people has less influence on the data than a city of 1,000,000 people. This is so the statistics are representative of a typical person living there. The population density is calculated from a weighted average too. The "Predominant State" column is the state that contributes the most to the population of the metro. The data for this .csv was calculated from using the above .csv with weather and demographics data for all USA cities. This .csv with weather and demographics data can be found here: <a href="https://amcneil36.github.io/programs/MetroStats/MetroSummary.csv" download>https://amcneil36.github.io/programs/MetroStats/MetroSummary.csv</a>
+
+## Folder with one .csv per metro with data on each city within the metro
+This folder takes data from the .csv that has weather and demographics information for all USA cities and produces one .csv per metro that has a metro population greater than 100k. Unlike the .csv that has weather and demographics data calculated on the metro level, this one doesn't do any calculations. It gives you the same data that you would get if you have the one .csv with all USA cities and then filter the data to a particular metro. This folder can be found here: https://github.com/amcneil36/amcneil36.github.io/tree/master/programs/MetroStats/Metros
