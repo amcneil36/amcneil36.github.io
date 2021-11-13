@@ -45,6 +45,36 @@ public class MetroStatistics {
 		WeightedAverage singlePopulation = new WeightedAverage();
 		WeightedAverage percentOfIncomeLostToHousingCosts = new WeightedAverage();
 		WeightedAverage sexOffenderCount = new WeightedAverage();
+		private Map<String, Integer> mapOfStateToPopulation = new HashMap<>();
+		
+		public String getPrimaryState() {
+			Set<String> keys = mapOfStateToPopulation.keySet();
+			
+			String mostPopulatedState = "";
+			int maxPopulation = -1;
+			for (String key : keys) {
+				int currentPop = mapOfStateToPopulation.get(key);
+				if (currentPop > maxPopulation) {
+					maxPopulation = currentPop;
+					mostPopulatedState = key;
+				}
+			}
+			if (maxPopulation == -1) {
+				throw new RuntimeException("didn't find most populated state");
+			}
+			return mostPopulatedState;
+		}
+		
+		
+		public void addDataToMap(CityStats.Data data) {
+			String state = data.stateName;
+			if (!mapOfStateToPopulation.containsKey(state)) {
+				mapOfStateToPopulation.put(state, 0);
+			}
+			int pop = mapOfStateToPopulation.get(state);
+			pop += Integer.valueOf(data.population);
+			mapOfStateToPopulation.put(state, pop);
+		}
 
 	}
 
@@ -81,10 +111,11 @@ public class MetroStatistics {
 		stats.singlePopulation.addCity(data, data.singlePopulation);
 		stats.percentOfIncomeLostToHousingCosts.addCity(data, data.percentOfIncomeLostToHousingCosts);
 		stats.sexOffenderCount.addCity(data, data.sexOffenderCount);
+		stats.addDataToMap(data);
 
 	}
 
-	static String startSt = "Metro Name,Metro Population,People Per Sq Mi,Hottest month's avg high (F),Coldest month's avg high (F),Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),"
+	static String startSt = "Metro Name,Predominant State,Metro Population,People Per Sq Mi,Hottest month's avg high (F),Coldest month's avg high (F),Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),"
 			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
 			+ "Median household income,Poverty Rate,Median home price,Median home sqft,"
 			+ "Median home cost per sqft,Homeownership Rate,Population growth since 2010,"
@@ -124,20 +155,25 @@ public class MetroStatistics {
 		sb.appendWAPercent(stat.percentOfIncomeLostToHousingCosts);
 		sb.appendWA(stat.sexOffenderCount);
 	}
+	
+	public static String getMetroKey(CityStats.Data data) {
+		return data.metro + "," + data.metroPopulation;
+	}
 
 	///////////////////////////////////////////////////////////////////////
 	public static void main(String[] args) throws Exception {
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
 		Map<String, Stats> mapOfMetroNameToStats = new HashMap<>();
 		for (CityStats.Data data : dataList) {
-			if (!data.metro.contains("None") && Integer.valueOf(data.metroPopulation) > 99999) {
-				if (!mapOfMetroNameToStats.containsKey(data.metro)) {
+			if (isMetroValid(data)) {
+				String metroKey = getMetroKey(data);
+				if (!mapOfMetroNameToStats.containsKey(metroKey)) {
 					Stats stats = new Stats();
 					stats.metroName = data.metro;
 					stats.metroPopulation = Integer.valueOf(data.metroPopulation);
-					mapOfMetroNameToStats.put(data.metro, stats);
+					mapOfMetroNameToStats.put(metroKey, stats);
 				}
-				Stats stats = mapOfMetroNameToStats.get(data.metro);
+				Stats stats = mapOfMetroNameToStats.get(metroKey);
 				addStuffToStats(stats, data);
 			}
 		}
@@ -152,7 +188,7 @@ public class MetroStatistics {
 		AndrewStringWriter sb = new AndrewStringWriter();
 		sb.appendLastItem(startSt);
 		for (Stats stat : statsList) {
-			sb.appendWithComma(stat.metroName).appendWithComma(stat.metroPopulation);
+			sb.appendWithComma(stat.metroName).appendWithComma(stat.getPrimaryState()).appendWithComma(stat.metroPopulation);
 			addToSb(sb, stat);
 			sb.appendEnding();
 		}
@@ -160,6 +196,10 @@ public class MetroStatistics {
 		myWriter.write(st);
 		myWriter.close();
 		System.out.println("wrote to file " + filePath);
+	}
+
+	private static boolean isMetroValid(CityStats.Data data) {
+		return !data.metro.contains("None") && Integer.valueOf(data.metroPopulation) > 99999;
 	}
 
 	static class WeightedAverage {
