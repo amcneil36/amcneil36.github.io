@@ -76,7 +76,7 @@ This folder takes data from CityStats.csv and produces one .csv per metro that h
 [CityVsUSAComparison](https://amcneil36.github.io/programs/cityVsUSAComparison/cityVsUSAComparison.html) shows which percentiles that each city's weather and demographics data fall under (in comparison to the rest of the USA cities). It uses the data from most of the columns from this CSV.
 
 ## Additional Information
-Data is retrieved for all USA cities, towns, and CDPS (Census Designated Places). In an effort to be less verbose with word choice, I refer to cities, towns, and CDPs all as cities instead of trying to make a distinction between them. Note that cities, towns, and CDPs are all separate entities. So a city will not be part of a town or CDP and vice-versa.
+Data is retrieved for all USA cities, towns, and CDPs (Census Designated Places). In an effort to be less verbose with word choice, I refer to cities, towns, and CDPs all as cities instead of trying to make a distinction between them. Note that cities, towns, and CDPs are all separate entities. So a city will not be part of a town or CDP and vice-versa.
 
 A value of N/A in a cell means that the data source did not find the requested data for the city. This is more common in lesser populated cities.
 
