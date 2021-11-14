@@ -90,7 +90,7 @@ function createRows(tbdy, cityData){
 	  insertRowWithGrayBackgroundWithInfoButton(tbdy, "Percent Republican (%)", percentRepublicanAverage, percentRepublicanMedian, cityData.percentRepublicanMetric, "% of residents who are Republican. Tracked on the county level");
 	  insertRow(tbdy, "Percent Asian (%)", percentAsianAverage, percentAsianMedian, cityData.percentAsianMetric);
 	  insertRowWithGrayBackgroundWithInfoButton(tbdy, "Percent Black (%)", percentBlackAverage, percentBlackMedian, cityData.percentBlackMetric, "Includes hispanic black and non-hispanic black residents");
-	  insertRowWithInfoButton(tbdy, "Percent White (%)", percentWhiteAverage, percentWhiteMedian, cityData.percentWhiteMetric, "Includes hispanic white and non-hispanic white residents");
+	  insertRowWithInfoButton(tbdy, "Percent Non-Hispanic White (%)", percentWhiteAverage, percentWhiteMedian, cityData.percentWhiteMetric, "White residents who are not hispanic");
 	  insertRowWithGrayBackgroundWithInfoButton(tbdy, "Percent Hispanic (%)", percentHispanicAverage, percentHispanicMedian, cityData.percentHispanicMetric, "% of residents who claim hispanic, regardless of race");
 	  insertRow(tbdy, "Foreign Born %", foreignBornPercentAverage, foreignBornPercentMedian, cityData.foreignBornPercentMetric);
 	  insertRowWithGrayBackground(tbdy, "Elevation (ft)", feetAboveSeaLevelAverage, feetAboveSeaLevelMedian, cityData.feetAboveSeaLevelMetric);

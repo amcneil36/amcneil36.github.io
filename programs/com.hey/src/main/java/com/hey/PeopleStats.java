@@ -18,7 +18,7 @@ public class PeopleStats extends CityStats {
 
 	private String parseRaceOrEthnicity(String text, String url, String searchPattern) {
 		if (!text.contains(searchPattern)) {
-			System.out.println(searchPattern + " not found for: " + url + "; " + text);
+			//System.out.println(searchPattern + " not found for: " + url + "; " + text);
 			return "N/A";
 		}
 		text = text.substring(0, text.indexOf(searchPattern) + 1);
@@ -30,7 +30,7 @@ public class PeopleStats extends CityStats {
 			ch = text.charAt(startIdx);
 			totalIterations++;
 			if (totalIterations > 8) {
-				System.out.println("iteration fail!");
+				//System.out.println("iteration fail!");
 				return "N/A";
 			}
 		}

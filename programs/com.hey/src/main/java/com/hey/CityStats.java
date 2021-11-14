@@ -14,7 +14,7 @@ public abstract class CityStats {
 			+ "Avg Apartment Monthly Rent,Avg Apartment sqft,"
 			+ "Median home price,Median home sqft,Median home cost per sqft,Median home age,"
 			+ "Homeownership Rate,Home appreciation Last Year,Home appreciation Last 5 Years,Home appreciation Last 10 Years,Air quality Index,Average one-way commute time,Unemployment rate,Job growth last year,"
-			+ "Population growth since 2010,County,% Democrat,% Republican,% Asian,% Black,% White,% Hispanic,Foreign Born %,Timezone,Elevation (ft),"
+			+ "Population growth since 2010,County,% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,Timezone,Elevation (ft),"
 			+ "UV Index,Single Population,Walk Score,Transit Score,Bike Score,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Number of hurricanes since 1930,Number of tornadoes per year,Number of earthquakes since 1931";
 
 	public static class Data {
