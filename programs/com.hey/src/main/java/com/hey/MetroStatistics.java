@@ -199,7 +199,7 @@ public class MetroStatistics {
 	}
 
 	private static boolean isMetroValid(CityStats.Data data) {
-		return !data.metro.contains("None") && Integer.valueOf(data.metroPopulation) > 99999;
+		return !data.metro.contains("None");
 	}
 
 	static class WeightedAverage {
