@@ -4,24 +4,19 @@ public class PeopleStats extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
+		if (!"N/A".equals(data.percentWhite)) {
+			return;
+		}
 		String cityName = data.cityName.replace("\"", "").replace(" ", "_");
 		String url = "https://www.bestplaces.net/people/city/" + stateName.replace(" ", "_") + "/" + cityName;
-		// String url = "https://www.bestplaces.net/people/city/texas/corpus_christi";
-		//String text = Util.ReadTextFromPage(url);
-		data.percentWhite = "N/A";
-		data.percentBlack = "N/A";
-		data.percentAsian = "N/A";
-		data.percentHispanic = "N/A";
-	//	data.percentWhite = grabPercentNonHispanicWhite(text, url, "% are white");
-	//	data.percentBlack = grabPercentNonHispanicWhite(text, url, "% are black");
-//		data.percentAsian = grabPercentNonHispanicWhite(text, url, "% are asian");
-//		data.percentHispanic = grabPercentNonHispanicWhite(text, url, "% claim Hispanic");
-
-		System.out.println("%white: " + data.percentWhite + "; %black: " + data.percentBlack + "; %asian: "
-				+ data.percentAsian + "; %hispanic: " + data.percentHispanic);
+		String text = Util.ReadTextFromPage(url);
+		data.percentWhite = parseRaceOrEthnicity(text, url, "% are white");
+		data.percentBlack = parseRaceOrEthnicity(text, url, "% are black");
+		data.percentAsian = parseRaceOrEthnicity(text, url, "% are asian");
+		data.percentHispanic = parseRaceOrEthnicity(text, url, "% claim Hispanic");
 	}
 
-	private String grabPercentNonHispanicWhite(String text, String url, String searchPattern) {
+	private String parseRaceOrEthnicity(String text, String url, String searchPattern) {
 		if (!text.contains(searchPattern)) {
 			System.out.println(searchPattern + " not found for: " + url + "; " + text);
 			return "N/A";
