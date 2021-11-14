@@ -7,7 +7,7 @@ public class PeopleStats extends CityStats {
 		String cityName = data.cityName.replace("\"", "").replace(" ", "_");
 		String url = "https://www.bestplaces.net/people/city/" + stateName.replace(" ", "_") + "/" + cityName;
 		// String url = "https://www.bestplaces.net/people/city/texas/corpus_christi";
-		String text = Util.ReadTextFromPage(url);
+		//String text = Util.ReadTextFromPage(url);
 		data.percentWhite = "N/A";
 		data.percentBlack = "N/A";
 		data.percentAsian = "N/A";
