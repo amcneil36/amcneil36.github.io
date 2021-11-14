@@ -48,10 +48,10 @@
 | County   |  | [Best Places](https://www.bestplaces.net/)| Feb 2021 |
 | % Democrat | The percent of residents who are democrat. Tracked at the county level. | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
 | % Republican | The percent of residents who are republican. Tracked at the county level. | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
-| % Asian | The percent of residents who identified as Asian only. This includes Hispanic and non-hispanic Asian residents. | [World Population Review](https://www.worldpopulationreview.com) | Mar 2021 |
-| % Black | The percent of residents who identified as Black only. This includes Hispanic and non-hispanic Black residents. | [World Population Review](https://www.worldpopulationreview.com) | Mar 2021 |
-| % White | The percent of residents who identified as White only. This includes Hispanic and non-hispanic White residents. | [World Population Review](https://www.worldpopulationreview.com) | Mar 2021 |
-| % Hispanic | The percent of residents who identified as Hispanic. This includes Hispanic residents of any race. | [World Population Review](https://www.worldpopulationreview.com) | Mar 2021 |
+| % Asian | The percent of residents who identified as Asian only. This includes Hispanic and non-hispanic Asian residents. | [Best Places](https://www.bestplaces.net/) | Nov 2021 |
+| % Black | The percent of residents who identified as Black only. This includes Hispanic and non-hispanic Black residents. | [Best Places](https://www.bestplaces.net/) | Nov 2021 |
+| % Non-Hispanic White | The percent of residents who identified as White only. This does not include hispanic residents. | [Best Places](https://www.bestplaces.net/) | Nov 2021 |
+| % Hispanic | The percent of residents who identified as Hispanic. This includes Hispanic residents of any race. | [Best Places](https://www.bestplaces.net/) | Nov 2021 |
 | Foreign Born % | The percent of residents born outside of the United States. | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | Timezone | | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | Elevation (ft) | | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
