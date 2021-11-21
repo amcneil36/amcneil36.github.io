@@ -9,9 +9,9 @@ import java.util.Map;
 public class RealtorWebPageCityOpener {
 
 	private static boolean shouldTabBeOpened(CityStats.Data data) throws Exception {
-		return !data.metroPopulation.contains("N/A") && data.metro.contains("Dallas")
+		return !data.metroPopulation.contains("N/A") 
 				&& Util.getDaysSinceLastUpdated(data) > 10 && Integer.valueOf(data.population) > 5000
-				&& data.stateName.equals("Texas");
+				&& data.stateName.equals("Texas") && Integer.valueOf(data.metroPopulation) > 300000;
 	}
 
 	private static Map<String, String> map = new HashMap<String, String>();
