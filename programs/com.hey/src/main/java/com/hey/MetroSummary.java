@@ -10,7 +10,7 @@ import java.util.Set;
 
 import main.java.com.hey.CityStats.AndrewStringWriter;
 
-public class MetroStatistics {
+public class MetroSummary {
 
 	static class Stats extends Stats2 {
 		WeightedAverage peoplePerSqMi = new WeightedAverage();
@@ -46,6 +46,7 @@ public class MetroStatistics {
 		WeightedAverage percentOfIncomeLostToHousingCosts = new WeightedAverage();
 		WeightedAverage sexOffenderCount = new WeightedAverage();
 		private Map<String, Integer> mapOfStateToPopulation = new HashMap<>();
+		private Map<String, Integer> mapOfTimeZoneToPopulation = new HashMap<>();
 		
 		public String getPrimaryState() {
 			Set<String> keys = mapOfStateToPopulation.keySet();
@@ -65,8 +66,26 @@ public class MetroStatistics {
 			return mostPopulatedState;
 		}
 		
+		public String getPrimaryTimeZone() {
+			Set<String> keys = mapOfTimeZoneToPopulation.keySet();
+			
+			String mostPopulatedTimeZone = "";
+			int maxPopulation = -1;
+			for (String key : keys) {
+				int currentPop = mapOfTimeZoneToPopulation.get(key);
+				if (currentPop > maxPopulation) {
+					maxPopulation = currentPop;
+					mostPopulatedTimeZone = key;
+				}
+			}
+			if (maxPopulation == -1) {
+				throw new RuntimeException("didn't find most populated time zone");
+			}
+			return mostPopulatedTimeZone;
+		}
 		
-		public void addDataToMap(CityStats.Data data) {
+		
+		public void addDataToMapOfStateToPopulation(CityStats.Data data) {
 			String state = data.stateName;
 			if (!mapOfStateToPopulation.containsKey(state)) {
 				mapOfStateToPopulation.put(state, 0);
@@ -75,6 +94,17 @@ public class MetroStatistics {
 			pop += Integer.valueOf(data.population);
 			mapOfStateToPopulation.put(state, pop);
 		}
+		
+		public void addDataToMapOfTimeZoneToPopulation(CityStats.Data data) {
+			String timeZone = data.timeZone;
+			if (!mapOfTimeZoneToPopulation.containsKey(timeZone)) {
+				mapOfTimeZoneToPopulation.put(timeZone, 0);
+			}
+			int pop = mapOfTimeZoneToPopulation.get(timeZone);
+			pop += Integer.valueOf(data.population);
+			mapOfTimeZoneToPopulation.put(timeZone, pop);
+		}
+		
 
 	}
 
@@ -111,7 +141,8 @@ public class MetroStatistics {
 		stats.singlePopulation.addCity(data, data.singlePopulation);
 		stats.percentOfIncomeLostToHousingCosts.addCity(data, data.percentOfIncomeLostToHousingCosts);
 		stats.sexOffenderCount.addCity(data, data.sexOffenderCount);
-		stats.addDataToMap(data);
+		stats.addDataToMapOfStateToPopulation(data);
+		stats.addDataToMapOfTimeZoneToPopulation(data);
 
 	}
 
@@ -119,7 +150,7 @@ public class MetroStatistics {
 			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
 			+ "Median household income,Poverty Rate,Median home price,Median home sqft,"
 			+ "Median home cost per sqft,Homeownership Rate,Population growth since 2010,"
-			+ "% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,UV Index,Single Population,% of income spent on housing costs (owners),Number of sex offenders per 10k residents";
+			+ "% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,UV Index,Single Population,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Predominant Timezone";
 
 	static void addToSb(AndrewStringWriter sb, Stats stat) {
 		sb.appendWA(stat.peoplePerSqMi);
@@ -154,6 +185,7 @@ public class MetroStatistics {
 		sb.appendWAPercent(stat.singlePopulation);
 		sb.appendWAPercent(stat.percentOfIncomeLostToHousingCosts);
 		sb.appendWA(stat.sexOffenderCount);
+		sb.appendWithComma(stat.getPrimaryTimeZone());
 	}
 	
 	public static String getMetroKey(CityStats.Data data) {

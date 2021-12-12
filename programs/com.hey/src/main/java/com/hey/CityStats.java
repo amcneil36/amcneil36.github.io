@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import main.java.com.hey.MetroStatistics.WeightedAverage;
+import main.java.com.hey.MetroSummary.WeightedAverage;
 
 public abstract class CityStats {
 
