@@ -1,7 +1,7 @@
 ## Completed Reading List and Recommended Readings
 In this post I am keeping track of all the books I have read and am documenting which of these books I feel are the best books to read for people who are working in software development. I started keeping track of these books in 2019 so I haven't included any books that I read prior to then. Most of these books will be specific to software development. The remaining books will be on topics that are indirectly useful for software development like professionalism, presentation skills, social skills, etc. If I read any book that is not beneficial to software development, I will not include it on this list. Some of these books will only be relevant to software engineers and others will be relevant to all people on a software development team.
 
-### Completed Reading List (since 2019)
+### Completed Reading List
 1. Kerievsky, Joshua. Refactoring to Patterns. Addison-Wesley, 2004.
 1. Martin, Robert. Clean Code: A Handbook of Agile Software Craftsmanship. Prentice Hall, 2009.
 1. Fowler, Martin and Beck, Kent. Refactoring: Improving the Design of Existing Code. Addison-Wesley, 1999.
@@ -109,6 +109,7 @@ In this post I am keeping track of all the books I have read and am documenting 
 1. White, Paul. The Vibrant Workplace: Overcoming the Obstacles to Building a Culture of Appreciation. Northfield Publishing, 2017.  
 1. Perez, Patti. The Drama-free Workplace: How you can prevent unconscious bias, sexual harassment, ethics lapses, and inspire a healthy culture. 2019.  
 1. Mcintyre, Marie G. Secrets To Winning At Office Politics: How to Achieve Your Goals and Increase Your Influence at Work. 2005.
+1. Kleppmann, Martin. Designing Data-Intensive Applications: The Big Ideas Behind Reliable, Scalable, And Maintainable Systems. 2017.
 
 ### Recommended Readings
 This list will be sorted from best to worst in terms of how much I recommend reading it. That being said, any book that makes this list is terrific. Many of the books that did not make this list were also very good but I wanted to keep this list small because throwing too many books at people might discourage them. 
