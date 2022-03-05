@@ -2,6 +2,7 @@ package main.java.com.hey;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -25,14 +26,14 @@ import org.jsoup.nodes.Element;
 import main.java.com.hey.CityStats.Data;
 
 public class Util {
-	
+
 	public static boolean debug = false;
-	
+
 	public static String getCityUniqueId(Data data) {
 		return data.cityName + "," + data.stateName + "," + data.countyName + "," + data.metro + ";";
-		
+
 	}
-	
+
 	public static String minToString(int minRemaining) {
 		String st = "";
 		int hrRemaining = (int) Math.floor(minRemaining / 60);
@@ -66,14 +67,14 @@ public class Util {
 	}
 
 	private static String JsoupStuffNoRetry(String url) {
-			Connection conn = Jsoup.connect(url);
-			try {
-				Document doc = conn.get();
-				String text = doc.body().text();
-				return text;
-			} catch (IOException ex) {
-				return "";
-			}
+		Connection conn = Jsoup.connect(url);
+		try {
+			Document doc = conn.get();
+			String text = doc.body().text();
+			return text;
+		} catch (IOException ex) {
+			return "";
+		}
 	}
 
 	public static Element RetrieveHtmlcodeFromPage(String url) {
@@ -86,7 +87,7 @@ public class Util {
 			return body;
 		} catch (IOException ex) {
 			// System.out.println("oh no!");
-		//	ex.printStackTrace();
+			// ex.printStackTrace();
 			String stacktrace = ExceptionUtils.getStackTrace(ex);
 			if (stacktrace.contains("Status=403")) {
 				throw new SecurityException("you are banned from the website");
@@ -95,7 +96,7 @@ public class Util {
 			throw new RuntimeException();
 		}
 	}
-	
+
 	public static Element getElement(String url) throws Exception {
 		Connection conn = Jsoup.connect(url);
 		Document doc = conn.get();
@@ -128,7 +129,7 @@ public class Util {
 		throw new RuntimeException("jsoup couldn't connect to: " + url);
 
 	}
-	
+
 	public static void log(String str) {
 		if (debug) {
 			System.out.println(str);
@@ -163,9 +164,9 @@ public class Util {
 		}
 		return sb.toString();
 	}
-	
+
 	private static Map<String, String> map = new HashMap<String, String>();
-	
+
 	private static void populateMap() {
 		map = new HashMap<String, String>();
 		fillMapWithItem("al", "Alabama");
@@ -220,41 +221,45 @@ public class Util {
 		fillMapWithItem("wy", "Wyoming");
 		fillMapWithItem("dc", "Washington DC");
 	}
-	
+
 	private static void fillMapWithItem(String string, String string2) {
 		map.put(string2.toLowerCase(), string.toLowerCase());
 
 	}
-	
+
 	public static String getStateAbbreviation(String stateName) {
 		if (map.isEmpty()) {
 			populateMap();
 		}
 		return map.get(stateName.toLowerCase());
 	}
-	
+
 	public static List<String> readTextFromFile(String filePath) throws Exception {
 		File myObj = new File(filePath);
 		Scanner myReader = new Scanner(myObj);
 		List<String> list = new ArrayList<>();
-		while (myReader.hasNextLine()) {
-			list.add(myReader.nextLine());
+		BufferedReader br = new BufferedReader(new FileReader(new File(filePath)));
+		String line;
+		while ((line = br.readLine()) != null) {
+			list.add(line);
 		}
 		myReader.close();
+		br.close();
 		return list;
 	}
-	
+
 	public static void writeTextToFile(String filePath, String textToWrite) throws Exception {
 		FileWriter myWriter = new FileWriter(filePath);
 		myWriter.write(textToWrite);
 		myWriter.close();
 	}
-	
+
 	private static Map<String, LocalDate> mapOfKeyToDate = new HashMap<>();
-	
+
 	public static Map<String, LocalDate> getMapOfKeyToDate() throws Exception {
 		if (mapOfKeyToDate.size() == 0) {
-			List<String> lines = readTextFromFile("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\internal\\DateHousingDataLastUpdated.txt");
+			List<String> lines = readTextFromFile(
+					"C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\internal\\DateHousingDataLastUpdated.txt");
 			for (String line : lines) {
 				String[] arr = line.split(";");
 				mapOfKeyToDate.put(arr[0] + ";", LocalDate.parse(arr[1]));
@@ -262,7 +267,7 @@ public class Util {
 		}
 		return mapOfKeyToDate;
 	}
-	
+
 	public static long getDaysSinceLastUpdated(Data data) throws Exception {
 		Map<String, LocalDate> map = getMapOfKeyToDate();
 		LocalDate now = LocalDate.now();
@@ -285,13 +290,11 @@ public class Util {
 			sb.append(key);
 			LocalDate localDate = map2.get(key);
 			sb.append(localDate.toString());
-	    	sb.append("\n");
+			sb.append("\n");
 		}
-	    sb.setLength(sb.length() - 1);
+		sb.setLength(sb.length() - 1);
 		Util.writeTextToFile(filePath, sb.toString());
-		
+
 	}
-	
-	    
 
 }
