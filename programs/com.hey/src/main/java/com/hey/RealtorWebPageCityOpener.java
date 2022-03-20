@@ -11,7 +11,7 @@ public class RealtorWebPageCityOpener {
 	private static boolean shouldTabBeOpened(CityStats.Data data) throws Exception {
 		return !data.metroPopulation.contains("N/A") 
 				&& Util.getDaysSinceLastUpdated(data) > 10 && Integer.valueOf(data.medianIncome.replace("$", "")) > 0
-				&& data.stateName.equals("Hawaii") && data.metro.contains("Honolulu");
+				&& data.stateName.equals("Nevada") && data.metro.contains("Vegas");
 	}
 
 	private static Map<String, String> map = new HashMap<String, String>();
