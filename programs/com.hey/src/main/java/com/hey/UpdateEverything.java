@@ -18,7 +18,7 @@ public class UpdateEverything {
 		}
 		CreateBigCsv.main(null);
 		MetroCsvs.main(null);
-		MetroSummary.main(null);
+		MetroStats.main(null);
 	//	MetroTabs.main(null);
 		CityVsUSAComparison.main(null);
 

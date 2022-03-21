@@ -10,7 +10,7 @@ import java.util.Set;
 
 import main.java.com.hey.CityStats.AndrewStringWriter;
 
-public class MetroSummary {
+public class MetroStats {
 
 	static class Stats extends Stats2 {
 		WeightedAverage peoplePerSqMi = new WeightedAverage();
@@ -215,7 +215,7 @@ public class MetroSummary {
 			statsList.add(mapOfMetroNameToStats.get(key));
 		}
 		Collections.sort(statsList, Collections.reverseOrder());
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\MetroStats\\MetroSummary.csv";
+		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\MetroStats\\MetroStats.csv";
 		FileWriter myWriter = new FileWriter(filePath);
 		AndrewStringWriter sb = new AndrewStringWriter();
 		sb.appendLastItem(startSt);
