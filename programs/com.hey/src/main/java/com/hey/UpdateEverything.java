@@ -20,6 +20,7 @@ public class UpdateEverything {
 		MetroCsvs.main(null);
 		MetroStats.main(null);
 		CountyStats.main(null);
+		CountyStats.main(null);
 	//	MetroTabs.main(null);
 		CityVsUSAComparison.main(null);
 
