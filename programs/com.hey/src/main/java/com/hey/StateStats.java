@@ -11,22 +11,14 @@ import java.util.Set;
 import main.java.com.hey.CityStats.AndrewStringWriter;
 import main.java.com.hey.MetroStats.Stats;
 
-public class CountyStats {
-
-	static class CountyStatsObj extends MetroStats.Stats {
-		public String countyName = "";
-		public int countyPopulation = 0;
-		public String mostPopulatedCityName = "";
-		public int mostPopulatedCityPop = 0;
+public class StateStats {
+	
+	static class StateStatsObj extends MetroStats.Stats{
+		public int statePopulation = 0;
 		public String stateName = "";
-		
 	}
-
-	public static String getCountyKey(CityStats.Data data) {
-		return data.countyName + "," + data.stateName + "," + data.percentDemocrat;
-	}
-
-	static void addStuffToStats(CountyStatsObj stats, CityStats.Data data) {
+	
+	static void addStuffToStats(StateStatsObj stats, CityStats.Data data) {
 		stats.peoplePerSqMi.addCity(data, data.populationDensity);
 		stats.hottestMonthsHigh.addCity(data, data.hottestMonthsHigh);
 		stats.coldestHigh.addCity(data, data.coldestHigh);
@@ -61,19 +53,16 @@ public class CountyStats {
 		stats.sexOffenderCount.addCity(data, data.sexOffenderCount);
 		stats.addDataToMapOfTimeZoneToPopulation(data);
 		int cityPop = Integer.valueOf(data.population);
-		stats.countyPopulation += cityPop;
-		if (cityPop > stats.mostPopulatedCityPop) {
-			stats.mostPopulatedCityPop = cityPop;
-			stats.mostPopulatedCityName = data.cityName;
-		}
+		stats.statePopulation += cityPop;
 
 	}
 	
-	static String startSt = "County Name,County Population,Predominant City,State,People Per Sq Mi,Hottest month's avg high (F),Coldest month's avg high (F),Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),"
+	static String startSt = "State Name,Population,People Per Sq Mi,Hottest month's avg high (F),Coldest month's avg high (F),Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),"
 			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
 			+ "Median household income,Poverty Rate,Median home price,Median home sqft,"
 			+ "Median home cost per sqft,Homeownership Rate,Population growth since 2010,"
 			+ "% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,UV Index,Single Population,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Predominant Timezone";
+
 
 	static void addToSb(AndrewStringWriter sb, Stats stat) {
 		sb.appendWA(stat.peoplePerSqMi);
@@ -110,35 +99,33 @@ public class CountyStats {
 		sb.appendWA(stat.sexOffenderCount);
 		sb.appendWithComma(stat.getPrimaryTimeZone());
 	}
-
-	///////////////////////////////////////////////////////////////////////
+	
 	public static void main(String[] args) throws Exception {
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
-		Map<String, CountyStatsObj> mapOfCountyNameToStats = new HashMap<>();
+		Map<String, StateStatsObj> mapOfStateNameToStats = new HashMap<>();
 		for (CityStats.Data data : dataList) {
-			String countyKey = getCountyKey(data);
-			if (!mapOfCountyNameToStats.containsKey(countyKey)) {
-				CountyStatsObj stats = new CountyStatsObj();
-				stats.countyName = data.countyName;
+			String state = data.stateName;
+			if (!mapOfStateNameToStats.containsKey(state)) {
+				StateStatsObj stats = new StateStatsObj();
 				stats.stateName = data.stateName;
-				mapOfCountyNameToStats.put(countyKey, stats);
+				mapOfStateNameToStats.put(state, stats);
 			}
-			CountyStatsObj stats = mapOfCountyNameToStats.get(countyKey);
+			StateStatsObj stats = mapOfStateNameToStats.get(state);
 			addStuffToStats(stats, data);
 		}
 		
-		Set<String> keys = mapOfCountyNameToStats.keySet();
-		List<CountyStatsObj> statsList = new ArrayList<>();
+		Set<String> keys = mapOfStateNameToStats.keySet();
+		List<StateStatsObj> statsList = new ArrayList<>();
 		for (String key : keys) {
-			statsList.add(mapOfCountyNameToStats.get(key));
+			statsList.add(mapOfStateNameToStats.get(key));
 		}
-		Collections.sort(statsList, (a,b)->b.countyPopulation-a.countyPopulation);
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CountyStats\\CountyStats.csv";
+		Collections.sort(statsList, (a,b)->a.stateName.compareTo(b.stateName));
+		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\StateStats\\StateStats.csv";
 		FileWriter myWriter = new FileWriter(filePath);
 		AndrewStringWriter sb = new AndrewStringWriter();
 		sb.appendLastItem(startSt);
-		for (CountyStatsObj stat : statsList) {
-			sb.appendWithComma(stat.countyName).appendWithComma(stat.countyPopulation).appendWithComma(stat.mostPopulatedCityName).appendWithComma(stat.stateName);
+		for (StateStatsObj stat : statsList) {
+			sb.appendWithComma(stat.stateName).appendWithComma(stat.statePopulation);
 			addToSb(sb, stat);
 			sb.appendEnding();
 		}
