@@ -12,7 +12,7 @@ This .csv is very similar to CountyStats.csv exept the data is provided on the m
 ## Weather and Demographics data calculated on the State level (StateStats.csv)
 This .csv is very similar to CountyStats.csv exept the data is provided on the State level as opposed to the county level. StateStats.csv can be found here: <a href="https://amcneil36.github.io/programs/StateStats/StateStats.csv" download>https://amcneil36.github.io/programs/StateStats/StateStats.csv</a>
 
-### Column name descriptions
+## Datapoints
 
 | Column name | Description (if necessary) | Data source | Date updated |
 | ----------- | ----------- | ----------- | ----------- |
