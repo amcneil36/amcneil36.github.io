@@ -4,6 +4,15 @@
 
 ### The .csv file can be found here: <a href="https://amcneil36.github.io/programs/CityStats/CityStats.csv" download>https://amcneil36.github.io/programs/CityStats/CityStats.csv</a>
 
+## Weather and Demographics data calculated on the county level (CountyStats.csv)
+CountyStats.csv is a .csv file with weather and demographics data for all USA counties. All data is on the county level. This means that you can see things like the average summer high for the county. All numbers in this .csv (including population density) are calculated from using a weighted average except for the county population column. The county population is just a sum of the population of all cities in the county. The weighted average is used for the rest of the columns so that a city of 10 people has less influence on the data than a city of 1,000,000 people. This is so the statistics are representative of a typical person living there. The data for this .csv was calculated from using the data from CityStats.csv. CountyStats.csv can be found here: <a href="https://amcneil36.github.io/programs/CountyStats/CountyStats.csv" download>https://amcneil36.github.io/programs/CountyStats/CountyStats.csv</a>
+
+## Weather and Demographics data calculated on the metro level (MetroStats.csv)
+This .csv is very similar to CountyStats.csv exept the data is provided on the metro level as opposed to the county level. MetroStats.csv can be found here: <a href="https://amcneil36.github.io/programs/MetroStats/MetroStats.csv" download>https://amcneil36.github.io/programs/MetroStats/MetroStats.csv</a>
+
+## Weather and Demographics data calculated on the State level (StateStats.csv)
+This .csv is very similar to CountyStats.csv exept the data is provided on the State level as opposed to the county level. StateStats.csv can be found here: <a href="https://amcneil36.github.io/programs/StateStats/StateStats.csv" download>https://amcneil36.github.io/programs/StateStats/StateStats.csv</a>
+
 ### Column name descriptions
 
 | Column name | Description (if necessary) | Data source | Date updated |
@@ -66,17 +75,8 @@
 | Number of tornadoes per year | |[Home Facts](https://www.homefacts.com/) | Sep 2021 |
 | Number of earthquakes since 1931 | |[Home Facts](https://www.homefacts.com/) | Sep 2021 |
 
-## Weather and Demographics data calculated on the county level (CountyStats.csv)
-CountyStats.csv is a .csv file with weather and demographics data for all USA counties. All data is on the county level. This means that you can see things like the average summer high for the county. All numbers in this .csv (including population density) are calculated from using a weighted average except for the county population column. The county population is just a sum of the population of all cities in the county. The weighted average is used for the rest of the columns so that a city of 10 people has less influence on the data than a city of 1,000,000 people. This is so the statistics are representative of a typical person living there. The data for this .csv was calculated from using the data from CityStats.csv. CountyStats.csv can be found here: <a href="https://amcneil36.github.io/programs/CountyStats/CountyStats.csv" download>https://amcneil36.github.io/programs/CountyStats/CountyStats.csv</a>
-
-## Weather and Demographics data calculated on the metro level (MetroStats.csv)
-This .csv is very similar to CountyStats.csv exept the data is provided on the metro level as opposed to the county level. MetroStats.csv can be found here: <a href="https://amcneil36.github.io/programs/MetroStats/MetroStats.csv" download>https://amcneil36.github.io/programs/MetroStats/MetroStats.csv</a>
-
-## Weather and Demographics data calculated on the State level (StateStats.csv)
-This .csv is very similar to CountyStats.csv exept the data is provided on the State level as opposed to the county level. StateStats.csv can be found here: <a href="https://amcneil36.github.io/programs/StateStats/StateStats.csv" download>https://amcneil36.github.io/programs/StateStats/StateStats.csv</a>
-
 ## City vs USA Comparison (webpage)
-[CityVsUSAComparison](https://amcneil36.github.io/programs/cityVsUSAComparison/cityVsUSAComparison.html) shows which percentiles that each city's weather and demographics data fall under (in comparison to the rest of the USA cities). It uses the data from most of the columns from this CSV.
+[CityVsUSAComparison](https://amcneil36.github.io/programs/cityVsUSAComparison/cityVsUSAComparison.html) shows which percentiles that each city's weather and demographics data fall under (in comparison to the rest of the USA cities). It uses the data from most of the columns from CityStats.csv.
 
 ## Additional Information
 Data is retrieved for all USA cities, towns, and CDPs (Census Designated Places). In an effort to be less verbose with word choice, I refer to cities, towns, and CDPs all as cities instead of trying to make a distinction between them. Note that cities, towns, and CDPs are all separate entities. So a city will not be part of a town or CDP and vice-versa.
