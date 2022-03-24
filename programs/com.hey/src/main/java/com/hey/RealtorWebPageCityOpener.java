@@ -8,12 +8,10 @@ import java.util.Map;
 
 public class RealtorWebPageCityOpener {
 
-	// salinas. ventura.
 	private static boolean shouldTabBeOpened(CityStats.Data data) throws Exception {
 		return !data.metroPopulation.contains("N/A") && Util.getDaysSinceLastUpdated(data) > 10
 				&& Integer.valueOf(data.medianIncome.replace("$", "")) > 0 && data.stateName.equals("California")
-				&& data.metro.contains("Santa Maria") && Integer.valueOf(data.hottestMonthsHigh) < 84
-				&& Integer.valueOf(data.coldestHigh) > 55 && Integer.valueOf(data.population) > 1000;
+				&& data.metro.contains("San Diego") && Integer.valueOf(data.population) > 1000;
 	}
 
 	private static Map<String, String> map = new HashMap<String, String>();
