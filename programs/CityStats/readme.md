@@ -1,8 +1,7 @@
-# USA Weather and Demographics Information
+# Weather and Demographics Information for all USA cities
 
-## One .csv file with weather and demographics information for all USA cities (CityStats.csv)
-
-### The .csv file can be found here: <a href="https://amcneil36.github.io/programs/CityStats/CityStats.csv" download>https://amcneil36.github.io/programs/CityStats/CityStats.csv</a>
+## Weather and Demographics data calculated on the city level (CityStats.csv)
+CityStats.csv is a .csv file with weather and demographics information for all USA cities. The .csv file can be found here: <a href="https://amcneil36.github.io/programs/CityStats/CityStats.csv" download>https://amcneil36.github.io/programs/CityStats/CityStats.csv</a>
 
 ## Weather and Demographics data calculated on the county level (CountyStats.csv)
 CountyStats.csv is a .csv file with weather and demographics data for all USA counties. All data is on the county level. This means that you can see things like the average summer high for the county. All numbers in this .csv (including population density) are calculated from using a weighted average except for the county population column. The county population is just a sum of the population of all cities in the county. The weighted average is used for the rest of the columns so that a city of 10 people has less influence on the data than a city of 1,000,000 people. This is so the statistics are representative of a typical person living there. The data for this .csv was calculated from using the data from CityStats.csv. CountyStats.csv can be found here: <a href="https://amcneil36.github.io/programs/CountyStats/CountyStats.csv" download>https://amcneil36.github.io/programs/CountyStats/CountyStats.csv</a>
