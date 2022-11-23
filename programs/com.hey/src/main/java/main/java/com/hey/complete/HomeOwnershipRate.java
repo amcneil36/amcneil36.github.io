@@ -1,8 +1,8 @@
 package main.java.com.hey.complete;
 
 
-public class HomeOwnershipRate extends GenericDataReadAndWriter {
-
+public class HomeOwnershipRate {//extends GenericDataReadAndWriter {
+/*
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
 			if (!data.homeOwnershipRate.contains("N/A")) {
@@ -32,5 +32,5 @@ public class HomeOwnershipRate extends GenericDataReadAndWriter {
 		// https://www.bestplaces.net/transportation/city/california/oceanside transit
 		// bike walk
 
-	}
+	}*/
 }

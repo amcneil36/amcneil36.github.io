@@ -1,10 +1,11 @@
-package com.hey.complete;
+package main.java.com.hey.complete;
 
-import com.hey.GenericDataReadAndWriter;
-import com.hey.Util;
+//import com.hey.GenericDataReadAndWriter;
 
-public class UVIndexGenericDataReadAndWriter extends GenericDataReadAndWriter {
+import main.java.com.hey.Util;
 
+public class UVIndexGenericDataReadAndWriter {//extends GenericDataReadAndWriter {
+/*
 	@Override
 	protected void updateData(Data data, String stateName) {
 	//	if (!data.uvIndex.contains("N/A")) {
@@ -39,5 +40,5 @@ public class UVIndexGenericDataReadAndWriter extends GenericDataReadAndWriter {
 		// https://www.bestplaces.net/transportation/city/california/oceanside transit
 		// bike walk
 
-	}
+	}*/
 }

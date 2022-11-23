@@ -2,12 +2,12 @@ package com.hey;
 
 import org.junit.Test;
 
-import com.hey.old.RealtorCountyReader;
+//import com.hey.old.RealtorCountyReader;
 
 import org.junit.Assert;
 
 public class RealtorReaderTest {
-
+/*
 	@Test
 	public void hi() {
 		Assert.assertEquals(259900, RealtorCountyReader.getIntFromString("$259.9K"));
@@ -31,5 +31,5 @@ public class RealtorReaderTest {
 	@Test
 	public void hi5() {
 		Assert.assertEquals(125, RealtorCountyReader.getIntFromString("$125"));
-	}
+	}*/
 }

@@ -1,10 +1,11 @@
-package com.hey.complete;
+package main.java.com.hey.complete;
 
-import com.hey.GenericDataReadAndWriter;
-import com.hey.Util;
+//import com.hey.GenericDataReadAndWriter;
 
-public class SinglePopulation extends GenericDataReadAndWriter{
+import main.java.com.hey.Util;
 
+public class SinglePopulation {//extends GenericDataReadAndWriter{
+/*
 	private static String PREFIX = "Single Population ";
 	
 	@Override
@@ -36,5 +37,5 @@ public class SinglePopulation extends GenericDataReadAndWriter{
 		// https://www.bestplaces.net/transportation/city/california/oceanside transit
 		// bike walk
 
-	}
+	}*/
 }

@@ -1,9 +1,9 @@
-package com.hey.complete;
+package main.java.com.hey.complete;
 
-import com.hey.GenericDataReadAndWriter;
+//import com.hey.GenericDataReadAndWriter;
 
-public class NoopGenericDataReadAndWriter extends GenericDataReadAndWriter {
-
+public class NoopGenericDataReadAndWriter {//extends GenericDataReadAndWriter {
+/*
 	@Override
 	protected void updateData(Data data, String stateName) {
 		
@@ -15,5 +15,5 @@ public class NoopGenericDataReadAndWriter extends GenericDataReadAndWriter {
 		n.processAllStates();
 
 	}
-
+*/
 }

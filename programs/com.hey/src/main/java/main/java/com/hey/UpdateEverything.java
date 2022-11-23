@@ -6,8 +6,7 @@ public class UpdateEverything {
 	public static void main(String[] args) throws Exception {
 		
 		NoopCityStats n = new NoopCityStats();
-		//n.processAllStates();
-		n.processAllStates();
+		n.processAllStates(); // doesn't do anything. just makes sure there is no error
 		int totalMsSlept = 0;
 		while(n.numStatesComplete < 51) {
 			if (totalMsSlept > 10000) {

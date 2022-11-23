@@ -72,7 +72,7 @@ public class RealtorCountyReader {
 		}
 		while (myReader.hasNextLine()) {
 			String cityName = myReader.nextLine().toLowerCase();
-			if (cityName.startsWith("©") || cityName.startsWith("get the app")) {
+			if (cityName.startsWith("ï¿½") || cityName.startsWith("get the app")) {
 				break;
 			}
 			String medianPrice = myReader.nextLine();

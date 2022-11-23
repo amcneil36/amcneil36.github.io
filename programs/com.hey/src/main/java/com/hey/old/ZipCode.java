@@ -10,7 +10,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.jsoup.nodes.Element;
 
-import com.hey.Util;
+import main.java.com.hey.Util;
 
 public class ZipCode {
 
@@ -224,13 +224,13 @@ public class ZipCode {
 		String text2 = Util
 				.ReadTextFromPage("https://www.bestplaces.net/weather/zip-code/" + obj.getEndingUrl());
 
-		int startIdx3 = text2.indexOf("August ", text2.indexOf("(°F)")) + "August ".length();
-		int endIdx3 = text2.indexOf("°", startIdx3);
+		int startIdx3 = text2.indexOf("August ", text2.indexOf("(ï¿½F)")) + "August ".length();
+		int endIdx3 = text2.indexOf("ï¿½", startIdx3);
 		String augHi = text2.substring(startIdx3, endIdx3);
 		obj.augHi = augHi;
 
-		int startIdx2 = text2.indexOf("December ", text2.indexOf("(°F)")) + "December ".length();
-		int endIdx2 = text2.indexOf("°", startIdx2);
+		int startIdx2 = text2.indexOf("December ", text2.indexOf("(ï¿½F)")) + "December ".length();
+		int endIdx2 = text2.indexOf("ï¿½", startIdx2);
 		String decHi = text2.substring(startIdx2, endIdx2);
 		obj.decHi = decHi;
 		obj.augHiMinusDecHi = Integer.parseInt(obj.augHi) - Integer.parseInt(obj.decHi);

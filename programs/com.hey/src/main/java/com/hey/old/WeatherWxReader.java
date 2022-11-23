@@ -8,7 +8,7 @@ import java.util.Scanner;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.hey.Util;
+import main.java.com.hey.Util;
 
 public class WeatherWxReader {
 
