@@ -6,7 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import main.java.com.hey.MetroStats.WeightedAverage;
+import main.java.com.hey.summaries.MetroStats;
+import main.java.com.hey.summaries.MetroStats.WeightedAverage;
 
 public abstract class CityStats {
 
@@ -80,7 +81,7 @@ public abstract class CityStats {
 	public static class AndrewStringWriter {
 		StringBuilder sb = new StringBuilder();
 
-		AndrewStringWriter appendDollar(String st) {
+		public AndrewStringWriter appendDollar(String st) {
 			if (!st.contains("$") && !st.contains("N/A")) {
 				sb.append("$").append(st).append(",");
 				return this;
@@ -89,52 +90,52 @@ public abstract class CityStats {
 			return this;
 		}
 
-		AndrewStringWriter appendWithComma(String st) {
+		public AndrewStringWriter appendWithComma(String st) {
 			sb.append(st).append(",");
 			return this;
 		}
 
-		AndrewStringWriter appendWithComma(int st) {
+		public AndrewStringWriter appendWithComma(int st) {
 			sb.append(st).append(",");
 			return this;
 		}
 
-		AndrewStringWriter appendWAPercent(WeightedAverage wa) {
+		public AndrewStringWriter appendWAPercent(WeightedAverage wa) {
 			sb.append(wa.getWeightedAverage());
 			sb.append("%,");
 			return this;
 		}
 
-		AndrewStringWriter appendWADollar(WeightedAverage wa) {
+		public AndrewStringWriter appendWADollar(WeightedAverage wa) {
 			if (!wa.getWeightedAverage().equals("N/A")) {
 				sb.append("$");	
 			}
 			return appendWA(wa);
 		}
 
-		AndrewStringWriter appendWA(WeightedAverage wa) {
+		public AndrewStringWriter appendWA(WeightedAverage wa) {
 			return appendWithComma(wa.getWeightedAverage());
 		}
 
-		AndrewStringWriter appendLastItem(String st) {
+		public AndrewStringWriter appendLastItem(String st) {
 			sb.append(st);
 			sb.append("\n");
 			return this;
 		}
 
-		AndrewStringWriter appendLastItem(int st) {
+		public AndrewStringWriter appendLastItem(int st) {
 			sb.append(st);
 			sb.append("\n");
 			return this;
 		}
 
-		AndrewStringWriter appendEnding() {
+		public AndrewStringWriter appendEnding() {
 			sb.setLength(sb.length() - 1);
 			sb.append("\n");
 			return this;
 		}
 
-		String getString() {
+		public String getString() {
 			return sb.toString();
 		}
 	}

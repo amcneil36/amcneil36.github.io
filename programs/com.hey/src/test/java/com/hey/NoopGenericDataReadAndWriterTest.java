@@ -5,7 +5,7 @@ import java.util.Scanner;
 
 import org.junit.Test;
 
-import main.java.com.hey.complete.NoopGenericDataReadAndWriter;
+import com.hey.old.NoopGenericDataReadAndWriter;
 
 public class NoopGenericDataReadAndWriterTest {
 
