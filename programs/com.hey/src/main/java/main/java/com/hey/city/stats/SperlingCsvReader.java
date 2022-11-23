@@ -3,12 +3,10 @@ package main.java.com.hey.city.stats;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
 import main.java.com.hey.CityStats;
-import main.java.com.hey.CityStats.Data;
 
 public class SperlingCsvReader extends CityStats {
 

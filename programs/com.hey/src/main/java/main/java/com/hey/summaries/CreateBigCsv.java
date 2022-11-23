@@ -1,11 +1,9 @@
 package main.java.com.hey.summaries;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 import main.java.com.hey.CityStats;
-import main.java.com.hey.CityStats.Data;
 
 public class CreateBigCsv {
 	

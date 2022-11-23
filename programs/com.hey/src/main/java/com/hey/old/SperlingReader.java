@@ -1,20 +1,10 @@
 package com.hey.old;
 
-import java.io.*;
-import java.io.IOException;
-
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-
-import main.java.com.hey.Util;
-
-import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import main.java.com.hey.Util;
 
 // C:\Users\anmcneil\eclipse-workspace\com.hey
 

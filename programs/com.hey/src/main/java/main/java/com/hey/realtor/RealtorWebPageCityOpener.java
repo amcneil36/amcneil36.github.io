@@ -8,7 +8,6 @@ import java.util.Map;
 
 import main.java.com.hey.CityStats;
 import main.java.com.hey.Util;
-import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.summaries.CreateBigCsv;
 
 public class RealtorWebPageCityOpener {

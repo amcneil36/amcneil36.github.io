@@ -9,13 +9,13 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
-import java.time.temporal.ChronoUnit;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jsoup.Connection;
@@ -101,33 +101,6 @@ public class Util {
 		Connection conn = Jsoup.connect(url);
 		Document doc = conn.get();
 		return doc.body();
-	}
-
-	private static String JsoupStuff(String url) {
-		for (int i = 0; i < 10; i++) {
-			Connection conn = Jsoup.connect(url);
-			try {
-				Document doc = conn.get();
-				String text = doc.body().text();
-				if (text.contains("Oops. This is embarrassing.") && i == 9) {
-					System.out.println("jsoup connected to this page but it said oops this is embarassing: " + url);
-					continue;
-				}
-				return text;
-			} catch (IOException ex) {
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				if (i == 9) {
-					throw new RuntimeException("jsoup couldn't connect to: " + url, ex);
-				}
-			}
-		}
-		throw new RuntimeException("jsoup couldn't connect to: " + url);
-
 	}
 
 	public static void log(String str) {

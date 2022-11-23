@@ -1,7 +1,6 @@
 package main.java.com.hey.city.stats;
 
 import main.java.com.hey.CityStats;
-import main.java.com.hey.CityStats.Data;
 
 public class NoopCityStats extends CityStats {
 

@@ -1,9 +1,5 @@
 package main.java.com.hey.other;
 
-import java.awt.Desktop;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
 import main.java.com.hey.UpdatePrinter;
@@ -59,17 +55,6 @@ public static void readAll() throws Exception {
 			sb.append("\"").append(st.replace("-", " ")).append("\" OR ");
 		}
 		System.out.println(sb.toString());
-	}
-
-
-	private static void openTabs() throws Exception, IOException, URISyntaxException {
-		List<String> inp = Util.readTextFromFile("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\com.hey\\level2.txt");
-		for (String st : inp) {
-			String companyName = st;
-			companyName = companyName.replace(" ", "-").replace("&", "and");
-			String url = "https://www.levels.fyi/company/" + companyName + "/salaries/Software-Engineer/";
-			Desktop.getDesktop().browse(new URI(url));
-		}
 	}
 
 }

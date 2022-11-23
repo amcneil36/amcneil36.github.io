@@ -11,7 +11,6 @@ import java.util.Map;
 
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
-import main.java.com.hey.CityStats;
 import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.summaries.CreateBigCsv;
 

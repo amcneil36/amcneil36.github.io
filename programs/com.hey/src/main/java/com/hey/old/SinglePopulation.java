@@ -1,9 +1,5 @@
 package com.hey.old;
 
-//import com.hey.GenericDataReadAndWriter;
-
-import main.java.com.hey.Util;
-
 public class SinglePopulation {//extends GenericDataReadAndWriter{
 /*
 	private static String PREFIX = "Single Population ";

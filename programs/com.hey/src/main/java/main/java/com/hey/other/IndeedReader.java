@@ -16,11 +16,8 @@ import java.util.Scanner; // Import the Scanner class to read text files
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.jsoup.nodes.Element;
-
 import main.java.com.hey.CityStats;
 import main.java.com.hey.Util;
-import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.summaries.CreateBigCsv;
 
 // update code to show banned ip address count. maybe clear after 5 ip addresses
@@ -235,43 +232,6 @@ public class IndeedReader {
 			e.printStackTrace();
 		}
 
-	}
-
-	private static int extractJobPostingsFromUrl(String url) {
-		Element element = null;
-		Element element2 = null;
-		try {
-			element = Util.RetrieveHtmlcodeFromPage(url);
-			if (element.text().length() == 0) {
-				// System.out.println("no text for url: " + url);
-				return -1;
-			}
-			Element element3 = element.getElementById("original_radius_result");
-			if (element3 != null) {
-				// System.out.println("url found no jobs: " + url);
-				// System.out.println(element3.text());
-				return 0;
-			}
-			element2 = element.getElementById("searchCountPages");
-			if (element2 == null) {
-				return 0;
-			}
-			String txt = element2.text();
-			int begIdx = "Page 1 of ".length();
-			int endIdx = txt.indexOf(" ", begIdx);
-			txt = txt.substring(begIdx, endIdx);
-			txt = txt.replace(",", "");
-			return Integer.valueOf(txt);
-		} catch (Exception ex) {
-			System.out.println("exception at url: " + url);
-			if (element != null) {
-				System.out.println("element1 text: " + element.text());
-			}
-			if (element2 != null) {
-				System.out.println("element2 text: " + element2.text());
-			}
-			return -1;
-		}
 	}
 
 	private static void populateMap() {

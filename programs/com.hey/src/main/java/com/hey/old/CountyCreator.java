@@ -4,12 +4,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
@@ -229,9 +226,7 @@ public class CountyCreator {
 			File myObj = new File("citydatainput.csv");
 			Scanner myReader = new Scanner(myObj);
 			myReader.nextLine();
-			int idx = 0;
 			while (myReader.hasNextLine()) {
-				idx++;
 				String line = myReader.nextLine();
 				String[] arr = line.split(",");
 				String countyName = arr[2].toLowerCase();

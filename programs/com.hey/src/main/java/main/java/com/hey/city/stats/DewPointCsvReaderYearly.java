@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Scanner;
 
 import main.java.com.hey.CityStats;
-import main.java.com.hey.CityStats.Data;
 
 public class DewPointCsvReaderYearly extends CityStats{
 
