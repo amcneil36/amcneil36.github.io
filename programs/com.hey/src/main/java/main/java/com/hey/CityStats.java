@@ -150,6 +150,8 @@ public abstract class CityStats extends CityStatsSuper {
 				data.hurricanes = arr[idx++];
 				data.tornadoes = arr[idx++];
 				data.earthQuakes = arr[idx++];
+				data.fbiViolentCrimeRate = arr[idx++];
+				data.fbiPropertyCrimeRate = arr[idx++];
 			} catch (Exception ex) {
 
 			}
