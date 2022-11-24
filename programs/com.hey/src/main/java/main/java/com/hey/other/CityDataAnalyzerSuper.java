@@ -17,6 +17,8 @@ public abstract class CityDataAnalyzerSuper {
 	
 	public abstract int calculateScore(CityStats.Data data);
 	
+	public abstract boolean sortAscending();
+	
 	public void doEverything() throws Exception {
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
 		removeInvalidData(dataList);
@@ -35,6 +37,9 @@ public abstract class CityDataAnalyzerSuper {
 	
 	private void sortData(List<CityStats.Data> dataList) {
 		Collections.sort(dataList, (a,b)->calculateScore(a)-calculateScore(b));
+		if (!sortAscending()) {
+			Collections.reverse(dataList);
+		}
 	}
 	
 	private void printData(List<Data> dataList) {
