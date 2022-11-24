@@ -74,8 +74,8 @@ public class FBICrimeStats extends CityStats{
 			int violentCrimes = Integer.valueOf(arr[violentCrimeIdx]);
 			int propertyCrimes = Integer.valueOf(arr[propertyCrimeIdx]);
 			FBIData fbi = new FBIData();
-			fbi.violentCrimeRate = 100000*violentCrimes/population;
-			fbi.propertyCrimeRate = 100000*propertyCrimes/population;
+			fbi.violentCrimeRate = (violentCrimes/population)*100000;
+			fbi.propertyCrimeRate = (propertyCrimes/population)*100000;
 			mapOfCityToFbiData.put(cityName, fbi);
 		}
 		mapOfStateToMap.put(stateName, mapOfCityToFbiData);

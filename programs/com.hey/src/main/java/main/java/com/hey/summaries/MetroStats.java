@@ -46,6 +46,8 @@ public class MetroStats {
 		WeightedAverage singlePopulation = new WeightedAverage();
 		WeightedAverage percentOfIncomeLostToHousingCosts = new WeightedAverage();
 		WeightedAverage sexOffenderCount = new WeightedAverage();
+		WeightedAverage fbiViolentCrimeData = new WeightedAverage();
+		WeightedAverage fbiPropertyCrimeData = new WeightedAverage();
 		private Map<String, Integer> mapOfStateToPopulation = new HashMap<>();
 		private Map<String, Integer> mapOfTimeZoneToPopulation = new HashMap<>();
 		
@@ -142,6 +144,8 @@ public class MetroStats {
 		stats.singlePopulation.addCity(data, data.singlePopulation);
 		stats.percentOfIncomeLostToHousingCosts.addCity(data, data.percentOfIncomeLostToHousingCosts);
 		stats.sexOffenderCount.addCity(data, data.sexOffenderCount);
+		stats.fbiViolentCrimeData.addCity(data, data.fbiViolentCrimeRate);
+		stats.fbiPropertyCrimeData.addCity(data, data.fbiPropertyCrimeRate);
 		stats.addDataToMapOfStateToPopulation(data);
 		stats.addDataToMapOfTimeZoneToPopulation(data);
 
@@ -151,7 +155,7 @@ public class MetroStats {
 			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
 			+ "Median household income,Poverty Rate,Median home price,Median home sqft,"
 			+ "Median home cost per sqft,Homeownership Rate,Population growth since 2010,"
-			+ "% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,UV Index,Single Population,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Predominant Timezone";
+			+ "% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,UV Index,Single Population,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Predominant Timezone,Num Violent Crimes Per 100k residents,Num Property Crimes Per 100k residents";
 
 	static void addToSb(AndrewStringWriter sb, Stats stat) {
 		sb.appendWA(stat.peoplePerSqMi);
@@ -187,6 +191,8 @@ public class MetroStats {
 		sb.appendWAPercent(stat.percentOfIncomeLostToHousingCosts);
 		sb.appendWA(stat.sexOffenderCount);
 		sb.appendWithComma(stat.getPrimaryTimeZone());
+		sb.appendWA(stat.fbiViolentCrimeData);
+		sb.appendWA(stat.fbiPropertyCrimeData);
 	}
 	
 	public static String getMetroKey(CityStats.Data data) {

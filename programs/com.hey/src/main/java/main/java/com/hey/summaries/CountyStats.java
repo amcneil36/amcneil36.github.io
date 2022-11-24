@@ -60,6 +60,8 @@ public class CountyStats {
 		stats.singlePopulation.addCity(data, data.singlePopulation);
 		stats.percentOfIncomeLostToHousingCosts.addCity(data, data.percentOfIncomeLostToHousingCosts);
 		stats.sexOffenderCount.addCity(data, data.sexOffenderCount);
+		stats.fbiViolentCrimeData.addCity(data, data.fbiViolentCrimeRate);
+		stats.fbiPropertyCrimeData.addCity(data, data.fbiPropertyCrimeRate);
 		stats.addDataToMapOfTimeZoneToPopulation(data);
 		int cityPop = Integer.valueOf(data.population);
 		stats.countyPopulation += cityPop;
@@ -74,7 +76,7 @@ public class CountyStats {
 			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
 			+ "Median household income,Poverty Rate,Median home price,Median home sqft,"
 			+ "Median home cost per sqft,Homeownership Rate,Population growth since 2010,"
-			+ "% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,UV Index,Single Population,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Predominant Timezone";
+			+ "% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,UV Index,Single Population,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Predominant Timezone,Num Violent Crimes Per 100k residents,Num Property Crimes Per 100k residents";
 
 	static void addToSb(AndrewStringWriter sb, Stats stat) {
 		sb.appendWA(stat.peoplePerSqMi);
@@ -110,6 +112,8 @@ public class CountyStats {
 		sb.appendWAPercent(stat.percentOfIncomeLostToHousingCosts);
 		sb.appendWA(stat.sexOffenderCount);
 		sb.appendWithComma(stat.getPrimaryTimeZone());
+		sb.appendWA(stat.fbiViolentCrimeData);
+		sb.appendWA(stat.fbiPropertyCrimeData);
 	}
 
 	///////////////////////////////////////////////////////////////////////
