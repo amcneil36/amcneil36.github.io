@@ -75,6 +75,8 @@ public abstract class CityStats {
 		public String avgApartmentRent = "N/A";
 		public String avgApartmentSize = "N/A";
 		public String metroPopulation = "N/A";
+		public String fbiViolentCrimeRate = "N/A";
+		public String fbiPropertyCrimeRate = "N/A";
 	}
 
 	public static class AndrewStringWriter {
