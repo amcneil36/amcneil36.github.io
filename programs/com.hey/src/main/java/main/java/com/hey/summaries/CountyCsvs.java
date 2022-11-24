@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import main.java.com.hey.CityStats;
+import main.java.com.hey.city.stats.NoopCityStats;
 
 public class CountyCsvs {
 
@@ -15,6 +16,7 @@ public class CountyCsvs {
 	}
 
 	public static void main(String[] args) throws Exception {
+		NoopCityStats cityStats = new NoopCityStats();
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
 		Map<String, List<CityStats.Data>> mapOfCountyNameToData = new HashMap<>();
 		for (CityStats.Data data : dataList) {
@@ -33,7 +35,7 @@ public class CountyCsvs {
 			List<CityStats.Data> countyDataList = mapOfCountyNameToData.get(key);
 			String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CountyStats\\Counties\\"
 					+ countyDataList.get(0).countyName + " " + countyDataList.get(0).stateName + ".csv";
-			CityStats.writeDataToPath(countyDataList, filePath, true);
+			cityStats.writeDataToPath(countyDataList, filePath, true);
 		}
 	}
 }

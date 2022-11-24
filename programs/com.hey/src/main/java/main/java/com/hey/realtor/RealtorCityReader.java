@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import main.java.com.hey.CityStats;
-import main.java.com.hey.Util;
 import main.java.com.hey.CityStats.Data;
+import main.java.com.hey.Util;
+import main.java.com.hey.city.stats.NoopCityStats;
 
 public class RealtorCityReader {
 
@@ -62,7 +62,8 @@ public class RealtorCityReader {
 	}
 
 	private static void writeOutput(HouseData houseData) throws Exception {
-		List<Data> dataList = CityStats.readData(houseData.state);
+		NoopCityStats cityStats = new NoopCityStats();
+		List<Data> dataList = cityStats.readData(houseData.state);
 		boolean isCityFound = false;
 		Map<String, LocalDate> map = Util.getMapOfKeyToDate();
 		for (Data data : dataList) {
@@ -79,7 +80,7 @@ public class RealtorCityReader {
 
 		}
 		if (isCityFound) {
-			CityStats.writeData(dataList, houseData.state, true);
+			cityStats.writeData(dataList, houseData.state, true);
 			Util.writeMapOfDateUpdatedToFile(map);
 		}
 		else {

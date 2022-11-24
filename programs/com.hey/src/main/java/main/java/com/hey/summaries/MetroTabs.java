@@ -15,7 +15,8 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import main.java.com.hey.CityStats;
-import main.java.com.hey.CityStats.AndrewStringWriter;
+import main.java.com.hey.CityStatsSuper.AndrewStringWriter;
+import main.java.com.hey.city.stats.NoopCityStats;
 
 public class MetroTabs {
 
@@ -60,7 +61,8 @@ public class MetroTabs {
 		Collections.sort(dataListSorted, comparator);
 
 		XSSFWorkbook workbook = new XSSFWorkbook();
-		String[] headers = CityStats.startSt.split(",");
+		NoopCityStats cityStats = new NoopCityStats();
+		String[] headers = cityStats.getStartString().split(",");
 		for (List<CityStats.Data> metroStats : dataListSorted) {
 			XSSFSheet sheet = workbook.createSheet(metroStats.get(0).metro);
 			int rowNum = 0;
@@ -72,7 +74,7 @@ public class MetroTabs {
 			}
 			for (CityStats.Data data : metroStats) {
 				AndrewStringWriter sb = new AndrewStringWriter();
-				CityStats.appendRowToSb(sb, data);
+				cityStats.appendRowToSb(sb, data);
 				String st = sb.getString().replace("\n", "");
 				String[] datas = st.split(",");
 				row = sheet.createRow(rowNum++);

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import main.java.com.hey.CityStats;
+import main.java.com.hey.city.stats.NoopCityStats;
 
 public class CreateBigCsv {
 	
@@ -12,7 +13,8 @@ public class CreateBigCsv {
 	}
 	
 	public static void processState(List<CityStats.Data> dataList, String stateName) throws Exception {
-		List<CityStats.Data> list2 = CityStats.readData(stateName);
+		NoopCityStats cityStats = new NoopCityStats();
+		List<CityStats.Data> list2 = cityStats.readData(stateName);
 		for (CityStats.Data data : list2) {
 			dataList.add(data);
 		}
@@ -75,9 +77,10 @@ public class CreateBigCsv {
 	}
 	
 	public static void processAllStates() throws Exception {
+		NoopCityStats cityStats = new NoopCityStats();
 		List<CityStats.Data> dataList = readInput();
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\CityStats.csv";
-		CityStats.writeDataToPath(dataList, filePath, true);
+		cityStats.writeDataToPath(dataList, filePath, true);
 	}
 
 }

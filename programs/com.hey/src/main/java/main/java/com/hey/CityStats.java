@@ -1,22 +1,22 @@
 package main.java.com.hey;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import main.java.com.hey.summaries.MetroStats.WeightedAverage;
+public abstract class CityStats extends CityStatsSuper {
 
-public abstract class CityStats {
-
-	public static String startSt = "City,State,Population,People per sq mi,Metro Name,Metro population,Hottest month's avg high (F),Coldest month's avg high (F),Hottest high minus coldest high,Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,Median household income,Poverty Rate,"
-			+ "Avg Apartment Monthly Rent,Avg Apartment sqft,"
-			+ "Median home price,Median home sqft,Median home cost per sqft,Median home age,"
-			+ "Homeownership Rate,Home appreciation Last Year,Home appreciation Last 5 Years,Home appreciation Last 10 Years,Air quality Index,Average one-way commute time,Unemployment rate,Job growth last year,"
-			+ "Population growth since 2010,County,% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,Timezone,Elevation (ft),"
-			+ "UV Index,Single Population,Walk Score,Transit Score,Bike Score,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Number of hurricanes since 1930,Number of tornadoes per year,Number of earthquakes since 1931";
-
+	@Override
+	public String getStartString() {
+      return "City,State,Population,People per sq mi,Metro Name,Metro population,Hottest month's avg high (F),Coldest month's avg high (F),Hottest high minus coldest high,Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,Median household income,Poverty Rate,"
+  			+ "Avg Apartment Monthly Rent,Avg Apartment sqft,"
+  			+ "Median home price,Median home sqft,Median home cost per sqft,Median home age,"
+  			+ "Homeownership Rate,Home appreciation Last Year,Home appreciation Last 5 Years,Home appreciation Last 10 Years,Air quality Index,Average one-way commute time,Unemployment rate,Job growth last year,"
+  			+ "Population growth since 2010,County,% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,Timezone,Elevation (ft),"
+  			+ "UV Index,Single Population,Walk Score,Transit Score,Bike Score,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Number of hurricanes since 1930,Number of tornadoes per year,Number of earthquakes since 1931,Num Violent Crimes Per 100k residents,Num Property Crimes Per 100k residents";		
+	}
+	
 	public static class Data {
 		public String cityName = "N/A";
 		public String stateName = "N/A";
@@ -79,69 +79,8 @@ public abstract class CityStats {
 		public String fbiPropertyCrimeRate = "N/A";
 	}
 
-	public static class AndrewStringWriter {
-		StringBuilder sb = new StringBuilder();
-
-		public AndrewStringWriter appendDollar(String st) {
-			if (!st.contains("$") && !st.contains("N/A")) {
-				sb.append("$").append(st).append(",");
-				return this;
-			}
-			sb.append(st).append(",");
-			return this;
-		}
-
-		public AndrewStringWriter appendWithComma(String st) {
-			sb.append(st).append(",");
-			return this;
-		}
-
-		public AndrewStringWriter appendWithComma(int st) {
-			sb.append(st).append(",");
-			return this;
-		}
-
-		public AndrewStringWriter appendWAPercent(WeightedAverage wa) {
-			sb.append(wa.getWeightedAverage());
-			sb.append("%,");
-			return this;
-		}
-
-		public AndrewStringWriter appendWADollar(WeightedAverage wa) {
-			if (!wa.getWeightedAverage().equals("N/A")) {
-				sb.append("$");	
-			}
-			return appendWA(wa);
-		}
-
-		public AndrewStringWriter appendWA(WeightedAverage wa) {
-			return appendWithComma(wa.getWeightedAverage());
-		}
-
-		public AndrewStringWriter appendLastItem(String st) {
-			sb.append(st);
-			sb.append("\n");
-			return this;
-		}
-
-		public AndrewStringWriter appendLastItem(int st) {
-			sb.append(st);
-			sb.append("\n");
-			return this;
-		}
-
-		public AndrewStringWriter appendEnding() {
-			sb.setLength(sb.length() - 1);
-			sb.append("\n");
-			return this;
-		}
-
-		public String getString() {
-			return sb.toString();
-		}
-	}
-
-	public static List<Data> readData(String stateName) throws Exception {
+	@Override
+	public List<Data> readData(String stateName) throws Exception {
 		List<Data> dataList = new ArrayList<>();
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\States\\" + stateName
 				+ ".csv";
@@ -220,22 +159,7 @@ public abstract class CityStats {
 		return dataList;
 	}
 
-	public static void writeDataToPath(List<Data> dataList, String filePath, boolean isLastWrite) throws Exception {
-		FileWriter myWriter = new FileWriter(filePath);
-		AndrewStringWriter sb = new AndrewStringWriter();
-		sb.appendLastItem(startSt);
-		for (Data data : dataList) {
-			appendRowToSb(sb, data);
-		}
-		String st = sb.getString();
-		myWriter.write(st);
-		myWriter.close();
-		if (isLastWrite) {
-			System.out.println("wrote to file " + filePath);
-		}
-	}
-
-	public static void appendRowToSb(AndrewStringWriter sb, Data data) {
+	public void appendRowToSb(AndrewStringWriter sb, Data data) {
 		sb.appendWithComma(data.cityName).appendWithComma(data.stateName).appendWithComma(data.population)
 				.appendWithComma(data.populationDensity).appendWithComma(data.metro)
 				.appendWithComma(data.metroPopulation).appendWithComma(data.hottestMonthsHigh)
@@ -263,123 +187,6 @@ public abstract class CityStats {
 				.appendWithComma(data.transitScore).appendWithComma(data.bikeScore)
 				.appendWithComma(data.percentOfIncomeLostToHousingCosts).appendWithComma(data.sexOffenderCount)
 				.appendWithComma(data.hurricanes).appendWithComma(data.tornadoes).appendLastItem(data.earthQuakes);
-	}
-
-	public static void writeData(List<Data> dataList, String stateName, boolean isLastWrite) throws Exception {
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\States\\" + stateName
-				+ ".csv";
-		writeDataToPath(dataList, filePath, isLastWrite);
-	}
-
-	protected abstract void updateData(Data data, String stateName) throws Exception;
-
-	public void processAllStates() throws Exception {
-		runStateAsync("Alabama");
-		runStateAsync("Alaska");
-		runStateAsync("Arizona");
-		runStateAsync("Arkansas");
-		runStateAsync("California");
-		runStateAsync("Colorado");
-		runStateAsync("Connecticut");
-		runStateAsync("Delaware");
-		runStateAsync("Florida");
-		runStateAsync("Georgia");
-		runStateAsync("Hawaii");
-		runStateAsync("Idaho");
-		runStateAsync("Illinois");
-		runStateAsync("Indiana");
-		runStateAsync("Iowa");
-		runStateAsync("Kansas");
-		runStateAsync("Kentucky");
-		runStateAsync("Louisiana");
-		runStateAsync("Maine");
-		runStateAsync("Maryland");
-		runStateAsync("Massachusetts");
-		runStateAsync("Michigan");
-		runStateAsync("Minnesota");
-		runStateAsync("Mississippi");
-		runStateAsync("Missouri");
-		runStateAsync("Montana");
-		runStateAsync("Nebraska");
-		runStateAsync("Nevada");
-		runStateAsync("New Hampshire");
-		runStateAsync("New Jersey");
-		runStateAsync("New Mexico");
-		runStateAsync("New York");
-		runStateAsync("North Carolina");
-		runStateAsync("North Dakota");
-		runStateAsync("Ohio");
-		runStateAsync("Oklahoma");
-		runStateAsync("Oregon");
-		runStateAsync("Pennsylvania");
-		runStateAsync("Rhode Island");
-		runStateAsync("South Carolina");
-		runStateAsync("South Dakota");
-		runStateAsync("Tennessee");
-		runStateAsync("Texas");
-		runStateAsync("Utah");
-		runStateAsync("Vermont");
-		runStateAsync("Virginia");
-		runStateAsync("Washington");
-		runStateAsync("West Virginia");
-		runStateAsync("Wisconsin");
-		runStateAsync("Wyoming");
-		runStateAsync("District of Columbia");
-	}
-
-	private void runStateAsync(String stateName) throws Exception {
-		new RunnableDemo52(stateName, this).start();
-	}
-
-	public void processState(String stateName) throws Exception {
-		List<Data> dataList = readData(stateName);
-		try {
-			UpdatePrinter updatePrinter = new UpdatePrinter(dataList.size(), stateName);
-			int idx = 0;
-			for (Data data : dataList) {
-				updateData(data, stateName);
-				updatePrinter.printUpdateIfNeeded();
-				idx++;
-				if (idx % 30 == 0) {
-					writeData(dataList, stateName, false);
-				}
-			}
-		} finally {
-			writeData(dataList, stateName, true);
-			runCleanup();
-		}
-	}
-
-	protected void runCleanup() {
-		
-	};
-
-	static class RunnableDemo52 implements Runnable {
-		private Thread t;
-		private String stateName;
-		private CityStats g;
-
-		RunnableDemo52(String stateName, CityStats g) {
-			this.stateName = stateName;
-			this.g = g;
-		}
-
-		public void run() {
-			try {
-				g.processState(stateName);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-
-		public void start() {
-			if (t == null) {
-				t = new Thread(this);
-				t.start();
-			}
-		}
-
 	}
 
 }

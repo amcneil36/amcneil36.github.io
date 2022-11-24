@@ -8,6 +8,7 @@ import java.util.Set;
 
 import main.java.com.hey.CityStats;
 import main.java.com.hey.CityStats.Data;
+import main.java.com.hey.city.stats.NoopCityStats;
 
 public class MetroCsvs {
 	
@@ -16,6 +17,7 @@ public class MetroCsvs {
 	}
 
 	public static void main(String[] args) throws Exception {
+		NoopCityStats cityStats = new NoopCityStats();
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
 		Map<String, List<CityStats.Data>> mapOfMetroNameToData = new HashMap<>();
 		for (CityStats.Data data : dataList) {
@@ -35,7 +37,7 @@ public class MetroCsvs {
 			String dominantState = getDominantState(metroDataList);
 			String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\MetroStats\\Metros\\"
 					+ metroDataList.get(0).metro + " " + dominantState + ".csv";
-			CityStats.writeDataToPath(metroDataList, filePath, true);
+			cityStats.writeDataToPath(metroDataList, filePath, true);
 		}
 	}
 
