@@ -3,7 +3,7 @@ package main.java.com.hey.other;
 import main.java.com.hey.CityStats;
 import main.java.com.hey.CityStats.Data;
 
-public class DataAnalyzer extends DataAnalyzerSuper {
+public class CityDataAnalyzer extends CityDataAnalyzerSuper {
 	
 	@Override
 	public boolean isDataValid(CityStats.Data data) {
@@ -33,7 +33,7 @@ public class DataAnalyzer extends DataAnalyzerSuper {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		new DataAnalyzer().doEverything();
+		new CityDataAnalyzer().doEverything();
 	}
 
 }

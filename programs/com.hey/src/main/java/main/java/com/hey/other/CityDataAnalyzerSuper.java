@@ -7,7 +7,7 @@ import main.java.com.hey.CityStats;
 import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.summaries.CreateBigCsv;
 
-public abstract class DataAnalyzerSuper {
+public abstract class CityDataAnalyzerSuper {
 	
 	public abstract boolean isDataValid(CityStats.Data data);
 	
