@@ -100,9 +100,9 @@ public class StateStats {
 		sb.appendWAPercent(stat.singlePopulation);
 		sb.appendWAPercent(stat.percentOfIncomeLostToHousingCosts);
 		sb.appendWA(stat.sexOffenderCount);
+		sb.appendWithComma(stat.getPrimaryTimeZone());
 		sb.appendWA(stat.fbiViolentCrimeData);
 		sb.appendWA(stat.fbiPropertyCrimeData);
-		sb.appendWithComma(stat.getPrimaryTimeZone());
 	}
 	
 	public static void main(String[] args) throws Exception {
