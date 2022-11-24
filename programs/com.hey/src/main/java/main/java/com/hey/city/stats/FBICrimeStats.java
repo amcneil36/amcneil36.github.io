@@ -70,12 +70,12 @@ public class FBICrimeStats extends CityStats{
 			if (arr[populationIdx].contains("County")) { // some cities are called Reno, X County for example. we want to skip these
 				continue;
 			}
-			int population = Integer.valueOf(arr[populationIdx]);
-			int violentCrimes = Integer.valueOf(arr[violentCrimeIdx]);
-			int propertyCrimes = Integer.valueOf(arr[propertyCrimeIdx]);
+			double population = Integer.valueOf(arr[populationIdx]);
+			double violentCrimes = Integer.valueOf(arr[violentCrimeIdx]);
+			double propertyCrimes = Integer.valueOf(arr[propertyCrimeIdx]);
 			FBIData fbi = new FBIData();
-			fbi.violentCrimeRate = (violentCrimes/population)*100000;
-			fbi.propertyCrimeRate = (propertyCrimes/population)*100000;
+			fbi.violentCrimeRate = (int)((violentCrimes/population)*100000);
+			fbi.propertyCrimeRate = (int)((propertyCrimes/population)*100000);
 			mapOfCityToFbiData.put(cityName, fbi);
 		}
 		mapOfStateToMap.put(stateName, mapOfCityToFbiData);
