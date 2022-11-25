@@ -9,7 +9,7 @@ import main.java.com.hey.CityStats;
 import main.java.com.hey.Util;
 
 public class FIPSCodes extends CityStats {
-	
+
 	private static Map<String, String> map = new HashMap<String, String>();
 
 	public static class FipsData {
@@ -24,13 +24,13 @@ public class FIPSCodes extends CityStats {
 			return city + ", " + stateName + " " + county + " " + stateNum + "-" + fips;
 		}
 	}
-	
+
 	private static Map<String, String> mapOfEntityToFipsCode = new HashMap<String, String>();
-	
+
 	private static String getKey(String city, String state, String county) {
 		return city + ";" + state + ";" + county;
 	}
-	
+
 	private static void populateMap() {
 		map = new HashMap<String, String>();
 		fillMapWithItem("al", "Alabama");
@@ -94,17 +94,17 @@ public class FIPSCodes extends CityStats {
 	public static void main(String[] args) throws Exception {
 		List<String> text = Util
 				.readTextFromFile("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\FIPSCodes\\fedCodes.txt");
-		System.out.println(text.get(0));
 		text.remove(0);
 		populateMap();
 		for (String st : text) {
 			String[] lines = st.split("\\|");
 			FipsData data = new FipsData();
 			String city = lines[1];
-			if (city.contains("Statistical") || city.contains("County") || city.contains("Government") || city.contains("(")) {
+			if (city.contains("Statistical") || city.contains("County") || city.contains("Government")
+					|| city.contains("(")) {
 				continue;
 			}
-			while (city.contains(" of " )) {
+			while (city.contains(" of ")) {
 				city = city.substring(city.indexOf(" of ") + " of ".length());
 			}
 			if (city.contains(" Census Designated Place")) {
@@ -122,14 +122,11 @@ public class FIPSCodes extends CityStats {
 				continue;
 			}
 			data.stateName = map.get(stateAcronym.toLowerCase());
-			if (data.city.equals("Weston") && data.stateName.equals("Florida")) {
-				System.out.println(data);	
-			}
 			String key = getKey(data.city, data.stateName, data.county);
 			String value = stateAcronym + "-" + data.fips;
 			mapOfEntityToFipsCode.put(key, value);
 		}
-		
+
 		FIPSCodes fp = new FIPSCodes();
 		fp.processAllStates();
 
@@ -139,7 +136,8 @@ public class FIPSCodes extends CityStats {
 	protected void updateData(Data data, String stateName) throws Exception {
 		String key = getKey(data.cityName, data.stateName, data.countyName);
 		if (mapOfEntityToFipsCode.containsKey(key)) {
-			System.out.println("found!");
+			String fipsCode = mapOfEntityToFipsCode.get(key);
+			data.fipsCode = fipsCode;
 		}
 
 	}
