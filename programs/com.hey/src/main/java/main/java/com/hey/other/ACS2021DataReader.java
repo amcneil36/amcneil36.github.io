@@ -3,8 +3,10 @@ package main.java.com.hey.other;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.jsoup.Jsoup;
 
@@ -33,7 +35,9 @@ public class ACS2021DataReader {
 		List<String> elements = new ArrayList<String>(Arrays.asList(text.split("\n")));
 		elements.remove(0);
 		elements.set(elements.size() - 1, (elements.get(elements.size() - 1).replace("]]", "]")));
+		Set<String> cityAndStates = new HashSet<>();
 		List<Result> elementsList = new ArrayList<>();
+		int totalDuplicates = 0;
 		for (String st : elements) {
 			st = st.replace("\",", ">").replace("],", ">").replace(" [", "").replace("\"", "").replace("]", ">");
 			String[] row = st.split(">");
@@ -50,8 +54,14 @@ public class ACS2021DataReader {
 			for (int i = 1; i < row.length-2; i++) {
 				result.results.put(variables[i-1], row[i]);
 			}
+			if (cityAndStates.contains(result.city + ", " + result.state)) {
+				System.out.println("duplicate! " + result);
+				totalDuplicates++;
+			}
+			cityAndStates.add(result.city + ", " + result.state);
 			elementsList.add(result);
 		}
+		System.out.println("total duplicates: " + totalDuplicates);
 		return elementsList;
 	}
 	
