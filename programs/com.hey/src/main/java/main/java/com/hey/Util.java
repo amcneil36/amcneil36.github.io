@@ -194,6 +194,7 @@ public class Util {
 		fillMapWithItem("wi", "Wisconsin");
 		fillMapWithItem("wy", "Wyoming");
 		fillMapWithItem("dc", "Washington DC");
+		fillMapWithItem("dc", "District of Columbia");
 	}
 
 	private static void fillMapWithItem(String string, String string2) {

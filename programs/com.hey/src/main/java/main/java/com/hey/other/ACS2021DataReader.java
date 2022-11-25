@@ -3,28 +3,29 @@ package main.java.com.hey.other;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
+
+import main.java.com.hey.Util;
 
 public class ACS2021DataReader {
 
 	public static class Result{
 		String city = "";
 		String state = "";
-		int place = 0;
+		String fipsCode = "";
 		Map<String, String> results = new HashMap<>();
 		
 		@Override
 		public String toString() {
-			return city + ", " + state + "; results: " + results;
+			return city + ", " + state + " (" + fipsCode + "); results: " + results;
 		}
 	}
 	
-	public static List<Result> getResults(String[] variables) throws Exception{
+	public static Map<String, Result> getResults(String[] variables) throws Exception{
 		String url = "https://api.census.gov/data/2020/acs/acs5?get=NAME";
 		for (String variable : variables) {
 			url += "," + variable.substring(0, variable.indexOf("("));
@@ -35,13 +36,17 @@ public class ACS2021DataReader {
 		List<String> elements = new ArrayList<String>(Arrays.asList(text.split("\n")));
 		elements.remove(0);
 		elements.set(elements.size() - 1, (elements.get(elements.size() - 1).replace("]]", "]")));
-		Set<String> cityAndStates = new HashSet<>();
-		List<Result> elementsList = new ArrayList<>();
-		int totalDuplicates = 0;
+		Map<String, Result> elementsMap = new HashMap<>();
 		for (String st : elements) {
 			st = st.replace("\",", ">").replace("],", ">").replace(" [", "").replace("\"", "").replace("]", ">");
+			if (st.contains("government")) {
+				continue;
+			}
 			String[] row = st.split(">");
 			String str = row[0];
+			if (StringUtils.countMatches(str, ",") > 1) {
+				continue;
+			}
 			str = str.replace(" city,", ",");
 			str = str.replace(" town,", ",");
 			str = str.replace(" CDP,", ",");
@@ -50,29 +55,22 @@ public class ACS2021DataReader {
 			Result result = new Result();
 			result.city = str.substring(0, str.indexOf(","));
 			result.state = str.substring(str.indexOf(",") + 2);
-			result.place = Integer.valueOf(row[row.length-1]);
+			if (result.state.equals("Puerto Rico")) {
+				continue;
+			}
+			String abbrev = Util.getStateAbbreviation(result.state).toUpperCase();
+			result.fipsCode = abbrev + "-" + Integer.valueOf(row[row.length-1]);
 			for (int i = 1; i < row.length-2; i++) {
 				result.results.put(variables[i-1], row[i]);
 			}
-			if (cityAndStates.contains(result.city + ", " + result.state)) {
-				System.out.println("duplicate! " + result);
-				totalDuplicates++;
-			}
-			cityAndStates.add(result.city + ", " + result.state);
-			elementsList.add(result);
+			elementsMap.put(result.fipsCode, result);
 		}
-		System.out.println("total duplicates: " + totalDuplicates);
-		return elementsList;
+		return elementsMap;
 	}
 	
 	public static void main(String[] args) throws Exception {
 		String[] variables = new String[] {"B01003_001E(population)", "B19013_001E(median_household_income)"};
-		List<Result> elementsList = getResults(variables);
-		for (Result result : elementsList) {
-			if (result.city.equals("Weston") && result.state.equals("Florida")) {
-				System.out.println(result);	
-			}
-		}
+		Map<String, Result> elementsList = getResults(variables);
 	}
 
 }
