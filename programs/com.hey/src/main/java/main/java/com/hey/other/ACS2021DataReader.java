@@ -2,7 +2,9 @@ package main.java.com.hey.other;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jsoup.Jsoup;
 
@@ -12,21 +14,20 @@ public class ACS2021DataReader {
 		String city = "";
 		String state = "";
 		int place = 0;
-		List<String> results = new ArrayList<>(); // maybe make this a map
+		Map<String, String> results = new HashMap<>();
 		
 		@Override
 		public String toString() {
-			String st = city + ", " + state + "; results: {";
-			for (String st2 : results) {
-				st += st2 + ", ";
-			}
-			st = st.substring(0, st.length()-2);
-			st += "}"; 
-			return st;
+			return city + ", " + state + "; results: " + results;
 		}
 	}
 	
-	public static List<Result> getResults(String url) throws Exception{
+	public static List<Result> getResults(String[] variables) throws Exception{
+		String url = "https://api.census.gov/data/2020/acs/acs5?get=NAME";
+		for (String variable : variables) {
+			url += "," + variable.substring(0, variable.indexOf("("));
+		}
+		url += "&for=place:*";
 		String text = Jsoup.connect(url).ignoreContentType(true).maxBodySize(0).timeout(0).get().text();
 		text = text.replace("],", "],\n");
 		List<String> elements = new ArrayList<String>(Arrays.asList(text.split("\n")));
@@ -47,7 +48,7 @@ public class ACS2021DataReader {
 			result.state = str.substring(str.indexOf(",") + 2);
 			result.place = Integer.valueOf(row[row.length-1]);
 			for (int i = 1; i < row.length-2; i++) {
-				result.results.add(row[i]);
+				result.results.put(variables[i-1], row[i]);
 			}
 			elementsList.add(result);
 		}
@@ -55,8 +56,8 @@ public class ACS2021DataReader {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		String url = "https://api.census.gov/data/2020/acs/acs5?get=NAME,B19013_001E&for=place:*";
-		List<Result> elementsList = getResults(url);
+		String[] variables = new String[] {"B01003_001E(population)", "B19013_001E(median_household_income)"};
+		List<Result> elementsList = getResults(variables);
 		for (Result result : elementsList) {
 			if (result.city.equals("Weston") && result.state.equals("Florida")) {
 				System.out.println(result);	
