@@ -6,7 +6,7 @@ import java.util.List;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-public class CensusReader {
+public abstract class ACS2021VariableReaderSuper {
 
 	public static class HtmlData{
 		public String name = "";
@@ -19,7 +19,7 @@ public class CensusReader {
 		}
 	}
 	
-	public static List<HtmlData> getHtmlVariables() throws Exception {
+	public List<HtmlData> getHtmlVariables() throws Exception {
 		String url = "https://api.census.gov/data/2020/acs/acs5/variables.html";
 		Document pod = Jsoup.connect(url).ignoreContentType(true).maxBodySize(0)
 			       .timeout(0).get();
@@ -50,15 +50,9 @@ public class CensusReader {
 		return list;
 	}
 	
-	public static boolean shouldPrintData(HtmlData data) {
-		if (data.concept.contains("in puerto rico") || data.concept.contains("geographical") || data.concept.contains("under")) {
-			return false;
-		}
-		return data.label.equals("estimate!!total:");
-		//return data.concept.contains("median household income in the past 12 months");
-	}
+	public abstract boolean shouldPrintData(HtmlData data);
 	
-	public static void main(String[] args) throws Exception {
+	public void doEverything() throws Exception {
 		List<HtmlData> dataList = getHtmlVariables();
 		int numElementsPrinted = 0;
 		for (HtmlData data : dataList) {
