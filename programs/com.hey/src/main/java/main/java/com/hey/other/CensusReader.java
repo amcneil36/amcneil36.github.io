@@ -54,8 +54,8 @@ public class CensusReader {
 		if (data.concept.contains("in puerto rico") || data.concept.contains("geographical") || data.concept.contains("under")) {
 			return false;
 		}
-		//return data.label.equals("Estimate!!Total:");
-		return data.concept.contains("median household income in the past 12 months");
+		return data.label.equals("estimate!!total:");
+		//return data.concept.contains("median household income in the past 12 months");
 	}
 	
 	public static void main(String[] args) throws Exception {
