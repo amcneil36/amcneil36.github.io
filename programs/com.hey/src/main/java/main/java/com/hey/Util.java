@@ -73,6 +73,7 @@ public class Util {
 			String text = doc.body().text();
 			return text;
 		} catch (IOException ex) {
+			System.out.println(ex);
 			return "";
 		}
 	}
