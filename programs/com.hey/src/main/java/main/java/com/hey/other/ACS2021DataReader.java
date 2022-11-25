@@ -25,8 +25,8 @@ public class ACS2021DataReader {
 			return st;
 		}
 	}
-	public static void main(String[] args) throws Exception {
-		String url = "https://api.census.gov/data/2020/acs/acs5?get=NAME,B19013_001E&for=place:*";
+	
+	public static List<Result> getResults(String url) throws Exception{
 		String text = Jsoup.connect(url).ignoreContentType(true).maxBodySize(0).timeout(0).get().text();
 		text = text.replace("],", "],\n");
 		List<String> elements = new ArrayList<String>(Arrays.asList(text.split("\n")));
@@ -36,7 +36,6 @@ public class ACS2021DataReader {
 		for (String st : elements) {
 			st = st.replace("\",", ">").replace("],", ">").replace(" [", "").replace("\"", "").replace("]", ">");
 			String[] row = st.split(">");
-			int idx = 0;
 			String str = row[0];
 			str = str.replace(" city,", ",");
 			str = str.replace(" town,", ",");
@@ -51,8 +50,13 @@ public class ACS2021DataReader {
 				result.results.add(row[i]);
 			}
 			elementsList.add(result);
-			//System.out.println(place);
 		}
+		return elementsList;
+	}
+	
+	public static void main(String[] args) throws Exception {
+		String url = "https://api.census.gov/data/2020/acs/acs5?get=NAME,B19013_001E&for=place:*";
+		List<Result> elementsList = getResults(url);
 		for (Result result : elementsList) {
 			if (result.city.equals("Weston") && result.state.equals("Florida")) {
 				System.out.println(result);	
