@@ -14,10 +14,10 @@ import main.java.com.hey.Util;
 public class ACS2021DataReader {
 
 	public static class Result{
-		String city = "";
-		String state = "";
-		String fipsCode = "";
-		Map<String, String> results = new HashMap<>();
+		public String city = "";
+		public String state = "";
+		public String fipsCode = "";
+		public Map<String, String> results = new HashMap<>();
 		
 		@Override
 		public String toString() {

@@ -10,10 +10,12 @@ public class Population extends CityStats {
 	
 	private static Map<String, Result> mapOfFipsCodeToResult;
 
+	private static String[] variables = new String[] {"B01003_001E(population)"};
+	
 	public static void main(String[] args) throws Exception {
-		String[] variables = new String[] {"B01003_001E(population)"};
 		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
-
+		Population pop = new Population();
+		pop.processAllStates();
 	}
 	
 	static int numMatches = 0;
@@ -22,7 +24,12 @@ public class Population extends CityStats {
 	protected void updateData(Data data, String stateName) throws Exception {
 		String fips = data.fipsCode;
 		if (mapOfFipsCodeToResult.containsKey(fips)) {
-			System.out.println(numMatches++);
+			Result result = mapOfFipsCodeToResult.get(fips);
+			String population = result.results.get(variables[0]);
+			int pop = Integer.valueOf(population);
+			if (pop > 0) {
+				data.population = population;
+			}
 		}
 		
 	}
