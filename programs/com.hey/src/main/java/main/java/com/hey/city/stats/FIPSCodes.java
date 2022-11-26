@@ -139,10 +139,5 @@ public class FIPSCodes extends CityStats {
 			data.fipsCode = fipsCode;
 		}
 	}
-	
-	@Override
-	public boolean shouldWriteData() {
-		return false;
-	}
 
 }

@@ -75,7 +75,7 @@ public class LandArea extends CityStats {
 	static Map<String, List<Double>> mapOfNameToLandArea = new HashMap<>();
 
 	private static String getKey(String cityName, String stateName) {
-		return cityName + ", " + stateName;
+		return Util.removeStuffFromCityName(cityName) + ", " + stateName;
 	}
 	
 	private static String removeIfExists(String text, String st) {
