@@ -77,6 +77,13 @@ public class LandArea extends CityStats {
 	private static String getKey(String cityName, String stateName) {
 		return cityName + ", " + stateName;
 	}
+	
+	private static String removeIfExists(String text, String st) {
+		if (text.contains(st)) {
+			text = text.substring(0, text.indexOf(st));
+		}
+		return text;
+	}
 
 	public static void main(String[] args) throws Exception {
 		// https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.2020.html
@@ -95,30 +102,58 @@ public class LandArea extends CityStats {
 			while (city.contains(" of ")) {
 				city = city.substring(city.indexOf(" of ") + " of ".length());
 			}
-			if (city.contains(" Census Designated Place")) {
-				city = city.substring(0, city.indexOf(" Census Designated Place"));
-			}
+			city = removeStuffFromCityName(city);
 			String stateAcronym = lines[0];
 			String stateName = map.get(stateAcronym.toLowerCase());
 			if (!map.containsKey(stateAcronym.toLowerCase())) {
 				continue;
 			}
 			String key = getKey(city, stateName);
+			//System.out.println(key);
+			if (city.equals("")) {
+			//	System.out.println(st);
+			}
 			List<Double> list = mapOfNameToLandArea.getOrDefault(key, new ArrayList<>());
 			list.add(Double.valueOf(landArea));
 			mapOfNameToLandArea.put(key, list);
 		}
+		
+		LandArea la = new LandArea();
+		la.processAllStates();
+	}
+	
+	private static String removeStuffFromCityName(String city) {
+		city = removeIfExists(city, " Census Designated Place");
+		city = removeIfExists(city, " borough");
+		city = removeIfExists(city, " CDP");
+		city = removeIfExists(city, " estates");
+		city = removeIfExists(city, " city");
+		city = removeIfExists(city, " village");
+		city = removeIfExists(city, " town");
+		city = removeIfExists(city, " (");
+		return city;
 	}
 
+	int numMisses = 0;
+	int numMatches = 0;
+	
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
-		// TODO Auto-generated method stub
+		String city = data.cityName;
+		city = removeStuffFromCityName(city);
+		String key = getKey(city, data.stateName);
+		if (!mapOfNameToLandArea.containsKey(key)) {
+			System.out.println(key + "; num misses is now " + ++numMisses);
+		}
+		else {
+			//System.out.println("found! num matches: " + ++numMatches);
+		}
 
 	}
 	
 	@Override
 	public boolean shouldWriteData() {
-		return true;
+		return false;
 	}
 
 }
