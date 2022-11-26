@@ -39,7 +39,6 @@ public class ACS2021DataReader {
 	public static Map<String, Result> getResults(String[] variables) throws Exception{
 		String url = "https://api.census.gov/data/2020/acs/acs5?get=NAME";
 		for (String variable : variables) {
-			System.out.println(variable);
 			url += "," + variable.substring(0, variable.indexOf("("));
 		}
 		url += "&for=place:*";
