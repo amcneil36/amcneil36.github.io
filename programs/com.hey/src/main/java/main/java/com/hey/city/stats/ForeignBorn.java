@@ -16,8 +16,8 @@ public class ForeignBorn extends CityStats {
 		// bachelors is the highest they have + num people with masters + doctoral, etc
 		// all divided by the number of people over the age of 25
 		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
-		BachelorsDegree bd = new BachelorsDegree();
-		bd.processAllStates();
+		ForeignBorn foreignBorn = new ForeignBorn();
+		foreignBorn.processAllStates();
 
 	}
 
@@ -31,8 +31,7 @@ public class ForeignBorn extends CityStats {
 		double numForeignBorn = Integer.valueOf(result.results.get(variables[0]));
 		double fraction = (numForeignBorn / numPeeps) * 100;
 		fraction = Math.round(fraction * 100.0) / 100.0; // round two decimals
-		System.out.println(data.foreignBornPercent + "; " + fraction);
-		//data.foreignBornPercent = fraction + "%";
+		data.foreignBornPercent = fraction + "%";
 	}
 
 }
