@@ -138,7 +138,6 @@ public class FIPSCodes extends CityStats {
 			String fipsCode = mapOfEntityToFipsCode.get(key);
 			data.fipsCode = fipsCode;
 		}
-
 	}
 
 }

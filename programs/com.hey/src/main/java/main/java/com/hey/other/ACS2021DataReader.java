@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
@@ -12,6 +13,12 @@ import org.jsoup.Jsoup;
 import main.java.com.hey.Util;
 
 public class ACS2021DataReader {
+	
+	public static String POPULATION = "B01003_001E(population)";
+	public static String MEDIAN_HOUSEHOLD_INCOME = "B19013_001E(median_household_income)";
+	public static String MEDIAN_HOUSEHOLD_INCOME_WHITE = "B19013A_001E(median household income white)";
+	public static String MEDIAN_HOUSEHOLD_INCOME_BLACK = "B19013B_001E(median household income black)";
+	
 
 	public static class Result{
 		public String city = "";
@@ -69,8 +76,15 @@ public class ACS2021DataReader {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		String[] variables = new String[] {"B01003_001E(population)", "B19013_001E(median_household_income)"};
-		Map<String, Result> elementsList = getResults(variables);
+		String[] variables = new String[] {POPULATION, MEDIAN_HOUSEHOLD_INCOME, MEDIAN_HOUSEHOLD_INCOME_WHITE, MEDIAN_HOUSEHOLD_INCOME_BLACK};
+		Map<String, Result> elementsMap = getResults(variables);
+		Set<String> keys = elementsMap.keySet();
+		for (String key : keys) {
+			Result result = elementsMap.get(key);
+			if (result.city.equals("SeaTac") && result.state.equals("Washington")) {
+				System.out.println(result);	
+			}
+		}
 	}
 
 }
