@@ -17,7 +17,6 @@ public class Poverty extends CityStats {
 		Poverty poverty = new Poverty();
 		poverty.processAllStates();
 		
-
 	}
 
 	@Override
