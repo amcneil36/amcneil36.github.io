@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Scanner;
 
 public abstract class CityStats extends CityStatsSuper {
-	
+
 	public static class Data {
 		public String cityName = "N/A";
 		public String stateName = "N/A";
@@ -70,7 +70,7 @@ public abstract class CityStats extends CityStatsSuper {
 		public String fipsCode = "N/A";
 		public String landArea = "N/A";
 	}
-	
+
 	@Override
 	public String getStartString() {
 		return "City,State,Population,People per sq mi,Metro Name,Metro population,Hottest month's avg high (F),Coldest month's avg high (F),Hottest high minus coldest high,Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,Median household income,Poverty Rate,"
@@ -141,24 +141,20 @@ public abstract class CityStats extends CityStatsSuper {
 			data.foreignBornPercent = arr[idx++];
 			data.timeZone = arr[idx++];
 			data.feetAboveSeaLevel = arr[idx++];
-			try {
-				data.uvIndex = arr[idx++];
-				data.singlePopulation = arr[idx++];
-				data.walkScore = arr[idx++];
-				data.transitScore = arr[idx++];
-				data.bikeScore = arr[idx++];
-				data.percentOfIncomeLostToHousingCosts = arr[idx++];
-				data.sexOffenderCount = arr[idx++];
-				data.hurricanes = arr[idx++];
-				data.tornadoes = arr[idx++];
-				data.earthQuakes = arr[idx++];
-				data.fbiViolentCrimeRate = arr[idx++];
-				data.fbiPropertyCrimeRate = arr[idx++];
-				data.fipsCode = arr[idx++];
-				data.landArea = arr[idx++];
-			} catch (Exception ex) {
-
-			}
+			data.uvIndex = arr[idx++];
+			data.singlePopulation = arr[idx++];
+			data.walkScore = arr[idx++];
+			data.transitScore = arr[idx++];
+			data.bikeScore = arr[idx++];
+			data.percentOfIncomeLostToHousingCosts = arr[idx++];
+			data.sexOffenderCount = arr[idx++];
+			data.hurricanes = arr[idx++];
+			data.tornadoes = arr[idx++];
+			data.earthQuakes = arr[idx++];
+			data.fbiViolentCrimeRate = arr[idx++];
+			data.fbiPropertyCrimeRate = arr[idx++];
+			data.fipsCode = arr[idx++];
+			data.landArea = arr[idx++];
 			dataList.add(data);
 		}
 		myReader.close();
