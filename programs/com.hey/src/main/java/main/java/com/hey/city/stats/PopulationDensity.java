@@ -15,7 +15,7 @@ public class PopulationDensity extends CityStats {
 		double population = Double.valueOf(data.population);
 		double landArea = Double.valueOf(data.landArea);
 		int populationDensity = Util.getIntFromDouble(population/landArea);
-		System.out.println(populationDensity);
+		data.populationDensity = String.valueOf(populationDensity);
 		
 	}
 
