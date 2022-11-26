@@ -161,7 +161,7 @@ public class LandArea extends CityStats {
 	
 	@Override
 	public boolean shouldWriteData() {
-		return false;
+		return true;
 	}
 
 }
