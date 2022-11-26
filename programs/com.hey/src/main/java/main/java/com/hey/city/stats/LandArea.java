@@ -109,10 +109,6 @@ public class LandArea extends CityStats {
 				continue;
 			}
 			String key = getKey(city, stateName);
-			//System.out.println(key);
-			if (city.equals("")) {
-			//	System.out.println(st);
-			}
 			List<Double> list = mapOfNameToLandArea.getOrDefault(key, new ArrayList<>());
 			list.add(Double.valueOf(landArea));
 			mapOfNameToLandArea.put(key, list);
@@ -142,12 +138,24 @@ public class LandArea extends CityStats {
 		String city = data.cityName;
 		city = removeStuffFromCityName(city);
 		String key = getKey(city, data.stateName);
-		if (!mapOfNameToLandArea.containsKey(key)) {
-			System.out.println(key + "; num misses is now " + ++numMisses);
+		double landArea = Double.valueOf(data.population)/Double.valueOf(data.populationDensity);
+		double minDistance = Double.MAX_VALUE;
+		double temp = -1;
+		if (mapOfNameToLandArea.containsKey(key)) {
+			List<Double> landAreas = mapOfNameToLandArea.get(key);
+			for (double val : landAreas) {
+				double distance = Math.abs(val-landArea);
+				if (distance < minDistance) {
+					temp = val;
+					minDistance = distance;
+				}
+			}
+			landArea = temp;
 		}
-		else {
-			//System.out.println("found! num matches: " + ++numMatches);
-		}
+		
+		landArea = Math.round(((landArea*100.0))) / 100.0; // round two decimals
+		
+		
 
 	}
 	
