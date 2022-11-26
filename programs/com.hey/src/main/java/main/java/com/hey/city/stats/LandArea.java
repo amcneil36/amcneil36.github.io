@@ -87,6 +87,11 @@ public class LandArea extends CityStats {
 
 	public static void main(String[] args) throws Exception {
 		// https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.2020.html
+		// there can be duplicates (same city same state diff county)
+		// and our text file doesn't say the county
+		// for those, we will store all the land areas
+		// we will then select the closest land area that we predict
+		// based on us already having population and population density
 		List<String> text = Util.readTextFromFile(
 				"C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\FIPSCodes\\2020_Gaz_place_national.txt");
 		text.remove(0);
@@ -154,7 +159,7 @@ public class LandArea extends CityStats {
 		}
 		
 		landArea = Math.round(((landArea*100.0))) / 100.0; // round two decimals
-		
+		data.landArea = String.valueOf(landArea);
 		
 
 	}
