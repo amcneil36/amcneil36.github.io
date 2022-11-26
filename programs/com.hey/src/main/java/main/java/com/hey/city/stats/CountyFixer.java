@@ -17,6 +17,10 @@ public class CountyFixer extends CityStats {
 	
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
+		data.countyName = data.countyName.replace(" Census Area", "");
+		data.countyName = data.countyName.replace(" city", "");
+		data.countyName = data.countyName.replace(" Borough", "");
+		// Borough
 		if (!data.countyName.endsWith(" County")) {
 			data.countyName = data.countyName + " County";
 		}
