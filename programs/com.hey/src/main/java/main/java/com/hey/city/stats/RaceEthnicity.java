@@ -23,8 +23,6 @@ public class RaceEthnicity extends CityStats {
 
 	public static void main(String[] args) throws Exception {
 		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
-		//FL-76582
-		Result result = mapOfFipsCodeToResult.get("FL-76582");
 		RaceEthnicity rn = new RaceEthnicity();
 		rn.processAllStates();
 
