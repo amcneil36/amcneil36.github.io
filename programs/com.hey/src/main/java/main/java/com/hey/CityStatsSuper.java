@@ -27,7 +27,14 @@ public abstract class CityStatsSuper {
 		}
 	}
 	
+	public boolean shouldWriteData() {
+		return true;
+	}
+	
 	public void writeData(List<Data> dataList, String stateName, boolean isLastWrite) throws Exception {
+		if (!shouldWriteData()) {
+			return;
+		}
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\States\\" + stateName
 				+ ".csv";
 		writeDataToPath(dataList, filePath, isLastWrite);
