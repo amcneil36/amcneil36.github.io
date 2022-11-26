@@ -39,7 +39,13 @@ public class ACS2021DataReader {
 	public static Map<String, Result> getResults(String[] variables) throws Exception{
 		String url = "https://api.census.gov/data/2020/acs/acs5?get=NAME";
 		for (String variable : variables) {
-			url += "," + variable.substring(0, variable.indexOf("("));
+			url += ",";
+			if (variable.contains("(")) {
+				url += variable.substring(0, variable.indexOf("("));	
+			}
+			else {
+				url += variable;
+			}
 		}
 		url += "&for=place:*";
 		System.out.println(url);
@@ -81,11 +87,14 @@ public class ACS2021DataReader {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		String[] variables = new String[] {ACS2021DataReader.POPULATION, ACS2021DataReader.BACHELORS_DEGREE};
+		String[] variables = new String[] {"B17020_001E(total)", "B17020_002E", "B17020_003E", "B17020_004E", "B17020_005E", "B17020_006E", "B17020_007E", "B17020_008E", "B17020_009E"};
 		Map<String, Result> elementsMap = getResults(variables);
 		Set<String> keys = elementsMap.keySet();
 		for (String key : keys) {
 			Result result = elementsMap.get(key);
+			if (result.city.equals("Weston") && result.state.equals("Florida")) {
+				System.out.println(result);
+			}
 		}
 	}
 
