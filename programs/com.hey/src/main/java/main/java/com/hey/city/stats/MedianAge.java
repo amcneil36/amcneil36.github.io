@@ -25,7 +25,7 @@ public class MedianAge extends CityStats {
 			return;
 		}
 		Result result = mapOfFipsCodeToResult.get(data.fipsCode);
-		int age = (int)(Math.round(Double.valueOf(mapOfFipsCodeToResult.get("FL-76582").results.get(variables[0]))));
+		int age = (int)(Math.round(Double.valueOf(result.results.get(variables[0]))));
 		data.medianAge = String.valueOf(age);
 	}
 }
