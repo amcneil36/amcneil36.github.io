@@ -87,7 +87,7 @@ public class ACS2021DataReader {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		String[] variables = new String[] {"B05006_001E(foreign)", POPULATION};
+		String[] variables = new String[] {"B02001_001E(race)", POPULATION};
 		Map<String, Result> elementsMap = getResults(variables);
 		Set<String> keys = elementsMap.keySet();
 		for (String key : keys) {
