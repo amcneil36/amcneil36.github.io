@@ -45,7 +45,10 @@ public class RaceEthnicity extends CityStats {
 		double percentBlack = Math.round(((black / population) * 100) * 100.0) / 100.0; // round two decimals
 		double percentAsian = Math.round(((asian / population) * 100) * 100.0) / 100.0; // round two decimals
 		double percentHispanic = Math.round(((hispanic / population) * 100) * 100.0) / 100.0; // round two decimals
-		System.out.println(data.percentWhite);
+		data.percentWhite = percentNonHispanicWhite + "%";
+		data.percentBlack = percentBlack+ "%";
+		data.percentAsian = percentAsian+ "%";
+		data.percentHispanic = percentHispanic+ "%";
 
 	}
 
