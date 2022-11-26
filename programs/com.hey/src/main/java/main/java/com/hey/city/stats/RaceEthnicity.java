@@ -13,14 +13,6 @@ public class RaceEthnicity extends CityStats {
 	private static String[] variables = new String[] { ACS2021DataReader.POPULATION, "B03002_003E(non-hispanic white)",
 			"B02001_003E(black)", "B02001_005E(asian)", "B03001_003E(hispanic or latino)" };
 
-	// name: B03002_003E; label: estimate!!total:!!not hispanic or latino:!!white
-	// alone; concept: hispanic or latino origin by race
-	// name: B02001_003E; label: estimate!!total:!!black or african american alone;
-	// concept: race
-	// name: B02001_005E; label: estimate!!total:!!asian alone; concept: race
-	// name: B03001_003E; label: estimate!!total:!!hispanic or latino:; concept:
-	// hispanic or latino origin by specific origin
-
 	public static void main(String[] args) throws Exception {
 		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
 		RaceEthnicity rn = new RaceEthnicity();
