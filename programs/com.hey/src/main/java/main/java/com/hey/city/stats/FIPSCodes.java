@@ -123,6 +123,9 @@ public class FIPSCodes extends CityStats {
 			data.stateName = map.get(stateAcronym.toLowerCase());
 			String key = getKey(data.city, data.stateName, data.county);
 			String value = stateAcronym + "-" + data.fips;
+			if (data.city.equals("Manchester")) {
+				System.out.println(key);
+			}
 			mapOfEntityToFipsCode.put(key, value);
 		}
 
@@ -135,13 +138,16 @@ public class FIPSCodes extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
+		// 868243|Manchester|Populated Place|45140|P1|0310|330310011|33|NH|1|011|Hillsborough|42.9956397|-71.4547891|08/27/1980|02/06/2018
+		// Manchester;New Hampshire;Hillsborough County
+		// Manchester;New Hampshire;Hillsborough
 		String key = getKey(data.cityName, data.stateName, data.countyName);
 		if (mapOfEntityToFipsCode.containsKey(key)) {
 			String fipsCode = mapOfEntityToFipsCode.get(key);
 			data.fipsCode = fipsCode;
 		}
 		else {
-			System.out.println("num misses: " + ++numMisses + "; " + key);
+			//System.out.println("num misses: " + ++numMisses + "; " + key);
 		}
 	}
 	
