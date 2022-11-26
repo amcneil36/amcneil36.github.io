@@ -18,7 +18,11 @@ public class ACS2021DataReader {
 	public static String MEDIAN_HOUSEHOLD_INCOME = "B19013_001E(median_household_income)";
 	public static String MEDIAN_HOUSEHOLD_INCOME_WHITE = "B19013A_001E(median household income white)";
 	public static String MEDIAN_HOUSEHOLD_INCOME_BLACK = "B19013B_001E(median household income black)";
-	
+	public static String BACHELORS_DEGREE = "B15003_022E(number of people with a bachelor's degree)";
+	public static String MASTERS_DEGREE = "B15003_023E(number of people with a master's degree)";
+	public static String PROFESSIONAL_DEGREE = "B15003_024E(number of people with a professional degree)";
+	public static String DOCTORATE_DEGREE = "B15003_025E(number of people with a doctorate degree)";
+	public static String NUM_PEOPLE_OVER_25_EDUCATION = "B15003_001E(num people over 25)";
 
 	public static class Result{
 		public String city = "";
@@ -35,9 +39,11 @@ public class ACS2021DataReader {
 	public static Map<String, Result> getResults(String[] variables) throws Exception{
 		String url = "https://api.census.gov/data/2020/acs/acs5?get=NAME";
 		for (String variable : variables) {
+			System.out.println(variable);
 			url += "," + variable.substring(0, variable.indexOf("("));
 		}
 		url += "&for=place:*";
+		System.out.println(url);
 		String text = Jsoup.connect(url).ignoreContentType(true).maxBodySize(0).timeout(0).get().text();
 		text = text.replace("],", "],\n");
 		List<String> elements = new ArrayList<String>(Arrays.asList(text.split("\n")));
@@ -76,14 +82,11 @@ public class ACS2021DataReader {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		String[] variables = new String[] {POPULATION, MEDIAN_HOUSEHOLD_INCOME, MEDIAN_HOUSEHOLD_INCOME_WHITE, MEDIAN_HOUSEHOLD_INCOME_BLACK};
+		String[] variables = new String[] {ACS2021DataReader.POPULATION, ACS2021DataReader.BACHELORS_DEGREE};
 		Map<String, Result> elementsMap = getResults(variables);
 		Set<String> keys = elementsMap.keySet();
 		for (String key : keys) {
 			Result result = elementsMap.get(key);
-			if (result.city.equals("SeaTac") && result.state.equals("Washington")) {
-				System.out.println(result);	
-			}
 		}
 	}
 

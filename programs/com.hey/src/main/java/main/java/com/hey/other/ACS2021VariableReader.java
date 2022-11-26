@@ -7,7 +7,7 @@ public class ACS2021VariableReader extends ACS2021VariableReaderSuper {
 		if (data.concept.contains("in puerto rico") || data.concept.contains("geographical") || data.concept.contains("under")) {
 			return false;
 		}
-		return data.concept.contains("median household income in the past 12 months");
+		return data.label.contains("bachelor's") && data.concept.contains("educational attainment");
 	}
 	
 	public static void main(String[] args) throws Exception {
