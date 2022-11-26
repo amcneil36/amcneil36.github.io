@@ -155,6 +155,9 @@ public abstract class CityStats extends CityStatsSuper {
 			data.fbiPropertyCrimeRate = arr[idx++];
 			data.fipsCode = arr[idx++];
 			data.landArea = arr[idx++];
+			if (idx != arr.length) {
+				throw new RuntimeException("didn't read all elements!");
+			}
 			dataList.add(data);
 		}
 		myReader.close();

@@ -1,5 +1,22 @@
 package main.java.com.hey.city.stats;
 
-public class PopulationDensity {
+import main.java.com.hey.CityStats;
+import main.java.com.hey.Util;
+
+public class PopulationDensity extends CityStats {
+
+	public static void main(String[] args) throws Exception {
+		PopulationDensity pd = new PopulationDensity();
+		pd.processAllStates();
+	}
+	
+	@Override
+	protected void updateData(Data data, String stateName) throws Exception {
+		double population = Double.valueOf(data.population);
+		double landArea = Double.valueOf(data.landArea);
+		int populationDensity = Util.getIntFromDouble(population/landArea);
+		System.out.println(populationDensity);
+		
+	}
 
 }

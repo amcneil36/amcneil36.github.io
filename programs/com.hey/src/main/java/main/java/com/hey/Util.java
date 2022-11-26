@@ -33,6 +33,14 @@ public class Util {
 		return data.cityName + "," + data.stateName + "," + data.countyName + "," + data.metro + ";";
 
 	}
+	
+	public static double roundTwoDecimalPlaces(double num) {
+		return Math.round(((num*100.0))) / 100.0;
+	}
+	
+	public static int getIntFromDouble(double num) {
+		return (int) Math.round(num);
+	}
 
 	public static String minToString(int minRemaining) {
 		String st = "";
