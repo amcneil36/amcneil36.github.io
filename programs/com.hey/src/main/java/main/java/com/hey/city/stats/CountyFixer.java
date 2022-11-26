@@ -17,7 +17,6 @@ public class CountyFixer extends CityStats {
 	
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
-		String key = data.stateName + ";" + data.countyName;
 		if (!data.countyName.endsWith(" County")) {
 			data.countyName = data.countyName + " County";
 		}

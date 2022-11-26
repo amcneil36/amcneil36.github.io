@@ -147,7 +147,7 @@ public class FIPSCodes extends CityStats {
 			data.fipsCode = fipsCode;
 		}
 		else {
-			//System.out.println("num misses: " + ++numMisses + "; " + key);
+			System.out.println("num misses: " + ++numMisses + "; " + key);
 		}
 	}
 	
