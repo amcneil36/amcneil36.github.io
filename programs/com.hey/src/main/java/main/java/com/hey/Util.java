@@ -28,6 +28,27 @@ import main.java.com.hey.CityStats.Data;
 public class Util {
 
 	public static boolean debug = false;
+	
+	public static String removeStuffFromCityName(String city) {
+		city = removeIfExists(city, " Census Designated Place");
+		city = removeIfExists(city, " borough");
+		city = removeIfExists(city, " CDP");
+		city = removeIfExists(city, " estates");
+		city = removeIfExists(city, " city");
+		city = removeIfExists(city, " village");
+		city = removeIfExists(city, " town");
+		city = removeIfExists(city, " (");
+		city = removeIfExists(city, " County");
+		city = removeIfExists(city, " charter");
+		return city;
+	}
+	
+	private static String removeIfExists(String text, String st) {
+		if (text.contains(st)) {
+			text = text.substring(0, text.indexOf(st));
+		}
+		return text;
+	}
 
 	public static String getCityUniqueId(Data data) {
 		return data.cityName + "," + data.stateName + "," + data.countyName + "," + data.metro + ";";

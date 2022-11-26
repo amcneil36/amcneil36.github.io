@@ -27,7 +27,7 @@ public class FIPSCodes extends CityStats {
 	private static Map<String, String> mapOfEntityToFipsCode = new HashMap<String, String>();
 
 	private static String getKey(String city, String state, String county) {
-		return city + ";" + state + ";" + county;
+		return Util.removeStuffFromCityName(city) + ";" + state + ";" + county;
 	}
 
 	private static void populateMap() {
@@ -130,6 +130,8 @@ public class FIPSCodes extends CityStats {
 		fp.processAllStates();
 
 	}
+	
+	int numMisses = 0;
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
@@ -138,6 +140,14 @@ public class FIPSCodes extends CityStats {
 			String fipsCode = mapOfEntityToFipsCode.get(key);
 			data.fipsCode = fipsCode;
 		}
+		else {
+			System.out.println("num misses: " + ++numMisses + "; " + key);
+		}
+	}
+	
+	@Override
+	public boolean shouldWriteData() {
+		return false;
 	}
 
 }
