@@ -26,23 +26,21 @@ public class BachelorsDegree extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
-		if (data.cityName.equals("Weston") && data.stateName.equals("Florida")) {
-			Result result = mapOfFipsCodeToResult.get(data.fipsCode);
-			double numPeepsWithDegrees = Integer.valueOf(result.results.get(ACS2021DataReader.BACHELORS_DEGREE))
-					+ Integer.valueOf(result.results.get(ACS2021DataReader.MASTERS_DEGREE))
-					+ Integer.valueOf(result.results.get(ACS2021DataReader.PROFESSIONAL_DEGREE))
-					+ Integer.valueOf(result.results.get(ACS2021DataReader.DOCTORATE_DEGREE));
-			double numPeeps = Integer.valueOf(result.results.get(ACS2021DataReader.NUM_PEOPLE_OVER_25_EDUCATION));
-			if (numPeeps < 1) {
-				return;
-			}
-			double fraction = (numPeepsWithDegrees/numPeeps)*100;
-			fraction = Math.round(fraction * 100.0) / 100.0;
-			System.out.println("fraction: " + fraction);
-			System.out.println(data.percentWithAtleastBachelors);
-			System.out.println(mapOfFipsCodeToResult.get(data.fipsCode));
+		if (!mapOfFipsCodeToResult.containsKey(data.fipsCode)) {
+			return;
 		}
-
+		Result result = mapOfFipsCodeToResult.get(data.fipsCode);
+		double numPeepsWithDegrees = Integer.valueOf(result.results.get(ACS2021DataReader.BACHELORS_DEGREE))
+				+ Integer.valueOf(result.results.get(ACS2021DataReader.MASTERS_DEGREE))
+				+ Integer.valueOf(result.results.get(ACS2021DataReader.PROFESSIONAL_DEGREE))
+				+ Integer.valueOf(result.results.get(ACS2021DataReader.DOCTORATE_DEGREE));
+		double numPeeps = Integer.valueOf(result.results.get(ACS2021DataReader.NUM_PEOPLE_OVER_25_EDUCATION));
+		if (numPeeps < 1) {
+			return;
+		}
+		double fraction = (numPeepsWithDegrees / numPeeps) * 100;
+		fraction = Math.round(fraction * 100.0) / 100.0; // round two decimals
+		data.percentWithAtleastBachelors = fraction + "%";
 	}
 
 }
