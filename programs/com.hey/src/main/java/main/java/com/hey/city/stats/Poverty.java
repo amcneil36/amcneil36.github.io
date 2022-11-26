@@ -1,7 +1,6 @@
 package main.java.com.hey.city.stats;
 
 import java.util.Map;
-import java.util.Set;
 
 import main.java.com.hey.CityStats;
 import main.java.com.hey.other.ACS2021DataReader;
@@ -15,17 +14,6 @@ public class Poverty extends CityStats {
 
 	public static void main(String[] args) throws Exception {
 		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
-		Set<String> keys = mapOfFipsCodeToResult.keySet();
-		for (String key : keys) {
-			Result result = mapOfFipsCodeToResult.get(key);
-			if (result.city.equals("Weston") && result.state.equals("Florida")) {
-				double numPeopleEligible = Integer.valueOf(result.results.get(variables[0]));
-				double numPeopleInPoverty = Integer.valueOf(result.results.get(variables[1]));
-				double fraction = (numPeopleInPoverty / numPeopleEligible) * 100;
-				fraction = Math.round(fraction * 100.0) / 100.0; // round two decimals
-				System.out.println(fraction);
-			}
-		}
 		Poverty poverty = new Poverty();
 		poverty.processAllStates();
 		
