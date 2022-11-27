@@ -29,6 +29,9 @@ public class Rent extends CityStats {
 		if (mapOfFipsCodeToResult.containsKey(data.fipsCode)) {
 			Result result = mapOfFipsCodeToResult.get(data.fipsCode);
 			String rent = getRent(result);
+			if (rent.contains("-")) {
+				return;
+			}
 			data.avgApartmentRent = rent;
 		}
 	}
