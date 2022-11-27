@@ -10,8 +10,7 @@ import main.java.com.hey.Util;
 public class MedianHomeCost extends CityStats {
 
 	/*
-	 * data from https://www.redfin.com/news/data-center/. go to price per square
-	 * foot. select all places. download as Crosstab. open the .csv with notepad++
+	 * data from https://www.redfin.com/news/data-center/. go to home price. download as Crosstab. open the .csv with notepad++
 	 * and copy paste into a .txt file. for some reason it can't read from .csv here
 	 * because it is putting symbols
 	 * 
