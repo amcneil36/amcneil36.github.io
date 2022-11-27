@@ -54,6 +54,7 @@ public class StateStats {
 		stats.sexOffenderCount.addCity(data, data.sexOffenderCount);
 		stats.fbiViolentCrimeData.addCity(data, data.fbiViolentCrimeRate);
 		stats.fbiPropertyCrimeData.addCity(data, data.fbiPropertyCrimeRate);
+		stats.laborForceParticipationRate.addCity(data, data.laborForceParticipationRate);
 		stats.addDataToMapOfTimeZoneToPopulation(data);
 		int cityPop = Integer.valueOf(data.population);
 		stats.statePopulation += cityPop;
@@ -64,7 +65,7 @@ public class StateStats {
 			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
 			+ "Median household income,Poverty Rate,Median home price,Median home sqft,"
 			+ "Median home cost per sqft,Homeownership Rate,Population growth since 2010,"
-			+ "% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,UV Index,Single Population,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Predominant Timezone,Num Violent Crimes Per 100k residents,Num Property Crimes Per 100k residents";
+			+ "% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,UV Index,Single Population,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Predominant Timezone,Num Violent Crimes Per 100k residents,Num Property Crimes Per 100k residents,Labor Force Participation rate";
 
 
 	static void addToSb(AndrewStringWriter sb, Stats stat) {
@@ -103,6 +104,7 @@ public class StateStats {
 		sb.appendWithComma(stat.getPrimaryTimeZone());
 		sb.appendWA(stat.fbiViolentCrimeData);
 		sb.appendWA(stat.fbiPropertyCrimeData);
+		sb.appendWAPercent(stat.laborForceParticipationRate);
 	}
 	
 	public static void main(String[] args) throws Exception {
