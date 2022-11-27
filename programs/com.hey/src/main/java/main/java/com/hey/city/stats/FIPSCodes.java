@@ -114,7 +114,12 @@ public class FIPSCodes extends CityStats {
 			}
 			data.stateNum = lines[7];
 			String stateAcronym = lines[8];
-			data.county = lines[11] + " County";
+			String county = lines[11];
+			county = Util.removeIfExists(county, " (city)");
+			if (county.contains(" (city)")) {
+				
+			}
+			data.county = county + " County";
 			if (!map.containsKey(stateAcronym.toLowerCase())) {
 				continue;
 			}
@@ -128,8 +133,6 @@ public class FIPSCodes extends CityStats {
 		fp.processAllStates();
 
 	}
-	
-	int numMisses = 0;
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {

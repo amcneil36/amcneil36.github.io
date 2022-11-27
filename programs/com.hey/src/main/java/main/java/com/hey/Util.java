@@ -30,20 +30,40 @@ public class Util {
 	public static boolean debug = false;
 	
 	public static String removeStuffFromCityName(String city) {
-		city = removeIfExists(city, " Census Designated Place");
+		city = city.toLowerCase();
+		city = removeIfExists(city, " census designated place");
 		city = removeIfExists(city, " borough");
-		city = removeIfExists(city, " CDP");
+		city = removeIfExists(city, " cdp");
 		city = removeIfExists(city, " estates");
+		// Charter Township of 
+		if (city.startsWith("charter township of ")) {
+			city = city.replace("charter township of ", "");
+		}
+		if (city.startsWith("charter of ")) {
+			city = city.replace("charter of ", "");
+		}
+		if (city.startsWith("city of ")) {
+			city = city.replace("city of ", "");
+		}
+		if (city.startsWith("township of ")) {
+			city = city.replace("township of ", "");
+		}
 		city = removeIfExists(city, " city");
+		if (city.startsWith("village of ")) {
+			city = city.replace("village of ", "");
+		}
 		city = removeIfExists(city, " village");
 		city = removeIfExists(city, " town");
 		city = removeIfExists(city, " (");
 		city = removeIfExists(city, " County");
 		city = removeIfExists(city, " charter");
+		city = removeIfExists(city, " afb");
+		city = removeIfExists(city, " air force base");
+		city = city.replace("t.", "aint"); //saint
 		return city;
 	}
 	
-	private static String removeIfExists(String text, String st) {
+	public static String removeIfExists(String text, String st) {
 		if (text.contains(st)) {
 			text = text.substring(0, text.indexOf(st));
 		}

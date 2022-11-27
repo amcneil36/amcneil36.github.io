@@ -27,13 +27,6 @@ public class LaborForceParticipation extends CityStats {
 		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
 		LaborForceParticipation lfp = new LaborForceParticipation();
 		lfp.processAllStates();
-		Set<String> keys = mapOfFipsCodeToResult.keySet();
-		for (String key : keys) {
-			if (key.startsWith("FL")) {
-		//		System.out.println(key);
-			}
-		}
-
 	}
 
 	private static double getDouble(Result result, String key) {
@@ -52,9 +45,6 @@ public class LaborForceParticipation extends CityStats {
 		if (mapOfFipsCodeToResult.containsKey(data.fipsCode)) {
 			Result result = mapOfFipsCodeToResult.get(data.fipsCode);
 			data.laborForceParticipationRate = getLaborForceParticipationRate(result);
-		}
-		else if (data.stateName.equals("Florida")) {
-			System.out.println(data.cityName + ", " + data.fipsCode);
 		}
 
 	}
