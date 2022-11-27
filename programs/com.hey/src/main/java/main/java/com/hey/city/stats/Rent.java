@@ -1,41 +1,36 @@
 package main.java.com.hey.city.stats;
 
+import java.util.Map;
+
 import main.java.com.hey.CityStats;
-import main.java.com.hey.Util;
+import main.java.com.hey.other.ACS2021DataReader;
+import main.java.com.hey.other.ACS2021DataReader.Result;
 
-public class Rent extends CityStats{
+public class Rent extends CityStats {
 
-	private static final String SEARCH_STRING = "average rent for an apartment in ";
+	private static Map<String, Result> mapOfFipsCodeToResult;
+
+	private static String[] variables = new String[] { "B25064_001E(median gross rent)" };
+
+	public static void main(String[] args) throws Exception {
+		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
+
+		Rent rent = new Rent();
+		rent.processAllStates();
+
+	}
+
+	private static String getRent(Result result) {
+		return "$" + result.results.get("B25064_001E(median gross rent)");
+	}
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
-		String city = data.cityName.replace(" ", "-");
-		String url = "https://www.rentcafe.com/average-rent-market-trends/us/" + Util.getStateAbbreviation(stateName) + "/" + city + "/";
-		String text = Util.ReadTextFromPage(url);
-		if (!text.contains(SEARCH_STRING)) {
-			return;
-		}
-		try {
-			int startIdx = text.indexOf(SEARCH_STRING) + SEARCH_STRING.length();
-			text = text.substring(startIdx);
-			text = text.substring(text.indexOf("$") + 1);
-			String avgApartmentRent = text.substring(0, text.indexOf(", "));
-			avgApartmentRent = avgApartmentRent.replace(",", "");
-			Integer.valueOf(avgApartmentRent);
-			avgApartmentRent = "$" + avgApartmentRent;
-			data.avgApartmentRent = avgApartmentRent;
-			text = text.substring(text.indexOf("average size for a ") + "average size for a ".length());
-			text = text.substring(text.indexOf("apartment is ") + "apartment is ".length());
-			String avgSqFt = text.substring(0, text.indexOf(" ")).replace(",", "");
-			data.avgApartmentSize = avgSqFt;
-		} catch (Exception ex) {
+		if (mapOfFipsCodeToResult.containsKey(data.fipsCode)) {
+			Result result = mapOfFipsCodeToResult.get(data.fipsCode);
+			String rent = getRent(result);
+			data.avgApartmentRent = rent;
 		}
 	}
 
-	public static void main(String[] args) throws Exception {
-		CityStats s = new Rent();
-		s.processAllStates();
-
-	}
-	
 }
