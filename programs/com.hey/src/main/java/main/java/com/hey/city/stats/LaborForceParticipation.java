@@ -1,6 +1,7 @@
 package main.java.com.hey.city.stats;
 
 import java.util.Map;
+import java.util.Set;
 
 import main.java.com.hey.CityStats;
 import main.java.com.hey.Util;
@@ -24,9 +25,14 @@ public class LaborForceParticipation extends CityStats {
 
 	public static void main(String[] args) throws Exception {
 		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
-		System.out.println(getLaborForceParticipationRate(mapOfFipsCodeToResult.get("FL-76582")));
 		LaborForceParticipation lfp = new LaborForceParticipation();
 		lfp.processAllStates();
+		Set<String> keys = mapOfFipsCodeToResult.keySet();
+		for (String key : keys) {
+			if (key.startsWith("FL")) {
+		//		System.out.println(key);
+			}
+		}
 
 	}
 
@@ -46,6 +52,9 @@ public class LaborForceParticipation extends CityStats {
 		if (mapOfFipsCodeToResult.containsKey(data.fipsCode)) {
 			Result result = mapOfFipsCodeToResult.get(data.fipsCode);
 			data.laborForceParticipationRate = getLaborForceParticipationRate(result);
+		}
+		else if (data.stateName.equals("Florida")) {
+			System.out.println(data.cityName + ", " + data.fipsCode);
 		}
 
 	}

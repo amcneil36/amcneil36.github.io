@@ -77,7 +77,7 @@ public class ACS2021DataReader {
 				continue;
 			}
 			String abbrev = Util.getStateAbbreviation(result.state).toUpperCase();
-			result.fipsCode = abbrev + "-" + Integer.valueOf(row[row.length-1]);
+			result.fipsCode = abbrev + "-" + row[row.length-1];
 			for (int i = 1; i < row.length-2; i++) {
 				result.results.put(variables[i-1], row[i]);
 			}
