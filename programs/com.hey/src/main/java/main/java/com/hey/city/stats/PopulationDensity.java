@@ -12,10 +12,13 @@ public class PopulationDensity extends CityStats {
 	
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
+		
 		double population = Double.valueOf(data.population);
-		double landArea = Double.valueOf(data.landArea);
-		int populationDensity = Util.getIntFromDouble(population/landArea);
-		data.populationDensity = String.valueOf(populationDensity);
+		if (!data.landArea.equals("N/A")) {
+			double landArea = Double.valueOf(data.landArea);
+			int populationDensity = Util.getIntFromDouble(population/landArea);	
+			data.populationDensity = String.valueOf(populationDensity);
+		}
 		
 	}
 

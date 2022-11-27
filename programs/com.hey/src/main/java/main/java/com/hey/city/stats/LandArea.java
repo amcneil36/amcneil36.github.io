@@ -159,7 +159,14 @@ public class LandArea extends CityStats {
 		}
 		
 		landArea = Math.round(((landArea*100.0))) / 100.0; // round two decimals
-		data.landArea = String.valueOf(landArea);
+		data.landArea = "N/A";
+		if (landArea > 99999.0 || landArea < 0.0) {
+			data.landArea = "N/A";
+		}
+		else {
+			data.landArea = String.valueOf(landArea);	
+		}
+		
 		
 
 	}

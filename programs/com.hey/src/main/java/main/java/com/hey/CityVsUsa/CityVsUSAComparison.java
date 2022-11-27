@@ -306,7 +306,7 @@ public class CityVsUSAComparison {
 				inputData.yearlyWindspeed = getValidInt(data.avgYearlyWindspeed);
 				inputData.violentCrime = Integer.valueOf(data.violentCrime);
 				inputData.propertyCrime = Integer.valueOf(data.propertyCrime);
-				inputData.medianAge = Integer.valueOf(data.medianAge);
+				inputData.medianAge = getValidInt(data.medianAge);
 				inputData.bachelors = getValidFloatFromPercent(data.percentWithAtleastBachelors);
 				inputData.medianHouseholdIncome = Integer.valueOf(data.medianIncome.replace("$", ""));
 				inputData.medianHomePrice = Integer.valueOf(data.medianHomePrice.replace("$", ""));

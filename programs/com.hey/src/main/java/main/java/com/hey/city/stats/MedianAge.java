@@ -21,11 +21,14 @@ public class MedianAge extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
+		data.medianAge = "N/A";
 		if (!mapOfFipsCodeToResult.containsKey(data.fipsCode)) {
 			return;
 		}
 		Result result = mapOfFipsCodeToResult.get(data.fipsCode);
 		int age = (int)(Math.round(Double.valueOf(result.results.get(variables[0]))));
-		data.medianAge = String.valueOf(age);
+		if (age > 0) {
+			data.medianAge = String.valueOf(age);	
+		}
 	}
 }
