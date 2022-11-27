@@ -15,8 +15,8 @@ public class HomeSize extends CityStats {
 	protected void updateData(Data data, String stateName) throws Exception {
 		data.homeSquareFeet = "N/A";
 		if (!data.costPerSquareFoot.equals("N/A") && !data.medianHomePrice.equals("N/A")) {
-			double cost = Integer.valueOf(data.costPerSquareFoot.replace("$", ""));
-			double costPerSqFt = Integer.valueOf(data.medianHomePrice.replace("$", ""));
+			double cost = Integer.valueOf(data.medianHomePrice.replace("$", ""));
+			double costPerSqFt = Integer.valueOf(data.costPerSquareFoot.replace("$", ""));
 			double size = cost/costPerSqFt;
 			data.homeSquareFeet = String.valueOf(Util.getIntFromDouble(size));
 		}
