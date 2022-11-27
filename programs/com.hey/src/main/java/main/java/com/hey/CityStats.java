@@ -69,6 +69,7 @@ public abstract class CityStats extends CityStatsSuper {
 		public String fbiPropertyCrimeRate = "N/A";
 		public String fipsCode = "N/A";
 		public String landArea = "N/A";
+		public String laborForceParticipationRate = "N/A";
 	}
 
 	@Override
@@ -78,7 +79,7 @@ public abstract class CityStats extends CityStatsSuper {
 				+ "Median home price,Median home sqft,Median home cost per sqft,Median home age,"
 				+ "Homeownership Rate,Home appreciation Last Year,Home appreciation Last 5 Years,Home appreciation Last 10 Years,Air quality Index,Average one-way commute time,Unemployment rate,Job growth last year,"
 				+ "Population growth since 2010,County,% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,Timezone,Elevation (ft),"
-				+ "UV Index,Single Population,Walk Score,Transit Score,Bike Score,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Number of hurricanes since 1930,Number of tornadoes per year,Number of earthquakes since 1931,Num Violent Crimes Per 100k residents,Num Property Crimes Per 100k residents,Fips Code,Land Area (sq mi)";
+				+ "UV Index,Single Population,Walk Score,Transit Score,Bike Score,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Number of hurricanes since 1930,Number of tornadoes per year,Number of earthquakes since 1931,Num Violent Crimes Per 100k residents,Num Property Crimes Per 100k residents,Fips Code,Land Area (sq mi),Labor Force Participation rate";
 	}
 
 	@Override
@@ -193,7 +194,8 @@ public abstract class CityStats extends CityStatsSuper {
 				.appendWithComma(data.percentOfIncomeLostToHousingCosts).appendWithComma(data.sexOffenderCount)
 				.appendWithComma(data.hurricanes).appendWithComma(data.tornadoes).appendWithComma(data.earthQuakes)
 				.appendWithComma(data.fbiViolentCrimeRate).appendWithComma(data.fbiPropertyCrimeRate)
-				.appendWithComma(data.fipsCode).appendLastItem(data.landArea);
+				.appendWithComma(data.fipsCode).appendWithComma(data.landArea)
+				.appendLastItem(data.laborForceParticipationRate);
 	}
 
 }
