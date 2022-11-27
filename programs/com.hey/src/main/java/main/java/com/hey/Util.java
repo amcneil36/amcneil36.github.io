@@ -143,7 +143,7 @@ public class Util {
 				throw new SecurityException("you are banned from the website");
 			}
 			log("jsoup couldn't connect to: " + url);
-			throw new RuntimeException();
+			throw new RuntimeException(url, ex);
 		}
 	}
 

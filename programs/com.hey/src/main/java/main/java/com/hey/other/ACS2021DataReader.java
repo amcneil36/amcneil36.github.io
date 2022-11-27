@@ -87,7 +87,7 @@ public class ACS2021DataReader {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		String[] variables = new String[] {"B20017B_006E(bw earnings)", "B20017A_003E(wm)", "B20017A_006E(ww)", "B20017B_003E(bm)", "B20017D_003E(am)", "B20017D_006E(aw)"};
+		String[] variables = new String[] {"B25010_001E(household size)"};
 		Map<String, Result> elementsMap = getResults(variables);
 		Set<String> keys = elementsMap.keySet();
 		for (String key : keys) {
