@@ -309,7 +309,7 @@ public class CityVsUSAComparison {
 				inputData.medianAge = getValidInt(data.medianAge);
 				inputData.bachelors = getValidFloatFromPercent(data.percentWithAtleastBachelors);
 				inputData.medianHouseholdIncome = Integer.valueOf(data.medianIncome.replace("$", ""));
-				inputData.medianHomePrice = Integer.valueOf(data.medianHomePrice.replace("$", ""));
+				inputData.medianHomePrice = getValidInt(data.medianHomePrice.replace("$", ""));
 				inputData.medianHomeAge = Integer.valueOf(data.medianHomeAge);
 				inputData.homeAppreciation = getValidIntegerFromPercent(data.homeAppreciationLastTenYears);
 				inputData.airQuality = Integer.valueOf(data.airQuality);
