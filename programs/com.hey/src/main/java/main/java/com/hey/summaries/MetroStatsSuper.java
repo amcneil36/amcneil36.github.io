@@ -12,6 +12,7 @@ import main.java.com.hey.CityStats;
 import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.CityStatsSuper.AndrewStringWriter;
 import main.java.com.hey.summaries.MetroStats.Stats;
+import static main.java.com.hey.CityStats.*;
 
 public abstract class MetroStatsSuper {
 	
@@ -91,6 +92,8 @@ public abstract class MetroStatsSuper {
 				}
 				Stats stats = mapOfMetroNameToStats.get(metroKey);
 				addStuffToStats(stats, data);
+				stats.addDataToMapOfStateToPopulation(data);
+				stats.addDataToMapOfTimeZoneToPopulation(data);
 			}
 		}
 		Set<String> keys = mapOfMetroNameToStats.keySet();
@@ -102,9 +105,13 @@ public abstract class MetroStatsSuper {
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\MetroStats\\MetroStats.csv";
 		FileWriter myWriter = new FileWriter(filePath);
 		AndrewStringWriter sb = new AndrewStringWriter();
-		String[] arr = getHeader();
 		StringBuilder mySb = new StringBuilder();
-		for (String str : arr) {
+		String[] firstHeaders = {METRO_NAME, PREDOMINANT_STATE, METRO_POP};
+		for (String str : firstHeaders) {
+			mySb.append(str).append(",");
+		}
+		String[] remainingHeaders = getHeader();
+		for (String str : remainingHeaders) {
 			mySb.append(str).append(",");
 		}
 		mySb.deleteCharAt(mySb.length() - 1);
@@ -120,9 +127,25 @@ public abstract class MetroStatsSuper {
 		System.out.println("wrote to file " + filePath);
 	}
 	
-	public abstract String[] getHeader();
+	public void addToSb(AndrewStringWriter sb, Stats stat) {
+		
+		Map<String, Integer> mapOfNameToIdx = new HashMap<>();
+		String[] headers = getHeader();
+		Object[] arr = new Object[headers.length];
+		for (int i = 0; i < headers.length; i++) {
+			mapOfNameToIdx.put(headers[i], i);
+		}
+		extractDataToArray(stat, mapOfNameToIdx, arr);
+	
+		
+		for (Object obj : arr) {
+			sb.appendWithComma(obj.toString());
+		}
+	}
+	
+	public abstract void extractDataToArray(Stats stat, Map<String, Integer> mapOfNameToIdx, Object[] arr);
 
-	public abstract void addToSb(AndrewStringWriter sb, Stats stat);
+	public abstract String[] getHeader();
 
 	public abstract void addStuffToStats(Stats stats, Data data);
 

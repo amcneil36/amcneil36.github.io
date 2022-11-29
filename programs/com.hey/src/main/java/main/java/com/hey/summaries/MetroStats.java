@@ -22,8 +22,6 @@ import static main.java.com.hey.CityStats.HOTTEST_MONTH;
 import static main.java.com.hey.CityStats.INCOME;
 import static main.java.com.hey.CityStats.INCOME_SPENT;
 import static main.java.com.hey.CityStats.LABOR_FORCE;
-import static main.java.com.hey.CityStats.METRO_NAME;
-import static main.java.com.hey.CityStats.METRO_POP;
 import static main.java.com.hey.CityStats.POPULATION_DENSITY;
 import static main.java.com.hey.CityStats.POPULATION_GROWTH;
 import static main.java.com.hey.CityStats.POVERTY_RATE;
@@ -38,11 +36,9 @@ import static main.java.com.hey.CityStats.VIOLENT_CRIME_INDEX;
 import static main.java.com.hey.CityStats.WHITE;
 import static main.java.com.hey.CityStats.WIND_SPEED;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import main.java.com.hey.CityStats;
-import main.java.com.hey.CityStatsSuper.AndrewStringWriter;
 
 public class MetroStats extends MetroStatsSuper {
 
@@ -84,7 +80,6 @@ public class MetroStats extends MetroStatsSuper {
 		WeightedAverage laborForceParticipationRate = new WeightedAveragePercent();
 	}
 
-	// this can stay as is
 	@Override
 	public void addStuffToStats(Stats stats, CityStats.Data data) {
 		stats.peoplePerSqMi.addCity(data, data.populationDensity);
@@ -122,27 +117,11 @@ public class MetroStats extends MetroStatsSuper {
 		stats.fbiViolentCrimeData.addCity(data, data.fbiViolentCrimeRate);
 		stats.fbiPropertyCrimeData.addCity(data, data.fbiPropertyCrimeRate);
 		stats.laborForceParticipationRate.addCity(data, data.laborForceParticipationRate);
-		stats.addDataToMapOfStateToPopulation(data);
-		stats.addDataToMapOfTimeZoneToPopulation(data);
 
 	}
 
-	// change this
-	// make a test that reads CityStats.csv and then calls into addStuffToStats with a random
-	// CityStats.data object and then calls into this. then use code that makes a map and populates an array from the map
-	// similar to CityStats::extractDataToArray
 	@Override
-	public void addToSb(AndrewStringWriter sb, Stats stat) {
-		
-		Map<String, Integer> mapOfNameToIdx = new HashMap<>();
-		String[] headers = getHeader();
-		// subtract 3 because metro name and others at the start arent needed here
-		Object[] arr = new Object[headers.length-3];
-		for (int i = 0; i < headers.length-3; i++) {
-			mapOfNameToIdx.put(headers[i+3], i);
-		}
-		// repeat this for the ones below and then iterate over the array to create a string. do append with comma on the toString() of the element in the array
-		// then run the unit test to make sure it still works
+	public void extractDataToArray(Stats stat, Map<String, Integer> mapOfNameToIdx, Object[] arr) {
 		arr[mapOfNameToIdx.get(POPULATION_DENSITY)] = stat.peoplePerSqMi;
 		arr[mapOfNameToIdx.get(HOTTEST_MONTH)] = stat.hottestMonthsHigh;
 		arr[mapOfNameToIdx.get(COLDEST_MONTH)] = stat.coldestHigh;
@@ -179,27 +158,22 @@ public class MetroStats extends MetroStatsSuper {
 		arr[mapOfNameToIdx.get(VIOLENT_CRIMES_FBI)] = stat.fbiViolentCrimeData;
 		arr[mapOfNameToIdx.get(PROPERTY_CRIMES_FBI)] = stat.fbiPropertyCrimeData;
 		arr[mapOfNameToIdx.get(LABOR_FORCE)] = stat.laborForceParticipationRate;
-	
-		
-		for (Object obj : arr) {
-			sb.appendWithComma(obj.toString());
-		}
-	}
-
-	public static void main(String[] args) throws Exception {
-		MetroStats metroStats = new MetroStats();
-		metroStats.performStuff();
 	}
 
 	@Override
 	public String[] getHeader() {
-		return new String[] { METRO_NAME, PREDOMINANT_STATE, METRO_POP, POPULATION_DENSITY, HOTTEST_MONTH,
+		return new String[] { POPULATION_DENSITY, HOTTEST_MONTH,
 				COLDEST_MONTH, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE, ANNUAL_SNOWFALL,
 				AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED, VIOLENT_CRIME_INDEX, PROPERTY_CRIME_INDEX, AGE,
 				BACHELORS, INCOME, POVERTY_RATE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT, HOMEOWNERSHIP_RATE,
 				POPULATION_GROWTH, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, UV_INDEX,
 				SINGLE_POPULATION, INCOME_SPENT, SEX_OFFENDERS, PREDOMINANT_TIMEZONE, VIOLENT_CRIMES_FBI,
 				PROPERTY_CRIMES_FBI, LABOR_FORCE };
+	}
+	
+	public static void main(String[] args) throws Exception {
+		MetroStats metroStats = new MetroStats();
+		metroStats.performStuff();
 	}
 
 }

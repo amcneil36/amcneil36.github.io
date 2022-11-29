@@ -22,7 +22,7 @@ public class MetroStatsTest {
 		Assert.assertEquals(header, expected);
 	}*/
 	
-	@Test
+	/*@Test
 	public void foo2() throws Exception {
 		CityStats cs = new BachelorsDegree();
 		List<Data> list = cs.readData("Florida");
@@ -35,5 +35,5 @@ public class MetroStatsTest {
 		String actual = sb.getString();
 		String expected = "1194,90,70,51,100,241,0,73,63,N/A,20,40,44,43%,$95980,3%,$443000,2023,$219,83%,33%,51%,44%,2%,12%,65%,15%,9%,6,35%,19%,8,Eastern Standard Time,N/A,N/A,65%,";
 		Assert.assertEquals(actual, expected);
-	}
+	}*/
 }
