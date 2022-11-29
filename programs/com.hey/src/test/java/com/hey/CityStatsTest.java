@@ -8,6 +8,7 @@ import org.junit.Test;
 import main.java.com.hey.CityStats;
 import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.city.stats.BachelorsDegree;
+import main.java.com.hey.city.stats.NoopCityStats;
 
 public class CityStatsTest {
 
@@ -23,6 +24,24 @@ public class CityStatsTest {
 	public void testFoo2() throws Exception {
 		CityStats cs = new BachelorsDegree();
 		List<Data> list = cs.readData("Florida");
+		Data data = list.get(12);
+		String expected = "airQuality=68,annualSnowfall=0,averageCommuteTime=33 mins,avgAnnualDewPoint=63.5,avgApartmentRent=$1559,avgApartmentSize=1026,avgSummerDewPoint=73.2,avgYearlyWindspeed=N/A,bikeScore=52,cityName=Apollo Beach,coldestHigh=70,costPerSquareFoot=$219,countyName=Hillsborough County,earthQuakes=0,fbiPropertyCrimeRate=N/A,fbiViolentCrimeRate=N/A,feetAboveSeaLevel=57,fipsCode=FL-01675,foreignBornPercent=9.31%,homeAppreciationLastFiveYears=46%,homeAppreciationLastTenYears=32%,homeAppreciationLastYear=6%,homeOwnershipRate=83.09%,homeSquareFeet=2023,hottestMonthMinusColdestMonth=20,hottestMonthsHigh=90,hurricanes=69,jobGrowthLastYear=2.30%,laborForceParticipationRate=65.32%,landArea=19.67,medianAge=44,medianHomeAge=16,medianHomePrice=$443000,medianIncome=$95980,metro=Tampa-St. Petersburg-Clearwater,metroPopulation=3243963,numDaysOfRain=100,numInchesOfRain=51,numSunnyDays=241,percentAsian=2.05%,percentBlack=12.13%,percentDemocrat=51.00%,percentHispanic=15.31%,percentOfIncomeLostToHousingCosts=19.6%,percentRepublican=44.20%,percentWhite=65.6%,percentWithAtleastBachelors=43.45%,population=23487,populationDensity=1194,populationGrowthSince2010=33.00%,povertyRate=3.88%,propertyCrime=40,sexOffenderCount=8.81,singlePopulation=35.90%,stateName=Florida,timeZone=Eastern Standard Time,tornadoes=6,transitScore=N/A,unemploymentRate=4.2%,uvIndex=6.9,violentCrime=20,walkScore=32]";
+		Assert.assertTrue(data.toString().contains(expected));
+	}
+	
+	@Test
+	public void testFoo3() throws Exception {
+		NoopCityStats n = new NoopCityStats();
+		n.processAllStates(); // doesn't do anything. just makes sure there is no error
+		int totalMsSlept = 0;
+		while(n.numStatesComplete < 51) {
+			if (totalMsSlept > 10000) {
+				throw new RuntimeException("took too long for NoopCityStats");
+			}
+			Thread.sleep(100);
+			totalMsSlept+=100;
+		}
+		List<Data> list = n.readData("Florida");
 		Data data = list.get(12);
 		String expected = "airQuality=68,annualSnowfall=0,averageCommuteTime=33 mins,avgAnnualDewPoint=63.5,avgApartmentRent=$1559,avgApartmentSize=1026,avgSummerDewPoint=73.2,avgYearlyWindspeed=N/A,bikeScore=52,cityName=Apollo Beach,coldestHigh=70,costPerSquareFoot=$219,countyName=Hillsborough County,earthQuakes=0,fbiPropertyCrimeRate=N/A,fbiViolentCrimeRate=N/A,feetAboveSeaLevel=57,fipsCode=FL-01675,foreignBornPercent=9.31%,homeAppreciationLastFiveYears=46%,homeAppreciationLastTenYears=32%,homeAppreciationLastYear=6%,homeOwnershipRate=83.09%,homeSquareFeet=2023,hottestMonthMinusColdestMonth=20,hottestMonthsHigh=90,hurricanes=69,jobGrowthLastYear=2.30%,laborForceParticipationRate=65.32%,landArea=19.67,medianAge=44,medianHomeAge=16,medianHomePrice=$443000,medianIncome=$95980,metro=Tampa-St. Petersburg-Clearwater,metroPopulation=3243963,numDaysOfRain=100,numInchesOfRain=51,numSunnyDays=241,percentAsian=2.05%,percentBlack=12.13%,percentDemocrat=51.00%,percentHispanic=15.31%,percentOfIncomeLostToHousingCosts=19.6%,percentRepublican=44.20%,percentWhite=65.6%,percentWithAtleastBachelors=43.45%,population=23487,populationDensity=1194,populationGrowthSince2010=33.00%,povertyRate=3.88%,propertyCrime=40,sexOffenderCount=8.81,singlePopulation=35.90%,stateName=Florida,timeZone=Eastern Standard Time,tornadoes=6,transitScore=N/A,unemploymentRate=4.2%,uvIndex=6.9,violentCrime=20,walkScore=32]";
 		Assert.assertTrue(data.toString().contains(expected));

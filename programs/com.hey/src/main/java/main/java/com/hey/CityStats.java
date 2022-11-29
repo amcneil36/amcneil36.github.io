@@ -248,37 +248,76 @@ public abstract class CityStats extends CityStatsSuper {
 	}
 
 	@Override
-	public void appendRowToSb(AndrewStringWriter sb, Data data, Map<String, Integer> mapOfHeaderToIdx) {
-		sb.appendWithComma(data.cityName).appendWithComma(data.stateName).appendWithComma(data.population)
-				.appendWithComma(data.populationDensity).appendWithComma(data.metro)
-				.appendWithComma(data.metroPopulation).appendWithComma(data.hottestMonthsHigh)
-				.appendWithComma(data.coldestHigh).appendWithComma(data.hottestMonthMinusColdestMonth)
-				.appendWithComma(data.numInchesOfRain).appendWithComma(data.numDaysOfRain)
-				.appendWithComma(data.numSunnyDays).appendWithComma(data.annualSnowfall)
-				.appendWithComma(data.avgSummerDewPoint).appendWithComma(data.avgAnnualDewPoint)
-				.appendWithComma(data.avgYearlyWindspeed).appendWithComma(data.violentCrime)
-				.appendWithComma(data.propertyCrime).appendWithComma(data.medianAge)
-				.appendWithComma(data.percentWithAtleastBachelors).appendDollar(data.medianIncome)
-				.appendWithComma(data.povertyRate).appendWithComma(data.avgApartmentRent)
-				.appendWithComma(data.avgApartmentSize).appendDollar(data.medianHomePrice)
-				.appendWithComma(data.homeSquareFeet).appendDollar(data.costPerSquareFoot)
-				.appendWithComma(data.medianHomeAge).appendWithComma(data.homeOwnershipRate)
-				.appendWithComma(data.homeAppreciationLastYear).appendWithComma(data.homeAppreciationLastFiveYears)
-				.appendWithComma(data.homeAppreciationLastTenYears).appendWithComma(data.airQuality)
-				.appendWithComma(data.averageCommuteTime).appendWithComma(data.unemploymentRate)
-				.appendWithComma(data.jobGrowthLastYear).appendWithComma(data.populationGrowthSince2010)
-				.appendWithComma(data.countyName).appendWithComma(data.percentDemocrat)
-				.appendWithComma(data.percentRepublican).appendWithComma(data.percentAsian)
-				.appendWithComma(data.percentBlack).appendWithComma(data.percentWhite)
-				.appendWithComma(data.percentHispanic).appendWithComma(data.foreignBornPercent)
-				.appendWithComma(data.timeZone).appendWithComma(data.feetAboveSeaLevel).appendWithComma(data.uvIndex)
-				.appendWithComma(data.singlePopulation).appendWithComma(data.walkScore)
-				.appendWithComma(data.transitScore).appendWithComma(data.bikeScore)
-				.appendWithComma(data.percentOfIncomeLostToHousingCosts).appendWithComma(data.sexOffenderCount)
-				.appendWithComma(data.hurricanes).appendWithComma(data.tornadoes).appendWithComma(data.earthQuakes)
-				.appendWithComma(data.fbiViolentCrimeRate).appendWithComma(data.fbiPropertyCrimeRate)
-				.appendWithComma(data.fipsCode).appendWithComma(data.landArea)
-				.appendLastItem(data.laborForceParticipationRate);
+	public void appendRowToSb(AndrewStringWriter sb, Data data, Map<String, Integer> mapOfNameToIndex) {
+		String[] arr = new String[getHeaders().length];
+		arr[mapOfNameToIndex.get(CITY)] = data.cityName;
+		arr[mapOfNameToIndex.get(STATE)] = data.stateName;
+		arr[mapOfNameToIndex.get(POPULATION)] = data.population;
+		arr[mapOfNameToIndex.get(POPULATION_DENSITY)] = data.populationDensity;
+		arr[mapOfNameToIndex.get(METRO_NAME)] = data.metro;
+		arr[mapOfNameToIndex.get(METRO_POP)] = data.metroPopulation;
+		arr[mapOfNameToIndex.get(HOTTEST_MONTH)] = data.hottestMonthsHigh;
+		arr[mapOfNameToIndex.get(COLDEST_MONTH)] = data.coldestHigh;
+		arr[mapOfNameToIndex.get(HOTTEST_MINUS_COLDEST)] = data.hottestMonthMinusColdestMonth;
+		arr[mapOfNameToIndex.get(ANNUAL_RAINFALL)] = data.numInchesOfRain;
+		arr[mapOfNameToIndex.get(ANNUAL_DAYS_OF_PRECIPITATION)] = data.numDaysOfRain;
+		arr[mapOfNameToIndex.get(ANNUAL_DAYS_OF_SUNSHINE)] = data.numSunnyDays;
+		arr[mapOfNameToIndex.get(ANNUAL_SNOWFALL)] = data.annualSnowfall;
+		arr[mapOfNameToIndex.get(AVERAGE_SUMMER_DEW_POINT)] = data.avgSummerDewPoint;
+		arr[mapOfNameToIndex.get(DEW_POINT)] = data.avgAnnualDewPoint;
+		arr[mapOfNameToIndex.get(WIND_SPEED)] = data.avgYearlyWindspeed;
+		arr[mapOfNameToIndex.get(VIOLENT_CRIME_INDEX)] = data.violentCrime;
+		arr[mapOfNameToIndex.get(PROPERTY_CRIME_INDEX)] = data.propertyCrime;
+		arr[mapOfNameToIndex.get(AGE)] = data.medianAge;
+		arr[mapOfNameToIndex.get(BACHELORS)] = data.percentWithAtleastBachelors;
+		arr[mapOfNameToIndex.get(INCOME)] = data.medianIncome;
+		arr[mapOfNameToIndex.get(POVERTY_RATE)] = data.povertyRate;
+		arr[mapOfNameToIndex.get(RENT)] = data.avgApartmentRent;
+		arr[mapOfNameToIndex.get(SQFT)] = data.avgApartmentSize;
+		arr[mapOfNameToIndex.get(HOME_PRICE)] = data.medianHomePrice;
+		arr[mapOfNameToIndex.get(HOME_SQFT)] = data.homeSquareFeet;
+		arr[mapOfNameToIndex.get(COST_PER_SQFT)] = data.costPerSquareFoot;
+		arr[mapOfNameToIndex.get(HOME_AGE)] = data.medianHomeAge;
+		arr[mapOfNameToIndex.get(HOMEOWNERSHIP_RATE)] = data.homeOwnershipRate;
+		arr[mapOfNameToIndex.get(HOME_APPRECIATION)] = data.homeAppreciationLastYear;
+		arr[mapOfNameToIndex.get(HOME_APPRECIAITON_LAST_5_YEARS)] = data.homeAppreciationLastFiveYears;
+		arr[mapOfNameToIndex.get(HOME_APPRECIATION_LAST_10_YEARS)] = data.homeAppreciationLastTenYears;
+		arr[mapOfNameToIndex.get(AIR_QUALITY_IDX)] = data.airQuality;
+		arr[mapOfNameToIndex.get(COMMUTE)] = data.averageCommuteTime;
+		arr[mapOfNameToIndex.get(UNEMPLOYMENT_RATE)] = data.unemploymentRate;
+		arr[mapOfNameToIndex.get(JOB_GROWTH)] = data.jobGrowthLastYear;
+		arr[mapOfNameToIndex.get(POPULATION_GROWTH)] = data.populationGrowthSince2010;
+		arr[mapOfNameToIndex.get(COUNTY)] = data.countyName;
+		arr[mapOfNameToIndex.get(DEMOCRAT)] = data.percentDemocrat;
+		arr[mapOfNameToIndex.get(REPUBLICAN)] = data.percentRepublican;
+		arr[mapOfNameToIndex.get(ASIAN)] = data.percentAsian;
+		arr[mapOfNameToIndex.get(BLACK)] = data.percentBlack;
+		arr[mapOfNameToIndex.get(WHITE)] = data.percentWhite;
+		arr[mapOfNameToIndex.get(HISPANIC)] = data.percentHispanic;
+		arr[mapOfNameToIndex.get(FOREIGN_BORN)] = data.foreignBornPercent;
+		arr[mapOfNameToIndex.get(TIME_ZONE)] = data.timeZone;
+		arr[mapOfNameToIndex.get(ELEVATION)] = data.feetAboveSeaLevel;
+		arr[mapOfNameToIndex.get(UV_INDEX)] = data.uvIndex;
+		arr[mapOfNameToIndex.get(SINGLE_POPULATION)] = data.singlePopulation;
+		arr[mapOfNameToIndex.get(WALK_SCORE)] = data.walkScore;
+		arr[mapOfNameToIndex.get(TRANSIT_SCORE)] = data.transitScore;
+		arr[mapOfNameToIndex.get(BIKE_SCORE)] = data.bikeScore;
+		arr[mapOfNameToIndex.get(INCOME_SPENT)] = data.percentOfIncomeLostToHousingCosts;
+		arr[mapOfNameToIndex.get(SEX_OFFENDERS)] = data.sexOffenderCount;
+		arr[mapOfNameToIndex.get(HURRICANES)] = data.hurricanes;
+		arr[mapOfNameToIndex.get(TORNADOES)] = data.tornadoes;
+		arr[mapOfNameToIndex.get(EARTHQUAKES)] = data.earthQuakes;
+		arr[mapOfNameToIndex.get(VIOLENT_CRIMES_FBI)] = data.fbiViolentCrimeRate;
+		arr[mapOfNameToIndex.get(PROPERTY_CRIMES_FBI)] = data.fbiPropertyCrimeRate;
+		arr[mapOfNameToIndex.get(FIPS_CODE)] = data.fipsCode;
+		arr[mapOfNameToIndex.get(LAND_AREA)] = data.landArea;
+		arr[mapOfNameToIndex.get(LABOR_FORCE)] = data.laborForceParticipationRate;
+		
+		
+		for (String st : arr) {
+			sb.appendWithComma(st);
+		}
+		sb.removeLastElement().getString();
 	}
 
 }
