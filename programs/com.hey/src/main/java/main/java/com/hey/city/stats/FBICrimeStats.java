@@ -34,55 +34,56 @@ public class FBICrimeStats extends CityStats{
 	private void populateMapWithState(String stateName) throws Exception {
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CrimeRates\\" + stateName + ".csv";
 		File myObj = new File(filePath);
-		Scanner myReader = new Scanner(myObj);
-		String header = "";
-		int ctr = 0;
-		while(true) {
-			String line = myReader.nextLine();
-			header += line + " ";
-			if (line.startsWith("theft\",Arson")) {
-				break;
+		try (Scanner myReader = new Scanner(myObj)) {
+			String header = "";
+			int ctr = 0;
+			while(true) {
+				String line = myReader.nextLine();
+				header += line + " ";
+				if (line.startsWith("theft\",Arson")) {
+					break;
+				}
+				ctr++;
+				if (ctr > 100) {
+					throw new RuntimeException("fix text file for " + stateName);
+				}
 			}
-			ctr++;
-			if (ctr > 100) {
-				throw new RuntimeException("fix text file for " + stateName);
+			String[] arr = header.split(",");
+			Map<String, Integer> mapOfHeaderToIdx = new HashMap<>();
+			for (int i = 0; i < arr.length; i++) {
+				mapOfHeaderToIdx.put(arr[i], i);
 			}
-		}
-		String[] arr = header.split(",");
-		Map<String, Integer> mapOfHeaderToIdx = new HashMap<>();
-		for (int i = 0; i < arr.length; i++) {
-			mapOfHeaderToIdx.put(arr[i], i);
-		}
-		int cityIdx = mapOfHeaderToIdx.get("﻿City");
-		int populationIdx = mapOfHeaderToIdx.get("Population");
-		int violentCrimeIdx = mapOfHeaderToIdx.get("\"Violent crime\"");
-		int propertyCrimeIdx = mapOfHeaderToIdx.get("\"Property crime\"");
-		Map<String, Integer> map = new HashMap<>();
-		for (int i = 0; i < arr.length; i++) {
-			map.put(arr[i],  i);
-		}
-		Map<String, FBIData> mapOfCityToFbiData = new HashMap<>();
-		while (myReader.hasNextLine()) {
-			String line = myReader.nextLine();
-			if (arr.length != map.size() || line.contains(",,")) {
-				continue;
+			int cityIdx = mapOfHeaderToIdx.get("﻿City");
+			int populationIdx = mapOfHeaderToIdx.get("Population");
+			int violentCrimeIdx = mapOfHeaderToIdx.get("\"Violent crime\"");
+			int propertyCrimeIdx = mapOfHeaderToIdx.get("\"Property crime\"");
+			Map<String, Integer> map = new HashMap<>();
+			for (int i = 0; i < arr.length; i++) {
+				map.put(arr[i],  i);
 			}
-			arr = line.split(",");
-			String cityName = arr[cityIdx].replace("2", "");
-			if (arr[populationIdx].contains("County")) { // some cities are called Reno, X County for example. we want to skip these
-				continue;
+			Map<String, FBIData> mapOfCityToFbiData = new HashMap<>();
+			while (myReader.hasNextLine()) {
+				String line = myReader.nextLine();
+				if (arr.length != map.size() || line.contains(",,")) {
+					continue;
+				}
+				arr = line.split(",");
+				String cityName = arr[cityIdx].replace("2", "");
+				if (arr[populationIdx].contains("County")) { // some cities are called Reno, X County for example. we want to skip these
+					continue;
+				}
+				cityName = Util.removeStuffFromCityName(cityName);
+				double population = Integer.valueOf(arr[populationIdx]);
+				double violentCrimes = Integer.valueOf(arr[violentCrimeIdx]);
+				double propertyCrimes = Integer.valueOf(arr[propertyCrimeIdx]);
+				FBIData fbi = new FBIData();
+				fbi.violentCrimeRate = (int)((violentCrimes/population)*100000);
+				fbi.propertyCrimeRate = (int)((propertyCrimes/population)*100000);
+				mapOfCityToFbiData.put(cityName, fbi);
 			}
-			cityName = Util.removeStuffFromCityName(cityName);
-			double population = Integer.valueOf(arr[populationIdx]);
-			double violentCrimes = Integer.valueOf(arr[violentCrimeIdx]);
-			double propertyCrimes = Integer.valueOf(arr[propertyCrimeIdx]);
-			FBIData fbi = new FBIData();
-			fbi.violentCrimeRate = (int)((violentCrimes/population)*100000);
-			fbi.propertyCrimeRate = (int)((propertyCrimes/population)*100000);
-			mapOfCityToFbiData.put(cityName, fbi);
+			mapOfStateToMap.put(stateName, mapOfCityToFbiData);
+			myReader.close();
 		}
-		mapOfStateToMap.put(stateName, mapOfCityToFbiData);
-		myReader.close();
 		
 	}
 

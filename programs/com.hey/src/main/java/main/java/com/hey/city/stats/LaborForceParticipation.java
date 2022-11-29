@@ -1,7 +1,6 @@
 package main.java.com.hey.city.stats;
 
 import java.util.Map;
-import java.util.Set;
 
 import main.java.com.hey.CityStats;
 import main.java.com.hey.Util;
