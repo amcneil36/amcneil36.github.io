@@ -1,17 +1,10 @@
 package main.java.com.hey.summaries;
 
-import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import main.java.com.hey.CityStats;
+import static main.java.com.hey.CityStats.*;
 import main.java.com.hey.CityStatsSuper.AndrewStringWriter;
 
-public class MetroStats {
+public class MetroStats extends MetroStatsSuper {
 
 	static class Stats extends Stats2 {
 		WeightedAverage peoplePerSqMi = new WeightedAverage();
@@ -49,70 +42,10 @@ public class MetroStats {
 		WeightedAverage fbiViolentCrimeData = new WeightedAverage();
 		WeightedAverage fbiPropertyCrimeData = new WeightedAverage();
 		WeightedAverage laborForceParticipationRate = new WeightedAverage();
-		private Map<String, Integer> mapOfStateToPopulation = new HashMap<>();
-		private Map<String, Integer> mapOfTimeZoneToPopulation = new HashMap<>();
-		
-		public String getPrimaryState() {
-			Set<String> keys = mapOfStateToPopulation.keySet();
-			
-			String mostPopulatedState = "";
-			int maxPopulation = -1;
-			for (String key : keys) {
-				int currentPop = mapOfStateToPopulation.get(key);
-				if (currentPop > maxPopulation) {
-					maxPopulation = currentPop;
-					mostPopulatedState = key;
-				}
-			}
-			if (maxPopulation == -1) {
-				throw new RuntimeException("didn't find most populated state");
-			}
-			return mostPopulatedState;
-		}
-		
-		public String getPrimaryTimeZone() {
-			Set<String> keys = mapOfTimeZoneToPopulation.keySet();
-			
-			String mostPopulatedTimeZone = "";
-			int maxPopulation = -1;
-			for (String key : keys) {
-				int currentPop = mapOfTimeZoneToPopulation.get(key);
-				if (currentPop > maxPopulation) {
-					maxPopulation = currentPop;
-					mostPopulatedTimeZone = key;
-				}
-			}
-			if (maxPopulation == -1) {
-				throw new RuntimeException("didn't find most populated time zone");
-			}
-			return mostPopulatedTimeZone;
-		}
-		
-		
-		public void addDataToMapOfStateToPopulation(CityStats.Data data) {
-			String state = data.stateName;
-			if (!mapOfStateToPopulation.containsKey(state)) {
-				mapOfStateToPopulation.put(state, 0);
-			}
-			int pop = mapOfStateToPopulation.get(state);
-			pop += Integer.valueOf(data.population);
-			mapOfStateToPopulation.put(state, pop);
-		}
-		
-		public void addDataToMapOfTimeZoneToPopulation(CityStats.Data data) {
-			String timeZone = data.timeZone;
-			if (!mapOfTimeZoneToPopulation.containsKey(timeZone)) {
-				mapOfTimeZoneToPopulation.put(timeZone, 0);
-			}
-			int pop = mapOfTimeZoneToPopulation.get(timeZone);
-			pop += Integer.valueOf(data.population);
-			mapOfTimeZoneToPopulation.put(timeZone, pop);
-		}
-		
-
 	}
 
-	static void addStuffToStats(Stats stats, CityStats.Data data) {
+	@Override
+	public void addStuffToStats(Stats stats, CityStats.Data data) {
 		stats.peoplePerSqMi.addCity(data, data.populationDensity);
 		stats.hottestMonthsHigh.addCity(data, data.hottestMonthsHigh);
 		stats.coldestHigh.addCity(data, data.coldestHigh);
@@ -153,13 +86,8 @@ public class MetroStats {
 
 	}
 
-	static String startSt = "Metro Name,Predominant State,Metro Population,People Per Sq Mi,Hottest month's avg high (F),Coldest month's avg high (F),Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,Average yearly windspeed (mph),"
-			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
-			+ "Median household income,Poverty Rate,Median home price,Median home sqft,"
-			+ "Median home cost per sqft,Homeownership Rate,Population growth since 2010,"
-			+ "% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,UV Index,Single Population,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Predominant Timezone,Num Violent Crimes Per 100k residents,Num Property Crimes Per 100k residents,Labor Force Participation rate";
-
-	static void addToSb(AndrewStringWriter sb, Stats stat) {
+	@Override
+	public void addToSb(AndrewStringWriter sb, Stats stat) {
 		sb.appendWA(stat.peoplePerSqMi);
 		sb.appendWA(stat.hottestMonthsHigh);
 		sb.appendWA(stat.coldestHigh);
@@ -197,93 +125,40 @@ public class MetroStats {
 		sb.appendWA(stat.fbiPropertyCrimeData);
 		sb.appendWAPercent(stat.laborForceParticipationRate);
 	}
-	
-	public static String getMetroKey(CityStats.Data data) {
-		return data.metro + "," + data.metroPopulation;
+
+	static String startSt = "Metro Name,Predominant State,Metro Population,People Per Sq Mi,Hottest month's avg high (F),Coldest month's avg high (F),"
+			+ "Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,"
+			+ "Average yearly windspeed (mph),"
+			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
+			+ "Median household income,Poverty Rate,Median home price,Median home sqft,"
+			+ "Median home cost per sqft,Homeownership Rate,Population growth since 2010,"
+			+ "% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,UV Index,Single Population,"
+			+ "% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Predominant Timezone,Num Violent Crimes Per 100k residents,"
+			+ "Num Property Crimes Per 100k residents,Labor Force Participation rate";
+
+	private static final String PREDOMINANT_STATE = "Predominant State";
+	private static final String PREDOMINANT_TIMEZONE = "Predominant Timezone";
+
+	@Override
+	public String getHeader() {
+		String[] arr = new String[] { METRO_NAME, PREDOMINANT_STATE, METRO_POP, POPULATION_DENSITY, HOTTEST_MONTH,
+				COLDEST_MONTH, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE, ANNUAL_SNOWFALL,
+				AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED, VIOLENT_CRIME_INDEX, PROPERTY_CRIME_INDEX, AGE,
+				BACHELORS, INCOME, POVERTY_RATE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT, HOMEOWNERSHIP_RATE,
+				POPULATION_GROWTH, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, UV_INDEX,
+				SINGLE_POPULATION, INCOME_SPENT, SEX_OFFENDERS, PREDOMINANT_TIMEZONE, VIOLENT_CRIMES_FBI,
+				PROPERTY_CRIMES_FBI, LABOR_FORCE };
+		StringBuilder sb = new StringBuilder();
+		for (String str : arr) {
+			sb.append(str).append(",");
+		}
+		sb.deleteCharAt(sb.length() - 1);
+		return sb.toString();
 	}
 
-	///////////////////////////////////////////////////////////////////////
 	public static void main(String[] args) throws Exception {
-		List<CityStats.Data> dataList = CreateBigCsv.readInput();
-		Map<String, Stats> mapOfMetroNameToStats = new HashMap<>();
-		for (CityStats.Data data : dataList) {
-			if (isMetroValid(data)) {
-				String metroKey = getMetroKey(data);
-				if (!mapOfMetroNameToStats.containsKey(metroKey)) {
-					Stats stats = new Stats();
-					stats.metroName = data.metro;
-					stats.metroPopulation = Integer.valueOf(data.metroPopulation);
-					mapOfMetroNameToStats.put(metroKey, stats);
-				}
-				Stats stats = mapOfMetroNameToStats.get(metroKey);
-				addStuffToStats(stats, data);
-			}
-		}
-		Set<String> keys = mapOfMetroNameToStats.keySet();
-		List<Stats> statsList = new ArrayList<>();
-		for (String key : keys) {
-			statsList.add(mapOfMetroNameToStats.get(key));
-		}
-		Collections.sort(statsList, Collections.reverseOrder());
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\MetroStats\\MetroStats.csv";
-		FileWriter myWriter = new FileWriter(filePath);
-		AndrewStringWriter sb = new AndrewStringWriter();
-		sb.appendLastItem(startSt);
-		for (Stats stat : statsList) {
-			sb.appendWithComma(stat.metroName).appendWithComma(stat.getPrimaryState()).appendWithComma(stat.metroPopulation);
-			addToSb(sb, stat);
-			sb.appendEnding();
-		}
-		String st = sb.getString();
-		myWriter.write(st);
-		myWriter.close();
-		System.out.println("wrote to file " + filePath);
-	}
-
-	private static boolean isMetroValid(CityStats.Data data) {
-		return !data.metro.contains("None");
-	}
-
-	public static class WeightedAverage {
-		private double totalSummedValue = 0;
-		private double totalPopulation = 0;
-
-		public void addCity(CityStats.Data data, String value) {
-			if (value.contains("N/A")) {
-				return;
-			}
-			double val = Double.valueOf(value.replace("%", "").replace("$", ""));
-			int pop = Integer.valueOf(data.population);
-			totalSummedValue += val * pop;
-			totalPopulation += pop;
-		}
-
-		public String getWeightedAverage() {
-			if (totalPopulation == 0) {
-				return "N/A";
-			}
-			return String.valueOf((int)(totalSummedValue / totalPopulation));
-		}
-	}
-
-	static class Stats2 implements Comparable<Stats2> {
-		public String metroName = "";
-		public int metroPopulation = 0;
-
-		@Override
-		public int compareTo(Stats2 arg0) {
-			return compareTo2(this, arg0);
-		}
-
-	}
-
-	static int compareTo2(Stats2 self, Stats2 arg0) {
-		if (self.metroPopulation < arg0.metroPopulation) {
-			return -1;
-		} else if (self.metroPopulation == arg0.metroPopulation) {
-			return 0;
-		}
-		return 1;
+		MetroStats metroStats = new MetroStats();
+		metroStats.performStuff();
 	}
 
 }

@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 import main.java.com.hey.CityStats.Data;
-import main.java.com.hey.summaries.MetroStats.WeightedAverage;
+import main.java.com.hey.summaries.MetroStatsSuper.WeightedAverage;
 
 public abstract class CityStatsSuper {
 	
