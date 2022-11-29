@@ -19,7 +19,7 @@ public class CostPerSquareFoot extends CityStats {
 	static Map<String, String> mapOfKeyToPrice = new HashMap<>();
 	
 	private static String getKey(String city, String stateAbbreviation) {
-		return city.toLowerCase() + ", " + stateAbbreviation.toLowerCase();
+		return Util.removeStuffFromCityName(city) + ", " + stateAbbreviation.toLowerCase();
 	}
 	
 	public static void main(String[] args) throws Exception {
@@ -55,7 +55,7 @@ public class CostPerSquareFoot extends CityStats {
 	protected void updateData(Data data, String stateName) throws Exception {
 		data.costPerSquareFoot = "N/A";
 		String stateAbbreviation = Util.getStateAbbreviation(data.stateName);
-		String key = getKey(Util.removeStuffFromCityName(data.cityName), stateAbbreviation);
+		String key = getKey(data.cityName, stateAbbreviation);
 		if (mapOfKeyToPrice.containsKey(key)) {
 			data.costPerSquareFoot = mapOfKeyToPrice.get(key);
 		}

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 import main.java.com.hey.CityStats;
+import main.java.com.hey.Util;
 
 public class FBICrimeStats extends CityStats{
 
@@ -21,8 +22,9 @@ public class FBICrimeStats extends CityStats{
 			populateMapWithState(stateName);
 		}
 		Map<String, FBIData> mapOfCityToData = mapOfStateToMap.get(stateName);
-		if (mapOfCityToData.containsKey(data.cityName)) {
-			FBIData fbiData = mapOfCityToData.get(data.cityName);
+		String city = Util.removeStuffFromCityName(data.cityName);
+		if (mapOfCityToData.containsKey(city)) {
+			FBIData fbiData = mapOfCityToData.get(city);
 			data.fbiPropertyCrimeRate = String.valueOf(fbiData.propertyCrimeRate);
 			data.fbiViolentCrimeRate = String.valueOf(fbiData.violentCrimeRate);
 		}
@@ -70,6 +72,7 @@ public class FBICrimeStats extends CityStats{
 			if (arr[populationIdx].contains("County")) { // some cities are called Reno, X County for example. we want to skip these
 				continue;
 			}
+			cityName = Util.removeStuffFromCityName(cityName);
 			double population = Integer.valueOf(arr[populationIdx]);
 			double violentCrimes = Integer.valueOf(arr[violentCrimeIdx]);
 			double propertyCrimes = Integer.valueOf(arr[propertyCrimeIdx]);
@@ -82,6 +85,7 @@ public class FBICrimeStats extends CityStats{
 		myReader.close();
 		
 	}
+
 
 	public static void main(String[] args) throws Exception {
 		FBICrimeStats st = new FBICrimeStats();

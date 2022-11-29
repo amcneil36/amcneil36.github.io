@@ -20,7 +20,7 @@ public class MedianHomeCost extends CityStats {
 	static Map<String, String> mapOfKeyToPrice = new HashMap<>();
 
 	private static String getKey(String city, String stateAbbreviation) {
-		return city.toLowerCase() + ", " + stateAbbreviation.toLowerCase();
+		return Util.removeStuffFromCityName(city) + ", " + stateAbbreviation.toLowerCase();
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -60,7 +60,7 @@ public class MedianHomeCost extends CityStats {
 	protected void updateData(Data data, String stateName) throws Exception {
 		data.medianHomePrice = "N/A";
 		String stateAbbreviation = Util.getStateAbbreviation(data.stateName);
-		String key = getKey(Util.removeStuffFromCityName(data.cityName), stateAbbreviation);
+		String key = getKey(data.cityName, stateAbbreviation);
 		if (mapOfKeyToPrice.containsKey(key)) {
 			data.medianHomePrice = mapOfKeyToPrice.get(key);
 		}

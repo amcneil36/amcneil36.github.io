@@ -7,7 +7,7 @@ public class ACS2021VariableReader extends ACS2021VariableReaderSuper {
 		if (data.concept.contains("in puerto rico")) {
 			return false;
 		}
-		return data.concept.contains("monthly") && data.name.contains("001E");
+		return data.concept.contains("children under 18 years") && data.label.contains("householder") && (data.concept.contains("black") || data.label.contains("black"));// && data.concept.contains("black");
 	}
 	
 	public static void main(String[] args) throws Exception {
