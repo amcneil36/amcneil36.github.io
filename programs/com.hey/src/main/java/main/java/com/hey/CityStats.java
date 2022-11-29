@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+
 public abstract class CityStats extends CityStatsSuper {
 
 	public static class Data {
@@ -72,34 +74,13 @@ public abstract class CityStats extends CityStatsSuper {
 		public String fipsCode = "N/A";
 		public String landArea = "N/A";
 		public String laborForceParticipationRate = "N/A";
+		
+		@Override
+		 public String toString() {
+		     return ReflectionToStringBuilder.toString(this);
+		 }
 	}
 
-	@Override
-	public String getStartString() {
-		return new AndrewStringWriter().appendWithComma(CITY).appendWithComma(STATE).appendWithComma(POPULATION)
-				.appendWithComma(POPULATION_DENSITY).appendWithComma(METRO_NAME).appendWithComma(METRO_POP)
-				.appendWithComma(HOTTEST_MONTH).appendWithComma(COLDEST_MONTH).appendWithComma(HOTTEST_MINUS_COLDEST).appendWithComma(ANNUAL_RAINFALL)
-				.appendWithComma(ANNUAL_DAYS_OF_PRECIPITATION).appendWithComma(ANNUAL_DAYS_OF_SUNSHINE)
-				.appendWithComma(ANNUAL_SNOWFALL).appendWithComma(AVERAGE_SUMMER_DEW_POINT).appendWithComma(DEW_POINT)
-				.appendWithComma(WIND_SPEED).appendWithComma(VIOLENT_CRIME_INDEX).appendWithComma(PROPERTY_CRIME_INDEX)
-				.appendWithComma(AGE).appendWithComma(BACHELORS).appendWithComma(INCOME).appendWithComma(POVERTY_RATE)
-				.appendWithComma(RENT).appendWithComma(SQFT).appendWithComma(HOME_PRICE).appendWithComma(HOME_SQFT)
-				.appendWithComma(COST_PER_SQFT).appendWithComma(HOME_AGE).appendWithComma(HOMEOWNERSHIP_RATE)
-				.appendWithComma(HOME_APPRECIATION).appendWithComma(HOME_APPRECIAITON_LAST_5_YEARS)
-				.appendWithComma(HOME_APPRECIATION_LAST_10_YEARS).appendWithComma(AIR_QUALITY_IDX)
-				.appendWithComma(COMMUTE).appendWithComma(UNEMPLOYMENT_RATE).appendWithComma(JOB_GROWTH)
-				.appendWithComma(POPULATION_GROWTH).appendWithComma(COUNTY).appendWithComma(DEMOCRAT)
-				.appendWithComma(REPUBLICAN).appendWithComma(ASIAN).appendWithComma(BLACK).appendWithComma(WHITE)
-				.appendWithComma(HISPANIC).appendWithComma(FOREIGN_BORN).appendWithComma(TIME_ZONE)
-				.appendWithComma(ELEVATION).appendWithComma(UV_INDEX).appendWithComma(SINGLE_POPULATION)
-				.appendWithComma(WALK_SCORE).appendWithComma(TRANSIT_SCORE).appendWithComma(BIKE_SCORE)
-				.appendWithComma(INCOME_SPENT).appendWithComma(SEX_OFFENDERS).appendWithComma(HURRICANES)
-				.appendWithComma(TORNADOES).appendWithComma(EARTHQUAKES).appendWithComma(VIOLENT_CRIMES_FBI)
-				.appendWithComma(PROPERTY_CRIMES_FBI).appendWithComma(FIPS_CODE).appendWithComma(LAND_AREA)
-				.appendWithComma(LABOR_FORCE).removeLastElement().getString();
-	}
-
-	//////////
 	private static final String CITY = "City";
 	private static final String STATE = "State";
 	private static final String POPULATION = "Population";
@@ -162,6 +143,31 @@ public abstract class CityStats extends CityStatsSuper {
 	private static final String FIPS_CODE = "Fips Code";
 	private static final String LAND_AREA = "Land Area (sq mi)";
 	private static final String LABOR_FORCE = "Labor Force Participation rate";
+	
+	@Override
+	public String getStartString() {
+		return new AndrewStringWriter().appendWithComma(CITY).appendWithComma(STATE).appendWithComma(POPULATION)
+				.appendWithComma(POPULATION_DENSITY).appendWithComma(METRO_NAME).appendWithComma(METRO_POP)
+				.appendWithComma(HOTTEST_MONTH).appendWithComma(COLDEST_MONTH).appendWithComma(HOTTEST_MINUS_COLDEST).appendWithComma(ANNUAL_RAINFALL)
+				.appendWithComma(ANNUAL_DAYS_OF_PRECIPITATION).appendWithComma(ANNUAL_DAYS_OF_SUNSHINE)
+				.appendWithComma(ANNUAL_SNOWFALL).appendWithComma(AVERAGE_SUMMER_DEW_POINT).appendWithComma(DEW_POINT)
+				.appendWithComma(WIND_SPEED).appendWithComma(VIOLENT_CRIME_INDEX).appendWithComma(PROPERTY_CRIME_INDEX)
+				.appendWithComma(AGE).appendWithComma(BACHELORS).appendWithComma(INCOME).appendWithComma(POVERTY_RATE)
+				.appendWithComma(RENT).appendWithComma(SQFT).appendWithComma(HOME_PRICE).appendWithComma(HOME_SQFT)
+				.appendWithComma(COST_PER_SQFT).appendWithComma(HOME_AGE).appendWithComma(HOMEOWNERSHIP_RATE)
+				.appendWithComma(HOME_APPRECIATION).appendWithComma(HOME_APPRECIAITON_LAST_5_YEARS)
+				.appendWithComma(HOME_APPRECIATION_LAST_10_YEARS).appendWithComma(AIR_QUALITY_IDX)
+				.appendWithComma(COMMUTE).appendWithComma(UNEMPLOYMENT_RATE).appendWithComma(JOB_GROWTH)
+				.appendWithComma(POPULATION_GROWTH).appendWithComma(COUNTY).appendWithComma(DEMOCRAT)
+				.appendWithComma(REPUBLICAN).appendWithComma(ASIAN).appendWithComma(BLACK).appendWithComma(WHITE)
+				.appendWithComma(HISPANIC).appendWithComma(FOREIGN_BORN).appendWithComma(TIME_ZONE)
+				.appendWithComma(ELEVATION).appendWithComma(UV_INDEX).appendWithComma(SINGLE_POPULATION)
+				.appendWithComma(WALK_SCORE).appendWithComma(TRANSIT_SCORE).appendWithComma(BIKE_SCORE)
+				.appendWithComma(INCOME_SPENT).appendWithComma(SEX_OFFENDERS).appendWithComma(HURRICANES)
+				.appendWithComma(TORNADOES).appendWithComma(EARTHQUAKES).appendWithComma(VIOLENT_CRIMES_FBI)
+				.appendWithComma(PROPERTY_CRIMES_FBI).appendWithComma(FIPS_CODE).appendWithComma(LAND_AREA)
+				.appendWithComma(LABOR_FORCE).removeLastElement().getString();
+	}
 
 	@Override
 	public List<Data> readData(String stateName) throws Exception {
@@ -172,76 +178,73 @@ public abstract class CityStats extends CityStatsSuper {
 		Scanner myReader = new Scanner(myObj);
 		String header = myReader.nextLine(); //
 		Map<String, Integer> mapOfNameToIndex = createMapOfNameToIndex(header);
+		System.out.println(mapOfNameToIndex);
 		while (myReader.hasNextLine()) {
 			String line = myReader.nextLine();
 			String[] arr = line.split(",");
 			Data data = new Data();
-			int idx = 0;
-			data.cityName = arr[idx++];
-			data.stateName = arr[idx++];
-			data.population = arr[idx++];
-			data.populationDensity = arr[idx++];
-			data.metro = arr[idx++];
-			data.metroPopulation = arr[idx++];
-			data.hottestMonthsHigh = arr[idx++];
-			data.coldestHigh = arr[idx++];
-			data.hottestMonthMinusColdestMonth = arr[idx++];
-			data.numInchesOfRain = arr[idx++];
-			data.numDaysOfRain = arr[idx++];
-			data.numSunnyDays = arr[idx++];
-			data.annualSnowfall = arr[idx++];
-			data.avgSummerDewPoint = arr[idx++];
-			data.avgAnnualDewPoint = arr[idx++];
-			data.avgYearlyWindspeed = arr[idx++];
-			data.violentCrime = arr[idx++];
-			data.propertyCrime = arr[idx++];
-			data.medianAge = arr[idx++];
-			data.percentWithAtleastBachelors = arr[idx++];
-			data.medianIncome = arr[idx++];
-			data.povertyRate = arr[idx++];
-			data.avgApartmentRent = arr[idx++];
-			data.avgApartmentSize = arr[idx++];
-			data.medianHomePrice = arr[idx++];
-			data.homeSquareFeet = arr[idx++];
-			data.costPerSquareFoot = arr[idx++];
-			data.medianHomeAge = arr[idx++];
-			data.homeOwnershipRate = arr[idx++];
-			data.homeAppreciationLastYear = arr[idx++];
-			data.homeAppreciationLastFiveYears = arr[idx++];
-			data.homeAppreciationLastTenYears = arr[idx++];
-			data.airQuality = arr[idx++];
-			data.averageCommuteTime = arr[idx++];
-			data.unemploymentRate = arr[idx++];
-			data.jobGrowthLastYear = arr[idx++];
-			data.populationGrowthSince2010 = arr[idx++];
-			data.countyName = arr[idx++];
-			data.percentDemocrat = arr[idx++];
-			data.percentRepublican = arr[idx++];
-			data.percentAsian = arr[idx++];
-			data.percentBlack = arr[idx++];
-			data.percentWhite = arr[idx++];
-			data.percentHispanic = arr[idx++];
-			data.foreignBornPercent = arr[idx++];
-			data.timeZone = arr[idx++];
-			data.feetAboveSeaLevel = arr[idx++];
-			data.uvIndex = arr[idx++];
-			data.singlePopulation = arr[idx++];
-			data.walkScore = arr[idx++];
-			data.transitScore = arr[idx++];
-			data.bikeScore = arr[idx++];
-			data.percentOfIncomeLostToHousingCosts = arr[idx++];
-			data.sexOffenderCount = arr[idx++];
-			data.hurricanes = arr[idx++];
-			data.tornadoes = arr[idx++];
-			data.earthQuakes = arr[idx++];
-			data.fbiViolentCrimeRate = arr[idx++];
-			data.fbiPropertyCrimeRate = arr[idx++];
-			data.fipsCode = arr[idx++];
-			data.landArea = arr[idx++];
-			data.laborForceParticipationRate = arr[idx++];
-			if (idx != arr.length) {
-				throw new RuntimeException("didn't read all elements!");
-			}
+			data.cityName = arr[mapOfNameToIndex.get(CITY)];
+			data.stateName = arr[mapOfNameToIndex.get(STATE)];
+			data.population = arr[mapOfNameToIndex.get(POPULATION)];
+			data.populationDensity = arr[mapOfNameToIndex.get(POPULATION_DENSITY)];
+			data.metro = arr[mapOfNameToIndex.get(METRO_NAME)];
+			data.metroPopulation = arr[mapOfNameToIndex.get(METRO_POP)];
+			data.hottestMonthsHigh = arr[mapOfNameToIndex.get(HOTTEST_MONTH)];
+			data.coldestHigh = arr[mapOfNameToIndex.get(COLDEST_MONTH)];
+			data.hottestMonthMinusColdestMonth = arr[mapOfNameToIndex.get(HOTTEST_MINUS_COLDEST)];
+			data.numInchesOfRain = arr[mapOfNameToIndex.get(ANNUAL_RAINFALL)];
+			data.numDaysOfRain = arr[mapOfNameToIndex.get(ANNUAL_DAYS_OF_PRECIPITATION)];
+			data.numSunnyDays = arr[mapOfNameToIndex.get(ANNUAL_DAYS_OF_SUNSHINE)];
+			data.annualSnowfall = arr[mapOfNameToIndex.get(ANNUAL_SNOWFALL)];
+			data.avgSummerDewPoint = arr[mapOfNameToIndex.get(AVERAGE_SUMMER_DEW_POINT)];
+			data.avgAnnualDewPoint = arr[mapOfNameToIndex.get(DEW_POINT)];
+			data.avgYearlyWindspeed = arr[mapOfNameToIndex.get(WIND_SPEED)];
+			data.violentCrime = arr[mapOfNameToIndex.get(VIOLENT_CRIME_INDEX)];
+			data.propertyCrime = arr[mapOfNameToIndex.get(PROPERTY_CRIME_INDEX)];
+			data.medianAge = arr[mapOfNameToIndex.get(AGE)];
+			data.percentWithAtleastBachelors = arr[mapOfNameToIndex.get(BACHELORS)];
+			data.medianIncome = arr[mapOfNameToIndex.get(INCOME)];
+			data.povertyRate = arr[mapOfNameToIndex.get(POVERTY_RATE)];
+			data.avgApartmentRent = arr[mapOfNameToIndex.get(RENT)];
+			data.avgApartmentSize = arr[mapOfNameToIndex.get(SQFT)];
+			data.medianHomePrice = arr[mapOfNameToIndex.get(HOME_PRICE)];
+			data.homeSquareFeet = arr[mapOfNameToIndex.get(HOME_SQFT)];
+			data.costPerSquareFoot = arr[mapOfNameToIndex.get(COST_PER_SQFT)];
+			data.medianHomeAge = arr[mapOfNameToIndex.get(HOME_AGE)];
+			data.homeOwnershipRate = arr[mapOfNameToIndex.get(HOMEOWNERSHIP_RATE)];
+			data.homeAppreciationLastYear = arr[mapOfNameToIndex.get(HOME_APPRECIATION)];
+			data.homeAppreciationLastFiveYears = arr[mapOfNameToIndex.get(HOME_APPRECIAITON_LAST_5_YEARS)];
+			data.homeAppreciationLastTenYears = arr[mapOfNameToIndex.get(HOME_APPRECIATION_LAST_10_YEARS)];
+			data.airQuality = arr[mapOfNameToIndex.get(AIR_QUALITY_IDX)];
+			data.averageCommuteTime = arr[mapOfNameToIndex.get(COMMUTE)];
+			data.unemploymentRate = arr[mapOfNameToIndex.get(UNEMPLOYMENT_RATE)];
+			data.jobGrowthLastYear = arr[mapOfNameToIndex.get(JOB_GROWTH)];
+			data.populationGrowthSince2010 = arr[mapOfNameToIndex.get(POPULATION_GROWTH)];
+			data.countyName = arr[mapOfNameToIndex.get(COUNTY)];
+			data.percentDemocrat = arr[mapOfNameToIndex.get(DEMOCRAT)];
+			data.percentRepublican = arr[mapOfNameToIndex.get(REPUBLICAN)];
+			data.percentAsian = arr[mapOfNameToIndex.get(ASIAN)];
+			data.percentBlack = arr[mapOfNameToIndex.get(BLACK)];
+			data.percentWhite = arr[mapOfNameToIndex.get(WHITE)];
+			data.percentHispanic = arr[mapOfNameToIndex.get(HISPANIC)];
+			data.foreignBornPercent = arr[mapOfNameToIndex.get(FOREIGN_BORN)];
+			data.timeZone = arr[mapOfNameToIndex.get(TIME_ZONE)];
+			data.feetAboveSeaLevel = arr[mapOfNameToIndex.get(ELEVATION)];
+			data.uvIndex = arr[mapOfNameToIndex.get(UV_INDEX)];
+			data.singlePopulation = arr[mapOfNameToIndex.get(SINGLE_POPULATION)];
+			data.walkScore = arr[mapOfNameToIndex.get(WALK_SCORE)];
+			data.transitScore = arr[mapOfNameToIndex.get(TRANSIT_SCORE)];
+			data.bikeScore = arr[mapOfNameToIndex.get(BIKE_SCORE)];
+			data.percentOfIncomeLostToHousingCosts = arr[mapOfNameToIndex.get(INCOME_SPENT)];
+			data.sexOffenderCount = arr[mapOfNameToIndex.get(SEX_OFFENDERS)];
+			data.hurricanes = arr[mapOfNameToIndex.get(HURRICANES)];
+			data.tornadoes = arr[mapOfNameToIndex.get(TORNADOES)];
+			data.earthQuakes = arr[mapOfNameToIndex.get(EARTHQUAKES)];
+			data.fbiViolentCrimeRate = arr[mapOfNameToIndex.get(VIOLENT_CRIMES_FBI)];
+			data.fbiPropertyCrimeRate = arr[mapOfNameToIndex.get(PROPERTY_CRIMES_FBI)];
+			data.fipsCode = arr[mapOfNameToIndex.get(FIPS_CODE)];
+			data.landArea = arr[mapOfNameToIndex.get(LAND_AREA)];
+			data.laborForceParticipationRate = arr[mapOfNameToIndex.get(LABOR_FORCE)];
 			dataList.add(data);
 		}
 		myReader.close();
