@@ -143,26 +143,19 @@ public abstract class CityStats extends CityStatsSuper {
 	private static final String FIPS_CODE = "Fips Code";
 	private static final String LAND_AREA = "Land Area (sq mi)";
 	private static final String LABOR_FORCE = "Labor Force Participation rate";
-
-	private static final String[] HEADERS = { CITY, STATE, POPULATION, POPULATION_DENSITY, METRO_NAME, METRO_POP,
-			HOTTEST_MONTH, COLDEST_MONTH, HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION,
-			ANNUAL_DAYS_OF_SUNSHINE, ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED,
-			VIOLENT_CRIME_INDEX, PROPERTY_CRIME_INDEX, AGE, BACHELORS, INCOME, POVERTY_RATE, RENT, SQFT, HOME_PRICE,
-			HOME_SQFT, COST_PER_SQFT, HOME_AGE, HOMEOWNERSHIP_RATE, HOME_APPRECIATION, HOME_APPRECIAITON_LAST_5_YEARS,
-			HOME_APPRECIATION_LAST_10_YEARS, AIR_QUALITY_IDX, COMMUTE, UNEMPLOYMENT_RATE, JOB_GROWTH, POPULATION_GROWTH,
-			COUNTY, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, TIME_ZONE, ELEVATION, UV_INDEX,
-			SINGLE_POPULATION, WALK_SCORE, TRANSIT_SCORE, BIKE_SCORE, INCOME_SPENT, SEX_OFFENDERS, HURRICANES,
-			TORNADOES, EARTHQUAKES, VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI, FIPS_CODE, LAND_AREA, LABOR_FORCE };
-
-	@Override
-	public String getStartString() {
-		AndrewStringWriter sb = new AndrewStringWriter();
-		for (String header : HEADERS) {
-			sb.appendWithComma(header);
-		}
-		return sb.removeLastElement().getString();
+	
+	public  String[] getHeaders(){
+		return new String[]{ CITY, STATE, POPULATION, POPULATION_DENSITY, METRO_NAME, METRO_POP,
+				HOTTEST_MONTH, COLDEST_MONTH, HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION,
+				ANNUAL_DAYS_OF_SUNSHINE, ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED,
+				VIOLENT_CRIME_INDEX, PROPERTY_CRIME_INDEX, AGE, BACHELORS, INCOME, POVERTY_RATE, RENT, SQFT, HOME_PRICE,
+				HOME_SQFT, COST_PER_SQFT, HOME_AGE, HOMEOWNERSHIP_RATE, HOME_APPRECIATION, HOME_APPRECIAITON_LAST_5_YEARS,
+				HOME_APPRECIATION_LAST_10_YEARS, AIR_QUALITY_IDX, COMMUTE, UNEMPLOYMENT_RATE, JOB_GROWTH, POPULATION_GROWTH,
+				COUNTY, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, TIME_ZONE, ELEVATION, UV_INDEX,
+				SINGLE_POPULATION, WALK_SCORE, TRANSIT_SCORE, BIKE_SCORE, INCOME_SPENT, SEX_OFFENDERS, HURRICANES,
+				TORNADOES, EARTHQUAKES, VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI, FIPS_CODE, LAND_AREA, LABOR_FORCE };
 	}
-
+	
 	@Override
 	public List<Data> readData(String stateName) throws Exception {
 		List<Data> dataList = new ArrayList<>();
@@ -254,7 +247,8 @@ public abstract class CityStats extends CityStatsSuper {
 		return map;
 	}
 
-	public void appendRowToSb(AndrewStringWriter sb, Data data) {
+	@Override
+	public void appendRowToSb(AndrewStringWriter sb, Data data, Map<String, Integer> mapOfHeaderToIdx) {
 		sb.appendWithComma(data.cityName).appendWithComma(data.stateName).appendWithComma(data.population)
 				.appendWithComma(data.populationDensity).appendWithComma(data.metro)
 				.appendWithComma(data.metroPopulation).appendWithComma(data.hottestMonthsHigh)

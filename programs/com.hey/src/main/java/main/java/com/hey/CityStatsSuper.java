@@ -1,23 +1,39 @@
 package main.java.com.hey;
 
 import java.io.FileWriter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.summaries.MetroStats.WeightedAverage;
 
 public abstract class CityStatsSuper {
 	
-	public abstract void appendRowToSb(AndrewStringWriter sb, Data data);
+	public abstract void appendRowToSb(AndrewStringWriter sb, Data data, Map<String, Integer> mapOfHeaderToIdx);
 	
-	public abstract String getStartString();
+	public String getStartString() {
+		AndrewStringWriter sb = new AndrewStringWriter();
+		String[] headers = getHeaders();
+		for (String header : headers) {
+			sb.appendWithComma(header);
+		}
+		return sb.removeLastElement().getString();
+	}
 	
+	public abstract String[] getHeaders();
+
 	public void writeDataToPath(List<Data> dataList, String filePath, boolean isLastWrite) throws Exception {
 		FileWriter myWriter = new FileWriter(filePath);
 		AndrewStringWriter sb = new AndrewStringWriter();
 		sb.appendLastItem(getStartString());
+		String[] headers = getHeaders();
+		Map<String, Integer> mapOfHeaderToIdx = new HashMap<>();
+		for (int i = 0; i < headers.length; i++) {
+			mapOfHeaderToIdx.put(headers[i], i);
+		}
 		for (Data data : dataList) {
-			appendRowToSb(sb, data);
+			appendRowToSb(sb, data, mapOfHeaderToIdx);
 		}
 		String st = sb.getString();
 		myWriter.write(st);
