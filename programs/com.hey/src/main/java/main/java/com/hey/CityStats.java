@@ -74,11 +74,11 @@ public abstract class CityStats extends CityStatsSuper {
 		public String fipsCode = "N/A";
 		public String landArea = "N/A";
 		public String laborForceParticipationRate = "N/A";
-		
+
 		@Override
-		 public String toString() {
-		     return ReflectionToStringBuilder.toString(this);
-		 }
+		public String toString() {
+			return ReflectionToStringBuilder.toString(this);
+		}
 	}
 
 	private static final String CITY = "City";
@@ -143,30 +143,24 @@ public abstract class CityStats extends CityStatsSuper {
 	private static final String FIPS_CODE = "Fips Code";
 	private static final String LAND_AREA = "Land Area (sq mi)";
 	private static final String LABOR_FORCE = "Labor Force Participation rate";
-	
+
+	private static final String[] HEADERS = { CITY, STATE, POPULATION, POPULATION_DENSITY, METRO_NAME, METRO_POP,
+			HOTTEST_MONTH, COLDEST_MONTH, HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION,
+			ANNUAL_DAYS_OF_SUNSHINE, ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED,
+			VIOLENT_CRIME_INDEX, PROPERTY_CRIME_INDEX, AGE, BACHELORS, INCOME, POVERTY_RATE, RENT, SQFT, HOME_PRICE,
+			HOME_SQFT, COST_PER_SQFT, HOME_AGE, HOMEOWNERSHIP_RATE, HOME_APPRECIATION, HOME_APPRECIAITON_LAST_5_YEARS,
+			HOME_APPRECIATION_LAST_10_YEARS, AIR_QUALITY_IDX, COMMUTE, UNEMPLOYMENT_RATE, JOB_GROWTH, POPULATION_GROWTH,
+			COUNTY, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, TIME_ZONE, ELEVATION, UV_INDEX,
+			SINGLE_POPULATION, WALK_SCORE, TRANSIT_SCORE, BIKE_SCORE, INCOME_SPENT, SEX_OFFENDERS, HURRICANES,
+			TORNADOES, EARTHQUAKES, VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI, FIPS_CODE, LAND_AREA, LABOR_FORCE };
+
 	@Override
 	public String getStartString() {
-		return new AndrewStringWriter().appendWithComma(CITY).appendWithComma(STATE).appendWithComma(POPULATION)
-				.appendWithComma(POPULATION_DENSITY).appendWithComma(METRO_NAME).appendWithComma(METRO_POP)
-				.appendWithComma(HOTTEST_MONTH).appendWithComma(COLDEST_MONTH).appendWithComma(HOTTEST_MINUS_COLDEST).appendWithComma(ANNUAL_RAINFALL)
-				.appendWithComma(ANNUAL_DAYS_OF_PRECIPITATION).appendWithComma(ANNUAL_DAYS_OF_SUNSHINE)
-				.appendWithComma(ANNUAL_SNOWFALL).appendWithComma(AVERAGE_SUMMER_DEW_POINT).appendWithComma(DEW_POINT)
-				.appendWithComma(WIND_SPEED).appendWithComma(VIOLENT_CRIME_INDEX).appendWithComma(PROPERTY_CRIME_INDEX)
-				.appendWithComma(AGE).appendWithComma(BACHELORS).appendWithComma(INCOME).appendWithComma(POVERTY_RATE)
-				.appendWithComma(RENT).appendWithComma(SQFT).appendWithComma(HOME_PRICE).appendWithComma(HOME_SQFT)
-				.appendWithComma(COST_PER_SQFT).appendWithComma(HOME_AGE).appendWithComma(HOMEOWNERSHIP_RATE)
-				.appendWithComma(HOME_APPRECIATION).appendWithComma(HOME_APPRECIAITON_LAST_5_YEARS)
-				.appendWithComma(HOME_APPRECIATION_LAST_10_YEARS).appendWithComma(AIR_QUALITY_IDX)
-				.appendWithComma(COMMUTE).appendWithComma(UNEMPLOYMENT_RATE).appendWithComma(JOB_GROWTH)
-				.appendWithComma(POPULATION_GROWTH).appendWithComma(COUNTY).appendWithComma(DEMOCRAT)
-				.appendWithComma(REPUBLICAN).appendWithComma(ASIAN).appendWithComma(BLACK).appendWithComma(WHITE)
-				.appendWithComma(HISPANIC).appendWithComma(FOREIGN_BORN).appendWithComma(TIME_ZONE)
-				.appendWithComma(ELEVATION).appendWithComma(UV_INDEX).appendWithComma(SINGLE_POPULATION)
-				.appendWithComma(WALK_SCORE).appendWithComma(TRANSIT_SCORE).appendWithComma(BIKE_SCORE)
-				.appendWithComma(INCOME_SPENT).appendWithComma(SEX_OFFENDERS).appendWithComma(HURRICANES)
-				.appendWithComma(TORNADOES).appendWithComma(EARTHQUAKES).appendWithComma(VIOLENT_CRIMES_FBI)
-				.appendWithComma(PROPERTY_CRIMES_FBI).appendWithComma(FIPS_CODE).appendWithComma(LAND_AREA)
-				.appendWithComma(LABOR_FORCE).removeLastElement().getString();
+		AndrewStringWriter sb = new AndrewStringWriter();
+		for (String header : HEADERS) {
+			sb.appendWithComma(header);
+		}
+		return sb.removeLastElement().getString();
 	}
 
 	@Override
