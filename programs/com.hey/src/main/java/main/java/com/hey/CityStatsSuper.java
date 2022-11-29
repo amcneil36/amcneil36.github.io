@@ -1,16 +1,17 @@
 package main.java.com.hey;
 
+import java.io.File;
 import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.summaries.MetroStats.WeightedAverage;
 
 public abstract class CityStatsSuper {
-	
-	public abstract void appendRowToSb(AndrewStringWriter sb, Data data, Map<String, Integer> mapOfHeaderToIdx);
 	
 	public String getStartString() {
 		AndrewStringWriter sb = new AndrewStringWriter();
@@ -234,5 +235,49 @@ public abstract class CityStatsSuper {
 		}
 	}
 
-	public abstract List<Data> readData(String stateName) throws Exception;
+	public abstract void populateDataFromMap(Map<String, Integer> mapOfNameToIndex, String[] arr, Data data);
+	
+	private Map<String, Integer> createMapOfNameToIndex(String header) {
+		Map<String, Integer> map = new HashMap<>();
+		String[] arr = header.split(",");
+		for (int i = 0; i < arr.length; i++) {
+			map.put(arr[i], i);
+		}
+		return map;
+	}
+	
+	public void appendRowToSb(AndrewStringWriter sb, Data data, Map<String, Integer> mapOfNameToIndex) {
+		String[] arr = new String[getHeaders().length];
+		extractDataToArray(data, mapOfNameToIndex, arr);
+		
+		
+		for (String st : arr) {
+			sb.appendWithComma(st);
+		}
+		sb.removeLastElement().appendLastItem("").getString();
+	}
+	
+	public List<Data> readData(String stateName) throws Exception {
+		List<Data> dataList = new ArrayList<>();
+		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\States\\" + stateName
+				+ ".csv";
+		File myObj = new File(filePath);
+		Scanner myReader = new Scanner(myObj);
+		String header = myReader.nextLine(); //
+		Map<String, Integer> mapOfNameToIndex = createMapOfNameToIndex(header);
+		while (myReader.hasNextLine()) {
+			String line = myReader.nextLine();
+			String[] arr = line.split(",");
+			Data data = new Data();
+			populateDataFromMap(mapOfNameToIndex, arr, data);
+			dataList.add(data);
+		}
+		myReader.close();
+		return dataList;
+	}
+
+	public void extractDataToArray(Data data, Map<String, Integer> mapOfNameToIndex, String[] arr) {
+		// TODO Auto-generated method stub
+		
+	}
 }

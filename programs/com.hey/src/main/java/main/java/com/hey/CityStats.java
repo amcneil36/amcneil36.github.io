@@ -1,17 +1,12 @@
 package main.java.com.hey;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
-import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import main.java.com.hey.other.Pojo;
 
 public abstract class CityStats extends CityStatsSuper {
 
-	public static class Data {
+	public static class Data extends Pojo {
 		public String cityName = "N/A";
 		public String stateName = "N/A";
 		public String hottestMonthsHigh = "N/A";
@@ -74,11 +69,6 @@ public abstract class CityStats extends CityStatsSuper {
 		public String fipsCode = "N/A";
 		public String landArea = "N/A";
 		public String laborForceParticipationRate = "N/A";
-
-		@Override
-		public String toString() {
-			return ReflectionToStringBuilder.toString(this);
-		}
 	}
 
 	private static final String CITY = "City";
@@ -155,28 +145,9 @@ public abstract class CityStats extends CityStatsSuper {
 				SINGLE_POPULATION, WALK_SCORE, TRANSIT_SCORE, BIKE_SCORE, INCOME_SPENT, SEX_OFFENDERS, HURRICANES,
 				TORNADOES, EARTHQUAKES, VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI, FIPS_CODE, LAND_AREA, LABOR_FORCE };
 	}
-	
-	@Override
-	public List<Data> readData(String stateName) throws Exception {
-		List<Data> dataList = new ArrayList<>();
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\States\\" + stateName
-				+ ".csv";
-		File myObj = new File(filePath);
-		Scanner myReader = new Scanner(myObj);
-		String header = myReader.nextLine(); //
-		Map<String, Integer> mapOfNameToIndex = createMapOfNameToIndex(header);
-		while (myReader.hasNextLine()) {
-			String line = myReader.nextLine();
-			String[] arr = line.split(",");
-			Data data = new Data();
-			populateDataFromMap(mapOfNameToIndex, arr, data);
-			dataList.add(data);
-		}
-		myReader.close();
-		return dataList;
-	}
 
-	private void populateDataFromMap(Map<String, Integer> mapOfNameToIndex, String[] arr, Data data) {
+	@Override
+	public void populateDataFromMap(Map<String, Integer> mapOfNameToIndex, String[] arr, Data data) {
 		data.cityName = arr[mapOfNameToIndex.get(CITY)];
 		data.stateName = arr[mapOfNameToIndex.get(STATE)];
 		data.population = arr[mapOfNameToIndex.get(POPULATION)];
@@ -241,28 +212,8 @@ public abstract class CityStats extends CityStatsSuper {
 		data.laborForceParticipationRate = arr[mapOfNameToIndex.get(LABOR_FORCE)];
 	}
 
-	private Map<String, Integer> createMapOfNameToIndex(String header) {
-		Map<String, Integer> map = new HashMap<>();
-		String[] arr = header.split(",");
-		for (int i = 0; i < arr.length; i++) {
-			map.put(arr[i], i);
-		}
-		return map;
-	}
-
 	@Override
-	public void appendRowToSb(AndrewStringWriter sb, Data data, Map<String, Integer> mapOfNameToIndex) {
-		String[] arr = new String[getHeaders().length];
-		extractDataToArray(data, mapOfNameToIndex, arr);
-		
-		
-		for (String st : arr) {
-			sb.appendWithComma(st);
-		}
-		sb.removeLastElement().appendLastItem("").getString();
-	}
-
-	private void extractDataToArray(Data data, Map<String, Integer> mapOfNameToIndex, String[] arr) {
+	public void extractDataToArray(Data data, Map<String, Integer> mapOfNameToIndex, String[] arr) {
 		arr[mapOfNameToIndex.get(CITY)] = data.cityName;
 		arr[mapOfNameToIndex.get(STATE)] = data.stateName;
 		arr[mapOfNameToIndex.get(POPULATION)] = data.population;
