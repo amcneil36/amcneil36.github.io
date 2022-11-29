@@ -211,6 +211,11 @@ public abstract class CityStatsSuper {
 		public String getString() {
 			return sb.toString();
 		}
+
+		public AndrewStringWriter removeLastElement() {
+			sb.deleteCharAt(sb.length() - 1);
+			return this;
+		}
 	}
 
 	public abstract List<Data> readData(String stateName) throws Exception;
