@@ -276,8 +276,5 @@ public abstract class CityStatsSuper {
 		return dataList;
 	}
 
-	public void extractDataToArray(Data data, Map<String, Integer> mapOfNameToIndex, String[] arr) {
-		// TODO Auto-generated method stub
-		
-	}
+	public abstract void extractDataToArray(Data data, Map<String, Integer> mapOfNameToIndex, String[] arr);
 }

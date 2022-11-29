@@ -44,6 +44,7 @@ public class MetroStats extends MetroStatsSuper {
 		WeightedAverage laborForceParticipationRate = new WeightedAverage();
 	}
 
+	// this can stay as is
 	@Override
 	public void addStuffToStats(Stats stats, CityStats.Data data) {
 		stats.peoplePerSqMi.addCity(data, data.populationDensity);
@@ -86,6 +87,10 @@ public class MetroStats extends MetroStatsSuper {
 
 	}
 
+	// change this
+	// make a test that reads CityStats.csv and then calls into addStuffToStats with a random
+	// CityStats.data object and then calls into this. then use code that makes a map and populates an array from the map
+	// similar to CityStats::extractDataToArray
 	@Override
 	public void addToSb(AndrewStringWriter sb, Stats stat) {
 		sb.appendWA(stat.peoplePerSqMi);
@@ -126,39 +131,20 @@ public class MetroStats extends MetroStatsSuper {
 		sb.appendWAPercent(stat.laborForceParticipationRate);
 	}
 
-	static String startSt = "Metro Name,Predominant State,Metro Population,People Per Sq Mi,Hottest month's avg high (F),Coldest month's avg high (F),"
-			+ "Annual rainfall (in),Annual days of precipitation,Annual days of sunshine,Annual snowfall (in),Avg Summer Dew Point,Avg Annual Dew Point,"
-			+ "Average yearly windspeed (mph),"
-			+ "Violent crime index,Property crime index,Median age,% with at least Bachelor's degree,"
-			+ "Median household income,Poverty Rate,Median home price,Median home sqft,"
-			+ "Median home cost per sqft,Homeownership Rate,Population growth since 2010,"
-			+ "% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,UV Index,Single Population,"
-			+ "% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Predominant Timezone,Num Violent Crimes Per 100k residents,"
-			+ "Num Property Crimes Per 100k residents,Labor Force Participation rate";
-
-	private static final String PREDOMINANT_STATE = "Predominant State";
-	private static final String PREDOMINANT_TIMEZONE = "Predominant Timezone";
+	public static void main(String[] args) throws Exception {
+		MetroStats metroStats = new MetroStats();
+		metroStats.performStuff();
+	}
 
 	@Override
-	public String getHeader() {
-		String[] arr = new String[] { METRO_NAME, PREDOMINANT_STATE, METRO_POP, POPULATION_DENSITY, HOTTEST_MONTH,
+	public String[] getHeader() {
+		return new String[] { METRO_NAME, PREDOMINANT_STATE, METRO_POP, POPULATION_DENSITY, HOTTEST_MONTH,
 				COLDEST_MONTH, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE, ANNUAL_SNOWFALL,
 				AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED, VIOLENT_CRIME_INDEX, PROPERTY_CRIME_INDEX, AGE,
 				BACHELORS, INCOME, POVERTY_RATE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT, HOMEOWNERSHIP_RATE,
 				POPULATION_GROWTH, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, UV_INDEX,
 				SINGLE_POPULATION, INCOME_SPENT, SEX_OFFENDERS, PREDOMINANT_TIMEZONE, VIOLENT_CRIMES_FBI,
 				PROPERTY_CRIMES_FBI, LABOR_FORCE };
-		StringBuilder sb = new StringBuilder();
-		for (String str : arr) {
-			sb.append(str).append(",");
-		}
-		sb.deleteCharAt(sb.length() - 1);
-		return sb.toString();
-	}
-
-	public static void main(String[] args) throws Exception {
-		MetroStats metroStats = new MetroStats();
-		metroStats.performStuff();
 	}
 
 }

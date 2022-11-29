@@ -15,6 +15,9 @@ import main.java.com.hey.summaries.MetroStats.Stats;
 
 public abstract class MetroStatsSuper {
 	
+	public static final String PREDOMINANT_STATE = "Predominant State";
+	public static final String PREDOMINANT_TIMEZONE = "Predominant Timezone";
+	
 	public static String getMetroKey(CityStats.Data data) {
 		return data.metro + "," + data.metroPopulation;
 	}
@@ -45,8 +48,6 @@ public abstract class MetroStatsSuper {
 		}
 	}
 	
-	public abstract String getHeader();
-	
 	public void performStuff() throws Exception {
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
 		Map<String, Stats> mapOfMetroNameToStats = new HashMap<>();
@@ -72,7 +73,13 @@ public abstract class MetroStatsSuper {
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\MetroStats\\MetroStats.csv";
 		FileWriter myWriter = new FileWriter(filePath);
 		AndrewStringWriter sb = new AndrewStringWriter();
-		sb.appendLastItem(getHeader());
+		String[] arr = getHeader();
+		StringBuilder mySb = new StringBuilder();
+		for (String str : arr) {
+			mySb.append(str).append(",");
+		}
+		mySb.deleteCharAt(mySb.length() - 1);
+		sb.appendLastItem(mySb.toString());
 		for (Stats stat : statsList) {
 			sb.appendWithComma(stat.metroName).appendWithComma(stat.getPrimaryState()).appendWithComma(stat.metroPopulation);
 			addToSb(sb, stat);
@@ -84,6 +91,8 @@ public abstract class MetroStatsSuper {
 		System.out.println("wrote to file " + filePath);
 	}
 	
+	public abstract String[] getHeader();
+
 	public abstract void addToSb(AndrewStringWriter sb, Stats stat);
 
 	public abstract void addStuffToStats(Stats stats, Data data);
