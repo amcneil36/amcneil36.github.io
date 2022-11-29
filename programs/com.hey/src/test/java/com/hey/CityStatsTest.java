@@ -11,7 +11,6 @@ import main.java.com.hey.CityStats;
 import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.CityStatsSuper.AndrewStringWriter;
 import main.java.com.hey.city.stats.BachelorsDegree;
-import main.java.com.hey.city.stats.NoopCityStats;
 
 public class CityStatsTest {
 
@@ -44,9 +43,7 @@ public class CityStatsTest {
 		}
 		cs.appendRowToSb(sb, data, mapOfNameToIndex);
 		String actual = sb.getString();
-		AndrewStringWriter sb2 = new AndrewStringWriter();
-		cs.appendRowToSbOld(sb2, data, mapOfNameToIndex);
-		String expected = sb2.getString();
+		String expected = "Apollo Beach,Florida,23487,1194,Tampa-St. Petersburg-Clearwater,3243963,90,70,20,51,100,241,0,73.2,63.5,N/A,20,40,44,43.45%,$95980,3.88%,$1559,1026,$443000,2023,$219,16,83.09%,6%,46%,32%,68,33 mins,4.2%,2.30%,33.00%,Hillsborough County,51.00%,44.20%,2.05%,12.13%,65.6%,15.31%,9.31%,Eastern Standard Time,57,6.9,35.90%,32,N/A,52,19.6%,8.81,69,6,0,N/A,N/A,FL-01675,19.67,65.32%\n";
 		Assert.assertEquals(actual, expected);
 	}
 
