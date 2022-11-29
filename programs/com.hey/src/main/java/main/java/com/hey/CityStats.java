@@ -165,7 +165,6 @@ public abstract class CityStats extends CityStatsSuper {
 		Scanner myReader = new Scanner(myObj);
 		String header = myReader.nextLine(); //
 		Map<String, Integer> mapOfNameToIndex = createMapOfNameToIndex(header);
-		System.out.println(mapOfNameToIndex);
 		while (myReader.hasNextLine()) {
 			String line = myReader.nextLine();
 			String[] arr = line.split(",");
@@ -317,7 +316,40 @@ public abstract class CityStats extends CityStatsSuper {
 		for (String st : arr) {
 			sb.appendWithComma(st);
 		}
-		sb.removeLastElement().getString();
+		sb.removeLastElement().appendLastItem("").getString();
+	}
+	
+	public void appendRowToSbOld(AndrewStringWriter sb, Data data, Map<String, Integer> mapOfNameToIndex) {
+		sb.appendWithComma(data.cityName).appendWithComma(data.stateName).appendWithComma(data.population)
+		.appendWithComma(data.populationDensity).appendWithComma(data.metro)
+		.appendWithComma(data.metroPopulation).appendWithComma(data.hottestMonthsHigh)
+		.appendWithComma(data.coldestHigh).appendWithComma(data.hottestMonthMinusColdestMonth)
+		.appendWithComma(data.numInchesOfRain).appendWithComma(data.numDaysOfRain)
+		.appendWithComma(data.numSunnyDays).appendWithComma(data.annualSnowfall)
+		.appendWithComma(data.avgSummerDewPoint).appendWithComma(data.avgAnnualDewPoint)
+		.appendWithComma(data.avgYearlyWindspeed).appendWithComma(data.violentCrime)
+		.appendWithComma(data.propertyCrime).appendWithComma(data.medianAge)
+		.appendWithComma(data.percentWithAtleastBachelors).appendDollar(data.medianIncome)
+		.appendWithComma(data.povertyRate).appendWithComma(data.avgApartmentRent)
+		.appendWithComma(data.avgApartmentSize).appendDollar(data.medianHomePrice)
+		.appendWithComma(data.homeSquareFeet).appendDollar(data.costPerSquareFoot)
+		.appendWithComma(data.medianHomeAge).appendWithComma(data.homeOwnershipRate)
+		.appendWithComma(data.homeAppreciationLastYear).appendWithComma(data.homeAppreciationLastFiveYears)
+		.appendWithComma(data.homeAppreciationLastTenYears).appendWithComma(data.airQuality)
+		.appendWithComma(data.averageCommuteTime).appendWithComma(data.unemploymentRate)
+		.appendWithComma(data.jobGrowthLastYear).appendWithComma(data.populationGrowthSince2010)
+		.appendWithComma(data.countyName).appendWithComma(data.percentDemocrat)
+		.appendWithComma(data.percentRepublican).appendWithComma(data.percentAsian)
+		.appendWithComma(data.percentBlack).appendWithComma(data.percentWhite)
+		.appendWithComma(data.percentHispanic).appendWithComma(data.foreignBornPercent)
+		.appendWithComma(data.timeZone).appendWithComma(data.feetAboveSeaLevel).appendWithComma(data.uvIndex)
+		.appendWithComma(data.singlePopulation).appendWithComma(data.walkScore)
+		.appendWithComma(data.transitScore).appendWithComma(data.bikeScore)
+		.appendWithComma(data.percentOfIncomeLostToHousingCosts).appendWithComma(data.sexOffenderCount)
+		.appendWithComma(data.hurricanes).appendWithComma(data.tornadoes).appendWithComma(data.earthQuakes)
+		.appendWithComma(data.fbiViolentCrimeRate).appendWithComma(data.fbiPropertyCrimeRate)
+		.appendWithComma(data.fipsCode).appendWithComma(data.landArea)
+		.appendLastItem(data.laborForceParticipationRate);
 	}
 
 }
