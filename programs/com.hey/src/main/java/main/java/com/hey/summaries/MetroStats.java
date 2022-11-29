@@ -1,12 +1,52 @@
 package main.java.com.hey.summaries;
 
+import static main.java.com.hey.CityStats.AGE;
+import static main.java.com.hey.CityStats.ANNUAL_DAYS_OF_PRECIPITATION;
+import static main.java.com.hey.CityStats.ANNUAL_DAYS_OF_SUNSHINE;
+import static main.java.com.hey.CityStats.ANNUAL_RAINFALL;
+import static main.java.com.hey.CityStats.ANNUAL_SNOWFALL;
+import static main.java.com.hey.CityStats.ASIAN;
+import static main.java.com.hey.CityStats.AVERAGE_SUMMER_DEW_POINT;
+import static main.java.com.hey.CityStats.BACHELORS;
+import static main.java.com.hey.CityStats.BLACK;
+import static main.java.com.hey.CityStats.COLDEST_MONTH;
+import static main.java.com.hey.CityStats.COST_PER_SQFT;
+import static main.java.com.hey.CityStats.DEMOCRAT;
+import static main.java.com.hey.CityStats.DEW_POINT;
+import static main.java.com.hey.CityStats.FOREIGN_BORN;
+import static main.java.com.hey.CityStats.HISPANIC;
+import static main.java.com.hey.CityStats.HOMEOWNERSHIP_RATE;
+import static main.java.com.hey.CityStats.HOME_PRICE;
+import static main.java.com.hey.CityStats.HOME_SQFT;
+import static main.java.com.hey.CityStats.HOTTEST_MONTH;
+import static main.java.com.hey.CityStats.INCOME;
+import static main.java.com.hey.CityStats.INCOME_SPENT;
+import static main.java.com.hey.CityStats.LABOR_FORCE;
+import static main.java.com.hey.CityStats.METRO_NAME;
+import static main.java.com.hey.CityStats.METRO_POP;
+import static main.java.com.hey.CityStats.POPULATION_DENSITY;
+import static main.java.com.hey.CityStats.POPULATION_GROWTH;
+import static main.java.com.hey.CityStats.POVERTY_RATE;
+import static main.java.com.hey.CityStats.PROPERTY_CRIMES_FBI;
+import static main.java.com.hey.CityStats.PROPERTY_CRIME_INDEX;
+import static main.java.com.hey.CityStats.REPUBLICAN;
+import static main.java.com.hey.CityStats.SEX_OFFENDERS;
+import static main.java.com.hey.CityStats.SINGLE_POPULATION;
+import static main.java.com.hey.CityStats.UV_INDEX;
+import static main.java.com.hey.CityStats.VIOLENT_CRIMES_FBI;
+import static main.java.com.hey.CityStats.VIOLENT_CRIME_INDEX;
+import static main.java.com.hey.CityStats.WHITE;
+import static main.java.com.hey.CityStats.WIND_SPEED;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import main.java.com.hey.CityStats;
-import static main.java.com.hey.CityStats.*;
 import main.java.com.hey.CityStatsSuper.AndrewStringWriter;
 
 public class MetroStats extends MetroStatsSuper {
 
-	static class Stats extends Stats2 {
+	public static class Stats extends Stats2 {
 		WeightedAverage peoplePerSqMi = new WeightedAverage();
 		WeightedAverage hottestMonthsHigh = new WeightedAverage();
 		WeightedAverage coldestHigh = new WeightedAverage();
@@ -20,28 +60,28 @@ public class MetroStats extends MetroStatsSuper {
 		WeightedAverage violentCrime = new WeightedAverage();
 		WeightedAverage propertyCrime = new WeightedAverage();
 		WeightedAverage medianAge = new WeightedAverage();
-		WeightedAverage percentWithAtleastBachelors = new WeightedAverage();
-		WeightedAverage medianIncome = new WeightedAverage();
-		WeightedAverage povertyRate = new WeightedAverage();
-		WeightedAverage medianHomePrice = new WeightedAverage();
+		WeightedAverage percentWithAtleastBachelors = new WeightedAveragePercent();
+		WeightedAverage medianIncome = new WeightedAverageDollar();
+		WeightedAverage povertyRate = new WeightedAveragePercent();
+		WeightedAverage medianHomePrice = new WeightedAverageDollar();
 		WeightedAverage homeSquareFeet = new WeightedAverage();
-		WeightedAverage costPerSquareFoot = new WeightedAverage();
-		WeightedAverage homeOwnershipRate = new WeightedAverage();
-		WeightedAverage populationGrowthSince2010 = new WeightedAverage();
-		WeightedAverage percentDemocrat = new WeightedAverage();
-		WeightedAverage percentRepublican = new WeightedAverage();
-		WeightedAverage percentAsian = new WeightedAverage();
-		WeightedAverage percentBlack = new WeightedAverage();
-		WeightedAverage percentWhite = new WeightedAverage();
-		WeightedAverage percentHispanic = new WeightedAverage();
-		WeightedAverage foreignBornPercent = new WeightedAverage();
+		WeightedAverage costPerSquareFoot = new WeightedAverageDollar();
+		WeightedAverage homeOwnershipRate = new WeightedAveragePercent();
+		WeightedAverage populationGrowthSince2010 = new WeightedAveragePercent();
+		WeightedAverage percentDemocrat = new WeightedAveragePercent();
+		WeightedAverage percentRepublican = new WeightedAveragePercent();
+		WeightedAverage percentAsian = new WeightedAveragePercent();
+		WeightedAverage percentBlack = new WeightedAveragePercent();
+		WeightedAverage percentWhite = new WeightedAveragePercent();
+		WeightedAverage percentHispanic = new WeightedAveragePercent();
+		WeightedAverage foreignBornPercent = new WeightedAveragePercent();
 		WeightedAverage uvIndex = new WeightedAverage();
-		WeightedAverage singlePopulation = new WeightedAverage();
-		WeightedAverage percentOfIncomeLostToHousingCosts = new WeightedAverage();
+		WeightedAverage singlePopulation = new WeightedAveragePercent();
+		WeightedAverage percentOfIncomeLostToHousingCosts = new WeightedAveragePercent();
 		WeightedAverage sexOffenderCount = new WeightedAverage();
 		WeightedAverage fbiViolentCrimeData = new WeightedAverage();
 		WeightedAverage fbiPropertyCrimeData = new WeightedAverage();
-		WeightedAverage laborForceParticipationRate = new WeightedAverage();
+		WeightedAverage laborForceParticipationRate = new WeightedAveragePercent();
 	}
 
 	// this can stay as is
@@ -93,42 +133,57 @@ public class MetroStats extends MetroStatsSuper {
 	// similar to CityStats::extractDataToArray
 	@Override
 	public void addToSb(AndrewStringWriter sb, Stats stat) {
-		sb.appendWA(stat.peoplePerSqMi);
-		sb.appendWA(stat.hottestMonthsHigh);
-		sb.appendWA(stat.coldestHigh);
-		sb.appendWA(stat.numInchesOfRain);
-		sb.appendWA(stat.numDaysOfRain);
-		sb.appendWA(stat.numSunnyDays);
-		sb.appendWA(stat.annualSnowfall);
-		sb.appendWA(stat.avgSummerDewPoint);
-		sb.appendWA(stat.avgAnnualDewPoint);
-		sb.appendWA(stat.avgYearlyWindspeed);
-		sb.appendWA(stat.violentCrime);
-		sb.appendWA(stat.propertyCrime);
-		sb.appendWA(stat.medianAge);
-		sb.appendWAPercent(stat.percentWithAtleastBachelors);
-		sb.appendWADollar(stat.medianIncome);
-		sb.appendWAPercent(stat.povertyRate);
-		sb.appendWADollar(stat.medianHomePrice);
-		sb.appendWA(stat.homeSquareFeet);
-		sb.appendWADollar(stat.costPerSquareFoot);
-		sb.appendWAPercent(stat.homeOwnershipRate);
-		sb.appendWAPercent(stat.populationGrowthSince2010);
-		sb.appendWAPercent(stat.percentDemocrat);
-		sb.appendWAPercent(stat.percentRepublican);
-		sb.appendWAPercent(stat.percentAsian);
-		sb.appendWAPercent(stat.percentBlack);
-		sb.appendWAPercent(stat.percentWhite);
-		sb.appendWAPercent(stat.percentHispanic);
-		sb.appendWAPercent(stat.foreignBornPercent);
-		sb.appendWA(stat.uvIndex);
-		sb.appendWAPercent(stat.singlePopulation);
-		sb.appendWAPercent(stat.percentOfIncomeLostToHousingCosts);
-		sb.appendWA(stat.sexOffenderCount);
-		sb.appendWithComma(stat.getPrimaryTimeZone());
-		sb.appendWA(stat.fbiViolentCrimeData);
-		sb.appendWA(stat.fbiPropertyCrimeData);
-		sb.appendWAPercent(stat.laborForceParticipationRate);
+		
+		Map<String, Integer> mapOfNameToIdx = new HashMap<>();
+		String[] headers = getHeader();
+		// subtract 3 because metro name and others at the start arent needed here
+		Object[] arr = new Object[headers.length-3];
+		for (int i = 0; i < headers.length-3; i++) {
+			mapOfNameToIdx.put(headers[i+3], i);
+		}
+		// repeat this for the ones below and then iterate over the array to create a string. do append with comma on the toString() of the element in the array
+		// then run the unit test to make sure it still works
+		arr[mapOfNameToIdx.get(POPULATION_DENSITY)] = stat.peoplePerSqMi;
+		arr[mapOfNameToIdx.get(HOTTEST_MONTH)] = stat.hottestMonthsHigh;
+		arr[mapOfNameToIdx.get(COLDEST_MONTH)] = stat.coldestHigh;
+		arr[mapOfNameToIdx.get(ANNUAL_RAINFALL)] = stat.numInchesOfRain;
+		arr[mapOfNameToIdx.get(ANNUAL_DAYS_OF_PRECIPITATION)] = stat.numDaysOfRain;
+		arr[mapOfNameToIdx.get(ANNUAL_DAYS_OF_SUNSHINE)] = stat.numSunnyDays;
+		arr[mapOfNameToIdx.get(ANNUAL_SNOWFALL)] = stat.annualSnowfall;
+		arr[mapOfNameToIdx.get(AVERAGE_SUMMER_DEW_POINT)] = stat.avgSummerDewPoint;
+		arr[mapOfNameToIdx.get(DEW_POINT)] = stat.avgAnnualDewPoint;
+		arr[mapOfNameToIdx.get(WIND_SPEED)] = stat.avgYearlyWindspeed;
+		arr[mapOfNameToIdx.get(VIOLENT_CRIME_INDEX)] = stat.violentCrime;
+		arr[mapOfNameToIdx.get(PROPERTY_CRIME_INDEX)] = stat.propertyCrime;
+		arr[mapOfNameToIdx.get(AGE)] = stat.medianAge;
+		arr[mapOfNameToIdx.get(BACHELORS)] = stat.percentWithAtleastBachelors;
+		arr[mapOfNameToIdx.get(INCOME)] = stat.medianIncome;
+		arr[mapOfNameToIdx.get(POVERTY_RATE)] = stat.povertyRate;
+		arr[mapOfNameToIdx.get(HOME_PRICE)] = stat.medianHomePrice;
+		arr[mapOfNameToIdx.get(HOME_SQFT)] = stat.homeSquareFeet;
+		arr[mapOfNameToIdx.get(COST_PER_SQFT)] = stat.costPerSquareFoot;
+		arr[mapOfNameToIdx.get(HOMEOWNERSHIP_RATE)] = stat.homeOwnershipRate;
+		arr[mapOfNameToIdx.get(POPULATION_GROWTH)] = stat.populationGrowthSince2010;
+		arr[mapOfNameToIdx.get(DEMOCRAT)] = stat.percentDemocrat;
+		arr[mapOfNameToIdx.get(REPUBLICAN)] = stat.percentRepublican;
+		arr[mapOfNameToIdx.get(ASIAN)] = stat.percentAsian;
+		arr[mapOfNameToIdx.get(BLACK)] = stat.percentBlack;
+		arr[mapOfNameToIdx.get(WHITE)] = stat.percentWhite;
+		arr[mapOfNameToIdx.get(HISPANIC)] = stat.percentHispanic;
+		arr[mapOfNameToIdx.get(FOREIGN_BORN)] = stat.foreignBornPercent;
+		arr[mapOfNameToIdx.get(UV_INDEX)] = stat.uvIndex;
+		arr[mapOfNameToIdx.get(SINGLE_POPULATION)] = stat.singlePopulation;
+		arr[mapOfNameToIdx.get(INCOME_SPENT)] = stat.percentOfIncomeLostToHousingCosts;
+		arr[mapOfNameToIdx.get(SEX_OFFENDERS)] = stat.sexOffenderCount;
+		arr[mapOfNameToIdx.get(PREDOMINANT_TIMEZONE)] = stat.getPrimaryTimeZone();
+		arr[mapOfNameToIdx.get(VIOLENT_CRIMES_FBI)] = stat.fbiViolentCrimeData;
+		arr[mapOfNameToIdx.get(PROPERTY_CRIMES_FBI)] = stat.fbiPropertyCrimeData;
+		arr[mapOfNameToIdx.get(LABOR_FORCE)] = stat.laborForceParticipationRate;
+	
+		
+		for (Object obj : arr) {
+			sb.appendWithComma(obj.toString());
+		}
 	}
 
 	public static void main(String[] args) throws Exception {

@@ -46,7 +46,36 @@ public abstract class MetroStatsSuper {
 			}
 			return String.valueOf((int)(totalSummedValue / totalPopulation));
 		}
+		
+		@Override
+		public String toString() {
+			return getWeightedAverage();
+		}
 	}
+	
+	public static class WeightedAveragePercent extends WeightedAverage{
+		@Override
+		public String toString() {
+			return getWeightedAverage() + "%";
+		}
+	}
+	
+	public static class WeightedAverageDollar extends WeightedAverage{
+		@Override
+		public String toString() {
+			String wa = getWeightedAverage();
+			if (!wa.equals("N/A")) {
+				wa = "$" + wa;
+			}
+			return wa;
+		}
+	}
+	
+	/*
+	 * 			if (!wa.getWeightedAverage().equals("N/A")) {
+				sb.append("$");	
+			}
+	 */
 	
 	public void performStuff() throws Exception {
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
