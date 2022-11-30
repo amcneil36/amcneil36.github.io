@@ -3,23 +3,16 @@ package main.java.com.hey.summaries;
 import static main.java.com.hey.CityStats.POPULATION;
 import static main.java.com.hey.CityStats.STATE;
 
-import java.io.FileWriter;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import main.java.com.hey.CityStats;
 import main.java.com.hey.CityStats.Data;
-import main.java.com.hey.CityStatsSuper.AndrewStringWriter;
 
 public class StateStats extends GenericStats {
 
 	public static void main(String[] args) throws Exception {
 		StateStats metroStats = new StateStats();
-		metroStats.performStuff();
+		metroStats.createCsvWithDataSummary();
 	}
 
 	@Override

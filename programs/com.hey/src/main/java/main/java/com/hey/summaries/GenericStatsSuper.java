@@ -18,6 +18,10 @@ public abstract class GenericStatsSuper {
 		public int metroPopulation = 0;
 		public int statePopulation = 0;
 		public String stateName = "";
+		public String countyName = "";
+		public int countyPopulation = 0;
+		public String mostPopulatedCityName = "";
+		public int mostPopulatedCityPop = 0;
 		public Map<String, Integer> mapOfStateToPopulation = new HashMap<>();
 		public Map<String, Integer> mapOfTimeZoneToPopulation = new HashMap<>();
 
@@ -154,7 +158,7 @@ public abstract class GenericStatsSuper {
 		}
 	}
 
-	public void performStuff() throws Exception {
+	public void createCsvWithDataSummary() throws Exception {
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
 		Map<String, Stats> map = new HashMap<>();
 		for (CityStats.Data data : dataList) {

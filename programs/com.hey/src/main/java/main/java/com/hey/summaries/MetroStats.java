@@ -15,7 +15,7 @@ public class MetroStats extends GenericStats {
 
 	public static void main(String[] args) throws Exception {
 		MetroStats metroStats = new MetroStats();
-		metroStats.performStuff();
+		metroStats.createCsvWithDataSummary();
 	}
 
 	@Override
