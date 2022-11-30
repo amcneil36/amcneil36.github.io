@@ -20,8 +20,6 @@ public class CreateBigCsv {
 		}
 	}
 
-	// performance bottleneck because we are reading synchronously.
-	// maybe there is an async way to do this? like the UpdateEverything one
 	public static List<CityStats.Data> readInput() throws Exception {
 		List<CityStats.Data> dataList = new ArrayList<>();
 		processState(dataList, "Alabama");

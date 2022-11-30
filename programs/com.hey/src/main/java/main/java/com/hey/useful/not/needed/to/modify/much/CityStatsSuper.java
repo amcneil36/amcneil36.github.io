@@ -263,7 +263,7 @@ public abstract class CityStatsSuper {
 		for (String st : arr) {
 			sb.appendWithComma(st);
 		}
-		sb.removeLastElement().appendLastItem("").getString();
+		sb.removeLastElement().appendLastItem("");
 	}
 
 	private static final String UNPROCESSED_NODE = "unprocessed node here 23894720";
