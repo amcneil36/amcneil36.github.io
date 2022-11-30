@@ -26,18 +26,57 @@ import static main.java.com.hey.CityStats.POVERTY_RATE;
 import static main.java.com.hey.CityStats.PROPERTY_CRIMES_FBI;
 import static main.java.com.hey.CityStats.REPUBLICAN;
 import static main.java.com.hey.CityStats.SINGLE_POPULATION;
+import static main.java.com.hey.CityStats.STATE;
 import static main.java.com.hey.CityStats.TIME_ZONE;
 import static main.java.com.hey.CityStats.UV_INDEX;
 import static main.java.com.hey.CityStats.VIOLENT_CRIMES_FBI;
 import static main.java.com.hey.CityStats.WHITE;
-import static main.java.com.hey.CityStats.*;
+import static main.java.com.hey.CityStats.WIND_SPEED;
 
 import java.util.Map;
 
 import main.java.com.hey.CityStats;
-import main.java.com.hey.summaries.MetroStats.Stats;
 
-public class GenericStats {
+public class GenericStats extends GenericStatsSuper {
+	
+	
+	public static class Stats extends Stats2 {
+		WeightedAverage peoplePerSqMi = new WeightedAverage();
+		WeightedAverage hottestMonthsHigh = new WeightedAverage();
+		WeightedAverage coldestHigh = new WeightedAverage();
+		WeightedAverage numInchesOfRain = new WeightedAverage();
+		WeightedAverage annualSnowfall = new WeightedAverage();
+		WeightedAverage numSunnyDays = new WeightedAverage();
+		WeightedAverage numDaysOfRain = new WeightedAverage();
+		WeightedAverage avgSummerDewPoint = new WeightedAverage();
+		WeightedAverage avgAnnualDewPoint = new WeightedAverage();
+		WeightedAverage avgYearlyWindspeed = new WeightedAverage();
+		WeightedAverage violentCrime = new WeightedAverage();
+		WeightedAverage propertyCrime = new WeightedAverage();
+		WeightedAverage medianAge = new WeightedAverage();
+		WeightedAverage percentWithAtleastBachelors = new WeightedAveragePercent();
+		WeightedAverage medianIncome = new WeightedAverageDollar();
+		WeightedAverage povertyRate = new WeightedAveragePercent();
+		WeightedAverage medianHomePrice = new WeightedAverageDollar();
+		WeightedAverage homeSquareFeet = new WeightedAverage();
+		WeightedAverage costPerSquareFoot = new WeightedAverageDollar();
+		WeightedAverage homeOwnershipRate = new WeightedAveragePercent();
+		WeightedAverage populationGrowthSince2010 = new WeightedAveragePercent();
+		WeightedAverage percentDemocrat = new WeightedAveragePercent();
+		WeightedAverage percentRepublican = new WeightedAveragePercent();
+		WeightedAverage percentAsian = new WeightedAveragePercent();
+		WeightedAverage percentBlack = new WeightedAveragePercent();
+		WeightedAverage percentWhite = new WeightedAveragePercent();
+		WeightedAverage percentHispanic = new WeightedAveragePercent();
+		WeightedAverage foreignBornPercent = new WeightedAveragePercent();
+		WeightedAverage uvIndex = new WeightedAverage();
+		WeightedAverage singlePopulation = new WeightedAveragePercent();
+		WeightedAverage percentOfIncomeLostToHousingCosts = new WeightedAveragePercent();
+		WeightedAverage sexOffenderCount = new WeightedAverage();
+		WeightedAverage fbiViolentCrimeData = new WeightedAverage();
+		WeightedAverage fbiPropertyCrimeData = new WeightedAverage();
+		WeightedAverage laborForceParticipationRate = new WeightedAveragePercent();
+	}
 
 	public void addStuffToStats(Stats stats, CityStats.Data data) {
 		stats.peoplePerSqMi.addCity(data, data.populationDensity);
@@ -113,5 +152,14 @@ public class GenericStats {
 				DEW_POINT, WIND_SPEED, AGE, BACHELORS, INCOME, POVERTY_RATE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT,
 				HOMEOWNERSHIP_RATE, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, UV_INDEX,
 				SINGLE_POPULATION, TIME_ZONE, VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI, LABOR_FORCE };
+	}
+	
+	static int compareTo2(Stats2 self, Stats2 arg0) {
+		if (self.metroPopulation < arg0.metroPopulation) {
+			return -1;
+		} else if (self.metroPopulation == arg0.metroPopulation) {
+			return 0;
+		}
+		return 1;
 	}
 }
