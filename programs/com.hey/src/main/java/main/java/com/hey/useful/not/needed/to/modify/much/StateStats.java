@@ -20,6 +20,11 @@ public class StateStats extends GenericStats {
 	public String[] getInitialHeaders() {
 		return new String[]{ STATE, POPULATION };
 	}
+	
+	@Override
+	public String[] getStartingElements(Stats stat) {
+		return new String[] {stat.stateName, String.valueOf(stat.statePopulation)};
+	}
 
 	@Override
 	public String getFilePath() {
