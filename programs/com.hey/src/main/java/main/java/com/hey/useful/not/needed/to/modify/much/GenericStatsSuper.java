@@ -87,6 +87,8 @@ public abstract class GenericStatsSuper {
 		}
 
 	}
+	
+	private static final int ERROR_HANDLE_IDX = 3; // only error handle once so performance is better
 
 	public static class WeightedAverage {
 		private double totalSummedValue = 0;
@@ -154,7 +156,7 @@ public abstract class GenericStatsSuper {
 
 	}
 
-	public void addToSb(AndrewStringWriter sb, Stats stat) {
+	public void addToSb(AndrewStringWriter sb, Stats stat, int idx) {
 
 		Map<String, Integer> mapOfNameToIdx = new HashMap<>();
 		String[] headers = getHeader();
@@ -164,7 +166,9 @@ public abstract class GenericStatsSuper {
 			arr[i] = UNPROCESSED_NODE;
 		}
 		extractDataToArray(stat, mapOfNameToIdx, arr);
-		validateAllFieldsWereWrittenTo(arr);
+		if (idx == ERROR_HANDLE_IDX) {
+			validateAllFieldsWereWrittenTo(arr);	
+		}
 
 		for (Object obj : arr) {
 			sb.appendWithComma(obj.toString());
@@ -207,12 +211,13 @@ public abstract class GenericStatsSuper {
 		}
 		mySb.deleteCharAt(mySb.length() - 1);
 		sb.appendLastItem(mySb.toString());
+		int i = 0;
 		for (Stats stat : statsList) {
 			String[] startingElements = getStartingElements(stat);
 			for (String st : startingElements) {
 				sb.appendWithComma(st);
 			}
-			addToSb(sb, stat);
+			addToSb(sb, stat.countyName, i++);
 			sb.appendEnding();
 		}
 		String st = sb.getString();
