@@ -279,9 +279,9 @@ public abstract class CityStatsSuper {
 		String header = myReader.nextLine(); //
 		Map<String, Integer> mapOfNameToIndex = createMapOfNameToIndex(header);
 		if (mapOfNameToIndex.size() != getHeaders().length) {
-			//myReader.close();
-			//throw new RuntimeException(
-			//		"The number of headers is in the code is not equal to the number of columns found in the file!");
+			myReader.close();
+			throw new RuntimeException(
+					"The number of headers is in the code is not equal to the number of columns found in the file!");
 		}
 		while (myReader.hasNextLine()) {
 			String line = myReader.nextLine();
@@ -300,7 +300,7 @@ public abstract class CityStatsSuper {
 	private void validateAllFieldsWereRead(String[] arr) {
 		for (String st : arr) {
 			if (!st.equals(PROCESSED_NODE)) {
-			//	throw new RuntimeException("didn't read all data! found: " + st);
+				throw new RuntimeException("didn't read all data! found: " + st);
 			}
 		}
 	}
