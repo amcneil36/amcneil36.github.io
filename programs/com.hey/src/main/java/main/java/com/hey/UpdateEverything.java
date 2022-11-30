@@ -16,7 +16,7 @@ public class UpdateEverything {
 		n.processAllStates(); // doesn't do anything. just makes sure there is no error
 		int totalMsSlept = 0;
 		while (n.numStatesComplete < 51) {
-			if (totalMsSlept > 10000) {
+			if (totalMsSlept > 100000) {
 				throw new RuntimeException("took too long for NoopCityStats");
 			}
 			Thread.sleep(100);
