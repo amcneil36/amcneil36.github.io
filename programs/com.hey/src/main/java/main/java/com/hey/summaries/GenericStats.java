@@ -38,8 +38,7 @@ import java.util.Map;
 import main.java.com.hey.CityStats;
 
 public class GenericStats extends GenericStatsSuper {
-	
-	
+
 	public static class Stats extends Stats2 {
 		WeightedAverage peoplePerSqMi = new WeightedAverage();
 		WeightedAverage hottestMonthsHigh = new WeightedAverage();
@@ -111,7 +110,7 @@ public class GenericStats extends GenericStatsSuper {
 		stats.laborForceParticipationRate.addCity(data, data.laborForceParticipationRate);
 
 	}
-	
+
 	public void extractDataToArray(Stats stat, Map<String, Integer> mapOfNameToIdx, Object[] arr) {
 		arr[mapOfNameToIdx.get(POPULATION_DENSITY)] = stat.peoplePerSqMi;
 		arr[mapOfNameToIdx.get(HOTTEST_MONTH)] = stat.hottestMonthsHigh;
@@ -153,13 +152,5 @@ public class GenericStats extends GenericStatsSuper {
 				HOMEOWNERSHIP_RATE, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, UV_INDEX,
 				SINGLE_POPULATION, TIME_ZONE, VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI, LABOR_FORCE };
 	}
-	
-	static int compareTo2(Stats2 self, Stats2 arg0) {
-		if (self.metroPopulation < arg0.metroPopulation) {
-			return -1;
-		} else if (self.metroPopulation == arg0.metroPopulation) {
-			return 0;
-		}
-		return 1;
-	}
+
 }
