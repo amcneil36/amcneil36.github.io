@@ -1,10 +1,16 @@
 package main.java.com.hey.summaries;
 
+import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import main.java.com.hey.CityStats;
+import main.java.com.hey.CityStats.Data;
+import main.java.com.hey.CityStatsSuper.AndrewStringWriter;
+import main.java.com.hey.summaries.GenericStats.Stats;
 
 public abstract class GenericStatsSuper {
 	public static class Stats2 implements Comparable<Stats2> {
@@ -131,4 +137,89 @@ public abstract class GenericStatsSuper {
 		}
 		return 1;
 	}
+	///////////////////////
+
+	public void addToSb(AndrewStringWriter sb, Stats stat) {
+
+		Map<String, Integer> mapOfNameToIdx = new HashMap<>();
+		String[] headers = getHeader();
+		Object[] arr = new Object[headers.length];
+		for (int i = 0; i < headers.length; i++) {
+			mapOfNameToIdx.put(headers[i], i);
+		}
+		extractDataToArray(stat, mapOfNameToIdx, arr);
+
+		for (Object obj : arr) {
+			sb.appendWithComma(obj.toString());
+		}
+	}
+
+	public void performStuff() throws Exception {
+		List<CityStats.Data> dataList = CreateBigCsv.readInput();
+		Map<String, Stats> map = new HashMap<>();
+		for (CityStats.Data data : dataList) {
+			if (isDataValid(data)) {
+				String key = getMapKey(data);
+				if (!map.containsKey(key)) {
+					Stats stats = new Stats();
+					doInitialStatsProcessing(stats, data);
+					map.put(key, stats);
+				}
+				Stats stats = map.get(key);
+				addStuffToStats(stats, data);
+				doExtraStatsProcessing(stats, data);
+			}
+		}
+		Set<String> keys = map.keySet();
+		List<Stats> statsList = new ArrayList<>();
+		for (String key : keys) {
+			statsList.add(map.get(key));
+		}
+		sortStatsList(statsList);
+		String filePath = getFilePath();
+		FileWriter myWriter = new FileWriter(filePath);
+		AndrewStringWriter sb = new AndrewStringWriter();
+		StringBuilder mySb = new StringBuilder();
+		String[] firstHeaders = getInitialHeaders();
+		for (String str : firstHeaders) {
+			mySb.append(str).append(",");
+		}
+		String[] remainingHeaders = getHeader();
+		for (String str : remainingHeaders) {
+			mySb.append(str).append(",");
+		}
+		mySb.deleteCharAt(mySb.length() - 1);
+		sb.appendLastItem(mySb.toString());
+		for (Stats stat : statsList) {
+			sb.appendWithComma(stat.metroName).appendWithComma(stat.getPrimaryState())
+					.appendWithComma(stat.metroPopulation);
+			addToSb(sb, stat);
+			sb.appendEnding();
+		}
+		String st = sb.getString();
+		myWriter.write(st);
+		myWriter.close();
+		System.out.println("wrote to file " + filePath);
+	}
+
+	public abstract String[] getHeader();
+
+	public abstract String[] getInitialHeaders();
+
+	public abstract String getFilePath();
+
+	public abstract void sortStatsList(List<Stats> statsList);
+
+	public abstract void doExtraStatsProcessing(Stats stats, Data data);
+
+	public abstract void addStuffToStats(Stats stats, Data data);
+
+	public abstract void doInitialStatsProcessing(Stats stats, Data data);
+
+	public abstract String getMapKey(Data data);
+
+	public abstract boolean isDataValid(Data data);
+	
+	public abstract void extractDataToArray(Stats stat, Map<String, Integer> mapOfNameToIdx, Object[] arr);
+
 }

@@ -37,7 +37,7 @@ import java.util.Map;
 
 import main.java.com.hey.CityStats;
 
-public class GenericStats extends GenericStatsSuper {
+public abstract class GenericStats extends GenericStatsSuper {
 
 	public static class Stats extends Stats2 {
 		WeightedAverage peoplePerSqMi = new WeightedAverage();
@@ -77,6 +77,7 @@ public class GenericStats extends GenericStatsSuper {
 		WeightedAverage laborForceParticipationRate = new WeightedAveragePercent();
 	}
 
+	@Override
 	public void addStuffToStats(Stats stats, CityStats.Data data) {
 		stats.peoplePerSqMi.addCity(data, data.populationDensity);
 		stats.hottestMonthsHigh.addCity(data, data.hottestMonthsHigh);
@@ -111,6 +112,7 @@ public class GenericStats extends GenericStatsSuper {
 
 	}
 
+	@Override
 	public void extractDataToArray(Stats stat, Map<String, Integer> mapOfNameToIdx, Object[] arr) {
 		arr[mapOfNameToIdx.get(POPULATION_DENSITY)] = stat.peoplePerSqMi;
 		arr[mapOfNameToIdx.get(HOTTEST_MONTH)] = stat.hottestMonthsHigh;
@@ -145,6 +147,7 @@ public class GenericStats extends GenericStatsSuper {
 		arr[mapOfNameToIdx.get(LABOR_FORCE)] = stat.laborForceParticipationRate;
 	}
 
+	@Override
 	public String[] getHeader() {
 		return new String[] { POPULATION_DENSITY, HOTTEST_MONTH, COLDEST_MONTH, ANNUAL_RAINFALL,
 				ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE, ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT,
