@@ -1,4 +1,4 @@
-package main.java.com.hey.summaries;
+package main.java.com.hey.useful.not.needed.to.modify.much;
 
 import java.io.FileWriter;
 import java.util.ArrayList;
@@ -9,8 +9,8 @@ import java.util.Set;
 
 import main.java.com.hey.CityStats;
 import main.java.com.hey.CityStats.Data;
-import main.java.com.hey.CityStatsSuper.AndrewStringWriter;
-import main.java.com.hey.summaries.GenericStats.Stats;
+import main.java.com.hey.GenericStats.Stats;
+import main.java.com.hey.useful.not.needed.to.modify.much.CityStatsSuper.AndrewStringWriter;
 
 public abstract class GenericStatsSuper {
 	public static class Stats2 implements Comparable<Stats2> {

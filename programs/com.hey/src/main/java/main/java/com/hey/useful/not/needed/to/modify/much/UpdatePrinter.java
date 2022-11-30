@@ -1,4 +1,6 @@
-package main.java.com.hey;
+package main.java.com.hey.useful.not.needed.to.modify.much;
+
+import main.java.com.hey.Util;
 
 public class UpdatePrinter {
 

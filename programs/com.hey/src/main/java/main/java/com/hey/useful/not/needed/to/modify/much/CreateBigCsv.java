@@ -1,4 +1,4 @@
-package main.java.com.hey.summaries;
+package main.java.com.hey.useful.not.needed.to.modify.much;
 
 import java.util.ArrayList;
 import java.util.List;

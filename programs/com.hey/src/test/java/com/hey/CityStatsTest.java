@@ -9,8 +9,8 @@ import org.junit.Test;
 
 import main.java.com.hey.CityStats;
 import main.java.com.hey.CityStats.Data;
-import main.java.com.hey.CityStatsSuper.AndrewStringWriter;
 import main.java.com.hey.city.stats.BachelorsDegree;
+import main.java.com.hey.useful.not.needed.to.modify.much.CityStatsSuper.AndrewStringWriter;
 
 public class CityStatsTest {
 

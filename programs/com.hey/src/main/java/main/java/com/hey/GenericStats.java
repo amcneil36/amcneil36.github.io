@@ -1,4 +1,4 @@
-package main.java.com.hey.summaries;
+package main.java.com.hey;
 
 import static main.java.com.hey.CityStats.AGE;
 import static main.java.com.hey.CityStats.ANNUAL_DAYS_OF_PRECIPITATION;
@@ -35,8 +35,9 @@ import static main.java.com.hey.CityStats.WIND_SPEED;
 
 import java.util.Map;
 
-import main.java.com.hey.CityStats;
+import main.java.com.hey.useful.not.needed.to.modify.much.GenericStatsSuper;
 
+// update this file to get data written to State/Metro/County stats
 public abstract class GenericStats extends GenericStatsSuper {
 
 	public static class Stats extends Stats2 {

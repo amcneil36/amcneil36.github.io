@@ -1,4 +1,4 @@
-package main.java.com.hey;
+package main.java.com.hey.useful.not.needed.to.modify.much;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 import main.java.com.hey.CityStats.Data;
-import main.java.com.hey.summaries.GenericStatsSuper.WeightedAverage;
+import main.java.com.hey.useful.not.needed.to.modify.much.GenericStatsSuper.WeightedAverage;
 
 public abstract class CityStatsSuper {
 
@@ -154,7 +154,6 @@ public abstract class CityStatsSuper {
 			try {
 				g.processState(stateName);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}

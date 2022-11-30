@@ -2,8 +2,8 @@ package main.java.com.hey.other;
 
 import java.util.List;
 
-import main.java.com.hey.UpdatePrinter;
 import main.java.com.hey.Util;
+import main.java.com.hey.useful.not.needed.to.modify.much.UpdatePrinter;
 
 public class LevelsReader {
 	

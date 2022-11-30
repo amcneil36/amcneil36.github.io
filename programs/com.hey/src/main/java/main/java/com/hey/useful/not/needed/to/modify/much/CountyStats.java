@@ -1,4 +1,4 @@
-package main.java.com.hey.summaries;
+package main.java.com.hey.useful.not.needed.to.modify.much;
 
 import static main.java.com.hey.CityStats.COUNTY;
 import static main.java.com.hey.CityStats.STATE;
@@ -6,6 +6,7 @@ import static main.java.com.hey.CityStats.STATE;
 import java.util.Collections;
 import java.util.List;
 
+import main.java.com.hey.GenericStats;
 import main.java.com.hey.CityStats.Data;
 
 public class CountyStats extends GenericStats {
