@@ -2,8 +2,8 @@ package main.java.com.hey;
 
 import java.util.Map;
 
-import main.java.com.hey.other.Pojo;
 import main.java.com.hey.useful.not.needed.to.modify.much.CityStatsSuper;
+import main.java.com.hey.useful.not.needed.to.modify.much.Pojo;
 
 // update this file to get new columns read/written in CityStats.csv
 public abstract class CityStats extends CityStatsSuper {

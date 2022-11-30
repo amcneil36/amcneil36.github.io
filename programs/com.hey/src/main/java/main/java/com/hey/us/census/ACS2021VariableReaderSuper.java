@@ -1,4 +1,4 @@
-package main.java.com.hey.other;
+package main.java.com.hey.us.census;
 
 import java.util.ArrayList;
 import java.util.List;

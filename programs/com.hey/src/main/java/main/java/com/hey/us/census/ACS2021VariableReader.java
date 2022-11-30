@@ -1,4 +1,4 @@
-package main.java.com.hey.other;
+package main.java.com.hey.us.census;
 
 public class ACS2021VariableReader extends ACS2021VariableReaderSuper {
 

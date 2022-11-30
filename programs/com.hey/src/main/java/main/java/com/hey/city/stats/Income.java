@@ -3,8 +3,8 @@ package main.java.com.hey.city.stats;
 import java.util.Map;
 
 import main.java.com.hey.CityStats;
-import main.java.com.hey.other.ACS2021DataReader;
-import main.java.com.hey.other.ACS2021DataReader.Result;
+import main.java.com.hey.us.census.ACS2021DataReader;
+import main.java.com.hey.us.census.ACS2021DataReader.Result;
 
 public class Income extends CityStats {
 	
