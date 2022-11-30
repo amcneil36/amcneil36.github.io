@@ -20,7 +20,6 @@ public class MetroStats extends GenericStats {
 
 	@Override
 	public String[] getInitialHeaders() {
-		// TODO Auto-generated method stub
 		return new String[] { METRO_NAME, PREDOMINANT_STATE, METRO_POP };
 	}
 
