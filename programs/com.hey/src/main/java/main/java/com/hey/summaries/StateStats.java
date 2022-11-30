@@ -15,10 +15,6 @@ import main.java.com.hey.CityStats;
 import main.java.com.hey.CityStatsSuper.AndrewStringWriter;
 
 public class StateStats extends GenericStats {
-	public static class StateStatsObj extends MetroStats.Stats {
-		public int statePopulation = 0;
-		public String stateName = "";
-	}
 
 	public void addToSb(AndrewStringWriter sb, Stats stat) {
 
@@ -37,15 +33,15 @@ public class StateStats extends GenericStats {
 
 	public void performStuff() throws Exception {
 		List<CityStats.Data> dataList = CreateBigCsv.readInput();
-		Map<String, StateStatsObj> mapOfStateNameToStats = new HashMap<>();
+		Map<String, Stats> mapOfStateNameToStats = new HashMap<>();
 		for (CityStats.Data data : dataList) {
 			String state = data.stateName;
 			if (!mapOfStateNameToStats.containsKey(state)) {
-				StateStatsObj stats = new StateStatsObj();
+				Stats stats = new Stats();
 				stats.stateName = data.stateName;
 				mapOfStateNameToStats.put(state, stats);
 			}
-			StateStatsObj stats = mapOfStateNameToStats.get(state);
+			Stats stats = mapOfStateNameToStats.get(state);
 			addStuffToStats(stats, data);
 			stats.addDataToMapOfTimeZoneToPopulation(data);
 			int cityPop = Integer.valueOf(data.population);
@@ -53,7 +49,7 @@ public class StateStats extends GenericStats {
 		}
 
 		Set<String> keys = mapOfStateNameToStats.keySet();
-		List<StateStatsObj> statsList = new ArrayList<>();
+		List<Stats> statsList = new ArrayList<>();
 		for (String key : keys) {
 			statsList.add(mapOfStateNameToStats.get(key));
 		}
@@ -72,7 +68,7 @@ public class StateStats extends GenericStats {
 		}
 		mySb.deleteCharAt(mySb.length() - 1);
 		sb.appendLastItem(mySb.toString());
-		for (StateStatsObj stat : statsList) {
+		for (Stats stat : statsList) {
 			sb.appendWithComma(stat.stateName).appendWithComma(stat.statePopulation);
 			addToSb(sb, stat);
 			sb.appendEnding();

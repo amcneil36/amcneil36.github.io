@@ -10,6 +10,8 @@ public abstract class GenericStatsSuper {
 	public static class Stats2 implements Comparable<Stats2> {
 		public String metroName = "";
 		public int metroPopulation = 0;
+		public int statePopulation = 0;
+		public String stateName = "";
 		public Map<String, Integer> mapOfStateToPopulation = new HashMap<>();
 		public Map<String, Integer> mapOfTimeZoneToPopulation = new HashMap<>();
 
