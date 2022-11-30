@@ -161,8 +161,6 @@ public abstract class GenericStatsSuper {
 		Object[] arr = new Object[headers.length];
 		for (int i = 0; i < headers.length; i++) {
 			mapOfNameToIdx.put(headers[i], i);
-		}
-		for (int i = 0; i < arr.length; i++) {
 			arr[i] = UNPROCESSED_NODE;
 		}
 		extractDataToArray(stat, mapOfNameToIdx, arr);
@@ -210,8 +208,10 @@ public abstract class GenericStatsSuper {
 		mySb.deleteCharAt(mySb.length() - 1);
 		sb.appendLastItem(mySb.toString());
 		for (Stats stat : statsList) {
-			sb.appendWithComma(stat.metroName).appendWithComma(stat.getPrimaryState())
-					.appendWithComma(stat.metroPopulation);
+			String[] startingElements = getStartingElements(stat);
+			for (String st : startingElements) {
+				sb.appendWithComma(st);
+			}
 			addToSb(sb, stat);
 			sb.appendEnding();
 		}
@@ -220,6 +220,8 @@ public abstract class GenericStatsSuper {
 		myWriter.close();
 		System.out.println("wrote to file " + filePath);
 	}
+
+	public abstract String[] getStartingElements(Stats stat);
 
 	public abstract String[] getHeader();
 

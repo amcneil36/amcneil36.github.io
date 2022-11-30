@@ -6,8 +6,8 @@ import static main.java.com.hey.CityStats.METRO_POP;
 import java.util.Collections;
 import java.util.List;
 
-import main.java.com.hey.GenericStats;
 import main.java.com.hey.CityStats.Data;
+import main.java.com.hey.GenericStats;
 
 public class MetroStats extends GenericStats {
 
@@ -54,6 +54,11 @@ public class MetroStats extends GenericStats {
 	@Override
 	public boolean isDataValid(Data data) {
 		return !data.metro.contains("None");
+	}
+
+	@Override
+	public String[] getStartingElements(Stats stat) {
+		return new String[] {stat.metroName, stat.getPrimaryState(), String.valueOf(stat.metroPopulation)};
 	}
 
 }

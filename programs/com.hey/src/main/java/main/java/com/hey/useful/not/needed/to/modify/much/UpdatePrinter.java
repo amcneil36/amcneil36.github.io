@@ -20,7 +20,7 @@ public class UpdatePrinter {
 	// maybe have the init time not start until 10s have passed?
 	// and then counter will be set and size will be set
 	public void printUpdateIfNeeded() {
-		counter++;
+		/*counter++;
 		long secondsSinceStart = (System.currentTimeMillis() - initTime) / 1000;
 		if (!hasBeen10Seconds && secondsSinceStart > 10) {
 			hasBeen10Seconds = true;
@@ -36,6 +36,6 @@ public class UpdatePrinter {
 			System.out.println(stateName + " (" + counter + "/" + size + ") time remaining: "
 					+ Util.minToString((int) minRemaining));
 			initTime = System.currentTimeMillis();
-		}
+		}*/
 	}
 }

@@ -26,7 +26,6 @@ import static main.java.com.hey.CityStats.POVERTY_RATE;
 import static main.java.com.hey.CityStats.PROPERTY_CRIMES_FBI;
 import static main.java.com.hey.CityStats.REPUBLICAN;
 import static main.java.com.hey.CityStats.SINGLE_POPULATION;
-import static main.java.com.hey.CityStats.STATE;
 import static main.java.com.hey.CityStats.TIME_ZONE;
 import static main.java.com.hey.CityStats.UV_INDEX;
 import static main.java.com.hey.CityStats.VIOLENT_CRIMES_FBI;
@@ -142,7 +141,7 @@ public abstract class GenericStats extends GenericStatsSuper {
 		arr[mapOfNameToIdx.get(FOREIGN_BORN)] = stat.foreignBornPercent;
 		arr[mapOfNameToIdx.get(UV_INDEX)] = stat.uvIndex;
 		arr[mapOfNameToIdx.get(SINGLE_POPULATION)] = stat.singlePopulation;
-		arr[mapOfNameToIdx.get(STATE)] = stat.getPrimaryTimeZone();
+		arr[mapOfNameToIdx.get(TIME_ZONE)] = stat.getPrimaryTimeZone();
 		arr[mapOfNameToIdx.get(VIOLENT_CRIMES_FBI)] = stat.fbiViolentCrimeData;
 		arr[mapOfNameToIdx.get(PROPERTY_CRIMES_FBI)] = stat.fbiPropertyCrimeData;
 		arr[mapOfNameToIdx.get(LABOR_FORCE)] = stat.laborForceParticipationRate;
