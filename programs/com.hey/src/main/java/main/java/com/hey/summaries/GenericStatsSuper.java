@@ -143,6 +143,17 @@ public abstract class GenericStatsSuper {
 	}
 	///////////////////////
 
+	private static final String UNPROCESSED_NODE = "unprocessed node here 23894720";
+
+	public void validateAllFieldsWereWrittenTo(Object[] arr) {
+		for (Object st : arr) {
+			if (st.equals(UNPROCESSED_NODE)) {
+				throw new RuntimeException("Not all fields were written too!");
+			}
+		}
+
+	}
+
 	public void addToSb(AndrewStringWriter sb, Stats stat) {
 
 		Map<String, Integer> mapOfNameToIdx = new HashMap<>();
@@ -151,7 +162,11 @@ public abstract class GenericStatsSuper {
 		for (int i = 0; i < headers.length; i++) {
 			mapOfNameToIdx.put(headers[i], i);
 		}
+		for (int i = 0; i < arr.length; i++) {
+			arr[i] = UNPROCESSED_NODE;
+		}
 		extractDataToArray(stat, mapOfNameToIdx, arr);
+		validateAllFieldsWereWrittenTo(arr);
 
 		for (Object obj : arr) {
 			sb.appendWithComma(obj.toString());
@@ -223,7 +238,7 @@ public abstract class GenericStatsSuper {
 	public abstract String getMapKey(Data data);
 
 	public abstract boolean isDataValid(Data data);
-	
+
 	public abstract void extractDataToArray(Stats stat, Map<String, Integer> mapOfNameToIdx, Object[] arr);
 
 }

@@ -12,7 +12,7 @@ import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.summaries.GenericStatsSuper.WeightedAverage;
 
 public abstract class CityStatsSuper {
-	
+
 	public String getStartString() {
 		AndrewStringWriter sb = new AndrewStringWriter();
 		String[] headers = getHeaders();
@@ -21,7 +21,7 @@ public abstract class CityStatsSuper {
 		}
 		return sb.removeLastElement().getString();
 	}
-	
+
 	public abstract String[] getHeaders();
 
 	public void writeDataToPath(List<Data> dataList, String filePath, boolean isLastWrite) throws Exception {
@@ -43,11 +43,11 @@ public abstract class CityStatsSuper {
 			System.out.println("wrote to file " + filePath);
 		}
 	}
-	
+
 	public boolean shouldWriteData() {
 		return true;
 	}
-	
+
 	public void writeData(List<Data> dataList, String stateName, boolean isLastWrite) throws Exception {
 		if (!shouldWriteData()) {
 			return;
@@ -56,7 +56,7 @@ public abstract class CityStatsSuper {
 				+ ".csv";
 		writeDataToPath(dataList, filePath, isLastWrite);
 	}
-	
+
 	protected abstract void updateData(Data data, String stateName) throws Exception;
 
 	public void processAllStates() throws Exception {
@@ -137,7 +137,7 @@ public abstract class CityStatsSuper {
 	}
 
 	protected void runCleanup() {
-		
+
 	};
 
 	static class RunnableDemo52 implements Runnable {
@@ -198,7 +198,7 @@ public abstract class CityStatsSuper {
 
 		public AndrewStringWriter appendWADollar(WeightedAverage wa) {
 			if (!wa.getWeightedAverage().equals("N/A")) {
-				sb.append("$");	
+				sb.append("$");
 			}
 			return appendWA(wa);
 		}
@@ -236,7 +236,7 @@ public abstract class CityStatsSuper {
 	}
 
 	public abstract void populateDataFromMap(Map<String, Integer> mapOfNameToIndex, String[] arr, Data data);
-	
+
 	private Map<String, Integer> createMapOfNameToIndex(String header) {
 		Map<String, Integer> map = new HashMap<>();
 		String[] arr = header.split(",");
@@ -245,18 +245,32 @@ public abstract class CityStatsSuper {
 		}
 		return map;
 	}
-	
+
 	public void appendRowToSb(AndrewStringWriter sb, Data data, Map<String, Integer> mapOfNameToIndex) {
 		String[] arr = new String[getHeaders().length];
+		for (int i = 0; i < arr.length; i++) {
+			arr[i] = UNPROCESSED_NODE;
+		}
 		extractDataToArray(data, mapOfNameToIndex, arr);
-		
-		
+		validateAllFieldsWereWrittenTo(arr);
+
 		for (String st : arr) {
 			sb.appendWithComma(st);
 		}
 		sb.removeLastElement().appendLastItem("").getString();
 	}
-	
+
+	private static final String UNPROCESSED_NODE = "unprocessed node here 23894720";
+
+	public void validateAllFieldsWereWrittenTo(String[] arr) {
+		for (String st : arr) {
+			if (st.equals(UNPROCESSED_NODE)) {
+				throw new RuntimeException("Not all fields were written too!");
+			}
+		}
+
+	}
+
 	public List<Data> readData(String stateName) throws Exception {
 		List<Data> dataList = new ArrayList<>();
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\States\\" + stateName
@@ -265,15 +279,37 @@ public abstract class CityStatsSuper {
 		Scanner myReader = new Scanner(myObj);
 		String header = myReader.nextLine(); //
 		Map<String, Integer> mapOfNameToIndex = createMapOfNameToIndex(header);
+		if (mapOfNameToIndex.size() != getHeaders().length) {
+			myReader.close();
+			throw new RuntimeException(
+					"The number of headers is in the code is not equal to the number of columns found in the file!");
+		}
 		while (myReader.hasNextLine()) {
 			String line = myReader.nextLine();
 			String[] arr = line.split(",");
 			Data data = new Data();
 			populateDataFromMap(mapOfNameToIndex, arr, data);
+			validateAllFieldsWereRead(arr);
 			dataList.add(data);
 		}
 		myReader.close();
 		return dataList;
+	}
+
+	private static final String PROCESSED_NODE = "processed node here 239487";
+
+	private void validateAllFieldsWereRead(String[] arr) {
+		for (String st : arr) {
+			if (!st.equals(PROCESSED_NODE)) {
+				throw new RuntimeException("didn't read all data! found: " + st);
+			}
+		}
+	}
+
+	public String read(String[] arr, Map<String, Integer> mapOfNameToIndex, String key) {
+		String st = arr[mapOfNameToIndex.get(key)];
+		arr[mapOfNameToIndex.get(key)] = PROCESSED_NODE;
+		return st;
 	}
 
 	public abstract void extractDataToArray(Data data, Map<String, Integer> mapOfNameToIndex, String[] arr);
