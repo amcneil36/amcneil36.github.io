@@ -144,6 +144,7 @@ public abstract class GenericStatsSuper {
 	///////////////////////
 
 	private static final String UNPROCESSED_NODE = "unprocessed node here 23894720";
+	private static final int ERROR_HANDLING_IDX = 3;
 
 	public void validateAllFieldsWereWrittenTo(Object[] arr) {
 		for (Object st : arr) {
@@ -154,17 +155,18 @@ public abstract class GenericStatsSuper {
 
 	}
 
-	public void addToSb(AndrewStringWriter sb, Stats stat) {
-
-		Map<String, Integer> mapOfNameToIdx = new HashMap<>();
+	public void addToSb(AndrewStringWriter sb, Stats stat, int idx, Map<String, Integer> mapOfNameToIdx) {
 		String[] headers = getHeader();
 		Object[] arr = new Object[headers.length];
-		for (int i = 0; i < headers.length; i++) {
-			mapOfNameToIdx.put(headers[i], i);
-			arr[i] = UNPROCESSED_NODE;
+		if (idx == ERROR_HANDLING_IDX) {
+			for (int i = 0; i < headers.length; i++) {
+				arr[i] = UNPROCESSED_NODE;
+			}
 		}
 		extractDataToArray(stat, mapOfNameToIdx, arr);
-		validateAllFieldsWereWrittenTo(arr);
+		if (idx == ERROR_HANDLING_IDX) {
+			validateAllFieldsWereWrittenTo(arr);
+		}
 
 		for (Object obj : arr) {
 			sb.appendWithComma(obj.toString());
@@ -207,12 +209,18 @@ public abstract class GenericStatsSuper {
 		}
 		mySb.deleteCharAt(mySb.length() - 1);
 		sb.appendLastItem(mySb.toString());
+		int k = 0;
+		Map<String, Integer> mapOfNameToIdx = new HashMap<>();
+		String[] headers = getHeader();
+		for (int i = 0; i < headers.length; i++) {
+			mapOfNameToIdx.put(headers[i], i);
+		}
 		for (Stats stat : statsList) {
 			String[] startingElements = getStartingElements(stat);
 			for (String st : startingElements) {
 				sb.appendWithComma(st);
 			}
-			addToSb(sb, stat);
+			addToSb(sb, stat, k++, mapOfNameToIdx);
 			sb.appendEnding();
 		}
 		String st = sb.getString();
