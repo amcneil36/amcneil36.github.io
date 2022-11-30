@@ -7,11 +7,11 @@ import main.java.com.hey.CityStats;
 import main.java.com.hey.city.stats.NoopCityStats;
 
 public class CreateBigCsv {
-	
+
 	public static void main(String[] args) throws Exception {
 		processAllStates();
 	}
-	
+
 	public static void processState(List<CityStats.Data> dataList, String stateName) throws Exception {
 		NoopCityStats cityStats = new NoopCityStats();
 		List<CityStats.Data> list2 = cityStats.readData(stateName);
@@ -19,7 +19,9 @@ public class CreateBigCsv {
 			dataList.add(data);
 		}
 	}
-	
+
+	// performance bottleneck because we are reading synchronously.
+	// maybe there is an async way to do this? like the UpdateEverything one
 	public static List<CityStats.Data> readInput() throws Exception {
 		List<CityStats.Data> dataList = new ArrayList<>();
 		processState(dataList, "Alabama");
@@ -75,7 +77,7 @@ public class CreateBigCsv {
 		processState(dataList, "District of Columbia");
 		return dataList;
 	}
-	
+
 	public static void processAllStates() throws Exception {
 		NoopCityStats cityStats = new NoopCityStats();
 		List<CityStats.Data> dataList = readInput();
