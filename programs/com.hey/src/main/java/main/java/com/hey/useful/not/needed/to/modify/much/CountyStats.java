@@ -23,6 +23,11 @@ public class CountyStats extends GenericStats {
 	public String[] getInitialHeaders() {
 		return new String[] { COUNTY, COUNTY_POPULATION, PREDOMINANT_CITY, STATE };
 	}
+	
+	@Override
+	public String[] getStartingElements(Stats stat) {
+		return new String[] {stat.countyName, String.valueOf(stat.countyPopulation), stat.mostPopulatedCityName, stat.stateName};
+	}
 
 	@Override
 	public String getFilePath() {
