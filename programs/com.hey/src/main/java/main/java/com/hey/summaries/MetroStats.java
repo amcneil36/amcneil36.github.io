@@ -20,19 +20,14 @@ import static main.java.com.hey.CityStats.HOME_PRICE;
 import static main.java.com.hey.CityStats.HOME_SQFT;
 import static main.java.com.hey.CityStats.HOTTEST_MONTH;
 import static main.java.com.hey.CityStats.INCOME;
-import static main.java.com.hey.CityStats.INCOME_SPENT;
 import static main.java.com.hey.CityStats.LABOR_FORCE;
 import static main.java.com.hey.CityStats.POPULATION_DENSITY;
-import static main.java.com.hey.CityStats.POPULATION_GROWTH;
 import static main.java.com.hey.CityStats.POVERTY_RATE;
 import static main.java.com.hey.CityStats.PROPERTY_CRIMES_FBI;
-import static main.java.com.hey.CityStats.PROPERTY_CRIME_INDEX;
 import static main.java.com.hey.CityStats.REPUBLICAN;
-import static main.java.com.hey.CityStats.SEX_OFFENDERS;
 import static main.java.com.hey.CityStats.SINGLE_POPULATION;
 import static main.java.com.hey.CityStats.UV_INDEX;
 import static main.java.com.hey.CityStats.VIOLENT_CRIMES_FBI;
-import static main.java.com.hey.CityStats.VIOLENT_CRIME_INDEX;
 import static main.java.com.hey.CityStats.WHITE;
 import static main.java.com.hey.CityStats.WIND_SPEED;
 
@@ -92,8 +87,6 @@ public class MetroStats extends MetroStatsSuper {
 		stats.avgSummerDewPoint.addCity(data, data.avgSummerDewPoint);
 		stats.avgAnnualDewPoint.addCity(data, data.avgAnnualDewPoint);
 		stats.avgYearlyWindspeed.addCity(data, data.avgYearlyWindspeed);
-		stats.violentCrime.addCity(data, data.violentCrime);
-		stats.propertyCrime.addCity(data, data.propertyCrime);
 		stats.medianAge.addCity(data, data.medianAge);
 		stats.percentWithAtleastBachelors.addCity(data, data.percentWithAtleastBachelors);
 		stats.medianIncome.addCity(data, data.medianIncome);
@@ -102,7 +95,6 @@ public class MetroStats extends MetroStatsSuper {
 		stats.homeSquareFeet.addCity(data, data.homeSquareFeet);
 		stats.costPerSquareFoot.addCity(data, data.costPerSquareFoot);
 		stats.homeOwnershipRate.addCity(data, data.homeOwnershipRate);
-		stats.populationGrowthSince2010.addCity(data, data.populationGrowthSince2010);
 		stats.percentDemocrat.addCity(data, data.percentDemocrat);
 		stats.percentRepublican.addCity(data, data.percentRepublican);
 		stats.percentAsian.addCity(data, data.percentAsian);
@@ -112,8 +104,6 @@ public class MetroStats extends MetroStatsSuper {
 		stats.foreignBornPercent.addCity(data, data.foreignBornPercent);
 		stats.uvIndex.addCity(data, data.uvIndex);
 		stats.singlePopulation.addCity(data, data.singlePopulation);
-		stats.percentOfIncomeLostToHousingCosts.addCity(data, data.percentOfIncomeLostToHousingCosts);
-		stats.sexOffenderCount.addCity(data, data.sexOffenderCount);
 		stats.fbiViolentCrimeData.addCity(data, data.fbiViolentCrimeRate);
 		stats.fbiPropertyCrimeData.addCity(data, data.fbiPropertyCrimeRate);
 		stats.laborForceParticipationRate.addCity(data, data.laborForceParticipationRate);
@@ -132,8 +122,6 @@ public class MetroStats extends MetroStatsSuper {
 		arr[mapOfNameToIdx.get(AVERAGE_SUMMER_DEW_POINT)] = stat.avgSummerDewPoint;
 		arr[mapOfNameToIdx.get(DEW_POINT)] = stat.avgAnnualDewPoint;
 		arr[mapOfNameToIdx.get(WIND_SPEED)] = stat.avgYearlyWindspeed;
-		arr[mapOfNameToIdx.get(VIOLENT_CRIME_INDEX)] = stat.violentCrime;
-		arr[mapOfNameToIdx.get(PROPERTY_CRIME_INDEX)] = stat.propertyCrime;
 		arr[mapOfNameToIdx.get(AGE)] = stat.medianAge;
 		arr[mapOfNameToIdx.get(BACHELORS)] = stat.percentWithAtleastBachelors;
 		arr[mapOfNameToIdx.get(INCOME)] = stat.medianIncome;
@@ -142,7 +130,6 @@ public class MetroStats extends MetroStatsSuper {
 		arr[mapOfNameToIdx.get(HOME_SQFT)] = stat.homeSquareFeet;
 		arr[mapOfNameToIdx.get(COST_PER_SQFT)] = stat.costPerSquareFoot;
 		arr[mapOfNameToIdx.get(HOMEOWNERSHIP_RATE)] = stat.homeOwnershipRate;
-		arr[mapOfNameToIdx.get(POPULATION_GROWTH)] = stat.populationGrowthSince2010;
 		arr[mapOfNameToIdx.get(DEMOCRAT)] = stat.percentDemocrat;
 		arr[mapOfNameToIdx.get(REPUBLICAN)] = stat.percentRepublican;
 		arr[mapOfNameToIdx.get(ASIAN)] = stat.percentAsian;
@@ -152,8 +139,6 @@ public class MetroStats extends MetroStatsSuper {
 		arr[mapOfNameToIdx.get(FOREIGN_BORN)] = stat.foreignBornPercent;
 		arr[mapOfNameToIdx.get(UV_INDEX)] = stat.uvIndex;
 		arr[mapOfNameToIdx.get(SINGLE_POPULATION)] = stat.singlePopulation;
-		arr[mapOfNameToIdx.get(INCOME_SPENT)] = stat.percentOfIncomeLostToHousingCosts;
-		arr[mapOfNameToIdx.get(SEX_OFFENDERS)] = stat.sexOffenderCount;
 		arr[mapOfNameToIdx.get(PREDOMINANT_TIMEZONE)] = stat.getPrimaryTimeZone();
 		arr[mapOfNameToIdx.get(VIOLENT_CRIMES_FBI)] = stat.fbiViolentCrimeData;
 		arr[mapOfNameToIdx.get(PROPERTY_CRIMES_FBI)] = stat.fbiPropertyCrimeData;
@@ -162,15 +147,13 @@ public class MetroStats extends MetroStatsSuper {
 
 	@Override
 	public String[] getHeader() {
-		return new String[] { POPULATION_DENSITY, HOTTEST_MONTH,
-				COLDEST_MONTH, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE, ANNUAL_SNOWFALL,
-				AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED, VIOLENT_CRIME_INDEX, PROPERTY_CRIME_INDEX, AGE,
-				BACHELORS, INCOME, POVERTY_RATE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT, HOMEOWNERSHIP_RATE,
-				POPULATION_GROWTH, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, UV_INDEX,
-				SINGLE_POPULATION, INCOME_SPENT, SEX_OFFENDERS, PREDOMINANT_TIMEZONE, VIOLENT_CRIMES_FBI,
-				PROPERTY_CRIMES_FBI, LABOR_FORCE };
+		return new String[] { POPULATION_DENSITY, HOTTEST_MONTH, COLDEST_MONTH, ANNUAL_RAINFALL,
+				ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE, ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT,
+				DEW_POINT, WIND_SPEED, AGE, BACHELORS, INCOME, POVERTY_RATE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT,
+				HOMEOWNERSHIP_RATE, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, UV_INDEX,
+				SINGLE_POPULATION, PREDOMINANT_TIMEZONE, VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI, LABOR_FORCE };
 	}
-	
+
 	public static void main(String[] args) throws Exception {
 		MetroStats metroStats = new MetroStats();
 		metroStats.performStuff();
