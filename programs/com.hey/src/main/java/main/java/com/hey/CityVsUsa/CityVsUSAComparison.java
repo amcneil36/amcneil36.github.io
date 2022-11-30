@@ -304,17 +304,13 @@ public class CityVsUSAComparison {
 				inputData.annualSnowfall = Integer.valueOf(data.annualSnowfall);
 				inputData.averageYearlyHumidity = getValidInt(data.avgAnnualDewPoint); // swapped
 				inputData.yearlyWindspeed = getValidInt(data.avgYearlyWindspeed);
-				inputData.violentCrime = Integer.valueOf(data.violentCrime);
-				inputData.propertyCrime = Integer.valueOf(data.propertyCrime);
 				inputData.medianAge = getValidInt(data.medianAge);
 				inputData.bachelors = getValidFloatFromPercent(data.percentWithAtleastBachelors);
 				inputData.medianHouseholdIncome = Integer.valueOf(data.medianIncome.replace("$", ""));
 				inputData.medianHomePrice = getValidInt(data.medianHomePrice.replace("$", ""));
 				inputData.medianHomeAge = Integer.valueOf(data.medianHomeAge);
-				inputData.homeAppreciation = getValidIntegerFromPercent(data.homeAppreciationLastTenYears);
 				inputData.airQuality = Integer.valueOf(data.airQuality);
-				inputData.unemploymentRate = getValidFloatFromPercent(data.unemploymentRate);
-				inputData.populationGrowth = getValidFloatFromPercent(data.populationGrowthSince2010);		
+				inputData.unemploymentRate = getValidFloatFromPercent(data.unemploymentRate);	
 				inputData.percentDemocrat = getValidFloatFromPercent(data.percentDemocrat);
 				inputData.percentRepublican = getValidFloatFromPercent(data.percentRepublican);		
 				inputData.percentAsian = getValidFloatFromPercent(data.percentAsian);		
@@ -325,7 +321,6 @@ public class CityVsUSAComparison {
 				inputData.povertyRate = getValidFloatFromPercent(data.povertyRate);
 				inputData.avgSummerDewPoint = getValidInt(data.avgSummerDewPoint);
 				inputData.avgApartmentRent = getValidInt(data.avgApartmentRent.replace("$", ""));
-				inputData.avgApartmentSize = getValidInt(data.avgApartmentSize);
 				inputData.homeSquareFeet = getValidInt(data.homeSquareFeet);
 				inputData.costPerSquareFoot = getValidInt(data.costPerSquareFoot.replace("$", ""));
 				inputData.homeOwnershipRate = getValidFloatFromPercent(data.homeOwnershipRate);
@@ -333,14 +328,6 @@ public class CityVsUSAComparison {
 				inputData.feetAboveSeaLevel = getValidInt(data.feetAboveSeaLevel);
 				inputData.uvIndex = Float.valueOf(data.uvIndex);
 				inputData.singlePopulation = getValidFloatFromPercent(data.singlePopulation);
-				inputData.walkScore = getValidInt(data.walkScore);
-				inputData.transitScore = getValidInt(data.transitScore);
-				inputData.bikeScore = getValidInt(data.bikeScore);
-				inputData.percentOfIncomeLostToHousingCosts = getValidFloatFromPercent(data.percentOfIncomeLostToHousingCosts);
-				inputData.sexOffenderCount = getValidFloat(data.sexOffenderCount);
-				inputData.hurricanes = getValidInt(data.hurricanes);
-				inputData.tornadoes = getValidInt(data.tornadoes);
-				inputData.earthQuakes = getValidInt(data.earthQuakes);
 				//TODO5
 				list.add(inputData);
 	        }
@@ -352,14 +339,14 @@ public class CityVsUSAComparison {
 
 	}
 
-	private static float getValidFloat(String sexOffenderCount) {
+	/*private static float getValidFloat(String sexOffenderCount) {
 		if (sexOffenderCount.contains("N/A")) {
 			return -100;
 		}
 		else {
 			return Float.valueOf(sexOffenderCount);
 		}
-	}
+	}*/
 
 	private static AveragesAndMedians getAveragesAndMedians(List<InputData> inputDataList) {
 		AveragesAndMedians obj = new AveragesAndMedians();
@@ -865,14 +852,14 @@ public class CityVsUSAComparison {
 		return Integer.valueOf(string);
 	}
 	
-	private static int getValidIntegerFromPercent(String string) {
+	/*private static int getValidIntegerFromPercent(String string) {
 		int val = -100;
 		if (string.contains("%")) {
 			string = string.replace("%", "");
 			val = Integer.valueOf(string);
 		}
 		return val;
-	}
+	}*/
 	
 	private static float getValidFloatFromPercent(String string) {
 		float val = -100;

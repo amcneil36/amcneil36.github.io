@@ -38,8 +38,6 @@ public class CountyStats {
 		stats.avgSummerDewPoint.addCity(data, data.avgSummerDewPoint);
 		stats.avgAnnualDewPoint.addCity(data, data.avgAnnualDewPoint);
 		stats.avgYearlyWindspeed.addCity(data, data.avgYearlyWindspeed);
-		stats.violentCrime.addCity(data, data.violentCrime);
-		stats.propertyCrime.addCity(data, data.propertyCrime);
 		stats.medianAge.addCity(data, data.medianAge);
 		stats.percentWithAtleastBachelors.addCity(data, data.percentWithAtleastBachelors);
 		stats.medianIncome.addCity(data, data.medianIncome);
@@ -48,7 +46,6 @@ public class CountyStats {
 		stats.homeSquareFeet.addCity(data, data.homeSquareFeet);
 		stats.costPerSquareFoot.addCity(data, data.costPerSquareFoot);
 		stats.homeOwnershipRate.addCity(data, data.homeOwnershipRate);
-		stats.populationGrowthSince2010.addCity(data, data.populationGrowthSince2010);
 		stats.percentDemocrat.addCity(data, data.percentDemocrat);
 		stats.percentRepublican.addCity(data, data.percentRepublican);
 		stats.percentAsian.addCity(data, data.percentAsian);
@@ -58,8 +55,6 @@ public class CountyStats {
 		stats.foreignBornPercent.addCity(data, data.foreignBornPercent);
 		stats.uvIndex.addCity(data, data.uvIndex);
 		stats.singlePopulation.addCity(data, data.singlePopulation);
-		stats.percentOfIncomeLostToHousingCosts.addCity(data, data.percentOfIncomeLostToHousingCosts);
-		stats.sexOffenderCount.addCity(data, data.sexOffenderCount);
 		stats.fbiViolentCrimeData.addCity(data, data.fbiViolentCrimeRate);
 		stats.fbiPropertyCrimeData.addCity(data, data.fbiPropertyCrimeRate);
 		stats.laborForceParticipationRate.addCity(data, data.laborForceParticipationRate);
