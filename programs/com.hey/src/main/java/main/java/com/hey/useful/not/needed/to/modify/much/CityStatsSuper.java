@@ -130,7 +130,7 @@ public abstract class CityStatsSuper {
 				updatePrinter.printUpdateIfNeeded();
 				idx++;
 				if (idx % 30 == 0) {
-					writeData(dataList, stateName, false);
+				//	writeData(dataList, stateName, false);
 				}
 			}
 		} finally {
@@ -300,6 +300,7 @@ public abstract class CityStatsSuper {
 				validateAllFieldsWereRead(arr);	
 			}
 			dataList.add(data);
+			i++;
 		}
 		myReader.close();
 		return dataList;
