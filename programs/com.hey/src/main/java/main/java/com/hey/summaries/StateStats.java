@@ -12,14 +12,10 @@ import main.java.com.hey.CityStats;
 import main.java.com.hey.CityStatsSuper.AndrewStringWriter;
 import main.java.com.hey.summaries.MetroStats.Stats;
 
-public class StateStats {
+public class StateStats extends StateStatsSuper {
 	
-	static class StateStatsObj extends MetroStats.Stats{
-		public int statePopulation = 0;
-		public String stateName = "";
-	}
-	
-	static void addStuffToStats(StateStatsObj stats, CityStats.Data data) {
+	@Override
+	public void addStuffToStats(StateStatsObj stats, CityStats.Data data) {
 		stats.peoplePerSqMi.addCity(data, data.populationDensity);
 		stats.hottestMonthsHigh.addCity(data, data.hottestMonthsHigh);
 		stats.coldestHigh.addCity(data, data.coldestHigh);
@@ -67,8 +63,13 @@ public class StateStats {
 			+ "Median home cost per sqft,Homeownership Rate,Population growth since 2010,"
 			+ "% Democrat,% Republican,% Asian,% Black,% Non-Hispanic White,% Hispanic,Foreign Born %,UV Index,Single Population,% of income spent on housing costs (owners),Number of sex offenders per 10k residents,Predominant Timezone,Num Violent Crimes Per 100k residents,Num Property Crimes Per 100k residents,Labor Force Participation rate";
 
+	@Override
+	public String getStartStr() {
+		return startSt;
+	}
 
-	static void addToSb(AndrewStringWriter sb, Stats stat) {
+	@Override
+	public void addToSb(AndrewStringWriter sb, StateStatsObj stat){
 		sb.appendWA(stat.peoplePerSqMi);
 		sb.appendWA(stat.hottestMonthsHigh);
 		sb.appendWA(stat.coldestHigh);
@@ -108,37 +109,7 @@ public class StateStats {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		List<CityStats.Data> dataList = CreateBigCsv.readInput();
-		Map<String, StateStatsObj> mapOfStateNameToStats = new HashMap<>();
-		for (CityStats.Data data : dataList) {
-			String state = data.stateName;
-			if (!mapOfStateNameToStats.containsKey(state)) {
-				StateStatsObj stats = new StateStatsObj();
-				stats.stateName = data.stateName;
-				mapOfStateNameToStats.put(state, stats);
-			}
-			StateStatsObj stats = mapOfStateNameToStats.get(state);
-			addStuffToStats(stats, data);
-		}
-		
-		Set<String> keys = mapOfStateNameToStats.keySet();
-		List<StateStatsObj> statsList = new ArrayList<>();
-		for (String key : keys) {
-			statsList.add(mapOfStateNameToStats.get(key));
-		}
-		Collections.sort(statsList, (a,b)->a.stateName.compareTo(b.stateName));
-		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\StateStats\\StateStats.csv";
-		FileWriter myWriter = new FileWriter(filePath);
-		AndrewStringWriter sb = new AndrewStringWriter();
-		sb.appendLastItem(startSt);
-		for (StateStatsObj stat : statsList) {
-			sb.appendWithComma(stat.stateName).appendWithComma(stat.statePopulation);
-			addToSb(sb, stat);
-			sb.appendEnding();
-		}
-		String st = sb.getString();
-		myWriter.write(st);
-		myWriter.close();
-		System.out.println("wrote to file " + filePath);
+		StateStats ss = new StateStats();
+		ss.performStuff();
 	}
 }
