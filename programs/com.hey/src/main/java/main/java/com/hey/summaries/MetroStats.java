@@ -1,43 +1,97 @@
 package main.java.com.hey.summaries;
 
-import static main.java.com.hey.CityStats.AGE;
-import static main.java.com.hey.CityStats.ANNUAL_DAYS_OF_PRECIPITATION;
-import static main.java.com.hey.CityStats.ANNUAL_DAYS_OF_SUNSHINE;
-import static main.java.com.hey.CityStats.ANNUAL_RAINFALL;
-import static main.java.com.hey.CityStats.ANNUAL_SNOWFALL;
-import static main.java.com.hey.CityStats.ASIAN;
-import static main.java.com.hey.CityStats.AVERAGE_SUMMER_DEW_POINT;
-import static main.java.com.hey.CityStats.BACHELORS;
-import static main.java.com.hey.CityStats.BLACK;
-import static main.java.com.hey.CityStats.COLDEST_MONTH;
-import static main.java.com.hey.CityStats.COST_PER_SQFT;
-import static main.java.com.hey.CityStats.DEMOCRAT;
-import static main.java.com.hey.CityStats.DEW_POINT;
-import static main.java.com.hey.CityStats.FOREIGN_BORN;
-import static main.java.com.hey.CityStats.HISPANIC;
-import static main.java.com.hey.CityStats.HOMEOWNERSHIP_RATE;
-import static main.java.com.hey.CityStats.HOME_PRICE;
-import static main.java.com.hey.CityStats.HOME_SQFT;
-import static main.java.com.hey.CityStats.HOTTEST_MONTH;
-import static main.java.com.hey.CityStats.INCOME;
-import static main.java.com.hey.CityStats.LABOR_FORCE;
-import static main.java.com.hey.CityStats.POPULATION_DENSITY;
-import static main.java.com.hey.CityStats.POVERTY_RATE;
-import static main.java.com.hey.CityStats.PROPERTY_CRIMES_FBI;
-import static main.java.com.hey.CityStats.REPUBLICAN;
-import static main.java.com.hey.CityStats.SINGLE_POPULATION;
-import static main.java.com.hey.CityStats.UV_INDEX;
-import static main.java.com.hey.CityStats.VIOLENT_CRIMES_FBI;
-import static main.java.com.hey.CityStats.WHITE;
-import static main.java.com.hey.CityStats.WIND_SPEED;
+import static main.java.com.hey.CityStats.METRO_NAME;
+import static main.java.com.hey.CityStats.METRO_POP;
 
+import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import main.java.com.hey.CityStats;
+import main.java.com.hey.CityStatsSuper.AndrewStringWriter;
 
-public class MetroStats extends MetroStatsSuper {
-
-
+public class MetroStats extends GenericStats {
+	
+	public static final String PREDOMINANT_STATE = "Predominant State";
+	public static final String PREDOMINANT_TIMEZONE = "Predominant Timezone";
+	
+	public static String getMetroKey(CityStats.Data data) {
+		return data.metro + "," + data.metroPopulation;
+	}
+	
+	private static boolean isMetroValid(CityStats.Data data) {
+		return !data.metro.contains("None");
+	}
+	
+	public void performStuff() throws Exception {
+		List<CityStats.Data> dataList = CreateBigCsv.readInput();
+		Map<String, Stats> mapOfMetroNameToStats = new HashMap<>();
+		for (CityStats.Data data : dataList) {
+			if (isMetroValid(data)) {
+				String metroKey = MetroStats.getMetroKey(data);
+				if (!mapOfMetroNameToStats.containsKey(metroKey)) {
+					Stats stats = new Stats();
+					stats.metroName = data.metro;
+					stats.metroPopulation = Integer.valueOf(data.metroPopulation);
+					mapOfMetroNameToStats.put(metroKey, stats);
+				}
+				Stats stats = mapOfMetroNameToStats.get(metroKey);
+				addStuffToStats(stats, data);
+				stats.addDataToMapOfStateToPopulation(data);
+				stats.addDataToMapOfTimeZoneToPopulation(data);
+			}
+		}
+		Set<String> keys = mapOfMetroNameToStats.keySet();
+		List<Stats> statsList = new ArrayList<>();
+		for (String key : keys) {
+			statsList.add(mapOfMetroNameToStats.get(key));
+		}
+		Collections.sort(statsList, Collections.reverseOrder());
+		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\MetroStats\\MetroStats.csv";
+		FileWriter myWriter = new FileWriter(filePath);
+		AndrewStringWriter sb = new AndrewStringWriter();
+		StringBuilder mySb = new StringBuilder();
+		String[] firstHeaders = {METRO_NAME, PREDOMINANT_STATE, METRO_POP};
+		for (String str : firstHeaders) {
+			mySb.append(str).append(",");
+		}
+		String[] remainingHeaders = getHeader();
+		for (String str : remainingHeaders) {
+			mySb.append(str).append(",");
+		}
+		mySb.deleteCharAt(mySb.length() - 1);
+		sb.appendLastItem(mySb.toString());
+		for (Stats stat : statsList) {
+			sb.appendWithComma(stat.metroName).appendWithComma(stat.getPrimaryState()).appendWithComma(stat.metroPopulation);
+			addToSb(sb, stat);
+			sb.appendEnding();
+		}
+		String st = sb.getString();
+		myWriter.write(st);
+		myWriter.close();
+		System.out.println("wrote to file " + filePath);
+	}
+	
+	public void addToSb(AndrewStringWriter sb, Stats stat) {
+		
+		Map<String, Integer> mapOfNameToIdx = new HashMap<>();
+		String[] headers = getHeader();
+		Object[] arr = new Object[headers.length];
+		for (int i = 0; i < headers.length; i++) {
+			mapOfNameToIdx.put(headers[i], i);
+		}
+		extractDataToArray(stat, mapOfNameToIdx, arr);
+	
+		
+		for (Object obj : arr) {
+			sb.appendWithComma(obj.toString());
+		}
+	}
+	
 	public static void main(String[] args) throws Exception {
 		MetroStats metroStats = new MetroStats();
 		metroStats.performStuff();
