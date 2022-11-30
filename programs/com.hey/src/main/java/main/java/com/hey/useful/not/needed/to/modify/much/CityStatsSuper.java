@@ -13,6 +13,8 @@ import main.java.com.hey.useful.not.needed.to.modify.much.GenericStatsSuper.Weig
 
 public abstract class CityStatsSuper {
 
+	private static final int ERROR_HANDLE_IDX = 3; // only error handle once so performance is better
+
 	public String getStartString() {
 		AndrewStringWriter sb = new AndrewStringWriter();
 		String[] headers = getHeaders();
@@ -33,8 +35,9 @@ public abstract class CityStatsSuper {
 		for (int i = 0; i < headers.length; i++) {
 			mapOfHeaderToIdx.put(headers[i], i);
 		}
+		int i = 0;
 		for (Data data : dataList) {
-			appendRowToSb(sb, data, mapOfHeaderToIdx);
+			appendRowToSb(sb, data, mapOfHeaderToIdx, i++);
 		}
 		String st = sb.getString();
 		myWriter.write(st);
@@ -245,13 +248,17 @@ public abstract class CityStatsSuper {
 		return map;
 	}
 
-	public void appendRowToSb(AndrewStringWriter sb, Data data, Map<String, Integer> mapOfNameToIndex) {
+	public void appendRowToSb(AndrewStringWriter sb, Data data, Map<String, Integer> mapOfNameToIndex, int idx) {
 		String[] arr = new String[getHeaders().length];
-		for (int i = 0; i < arr.length; i++) {
-			arr[i] = UNPROCESSED_NODE;
+		if (idx == ERROR_HANDLE_IDX) {
+			for (int i = 0; i < arr.length; i++) {
+				arr[i] = UNPROCESSED_NODE;
+			}	
 		}
 		extractDataToArray(data, mapOfNameToIndex, arr);
-		validateAllFieldsWereWrittenTo(arr);
+		if (idx == ERROR_HANDLE_IDX) {
+			validateAllFieldsWereWrittenTo(arr);	
+		}
 
 		for (String st : arr) {
 			sb.appendWithComma(st);
@@ -283,12 +290,15 @@ public abstract class CityStatsSuper {
 			throw new RuntimeException(
 					"The number of headers is in the code is not equal to the number of columns found in the file!");
 		}
+		int i = 0;
 		while (myReader.hasNextLine()) {
 			String line = myReader.nextLine();
 			String[] arr = line.split(",");
 			Data data = new Data();
 			populateDataFromMap(mapOfNameToIndex, arr, data);
-			validateAllFieldsWereRead(arr);
+			if (i == ERROR_HANDLE_IDX) {
+				validateAllFieldsWereRead(arr);	
+			}
 			dataList.add(data);
 		}
 		myReader.close();
