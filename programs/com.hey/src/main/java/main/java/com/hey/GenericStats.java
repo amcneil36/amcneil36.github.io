@@ -1,6 +1,6 @@
 package main.java.com.hey;
 
-import static main.java.com.hey.CityStats.AGE;
+import static main.java.com.hey.CityStats.*;
 import static main.java.com.hey.CityStats.ANNUAL_DAYS_OF_PRECIPITATION;
 import static main.java.com.hey.CityStats.ANNUAL_DAYS_OF_SUNSHINE;
 import static main.java.com.hey.CityStats.ANNUAL_RAINFALL;
@@ -75,6 +75,10 @@ public abstract class GenericStats extends GenericStatsSuper {
 		WeightedAverage fbiViolentCrimeData = new WeightedAverage();
 		WeightedAverage fbiPropertyCrimeData = new WeightedAverage();
 		WeightedAverage laborForceParticipationRate = new WeightedAveragePercent();
+		WeightedAverage rent = new WeightedAverageDollar();
+		WeightedAverage unemploymentRate = new WeightedAveragePercent();
+		WeightedAverage hottestMinusColdest = new WeightedAverage();
+		WeightedAverage airQuality = new WeightedAverage();
 	}
 
 	@Override
@@ -109,6 +113,10 @@ public abstract class GenericStats extends GenericStatsSuper {
 		stats.fbiViolentCrimeData.addCity(data, data.fbiViolentCrimeRate);
 		stats.fbiPropertyCrimeData.addCity(data, data.fbiPropertyCrimeRate);
 		stats.laborForceParticipationRate.addCity(data, data.laborForceParticipationRate);
+		stats.rent.addCity(data, data.avgApartmentRent);
+		stats.unemploymentRate.addCity(data, data.unemploymentRate);
+		stats.hottestMinusColdest.addCity(data, data.hottestMonthMinusColdestMonth);
+		stats.airQuality.addCity(data, data.airQuality);
 
 	}
 
@@ -145,15 +153,19 @@ public abstract class GenericStats extends GenericStatsSuper {
 		arr[mapOfNameToIdx.get(VIOLENT_CRIMES_FBI)] = stat.fbiViolentCrimeData;
 		arr[mapOfNameToIdx.get(PROPERTY_CRIMES_FBI)] = stat.fbiPropertyCrimeData;
 		arr[mapOfNameToIdx.get(LABOR_FORCE)] = stat.laborForceParticipationRate;
+		arr[mapOfNameToIdx.get(RENT)] = stat.rent;
+		arr[mapOfNameToIdx.get(UNEMPLOYMENT_RATE)] = stat.unemploymentRate;
+		arr[mapOfNameToIdx.get(HOTTEST_MINUS_COLDEST)] = stat.hottestMinusColdest;
+		arr[mapOfNameToIdx.get(AIR_QUALITY_IDX)] = stat.airQuality;
 	}
 
 	@Override
 	public String[] getHeader() {
 		return new String[] { POPULATION_DENSITY, INCOME, BACHELORS, AGE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT,
-				HOMEOWNERSHIP_RATE, SINGLE_POPULATION, VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI, POVERTY_RATE,
-				LABOR_FORCE, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, TIME_ZONE,
-				HOTTEST_MONTH, COLDEST_MONTH, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE,
-				ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED, UV_INDEX };
+				HOMEOWNERSHIP_RATE, RENT, SINGLE_POPULATION, VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI, POVERTY_RATE,
+				UNEMPLOYMENT_RATE, LABOR_FORCE, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, TIME_ZONE,
+				HOTTEST_MONTH, COLDEST_MONTH,HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE,
+				ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED, AIR_QUALITY_IDX,UV_INDEX };
 	}
 
 }
