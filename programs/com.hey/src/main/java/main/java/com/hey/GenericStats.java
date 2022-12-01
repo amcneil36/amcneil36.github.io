@@ -1,6 +1,7 @@
 package main.java.com.hey;
 
-import static main.java.com.hey.CityStats.*;
+import static main.java.com.hey.CityStats.AGE;
+import static main.java.com.hey.CityStats.AIR_QUALITY_IDX;
 import static main.java.com.hey.CityStats.ANNUAL_DAYS_OF_PRECIPITATION;
 import static main.java.com.hey.CityStats.ANNUAL_DAYS_OF_SUNSHINE;
 import static main.java.com.hey.CityStats.ANNUAL_RAINFALL;
@@ -16,17 +17,21 @@ import static main.java.com.hey.CityStats.DEW_POINT;
 import static main.java.com.hey.CityStats.FOREIGN_BORN;
 import static main.java.com.hey.CityStats.HISPANIC;
 import static main.java.com.hey.CityStats.HOMEOWNERSHIP_RATE;
+import static main.java.com.hey.CityStats.HOME_AGE;
 import static main.java.com.hey.CityStats.HOME_PRICE;
 import static main.java.com.hey.CityStats.HOME_SQFT;
+import static main.java.com.hey.CityStats.HOTTEST_MINUS_COLDEST;
 import static main.java.com.hey.CityStats.HOTTEST_MONTH;
 import static main.java.com.hey.CityStats.INCOME;
 import static main.java.com.hey.CityStats.LABOR_FORCE;
 import static main.java.com.hey.CityStats.POPULATION_DENSITY;
 import static main.java.com.hey.CityStats.POVERTY_RATE;
 import static main.java.com.hey.CityStats.PROPERTY_CRIMES_FBI;
+import static main.java.com.hey.CityStats.RENT;
 import static main.java.com.hey.CityStats.REPUBLICAN;
 import static main.java.com.hey.CityStats.SINGLE_POPULATION;
 import static main.java.com.hey.CityStats.TIME_ZONE;
+import static main.java.com.hey.CityStats.UNEMPLOYMENT_RATE;
 import static main.java.com.hey.CityStats.UV_INDEX;
 import static main.java.com.hey.CityStats.VIOLENT_CRIMES_FBI;
 import static main.java.com.hey.CityStats.WHITE;
@@ -79,6 +84,7 @@ public abstract class GenericStats extends GenericStatsSuper {
 		WeightedAverage unemploymentRate = new WeightedAveragePercent();
 		WeightedAverage hottestMinusColdest = new WeightedAverage();
 		WeightedAverage airQuality = new WeightedAverage();
+		WeightedAverage homeAge = new WeightedAverage();
 	}
 
 	@Override
@@ -117,6 +123,7 @@ public abstract class GenericStats extends GenericStatsSuper {
 		stats.unemploymentRate.addCity(data, data.unemploymentRate);
 		stats.hottestMinusColdest.addCity(data, data.hottestMonthMinusColdestMonth);
 		stats.airQuality.addCity(data, data.airQuality);
+		stats.homeAge.addCity(data, data.medianHomeAge);
 
 	}
 
@@ -157,11 +164,12 @@ public abstract class GenericStats extends GenericStatsSuper {
 		arr[mapOfNameToIdx.get(UNEMPLOYMENT_RATE)] = stat.unemploymentRate;
 		arr[mapOfNameToIdx.get(HOTTEST_MINUS_COLDEST)] = stat.hottestMinusColdest;
 		arr[mapOfNameToIdx.get(AIR_QUALITY_IDX)] = stat.airQuality;
+		arr[mapOfNameToIdx.get(HOME_AGE)] = stat.homeAge;
 	}
 
 	@Override
 	public String[] getHeader() {
-		return new String[] { POPULATION_DENSITY, INCOME, BACHELORS, AGE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT,
+		return new String[] { POPULATION_DENSITY, INCOME, BACHELORS, AGE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT, HOME_AGE,
 				HOMEOWNERSHIP_RATE, RENT, SINGLE_POPULATION, VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI, POVERTY_RATE,
 				UNEMPLOYMENT_RATE, LABOR_FORCE, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, TIME_ZONE,
 				HOTTEST_MONTH, COLDEST_MONTH,HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE,
