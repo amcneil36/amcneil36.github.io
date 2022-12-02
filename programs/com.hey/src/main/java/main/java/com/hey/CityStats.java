@@ -163,6 +163,8 @@ public abstract class CityStats extends CityStatsSuper {
 		data.fipsCode = read(arr, mapOfNameToIndex, FIPS_CODE);
 		data.landArea = read(arr, mapOfNameToIndex, LAND_AREA);
 		data.laborForceParticipationRate = read(arr, mapOfNameToIndex, LABOR_FORCE);
+		data.latitude = read(arr, mapOfNameToIndex, LATITUDE);
+		data.longitude = read(arr, mapOfNameToIndex, LONGITUDE);
 	}
 
 	@Override
