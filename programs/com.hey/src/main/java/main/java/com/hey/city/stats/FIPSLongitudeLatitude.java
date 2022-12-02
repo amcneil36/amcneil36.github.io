@@ -7,7 +7,7 @@ import java.util.Map;
 import main.java.com.hey.CityStats;
 import main.java.com.hey.Util;
 
-public class FIPSCodes extends CityStats {
+public class FIPSLongitudeLatitude extends CityStats {
 
 	private static Map<String, String> map = new HashMap<String, String>();
 
@@ -122,7 +122,7 @@ public class FIPSCodes extends CityStats {
 			mapOfEntityToFipsData.put(key, fipsData);
 		}
 
-		FIPSCodes fp = new FIPSCodes();
+		FIPSLongitudeLatitude fp = new FIPSLongitudeLatitude();
 		fp.processAllStates();
 
 	}

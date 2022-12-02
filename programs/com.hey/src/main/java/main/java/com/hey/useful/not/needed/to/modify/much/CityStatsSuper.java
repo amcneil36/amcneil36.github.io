@@ -31,6 +31,11 @@ public abstract class CityStatsSuper {
 		AndrewStringWriter sb = new AndrewStringWriter();
 		sb.appendLastItem(getStartString());
 		String[] headers = getOutputHeaders();
+		int numFields = Data.class.getDeclaredFields().length;
+		if (numFields != headers.length) {
+			myWriter.close();
+			throw new RuntimeException("not writing all of the fields from CityStats.Data!");
+		}
 		Map<String, Integer> mapOfHeaderToIdx = new HashMap<>();
 		for (int i = 0; i < headers.length; i++) {
 			mapOfHeaderToIdx.put(headers[i], i);
