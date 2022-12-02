@@ -12,19 +12,12 @@ public class FIPSCodes extends CityStats {
 	private static Map<String, String> map = new HashMap<String, String>();
 
 	public static class FipsData {
-		String city = "N/A";
-		String fips = "N/A";
-		String stateNum = "N/A";
-		String stateName = "N/A";
-		String county = "N/A";
-
-		@Override
-		public String toString() {
-			return city + ", " + stateName + " " + county + " " + stateNum + "-" + fips;
-		}
+		String fipsCode = "N/A";
+		String latitude = "N/A";
+		String longitude = "N/A";
 	}
 
-	private static Map<String, String> mapOfEntityToFipsCode = new HashMap<String, String>();
+	private static Map<String, FipsData> mapOfEntityToFipsData = new HashMap<String, FipsData>();
 
 	private static String getKey(String city, String state, String county) {
 		return Util.removeStuffFromCityName(city).toLowerCase() + ";" + state + ";" + county;
@@ -97,7 +90,6 @@ public class FIPSCodes extends CityStats {
 		populateMap();
 		for (String st : text) {
 			String[] lines = st.split("\\|");
-			FipsData data = new FipsData();
 			String city = lines[1];
 			city = Util.removeStuffFromCityName(city);
 			if (city.contains("Statistical") || city.contains("County") || city.contains("Government")
@@ -107,26 +99,27 @@ public class FIPSCodes extends CityStats {
 			while (city.contains(" of ")) {
 				city = city.substring(city.indexOf(" of ") + " of ".length());
 			}
-			data.city = city;
-			data.fips = lines[3];
-			if (data.fips.equals("")) {
+			String fipsSuffix = lines[3];
+			if (fipsSuffix.equals("")) {
 				continue;
 			}
-			data.stateNum = lines[7];
 			String stateAcronym = lines[8];
 			String county = lines[11];
+			FipsData fipsData = new FipsData();
+			fipsData.latitude = lines[12];
+			fipsData.longitude = lines[13];
 			county = Util.removeIfExists(county, " (city)");
 			if (county.contains(" (city)")) {
 				
 			}
-			data.county = county + " County";
+			county = county + " County";
 			if (!map.containsKey(stateAcronym.toLowerCase())) {
 				continue;
 			}
-			data.stateName = map.get(stateAcronym.toLowerCase());
-			String key = getKey(data.city, data.stateName, data.county);
-			String value = stateAcronym + "-" + data.fips;
-			mapOfEntityToFipsCode.put(key, value);
+			String stateName = map.get(stateAcronym.toLowerCase());
+			String key = getKey(city, stateName, county);
+			fipsData.fipsCode = stateAcronym + "-" + fipsSuffix;
+			mapOfEntityToFipsData.put(key, fipsData);
 		}
 
 		FIPSCodes fp = new FIPSCodes();
@@ -137,9 +130,11 @@ public class FIPSCodes extends CityStats {
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
 		String key = getKey(data.cityName, data.stateName, data.countyName);
-		if (mapOfEntityToFipsCode.containsKey(key)) {
-			String fipsCode = mapOfEntityToFipsCode.get(key);
-			data.fipsCode = fipsCode;
+		if (mapOfEntityToFipsData.containsKey(key)) {
+			FipsData fipsData = mapOfEntityToFipsData.get(key);
+			data.fipsCode = fipsData.fipsCode;
+			data.longitude = fipsData.longitude;
+			data.latitude = fipsData.latitude;
 		}
 	}
 

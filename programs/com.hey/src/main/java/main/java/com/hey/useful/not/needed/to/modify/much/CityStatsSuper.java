@@ -17,20 +17,20 @@ public abstract class CityStatsSuper {
 
 	public String getStartString() {
 		AndrewStringWriter sb = new AndrewStringWriter();
-		String[] headers = getHeaders();
+		String[] headers = getOutputHeaders();
 		for (String header : headers) {
 			sb.appendWithComma(header);
 		}
 		return sb.removeLastElement().getString();
 	}
 
-	public abstract String[] getHeaders();
+	public abstract String[] getOutputHeaders();
 
 	public void writeDataToPath(List<Data> dataList, String filePath, boolean isLastWrite) throws Exception {
 		FileWriter myWriter = new FileWriter(filePath);
 		AndrewStringWriter sb = new AndrewStringWriter();
 		sb.appendLastItem(getStartString());
-		String[] headers = getHeaders();
+		String[] headers = getOutputHeaders();
 		Map<String, Integer> mapOfHeaderToIdx = new HashMap<>();
 		for (int i = 0; i < headers.length; i++) {
 			mapOfHeaderToIdx.put(headers[i], i);
@@ -237,7 +237,7 @@ public abstract class CityStatsSuper {
 		}
 	}
 
-	public abstract void populateDataFromMap(Map<String, Integer> mapOfNameToIndex, String[] arr, Data data);
+	public abstract void readDataFromMap(Map<String, Integer> mapOfNameToIndex, String[] arr, Data data);
 
 	private Map<String, Integer> createMapOfNameToIndex(String header) {
 		Map<String, Integer> map = new HashMap<>();
@@ -249,13 +249,13 @@ public abstract class CityStatsSuper {
 	}
 
 	public void appendRowToSb(AndrewStringWriter sb, Data data, Map<String, Integer> mapOfNameToIndex, int idx) {
-		String[] arr = new String[getHeaders().length];
+		String[] arr = new String[getOutputHeaders().length];
 		if (idx == ERROR_HANDLE_IDX) {
 			for (int i = 0; i < arr.length; i++) {
 				arr[i] = UNPROCESSED_NODE;
 			}	
 		}
-		extractDataToArray(data, mapOfNameToIndex, arr);
+		writeDataToArray(data, mapOfNameToIndex, arr);
 		if (idx == ERROR_HANDLE_IDX) {
 			validateAllFieldsWereWrittenTo(arr);	
 		}
@@ -285,7 +285,7 @@ public abstract class CityStatsSuper {
 		Scanner myReader = new Scanner(myObj);
 		String header = myReader.nextLine(); //
 		Map<String, Integer> mapOfNameToIndex = createMapOfNameToIndex(header);
-		if (mapOfNameToIndex.size() != getHeaders().length) {
+		if (mapOfNameToIndex.size() != getOutputHeaders().length) {
 			myReader.close();
 			throw new RuntimeException(
 					"The number of headers is in the code is not equal to the number of columns found in the file!");
@@ -295,7 +295,7 @@ public abstract class CityStatsSuper {
 			String line = myReader.nextLine();
 			String[] arr = line.split(",");
 			Data data = new Data();
-			populateDataFromMap(mapOfNameToIndex, arr, data);
+			readDataFromMap(mapOfNameToIndex, arr, data);
 			if (i == ERROR_HANDLE_IDX) {
 				validateAllFieldsWereRead(arr);	
 			}
@@ -322,5 +322,5 @@ public abstract class CityStatsSuper {
 		return st;
 	}
 
-	public abstract void extractDataToArray(Data data, Map<String, Integer> mapOfNameToIndex, String[] arr);
+	public abstract void writeDataToArray(Data data, Map<String, Integer> mapOfNameToIndex, String[] arr);
 }

@@ -54,6 +54,8 @@ public abstract class CityStats extends CityStatsSuper {
 		public String fipsCode = "N/A";
 		public String landArea = "N/A";
 		public String laborForceParticipationRate = "N/A";
+		public String latitude = "N/A";
+		public String longitude = "N/A";
 	}
 
 	public static final String CITY = "City";
@@ -101,19 +103,21 @@ public abstract class CityStats extends CityStatsSuper {
 	public static final String FIPS_CODE = "Fips Code";
 	public static final String LAND_AREA = "Land Area (sq mi)";
 	public static final String LABOR_FORCE = "Labor Force Participation rate";
+	public static final String LATITUDE = "Latitude";
+	public static final String LONGITUDE = "Longitude";
 
-	public String[] getHeaders() {
+	public String[] getOutputHeaders() {
 		return new String[] { CITY, STATE, POPULATION, POPULATION_DENSITY, METRO_NAME, METRO_POP, INCOME, BACHELORS,
 				AGE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT, HOME_AGE, HOMEOWNERSHIP_RATE, RENT, SINGLE_POPULATION,
 				VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI, POVERTY_RATE, UNEMPLOYMENT_RATE, LABOR_FORCE, COUNTY, DEMOCRAT,
 				REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH,
 				HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE,
 				ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED, AIR_QUALITY_IDX, ELEVATION, UV_INDEX,
-				LAND_AREA, FIPS_CODE };
+				LAND_AREA, FIPS_CODE, LATITUDE, LONGITUDE };
 	}
 
 	@Override
-	public void populateDataFromMap(Map<String, Integer> mapOfNameToIndex, String[] arr, Data data) {
+	public void readDataFromMap(Map<String, Integer> mapOfNameToIndex, String[] arr, Data data) {
 		data.cityName = read(arr, mapOfNameToIndex, CITY);
 		data.stateName = read(arr, mapOfNameToIndex, STATE);
 		data.population = read(arr, mapOfNameToIndex, POPULATION);
@@ -162,7 +166,7 @@ public abstract class CityStats extends CityStatsSuper {
 	}
 
 	@Override
-	public void extractDataToArray(Data data, Map<String, Integer> mapOfNameToIndex, String[] arr) {
+	public void writeDataToArray(Data data, Map<String, Integer> mapOfNameToIndex, String[] arr) {
 		arr[mapOfNameToIndex.get(CITY)] = data.cityName;
 		arr[mapOfNameToIndex.get(STATE)] = data.stateName;
 		arr[mapOfNameToIndex.get(POPULATION)] = data.population;
@@ -208,6 +212,8 @@ public abstract class CityStats extends CityStatsSuper {
 		arr[mapOfNameToIndex.get(FIPS_CODE)] = data.fipsCode;
 		arr[mapOfNameToIndex.get(LAND_AREA)] = data.landArea;
 		arr[mapOfNameToIndex.get(LABOR_FORCE)] = data.laborForceParticipationRate;
+		arr[mapOfNameToIndex.get(LATITUDE)] = data.latitude;
+		arr[mapOfNameToIndex.get(LONGITUDE)] = data.longitude;
 	}
 
 }
