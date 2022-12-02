@@ -285,11 +285,6 @@ public abstract class CityStatsSuper {
 		Scanner myReader = new Scanner(myObj);
 		String header = myReader.nextLine(); //
 		Map<String, Integer> mapOfNameToIndex = createMapOfNameToIndex(header);
-		if (mapOfNameToIndex.size() != getOutputHeaders().length) {
-			myReader.close();
-			throw new RuntimeException(
-					"The number of headers is in the code is not equal to the number of columns found in the file!");
-		}
 		int i = 0;
 		while (myReader.hasNextLine()) {
 			String line = myReader.nextLine();
