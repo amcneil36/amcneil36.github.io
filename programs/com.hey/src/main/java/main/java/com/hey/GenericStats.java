@@ -88,8 +88,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		WeightedAverage latitude = new WeightedAverageDouble();
 		WeightedAverage longitude = new WeightedAverageDouble();
 		WeightedAverage annualSunshinePercent = new WeightedAveragePercent();
-		WeightedAverage avgSummerSunshinePercent = new WeightedAveragePercent();
-		WeightedAverage avgWinterSunshinePercent = new WeightedAveragePercent();
+		WeightedAverage summerSunshinePercent = new WeightedAveragePercent();
+		WeightedAverage winterSunshinePercent = new WeightedAveragePercent();
 	}
 
 	@Override
@@ -131,9 +131,9 @@ public abstract class GenericStats extends GenericStatsSuper {
 		stats.homeAge.addCity(data, data.medianHomeAge);
 		stats.latitude.addCity(data, data.latitude);
 		stats.longitude.addCity(data, data.longitude);
-		stats.annualSunshinePercent.addCity(data, data.annualPercentSunshine);
-		stats.avgSummerSunshinePercent.addCity(data, data.averageSummerSunshine);
-		stats.avgWinterSunshinePercent.addCity(data, data.averageWinterSushine);
+		stats.annualSunshinePercent.addCity(data, data.annualSunshinePercent);
+		stats.summerSunshinePercent.addCity(data, data.summerSunshinePercent);
+		stats.winterSunshinePercent.addCity(data, data.winterSunshinePercent);
 
 	}
 
@@ -178,8 +178,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		arr[mapOfNameToIdx.get(LATITUDE)] = stat.latitude;
 		arr[mapOfNameToIdx.get(LONGITUDE)] = stat.longitude;
 		arr[mapOfNameToIdx.get(ANNUAL_SUNSHINE)] = stat.annualSunshinePercent;
-		arr[mapOfNameToIdx.get(AVG_SUMMER_SUNSHINE)] = stat.avgSummerSunshinePercent;
-		arr[mapOfNameToIdx.get(AVG_WINTER_SUNSHINE)] = stat.avgWinterSunshinePercent;
+		arr[mapOfNameToIdx.get(SUMMER_SUNSHINE)] = stat.summerSunshinePercent;
+		arr[mapOfNameToIdx.get(WINTER_SUNSHINE)] = stat.winterSunshinePercent;
 	}
 
 	@Override
@@ -189,8 +189,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 				POVERTY_RATE, UNEMPLOYMENT_RATE, LABOR_FORCE, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC,
 				FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH, HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL,
 				ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE, ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT,
-				DEW_POINT, WIND_SPEED, AIR_QUALITY_IDX, UV_INDEX, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE, AVG_SUMMER_SUNSHINE,
-				AVG_WINTER_SUNSHINE };
+				DEW_POINT, WIND_SPEED, AIR_QUALITY_IDX, UV_INDEX, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE,
+				WINTER_SUNSHINE };
 	}
 
 }

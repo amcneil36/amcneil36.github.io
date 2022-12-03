@@ -106,9 +106,9 @@ public class Sunshine extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
-		data.annualPercentSunshine = "N/A";
-		data.averageSummerSunshine = "N/A";
-		data.averageWinterSushine = "N/A";
+		data.annualSunshinePercent = "N/A";
+		data.summerSunshinePercent = "N/A";
+		data.winterSunshinePercent = "N/A";
 		if (data.longitude.equals("N/A")) {
 			return;
 		}
@@ -124,9 +124,9 @@ public class Sunshine extends CityStats {
 			}
 		}
 		if (minDistance < MAX_ALLOWED_DISTANCE_MILES) {
-			data.annualPercentSunshine = bestSunshineData.annualSunshinePercent + "%";
-			data.averageSummerSunshine = bestSunshineData.summerSunshinePercent + "%";
-			data.averageWinterSushine = bestSunshineData.winterSunshinePercent + "%";
+			data.annualSunshinePercent = bestSunshineData.annualSunshinePercent + "%";
+			data.summerSunshinePercent = bestSunshineData.summerSunshinePercent + "%";
+			data.winterSunshinePercent = bestSunshineData.winterSunshinePercent + "%";
 		}
 
 	}

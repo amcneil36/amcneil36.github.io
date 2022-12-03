@@ -56,9 +56,9 @@ public abstract class CityStats extends CityStatsSuper {
 		public String laborForceParticipationRate = "N/A";
 		public String latitude = "N/A";
 		public String longitude = "N/A";
-		public String annualPercentSunshine = "N/A";
-		public String averageSummerSunshine = "N/A";
-		public String averageWinterSushine = "N/A";
+		public String annualSunshinePercent = "N/A";
+		public String summerSunshinePercent = "N/A";
+		public String winterSunshinePercent = "N/A";
 	}
 
 	public static final String CITY = "City";
@@ -109,8 +109,8 @@ public abstract class CityStats extends CityStatsSuper {
 	public static final String LATITUDE = "Latitude";
 	public static final String LONGITUDE = "Longitude";
 	public static final String ANNUAL_SUNSHINE = "Annual Sunshine - Percentage of Possible";
-	public static final String AVG_SUMMER_SUNSHINE = "Average Summer Sunshine - Percentage of Possible";
-	public static final String AVG_WINTER_SUNSHINE = "Average Winter Sunshine - Percentage of Possible";
+	public static final String SUMMER_SUNSHINE = "Summer Sunshine - Percentage of Possible";
+	public static final String WINTER_SUNSHINE = "Winter Sunshine - Percentage of Possible";
 
 	public String[] getOutputHeaders() {
 		return new String[] { CITY, STATE, POPULATION, POPULATION_DENSITY, METRO_NAME, METRO_POP, INCOME, BACHELORS,
@@ -119,7 +119,7 @@ public abstract class CityStats extends CityStatsSuper {
 				REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH,
 				HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE,
 				ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED, AIR_QUALITY_IDX, ELEVATION, UV_INDEX,
-				LAND_AREA, FIPS_CODE, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE, AVG_SUMMER_SUNSHINE, AVG_WINTER_SUNSHINE };
+				LAND_AREA, FIPS_CODE, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE };
 	}
 
 	@Override
@@ -171,9 +171,9 @@ public abstract class CityStats extends CityStatsSuper {
 		data.laborForceParticipationRate = read(arr, mapOfNameToIndex, LABOR_FORCE);
 		data.latitude = read(arr, mapOfNameToIndex, LATITUDE);
 		data.longitude = read(arr, mapOfNameToIndex, LONGITUDE);
-		data.annualPercentSunshine = read(arr, mapOfNameToIndex, ANNUAL_SUNSHINE);
-		data.averageSummerSunshine = read(arr, mapOfNameToIndex, AVG_SUMMER_SUNSHINE);
-		data.averageWinterSushine = read(arr, mapOfNameToIndex, AVG_WINTER_SUNSHINE);
+		data.annualSunshinePercent = read(arr, mapOfNameToIndex, ANNUAL_SUNSHINE);
+		data.summerSunshinePercent = read(arr, mapOfNameToIndex, SUMMER_SUNSHINE);
+		data.winterSunshinePercent = read(arr, mapOfNameToIndex, WINTER_SUNSHINE);
 	}
 
 	@Override
@@ -225,9 +225,9 @@ public abstract class CityStats extends CityStatsSuper {
 		arr[mapOfNameToIndex.get(LABOR_FORCE)] = data.laborForceParticipationRate;
 		arr[mapOfNameToIndex.get(LATITUDE)] = data.latitude;
 		arr[mapOfNameToIndex.get(LONGITUDE)] = data.longitude;
-		arr[mapOfNameToIndex.get(ANNUAL_SUNSHINE)] = data.annualPercentSunshine;
-		arr[mapOfNameToIndex.get(AVG_SUMMER_SUNSHINE)] = data.averageSummerSunshine;
-		arr[mapOfNameToIndex.get(AVG_WINTER_SUNSHINE)] = data.averageWinterSushine;
+		arr[mapOfNameToIndex.get(ANNUAL_SUNSHINE)] = data.annualSunshinePercent;
+		arr[mapOfNameToIndex.get(SUMMER_SUNSHINE)] = data.summerSunshinePercent;
+		arr[mapOfNameToIndex.get(WINTER_SUNSHINE)] = data.winterSunshinePercent;
 	}
 
 }
