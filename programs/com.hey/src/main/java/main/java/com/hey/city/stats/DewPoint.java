@@ -39,9 +39,9 @@ public class DewPoint extends CityStats {
 		for (String line : text) {
 			String[] arr = StringUtils.substringsBetween(line, "\"", "\"");
 			DewPointData dewPointData = new DewPointData();
-			dewPointData.summerDewPoint = Util.getIntFromDouble(
+			dewPointData.summerDewPoint = convertCToIntF(
 					(Double.valueOf(arr[18]) + Double.valueOf(arr[20]) + Double.valueOf(arr[22])) / 3);
-			dewPointData.annualDewPoint = Util.getIntFromDouble(Double.valueOf(arr[32]));
+			dewPointData.annualDewPoint = convertCToIntF(Double.valueOf(arr[32]));
 			String cityAndState = arr[1];
 			String stateAbbreviation = cityAndState.substring(cityAndState.length() - 2);
 			cityAndState = cityAndState.substring(0, cityAndState.length() - 3);
@@ -68,6 +68,10 @@ public class DewPoint extends CityStats {
 		}
 		DewPoint thunderstorm = new DewPoint();
 		thunderstorm.processAllStates();
+	}
+	
+	private static int convertCToIntF(double temp) {
+		return Util.getIntFromDouble((temp*9/5) + 32);
 	}
 
 	private static Map<String, Data> populateMapOfKeyToData() throws Exception {
