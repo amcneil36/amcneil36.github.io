@@ -42,14 +42,12 @@ public class WindSpeed extends CityStats {
 			String key = getKey(city, state);
 			line = line.substring(firstCommaIdx + 3);
 			line = line.substring(line.indexOf("-") + 10);
-			System.out.println(line);
 			String[] arrFoo = line.split("   ");
-			System.out.println(arrFoo.length);
 			if (arrFoo.length != 13) {
 				continue;
 			}
 			WindspeedData sunshineData = new WindspeedData();
-			sunshineData.windSpeed = Integer.valueOf(arrFoo[12]);
+			sunshineData.windSpeed = Double.valueOf(arrFoo[12]);
 			if (mapOfKeyToData.containsKey(key)) {
 				Data data = mapOfKeyToData.get(key);
 				if (!data.latitude.equals("N/A")) {
@@ -85,9 +83,7 @@ public class WindSpeed extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
-		data.annualSunshinePercent = "N/A";
-		data.summerSunshinePercent = "N/A";
-		data.winterSunshinePercent = "N/A";
+		data.avgYearlyWindspeed = "N/A";
 		if (data.longitude.equals("N/A")) {
 			return;
 		}
