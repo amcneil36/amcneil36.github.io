@@ -7,13 +7,11 @@ import static main.java.com.hey.CityStats.ANNUAL_RAINFALL;
 import static main.java.com.hey.CityStats.ANNUAL_SNOWFALL;
 import static main.java.com.hey.CityStats.ANNUAL_SUNSHINE;
 import static main.java.com.hey.CityStats.ASIAN;
-import static main.java.com.hey.CityStats.AVERAGE_SUMMER_DEW_POINT;
 import static main.java.com.hey.CityStats.BACHELORS;
 import static main.java.com.hey.CityStats.BLACK;
 import static main.java.com.hey.CityStats.COLDEST_MONTH;
 import static main.java.com.hey.CityStats.COST_PER_SQFT;
 import static main.java.com.hey.CityStats.DEMOCRAT;
-import static main.java.com.hey.CityStats.DEW_POINT;
 import static main.java.com.hey.CityStats.FOREIGN_BORN;
 import static main.java.com.hey.CityStats.HISPANIC;
 import static main.java.com.hey.CityStats.HOMEOWNERSHIP_RATE;
@@ -104,8 +102,6 @@ public abstract class GenericStats extends GenericStatsSuper {
 		stats.numInchesOfRain.addCity(data, data.numInchesOfRain);
 		stats.annualSnowfall.addCity(data, data.annualSnowfall);
 		stats.numDaysOfRain.addCity(data, data.numDaysOfRain);
-		stats.avgSummerDewPoint.addCity(data, data.avgSummerDewPoint);
-		stats.avgAnnualDewPoint.addCity(data, data.avgAnnualDewPoint);
 		stats.avgYearlyWindspeed.addCity(data, data.avgYearlyWindspeed);
 		stats.medianAge.addCity(data, data.medianAge);
 		stats.percentWithAtleastBachelors.addCity(data, data.percentWithAtleastBachelors);
@@ -148,8 +144,6 @@ public abstract class GenericStats extends GenericStatsSuper {
 		arr[mapOfNameToIdx.get(ANNUAL_RAINFALL)] = stat.numInchesOfRain;
 		arr[mapOfNameToIdx.get(ANNUAL_DAYS_OF_PRECIPITATION)] = stat.numDaysOfRain;
 		arr[mapOfNameToIdx.get(ANNUAL_SNOWFALL)] = stat.annualSnowfall;
-		arr[mapOfNameToIdx.get(AVERAGE_SUMMER_DEW_POINT)] = stat.avgSummerDewPoint;
-		arr[mapOfNameToIdx.get(DEW_POINT)] = stat.avgAnnualDewPoint;
 		arr[mapOfNameToIdx.get(WIND_SPEED)] = stat.avgYearlyWindspeed;
 		arr[mapOfNameToIdx.get(AGE)] = stat.medianAge;
 		arr[mapOfNameToIdx.get(BACHELORS)] = stat.percentWithAtleastBachelors;
@@ -190,8 +184,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 				HOME_AGE, HOMEOWNERSHIP_RATE, RENT, SINGLE_POPULATION, VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI,
 				POVERTY_RATE, UNEMPLOYMENT_RATE, LABOR_FORCE, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC,
 				FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH, HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL,
-				ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED,
-				AIR_QUALITY_IDX, UV_INDEX, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE };
+				ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_SNOWFALL, WIND_SPEED, AIR_QUALITY_IDX, UV_INDEX, LATITUDE,
+				LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE };
 	}
 
 }

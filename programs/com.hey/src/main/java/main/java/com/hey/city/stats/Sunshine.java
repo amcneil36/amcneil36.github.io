@@ -117,7 +117,7 @@ public class Sunshine extends CityStats {
 		for (SunshineData sunshineData : SUNSHINE_LIST) {
 			double dataLatitude = Double.valueOf(data.latitude);
 			double dataLongitude = Double.valueOf(data.longitude);
-			double distance = getDistance(sunshineData, dataLatitude, dataLongitude);
+			double distance = Util.milesBetweenCoordinates(sunshineData.latitude, sunshineData.longitude, dataLatitude, dataLongitude);
 			if (distance < minDistance) {
 				bestSunshineData = sunshineData;
 				minDistance = distance;
@@ -129,29 +129,6 @@ public class Sunshine extends CityStats {
 			data.winterSunshinePercent = bestSunshineData.winterSunshinePercent + "%";
 		}
 
-	}
-
-	// result is in km
-	private double getDistance(SunshineData sunshineData, double dataLatitude, double dataLongitude) {
-		double kmDistance = haversine(sunshineData.latitude, sunshineData.longitude, dataLatitude, dataLongitude);
-		double mileDistance = kmDistance * 0.621371 ;
-		return mileDistance;
-	}
-
-	private static double haversine(double lat1, double lon1, double lat2, double lon2) {
-// distance between latitudes and longitudes
-		double dLat = Math.toRadians(lat2 - lat1);
-		double dLon = Math.toRadians(lon2 - lon1);
-
-// convert to radians
-		lat1 = Math.toRadians(lat1);
-		lat2 = Math.toRadians(lat2);
-
-// apply formulae
-		double a = Math.pow(Math.sin(dLat / 2), 2) + Math.pow(Math.sin(dLon / 2), 2) * Math.cos(lat1) * Math.cos(lat2);
-		double rad = 6371;
-		double c = 2 * Math.asin(Math.sqrt(a));
-		return rad * c;
 	}
 
 }
