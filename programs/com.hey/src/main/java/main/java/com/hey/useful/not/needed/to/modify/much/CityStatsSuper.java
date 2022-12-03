@@ -309,10 +309,12 @@ public abstract class CityStatsSuper {
 	private static final String PROCESSED_NODE = "processed node here 239487";
 
 	private void validateAllFieldsWereRead(String[] arr) {
+		int i = 0;
 		for (String st : arr) {
 			if (!st.equals(PROCESSED_NODE)) {
-				throw new RuntimeException("didn't read all data! found: " + st);
+				throw new RuntimeException("didn't read all data! found: " + st + " at idx " + i);
 			}
+			i++;
 		}
 	}
 

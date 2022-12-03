@@ -171,6 +171,9 @@ public abstract class CityStats extends CityStatsSuper {
 		data.laborForceParticipationRate = read(arr, mapOfNameToIndex, LABOR_FORCE);
 		data.latitude = read(arr, mapOfNameToIndex, LATITUDE);
 		data.longitude = read(arr, mapOfNameToIndex, LONGITUDE);
+		data.annualPercentSunshine = read(arr, mapOfNameToIndex, ANNUAL_SUNSHINE);
+		data.averageSummerSunshine = read(arr, mapOfNameToIndex, AVG_SUMMER_SUNSHINE);
+		data.averageWinterSushine = read(arr, mapOfNameToIndex, AVG_WINTER_SUNSHINE);
 	}
 
 	@Override

@@ -62,6 +62,8 @@ public class Sunshine extends CityStats {
 				}
 			}
 		}
+		Sunshine sunshine = new Sunshine();
+		sunshine.processAllStates();
 	}
 
 	private static int getWinterAvg(String[] arrFoo) {
