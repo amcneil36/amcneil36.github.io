@@ -58,6 +58,8 @@ public abstract class CityStats extends CityStatsSuper {
 		public String annualSunshinePercent = "N/A";
 		public String summerSunshinePercent = "N/A";
 		public String winterSunshinePercent = "N/A";
+		public String annualHumidityPercent = "N/A";
+		public String summerHumidityPercent = "N/A";
 	}
 
 	public static final String CITY = "City";
@@ -109,7 +111,9 @@ public abstract class CityStats extends CityStatsSuper {
 	public static final String ANNUAL_SUNSHINE = "Annual Sunshine - Percentage of Possible";
 	public static final String SUMMER_SUNSHINE = "Summer Sunshine - Percentage of Possible";
 	public static final String WINTER_SUNSHINE = "Winter Sunshine - Percentage of Possible";
-
+	public static final String ANNUAL_HUMIDITY = "Annual Relative Humidity (afternoon)";
+	public static final String SUMMER_HUMIDITY = "Annual Summer Relative Humidity (afternoon)";
+	
 	public String[] getOutputHeaders() {
 		return new String[] { CITY, STATE, POPULATION, POPULATION_DENSITY, METRO_NAME, METRO_POP, INCOME, BACHELORS,
 				AGE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT, HOME_AGE, HOMEOWNERSHIP_RATE, RENT, SINGLE_POPULATION,
@@ -117,7 +121,7 @@ public abstract class CityStats extends CityStatsSuper {
 				REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH,
 				HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION,
 				ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED, AIR_QUALITY_IDX, ELEVATION, UV_INDEX,
-				LAND_AREA, FIPS_CODE, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE };
+				LAND_AREA, FIPS_CODE, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE, ANNUAL_HUMIDITY, SUMMER_HUMIDITY };
 	}
 
 	@Override
@@ -224,6 +228,8 @@ public abstract class CityStats extends CityStatsSuper {
 		arr[mapOfNameToIndex.get(ANNUAL_SUNSHINE)] = data.annualSunshinePercent;
 		arr[mapOfNameToIndex.get(SUMMER_SUNSHINE)] = data.summerSunshinePercent;
 		arr[mapOfNameToIndex.get(WINTER_SUNSHINE)] = data.winterSunshinePercent;
+		arr[mapOfNameToIndex.get(ANNUAL_HUMIDITY)] = data.annualHumidityPercent;
+		arr[mapOfNameToIndex.get(SUMMER_HUMIDITY)] = data.summerHumidityPercent;
 	}
 
 }
