@@ -1,0 +1,75 @@
+package main.java.com.hey.city.stats;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import main.java.com.hey.CityStats;
+import main.java.com.hey.Util;
+import main.java.com.hey.useful.not.needed.to.modify.much.CreateBigCsv;
+
+public class Sunshine extends CityStats {
+	
+	private static String getKey(String cityName, String stateAbbreviation) {
+		return cityName.toLowerCase() + ", " + stateAbbreviation.toLowerCase();
+	}
+	
+	private static final List<SunshineData> SUNSHINE_LIST = new ArrayList<>();
+	
+	public static class SunshineData{
+		double latitude;
+		double longitude;
+		int annualSunshinePercent;
+		int summerSunshinePercent;
+		int winterSunshinePercent;
+	}
+
+	public static void main(String[] args) throws Exception {
+		List<String> text = Util.readTextFromFile("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\WeatherData\\sunshine.txt");
+		text.remove(0);
+//        POR        JAN   FEB   MAR   APR   MAY   JUN   JUL   AUG   SEP   OCT   NOV   DEC   ANN
+//13876BIRMINGHAM,AL                   196501-197812    46    53    57    65    65    67    59    62    59    66    55    49    58
+
+		Map<String, Data> mapOfKeyToData = populateMapOfKeyToData();
+		for (String line : text) {
+			int firstCommaIdx = line.indexOf(",");
+			String city = line.substring(0,firstCommaIdx);
+			for (int i = 0; i <= 9; i++) {
+				city = city.replace(String.valueOf(i), "");
+			}
+			//System.out.println(city);
+			String state = line.substring(firstCommaIdx+1, firstCommaIdx+3);
+			String key = getKey(city, state);
+			line = line.substring(firstCommaIdx+3);
+			System.out.println(line);
+			
+		}
+	}
+
+	private static Map<String, Data> populateMapOfKeyToData() throws Exception {
+		List<Data> dataList = CreateBigCsv.readInput();
+		Map<String, Data> mapOfKeyToData = new HashMap<>();
+		for (Data data : dataList) {
+			String key = getKey(data.cityName, Util.getStateAbbreviation(data.stateName));
+			if (mapOfKeyToData.containsKey(key)) {
+				int prevPop = Integer.valueOf(mapOfKeyToData.get(key).population);
+				int curPop = Integer.valueOf(data.population);
+				if (curPop > prevPop) {
+					mapOfKeyToData.put(key, data);
+				}
+			}
+			else {
+				mapOfKeyToData.put(key, data);
+			}
+		}
+		return mapOfKeyToData;
+	}
+	
+	@Override
+	protected void updateData(Data data, String stateName) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+}
