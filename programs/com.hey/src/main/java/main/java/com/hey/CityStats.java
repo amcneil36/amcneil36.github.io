@@ -56,6 +56,9 @@ public abstract class CityStats extends CityStatsSuper {
 		public String laborForceParticipationRate = "N/A";
 		public String latitude = "N/A";
 		public String longitude = "N/A";
+		public String annualPercentSunshine = "N/A";
+		public String averageSummerSunshine = "N/A";
+		public String averageWinterSushine = "N/A";
 	}
 
 	public static final String CITY = "City";
@@ -105,6 +108,9 @@ public abstract class CityStats extends CityStatsSuper {
 	public static final String LABOR_FORCE = "Labor Force Participation rate";
 	public static final String LATITUDE = "Latitude";
 	public static final String LONGITUDE = "Longitude";
+	public static final String ANNUAL_SUNSHINE = "Annual Sunshine - Percentage of Possible";
+	public static final String AVG_SUMMER_SUNSHINE = "Average Summer Sunshine - Percentage of Possible";
+	public static final String AVG_WINTER_SUNSHINE = "Average Winter Sunshine - Percentage of Possible";
 
 	public String[] getOutputHeaders() {
 		return new String[] { CITY, STATE, POPULATION, POPULATION_DENSITY, METRO_NAME, METRO_POP, INCOME, BACHELORS,
@@ -113,7 +119,7 @@ public abstract class CityStats extends CityStatsSuper {
 				REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH,
 				HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE,
 				ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED, AIR_QUALITY_IDX, ELEVATION, UV_INDEX,
-				LAND_AREA, FIPS_CODE, LATITUDE, LONGITUDE };
+				LAND_AREA, FIPS_CODE, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE, AVG_SUMMER_SUNSHINE, AVG_WINTER_SUNSHINE };
 	}
 
 	@Override
@@ -216,6 +222,9 @@ public abstract class CityStats extends CityStatsSuper {
 		arr[mapOfNameToIndex.get(LABOR_FORCE)] = data.laborForceParticipationRate;
 		arr[mapOfNameToIndex.get(LATITUDE)] = data.latitude;
 		arr[mapOfNameToIndex.get(LONGITUDE)] = data.longitude;
+		arr[mapOfNameToIndex.get(ANNUAL_SUNSHINE)] = data.annualPercentSunshine;
+		arr[mapOfNameToIndex.get(AVG_SUMMER_SUNSHINE)] = data.averageSummerSunshine;
+		arr[mapOfNameToIndex.get(AVG_WINTER_SUNSHINE)] = data.averageWinterSushine;
 	}
 
 }
