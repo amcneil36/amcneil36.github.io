@@ -58,6 +58,7 @@ public abstract class CityStats extends CityStatsSuper {
 		public String winterSunshinePercent = "N/A";
 		public String annualHumidityPercent = "N/A";
 		public String summerHumidityPercent = "N/A";
+		public String numberOfThunderstormsPerYear = "N/A";
 	}
 
 	public static final String CITY = "City";
@@ -109,6 +110,7 @@ public abstract class CityStats extends CityStatsSuper {
 	public static final String WINTER_SUNSHINE = "Winter Sunshine - Percentage of Possible";
 	public static final String ANNUAL_HUMIDITY = "Annual Relative Humidity (afternoon)";
 	public static final String SUMMER_HUMIDITY = "Summer Relative Humidity (afternoon)";
+	public static final String ANNUAL_THUNDERSTORMS = "Number of thunderstorms per year";
 
 	public String[] getOutputHeaders() {
 		return new String[] { CITY, STATE, POPULATION, POPULATION_DENSITY, METRO_NAME, METRO_POP, INCOME, BACHELORS,
@@ -118,7 +120,7 @@ public abstract class CityStats extends CityStatsSuper {
 				HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_SNOWFALL,
 				 WIND_SPEED, AIR_QUALITY_IDX, ELEVATION, UV_INDEX, LAND_AREA,
 				FIPS_CODE, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE, ANNUAL_HUMIDITY,
-				SUMMER_HUMIDITY };
+				SUMMER_HUMIDITY, ANNUAL_THUNDERSTORMS };
 	}
 
 	@Override
@@ -225,6 +227,7 @@ public abstract class CityStats extends CityStatsSuper {
 		arr[mapOfNameToIndex.get(WINTER_SUNSHINE)] = data.winterSunshinePercent;
 		arr[mapOfNameToIndex.get(ANNUAL_HUMIDITY)] = data.annualHumidityPercent;
 		arr[mapOfNameToIndex.get(SUMMER_HUMIDITY)] = data.summerHumidityPercent;
+		arr[mapOfNameToIndex.get(ANNUAL_THUNDERSTORMS)] = data.numberOfThunderstormsPerYear;
 	}
 
 }
