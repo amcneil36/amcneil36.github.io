@@ -85,6 +85,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		WeightedAverage hottestMinusColdest = new WeightedAverage();
 		WeightedAverage airQuality = new WeightedAverage();
 		WeightedAverage homeAge = new WeightedAverage();
+		WeightedAverage latitude = new WeightedAverageDouble();
+		WeightedAverage longitude = new WeightedAverageDouble();
 		WeightedAverage annualSunshinePercent = new WeightedAveragePercent();
 		WeightedAverage avgSummerSunshinePercent = new WeightedAveragePercent();
 		WeightedAverage avgWinterSunshinePercent = new WeightedAveragePercent();
@@ -127,6 +129,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		stats.hottestMinusColdest.addCity(data, data.hottestMonthMinusColdestMonth);
 		stats.airQuality.addCity(data, data.airQuality);
 		stats.homeAge.addCity(data, data.medianHomeAge);
+		stats.latitude.addCity(data, data.latitude);
+		stats.longitude.addCity(data, data.longitude);
 		stats.annualSunshinePercent.addCity(data, data.annualPercentSunshine);
 		stats.avgSummerSunshinePercent.addCity(data, data.averageSummerSunshine);
 		stats.avgWinterSunshinePercent.addCity(data, data.averageWinterSushine);
@@ -171,6 +175,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		arr[mapOfNameToIdx.get(HOTTEST_MINUS_COLDEST)] = stat.hottestMinusColdest;
 		arr[mapOfNameToIdx.get(AIR_QUALITY_IDX)] = stat.airQuality;
 		arr[mapOfNameToIdx.get(HOME_AGE)] = stat.homeAge;
+		arr[mapOfNameToIdx.get(LATITUDE)] = stat.latitude;
+		arr[mapOfNameToIdx.get(LONGITUDE)] = stat.longitude;
 		arr[mapOfNameToIdx.get(ANNUAL_SUNSHINE)] = stat.annualSunshinePercent;
 		arr[mapOfNameToIdx.get(AVG_SUMMER_SUNSHINE)] = stat.avgSummerSunshinePercent;
 		arr[mapOfNameToIdx.get(AVG_WINTER_SUNSHINE)] = stat.avgWinterSunshinePercent;
@@ -178,11 +184,13 @@ public abstract class GenericStats extends GenericStatsSuper {
 
 	@Override
 	public String[] getHeader() {
-		return new String[] { POPULATION_DENSITY, INCOME, BACHELORS, AGE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT, HOME_AGE,
-				HOMEOWNERSHIP_RATE, RENT, SINGLE_POPULATION, VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI, POVERTY_RATE,
-				UNEMPLOYMENT_RATE, LABOR_FORCE, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, TIME_ZONE,
-				HOTTEST_MONTH, COLDEST_MONTH,HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE,
-				ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED, AIR_QUALITY_IDX,UV_INDEX, ANNUAL_SUNSHINE, AVG_SUMMER_SUNSHINE, AVG_WINTER_SUNSHINE};
+		return new String[] { POPULATION_DENSITY, INCOME, BACHELORS, AGE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT,
+				HOME_AGE, HOMEOWNERSHIP_RATE, RENT, SINGLE_POPULATION, VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI,
+				POVERTY_RATE, UNEMPLOYMENT_RATE, LABOR_FORCE, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC,
+				FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH, HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL,
+				ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE, ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT,
+				DEW_POINT, WIND_SPEED, AIR_QUALITY_IDX, UV_INDEX, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE, AVG_SUMMER_SUNSHINE,
+				AVG_WINTER_SUNSHINE };
 	}
 
 }

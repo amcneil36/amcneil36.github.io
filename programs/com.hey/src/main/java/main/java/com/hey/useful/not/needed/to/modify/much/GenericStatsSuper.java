@@ -89,8 +89,8 @@ public abstract class GenericStatsSuper {
 	}
 
 	public static class WeightedAverage {
-		private double totalSummedValue = 0;
-		private double totalPopulation = 0;
+		public double totalSummedValue = 0;
+		public double totalPopulation = 0;
 
 		public void addCity(CityStats.Data data, String value) {
 			if (value.contains("N/A")) {
@@ -112,6 +112,16 @@ public abstract class GenericStatsSuper {
 		@Override
 		public String toString() {
 			return getWeightedAverage();
+		}
+	}
+	
+	public static class WeightedAverageDouble extends WeightedAverage {
+		@Override
+		public String getWeightedAverage() {
+			if (totalPopulation == 0) {
+				return "N/A";
+			}
+			return String.valueOf((totalSummedValue / totalPopulation));
 		}
 	}
 
