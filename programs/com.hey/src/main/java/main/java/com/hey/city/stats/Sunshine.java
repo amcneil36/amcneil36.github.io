@@ -27,7 +27,7 @@ public class Sunshine extends CityStats {
 
 	public static void main(String[] args) throws Exception {
 		List<String> text = Util.readTextFromFile("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\WeatherData\\sunshine.txt");
-		text.remove(0);
+		text.remove(0); // first line is headers
 //        POR        JAN   FEB   MAR   APR   MAY   JUN   JUL   AUG   SEP   OCT   NOV   DEC   ANN
 //13876BIRMINGHAM,AL                   196501-197812    46    53    57    65    65    67    59    62    59    66    55    49    58
 
@@ -42,9 +42,35 @@ public class Sunshine extends CityStats {
 			String state = line.substring(firstCommaIdx+1, firstCommaIdx+3);
 			String key = getKey(city, state);
 			line = line.substring(firstCommaIdx+3);
-			System.out.println(line);
+			line = line.substring(line.indexOf("-")+11);
+			String[] arrFoo = line.split("    ");
+			if (arrFoo.length != 13) {
+				continue;
+			}
 			
+			System.out.println(arrFoo.length);
+			SunshineData sunshineData = new SunshineData();
+			sunshineData.summerSunshinePercent = getSummerAvg(arrFoo);
+			sunshineData.winterSunshinePercent = getWinterAvg(arrFoo);
+			sunshineData.annualSunshinePercent = Integer.valueOf(arrFoo[12]);
 		}
+	}
+	
+	private static int getWinterAvg(String[] arrFoo) {
+		// winter is December, January, February. 0, 1, 11
+		double winterTotal = Double.valueOf(arrFoo[0]) + Double.valueOf(arrFoo[1]) + Double.valueOf(arrFoo[11]);
+		double winterAvg = winterTotal/3;
+		int winterAvgInt = Util.getIntFromDouble(winterAvg);
+		return winterAvgInt;
+	}
+
+	private static int getSummerAvg(String[] arrFoo) {
+		// meteorologists consider june july august to be summer months since they are hotter and longer
+		// idx 5, 6, 7
+		double summerTotal = Double.valueOf(arrFoo[5]) + Double.valueOf(arrFoo[6]) + Double.valueOf(arrFoo[7]);
+		double summerAvg = summerTotal/3;
+		int summerAvgInt = Util.getIntFromDouble(summerAvg);
+		return summerAvgInt;
 	}
 
 	private static Map<String, Data> populateMapOfKeyToData() throws Exception {
