@@ -300,7 +300,6 @@ public class CityVsUSAComparison {
 				inputData.augustHighMinusDecemberHigh = Integer.valueOf(data.hottestMonthMinusColdestMonth);
 				inputData.annualInchesOfRain = Integer.valueOf(data.numInchesOfRain);
 				inputData.daysOfRain = Integer.valueOf(data.numDaysOfRain);
-				inputData.sunnyDays = Integer.valueOf(data.numSunnyDays);
 				inputData.annualSnowfall = Integer.valueOf(data.annualSnowfall);
 				inputData.averageYearlyHumidity = getValidInt(data.avgAnnualDewPoint); // swapped
 				inputData.yearlyWindspeed = getValidInt(data.avgYearlyWindspeed);

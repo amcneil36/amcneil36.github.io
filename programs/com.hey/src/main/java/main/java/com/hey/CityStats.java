@@ -15,7 +15,6 @@ public abstract class CityStats extends CityStatsSuper {
 		public String coldestHigh = "N/A";
 		public String numInchesOfRain = "N/A";
 		public String annualSnowfall = "N/A";
-		public String numSunnyDays = "N/A";
 		public String numDaysOfRain = "N/A";
 		public String population = "N/A";
 		public String populationDensity = "N/A";
@@ -72,7 +71,6 @@ public abstract class CityStats extends CityStatsSuper {
 	public static final String HOTTEST_MINUS_COLDEST = "Hottest high minus coldest high";
 	public static final String ANNUAL_RAINFALL = "Annual rainfall (in)";
 	public static final String ANNUAL_DAYS_OF_PRECIPITATION = "Annual days of precipitation";
-	public static final String ANNUAL_DAYS_OF_SUNSHINE = "Annual days of sunshine";
 	public static final String ANNUAL_SNOWFALL = "Annual snowfall (in)";
 	public static final String AVERAGE_SUMMER_DEW_POINT = "Avg Summer Dew Point";
 	public static final String DEW_POINT = "Avg Annual Dew Point";
@@ -117,7 +115,7 @@ public abstract class CityStats extends CityStatsSuper {
 				AGE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT, HOME_AGE, HOMEOWNERSHIP_RATE, RENT, SINGLE_POPULATION,
 				VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI, POVERTY_RATE, UNEMPLOYMENT_RATE, LABOR_FORCE, COUNTY, DEMOCRAT,
 				REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH,
-				HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE,
+				HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION,
 				ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED, AIR_QUALITY_IDX, ELEVATION, UV_INDEX,
 				LAND_AREA, FIPS_CODE, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE };
 	}
@@ -135,7 +133,6 @@ public abstract class CityStats extends CityStatsSuper {
 		data.hottestMonthMinusColdestMonth = read(arr, mapOfNameToIndex, HOTTEST_MINUS_COLDEST);
 		data.numInchesOfRain = read(arr, mapOfNameToIndex, ANNUAL_RAINFALL);
 		data.numDaysOfRain = read(arr, mapOfNameToIndex, ANNUAL_DAYS_OF_PRECIPITATION);
-		data.numSunnyDays = read(arr, mapOfNameToIndex, ANNUAL_DAYS_OF_SUNSHINE);
 		data.annualSnowfall = read(arr, mapOfNameToIndex, ANNUAL_SNOWFALL);
 		data.avgSummerDewPoint = read(arr, mapOfNameToIndex, AVERAGE_SUMMER_DEW_POINT);
 		data.avgAnnualDewPoint = read(arr, mapOfNameToIndex, DEW_POINT);
@@ -189,7 +186,6 @@ public abstract class CityStats extends CityStatsSuper {
 		arr[mapOfNameToIndex.get(HOTTEST_MINUS_COLDEST)] = data.hottestMonthMinusColdestMonth;
 		arr[mapOfNameToIndex.get(ANNUAL_RAINFALL)] = data.numInchesOfRain;
 		arr[mapOfNameToIndex.get(ANNUAL_DAYS_OF_PRECIPITATION)] = data.numDaysOfRain;
-		arr[mapOfNameToIndex.get(ANNUAL_DAYS_OF_SUNSHINE)] = data.numSunnyDays;
 		arr[mapOfNameToIndex.get(ANNUAL_SNOWFALL)] = data.annualSnowfall;
 		arr[mapOfNameToIndex.get(AVERAGE_SUMMER_DEW_POINT)] = data.avgSummerDewPoint;
 		arr[mapOfNameToIndex.get(DEW_POINT)] = data.avgAnnualDewPoint;

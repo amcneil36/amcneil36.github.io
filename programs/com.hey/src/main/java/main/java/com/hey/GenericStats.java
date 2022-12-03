@@ -1,11 +1,11 @@
 package main.java.com.hey;
 
-import static main.java.com.hey.CityStats.*;
+import static main.java.com.hey.CityStats.AGE;
 import static main.java.com.hey.CityStats.AIR_QUALITY_IDX;
 import static main.java.com.hey.CityStats.ANNUAL_DAYS_OF_PRECIPITATION;
-import static main.java.com.hey.CityStats.ANNUAL_DAYS_OF_SUNSHINE;
 import static main.java.com.hey.CityStats.ANNUAL_RAINFALL;
 import static main.java.com.hey.CityStats.ANNUAL_SNOWFALL;
+import static main.java.com.hey.CityStats.ANNUAL_SUNSHINE;
 import static main.java.com.hey.CityStats.ASIAN;
 import static main.java.com.hey.CityStats.AVERAGE_SUMMER_DEW_POINT;
 import static main.java.com.hey.CityStats.BACHELORS;
@@ -24,18 +24,22 @@ import static main.java.com.hey.CityStats.HOTTEST_MINUS_COLDEST;
 import static main.java.com.hey.CityStats.HOTTEST_MONTH;
 import static main.java.com.hey.CityStats.INCOME;
 import static main.java.com.hey.CityStats.LABOR_FORCE;
+import static main.java.com.hey.CityStats.LATITUDE;
+import static main.java.com.hey.CityStats.LONGITUDE;
 import static main.java.com.hey.CityStats.POPULATION_DENSITY;
 import static main.java.com.hey.CityStats.POVERTY_RATE;
 import static main.java.com.hey.CityStats.PROPERTY_CRIMES_FBI;
 import static main.java.com.hey.CityStats.RENT;
 import static main.java.com.hey.CityStats.REPUBLICAN;
 import static main.java.com.hey.CityStats.SINGLE_POPULATION;
+import static main.java.com.hey.CityStats.SUMMER_SUNSHINE;
 import static main.java.com.hey.CityStats.TIME_ZONE;
 import static main.java.com.hey.CityStats.UNEMPLOYMENT_RATE;
 import static main.java.com.hey.CityStats.UV_INDEX;
 import static main.java.com.hey.CityStats.VIOLENT_CRIMES_FBI;
 import static main.java.com.hey.CityStats.WHITE;
 import static main.java.com.hey.CityStats.WIND_SPEED;
+import static main.java.com.hey.CityStats.WINTER_SUNSHINE;
 
 import java.util.Map;
 
@@ -99,7 +103,6 @@ public abstract class GenericStats extends GenericStatsSuper {
 		stats.coldestHigh.addCity(data, data.coldestHigh);
 		stats.numInchesOfRain.addCity(data, data.numInchesOfRain);
 		stats.annualSnowfall.addCity(data, data.annualSnowfall);
-		stats.numSunnyDays.addCity(data, data.numSunnyDays);
 		stats.numDaysOfRain.addCity(data, data.numDaysOfRain);
 		stats.avgSummerDewPoint.addCity(data, data.avgSummerDewPoint);
 		stats.avgAnnualDewPoint.addCity(data, data.avgAnnualDewPoint);
@@ -144,7 +147,6 @@ public abstract class GenericStats extends GenericStatsSuper {
 		arr[mapOfNameToIdx.get(COLDEST_MONTH)] = stat.coldestHigh;
 		arr[mapOfNameToIdx.get(ANNUAL_RAINFALL)] = stat.numInchesOfRain;
 		arr[mapOfNameToIdx.get(ANNUAL_DAYS_OF_PRECIPITATION)] = stat.numDaysOfRain;
-		arr[mapOfNameToIdx.get(ANNUAL_DAYS_OF_SUNSHINE)] = stat.numSunnyDays;
 		arr[mapOfNameToIdx.get(ANNUAL_SNOWFALL)] = stat.annualSnowfall;
 		arr[mapOfNameToIdx.get(AVERAGE_SUMMER_DEW_POINT)] = stat.avgSummerDewPoint;
 		arr[mapOfNameToIdx.get(DEW_POINT)] = stat.avgAnnualDewPoint;
@@ -188,9 +190,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 				HOME_AGE, HOMEOWNERSHIP_RATE, RENT, SINGLE_POPULATION, VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI,
 				POVERTY_RATE, UNEMPLOYMENT_RATE, LABOR_FORCE, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC,
 				FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH, HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL,
-				ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_DAYS_OF_SUNSHINE, ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT,
-				DEW_POINT, WIND_SPEED, AIR_QUALITY_IDX, UV_INDEX, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE,
-				WINTER_SUNSHINE };
+				ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_SNOWFALL, AVERAGE_SUMMER_DEW_POINT, DEW_POINT, WIND_SPEED,
+				AIR_QUALITY_IDX, UV_INDEX, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE };
 	}
 
 }
