@@ -97,6 +97,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		WeightedAverage annualHumidityPercent = new WeightedAveragePercent();
 		WeightedAverage summerHumidityPercent = new WeightedAveragePercent();
 		WeightedAverage thunderStorms = new WeightedAverage();
+		WeightedAverage annualDewPoint = new WeightedAverage();
+		WeightedAverage summerDewPoint = new WeightedAverage();
 	}
 
 	@Override
@@ -141,6 +143,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		stats.annualHumidityPercent.addCity(data, data.annualHumidityPercent);
 		stats.summerHumidityPercent.addCity(data, data.summerHumidityPercent);
 		stats.thunderStorms.addCity(data, data.numberOfThunderstormsPerYear);
+		stats.annualDewPoint.addCity(data, data.annualDewPoint);
+		stats.summerDewPoint.addCity(data, data.summerDewPoint);
 
 	}
 
@@ -187,6 +191,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		arr[mapOfNameToIdx.get(ANNUAL_HUMIDITY)] = stat.annualHumidityPercent;
 		arr[mapOfNameToIdx.get(SUMMER_HUMIDITY)] = stat.summerHumidityPercent;
 		arr[mapOfNameToIdx.get(ANNUAL_THUNDERSTORMS)] = stat.thunderStorms;
+		arr[mapOfNameToIdx.get(ANNUAL_DEW_POINT)] = stat.annualDewPoint;
+		arr[mapOfNameToIdx.get(SUMMER_DEW_POINT)] = stat.summerDewPoint;
 	}
 
 	@Override
@@ -196,7 +202,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 				POVERTY_RATE, UNEMPLOYMENT_RATE, LABOR_FORCE, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC,
 				FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH, HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL,
 				ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_SNOWFALL, WIND_SPEED, AIR_QUALITY_IDX, UV_INDEX, LATITUDE,
-				LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE, ANNUAL_HUMIDITY, SUMMER_HUMIDITY, ANNUAL_THUNDERSTORMS };
+				LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE, ANNUAL_HUMIDITY, SUMMER_HUMIDITY,
+				ANNUAL_THUNDERSTORMS, ANNUAL_DEW_POINT, SUMMER_DEW_POINT };
 	}
 
 }
