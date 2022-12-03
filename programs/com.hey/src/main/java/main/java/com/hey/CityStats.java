@@ -110,7 +110,7 @@ public abstract class CityStats extends CityStatsSuper {
 	public static final String WINTER_SUNSHINE = "Winter Sunshine - Percentage of Possible";
 	public static final String ANNUAL_HUMIDITY = "Annual Relative Humidity (afternoon)";
 	public static final String SUMMER_HUMIDITY = "Summer Relative Humidity (afternoon)";
-	public static final String ANNUAL_THUNDERSTORMS = "Number of thunderstorms per year";
+	public static final String ANNUAL_THUNDERSTORMS = "Number of days with thunder per year";
 
 	public String[] getOutputHeaders() {
 		return new String[] { CITY, STATE, POPULATION, POPULATION_DENSITY, METRO_NAME, METRO_POP, INCOME, BACHELORS,
@@ -174,6 +174,7 @@ public abstract class CityStats extends CityStatsSuper {
 		data.winterSunshinePercent = read(arr, mapOfNameToIndex, WINTER_SUNSHINE);
 		data.annualHumidityPercent = read(arr, mapOfNameToIndex, ANNUAL_HUMIDITY);
 		data.summerHumidityPercent = read(arr, mapOfNameToIndex, SUMMER_HUMIDITY);
+		data.numberOfThunderstormsPerYear = read(arr, mapOfNameToIndex, ANNUAL_THUNDERSTORMS);
 	}
 
 	@Override
