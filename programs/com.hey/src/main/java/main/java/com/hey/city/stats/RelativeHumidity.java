@@ -97,8 +97,8 @@ public class RelativeHumidity extends CityStats {
 		for (RelativeHumidityData humidityData : RH_LIST) {
 			double dataLatitude = Double.valueOf(data.latitude);
 			double dataLongitude = Double.valueOf(data.longitude);
-			double distance = Util.milesBetweenCoordinates(humidityData.latitude, humidityData.longitude, dataLatitude,
-					dataLongitude);
+			double distance = Util.milesBetweenCoordinates(dataLatitude, dataLongitude, humidityData.latitude,
+					humidityData.longitude);
 			if (distance < minDistance) {
 				bestHumidityData = humidityData;
 				minDistance = distance;

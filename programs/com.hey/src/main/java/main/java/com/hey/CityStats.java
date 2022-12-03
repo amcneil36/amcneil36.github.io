@@ -176,6 +176,8 @@ public abstract class CityStats extends CityStatsSuper {
 		data.annualSunshinePercent = read(arr, mapOfNameToIndex, ANNUAL_SUNSHINE);
 		data.summerSunshinePercent = read(arr, mapOfNameToIndex, SUMMER_SUNSHINE);
 		data.winterSunshinePercent = read(arr, mapOfNameToIndex, WINTER_SUNSHINE);
+		data.annualHumidityPercent = read(arr, mapOfNameToIndex, ANNUAL_HUMIDITY);
+		data.summerHumidityPercent = read(arr, mapOfNameToIndex, SUMMER_HUMIDITY);
 	}
 
 	@Override
