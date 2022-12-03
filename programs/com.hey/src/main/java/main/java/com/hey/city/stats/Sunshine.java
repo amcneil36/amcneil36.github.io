@@ -119,7 +119,9 @@ public class Sunshine extends CityStats {
 			}
 		}
 		if (minDistance < MAX_ALLOWED_DISTANCE_MILES) {
-			
+			data.annualPercentSunshine = bestSunshineData.annualSunshinePercent + "%";
+			data.averageSummerSunshine = bestSunshineData.summerSunshinePercent + "%";
+			data.averageWinterSushine = bestSunshineData.winterSunshinePercent + "%";
 		}
 
 	}
