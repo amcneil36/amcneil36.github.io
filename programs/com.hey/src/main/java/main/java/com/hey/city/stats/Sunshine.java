@@ -104,6 +104,9 @@ public class Sunshine extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
+		data.annualPercentSunshine = "N/A";
+		data.averageSummerSunshine = "N/A";
+		data.averageWinterSushine = "N/A";
 		if (data.longitude.equals("N/A")) {
 			return;
 		}
