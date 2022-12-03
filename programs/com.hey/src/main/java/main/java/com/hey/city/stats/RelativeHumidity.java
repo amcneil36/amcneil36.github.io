@@ -87,7 +87,7 @@ public class RelativeHumidity extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
-		data.annualHumdityPercent = "N/A";
+		data.annualHumidityPercent = "N/A";
 		data.summerHumidityPercent = "N/A";
 		if (data.longitude.equals("N/A")) {
 			return;
@@ -105,7 +105,7 @@ public class RelativeHumidity extends CityStats {
 			}
 		}
 		if (minDistance < MAX_ALLOWED_DISTANCE_MILES) {
-			data.annualHumdityPercent = bestHumidityData.annualHumidityPercent + "%";
+			data.annualHumidityPercent = bestHumidityData.annualHumidityPercent + "%";
 			data.summerHumidityPercent = bestHumidityData.summerHumidityPercent + "%";
 		}
 	}
