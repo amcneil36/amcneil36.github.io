@@ -96,23 +96,25 @@ public class DewPoint extends CityStats {
 
 	@Override
 	public void updateData(Data data, String stateName) throws Exception {
-		data = "N/A";
+		data.summerDewPoint = "N/A";
+		data.annualDewPoint = "N/A";
 		if (data.longitude.equals("N/A")) {
 			return;
 		}
 		double minDistance = Double.MAX_VALUE;
-		DewPointData bestThunderstormData = new DewPointData();
-		for (DewPointData thunderstormData : DEW_POINT_LIST) {
+		DewPointData bestDewPointData = new DewPointData();
+		for (DewPointData dewPointData : DEW_POINT_LIST) {
 			double dataLatitude = Double.valueOf(data.latitude);
 			double dataLongitude = Double.valueOf(data.longitude);
-			double distance = Util.milesBetweenCoordinates(thunderstormData.latitude, thunderstormData.longitude, dataLatitude, dataLongitude);
+			double distance = Util.milesBetweenCoordinates(dewPointData.latitude, dewPointData.longitude, dataLatitude, dataLongitude);
 			if (distance < minDistance) {
-				bestThunderstormData = thunderstormData;
+				bestDewPointData = dewPointData;
 				minDistance = distance;
 			}
 		}
 		if (minDistance < MAX_ALLOWED_DISTANCE_MILES) {
-			data.numberOfThunderstormsPerYear = String.valueOf(bestThunderstormData.numberOfThunderstorms);
+			data.annualDewPoint = String.valueOf(bestDewPointData.annualDewPoint);
+			data.summerDewPoint = String.valueOf(bestDewPointData.summerDewPoint);
 		}
 
 	}
