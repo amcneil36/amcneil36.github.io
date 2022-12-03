@@ -3,6 +3,7 @@ package main.java.com.hey;
 import static main.java.com.hey.CityStats.AGE;
 import static main.java.com.hey.CityStats.AIR_QUALITY_IDX;
 import static main.java.com.hey.CityStats.ANNUAL_DAYS_OF_PRECIPITATION;
+import static main.java.com.hey.CityStats.ANNUAL_HUMIDITY;
 import static main.java.com.hey.CityStats.ANNUAL_RAINFALL;
 import static main.java.com.hey.CityStats.ANNUAL_SNOWFALL;
 import static main.java.com.hey.CityStats.ANNUAL_SUNSHINE;
@@ -30,6 +31,7 @@ import static main.java.com.hey.CityStats.PROPERTY_CRIMES_FBI;
 import static main.java.com.hey.CityStats.RENT;
 import static main.java.com.hey.CityStats.REPUBLICAN;
 import static main.java.com.hey.CityStats.SINGLE_POPULATION;
+import static main.java.com.hey.CityStats.SUMMER_HUMIDITY;
 import static main.java.com.hey.CityStats.SUMMER_SUNSHINE;
 import static main.java.com.hey.CityStats.TIME_ZONE;
 import static main.java.com.hey.CityStats.UNEMPLOYMENT_RATE;
@@ -92,6 +94,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		WeightedAverage annualSunshinePercent = new WeightedAveragePercent();
 		WeightedAverage summerSunshinePercent = new WeightedAveragePercent();
 		WeightedAverage winterSunshinePercent = new WeightedAveragePercent();
+		WeightedAverage annualHumidityPercent = new WeightedAveragePercent();
+		WeightedAverage summerHumidityPercent = new WeightedAveragePercent();
 	}
 
 	@Override
@@ -133,6 +137,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		stats.annualSunshinePercent.addCity(data, data.annualSunshinePercent);
 		stats.summerSunshinePercent.addCity(data, data.summerSunshinePercent);
 		stats.winterSunshinePercent.addCity(data, data.winterSunshinePercent);
+		stats.annualHumidityPercent.addCity(data, data.annualHumidityPercent);
+		stats.summerHumidityPercent.addCity(data, data.summerHumidityPercent);
 
 	}
 
@@ -176,6 +182,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		arr[mapOfNameToIdx.get(ANNUAL_SUNSHINE)] = stat.annualSunshinePercent;
 		arr[mapOfNameToIdx.get(SUMMER_SUNSHINE)] = stat.summerSunshinePercent;
 		arr[mapOfNameToIdx.get(WINTER_SUNSHINE)] = stat.winterSunshinePercent;
+		arr[mapOfNameToIdx.get(ANNUAL_HUMIDITY)] = stat.annualHumidityPercent;
+		arr[mapOfNameToIdx.get(SUMMER_HUMIDITY)] = stat.summerHumidityPercent;
 	}
 
 	@Override
@@ -185,7 +193,7 @@ public abstract class GenericStats extends GenericStatsSuper {
 				POVERTY_RATE, UNEMPLOYMENT_RATE, LABOR_FORCE, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC,
 				FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH, HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL,
 				ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_SNOWFALL, WIND_SPEED, AIR_QUALITY_IDX, UV_INDEX, LATITUDE,
-				LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE };
+				LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE, ANNUAL_HUMIDITY, SUMMER_HUMIDITY };
 	}
 
 }
