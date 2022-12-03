@@ -18,6 +18,12 @@ public class RelativeHumidity extends CityStats {
 		double longitude;
 		int summerHumidityPercent;
 		int annualHumidityPercent;
+
+		@Override
+		public String toString() {
+			return "latitude: " + latitude + "; longitude: " + longitude + "; summer humidity: "
+					+ summerHumidityPercent;
+		}
 	}
 
 	private static String getKey(String cityName, String stateAbbreviation) {
@@ -62,6 +68,9 @@ public class RelativeHumidity extends CityStats {
 				}
 			}
 		}
+
+		RelativeHumidity rh = new RelativeHumidity();
+		rh.processAllStates();
 	}
 
 	private static int getSummerAvg(String[] arrFoo) {
@@ -78,7 +87,7 @@ public class RelativeHumidity extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
-		data.annualHumidityPercent = "N/A";
+		data.annualHumdityPercent = "N/A";
 		data.summerHumidityPercent = "N/A";
 		if (data.longitude.equals("N/A")) {
 			return;
@@ -88,18 +97,20 @@ public class RelativeHumidity extends CityStats {
 		for (RelativeHumidityData humidityData : RH_LIST) {
 			double dataLatitude = Double.valueOf(data.latitude);
 			double dataLongitude = Double.valueOf(data.longitude);
-			double distance = Util.milesBetweenCoordinates(dataLatitude, dataLongitude, bestHumidityData.latitude,
-					bestHumidityData.longitude);
+			double distance = Util.milesBetweenCoordinates(humidityData.latitude, humidityData.longitude, dataLatitude,
+					dataLongitude);
 			if (distance < minDistance) {
 				bestHumidityData = humidityData;
 				minDistance = distance;
 			}
 		}
 		if (minDistance < MAX_ALLOWED_DISTANCE_MILES) {
-			data.annualHumidityPercent = bestHumidityData.annualHumidityPercent + "%";
+			data.annualHumdityPercent = bestHumidityData.annualHumidityPercent + "%";
 			data.summerHumidityPercent = bestHumidityData.summerHumidityPercent + "%";
 		}
 	}
+
+	static int numMatches = 0;
 
 	private static Map<String, Data> populateMapOfKeyToData() throws Exception {
 		List<Data> dataList = CreateBigCsv.readInput();
