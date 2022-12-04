@@ -148,7 +148,7 @@ public class NOAANormalsReader extends CityStats {
 			data.coldestHigh = String.valueOf(bestTemperatureData.coldestMonthAvgHigh);
 			data.hottestMonthMinusColdestMonth = String.valueOf(bestTemperatureData.hottestMonthAvgHigh - bestTemperatureData.coldestMonthAvgHigh);
 			data.hottestMonthAvgLow = String.valueOf(bestTemperatureData.hottestMonthAvgLow);
-			data.coldestHigh = String.valueOf(bestTemperatureData.coldestMonthAvgLow);
+			data.coldestMonthAvgLow = String.valueOf(bestTemperatureData.coldestMonthAvgLow);
 		}
 		
 	}

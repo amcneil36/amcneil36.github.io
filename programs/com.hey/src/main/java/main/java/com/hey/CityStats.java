@@ -185,6 +185,8 @@ public abstract class CityStats extends CityStatsSuper {
 		data.numberOfThunderstormsPerYear = read(arr, mapOfNameToIndex, ANNUAL_THUNDERSTORMS);
 		data.annualDewPoint = read(arr, mapOfNameToIndex, ANNUAL_DEW_POINT);
 		data.summerDewPoint = read(arr, mapOfNameToIndex, SUMMER_DEW_POINT);
+		data.hottestMonthAvgLow = read(arr, mapOfNameToIndex, HOTTEST_MONTH_AVG_LOW);
+		data.coldestMonthAvgLow = read(arr, mapOfNameToIndex, COLDEST_MONTH_AVG_LOW);
 	}
 
 	@Override
