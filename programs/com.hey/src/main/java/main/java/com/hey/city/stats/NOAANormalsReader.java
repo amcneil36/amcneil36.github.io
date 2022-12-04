@@ -52,11 +52,16 @@ public class NOAANormalsReader extends CityStats {
 		double percentOfWinterDaysOfRain;
 		double percentOfAnnualDaysOfRain;
 	}
+	
+	public static class SnowyDaysData extends Util.Coordinate{
+		int daysOfSnowPerYear;
+	}
 
 	private static final List<TemperatureData> TEMPERATURE_DATA_LIST = new ArrayList<>();
 	private static final List<RainInchesData> RAIN_INCHES_LIST = new ArrayList<>();
 	private static final List<SnowInchesData> _LIST = new ArrayList<>();
 	private static final List<RainDaysData> RAIN_DAYS_LIST = new ArrayList<>();
+	private static final List<SnowyDaysData> SNOWY_DAYS_LIST = new ArrayList<>();
 
 	public static void main(String[] args) throws Exception {
 		// USC00214546
@@ -78,7 +83,8 @@ public class NOAANormalsReader extends CityStats {
 			// populateTemperatureData(text, mapOfHeaderToIdx);
 			// populateRainInchesData(text, mapOfHeaderToIdx);
 			//populateSnowInchesData(text, mapOfHeaderToIdx);
-			populateRainDaysData(text, mapOfHeaderToIdx);
+			//populateRainDaysData(text, mapOfHeaderToIdx);
+			populateSnowyDaysData(text, mapOfHeaderToIdx);
 
 			// mly-tavg-normal Long-term averages of monthly average temperature
 			// mly-tmax-normal Long-term averages of monthly maximum temperature
@@ -93,6 +99,25 @@ public class NOAANormalsReader extends CityStats {
 		}
 		NOAANormalsReader reader = new NOAANormalsReader();
 		reader.processAllStates();
+	}
+
+	private static void populateSnowyDaysData(List<String> text, Map<String, Integer> mapOfHeaderToIdx) {
+		boolean containsSnowDays = mapOfHeaderToIdx.containsKey(MONTHLY_DAYS_OF_SNOW);
+		// 5 6 7 for summer
+		// 0 1 11 for winter
+		if (containsSnowDays) {
+			int totalDaysOfSnow = 0;
+			for (String line : text) {
+				String[] arr = StringUtils.substringsBetween(line, "\"", "\"");
+				totalDaysOfSnow += Double.valueOf(arr[mapOfHeaderToIdx.get(MONTHLY_DAYS_OF_SNOW)]);
+			}
+			String[] arr = StringUtils.substringsBetween(text.get(0), "\"", "\"");
+			SnowyDaysData snowyDaysData = new SnowyDaysData();
+			snowyDaysData.latitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LATITUDE)]);
+			snowyDaysData.longitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LONGITUDE)]);
+			snowyDaysData.daysOfSnowPerYear = totalDaysOfSnow;
+			SNOWY_DAYS_LIST.add(snowyDaysData);
+		}	
 	}
 
 	private static void populateRainDaysData(List<String> text, Map<String, Integer> mapOfHeaderToIdx) {
