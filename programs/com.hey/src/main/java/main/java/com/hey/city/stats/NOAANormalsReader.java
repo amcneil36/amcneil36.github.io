@@ -32,6 +32,7 @@ public class NOAANormalsReader extends CityStats {
 		int coldestMonthAvgHigh;
 		int hottestMonthAvgLow;
 		int coldestMonthAvgLow;
+		List<Integer> averageHighs = new ArrayList<>();
 	}
 
 	public static class RainInchesData extends Util.Coordinate {
@@ -224,9 +225,11 @@ public class NOAANormalsReader extends CityStats {
 			int coldestMonthAvgHigh = 4000;
 			int hottestMonthAvgLow = -999;
 			int coldestMonthAvgLow = -999;
+			TemperatureData temperatureData = new TemperatureData();
 			for (String line : text) {
 				String[] arr = StringUtils.substringsBetween(line, "\"", "\"");
 				int highInt = Util.getIntFromDouble(Double.valueOf(arr[mapOfHeaderToIdx.get(MONTHLY_MAX_TEMP)]));
+				temperatureData.averageHighs.add(highInt);
 				if (highInt > hottestMonthAvgHigh) {
 					hottestMonthAvgHigh = Math.max(hottestMonthAvgHigh, highInt);
 					hottestMonthAvgLow = Util
@@ -240,7 +243,6 @@ public class NOAANormalsReader extends CityStats {
 				}
 			}
 			String[] arr = StringUtils.substringsBetween(text.get(0), "\"", "\"");
-			TemperatureData temperatureData = new TemperatureData();
 			temperatureData.latitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LATITUDE)]);
 			temperatureData.longitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LONGITUDE)]);
 			temperatureData.coldestMonthAvgHigh = coldestMonthAvgHigh;

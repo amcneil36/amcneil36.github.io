@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import main.java.com.hey.CityStats;
 import main.java.com.hey.Util;
@@ -13,17 +14,10 @@ public class RelativeHumidity extends CityStats {
 
 	private static final List<RelativeHumidityData> RH_LIST = new ArrayList<>();
 
-	public static class RelativeHumidityData {
-		double latitude;
-		double longitude;
+	public static class RelativeHumidityData extends Util.Coordinate{
 		int summerHumidityPercent;
 		int annualHumidityPercent;
-
-		@Override
-		public String toString() {
-			return "latitude: " + latitude + "; longitude: " + longitude + "; summer humidity: "
-					+ summerHumidityPercent;
-		}
+		List<Integer> relativeHumidities = new ArrayList<>();
 	}
 
 	private static String getKey(String cityName, String stateAbbreviation) {
@@ -59,6 +53,7 @@ public class RelativeHumidity extends CityStats {
 			RelativeHumidityData rhData = new RelativeHumidityData();
 			rhData.summerHumidityPercent = getSummerAvg(arrFoo);
 			rhData.annualHumidityPercent = Integer.valueOf(arrFoo[12 * 2 + 1]);
+			rhData.relativeHumidities = getRelativeHumidities(arrFoo);
 			if (mapOfKeyToData.containsKey(key)) {
 				Data data = mapOfKeyToData.get(key);
 				if (!data.latitude.equals("N/A")) {
@@ -71,6 +66,14 @@ public class RelativeHumidity extends CityStats {
 
 		RelativeHumidity rh = new RelativeHumidity();
 		rh.processAllStates();
+	}
+
+	private static List<Integer> getRelativeHumidities(String[] arrFoo) {
+		List<Integer> humidities = new ArrayList<>();
+		for (int i = 0; i < 12; i++) {
+			humidities.add(Util.getIntFromDouble(Double.valueOf(arrFoo[i*2+1])));
+		}
+		return humidities;
 	}
 
 	private static int getSummerAvg(String[] arrFoo) {
@@ -92,21 +95,12 @@ public class RelativeHumidity extends CityStats {
 		if (data.longitude.equals("N/A")) {
 			return;
 		}
-		double minDistance = Double.MAX_VALUE;
-		RelativeHumidityData bestHumidityData = new RelativeHumidityData();
-		for (RelativeHumidityData humidityData : RH_LIST) {
-			double dataLatitude = Double.valueOf(data.latitude);
-			double dataLongitude = Double.valueOf(data.longitude);
-			double distance = Util.milesBetweenCoordinates(dataLatitude, dataLongitude, humidityData.latitude,
-					humidityData.longitude);
-			if (distance < minDistance) {
-				bestHumidityData = humidityData;
-				minDistance = distance;
-			}
-		}
-		if (minDistance < MAX_ALLOWED_DISTANCE_MILES) {
-			data.annualHumidityPercent = bestHumidityData.annualHumidityPercent + "%";
-			data.summerHumidityPercent = bestHumidityData.summerHumidityPercent + "%";
+		
+		Optional<RelativeHumidityData> bestHumidityData = Util.findBestCoordinate(RH_LIST, data,
+				MAX_ALLOWED_DISTANCE_MILES);
+		if (bestHumidityData.isPresent()) {
+			data.annualHumidityPercent = bestHumidityData.get().annualHumidityPercent + "%";
+			data.summerHumidityPercent = bestHumidityData.get().summerHumidityPercent + "%";
 		}
 	}
 
