@@ -28,7 +28,6 @@ import main.java.com.hey.city.stats.WindSpeed;
 
 public class UpdateAllColumns {
 	public static void main(String[] args) throws Exception {
-
 		FIPSLongitudeLatitude.main(null);
 		Population.main(null);
 		BachelorsDegree.main(null);
@@ -54,6 +53,5 @@ public class UpdateAllColumns {
 		Thunderstorms.main(null);
 		UnemploymentRate.main(null);
 		WindSpeed.main(null);
-
 	}
 }
