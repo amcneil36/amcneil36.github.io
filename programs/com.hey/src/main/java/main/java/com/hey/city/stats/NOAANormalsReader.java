@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import main.java.com.hey.CityStats;
 import main.java.com.hey.Util;
+import main.java.com.hey.useful.not.needed.to.modify.much.CreateBigCsv;
 
 public class NOAANormalsReader extends CityStats {
 
@@ -59,23 +60,25 @@ public class NOAANormalsReader extends CityStats {
 		int elevation;
 	}
 
+	public static class RelativeHumidityData extends Util.Coordinate{
+		int summerHumidityPercent;
+		int annualHumidityPercent;
+		List<Integer> relativeHumidities = new ArrayList<>();
+	}
+
 	private static final List<TemperatureData> TEMPERATURE_DATA_LIST = new ArrayList<>();
 	private static final List<RainInchesData> RAIN_INCHES_LIST = new ArrayList<>();
 	private static final List<SnowInchesData> SNOW_INCHES_LIST = new ArrayList<>();
 	private static final List<RainDaysData> RAIN_DAYS_LIST = new ArrayList<>();
 	private static final List<SnowyDaysData> SNOWY_DAYS_LIST = new ArrayList<>();
 	private static final List<ElevationData> ELEVATION_LIST = new ArrayList<>();
-
+	private static final List<RelativeHumidityData> RH_LIST = new ArrayList<>();
+	
 	public static void main(String[] args) throws Exception {
-		// USC00214546
-		// TODO Auto-generated method stub
-
 		String path = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\WeatherData\\multivariate\\";
 		File directoryPath = new File(path);
-		// List of all files and directories
 		String[] listArr = directoryPath.list();
 		for (String st : listArr) {
-			// System.out.println(++idx);
 			List<String> text = Util.readTextFromFile(path + st);
 			Map<String, Integer> mapOfHeaderToIdx = getMapOfHeaderToIdx(text);
 			text.remove(0);
@@ -98,8 +101,8 @@ public class NOAANormalsReader extends CityStats {
 			// inches
 			// mly-snow-avgnds-ge001ti Monthly number of days with snowfall >= 0.1 inch
 			// what if we do % days of rain?
-
 		}
+		populateRHList();
 		NOAANormalsReader reader = new NOAANormalsReader();
 		reader.processAllStates();
 	}
@@ -252,6 +255,45 @@ public class NOAANormalsReader extends CityStats {
 			TEMPERATURE_DATA_LIST.add(temperatureData);
 		}
 	}
+	
+	private static void populateRHList() throws Exception {
+		List<String> text = Util.readTextFromFile(
+				"C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\WeatherData\\relativeHumidity.txt");
+		text.remove(0); // first line is headers
+		text.remove(0); // second line is headers too
+//        POR        JAN   FEB   MAR   APR   MAY   JUN   JUL   AUG   SEP   OCT   NOV   DEC   ANN
+//13876BIRMINGHAM,AL                   196501-197812    46    53    57    65    65    67    59    62    59    66    55    49    58
+
+		Map<String, Data> mapOfKeyToData = populateMapOfKeyToData();
+		for (String line : text) {
+			int firstCommaIdx = line.indexOf(",");
+			String city = line.substring(0, firstCommaIdx);
+			for (int i = 0; i <= 9; i++) {
+				city = city.replace(String.valueOf(i), "");
+			}
+			String state = line.substring(firstCommaIdx + 1, firstCommaIdx + 3);
+			String key = getKey(city, state);
+			line = line.substring(firstCommaIdx + 3);
+			line = line.substring(line.indexOf("-") + 9);
+			String[] arrFoo = line.split("  ");
+			if (arrFoo.length != 26) {
+				continue;
+			}
+
+			RelativeHumidityData rhData = new RelativeHumidityData();
+			rhData.summerHumidityPercent = getSummerAvg(arrFoo);
+			rhData.annualHumidityPercent = Integer.valueOf(arrFoo[12 * 2 + 1]);
+			rhData.relativeHumidities = getRelativeHumidities(arrFoo);
+			if (mapOfKeyToData.containsKey(key)) {
+				Data data = mapOfKeyToData.get(key);
+				if (!data.latitude.equals("N/A")) {
+					rhData.latitude = Double.valueOf(data.latitude);
+					rhData.longitude = Double.valueOf(data.longitude);
+					RH_LIST.add(rhData);
+				}
+			}
+		}
+	}
 
 	private static Map<String, Integer> getMapOfHeaderToIdx(List<String> text) {
 		String[] arr = text.get(0).split(",");
@@ -281,6 +323,9 @@ public class NOAANormalsReader extends CityStats {
 		data.percentOfWinterDaysWithRain = "N/A";
 		data.daysOfSnowPerYear = "N/A";
 		data.feetAboveSeaLevel = "N/A";
+		data.annualHumidityPercent = "N/A";
+		data.summerHumidityPercent = "N/A";
+		data.hottestMonthsHeatIndexHigh = "N/A";
 		if (data.longitude.equals("N/A")) {
 			return;
 		}
@@ -290,7 +335,35 @@ public class NOAANormalsReader extends CityStats {
 		updateRainDaysData(data);
 		updateSnowyDaysData(data);
 		updateElevationData(data);
+		updateHumidityData(data);
+		updateHeatIndexData(data);
 
+	}
+
+	private void updateHeatIndexData(Data data) {
+		Optional<RelativeHumidityData> bestHumidityData = Util.findBestCoordinate(RH_LIST, data,
+				MAX_ALLOWED_DISTANCE_MILES);
+		Optional<TemperatureData> bestTemperatureData = Util.findBestCoordinate(TEMPERATURE_DATA_LIST, data,
+				MAX_ALLOWED_DISTANCE_MILES);
+		if (bestHumidityData.isPresent() && bestTemperatureData.isPresent()) {
+			List<Integer> humidities = bestHumidityData.get().relativeHumidities;
+			List<Integer> temperatures = bestTemperatureData.get().averageHighs;
+			int maxHeatIndex = Integer.MIN_VALUE;
+			for (int i = 0; i < humidities.size(); i++) {
+				int heatIndex = getHeatIndex(temperatures.get(i), humidities.get(i));
+				maxHeatIndex = Math.max(maxHeatIndex, heatIndex);
+			}
+			data.hottestMonthsHeatIndexHigh = String.valueOf(maxHeatIndex);
+		}
+	}
+
+	private void updateHumidityData(Data data) {
+		Optional<RelativeHumidityData> bestHumidityData = Util.findBestCoordinate(RH_LIST, data,
+				MAX_ALLOWED_DISTANCE_MILES);
+		if (bestHumidityData.isPresent()) {
+			data.annualHumidityPercent = bestHumidityData.get().annualHumidityPercent + "%";
+			data.summerHumidityPercent = bestHumidityData.get().summerHumidityPercent + "%";
+		}
 	}
 
 	private void updateElevationData(Data data) {
@@ -353,5 +426,84 @@ public class NOAANormalsReader extends CityStats {
 			data.coldestMonthAvgLow = String.valueOf(bestTemperatureData.get().coldestMonthAvgLow);			
 		}
 	}
+	
+	private static int getSummerAvg(String[] arrFoo) {
+		// 11, 13, 15
+		double summerTotal = Double.valueOf(arrFoo[5 * 2 + 1]) + Double.valueOf(arrFoo[6 * 2 + 1])
+				+ Double.valueOf(arrFoo[7 * 2 + 1]);
+		double summerAvg = summerTotal / 3;
+		int summerAvgInt = Util.getIntFromDouble(summerAvg);
+		return summerAvgInt;
+	}
+	
+	private static List<Integer> getRelativeHumidities(String[] arrFoo) {
+		List<Integer> humidities = new ArrayList<>();
+		for (int i = 0; i < 12; i++) {
+			humidities.add(Util.getIntFromDouble(Double.valueOf(arrFoo[i*2+1])));
+		}
+		return humidities;
+	}
+	
+	private static Map<String, Data> populateMapOfKeyToData() throws Exception {
+		List<Data> dataList = CreateBigCsv.readInput();
+		Map<String, Data> mapOfKeyToData = new HashMap<>();
+		for (Data data : dataList) {
+			String key = getKey(data.cityName, Util.getStateAbbreviation(data.stateName));
+			if (mapOfKeyToData.containsKey(key)) {
+				int prevPop = Integer.valueOf(mapOfKeyToData.get(key).population);
+				int curPop = Integer.valueOf(data.population);
+				if (curPop > prevPop) {
+					mapOfKeyToData.put(key, data);
+				}
+			} else {
+				mapOfKeyToData.put(key, data);
+			}
+		}
+		return mapOfKeyToData;
+	}
+	
+	private static String getKey(String cityName, String stateAbbreviation) {
+		return cityName.toLowerCase() + ", " + stateAbbreviation.toLowerCase();
+	}
+	
+    // copied from https://www.wpc.ncep.noaa.gov/html/heatindex.shtml
+    public static int getHeatIndex(double temperatureInF, double relativeHumidity) {
+    	double hi = 0;
+        if(relativeHumidity > 100){
+            throw new RuntimeException("humidity too high");
+        }
+        else if (relativeHumidity < 0) {
+            throw new RuntimeException("humidity too low");
+        }
+        else if (temperatureInF <= 40.0) {
+            hi = temperatureInF;
+        }
+        else {
+            double hitemp = 61.0+((temperatureInF-68.0)*1.2)+(relativeHumidity*0.094);
+            double fptemp = (temperatureInF);
+            double hifinal = 0.5*(fptemp+hitemp);
+
+            if(hifinal > 79.0){
+                hi = -42.379+2.04901523*temperatureInF+10.14333127*relativeHumidity-0.22475541*temperatureInF*relativeHumidity-6.83783*(Math.pow(10, -3))*(Math.pow(temperatureInF, 2))-5.481717*(Math.pow(10, -2))*(Math.pow(relativeHumidity, 2))+1.22874*(Math.pow(10, -3))*(Math.pow(temperatureInF, 2))*relativeHumidity+8.5282*(Math.pow(10, -4))*temperatureInF*(Math.pow(relativeHumidity, 2))-1.99*(Math.pow(10, -6))*(Math.pow(temperatureInF, 2))*(Math.pow(relativeHumidity,2));
+                if((relativeHumidity <= 13) && (temperatureInF >= 80.0) && (temperatureInF <= 112.0)) {
+                    double adj1 = (13.0-relativeHumidity)/4.0;
+                    double adj2 = Math.sqrt((17.0-Math.abs(temperatureInF-95.0))/17.0);
+                    double adj = adj1 * adj2;
+                    hi = hi - adj;
+                }
+                else if ((relativeHumidity > 85.0) && (temperatureInF >= 80.0) && (temperatureInF <= 87.0)) {
+                    double adj1 = (relativeHumidity-85.0)/10.0;
+                    double adj2 = (87.0-temperatureInF)/5.0;
+                    double adj = adj1 * adj2;
+                    hi = hi + adj;
+                }
+            }
+            else{
+                hi = hifinal;
+            }
+        }
+
+        return Util.getIntFromDouble(hi);
+    }
 
 }
