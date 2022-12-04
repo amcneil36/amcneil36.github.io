@@ -137,6 +137,8 @@ public abstract class CityStatsSuper {
 		runStateAsync("Wisconsin");
 		runStateAsync("Wyoming");
 		runStateAsync("District of Columbia");
+		sleepUntilFinished();
+		System.out.println("finished " + this.getClass().getCanonicalName());
 	}
 
 	private void runStateAsync(String stateName) throws Exception {

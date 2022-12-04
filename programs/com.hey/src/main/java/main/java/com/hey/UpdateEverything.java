@@ -14,7 +14,6 @@ public class UpdateEverything {
 
 		NoopCityStats n = new NoopCityStats();
 		n.processAllStates(); // doesn't do anything. just makes sure there is no error
-		n.sleepUntilFinished();
 		CreateBigCsv.main(null);
 		MetroCsvs.main(null);
 		MetroStats.main(null);
