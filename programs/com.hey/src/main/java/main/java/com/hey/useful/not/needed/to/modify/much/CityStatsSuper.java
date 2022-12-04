@@ -13,6 +13,23 @@ import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.useful.not.needed.to.modify.much.GenericStatsSuper.WeightedAverage;
 
 public abstract class CityStatsSuper {
+	
+	public int numStatesComplete = 0;
+	
+	protected void runCleanup() {
+		numStatesComplete++;
+	};
+	
+	public void sleepUntilFinished() throws Exception {
+		int totalMsSlept = 0;
+		while (numStatesComplete < 51) {
+			if (totalMsSlept > 1000000) {
+				//throw new RuntimeException("took too long for NoopCityStats"); this didn't seem to work when it ran
+			}
+			Thread.sleep(100);
+			totalMsSlept += 100;
+		}
+	}
 
 	private static final int ERROR_HANDLE_IDX = 3; // only error handle once so performance is better
 
@@ -134,10 +151,6 @@ public abstract class CityStatsSuper {
 		writeData(dataList, stateName, true);
 		runCleanup();
 	}
-
-	protected void runCleanup() {
-
-	};
 
 	static class RunnableDemo52 implements Runnable {
 		private Thread t;

@@ -14,14 +14,7 @@ public class UpdateEverything {
 
 		NoopCityStats n = new NoopCityStats();
 		n.processAllStates(); // doesn't do anything. just makes sure there is no error
-		int totalMsSlept = 0;
-		while (n.numStatesComplete < 51) {
-			if (totalMsSlept > 1000000) {
-				//throw new RuntimeException("took too long for NoopCityStats"); this didn't seem to work when it ran
-			}
-			Thread.sleep(100);
-			totalMsSlept += 100;
-		}
+		n.sleepUntilFinished();
 		CreateBigCsv.main(null);
 		MetroCsvs.main(null);
 		MetroStats.main(null);
