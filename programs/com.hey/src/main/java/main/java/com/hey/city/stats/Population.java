@@ -22,7 +22,6 @@ public class Population extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
-		data.population = "N/A";
 		String fips = data.fipsCode;
 		if (mapOfFipsCodeToResult.containsKey(fips)) {
 			Result result = mapOfFipsCodeToResult.get(fips);
