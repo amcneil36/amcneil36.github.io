@@ -27,18 +27,14 @@ public class NOAANormalsReader extends CityStats {
 	private static final String LONGITUDE = "longitude";
 	private static final String ELEVATION = "elevation";
 
-	public static class TemperatureData {
-		double latitude;
-		double longitude;
+	public static class TemperatureData extends Util.Coordinate{
 		int hottestMonthAvgHigh;
 		int coldestMonthAvgHigh;
 		int hottestMonthAvgLow;
 		int coldestMonthAvgLow;
 	}
 
-	public static class RainInchesData {
-		double latitude;
-		double longitude;
+	public static class RainInchesData extends Util.Coordinate {
 		double inchesOfRainPerYear;
 		double inchesOfRainPerSummer;
 		double inchesOfRainPerWinter;
@@ -64,7 +60,7 @@ public class NOAANormalsReader extends CityStats {
 
 	private static final List<TemperatureData> TEMPERATURE_DATA_LIST = new ArrayList<>();
 	private static final List<RainInchesData> RAIN_INCHES_LIST = new ArrayList<>();
-	private static final List<SnowInchesData> _LIST = new ArrayList<>();
+	private static final List<SnowInchesData> SNOW_INCHES_LIST = new ArrayList<>();
 	private static final List<RainDaysData> RAIN_DAYS_LIST = new ArrayList<>();
 	private static final List<SnowyDaysData> SNOWY_DAYS_LIST = new ArrayList<>();
 	private static final List<ElevationData> ELEVATION_LIST = new ArrayList<>();
@@ -184,7 +180,7 @@ public class NOAANormalsReader extends CityStats {
 			snowInchesData.latitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LATITUDE)]);
 			snowInchesData.longitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LONGITUDE)]);
 			snowInchesData.inchesOfSnowPerYear = Util.roundTwoDecimalPlaces(totalInchesOfSnow);
-			_LIST.add(snowInchesData);
+			SNOW_INCHES_LIST.add(snowInchesData);
 		}
 	}
 
@@ -322,7 +318,7 @@ public class NOAANormalsReader extends CityStats {
 	}
 
 	private void updateSnowInchesData(Data data) {
-		Optional<SnowInchesData> snowInchesData = Util.findBestCoordinate(_LIST, data,
+		Optional<SnowInchesData> snowInchesData = Util.findBestCoordinate(SNOW_INCHES_LIST, data,
 				MAX_ALLOWED_DISTANCE_MILES);
 		if (snowInchesData.isPresent()) {
 			data.annualSnowfall = String.valueOf(Util.roundTwoDecimalPlaces(snowInchesData.get().inchesOfSnowPerYear));
@@ -331,47 +327,28 @@ public class NOAANormalsReader extends CityStats {
 	}
 
 	private void updateRainInchesData(Data data) {
-		double minDistance = Double.MAX_VALUE;
-		RainInchesData bestrainInchesData = new RainInchesData();
-		for (RainInchesData rainInchesData : RAIN_INCHES_LIST) {
-			double dataLatitude = Double.valueOf(data.latitude);
-			double dataLongitude = Double.valueOf(data.longitude);
-			double distance = Util.milesBetweenCoordinates(rainInchesData.latitude, rainInchesData.longitude,
-					dataLatitude, dataLongitude);
-			if (distance < minDistance) {
-				bestrainInchesData = rainInchesData;
-				minDistance = distance;
-			}
-		}
-		if (minDistance < MAX_ALLOWED_DISTANCE_MILES) {
-			data.numInchesOfRain = String.valueOf(Util.roundTwoDecimalPlaces(bestrainInchesData.inchesOfRainPerYear));
+		
+		Optional<RainInchesData> bestrainInchesData = Util.findBestCoordinate(RAIN_INCHES_LIST, data,
+				MAX_ALLOWED_DISTANCE_MILES);
+		if (bestrainInchesData.isPresent()) {
+			data.numInchesOfRain = String.valueOf(Util.roundTwoDecimalPlaces(bestrainInchesData.get().inchesOfRainPerYear));
 			data.numInchesOfRainPerSummer = String
-					.valueOf(Util.roundTwoDecimalPlaces(bestrainInchesData.inchesOfRainPerSummer));
+					.valueOf(Util.roundTwoDecimalPlaces(bestrainInchesData.get().inchesOfRainPerSummer));
 			data.numInchesOfRainPerWinter = String
-					.valueOf(Util.roundTwoDecimalPlaces(bestrainInchesData.inchesOfRainPerWinter));
+					.valueOf(Util.roundTwoDecimalPlaces(bestrainInchesData.get().inchesOfRainPerWinter));
 		}
 	}
 
 	private void updateTemperatureData(Data data) {
-		double minDistance = Double.MAX_VALUE;
-		TemperatureData bestTemperatureData = new TemperatureData();
-		for (TemperatureData temperatureData : TEMPERATURE_DATA_LIST) {
-			double dataLatitude = Double.valueOf(data.latitude);
-			double dataLongitude = Double.valueOf(data.longitude);
-			double distance = Util.milesBetweenCoordinates(temperatureData.latitude, temperatureData.longitude,
-					dataLatitude, dataLongitude);
-			if (distance < minDistance) {
-				bestTemperatureData = temperatureData;
-				minDistance = distance;
-			}
-		}
-		if (minDistance < MAX_ALLOWED_DISTANCE_MILES) {
-			data.hottestMonthsHigh = String.valueOf(bestTemperatureData.hottestMonthAvgHigh);
-			data.coldestHigh = String.valueOf(bestTemperatureData.coldestMonthAvgHigh);
+		Optional<TemperatureData> bestTemperatureData = Util.findBestCoordinate(TEMPERATURE_DATA_LIST, data,
+				MAX_ALLOWED_DISTANCE_MILES);
+		if (bestTemperatureData.isPresent()) {
+			data.hottestMonthsHigh = String.valueOf(bestTemperatureData.get().hottestMonthAvgHigh);
+			data.coldestHigh = String.valueOf(bestTemperatureData.get().coldestMonthAvgHigh);
 			data.hottestMonthMinusColdestMonth = String
-					.valueOf(bestTemperatureData.hottestMonthAvgHigh - bestTemperatureData.coldestMonthAvgHigh);
-			data.hottestMonthAvgLow = String.valueOf(bestTemperatureData.hottestMonthAvgLow);
-			data.coldestMonthAvgLow = String.valueOf(bestTemperatureData.coldestMonthAvgLow);
+					.valueOf(bestTemperatureData.get().hottestMonthAvgHigh - bestTemperatureData.get().coldestMonthAvgHigh);
+			data.hottestMonthAvgLow = String.valueOf(bestTemperatureData.get().hottestMonthAvgLow);
+			data.coldestMonthAvgLow = String.valueOf(bestTemperatureData.get().coldestMonthAvgLow);			
 		}
 	}
 
