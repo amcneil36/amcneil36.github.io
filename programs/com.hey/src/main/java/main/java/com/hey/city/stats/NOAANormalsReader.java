@@ -47,7 +47,6 @@ public class NOAANormalsReader extends CityStats {
 		File directoryPath = new File(path);
 		// List of all files and directories
 		String[] listArr = directoryPath.list();
-		System.out.println(listArr.length);
 		for (String st : listArr) {
 			// System.out.println(++idx);
 			List<String> text = Util.readTextFromFile(path + st);
@@ -66,18 +65,17 @@ public class NOAANormalsReader extends CityStats {
 			// inches
 			// mly-snow-avgnds-ge001ti Monthly number of days with snowfall >= 0.1 inch
 			// what if we do % days of rain?
-			int hottestMonthAvgHigh = Integer.MIN_VALUE;
-			int coldestMonthAvgHigh = Integer.MAX_VALUE;
+			int hottestMonthAvgHigh = -4000;
+			int coldestMonthAvgHigh = 4000;
 			boolean containsMax = mapOfHeaderToIdx.containsKey(MONTHLY_MAX_TEMP);
-			boolean containsMin = mapOfHeaderToIdx.containsKey(MONTHLY_MIN_TEMP);
 			// if the .csv has the max temp, it also has the min temp.
 			if (containsMax) {
 				for (String line : text) {
 					String[] arr = StringUtils.substringsBetween(line, "\"", "\"");
 					int highInt = Util.getIntFromDouble(Double.valueOf(arr[mapOfHeaderToIdx.get(MONTHLY_MAX_TEMP)]));
 					hottestMonthAvgHigh = Math.max(hottestMonthAvgHigh, highInt);
-					int coldInt = Util.getIntFromDouble(Double.valueOf(arr[mapOfHeaderToIdx.get(MONTHLY_MIN_TEMP)]));
-					coldestMonthAvgHigh = Math.max(coldestMonthAvgHigh, coldInt);
+					int coldInt = Util.getIntFromDouble(Double.valueOf(arr[mapOfHeaderToIdx.get(MONTHLY_MAX_TEMP)]));
+					coldestMonthAvgHigh = Math.min(coldestMonthAvgHigh, coldInt);
 				}
 				String[] arr = StringUtils.substringsBetween(text.get(0), "\"", "\"");
 				TemperatureData temperatureData = new TemperatureData();
@@ -89,7 +87,11 @@ public class NOAANormalsReader extends CityStats {
 			}
 
 		}
-		
+		for (TemperatureData data : TEMPERATURE_DATA_LIST) {
+			if (data.hottestMonthAvgHigh < 0) {
+				System.out.println(data.hottestMonthAvgHigh);	
+			}
+		}
 		NOAANormalsReader reader = new NOAANormalsReader();
 		reader.processAllStates();
 
@@ -129,7 +131,7 @@ public class NOAANormalsReader extends CityStats {
 		if (minDistance < MAX_ALLOWED_DISTANCE_MILES) {
 			data.hottestMonthsHigh = String.valueOf(bestTemperatureData.hottestMonthAvgHigh);
 			data.coldestHigh = String.valueOf(bestTemperatureData.coldestMonthAvgHigh);
-			data.hottestMonthsHigh = String.valueOf(bestTemperatureData.hottestMonthAvgHigh - bestTemperatureData.coldestMonthAvgHigh);
+			data.hottestMonthMinusColdestMonth = String.valueOf(bestTemperatureData.hottestMonthAvgHigh - bestTemperatureData.coldestMonthAvgHigh);
 		}
 		
 	}
