@@ -10,6 +10,7 @@ import java.util.Set;
 import main.java.com.hey.CityStats;
 import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.GenericStats.Stats;
+import main.java.com.hey.Util;
 import main.java.com.hey.useful.not.needed.to.modify.much.CityStatsSuper.AndrewStringWriter;
 
 public abstract class GenericStatsSuper {
@@ -122,6 +123,16 @@ public abstract class GenericStatsSuper {
 				return "N/A";
 			}
 			return String.valueOf((totalSummedValue / totalPopulation));
+		}
+	}
+	
+	public static class WeightedAverageRoundTwo extends WeightedAverage {
+		@Override
+		public String getWeightedAverage() {
+			if (totalPopulation == 0) {
+				return "N/A";
+			}
+			return String.valueOf(Util.roundTwoDecimalPlaces(totalSummedValue / totalPopulation));
 		}
 	}
 

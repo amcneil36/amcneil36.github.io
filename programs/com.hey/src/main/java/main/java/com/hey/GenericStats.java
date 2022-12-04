@@ -1,16 +1,19 @@
 package main.java.com.hey;
 
-import static main.java.com.hey.CityStats.*;
+import static main.java.com.hey.CityStats.AGE;
 import static main.java.com.hey.CityStats.AIR_QUALITY_IDX;
 import static main.java.com.hey.CityStats.ANNUAL_DAYS_OF_PRECIPITATION;
+import static main.java.com.hey.CityStats.ANNUAL_DEW_POINT;
 import static main.java.com.hey.CityStats.ANNUAL_HUMIDITY;
 import static main.java.com.hey.CityStats.ANNUAL_RAINFALL;
 import static main.java.com.hey.CityStats.ANNUAL_SNOWFALL;
 import static main.java.com.hey.CityStats.ANNUAL_SUNSHINE;
+import static main.java.com.hey.CityStats.ANNUAL_THUNDERSTORMS;
 import static main.java.com.hey.CityStats.ASIAN;
 import static main.java.com.hey.CityStats.BACHELORS;
 import static main.java.com.hey.CityStats.BLACK;
 import static main.java.com.hey.CityStats.COLDEST_MONTH;
+import static main.java.com.hey.CityStats.COLDEST_MONTH_AVG_LOW;
 import static main.java.com.hey.CityStats.COST_PER_SQFT;
 import static main.java.com.hey.CityStats.DEMOCRAT;
 import static main.java.com.hey.CityStats.FOREIGN_BORN;
@@ -21,6 +24,7 @@ import static main.java.com.hey.CityStats.HOME_PRICE;
 import static main.java.com.hey.CityStats.HOME_SQFT;
 import static main.java.com.hey.CityStats.HOTTEST_MINUS_COLDEST;
 import static main.java.com.hey.CityStats.HOTTEST_MONTH;
+import static main.java.com.hey.CityStats.HOTTEST_MONTH_AVG_LOW;
 import static main.java.com.hey.CityStats.INCOME;
 import static main.java.com.hey.CityStats.LABOR_FORCE;
 import static main.java.com.hey.CityStats.LATITUDE;
@@ -31,7 +35,9 @@ import static main.java.com.hey.CityStats.PROPERTY_CRIMES_FBI;
 import static main.java.com.hey.CityStats.RENT;
 import static main.java.com.hey.CityStats.REPUBLICAN;
 import static main.java.com.hey.CityStats.SINGLE_POPULATION;
+import static main.java.com.hey.CityStats.SUMMER_DEW_POINT;
 import static main.java.com.hey.CityStats.SUMMER_HUMIDITY;
+import static main.java.com.hey.CityStats.SUMMER_RAINFALL;
 import static main.java.com.hey.CityStats.SUMMER_SUNSHINE;
 import static main.java.com.hey.CityStats.TIME_ZONE;
 import static main.java.com.hey.CityStats.UNEMPLOYMENT_RATE;
@@ -39,6 +45,7 @@ import static main.java.com.hey.CityStats.UV_INDEX;
 import static main.java.com.hey.CityStats.VIOLENT_CRIMES_FBI;
 import static main.java.com.hey.CityStats.WHITE;
 import static main.java.com.hey.CityStats.WIND_SPEED;
+import static main.java.com.hey.CityStats.WINTER_RAINFALL;
 import static main.java.com.hey.CityStats.WINTER_SUNSHINE;
 
 import java.util.Map;
@@ -101,6 +108,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		WeightedAverage summerDewPoint = new WeightedAverage();
 		WeightedAverage hottestMonthAvgLow = new WeightedAverage();
 		WeightedAverage coldestMonthAvgLow = new WeightedAverage();
+		WeightedAverage summerRainfall = new WeightedAverageRoundTwo();
+		WeightedAverage winterRainfall = new WeightedAverageRoundTwo();
 	}
 
 	@Override
@@ -149,6 +158,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		stats.summerDewPoint.addCity(data, data.summerDewPoint);
 		stats.hottestMonthAvgLow.addCity(data, data.hottestMonthAvgLow);
 		stats.coldestMonthAvgLow.addCity(data, data.coldestMonthAvgLow);
+		stats.summerRainfall.addCity(data, data.numInchesOfRainPerSummer);
+		stats.winterRainfall.addCity(data, data.numInchesOfRainPerWinter);
 
 	}
 
@@ -199,6 +210,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		arr[mapOfNameToIdx.get(SUMMER_DEW_POINT)] = stat.summerDewPoint;
 		arr[mapOfNameToIdx.get(HOTTEST_MONTH_AVG_LOW)] = stat.hottestMonthAvgLow;
 		arr[mapOfNameToIdx.get(COLDEST_MONTH_AVG_LOW)] = stat.coldestMonthAvgLow;
+		arr[mapOfNameToIdx.get(SUMMER_RAINFALL)] = stat.summerRainfall;
+		arr[mapOfNameToIdx.get(WINTER_RAINFALL)] = stat.winterRainfall;
 	}
 
 	@Override
@@ -209,7 +222,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 				FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH, HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL,
 				ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_SNOWFALL, WIND_SPEED, AIR_QUALITY_IDX, UV_INDEX, LATITUDE,
 				LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE, ANNUAL_HUMIDITY, SUMMER_HUMIDITY,
-				ANNUAL_THUNDERSTORMS, ANNUAL_DEW_POINT, SUMMER_DEW_POINT, HOTTEST_MONTH_AVG_LOW, COLDEST_MONTH_AVG_LOW};
+				ANNUAL_THUNDERSTORMS, ANNUAL_DEW_POINT, SUMMER_DEW_POINT, HOTTEST_MONTH_AVG_LOW, COLDEST_MONTH_AVG_LOW,
+				SUMMER_RAINFALL, WINTER_RAINFALL };
 	}
 
 }

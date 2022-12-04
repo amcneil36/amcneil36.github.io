@@ -41,9 +41,16 @@ public class NOAANormalsReader extends CityStats {
 		double inchesOfRainPerSummer;
 		double inchesOfRainPerWinter;
 	}
+	
+	public static class SnowInchesData {
+		double latitude;
+		double longitude;
+		double inchesOfSnowPerYear;
+	}
 
 	private static final List<TemperatureData> TEMPERATURE_DATA_LIST = new ArrayList<>();
 	private static final List<RainInchesData> RAIN_INCHES_LIST = new ArrayList<>();
+	private static final List<SnowInchesData> SNOW_INCHES_LIST = new ArrayList<>();
 
 	public static void main(String[] args) throws Exception {
 		// USC00214546
@@ -63,7 +70,8 @@ public class NOAANormalsReader extends CityStats {
 			}
 
 			// populateTemperatureData(text, mapOfHeaderToIdx);
-			populateRainInchesData(text, mapOfHeaderToIdx);
+			//populateRainInchesData(text, mapOfHeaderToIdx);
+			populateSnowInchesData(text, mapOfHeaderToIdx);
 
 			// mly-tavg-normal Long-term averages of monthly average temperature
 			// mly-tmax-normal Long-term averages of monthly maximum temperature
@@ -78,12 +86,27 @@ public class NOAANormalsReader extends CityStats {
 		}
 		NOAANormalsReader reader = new NOAANormalsReader();
 		reader.processAllStates();
+	}
 
+	private static void populateSnowInchesData(List<String> text, Map<String, Integer> mapOfHeaderToIdx) {
+		boolean containsSnowInches = mapOfHeaderToIdx.containsKey(MONTHLY_INCHES_SNOW);
+		if (containsSnowInches) {
+			double totalInchesOfSnow = 0;
+			for (String line : text) {
+				String[] arr = StringUtils.substringsBetween(line, "\"", "\"");
+				totalInchesOfSnow += Double.valueOf(arr[mapOfHeaderToIdx.get(MONTHLY_INCHES_SNOW)]);
+			}
+			String[] arr = StringUtils.substringsBetween(text.get(0), "\"", "\"");
+			SnowInchesData snowInchesData = new SnowInchesData();
+			snowInchesData.latitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LATITUDE)]);
+			snowInchesData.longitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LONGITUDE)]);
+			snowInchesData.inchesOfSnowPerYear = Util.roundTwoDecimalPlaces(totalInchesOfSnow);
+			SNOW_INCHES_LIST.add(snowInchesData);
+		}
 	}
 
 	private static void populateRainInchesData(List<String> text, Map<String, Integer> mapOfHeaderToIdx) {
 		boolean containsRainInches = mapOfHeaderToIdx.containsKey(MONTHLY_INCHES_RAIN);
-		// if the .csv has the max temp, it also has the min temp and avg temp.
 		// 5 6 7 for summer
 		// 0 1 11 for winter
 		if (containsRainInches) {
@@ -171,12 +194,32 @@ public class NOAANormalsReader extends CityStats {
 		data.numInchesOfRain = "N/A";
 		data.numInchesOfRainPerSummer = "N/A";
 		data.numInchesOfRainPerWinter = "N/A";
+		data.annualSnowfall = "N/A";
 		if (data.longitude.equals("N/A")) {
 			return;
 		}
 		// updateTemperatureData(data);
-		updateRainInchesData(data);
+		//updateRainInchesData(data);
+		updateSnowInchesData(data);
 
+	}
+
+	private void updateSnowInchesData(Data data) {
+		double minDistance = Double.MAX_VALUE;
+		SnowInchesData bestSnowInchesData = new SnowInchesData();
+		for (SnowInchesData snowInchesData : SNOW_INCHES_LIST) {
+			double dataLatitude = Double.valueOf(data.latitude);
+			double dataLongitude = Double.valueOf(data.longitude);
+			double distance = Util.milesBetweenCoordinates(snowInchesData.latitude, snowInchesData.longitude,
+					dataLatitude, dataLongitude);
+			if (distance < minDistance) {
+				bestSnowInchesData = snowInchesData;
+				minDistance = distance;
+			}
+		}
+		if (minDistance < MAX_ALLOWED_DISTANCE_MILES) {
+			data.annualSnowfall = String.valueOf(Util.roundTwoDecimalPlaces(bestSnowInchesData.inchesOfSnowPerYear));
+		}
 	}
 
 	private void updateRainInchesData(Data data) {
