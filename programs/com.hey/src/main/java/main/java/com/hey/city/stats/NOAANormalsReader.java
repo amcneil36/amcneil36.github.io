@@ -16,7 +16,6 @@ import main.java.com.hey.Util;
 
 public class NOAANormalsReader extends CityStats {
 
-	private static final String MONTHLY_AVERAGE_TEMP = "mly-tavg-normal";
 	private static final String MONTHLY_MAX_TEMP = "mly-tmax-normal";
 	private static final String MONTHLY_MIN_TEMP = "mly-tmin-normal";
 	private static final String MONTHLY_INCHES_RAIN = "mly-prcp-normal";
@@ -35,7 +34,14 @@ public class NOAANormalsReader extends CityStats {
 		int coldestMonthAvgLow;
 	}
 	
+	public static class RainInchesData{
+		double latitude;
+		double longitude;
+		double inchesOfRainPerYear;
+	}
+	
 	private static final List<TemperatureData> TEMPERATURE_DATA_LIST = new ArrayList<>();
+	private static final List<RainInchesData> RAIN_INCHES_LIST = new ArrayList<>();
 	
 	public static void main(String[] args) throws Exception {
 		// USC00214546
@@ -54,7 +60,8 @@ public class NOAANormalsReader extends CityStats {
 				continue;
 			}
 			
-			populateTemperatureData(text, mapOfHeaderToIdx);
+			//populateTemperatureData(text, mapOfHeaderToIdx);
+			populateRainInchesData(text, mapOfHeaderToIdx);
 
 			// mly-tavg-normal Long-term averages of monthly average temperature
 			// mly-tmax-normal Long-term averages of monthly maximum temperature
@@ -73,6 +80,24 @@ public class NOAANormalsReader extends CityStats {
 
 	}
 	
+	private static void populateRainInchesData(List<String> text, Map<String, Integer> mapOfHeaderToIdx) {
+		boolean containsRainInches = mapOfHeaderToIdx.containsKey(MONTHLY_INCHES_RAIN);
+		// if the .csv has the max temp, it also has the min temp and avg temp.
+		double totalInchesOfRain = 0;
+		if (containsRainInches) {
+			for (String line : text) {
+				String[] arr = StringUtils.substringsBetween(line, "\"", "\"");
+				totalInchesOfRain += Double.valueOf(arr[mapOfHeaderToIdx.get(MONTHLY_INCHES_RAIN)]);
+			}
+			String[] arr = StringUtils.substringsBetween(text.get(0), "\"", "\"");
+			RainInchesData rainInchesData = new RainInchesData();
+			rainInchesData.latitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LATITUDE)]);
+			rainInchesData.longitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LONGITUDE)]);
+			rainInchesData.inchesOfRainPerYear = Util.roundTwoDecimalPlaces(totalInchesOfRain);
+			RAIN_INCHES_LIST.add(rainInchesData);
+		}
+	}
+
 	private static void populateTemperatureData(List<String> text, Map<String, Integer> mapOfHeaderToIdx) {
 		boolean containsMax = mapOfHeaderToIdx.containsKey(MONTHLY_MAX_TEMP);
 		// if the .csv has the max temp, it also has the min temp and avg temp.
@@ -125,9 +150,33 @@ public class NOAANormalsReader extends CityStats {
 		data.hottestMonthAvgLow = "N/A";
 		data.coldestMonthAvgLow = "N/A";
 		data.hottestMonthMinusColdestMonth = "N/A";
+		data.numInchesOfRain = "N/A";
 		if (data.longitude.equals("N/A")) {
 			return;
 		}
+		//updateTemperatureData(data);
+		updateRainInchesData(data);
+		
+	}
+
+	private void updateRainInchesData(Data data) {
+		double minDistance = Double.MAX_VALUE;
+		RainInchesData bestrainInchesData = new RainInchesData();
+		for (RainInchesData rainInchesData : RAIN_INCHES_LIST) {
+			double dataLatitude = Double.valueOf(data.latitude);
+			double dataLongitude = Double.valueOf(data.longitude);
+			double distance = Util.milesBetweenCoordinates(rainInchesData.latitude, rainInchesData.longitude, dataLatitude, dataLongitude);
+			if (distance < minDistance) {
+				bestrainInchesData = rainInchesData;
+				minDistance = distance;
+			}
+		}
+		if (minDistance < MAX_ALLOWED_DISTANCE_MILES) {
+			data.numInchesOfRain = String.valueOf(bestrainInchesData.inchesOfRainPerYear);
+		}
+	}
+
+	private void updateTemperatureData(Data data) {
 		double minDistance = Double.MAX_VALUE;
 		TemperatureData bestTemperatureData = new TemperatureData();
 		for (TemperatureData temperatureData : TEMPERATURE_DATA_LIST) {
@@ -146,7 +195,6 @@ public class NOAANormalsReader extends CityStats {
 			data.hottestMonthAvgLow = String.valueOf(bestTemperatureData.hottestMonthAvgLow);
 			data.coldestMonthAvgLow = String.valueOf(bestTemperatureData.coldestMonthAvgLow);
 		}
-		
 	}
 
 }
