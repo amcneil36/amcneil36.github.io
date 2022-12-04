@@ -264,14 +264,24 @@ public class NOAANormalsReader extends CityStats {
 		data.percentOfDaysWithRain = "N/A";
 		data.percentOfSummerDaysWithRain = "N/A";
 		data.percentOfWinterDaysWithRain = "N/A";
+		data.daysOfSnowPerYear = "N/A";
 		if (data.longitude.equals("N/A")) {
 			return;
 		}
 		// updateTemperatureData(data);
 		// updateRainInchesData(data);
 		//updateSnowInchesData(data);
-		updateRainDaysData(data);
+		//updateRainDaysData(data);
+		updateSnowyDaysData(data);
 
+	}
+
+	private void updateSnowyDaysData(Data data) {
+		Optional<SnowyDaysData> rainDaysData = Util.findBestCoordinate(SNOWY_DAYS_LIST, data,
+				MAX_ALLOWED_DISTANCE_MILES);
+		if (rainDaysData.isPresent()) {
+			data.daysOfSnowPerYear = String.valueOf(rainDaysData.get().daysOfSnowPerYear);
+		}
 	}
 
 	private void updateRainDaysData(Data data) {
