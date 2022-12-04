@@ -68,6 +68,7 @@ public abstract class CityStats extends CityStatsSuper {
 		public String percentOfSummerDaysWithRain = "N/A";
 		public String percentOfWinterDaysWithRain = "N/A";
 		public String daysOfSnowPerYear = "N/A";
+		public String averageSummerHighHeatIndex = "N/A";
 	}
 
 	public static final String CITY = "City";
@@ -129,6 +130,7 @@ public abstract class CityStats extends CityStatsSuper {
 	public static final String PERCENT_OF_SUMMER_DAYS_WITH_RAIN = "Percent of Summer days that include precipitation";
 	public static final String PERCENT_OF_WINTER_DAYS_WITH_RAIN = "Percent of Winter days that include precipitation";
 	public static final String DAYS_OF_SNOW_PER_YEAR = "Days of snow per year";
+	public static final String AVERAGE_SUMMER_HIGH_HEAT_INDEX = "Average Summer Heat Index High (F)";
 
 	public String[] getOutputHeaders() {
 		return new String[] { CITY, STATE, POPULATION, POPULATION_DENSITY, METRO_NAME, METRO_POP, INCOME, BACHELORS,
@@ -139,7 +141,7 @@ public abstract class CityStats extends CityStatsSuper {
 				AIR_QUALITY_IDX, ELEVATION, UV_INDEX, LAND_AREA, FIPS_CODE, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE,
 				SUMMER_SUNSHINE, WINTER_SUNSHINE, ANNUAL_HUMIDITY, SUMMER_HUMIDITY, ANNUAL_THUNDERSTORMS,
 				ANNUAL_DEW_POINT, SUMMER_DEW_POINT, HOTTEST_MONTH_AVG_LOW, COLDEST_MONTH_AVG_LOW, SUMMER_RAINFALL,
-				WINTER_RAINFALL, PERCENT_OF_DAYS_WITH_RAIN, PERCENT_OF_SUMMER_DAYS_WITH_RAIN, PERCENT_OF_WINTER_DAYS_WITH_RAIN, DAYS_OF_SNOW_PER_YEAR };
+				WINTER_RAINFALL, PERCENT_OF_DAYS_WITH_RAIN, PERCENT_OF_SUMMER_DAYS_WITH_RAIN, PERCENT_OF_WINTER_DAYS_WITH_RAIN, DAYS_OF_SNOW_PER_YEAR, AVERAGE_SUMMER_HIGH_HEAT_INDEX };
 	}
 
 	@Override
@@ -266,6 +268,7 @@ public abstract class CityStats extends CityStatsSuper {
 		arr[mapOfNameToIndex.get(PERCENT_OF_SUMMER_DAYS_WITH_RAIN)] = data.percentOfSummerDaysWithRain;
 		arr[mapOfNameToIndex.get(PERCENT_OF_WINTER_DAYS_WITH_RAIN)] = data.percentOfWinterDaysWithRain;
 		arr[mapOfNameToIndex.get(DAYS_OF_SNOW_PER_YEAR)] = data.daysOfSnowPerYear;
+		arr[mapOfNameToIndex.get(AVERAGE_SUMMER_HIGH_HEAT_INDEX)] = data.averageSummerHighHeatIndex;
 	}
 
 }
