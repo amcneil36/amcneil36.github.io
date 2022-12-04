@@ -86,11 +86,11 @@ public class NOAANormalsReader extends CityStats {
 				continue;
 			}
 
-			// populateTemperatureData(text, mapOfHeaderToIdx);
-			// populateRainInchesData(text, mapOfHeaderToIdx);
-			//populateSnowInchesData(text, mapOfHeaderToIdx);
-			//populateRainDaysData(text, mapOfHeaderToIdx);
-			//populateSnowyDaysData(text, mapOfHeaderToIdx);
+			populateTemperatureData(text, mapOfHeaderToIdx);
+			populateRainInchesData(text, mapOfHeaderToIdx);
+			populateSnowInchesData(text, mapOfHeaderToIdx);
+			populateRainDaysData(text, mapOfHeaderToIdx);
+			populateSnowyDaysData(text, mapOfHeaderToIdx);
 			populateElevationData(text, mapOfHeaderToIdx);
 			// mly-tavg-normal Long-term averages of monthly average temperature
 			// mly-tmax-normal Long-term averages of monthly maximum temperature
@@ -113,7 +113,9 @@ public class NOAANormalsReader extends CityStats {
 			String line = text.get(0);
 			String[] arr = StringUtils.substringsBetween(line, "\"", "\"");
 			ElevationData elevationData = new ElevationData();
-			elevationData.elevation = Util.getIntFromDouble(Double.valueOf(arr[mapOfHeaderToIdx.get(ELEVATION)]));
+			elevationData.elevation = Util.getIntFromDouble(Double.valueOf(arr[mapOfHeaderToIdx.get(ELEVATION)]))*3; // multinplying by 3 cuz it looks like they give it in yards
+			elevationData.latitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LATITUDE)]);
+			elevationData.longitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LONGITUDE)]);
 			ELEVATION_LIST.add(elevationData);
 		}		
 	}
@@ -284,18 +286,18 @@ public class NOAANormalsReader extends CityStats {
 		if (data.longitude.equals("N/A")) {
 			return;
 		}
-		// updateTemperatureData(data);
-		// updateRainInchesData(data);
-		//updateSnowInchesData(data);
-		//updateRainDaysData(data);
-		//updateSnowyDaysData(data);
+		updateTemperatureData(data);
+		updateRainInchesData(data);
+		updateSnowInchesData(data);
+		updateRainDaysData(data);
+		updateSnowyDaysData(data);
 		updateElevationData(data);
 
 	}
 
 	private void updateElevationData(Data data) {
 		Optional<ElevationData> elevationData = Util.findBestCoordinate(ELEVATION_LIST, data,
-				MAX_ALLOWED_DISTANCE_MILES);
+				50);
 		if (elevationData.isPresent()) {
 			data.feetAboveSeaLevel = String.valueOf(elevationData.get().elevation);
 		}
