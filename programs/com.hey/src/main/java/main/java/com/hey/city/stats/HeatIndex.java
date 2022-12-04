@@ -7,30 +7,44 @@ public class HeatIndex extends CityStats {
 
     public static final String RESULT_FORMAT = "#.#";
 
-    public static int getHeatIndex(double temperature, double rh) {
-        double heatIndex;
-        
-        double simpleHeatIndex = 0.5 * (temperature + 61.0 + ((temperature-68.0)*1.2) + (rh*0.094));
-        double avg = (simpleHeatIndex + temperature)/2;
-        if (avg < 80) {
-        	return Util.getIntFromDouble(avg);
+    // copied from https://www.wpc.ncep.noaa.gov/html/heatindex.shtml
+    public static int getHeatIndex(double temperatureInF, double relativeHumidity) {
+    	double hi = 0;
+        if(relativeHumidity > 100){
+            throw new RuntimeException("humidity too high");
+        }
+        else if (relativeHumidity < 0) {
+            throw new RuntimeException("humidity too low");
+        }
+        else if (temperatureInF <= 40.0) {
+            hi = temperatureInF;
+        }
+        else {
+            double hitemp = 61.0+((temperatureInF-68.0)*1.2)+(relativeHumidity*0.094);
+            double fptemp = (temperatureInF);
+            double hifinal = 0.5*(fptemp+hitemp);
+
+            if(hifinal > 79.0){
+                hi = -42.379+2.04901523*temperatureInF+10.14333127*relativeHumidity-0.22475541*temperatureInF*relativeHumidity-6.83783*(Math.pow(10, -3))*(Math.pow(temperatureInF, 2))-5.481717*(Math.pow(10, -2))*(Math.pow(relativeHumidity, 2))+1.22874*(Math.pow(10, -3))*(Math.pow(temperatureInF, 2))*relativeHumidity+8.5282*(Math.pow(10, -4))*temperatureInF*(Math.pow(relativeHumidity, 2))-1.99*(Math.pow(10, -6))*(Math.pow(temperatureInF, 2))*(Math.pow(relativeHumidity,2));
+                if((relativeHumidity <= 13) && (temperatureInF >= 80.0) && (temperatureInF <= 112.0)) {
+                    double adj1 = (13.0-relativeHumidity)/4.0;
+                    double adj2 = Math.sqrt((17.0-Math.abs(temperatureInF-95.0))/17.0);
+                    double adj = adj1 * adj2;
+                    hi = hi - adj;
+                }
+                else if ((relativeHumidity > 85.0) && (temperatureInF >= 80.0) && (temperatureInF <= 87.0)) {
+                    double adj1 = (relativeHumidity-85.0)/10.0;
+                    double adj2 = (87.0-temperatureInF)/5.0;
+                    double adj = adj1 * adj2;
+                    hi = hi + adj;
+                }
+            }
+            else{
+                hi = hifinal;
+            }
         }
 
-        heatIndex = -42.379 + 2.04901523 * temperature + 10.14333127 * rh;
-        heatIndex = heatIndex - 0.22475541 * temperature * rh - 6.83783 * Math.pow(10, -3) * temperature * temperature;
-        heatIndex = heatIndex - 5.481717 * Math.pow(10, -2) * rh * rh;
-        heatIndex = heatIndex + 1.22874 * Math.pow(10, -3) * temperature * temperature * rh;
-        heatIndex = heatIndex + 8.5282 * Math.pow(10, -4) * temperature * rh * rh;
-        heatIndex = heatIndex - 1.99 * Math.pow(10, -6) * temperature * temperature * rh * rh;
-        
-        if (rh < 13 && temperature >= 80 && temperature <= 112) {
-        	heatIndex -= ((13-rh)/4)*Math.sqrt((17-Math.abs(temperature-95.))/17);
-        }
-        else if (rh > 85 && temperature >= 80 && temperature <=87) {
-        	heatIndex -= ((rh-85)/10) * ((87-temperature)/5);
-        }
-
-        return Util.getIntFromDouble(heatIndex);
+        return Util.getIntFromDouble(hi);
     }
 
 	public static void main(String[] args) throws Exception {
