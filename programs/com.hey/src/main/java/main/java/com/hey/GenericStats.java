@@ -99,6 +99,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		WeightedAverage thunderStorms = new WeightedAverage();
 		WeightedAverage annualDewPoint = new WeightedAverage();
 		WeightedAverage summerDewPoint = new WeightedAverage();
+		WeightedAverage hottestMonthAvgLow = new WeightedAverage();
+		WeightedAverage coldestMonthAvgLow = new WeightedAverage();
 	}
 
 	@Override
@@ -145,6 +147,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		stats.thunderStorms.addCity(data, data.numberOfThunderstormsPerYear);
 		stats.annualDewPoint.addCity(data, data.annualDewPoint);
 		stats.summerDewPoint.addCity(data, data.summerDewPoint);
+		stats.hottestMonthAvgLow.addCity(data, data.hottestMonthAvgLow);
+		stats.coldestMonthAvgLow.addCity(data, data.coldestMonthAvgLow);
 
 	}
 
@@ -193,6 +197,8 @@ public abstract class GenericStats extends GenericStatsSuper {
 		arr[mapOfNameToIdx.get(ANNUAL_THUNDERSTORMS)] = stat.thunderStorms;
 		arr[mapOfNameToIdx.get(ANNUAL_DEW_POINT)] = stat.annualDewPoint;
 		arr[mapOfNameToIdx.get(SUMMER_DEW_POINT)] = stat.summerDewPoint;
+		arr[mapOfNameToIdx.get(HOTTEST_MONTH_AVG_LOW)] = stat.hottestMonthAvgLow;
+		arr[mapOfNameToIdx.get(COLDEST_MONTH_AVG_LOW)] = stat.coldestMonthAvgLow;
 	}
 
 	@Override
@@ -203,7 +209,7 @@ public abstract class GenericStats extends GenericStatsSuper {
 				FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH, HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL,
 				ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_SNOWFALL, WIND_SPEED, AIR_QUALITY_IDX, UV_INDEX, LATITUDE,
 				LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE, ANNUAL_HUMIDITY, SUMMER_HUMIDITY,
-				ANNUAL_THUNDERSTORMS, ANNUAL_DEW_POINT, SUMMER_DEW_POINT };
+				ANNUAL_THUNDERSTORMS, ANNUAL_DEW_POINT, SUMMER_DEW_POINT, HOTTEST_MONTH_AVG_LOW, COLDEST_MONTH_AVG_LOW};
 	}
 
 }

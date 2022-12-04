@@ -26,10 +26,6 @@ public class NOAANormalsReader extends CityStats {
 	private static final String LATITUDE = "latitude";
 	private static final String LONGITUDE = "longitude";
 
-	private static final Set<String> WEATHER_VARIABLES = new HashSet<>(
-			Arrays.asList(MONTHLY_AVERAGE_TEMP, MONTHLY_MAX_TEMP, MONTHLY_MIN_TEMP, MONTHLY_INCHES_RAIN,
-					MONTHLY_INCHES_SNOW, MONTHLY_DAYS_OF_RAIN, MONTHLY_DAYS_OF_SNOW));
-
 	public static class TemperatureData{
 		double latitude;
 		double longitude;
