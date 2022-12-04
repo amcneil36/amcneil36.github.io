@@ -122,9 +122,9 @@ public class NOAANormalsReader extends CityStats {
 			RainDaysData rainDaysData = new RainDaysData();
 			rainDaysData.latitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LATITUDE)]);
 			rainDaysData.longitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LONGITUDE)]);
-			rainDaysData.percentOfAnnualDaysOfRain = Util.roundTwoDecimalPlaces(totalDaysOfRain/365);
-			rainDaysData.percentOfSummerDaysOfRain = Util.roundTwoDecimalPlaces(totalSummerDaysOfRain/totalSummerDays);
-			rainDaysData.percentOfWinterDaysOfRain = Util.roundTwoDecimalPlaces(totalWinterDaysOfRain/totalWinterDays);
+			rainDaysData.percentOfAnnualDaysOfRain = Util.roundTwoDecimalPlaces(100*totalDaysOfRain/365);
+			rainDaysData.percentOfSummerDaysOfRain = Util.roundTwoDecimalPlaces(100*totalSummerDaysOfRain/totalSummerDays);
+			rainDaysData.percentOfWinterDaysOfRain = Util.roundTwoDecimalPlaces(100*totalWinterDaysOfRain/totalWinterDays);
 			RAIN_DAYS_LIST.add(rainDaysData);
 		}		
 	}
