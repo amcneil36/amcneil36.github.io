@@ -35,6 +35,8 @@ public class NOAANormalsReader extends CityStats {
 		double longitude;
 		int hottestMonthAvgHigh;
 		int coldestMonthAvgHigh;
+		int hottestMonthAvgLow;
+		int coldestMonthAvgLow;
 	}
 	
 	private static final List<TemperatureData> TEMPERATURE_DATA_LIST = new ArrayList<>();
@@ -55,6 +57,8 @@ public class NOAANormalsReader extends CityStats {
 			if (text.size() != 12) {
 				continue;
 			}
+			
+			populateTemperatureData(text, mapOfHeaderToIdx);
 
 			// mly-tavg-normal Long-term averages of monthly average temperature
 			// mly-tmax-normal Long-term averages of monthly maximum temperature
@@ -65,36 +69,45 @@ public class NOAANormalsReader extends CityStats {
 			// inches
 			// mly-snow-avgnds-ge001ti Monthly number of days with snowfall >= 0.1 inch
 			// what if we do % days of rain?
-			int hottestMonthAvgHigh = -4000;
-			int coldestMonthAvgHigh = 4000;
-			boolean containsMax = mapOfHeaderToIdx.containsKey(MONTHLY_MAX_TEMP);
-			// if the .csv has the max temp, it also has the min temp.
-			if (containsMax) {
-				for (String line : text) {
-					String[] arr = StringUtils.substringsBetween(line, "\"", "\"");
-					int highInt = Util.getIntFromDouble(Double.valueOf(arr[mapOfHeaderToIdx.get(MONTHLY_MAX_TEMP)]));
-					hottestMonthAvgHigh = Math.max(hottestMonthAvgHigh, highInt);
-					int coldInt = Util.getIntFromDouble(Double.valueOf(arr[mapOfHeaderToIdx.get(MONTHLY_MAX_TEMP)]));
-					coldestMonthAvgHigh = Math.min(coldestMonthAvgHigh, coldInt);
-				}
-				String[] arr = StringUtils.substringsBetween(text.get(0), "\"", "\"");
-				TemperatureData temperatureData = new TemperatureData();
-				temperatureData.latitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LATITUDE)]);
-				temperatureData.longitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LONGITUDE)]);
-				temperatureData.coldestMonthAvgHigh = coldestMonthAvgHigh;
-				temperatureData.hottestMonthAvgHigh = hottestMonthAvgHigh;
-				TEMPERATURE_DATA_LIST.add(temperatureData);
-			}
 
-		}
-		for (TemperatureData data : TEMPERATURE_DATA_LIST) {
-			if (data.hottestMonthAvgHigh < 0) {
-				System.out.println(data.hottestMonthAvgHigh);	
-			}
+
 		}
 		NOAANormalsReader reader = new NOAANormalsReader();
 		reader.processAllStates();
 
+	}
+	
+	private static void populateTemperatureData(List<String> text, Map<String, Integer> mapOfHeaderToIdx) {
+		boolean containsMax = mapOfHeaderToIdx.containsKey(MONTHLY_MAX_TEMP);
+		// if the .csv has the max temp, it also has the min temp and avg temp.
+		if (containsMax) {
+			int hottestMonthAvgHigh = -4000;
+			int coldestMonthAvgHigh = 4000;
+			int hottestMonthAvgLow = -999;
+			int coldestMonthAvgLow = -999;
+			for (String line : text) {
+				String[] arr = StringUtils.substringsBetween(line, "\"", "\"");
+				int highInt = Util.getIntFromDouble(Double.valueOf(arr[mapOfHeaderToIdx.get(MONTHLY_MAX_TEMP)]));
+				if (highInt > hottestMonthAvgHigh) {
+					hottestMonthAvgHigh = Math.max(hottestMonthAvgHigh, highInt);	
+					hottestMonthAvgLow = Util.getIntFromDouble(Double.valueOf(arr[mapOfHeaderToIdx.get(MONTHLY_MIN_TEMP)]));
+				}
+				int coldInt = Util.getIntFromDouble(Double.valueOf(arr[mapOfHeaderToIdx.get(MONTHLY_MAX_TEMP)]));
+				if (coldInt < coldestMonthAvgHigh) {
+					coldestMonthAvgHigh = Math.min(coldestMonthAvgHigh, coldInt);
+					coldestMonthAvgLow = Util.getIntFromDouble(Double.valueOf(arr[mapOfHeaderToIdx.get(MONTHLY_MIN_TEMP)]));
+				}
+			}
+			String[] arr = StringUtils.substringsBetween(text.get(0), "\"", "\"");
+			TemperatureData temperatureData = new TemperatureData();
+			temperatureData.latitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LATITUDE)]);
+			temperatureData.longitude = Double.valueOf(arr[mapOfHeaderToIdx.get(LONGITUDE)]);
+			temperatureData.coldestMonthAvgHigh = coldestMonthAvgHigh;
+			temperatureData.hottestMonthAvgHigh = hottestMonthAvgHigh;
+			temperatureData.hottestMonthAvgLow = hottestMonthAvgLow;
+			temperatureData.coldestMonthAvgLow = coldestMonthAvgLow;
+			TEMPERATURE_DATA_LIST.add(temperatureData);
+		}
 	}
 
 	private static Map<String, Integer> getMapOfHeaderToIdx(List<String> text) {
@@ -113,6 +126,8 @@ public class NOAANormalsReader extends CityStats {
 	protected void updateData(Data data, String stateName) throws Exception {
 		data.hottestMonthsHigh = "N/A";
 		data.coldestHigh = "N/A";
+		data.hottestMonthAvgLow = "N/A";
+		data.coldestMonthAvgLow = "N/A";
 		data.hottestMonthMinusColdestMonth = "N/A";
 		if (data.longitude.equals("N/A")) {
 			return;
@@ -132,6 +147,8 @@ public class NOAANormalsReader extends CityStats {
 			data.hottestMonthsHigh = String.valueOf(bestTemperatureData.hottestMonthAvgHigh);
 			data.coldestHigh = String.valueOf(bestTemperatureData.coldestMonthAvgHigh);
 			data.hottestMonthMinusColdestMonth = String.valueOf(bestTemperatureData.hottestMonthAvgHigh - bestTemperatureData.coldestMonthAvgHigh);
+			data.hottestMonthAvgLow = String.valueOf(bestTemperatureData.hottestMonthAvgLow);
+			data.coldestHigh = String.valueOf(bestTemperatureData.coldestMonthAvgLow);
 		}
 		
 	}
