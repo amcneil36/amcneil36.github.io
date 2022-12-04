@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -24,10 +25,35 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import main.java.com.hey.CityStats.Data;
+import main.java.com.hey.useful.not.needed.to.modify.much.Pojo;
 
 public class Util {
 
 	public static boolean debug = false;
+	
+	public static class Coordinate extends Pojo {
+		public double latitude;
+		public double longitude;
+	}
+	// public <U extends Number> void inspect(U u){
+	public static <T extends Coordinate> Optional<T> findBestCoordinate(List<T> coordinates, Data data, double maxDistanceAllowed){
+		Optional<T> bestCoordinate = Optional.empty();
+		double minDistance = Double.MAX_VALUE;
+		if (data.latitude.equals("N/A")) {
+			return Optional.empty();
+		}
+		double dataLatitude = Double.valueOf(data.latitude);
+		double dataLongitude = Double.valueOf(data.longitude);
+		for (T coordinate : coordinates) {
+			double distance = Util.milesBetweenCoordinates(coordinate.latitude, coordinate.longitude,
+					dataLatitude, dataLongitude);
+			if (distance < minDistance && distance < maxDistanceAllowed) {
+				bestCoordinate = Optional.of(coordinate);
+				minDistance = distance;
+			}
+		}
+		return bestCoordinate;
+	}
 	
 	public static double milesBetweenCoordinates(double lat1, double lon1, double lat2, double lon2) {
 		double dLat = Math.toRadians(lat2 - lat1);
