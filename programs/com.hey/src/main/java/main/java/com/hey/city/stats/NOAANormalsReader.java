@@ -25,6 +25,7 @@ public class NOAANormalsReader extends CityStats {
 	private static final String MONTHLY_DAYS_OF_SNOW = "mly-snow-avgnds-ge001ti";
 	private static final String LATITUDE = "latitude";
 	private static final String LONGITUDE = "longitude";
+	private static final String ELEVATION = "elevation";
 
 	public static class TemperatureData {
 		double latitude;
@@ -56,12 +57,17 @@ public class NOAANormalsReader extends CityStats {
 	public static class SnowyDaysData extends Util.Coordinate{
 		int daysOfSnowPerYear;
 	}
+	
+	public static class ElevationData extends Util.Coordinate{
+		int elevation;
+	}
 
 	private static final List<TemperatureData> TEMPERATURE_DATA_LIST = new ArrayList<>();
 	private static final List<RainInchesData> RAIN_INCHES_LIST = new ArrayList<>();
 	private static final List<SnowInchesData> _LIST = new ArrayList<>();
 	private static final List<RainDaysData> RAIN_DAYS_LIST = new ArrayList<>();
 	private static final List<SnowyDaysData> SNOWY_DAYS_LIST = new ArrayList<>();
+	private static final List<ElevationData> ELEVATION_LIST = new ArrayList<>();
 
 	public static void main(String[] args) throws Exception {
 		// USC00214546
@@ -84,8 +90,8 @@ public class NOAANormalsReader extends CityStats {
 			// populateRainInchesData(text, mapOfHeaderToIdx);
 			//populateSnowInchesData(text, mapOfHeaderToIdx);
 			//populateRainDaysData(text, mapOfHeaderToIdx);
-			populateSnowyDaysData(text, mapOfHeaderToIdx);
-
+			//populateSnowyDaysData(text, mapOfHeaderToIdx);
+			populateElevationData(text, mapOfHeaderToIdx);
 			// mly-tavg-normal Long-term averages of monthly average temperature
 			// mly-tmax-normal Long-term averages of monthly maximum temperature
 			// mly-tmin-normal Long-term averages of monthly minimum temperature
@@ -101,10 +107,19 @@ public class NOAANormalsReader extends CityStats {
 		reader.processAllStates();
 	}
 
+	private static void populateElevationData(List<String> text, Map<String, Integer> mapOfHeaderToIdx) {
+		boolean containsElevation = mapOfHeaderToIdx.containsKey(ELEVATION);
+		if (containsElevation) {
+			String line = text.get(0);
+			String[] arr = StringUtils.substringsBetween(line, "\"", "\"");
+			ElevationData elevationData = new ElevationData();
+			elevationData.elevation = Util.getIntFromDouble(Double.valueOf(arr[mapOfHeaderToIdx.get(ELEVATION)]));
+			ELEVATION_LIST.add(elevationData);
+		}		
+	}
+
 	private static void populateSnowyDaysData(List<String> text, Map<String, Integer> mapOfHeaderToIdx) {
 		boolean containsSnowDays = mapOfHeaderToIdx.containsKey(MONTHLY_DAYS_OF_SNOW);
-		// 5 6 7 for summer
-		// 0 1 11 for winter
 		if (containsSnowDays) {
 			int totalDaysOfSnow = 0;
 			for (String line : text) {
@@ -265,6 +280,7 @@ public class NOAANormalsReader extends CityStats {
 		data.percentOfSummerDaysWithRain = "N/A";
 		data.percentOfWinterDaysWithRain = "N/A";
 		data.daysOfSnowPerYear = "N/A";
+		data.feetAboveSeaLevel = "N/A";
 		if (data.longitude.equals("N/A")) {
 			return;
 		}
@@ -272,8 +288,17 @@ public class NOAANormalsReader extends CityStats {
 		// updateRainInchesData(data);
 		//updateSnowInchesData(data);
 		//updateRainDaysData(data);
-		updateSnowyDaysData(data);
+		//updateSnowyDaysData(data);
+		updateElevationData(data);
 
+	}
+
+	private void updateElevationData(Data data) {
+		Optional<ElevationData> elevationData = Util.findBestCoordinate(ELEVATION_LIST, data,
+				MAX_ALLOWED_DISTANCE_MILES);
+		if (elevationData.isPresent()) {
+			data.feetAboveSeaLevel = String.valueOf(elevationData.get().elevation);
+		}
 	}
 
 	private void updateSnowyDaysData(Data data) {
