@@ -43,13 +43,13 @@ public class HeatIndex extends CityStats {
 	// this should maybe go in the RH folder? RH doesn't know which month is the hottest though.
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
-		data.averageSummerHighHeatIndex = "N/A";
-		if (data.hottestMonthsHigh.equals("N/A") || data.averageSummerHighHeatIndex.equals("N/A")) {
+		data.hottestMonthsHeatIndexHigh = "N/A";
+		if (data.hottestMonthsHigh.equals("N/A") || data.summerHumidityPercent.equals("N/A")) {
 			return;
 		}
 		double rh = Double.valueOf(data.summerHumidityPercent.replace("%", ""));
 		double temp = Double.valueOf(data.hottestMonthsHigh);
-		data.averageSummerHighHeatIndex = String.valueOf(getHeatIndex(temp, rh));
+		data.hottestMonthsHeatIndexHigh = String.valueOf(getHeatIndex(temp, rh));
 		
 	}
 

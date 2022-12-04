@@ -113,6 +113,7 @@ public abstract class GenericStats extends GenericStatsSuper {
 		WeightedAverage percentOfSummerDaysWithRain = new WeightedAveragePercent();
 		WeightedAverage percentOfWinterDaysWithRain = new WeightedAveragePercent();
 		WeightedAverage numberOfDaysOfSnowPerYear = new WeightedAverage();
+		WeightedAverage hottestMonthsHeatIndexHigh = new WeightedAverage();
 	}
 
 	@Override
@@ -166,6 +167,7 @@ public abstract class GenericStats extends GenericStatsSuper {
 		stats.percentOfSummerDaysWithRain.addCity(data, data.percentOfSummerDaysWithRain);
 		stats.percentOfWinterDaysWithRain.addCity(data, data.percentOfWinterDaysWithRain);
 		stats.numberOfDaysOfSnowPerYear.addCity(data, data.daysOfSnowPerYear);
+		stats.hottestMonthsHeatIndexHigh.addCity(data, data.hottestMonthsHeatIndexHigh);
 
 	}
 
@@ -221,6 +223,7 @@ public abstract class GenericStats extends GenericStatsSuper {
 		arr[mapOfNameToIdx.get(PERCENT_OF_SUMMER_DAYS_WITH_RAIN)] = stat.percentOfSummerDaysWithRain;
 		arr[mapOfNameToIdx.get(PERCENT_OF_WINTER_DAYS_WITH_RAIN)] = stat.percentOfWinterDaysWithRain;
 		arr[mapOfNameToIdx.get(DAYS_OF_SNOW_PER_YEAR)] = stat.numberOfDaysOfSnowPerYear;
+		arr[mapOfNameToIdx.get(HOTTEST_MONTHS_HEAT_INDEX_HIGH)] = stat.hottestMonthsHeatIndexHigh;
 	}
 
 	@Override
@@ -233,7 +236,7 @@ public abstract class GenericStats extends GenericStatsSuper {
 				SUMMER_SUNSHINE, WINTER_SUNSHINE, ANNUAL_HUMIDITY, SUMMER_HUMIDITY, ANNUAL_THUNDERSTORMS,
 				ANNUAL_DEW_POINT, SUMMER_DEW_POINT, HOTTEST_MONTH_AVG_LOW, COLDEST_MONTH_AVG_LOW, SUMMER_RAINFALL,
 				WINTER_RAINFALL, PERCENT_OF_DAYS_WITH_RAIN, PERCENT_OF_SUMMER_DAYS_WITH_RAIN,
-				PERCENT_OF_WINTER_DAYS_WITH_RAIN, DAYS_OF_SNOW_PER_YEAR };
+				PERCENT_OF_WINTER_DAYS_WITH_RAIN, DAYS_OF_SNOW_PER_YEAR, HOTTEST_MONTHS_HEAT_INDEX_HIGH };
 	}
 
 }
