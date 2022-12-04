@@ -63,6 +63,8 @@ public abstract class CityStats extends CityStatsSuper {
 		public String summerDewPoint = "N/A";
 		public String hottestMonthAvgLow = "N/A";
 		public String coldestMonthAvgLow = "N/A";
+		public String numInchesOfRainPerSummer = "N/A";
+		public String numInchesOfRainPerWinter = "N/A";
 	}
 
 	public static final String CITY = "City";
@@ -119,16 +121,19 @@ public abstract class CityStats extends CityStatsSuper {
 	public static final String SUMMER_DEW_POINT = "Average summer dew point (F)";
 	public static final String HOTTEST_MONTH_AVG_LOW = "Hottest month's avg low (F)";
 	public static final String COLDEST_MONTH_AVG_LOW = "Coldest month's avg low (F)";
+	public static final String SUMMER_RAINFALL = "Summer rainfall (in)";
+	public static final String WINTER_RAINFALL = "Winter rainfall (in)";
 
 	public String[] getOutputHeaders() {
 		return new String[] { CITY, STATE, POPULATION, POPULATION_DENSITY, METRO_NAME, METRO_POP, INCOME, BACHELORS,
 				AGE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT, HOME_AGE, HOMEOWNERSHIP_RATE, RENT, SINGLE_POPULATION,
 				VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI, POVERTY_RATE, UNEMPLOYMENT_RATE, LABOR_FORCE, COUNTY, DEMOCRAT,
 				REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH,
-				HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_SNOWFALL,
-				 WIND_SPEED, AIR_QUALITY_IDX, ELEVATION, UV_INDEX, LAND_AREA,
-				FIPS_CODE, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE, ANNUAL_HUMIDITY,
-				SUMMER_HUMIDITY, ANNUAL_THUNDERSTORMS, ANNUAL_DEW_POINT, SUMMER_DEW_POINT, HOTTEST_MONTH_AVG_LOW, COLDEST_MONTH_AVG_LOW };
+				HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_SNOWFALL, WIND_SPEED,
+				AIR_QUALITY_IDX, ELEVATION, UV_INDEX, LAND_AREA, FIPS_CODE, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE,
+				SUMMER_SUNSHINE, WINTER_SUNSHINE, ANNUAL_HUMIDITY, SUMMER_HUMIDITY, ANNUAL_THUNDERSTORMS,
+				ANNUAL_DEW_POINT, SUMMER_DEW_POINT, HOTTEST_MONTH_AVG_LOW, COLDEST_MONTH_AVG_LOW, SUMMER_RAINFALL,
+				WINTER_RAINFALL };
 	}
 
 	@Override
@@ -245,6 +250,8 @@ public abstract class CityStats extends CityStatsSuper {
 		arr[mapOfNameToIndex.get(SUMMER_DEW_POINT)] = data.summerDewPoint;
 		arr[mapOfNameToIndex.get(HOTTEST_MONTH_AVG_LOW)] = data.hottestMonthAvgLow;
 		arr[mapOfNameToIndex.get(COLDEST_MONTH_AVG_LOW)] = data.coldestMonthAvgLow;
+		arr[mapOfNameToIndex.get(SUMMER_RAINFALL)] = data.numInchesOfRainPerSummer;
+		arr[mapOfNameToIndex.get(WINTER_RAINFALL)] = data.numInchesOfRainPerWinter;
 	}
 
 }
