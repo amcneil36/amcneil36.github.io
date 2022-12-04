@@ -283,11 +283,12 @@ public abstract class CityStatsSuper {
 		int i = 0;
 		String line;
 		while ((line = br.readLine()) != null) {
+			i++;
 			String[] arr = line.split(",");
 			Data data = new Data();
 			readDataFromMap(mapOfNameToIndex, arr, data);
 			if (i == ERROR_HANDLE_IDX) {
-				validateAllFieldsWereRead(arr);
+				validateAllFieldsWereRead(arr, header);
 			}
 			dataList.add(data);
 		}
@@ -297,11 +298,13 @@ public abstract class CityStatsSuper {
 
 	private static final String PROCESSED_NODE = "processed node here 239487";
 
-	private void validateAllFieldsWereRead(String[] arr) {
+	private void validateAllFieldsWereRead(String[] arr, String header) {
 		int i = 0;
+		
 		for (String st : arr) {
 			if (!st.equals(PROCESSED_NODE)) {
-				throw new RuntimeException("didn't read all data! found: " + st + " at idx " + i);
+				String[] headerArr = header.split(",");
+				throw new RuntimeException("didn't read all data! found: " + st + " at idx " + headerArr[i]);
 			}
 			i++;
 		}
