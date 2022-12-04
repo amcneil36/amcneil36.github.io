@@ -18,6 +18,8 @@ public class FBICrimeStats extends CityStats{
 	
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
+		data.fbiPropertyCrimeRate = "N/A";
+		data.fbiViolentCrimeRate = "N/A";
 		if (!mapOfStateToMap.containsKey(stateName)) {
 			populateMapWithState(stateName);
 		}

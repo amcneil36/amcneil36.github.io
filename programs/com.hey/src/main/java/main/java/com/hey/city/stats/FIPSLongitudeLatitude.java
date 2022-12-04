@@ -133,6 +133,9 @@ public class FIPSLongitudeLatitude extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
+		data.fipsCode ="N/A";
+		data.longitude ="N/A";
+		data.latitude ="N/A";
 		String key = getKey(data.cityName, data.stateName, data.countyName);
 		if (stateName.equals("District of Columbia")) {
 			System.out.println(key);

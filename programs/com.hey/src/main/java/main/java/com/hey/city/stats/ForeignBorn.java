@@ -23,6 +23,7 @@ public class ForeignBorn extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
+		data.foreignBornPercent = "N/A";
 		if (!mapOfFipsCodeToResult.containsKey(data.fipsCode)) {
 			return;
 		}

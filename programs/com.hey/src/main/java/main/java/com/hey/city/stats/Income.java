@@ -21,6 +21,7 @@ public class Income extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
+		data.medianIncome = "N/A";
 		String fips = data.fipsCode;
 		if (mapOfFipsCodeToResult.containsKey(fips)) {
 			Result result = mapOfFipsCodeToResult.get(fips);

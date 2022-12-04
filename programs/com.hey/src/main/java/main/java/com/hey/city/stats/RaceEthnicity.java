@@ -22,6 +22,10 @@ public class RaceEthnicity extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
+		data.percentWhite = "N/A";
+		data.percentBlack = "N/A";
+		data.percentAsian = "N/A";
+		data.percentHispanic = "N/A";
 		if (!mapOfFipsCodeToResult.containsKey(data.fipsCode)) {
 			return;
 		}

@@ -26,6 +26,7 @@ public class BachelorsDegree extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
+		data.percentWithAtleastBachelors = "N/A";
 		if (!mapOfFipsCodeToResult.containsKey(data.fipsCode)) {
 			return;
 		}

@@ -33,6 +33,7 @@ public class HomeOwnershipRate extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
+		data.homeOwnershipRate = "N/A";
 		if (mapOfFipsCodeToResult.containsKey(data.fipsCode)) {
 			Result result = mapOfFipsCodeToResult.get(data.fipsCode);
 			data.homeOwnershipRate = getHomeOwnershipRateFromResult(result);
