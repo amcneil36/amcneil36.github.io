@@ -205,6 +205,7 @@ public abstract class CityStats extends CityStatsSuper {
 		data.percentOfDaysWithRain = read(arr, mapOfNameToIndex, PERCENT_OF_DAYS_WITH_RAIN);
 		data.percentOfSummerDaysWithRain = read(arr, mapOfNameToIndex, PERCENT_OF_SUMMER_DAYS_WITH_RAIN);
 		data.percentOfWinterDaysWithRain = read(arr, mapOfNameToIndex, PERCENT_OF_WINTER_DAYS_WITH_RAIN);
+		data.daysOfSnowPerYear = read(arr, mapOfNameToIndex, DAYS_OF_SNOW_PER_YEAR);
 	}
 
 	@Override
