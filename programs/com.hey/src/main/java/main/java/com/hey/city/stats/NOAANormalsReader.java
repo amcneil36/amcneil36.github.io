@@ -13,7 +13,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import main.java.com.hey.CityStats;
 import main.java.com.hey.Util;
-import main.java.com.hey.city.stats.Thunderstorms.ThunderstormData;
 
 public class NOAANormalsReader extends CityStats {
 
@@ -90,6 +89,9 @@ public class NOAANormalsReader extends CityStats {
 			}
 
 		}
+		
+		NOAANormalsReader reader = new NOAANormalsReader();
+		reader.processAllStates();
 
 	}
 
