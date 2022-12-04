@@ -2,7 +2,6 @@ package main.java.com.hey;
 
 import static main.java.com.hey.CityStats.*;
 import static main.java.com.hey.CityStats.AIR_QUALITY_IDX;
-import static main.java.com.hey.CityStats.ANNUAL_DAYS_OF_PRECIPITATION;
 import static main.java.com.hey.CityStats.ANNUAL_DEW_POINT;
 import static main.java.com.hey.CityStats.ANNUAL_HUMIDITY;
 import static main.java.com.hey.CityStats.ANNUAL_RAINFALL;
@@ -123,7 +122,6 @@ public abstract class GenericStats extends GenericStatsSuper {
 		stats.coldestHigh.addCity(data, data.coldestHigh);
 		stats.numInchesOfRain.addCity(data, data.numInchesOfRain);
 		stats.annualSnowfall.addCity(data, data.annualSnowfall);
-		stats.numDaysOfRain.addCity(data, data.numDaysOfRain);
 		stats.avgYearlyWindspeed.addCity(data, data.avgYearlyWindspeed);
 		stats.medianAge.addCity(data, data.medianAge);
 		stats.percentWithAtleastBachelors.addCity(data, data.percentWithAtleastBachelors);
@@ -177,7 +175,6 @@ public abstract class GenericStats extends GenericStatsSuper {
 		arr[mapOfNameToIdx.get(HOTTEST_MONTH)] = stat.hottestMonthsHigh;
 		arr[mapOfNameToIdx.get(COLDEST_MONTH)] = stat.coldestHigh;
 		arr[mapOfNameToIdx.get(ANNUAL_RAINFALL)] = stat.numInchesOfRain;
-		arr[mapOfNameToIdx.get(ANNUAL_DAYS_OF_PRECIPITATION)] = stat.numDaysOfRain;
 		arr[mapOfNameToIdx.get(ANNUAL_SNOWFALL)] = stat.annualSnowfall;
 		arr[mapOfNameToIdx.get(WIND_SPEED)] = stat.avgYearlyWindspeed;
 		arr[mapOfNameToIdx.get(AGE)] = stat.medianAge;
@@ -232,10 +229,11 @@ public abstract class GenericStats extends GenericStatsSuper {
 				HOME_AGE, HOMEOWNERSHIP_RATE, RENT, SINGLE_POPULATION, VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI,
 				POVERTY_RATE, UNEMPLOYMENT_RATE, LABOR_FORCE, DEMOCRAT, REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC,
 				FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH, HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL,
-				ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_SNOWFALL, WIND_SPEED, AIR_QUALITY_IDX, UV_INDEX, LATITUDE,
-				LONGITUDE, ANNUAL_SUNSHINE, SUMMER_SUNSHINE, WINTER_SUNSHINE, ANNUAL_HUMIDITY, SUMMER_HUMIDITY,
-				ANNUAL_THUNDERSTORMS, ANNUAL_DEW_POINT, SUMMER_DEW_POINT, HOTTEST_MONTH_AVG_LOW, COLDEST_MONTH_AVG_LOW,
-				SUMMER_RAINFALL, WINTER_RAINFALL, PERCENT_OF_DAYS_WITH_RAIN, PERCENT_OF_SUMMER_DAYS_WITH_RAIN, PERCENT_OF_WINTER_DAYS_WITH_RAIN, DAYS_OF_SNOW_PER_YEAR };
+				ANNUAL_SNOWFALL, WIND_SPEED, AIR_QUALITY_IDX, UV_INDEX, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE,
+				SUMMER_SUNSHINE, WINTER_SUNSHINE, ANNUAL_HUMIDITY, SUMMER_HUMIDITY, ANNUAL_THUNDERSTORMS,
+				ANNUAL_DEW_POINT, SUMMER_DEW_POINT, HOTTEST_MONTH_AVG_LOW, COLDEST_MONTH_AVG_LOW, SUMMER_RAINFALL,
+				WINTER_RAINFALL, PERCENT_OF_DAYS_WITH_RAIN, PERCENT_OF_SUMMER_DAYS_WITH_RAIN,
+				PERCENT_OF_WINTER_DAYS_WITH_RAIN, DAYS_OF_SNOW_PER_YEAR };
 	}
 
 }

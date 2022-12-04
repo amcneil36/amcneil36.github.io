@@ -299,7 +299,6 @@ public class CityVsUSAComparison {
 				inputData.decemberHigh = Integer.valueOf(data.coldestHigh);
 				inputData.augustHighMinusDecemberHigh = Integer.valueOf(data.hottestMonthMinusColdestMonth);
 				inputData.annualInchesOfRain = Integer.valueOf(data.numInchesOfRain);
-				inputData.daysOfRain = Integer.valueOf(data.numDaysOfRain);
 				inputData.annualSnowfall = Integer.valueOf(data.annualSnowfall);
 				inputData.yearlyWindspeed = getValidInt(data.avgYearlyWindspeed);
 				inputData.medianAge = getValidInt(data.medianAge);

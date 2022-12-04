@@ -15,7 +15,6 @@ public abstract class CityStats extends CityStatsSuper {
 		public String coldestHigh = "N/A";
 		public String numInchesOfRain = "N/A";
 		public String annualSnowfall = "N/A";
-		public String numDaysOfRain = "N/A";
 		public String population = "N/A";
 		public String populationDensity = "N/A";
 		public String medianIncome = "N/A";
@@ -81,7 +80,6 @@ public abstract class CityStats extends CityStatsSuper {
 	public static final String COLDEST_MONTH = "Coldest month's avg high (F)";
 	public static final String HOTTEST_MINUS_COLDEST = "Hottest high minus coldest high";
 	public static final String ANNUAL_RAINFALL = "Annual rainfall (in)";
-	public static final String ANNUAL_DAYS_OF_PRECIPITATION = "Annual days of precipitation";
 	public static final String ANNUAL_SNOWFALL = "Annual snowfall (in)";
 	public static final String WIND_SPEED = "Average yearly windspeed (mph)";
 	public static final String AGE = "Median age";
@@ -137,7 +135,7 @@ public abstract class CityStats extends CityStatsSuper {
 				AGE, HOME_PRICE, HOME_SQFT, COST_PER_SQFT, HOME_AGE, HOMEOWNERSHIP_RATE, RENT, SINGLE_POPULATION,
 				VIOLENT_CRIMES_FBI, PROPERTY_CRIMES_FBI, POVERTY_RATE, UNEMPLOYMENT_RATE, LABOR_FORCE, COUNTY, DEMOCRAT,
 				REPUBLICAN, ASIAN, BLACK, WHITE, HISPANIC, FOREIGN_BORN, TIME_ZONE, HOTTEST_MONTH, COLDEST_MONTH,
-				HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_DAYS_OF_PRECIPITATION, ANNUAL_SNOWFALL, WIND_SPEED,
+				HOTTEST_MINUS_COLDEST, ANNUAL_RAINFALL, ANNUAL_SNOWFALL, WIND_SPEED,
 				AIR_QUALITY_IDX, ELEVATION, UV_INDEX, LAND_AREA, FIPS_CODE, LATITUDE, LONGITUDE, ANNUAL_SUNSHINE,
 				SUMMER_SUNSHINE, WINTER_SUNSHINE, ANNUAL_HUMIDITY, SUMMER_HUMIDITY, ANNUAL_THUNDERSTORMS,
 				ANNUAL_DEW_POINT, SUMMER_DEW_POINT, HOTTEST_MONTH_AVG_LOW, COLDEST_MONTH_AVG_LOW, SUMMER_RAINFALL,
@@ -156,7 +154,6 @@ public abstract class CityStats extends CityStatsSuper {
 		data.coldestHigh = read(arr, mapOfNameToIndex, COLDEST_MONTH);
 		data.hottestMonthMinusColdestMonth = read(arr, mapOfNameToIndex, HOTTEST_MINUS_COLDEST);
 		data.numInchesOfRain = read(arr, mapOfNameToIndex, ANNUAL_RAINFALL);
-		data.numDaysOfRain = read(arr, mapOfNameToIndex, ANNUAL_DAYS_OF_PRECIPITATION);
 		data.annualSnowfall = read(arr, mapOfNameToIndex, ANNUAL_SNOWFALL);
 		data.avgYearlyWindspeed = read(arr, mapOfNameToIndex, WIND_SPEED);
 		data.medianAge = read(arr, mapOfNameToIndex, AGE);
@@ -220,7 +217,6 @@ public abstract class CityStats extends CityStatsSuper {
 		arr[mapOfNameToIndex.get(COLDEST_MONTH)] = data.coldestHigh;
 		arr[mapOfNameToIndex.get(HOTTEST_MINUS_COLDEST)] = data.hottestMonthMinusColdestMonth;
 		arr[mapOfNameToIndex.get(ANNUAL_RAINFALL)] = data.numInchesOfRain;
-		arr[mapOfNameToIndex.get(ANNUAL_DAYS_OF_PRECIPITATION)] = data.numDaysOfRain;
 		arr[mapOfNameToIndex.get(ANNUAL_SNOWFALL)] = data.annualSnowfall;
 		arr[mapOfNameToIndex.get(WIND_SPEED)] = data.avgYearlyWindspeed;
 		arr[mapOfNameToIndex.get(AGE)] = data.medianAge;
