@@ -25,6 +25,13 @@ public class RelativeHumidity extends CityStats {
 	}
 
 	public static void main(String[] args) throws Exception {
+		populateRHList();
+
+		RelativeHumidity rh = new RelativeHumidity();
+		rh.processAllStates();
+	}
+
+	private static void populateRHList() throws Exception {
 		List<String> text = Util.readTextFromFile(
 				"C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\WeatherData\\relativeHumidity.txt");
 		text.remove(0); // first line is headers
@@ -63,9 +70,6 @@ public class RelativeHumidity extends CityStats {
 				}
 			}
 		}
-
-		RelativeHumidity rh = new RelativeHumidity();
-		rh.processAllStates();
 	}
 
 	private static List<Integer> getRelativeHumidities(String[] arrFoo) {
