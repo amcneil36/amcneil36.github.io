@@ -105,6 +105,7 @@ public class FIPSLongitudeLatitude extends CityStats {
 			}
 			String stateAcronym = lines[8];
 			String county = lines[11];
+
 			FipsData fipsData = new FipsData();
 			fipsData.latitude = lines[12];
 			fipsData.longitude = lines[13];
@@ -117,6 +118,9 @@ public class FIPSLongitudeLatitude extends CityStats {
 				continue;
 			}
 			String stateName = map.get(stateAcronym.toLowerCase());
+			if (county.equals("District of Columbia County") && city.equals("washington")) {
+				stateName = "District of Columbia";
+			}
 			String key = getKey(city, stateName, county);
 			fipsData.fipsCode = stateAcronym + "-" + fipsSuffix;
 			mapOfEntityToFipsData.put(key, fipsData);
@@ -130,6 +134,9 @@ public class FIPSLongitudeLatitude extends CityStats {
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
 		String key = getKey(data.cityName, data.stateName, data.countyName);
+		if (stateName.equals("District of Columbia")) {
+			System.out.println(key);
+		}
 		if (mapOfEntityToFipsData.containsKey(key)) {
 			FipsData fipsData = mapOfEntityToFipsData.get(key);
 			data.fipsCode = fipsData.fipsCode;

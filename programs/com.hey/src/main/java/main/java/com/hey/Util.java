@@ -296,15 +296,12 @@ public class Util {
 	}
 
 	public static List<String> readTextFromFile(String filePath) throws Exception {
-		File myObj = new File(filePath);
-		Scanner myReader = new Scanner(myObj);
 		List<String> list = new ArrayList<>();
 		BufferedReader br = new BufferedReader(new FileReader(new File(filePath)));
 		String line;
 		while ((line = br.readLine()) != null) {
 			list.add(line);
 		}
-		myReader.close();
 		br.close();
 		return list;
 	}

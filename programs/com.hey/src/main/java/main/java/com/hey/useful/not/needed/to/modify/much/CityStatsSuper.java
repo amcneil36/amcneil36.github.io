@@ -1,12 +1,13 @@
 package main.java.com.hey.useful.not.needed.to.modify.much;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.useful.not.needed.to.modify.much.GenericStatsSuper.WeightedAverage;
@@ -127,21 +128,11 @@ public abstract class CityStatsSuper {
 
 	public void processState(String stateName) throws Exception {
 		List<Data> dataList = readData(stateName);
-		try {
-			UpdatePrinter updatePrinter = new UpdatePrinter(dataList.size(), stateName);
-			int idx = 0;
-			for (Data data : dataList) {
-				updateData(data, stateName);
-				updatePrinter.printUpdateIfNeeded();
-				idx++;
-				if (idx % 30 == 0) {
-				//	writeData(dataList, stateName, false);
-				}
-			}
-		} finally {
-			writeData(dataList, stateName, true);
-			runCleanup();
+		for (Data data : dataList) {
+			updateData(data, stateName);
 		}
+		writeData(dataList, stateName, true);
+		runCleanup();
 	}
 
 	protected void runCleanup() {
@@ -258,11 +249,11 @@ public abstract class CityStatsSuper {
 		if (idx == ERROR_HANDLE_IDX) {
 			for (int i = 0; i < arr.length; i++) {
 				arr[i] = UNPROCESSED_NODE;
-			}	
+			}
 		}
 		writeDataToArray(data, mapOfNameToIndex, arr);
 		if (idx == ERROR_HANDLE_IDX) {
-			validateAllFieldsWereWrittenTo(arr);	
+			validateAllFieldsWereWrittenTo(arr);
 		}
 
 		for (String st : arr) {
@@ -286,23 +277,21 @@ public abstract class CityStatsSuper {
 		List<Data> dataList = new ArrayList<>();
 		String filePath = "C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\CityStats\\States\\" + stateName
 				+ ".csv";
-		File myObj = new File(filePath);
-		Scanner myReader = new Scanner(myObj);
-		String header = myReader.nextLine(); //
+		BufferedReader br = new BufferedReader(new FileReader(new File(filePath)));
+		String header = br.readLine(); //
 		Map<String, Integer> mapOfNameToIndex = createMapOfNameToIndex(header);
 		int i = 0;
-		while (myReader.hasNextLine()) {
-			String line = myReader.nextLine();
+		String line;
+		while ((line = br.readLine()) != null) {
 			String[] arr = line.split(",");
 			Data data = new Data();
 			readDataFromMap(mapOfNameToIndex, arr, data);
 			if (i == ERROR_HANDLE_IDX) {
-				validateAllFieldsWereRead(arr);	
+				validateAllFieldsWereRead(arr);
 			}
 			dataList.add(data);
-			i++;
 		}
-		myReader.close();
+		br.close();
 		return dataList;
 	}
 
