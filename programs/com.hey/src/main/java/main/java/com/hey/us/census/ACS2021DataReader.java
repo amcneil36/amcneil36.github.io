@@ -36,7 +36,7 @@ public class ACS2021DataReader {
 		}
 	}
 	
-	public static Map<String, Result> getResults(String[] variables) throws Exception{
+	public static List<Map<String, String>> getResultsReusable(String[] variables) throws Exception{
 		String url = "https://api.census.gov/data/2020/acs/acs5?get=NAME";
 		for (String variable : variables) {
 			url += ",";
@@ -44,7 +44,7 @@ public class ACS2021DataReader {
 				url += variable.substring(0, variable.indexOf("("));	
 			}
 			else {
-				url += variable;
+				throw new RuntimeException("missing description!");
 			}
 		}
 		url += "&for=place:*";
@@ -52,16 +52,35 @@ public class ACS2021DataReader {
 		String text = Jsoup.connect(url).ignoreContentType(true).maxBodySize(0).timeout(0).get().text();
 		text = text.replace("],", "],\n");
 		List<String> elements = new ArrayList<String>(Arrays.asList(text.split("\n")));
+		Map<Integer, String> mapOfIdxToHeader = new HashMap<>();
+		String header = elements.get(0);
+		String[] headerArr = StringUtils.substringsBetween(header, "\"", "\"");
+		for (int i = 0; i < headerArr.length; i++) {
+			mapOfIdxToHeader.put(i, headerArr[i]);
+		}
 		elements.remove(0);
-		elements.set(elements.size() - 1, (elements.get(elements.size() - 1).replace("]]", "]")));
-		Map<String, Result> elementsMap = new HashMap<>();
+		List<Map<String, String>> resultsList = new ArrayList<>();
 		for (String st : elements) {
-			st = st.replace("\",", ">").replace("],", ">").replace(" [", "").replace("\"", "").replace("]", ">");
-			if (st.contains("government")) {
+			if (st.contains("government") || st.contains("Puerto Rico")) {
 				continue;
 			}
-			String[] row = st.split(">");
-			String str = row[0];
+			String[] row = StringUtils.substringsBetween(st , "\"", "\"");
+			Map<String, String> resultMap = new HashMap<>();
+			for (int i = 0; i < row.length; i++) {
+				String value = row[i];
+				String headerName = mapOfIdxToHeader.get(i);
+				resultMap.put(headerName, value);
+			}
+			resultsList.add(resultMap);
+		}
+		return resultsList;
+	}
+	
+	public static Map<String, Result> getResults(String[] variables) throws Exception{
+		List<Map<String, String>> resultsList = getResultsReusable(variables);
+		Map<String, Result> elementsMap = new HashMap<>();
+		for (Map<String, String> map : resultsList) {
+			String str = map.get("NAME");
 			if (StringUtils.countMatches(str, ",") > 1) {
 				continue;
 			}
@@ -73,13 +92,11 @@ public class ACS2021DataReader {
 			Result result = new Result();
 			result.city = str.substring(0, str.indexOf(","));
 			result.state = str.substring(str.indexOf(",") + 2);
-			if (result.state.equals("Puerto Rico")) {
-				continue;
-			}
 			String abbrev = Util.getStateAbbreviation(result.state).toUpperCase();
-			result.fipsCode = abbrev + "-" + row[row.length-1];
-			for (int i = 1; i < row.length-2; i++) {
-				result.results.put(variables[i-1], row[i]);
+			result.fipsCode = abbrev + "-" + map.get("place");
+			for (int i = 0; i < variables.length; i++) {
+				String colName = variables[i].substring(0, variables[i].indexOf("("));
+				result.results.put(variables[i], map.get(colName));
 			}
 			elementsMap.put(result.fipsCode, result);
 		}
