@@ -2,7 +2,9 @@ package main.java.com.hey.us.census;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -98,64 +100,76 @@ public class ACS2021DataReader {
 		}
 		return elementsMap;
 	}
-	
+
 	// 33120 of these
 	private static List<Map<String, String>> getZipCodes(String[] variables) throws Exception {
 		return getResultsReusable(variables, "&for=zip%20code%20tabulation%20area:*");
 	}
-	
+
 	// 31606 of these
 	public static List<Map<String, String>> getPlaces(String[] variables) throws Exception {
 		return getResultsReusable(variables, "&for=place:*");
 
 	}
-	
+
 	// 10895 of these
 	private static List<Map<String, String>> getSchoolDistricts(String[] variables) throws Exception {
 		return getResultsReusable(variables, "&for=school%20district%20(unified):*");
 	}
-	
+
 	// 3143 of these
 	private static List<Map<String, String>> getCounties(String[] variables) throws Exception {
 		return getResultsReusable(variables, "&for=county:*");
 	}
-	
+
 	// 939 of these
 	private static List<Map<String, String>> getMetrosAndMicros(String[] variables) throws Exception {
-		return getResultsReusable(variables, "&for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*");
+		return getResultsReusable(variables,
+				"&for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*");
 	}
-	
+
 	// 175 of these
 	private static List<Map<String, String>> getCombinedStatisticalAreas(String[] variables) throws Exception {
 		return getResultsReusable(variables, "&for=combined%20statistical%20area:*");
 	}
-	
+
 	// 51 of these
 	private static List<Map<String, String>> getStates(String[] variables) throws Exception {
 		return getResultsReusable(variables, "&for=state:*");
 	}
-	
+
 	// 4 of these
 	private static List<Map<String, String>> getRegions(String[] variables) throws Exception {
 		return getResultsReusable(variables, "&for=region:*");
 	}
-	
+
 	// 1 of these
 	private static List<Map<String, String>> getCountry(String[] variables) throws Exception {
 		return getResultsReusable(variables, "&for=us:*");
 	}
 
 	public static void main(String[] args) throws Exception {
-		String[] variables = new String[] { "B25010_001E(household size)" };
-		List<Map<String, String>> elementsList = getRegions(variables);
-		System.out.println(elementsList.size());
-		for (Map<String, String> elementsMap : elementsList) {
-			String name = elementsMap.get("NAME");
-			if (name.contains("Weston") && name.contains("Florida")) {
-				System.out.println(elementsMap);
+		String[] variables = new String[] { "B20017B_001E(median earnings by black women)",
+				"B02001_003E(number of black people)", ACS2021DataReader.POPULATION };
+		List<Map<String, String>> elementsList = getCombinedStatisticalAreas(variables);
+		Iterator<Map<String, String>> iterator = elementsList.iterator();
+		while (iterator.hasNext()) {
+			Map<String, String> map = iterator.next();
+			int numBlackPeople = Integer.valueOf(map.get("B02001_003E(number of black people)"));
+			if (numBlackPeople < 1000 || map.get("B20017B_001E(median earnings by black women)").contains("-")) {
+				iterator.remove();
 			}
 		}
-
+		Collections.sort(elementsList, (a, b) -> Integer.valueOf(b.get("B20017B_001E(median earnings by black women)"))
+				- Integer.valueOf(a.get("B20017B_001E(median earnings by black women)")));
+		for (Map<String, String> map : elementsList) {
+			int income = Integer.valueOf(map.get("B20017B_001E(median earnings by black women)"));
+			double totalBlackPopulation = Integer.valueOf(map.get("B02001_003E(number of black people)"));
+			double totalPopulation = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
+			double percentBlack = Util.roundTwoDecimalPlaces(100 * totalBlackPopulation / totalPopulation);
+			System.out.println(map.get("NAME") + ": population=" + Util.getIntFromDouble(totalPopulation)
+					+ ", percent_black=" + percentBlack + "%" + ", median_income_of_black_women=$" + income);
+		}
 	}
 
 }
