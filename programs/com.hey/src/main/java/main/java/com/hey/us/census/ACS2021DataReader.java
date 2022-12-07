@@ -36,6 +36,7 @@ public class ACS2021DataReader {
 		}
 	}
 	
+	// lets update code to add in the parenthesis stuff. first cols are always our stuff. rest are not.
 	public static List<Map<String, String>> getResultsReusable(String[] variables) throws Exception{
 		String url = "https://api.census.gov/data/2020/acs/acs5?get=NAME";
 		for (String variable : variables) {
@@ -50,14 +51,9 @@ public class ACS2021DataReader {
 		url += "&for=place:*";
 		System.out.println(url);
 		String text = Jsoup.connect(url).ignoreContentType(true).maxBodySize(0).timeout(0).get().text();
-		text = text.replace("],", "],\n");
+		text = text.replace("],", "],\n"); // keep this in
 		List<String> elements = new ArrayList<String>(Arrays.asList(text.split("\n")));
-		Map<Integer, String> mapOfIdxToHeader = new HashMap<>();
-		String header = elements.get(0);
-		String[] headerArr = StringUtils.substringsBetween(header, "\"", "\"");
-		for (int i = 0; i < headerArr.length; i++) {
-			mapOfIdxToHeader.put(i, headerArr[i]);
-		}
+		String[] headers = StringUtils.substringsBetween(elements.get(0) , "\"", "\"");
 		elements.remove(0);
 		List<Map<String, String>> resultsList = new ArrayList<>();
 		for (String st : elements) {
@@ -66,10 +62,12 @@ public class ACS2021DataReader {
 			}
 			String[] row = StringUtils.substringsBetween(st , "\"", "\"");
 			Map<String, String> resultMap = new HashMap<>();
-			for (int i = 0; i < row.length; i++) {
-				String value = row[i];
-				String headerName = mapOfIdxToHeader.get(i);
-				resultMap.put(headerName, value);
+			resultMap.put("NAME", row[0]);
+			for (int i = 0; i < variables.length; i++) {
+				resultMap.put(variables[i], row[i+1]); // i+1 because first variable is NAME
+			}
+			for (int i = variables.length; i < headers.length; i++) {
+				resultMap.put(headers[i], row[i]);
 			}
 			resultsList.add(resultMap);
 		}
@@ -94,9 +92,8 @@ public class ACS2021DataReader {
 			result.state = str.substring(str.indexOf(",") + 2);
 			String abbrev = Util.getStateAbbreviation(result.state).toUpperCase();
 			result.fipsCode = abbrev + "-" + map.get("place");
-			for (int i = 0; i < variables.length; i++) {
-				String colName = variables[i].substring(0, variables[i].indexOf("("));
-				result.results.put(variables[i], map.get(colName));
+			for (String st : variables) {
+				result.results.put(st, map.get(st));
 			}
 			elementsMap.put(result.fipsCode, result);
 		}
