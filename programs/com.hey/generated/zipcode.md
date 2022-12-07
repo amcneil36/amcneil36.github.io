@@ -1,4 +1,4 @@
-|Zip Code|Population|% Black|Median income of black women|
+|Zip code|Population|% Black|Median income of black women|
 |---|---|---|---|
 |10804|14365|11.13%|$126140|
 |95304|15533|7.71%|$108333|

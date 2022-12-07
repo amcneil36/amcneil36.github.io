@@ -1,4 +1,4 @@
-|Region|Population|% Black|Median income of black women|
+|Place|Population|% Black|Median income of black women|
 |---|---|---|---|
 |Parole CDP, Maryland|17505|6.27%|$102083|
 |Secaucus town, New Jersey|20667|5.08%|$99732|
