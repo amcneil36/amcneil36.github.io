@@ -47,9 +47,9 @@ public abstract class CensusMdGeneratorGeneric {
 
 	
 	public void doEverything() throws Exception {
-		String[] variables = getVariables();
         Util.deleteFilesInFolder("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\com.hey\\generated");
-        Util.writeTextToFile("generated//main.md", "### " + getReadMeHeaderText() + getReadMeBodyText() + getReadMeNotesText());
+		String[] variables = getVariables();
+        Util.writeTextToFile("generated//main.md", "### " + getMainHeaderText() + getMainBodyText() + getMainFooterText());
         doSuperEverythingResable(ACS2021DataReader.getZipCodes(variables), "Zip code", "zip code tabulation area",
 				"zipcode",
 				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.ZIP_CODE_SUFFIX));
@@ -72,9 +72,7 @@ public abstract class CensusMdGeneratorGeneric {
 
 	}
 
-	protected abstract String getReadMeHeaderText();
-
-	private String getReadMeBodyText() {
+	private String getMainBodyText() {
 		String st = "";
 		st += "  \n- Zip Code: [link](zipcode)  \n";
 		st += "- City/Town/CDP: [link](cityTownCDP)  \n";
@@ -87,8 +85,6 @@ public abstract class CensusMdGeneratorGeneric {
 		st += "- Country: [link](country)  \n\n";
 		return st;
 	}
-
-	protected abstract String getReadMeNotesText();
 
 	private void removeAndSort(List<Map<String, String>> elementsList) {
 		Iterator<Map<String, String>> iterator = elementsList.iterator();
@@ -108,14 +104,19 @@ public abstract class CensusMdGeneratorGeneric {
 		}
 		return st;
 	}
-
-	protected abstract Object[] getRemainingRowArray(Map<String, String> map);
+	
+	protected abstract String getMainHeaderText();
 
 	protected abstract String getRemainingHeaders();
-
-	protected abstract void sortCollection(List<Map<String, String>> elementsList);
-
-	protected abstract boolean removeRow(Map<String, String> map);
-
+	
 	protected abstract String[] getVariables();
+	
+	protected abstract boolean removeRow(Map<String, String> map);
+	
+	protected abstract String getMainFooterText();
+	
+	protected abstract void sortCollection(List<Map<String, String>> elementsList);
+	
+	protected abstract Object[] getRemainingRowArray(Map<String, String> map);
+	
 }

@@ -7,53 +7,52 @@ import java.util.Map;
 import main.java.com.hey.Util;
 import main.java.com.hey.us.census.ACS2021DataReader;
 
-public class BlackWomanMedianIncome extends CensusMdGeneratorGeneric {
+public class MedianHouseHouldIncomeBlack extends CensusMdGeneratorGeneric {
 
 	@Override
 	protected String getMainHeaderText() {
-		// TODO Auto-generated method stub
-		return "Median annual earnings of black women in the USA sorted in descending order by:";
+		return "Median household income of black households in the USA sorted in descending order by";
 	}
-	
+
 	@Override
 	protected String getRemainingHeaders() {
-		return "Population|% Black|Median income of black women|";
+		return "Population|% Black|Median household income of black households|";
 	}
-	
+
 	@Override
 	protected String[] getVariables() {
-		return new String[] { "B20017B_001E(median earnings by black women)", "B02001_003E(number of black people)",
-				ACS2021DataReader.POPULATION };
+		return new String[] { "B19013B_001E(median household income black families)",
+				"B02001_003E(number of black people)", ACS2021DataReader.POPULATION };
 	}
-	
+
 	@Override
 	protected boolean removeRow(Map<String, String> map) {
 		int numBlackPeople = Integer.valueOf(map.get("B02001_003E(number of black people)"));
-		return numBlackPeople < 1000 || map.get("B20017B_001E(median earnings by black women)").contains("-");
+		return numBlackPeople < 1000 || map.get("B19013B_001E(median household income black families)").contains("-");
 	}
-	
+
 	@Override
 	protected String getMainFooterText() {
 		return "Note: I only included places that have at least 1000 black people";
 	}
-	
+
 	@Override
 	protected void sortCollection(List<Map<String, String>> elementsList) {
-		Collections.sort(elementsList, (a, b) -> Integer.valueOf(b.get("B20017B_001E(median earnings by black women)"))
-				- Integer.valueOf(a.get("B20017B_001E(median earnings by black women)")));
+		Collections.sort(elementsList, (a, b) -> Integer.valueOf(b.get("B19013B_001E(median household income black families)"))
+				- Integer.valueOf(a.get("B19013B_001E(median household income black families)")));
 	}
-	
+
 	@Override
 	protected Object[] getRemainingRowArray(Map<String, String> map) {
-		int income = Integer.valueOf(map.get("B20017B_001E(median earnings by black women)"));
+		int income = Integer.valueOf(map.get("B19013B_001E(median household income black families)"));
 		double totalBlackPopulation = Integer.valueOf(map.get("B02001_003E(number of black people)"));
 		double totalPopulation = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
 		double percentBlack = Util.roundTwoDecimalPlaces(100 * totalBlackPopulation / totalPopulation);
 		return new Object[] { Util.getIntFromDouble(totalPopulation), percentBlack + "%", "$" + income };
 	}
-	
+
 	public static void main(String[] args) throws Exception {
-		new BlackWomanMedianIncome().doEverything();
+		new MedianHouseHouldIncomeBlack().doEverything();
 
 	}
 
