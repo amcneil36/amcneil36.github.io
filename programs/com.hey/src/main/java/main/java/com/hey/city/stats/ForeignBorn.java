@@ -15,7 +15,7 @@ public class ForeignBorn extends CityStats {
 		// number of people with a bachelors or higher is number of people where
 		// bachelors is the highest they have + num people with masters + doctoral, etc
 		// all divided by the number of people over the age of 25
-		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
+		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
 		ForeignBorn foreignBorn = new ForeignBorn();
 		foreignBorn.processAllStates();
 

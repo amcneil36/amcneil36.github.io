@@ -13,7 +13,7 @@ public class Rent extends CityStats {
 	private static String[] variables = new String[] { "B25064_001E(median gross rent)" };
 
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
+		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
 
 		Rent rent = new Rent();
 		rent.processAllStates();

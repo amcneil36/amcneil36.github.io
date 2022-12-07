@@ -18,7 +18,7 @@ public class HomeOwnershipRate extends CityStats {
 	private static String[] variables = new String[] { "B25008_001E(total in homes)", "B25008_002E(owner occupied)" };
 
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
+		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
 		HomeOwnershipRate hr = new HomeOwnershipRate();
 		hr.processAllStates();
 

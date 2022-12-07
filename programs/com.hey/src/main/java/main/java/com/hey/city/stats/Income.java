@@ -13,7 +13,7 @@ public class Income extends CityStats {
 	private static String[] variables = new String[] {ACS2021DataReader.MEDIAN_HOUSEHOLD_INCOME};
 
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
+		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
 		Income pop = new Income();
 		pop.processAllStates();
 

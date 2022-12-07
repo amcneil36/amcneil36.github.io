@@ -13,7 +13,7 @@ public class Population extends CityStats {
 	private static String[] variables = new String[] {"B01003_001E(population)"};
 	
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
+		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
 		Population pop = new Population();
 		pop.processAllStates();
 	}

@@ -13,7 +13,7 @@ public class Poverty extends CityStats {
 	private static String[] variables = new String[] {"B17020_001E(num people eligible for poverty)", "B17020_002E(num people in poverty)"};
 
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
+		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
 		Poverty poverty = new Poverty();
 		poverty.processAllStates();
 		

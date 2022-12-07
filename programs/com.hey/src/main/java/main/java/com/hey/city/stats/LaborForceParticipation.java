@@ -23,7 +23,7 @@ public class LaborForceParticipation extends CityStats {
 			"B23025_001E(total people)" };
 
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
+		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
 		LaborForceParticipation lfp = new LaborForceParticipation();
 		lfp.processAllStates();
 	}

@@ -15,7 +15,7 @@ public class MedianHomeAge extends CityStats {
 	// name: B25035_001E; label: estimate!!median year structure built; concept:
 	// median year structure built
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
+		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
 		MedianHomeAge ma = new MedianHomeAge();
 		ma.processAllStates();
 

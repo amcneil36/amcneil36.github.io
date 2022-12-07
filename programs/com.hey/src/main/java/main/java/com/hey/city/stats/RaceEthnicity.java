@@ -14,7 +14,7 @@ public class RaceEthnicity extends CityStats {
 			"B02001_003E(black)", "B02001_005E(asian)", "B03001_003E(hispanic or latino)" };
 
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
+		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
 		RaceEthnicity rn = new RaceEthnicity();
 		rn.processAllStates();
 

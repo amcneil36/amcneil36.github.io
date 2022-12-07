@@ -13,7 +13,7 @@ public class MedianAge extends CityStats {
 	private static String[] variables = new String[] { "B06002_001E(median age)" };
 
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
+		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
 		MedianAge ma = new MedianAge();
 		ma.processAllStates();
 

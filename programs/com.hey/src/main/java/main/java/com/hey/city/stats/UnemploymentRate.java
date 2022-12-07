@@ -23,7 +23,7 @@ public class UnemploymentRate extends CityStats {
 			"B23025_005E(unemployed in civilian labor force)" };
 
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
+		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
 
 		UnemploymentRate ur = new UnemploymentRate();
 		ur.processAllStates();

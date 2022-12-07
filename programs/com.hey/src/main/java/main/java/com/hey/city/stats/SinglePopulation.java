@@ -18,7 +18,7 @@ public class SinglePopulation extends CityStats{
 	private static String[] variables = new String[] { "B12001_001E(population over 15)", "B12001_004E(married men over 15)", "B12001_013E(married women over 15)"};
 
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getResults(variables);
+		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
 		SinglePopulation bd = new SinglePopulation();
 		bd.processAllStates();
 
