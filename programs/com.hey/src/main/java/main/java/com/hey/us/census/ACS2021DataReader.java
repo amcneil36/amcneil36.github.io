@@ -58,7 +58,8 @@ public class ACS2021DataReader {
 		elements.remove(0); // removing header
 		List<Map<String, String>> resultsList = new ArrayList<>();
 		for (String st : elements) {
-			if (st.contains("government") || st.contains("Puerto Rico")) {
+			// -66666666666666 is missing data
+			if (st.contains("government") || st.contains("Puerto Rico") || st.contains("-666666666")) {
 				continue;
 			}
 			String[] row = StringUtils.substringsBetween(st, "\"", "\"");
@@ -102,7 +103,7 @@ public class ACS2021DataReader {
 	}
 
 	// 33120 of these
-	private static List<Map<String, String>> getZipCodes(String[] variables) throws Exception {
+	public static List<Map<String, String>> getZipCodes(String[] variables) throws Exception {
 		return getResultsReusable(variables, "&for=zip%20code%20tabulation%20area:*");
 	}
 
@@ -113,45 +114,45 @@ public class ACS2021DataReader {
 	}
 
 	// 10895 of these
-	private static List<Map<String, String>> getSchoolDistricts(String[] variables) throws Exception {
+	public static List<Map<String, String>> getSchoolDistricts(String[] variables) throws Exception {
 		return getResultsReusable(variables, "&for=school%20district%20(unified):*");
 	}
 
 	// 3143 of these
-	private static List<Map<String, String>> getCounties(String[] variables) throws Exception {
+	public static List<Map<String, String>> getCounties(String[] variables) throws Exception {
 		return getResultsReusable(variables, "&for=county:*");
 	}
 
 	// 939 of these
-	private static List<Map<String, String>> getMetrosAndMicros(String[] variables) throws Exception {
+	public static List<Map<String, String>> getMetrosAndMicros(String[] variables) throws Exception {
 		return getResultsReusable(variables,
 				"&for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*");
 	}
 
 	// 175 of these
-	private static List<Map<String, String>> getCombinedStatisticalAreas(String[] variables) throws Exception {
+	public static List<Map<String, String>> getCombinedStatisticalAreas(String[] variables) throws Exception {
 		return getResultsReusable(variables, "&for=combined%20statistical%20area:*");
 	}
 
 	// 51 of these
-	private static List<Map<String, String>> getStates(String[] variables) throws Exception {
+	public static List<Map<String, String>> getStates(String[] variables) throws Exception {
 		return getResultsReusable(variables, "&for=state:*");
 	}
 
 	// 4 of these
-	private static List<Map<String, String>> getRegions(String[] variables) throws Exception {
+	public static List<Map<String, String>> getRegions(String[] variables) throws Exception {
 		return getResultsReusable(variables, "&for=region:*");
 	}
 
 	// 1 of these
-	private static List<Map<String, String>> getCountry(String[] variables) throws Exception {
+	public static List<Map<String, String>> getCountry(String[] variables) throws Exception {
 		return getResultsReusable(variables, "&for=us:*");
 	}
 
 	public static void main(String[] args) throws Exception {
 		String[] variables = new String[] { "B20017B_001E(median earnings by black women)",
 				"B02001_003E(number of black people)", ACS2021DataReader.POPULATION };
-		List<Map<String, String>> elementsList = getCombinedStatisticalAreas(variables);
+		List<Map<String, String>> elementsList = getCountry(variables);
 		Iterator<Map<String, String>> iterator = elementsList.iterator();
 		while (iterator.hasNext()) {
 			Map<String, String> map = iterator.next();
@@ -162,6 +163,7 @@ public class ACS2021DataReader {
 		}
 		Collections.sort(elementsList, (a, b) -> Integer.valueOf(b.get("B20017B_001E(median earnings by black women)"))
 				- Integer.valueOf(a.get("B20017B_001E(median earnings by black women)")));
+		int counter = 0;
 		for (Map<String, String> map : elementsList) {
 			int income = Integer.valueOf(map.get("B20017B_001E(median earnings by black women)"));
 			double totalBlackPopulation = Integer.valueOf(map.get("B02001_003E(number of black people)"));
@@ -169,6 +171,10 @@ public class ACS2021DataReader {
 			double percentBlack = Util.roundTwoDecimalPlaces(100 * totalBlackPopulation / totalPopulation);
 			System.out.println(map.get("NAME") + ": population=" + Util.getIntFromDouble(totalPopulation)
 					+ ", percent_black=" + percentBlack + "%" + ", median_income_of_black_women=$" + income);
+			counter++;
+			if (counter > 4999) {
+				break;
+			}
 		}
 	}
 
