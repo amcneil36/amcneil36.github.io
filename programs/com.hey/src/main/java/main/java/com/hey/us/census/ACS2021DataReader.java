@@ -15,6 +15,15 @@ import main.java.com.hey.Util;
 
 public class ACS2021DataReader {
 
+	public static final String COUNTRY_SUFFIX = "&for=us:*";
+	public static final String REGION_SUFFIX = "&for=region:*";
+	public static final String STATE_SUFFIX = "&for=state:*";
+	public static final String CSA_SUFFIX = "&for=combined%20statistical%20area:*";
+	public static final String METRO_MICRO_SUFFIX = "&for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*";
+	public static final String COUNTY_SUFFIX = "&for=county:*";
+	public static final String SCHOOL_DISTRICT_SUFFIX = "&for=school%20district%20(unified):*";
+	public static final String PLACE_SUFFIX = "&for=place:*";
+	public static final String ZIP_CODE_SUFFIX = "&for=zip%20code%20tabulation%20area:*";
 	public static String POPULATION = "B01003_001E(population)";
 	public static String MEDIAN_HOUSEHOLD_INCOME = "B19013_001E(median_household_income)";
 	public static String MEDIAN_HOUSEHOLD_INCOME_WHITE = "B19013A_001E(median household income white)";
@@ -40,16 +49,7 @@ public class ACS2021DataReader {
 	// lets update code to add in the parenthesis stuff. first cols are always our
 	// stuff. rest are not.
 	public static List<Map<String, String>> getResultsReusable(String[] variables, String urlSuffix) throws Exception {
-		String url = "https://api.census.gov/data/2020/acs/acs5?get=NAME";
-		for (String variable : variables) {
-			url += ",";
-			if (variable.contains("(")) {
-				url += variable.substring(0, variable.indexOf("("));
-			} else {
-				throw new RuntimeException("missing description!");
-			}
-		}
-		url += urlSuffix;
+		String url = createUrlFromVariablesAndSuffix(variables, urlSuffix);
 		System.out.println(url);
 		String text = Jsoup.connect(url).ignoreContentType(true).maxBodySize(0).timeout(0).get().text();
 		text = text.replace("],", "],\n"); // keep this in
@@ -76,8 +76,22 @@ public class ACS2021DataReader {
 		return resultsList;
 	}
 
+	public static String createUrlFromVariablesAndSuffix(String[] variables, String urlSuffix) {
+		String url = "https://api.census.gov/data/2020/acs/acs5?get=NAME";
+		for (String variable : variables) {
+			url += ",";
+			if (variable.contains("(")) {
+				url += variable.substring(0, variable.indexOf("("));
+			} else {
+				throw new RuntimeException("missing description!");
+			}
+		}
+		url += urlSuffix;
+		return url;
+	}
+
 	public static Map<String, Result> getPlaceResults(String[] variables) throws Exception {
-		List<Map<String, String>> resultsList = getResultsReusable(variables, "&for=place:*");
+		List<Map<String, String>> resultsList = getResultsReusable(variables, PLACE_SUFFIX);
 		Map<String, Result> elementsMap = new HashMap<>();
 		for (Map<String, String> map : resultsList) {
 			String name = map.get("NAME");
@@ -104,49 +118,49 @@ public class ACS2021DataReader {
 
 	// 33120 of these
 	public static List<Map<String, String>> getZipCodes(String[] variables) throws Exception {
-		return getResultsReusable(variables, "&for=zip%20code%20tabulation%20area:*");
+		return getResultsReusable(variables, ZIP_CODE_SUFFIX);
 	}
 
 	// 31606 of these
 	public static List<Map<String, String>> getPlaces(String[] variables) throws Exception {
-		return getResultsReusable(variables, "&for=place:*");
+		return getResultsReusable(variables, PLACE_SUFFIX);
 
 	}
 
 	// 10895 of these
 	public static List<Map<String, String>> getSchoolDistricts(String[] variables) throws Exception {
-		return getResultsReusable(variables, "&for=school%20district%20(unified):*");
+		return getResultsReusable(variables, SCHOOL_DISTRICT_SUFFIX);
 	}
 
 	// 3143 of these
 	public static List<Map<String, String>> getCounties(String[] variables) throws Exception {
-		return getResultsReusable(variables, "&for=county:*");
+		return getResultsReusable(variables, COUNTY_SUFFIX);
 	}
 
 	// 939 of these
 	public static List<Map<String, String>> getMetrosAndMicros(String[] variables) throws Exception {
 		return getResultsReusable(variables,
-				"&for=metropolitan%20statistical%20area/micropolitan%20statistical%20area:*");
+				METRO_MICRO_SUFFIX);
 	}
 
 	// 175 of these
 	public static List<Map<String, String>> getCombinedStatisticalAreas(String[] variables) throws Exception {
-		return getResultsReusable(variables, "&for=combined%20statistical%20area:*");
+		return getResultsReusable(variables, CSA_SUFFIX);
 	}
 
 	// 51 of these
 	public static List<Map<String, String>> getStates(String[] variables) throws Exception {
-		return getResultsReusable(variables, "&for=state:*");
+		return getResultsReusable(variables, STATE_SUFFIX);
 	}
 
 	// 4 of these
 	public static List<Map<String, String>> getRegions(String[] variables) throws Exception {
-		return getResultsReusable(variables, "&for=region:*");
+		return getResultsReusable(variables, REGION_SUFFIX);
 	}
 
 	// 1 of these
 	public static List<Map<String, String>> getCountry(String[] variables) throws Exception {
-		return getResultsReusable(variables, "&for=us:*");
+		return getResultsReusable(variables, COUNTRY_SUFFIX);
 	}
 
 	public static void main(String[] args) throws Exception {

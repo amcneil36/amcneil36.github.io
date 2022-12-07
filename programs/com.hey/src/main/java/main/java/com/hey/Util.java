@@ -27,6 +27,38 @@ import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.useful.not.needed.to.modify.much.Pojo;
 
 public class Util {
+	
+	public static void deleteFilesInFolder(String filePath) {
+        File file = new File(filePath);
+        
+        // call deleteDirectory function to delete
+        // subdirectory and files
+        deleteDirectory(file);
+  
+        // delete main GFG folder
+       // file.delete();
+	}
+	
+    private static void deleteDirectory(File file)
+    {
+        // store all the paths of files and folders present
+        // inside directory
+    	if (file == null || file.listFiles() == null) {
+    		return;
+    	}
+    	
+        for (File subfile : file.listFiles()) {
+  
+            // if it is a subfolder,e.g Rohan and Ritik,
+            // recursiley call function to empty subfolder
+            if (subfile.isDirectory()) {
+                deleteDirectory(subfile);
+            }
+  
+            // delete files and empty subfolders
+            subfile.delete();
+        }
+    }
 
 	public static boolean debug = false;
 	

@@ -8,16 +8,22 @@ import main.java.com.hey.Util;
 import main.java.com.hey.us.census.ACS2021DataReader;
 
 public abstract class CensusMdGeneratorGeneric {
-	
-	public void doSuperEverythingResable(List<Map<String, String>> elementsList, String firstColHeaderMdName, String firstColMapKey, String fileName) throws Exception{
+
+	// maybe add link to doc for column names or something
+	public void doSuperEverythingResable(List<Map<String, String>> elementsList, String firstColHeaderMdName,
+			String firstColMapKey, String fileName, String url) throws Exception {
 		removeAndSort(elementsList);
 		int counter = 0;
 		StringBuilder sb = new StringBuilder();
+		sb.append(
+				"This page is an analysis and visualization of data I queried from the US Census' American Community Survey 2020 5 year estimates API.");
+		sb.append(" To see the original, raw data that I retrieved from the API before analyzing it, navigate here: ");
+		sb.append("[").append(url).append("](").append(url).append(")\n\n");
 		String headerStr = "|" + firstColHeaderMdName + "|" + getRemainingHeaders();
 		sb.append(headerStr).append("\n");
 		int numCols = getRemainingHeaders().split("\\|").length;
 		sb.append("|");
-		for (int i = 0; i < numCols+1;i++) {
+		for (int i = 0; i < numCols + 1; i++) {
 			sb.append("---|");
 		}
 		sb.append("\n");
@@ -30,27 +36,38 @@ public abstract class CensusMdGeneratorGeneric {
 		}
 		Util.writeTextToFile("generated/" + fileName + ".md", sb.toString());////////////////////////////////
 	}
-	
-	
+
 	// make go inside a folder?
 	// maybe have readme.md in each folder that redirects to the others?
 	// maybe there can be some relative url redirect
 	// or maybe i need something that passes in the folder name
 	// maybe w/e it is will create a folder that doesn't exist?
 	// and also have it able to redirect to other stuff of the same url.
+
 	
 	public void doEverything() throws Exception {
 		String[] variables = getVariables();
-		doSuperEverythingResable(ACS2021DataReader.getZipCodes(variables), "Zip code", "zip code tabulation area", "zipcode");
-		doSuperEverythingResable(ACS2021DataReader.getPlaces(variables), "Place", "NAME", "place");
-		doSuperEverythingResable(ACS2021DataReader.getSchoolDistricts(variables), "School District", "NAME", "schoolDistrict");
-		doSuperEverythingResable(ACS2021DataReader.getCounties(variables), "County", "NAME", "county");
-		doSuperEverythingResable(ACS2021DataReader.getMetrosAndMicros(variables), "Metro/Micro", "NAME", "metroMicro");
-		doSuperEverythingResable(ACS2021DataReader.getCombinedStatisticalAreas(variables), "Combined Statistical Area", "NAME", "csa");
-		doSuperEverythingResable(ACS2021DataReader.getStates(variables), "State", "NAME", "state");
-		doSuperEverythingResable(ACS2021DataReader.getRegions(variables), "Region", "NAME", "region");
-		doSuperEverythingResable(ACS2021DataReader.getCountry(variables), "Country", "NAME", "country");
-	
+        Util.deleteFilesInFolder("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\com.hey\\generated");
+		doSuperEverythingResable(ACS2021DataReader.getZipCodes(variables), "Zip code", "zip code tabulation area",
+				"zipcode",
+				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.ZIP_CODE_SUFFIX));
+		doSuperEverythingResable(ACS2021DataReader.getPlaces(variables), "Place", "NAME", "place",
+				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.PLACE_SUFFIX));
+		doSuperEverythingResable(ACS2021DataReader.getSchoolDistricts(variables), "School District", "NAME",
+				"schoolDistrict", ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.SCHOOL_DISTRICT_SUFFIX));
+		doSuperEverythingResable(ACS2021DataReader.getCounties(variables), "County", "NAME", "county",
+				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.COUNTY_SUFFIX));
+		doSuperEverythingResable(ACS2021DataReader.getMetrosAndMicros(variables), "Metro/Micro", "NAME", "metroMicro",
+				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.METRO_MICRO_SUFFIX));
+		doSuperEverythingResable(ACS2021DataReader.getCombinedStatisticalAreas(variables), "Combined Statistical Area",
+				"NAME", "combinedStatisticalArea", ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.CSA_SUFFIX));
+		doSuperEverythingResable(ACS2021DataReader.getStates(variables), "State", "NAME", "state",
+				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.STATE_SUFFIX));
+		doSuperEverythingResable(ACS2021DataReader.getRegions(variables), "Region", "NAME", "region",
+				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.REGION_SUFFIX));
+		doSuperEverythingResable(ACS2021DataReader.getCountry(variables), "Country", "NAME", "country",
+				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.COUNTRY_SUFFIX));
+
 	}
 
 	private void removeAndSort(List<Map<String, String>> elementsList) {
@@ -63,7 +80,7 @@ public abstract class CensusMdGeneratorGeneric {
 		}
 		sortCollection(elementsList);
 	}
-	
+
 	private String getPipeString(Object[] arr) {
 		String st = "|";
 		for (Object str : arr) {
