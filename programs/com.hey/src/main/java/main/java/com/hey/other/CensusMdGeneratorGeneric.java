@@ -18,7 +18,8 @@ public abstract class CensusMdGeneratorGeneric {
 		sb.append(
 				"This page is an analysis and visualization of data I queried from the US Census' American Community Survey 2020 5 year estimates API.");
 		sb.append(" To see the original, raw data that I retrieved from the API before analyzing it, navigate here: ");
-		sb.append("[").append(url).append("](").append(url).append(")\n\n");
+		// <a href="https://www.census.gov/topics/population/race/about.html">https://www.census.gov/topics/population/race/about.html</a>
+		sb.append(Util.getHyperLink(url)).append("\n\n");
 		String headerStr = "|" + firstColHeaderMdName + "|" + getRemainingHeaders();
 		sb.append(headerStr).append("\n");
 		int numCols = getRemainingHeaders().split("\\|").length;
@@ -48,10 +49,11 @@ public abstract class CensusMdGeneratorGeneric {
 	public void doEverything() throws Exception {
 		String[] variables = getVariables();
         Util.deleteFilesInFolder("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\com.hey\\generated");
-		doSuperEverythingResable(ACS2021DataReader.getZipCodes(variables), "Zip code", "zip code tabulation area",
+        Util.writeTextToFile("generated//main.md", "### " + getReadMeHeaderText() + getReadMeBodyText() + getReadMeNotesText());
+        doSuperEverythingResable(ACS2021DataReader.getZipCodes(variables), "Zip code", "zip code tabulation area",
 				"zipcode",
 				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.ZIP_CODE_SUFFIX));
-		doSuperEverythingResable(ACS2021DataReader.getPlaces(variables), "Place", "NAME", "place",
+		doSuperEverythingResable(ACS2021DataReader.getPlaces(variables), "City/Town/CDP", "NAME", "cityTownCDP",
 				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.PLACE_SUFFIX));
 		doSuperEverythingResable(ACS2021DataReader.getSchoolDistricts(variables), "School District", "NAME",
 				"schoolDistrict", ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.SCHOOL_DISTRICT_SUFFIX));
@@ -69,6 +71,24 @@ public abstract class CensusMdGeneratorGeneric {
 				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.COUNTRY_SUFFIX));
 
 	}
+
+	protected abstract String getReadMeHeaderText();
+
+	private String getReadMeBodyText() {
+		String st = "";
+		st += "  \n- Zip Code: [link](zipcode)  \n";
+		st += "- City/Town/CDP: [link](cityTownCDP)  \n";
+		st += "- School District: [link](schoolDistrict)  \n";
+		st += "- County: [link](county)  \n";
+		st += "- Metro/Micro: [link](metroMicro)  \n";
+		st += "- Combined Statistical Area: [link](combinedStatisticalArea)  \n";
+		st += "- State: [link](state)  \n";
+		st += "- Region: [link](region)  \n";
+		st += "- Country: [link](country)  \n\n";
+		return st;
+	}
+
+	protected abstract String getReadMeNotesText();
 
 	private void removeAndSort(List<Map<String, String>> elementsList) {
 		Iterator<Map<String, String>> iterator = elementsList.iterator();

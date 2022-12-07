@@ -54,4 +54,16 @@ public class BlackWomanMedianIncome extends CensusMdGeneratorGeneric {
 
 	}
 
+	@Override
+	protected String getReadMeHeaderText() {
+		// TODO Auto-generated method stub
+		return "Median annual earnings of black women in the USA sorted in descending order by:";
+	}
+
+	@Override
+	protected String getReadMeNotesText() {
+		// TODO Auto-generated method stub
+		return "Note: I only included places that have at least 1000 black people";
+	}
+
 }

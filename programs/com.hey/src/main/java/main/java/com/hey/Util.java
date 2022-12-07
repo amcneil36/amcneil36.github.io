@@ -27,47 +27,52 @@ import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.useful.not.needed.to.modify.much.Pojo;
 
 public class Util {
-	
-	public static void deleteFilesInFolder(String filePath) {
-        File file = new File(filePath);
-        
-        // call deleteDirectory function to delete
-        // subdirectory and files
-        deleteDirectory(file);
-  
-        // delete main GFG folder
-       // file.delete();
+
+	public static String getHyperLink(String url) {
+		return new StringBuilder().append("<a href=\"").append(url).append("\">").append(url).append("</a>").toString();
 	}
-	
-    private static void deleteDirectory(File file)
-    {
-        // store all the paths of files and folders present
-        // inside directory
-    	if (file == null || file.listFiles() == null) {
-    		return;
-    	}
-    	
-        for (File subfile : file.listFiles()) {
-  
-            // if it is a subfolder,e.g Rohan and Ritik,
-            // recursiley call function to empty subfolder
-            if (subfile.isDirectory()) {
-                deleteDirectory(subfile);
-            }
-  
-            // delete files and empty subfolders
-            subfile.delete();
-        }
-    }
+
+	public static void deleteFilesInFolder(String filePath) {
+		File file = new File(filePath);
+
+		// call deleteDirectory function to delete
+		// subdirectory and files
+		deleteDirectory(file);
+
+		// delete main GFG folder
+		// file.delete();
+	}
+
+	private static void deleteDirectory(File file) {
+		// store all the paths of files and folders present
+		// inside directory
+		if (file == null || file.listFiles() == null) {
+			return;
+		}
+
+		for (File subfile : file.listFiles()) {
+
+			// if it is a subfolder,e.g Rohan and Ritik,
+			// recursiley call function to empty subfolder
+			if (subfile.isDirectory()) {
+				deleteDirectory(subfile);
+			}
+
+			// delete files and empty subfolders
+			subfile.delete();
+		}
+	}
 
 	public static boolean debug = false;
-	
+
 	public static class Coordinate extends Pojo {
 		public double latitude;
 		public double longitude;
 	}
+
 	// public <U extends Number> void inspect(U u){
-	public static <T extends Coordinate> Optional<T> findBestCoordinate(List<T> coordinates, Data data, double maxDistanceAllowed){
+	public static <T extends Coordinate> Optional<T> findBestCoordinate(List<T> coordinates, Data data,
+			double maxDistanceAllowed) {
 		Optional<T> bestCoordinate = Optional.empty();
 		double minDistance = Double.MAX_VALUE;
 		if (data.latitude.equals("N/A")) {
@@ -76,8 +81,8 @@ public class Util {
 		double dataLatitude = Double.valueOf(data.latitude);
 		double dataLongitude = Double.valueOf(data.longitude);
 		for (T coordinate : coordinates) {
-			double distance = Util.milesBetweenCoordinates(coordinate.latitude, coordinate.longitude,
-					dataLatitude, dataLongitude);
+			double distance = Util.milesBetweenCoordinates(coordinate.latitude, coordinate.longitude, dataLatitude,
+					dataLongitude);
 			if (distance < minDistance && distance < maxDistanceAllowed) {
 				bestCoordinate = Optional.of(coordinate);
 				minDistance = distance;
@@ -85,7 +90,7 @@ public class Util {
 		}
 		return bestCoordinate;
 	}
-	
+
 	public static double milesBetweenCoordinates(double lat1, double lon1, double lat2, double lon2) {
 		double dLat = Math.toRadians(lat2 - lat1);
 		double dLon = Math.toRadians(lon2 - lon1);
@@ -96,14 +101,14 @@ public class Util {
 		double c = 2 * Math.asin(Math.sqrt(a));
 		return rad * c * 0.621371;
 	}
-	
+
 	public static String removeStuffFromCityName(String city) {
 		city = city.toLowerCase();
 		city = removeIfExists(city, " census designated place");
 		city = removeIfExists(city, " borough");
 		city = removeIfExists(city, " cdp");
 		city = removeIfExists(city, " estates");
-		// Charter Township of 
+		// Charter Township of
 		if (city.startsWith("charter township of ")) {
 			city = city.replace("charter township of ", "");
 		}
@@ -127,10 +132,10 @@ public class Util {
 		city = removeIfExists(city, " charter");
 		city = removeIfExists(city, " afb");
 		city = removeIfExists(city, " air force base");
-		city = city.replace("t.", "aint"); //saint
+		city = city.replace("t.", "aint"); // saint
 		return city;
 	}
-	
+
 	public static String removeIfExists(String text, String st) {
 		if (text.contains(st)) {
 			text = text.substring(0, text.indexOf(st));
@@ -142,11 +147,11 @@ public class Util {
 		return data.cityName + "," + data.stateName + "," + data.countyName + "," + data.metro + ";";
 
 	}
-	
+
 	public static double roundTwoDecimalPlaces(double num) {
-		return Math.round(((num*100.0))) / 100.0;
+		return Math.round(((num * 100.0))) / 100.0;
 	}
-	
+
 	public static int getIntFromDouble(double num) {
 		return (int) Math.round(num);
 	}
