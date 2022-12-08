@@ -1,4 +1,4 @@
-### Unemployment rate of Asian people in the USA sorted in ascending order by  
+### Percentage of Asian men over the age of 25 with a bachelor's degree or higher in the USA sorted in descending order by  
 - Zip Code: [link](zipcode)  
 - City/Town/CDP: [link](cityTownCDP)  
 - School District: [link](schoolDistrict)  
