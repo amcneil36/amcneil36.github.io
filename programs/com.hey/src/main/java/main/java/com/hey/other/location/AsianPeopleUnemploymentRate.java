@@ -8,42 +8,42 @@ import main.java.com.hey.Util;
 import main.java.com.hey.other.CensusMdGeneratorGeneric;
 import main.java.com.hey.us.census.ACS2021DataReader;
 
-public class WhitePeopleUnemploymentRate extends CensusMdGeneratorGeneric {
+public class AsianPeopleUnemploymentRate extends CensusMdGeneratorGeneric {
 
 	@Override
 	protected String getMainHeaderText() {
-		return "Unemployment rate of white people in the USA sorted in ascending order by";
+		return "Unemployment rate of Asian people in the USA sorted in ascending order by";
 	}
 
 	@Override
 	protected String getRemainingHeaders() {
-		return "Population|% White|Unemployment rate of white people|";
+		return "Population|% Asian|Unemployment rate of Asian people|";
 	}
 
 	@Override
 	protected String[] getVariables() {
-		return new String[] { "B02001_002E(number of white people)", ACS2021DataReader.POPULATION,
-				"C23002A_006E(white men 16-64 in labor force)",
-				"C23002A_008E(white men 16-64 in labor force unemployed",
-				"C23002A_019E(white women 16-64 in labor force)", "C23002A_021E(white women 16-64 unemployed)" };
+		return new String[] { "B02001_005E(number of asian people)", ACS2021DataReader.POPULATION,
+				"C23002D_006E(Asian men 16-64 in labor force)",
+				"C23002D_008E(Asian men 16-64 in labor force unemployed",
+				"C23002D_019E(Asian women 16-64 in labor force)", "C23002D_021E(Asian women 16-64 unemployed)" };
 	}
 
 	@Override
 	protected boolean removeRow(Map<String, String> map) {
-		int numWhitePeople = Integer.valueOf(map.get("B02001_002E(number of white people)"));
-		return numWhitePeople < 1000;
+		int numAsianPeople = Integer.valueOf(map.get("B02001_005E(number of asian people)"));
+		return numAsianPeople < 1000;
 	}
 
 	@Override
 	protected String getMainFooterText() {
-		return "Notes:  \n- I only included places that have at least 1000 white people";
+		return "Notes:  \n- I only included places that have at least 1000 Asian people";
 	}
 
 	private static double getUnemploymentRate(Map<String, String> map) {
-		double numPeopleEligible = Double.valueOf(map.get("C23002A_006E(white men 16-64 in labor force)"))
-				+ Double.valueOf(map.get("C23002A_019E(white women 16-64 in labor force)"));
-		double numPeopleUnemployed = Double.valueOf(map.get("C23002A_021E(white women 16-64 unemployed)"))
-				+ Double.valueOf(map.get("C23002A_008E(white men 16-64 in labor force unemployed"));
+		double numPeopleEligible = Double.valueOf(map.get("C23002D_006E(Asian men 16-64 in labor force)"))
+				+ Double.valueOf(map.get("C23002D_019E(Asian women 16-64 in labor force)"));
+		double numPeopleUnemployed = Double.valueOf(map.get("C23002D_021E(Asian women 16-64 unemployed)"))
+				+ Double.valueOf(map.get("C23002D_008E(Asian men 16-64 in labor force unemployed"));
 		double fraction = (numPeopleUnemployed / numPeopleEligible) * 100;
 		return Util.roundTwoDecimalPlaces(fraction);
 	}
@@ -67,14 +67,14 @@ public class WhitePeopleUnemploymentRate extends CensusMdGeneratorGeneric {
 
 	@Override
 	protected Object[] getRemainingRowArray(Map<String, String> map) {
-		double totalWhitePopulation = Integer.valueOf(map.get("B02001_002E(number of white people)"));
+		double totalAsianPopulation = Integer.valueOf(map.get("B02001_005E(number of asian people)"));
 		double totalPopulation = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
-		double percentWhite = Util.roundTwoDecimalPlaces(100 * totalWhitePopulation / totalPopulation);
+		double percentAsian = Util.roundTwoDecimalPlaces(100 * totalAsianPopulation / totalPopulation);
 		double unemploymentRate = getUnemploymentRate(map);
-		return new Object[] { Util.getIntFromDouble(totalPopulation), percentWhite + "%", unemploymentRate + "%" };
+		return new Object[] { Util.getIntFromDouble(totalPopulation), percentAsian + "%", unemploymentRate + "%" };
 	}
 
 	public static void main(String[] args) throws Exception {
-		new WhitePeopleUnemploymentRate().doEverything();
+		new AsianPeopleUnemploymentRate().doEverything();
 	}
 }

@@ -71,7 +71,6 @@ public class WhitePeoplePovertyRate  extends CensusMdGeneratorGeneric {
 		double totalPopulation = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
 		double percentWhite = Util.roundTwoDecimalPlaces(100 * totalWhitePopulation / totalPopulation);
 		double povertyRate = getPovertyRate(map);
-		//System.out.println(povertyRate);
 		return new Object[] { Util.getIntFromDouble(totalPopulation), percentWhite + "%", povertyRate + "%"};
 	}
 

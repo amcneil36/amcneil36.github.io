@@ -1,4 +1,4 @@
-### Poverty rate of white people in the USA sorted in ascending order by  
+### Unemployment rate of Asian people in the USA sorted in ascending order by  
 - Zip Code: [link](zipcode)  
 - City/Town/CDP: [link](cityTownCDP)  
 - School District: [link](schoolDistrict)  
@@ -10,4 +10,4 @@
 - Country: [link](country)  
 
 Notes:  
-- I only included places that have at least 1000 white people
+- I only included places that have at least 1000 Asian people
