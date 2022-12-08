@@ -1,4 +1,4 @@
-### Median household income of black households in the USA sorted in descending order by  
+### Poverty rate of white people in the USA sorted in ascending order by  
 - Zip Code: [link](zipcode)  
 - City/Town/CDP: [link](cityTownCDP)  
 - School District: [link](schoolDistrict)  
@@ -9,4 +9,5 @@
 - Region: [link](region)  
 - Country: [link](country)  
 
-Note: I only included places that have at least 1000 black people
+Notes:  
+- I only included places that have at least 1000 white people

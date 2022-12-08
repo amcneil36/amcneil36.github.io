@@ -13,7 +13,6 @@ public abstract class CensusMdGeneratorGeneric {
 	public void doSuperEverythingResable(List<Map<String, String>> elementsList, String firstColHeaderMdName,
 			String firstColMapKey, String fileName, String url) throws Exception {
 		removeAndSort(elementsList);
-		int counter = 0;
 		StringBuilder sb = new StringBuilder();
 		sb.append(
 				"This page is an analysis and visualization of data I queried from the US Census' American Community Survey 2020 5 year estimates API.");
@@ -30,10 +29,6 @@ public abstract class CensusMdGeneratorGeneric {
 		sb.append("\n");
 		for (Map<String, String> map : elementsList) {
 			sb.append("|" + map.get(firstColMapKey) + getPipeString(getRemainingRowArray(map))).append("\n");
-			counter++;
-			if (counter > 4999) {
-				break;
-			}
 		}
 		Util.writeTextToFile("generated/" + fileName + ".md", sb.toString());////////////////////////////////
 	}

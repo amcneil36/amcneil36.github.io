@@ -1,10 +1,11 @@
-package main.java.com.hey.other;
+package main.java.com.hey.other.location;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import main.java.com.hey.Util;
+import main.java.com.hey.other.CensusMdGeneratorGeneric;
 import main.java.com.hey.us.census.ACS2021DataReader;
 
 public class MedianHouseHouldIncomeBlack extends CensusMdGeneratorGeneric {
@@ -33,7 +34,7 @@ public class MedianHouseHouldIncomeBlack extends CensusMdGeneratorGeneric {
 
 	@Override
 	protected String getMainFooterText() {
-		return "Note: I only included places that have at least 1000 black people";
+		return "Notes:  \n- I only included places that have at least 1000 black people  \n- Median household income is defined by the US Census as \"MEDIAN HOUSEHOLD INCOME IN THE PAST 12 MONTHS (IN 2019 INFLATION-ADJUSTED DOLLARS)\"";
 	}
 
 	@Override
