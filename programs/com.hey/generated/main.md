@@ -1,4 +1,4 @@
-### Percentage of Asian men over the age of 25 with a bachelor's degree or higher in the USA sorted in descending order by  
+### Percentage of Asian people over the age of 25 with a bachelor's degree or higher in the USA sorted in descending order by  
 - Zip Code: [link](zipcode)  
 - City/Town/CDP: [link](cityTownCDP)  
 - School District: [link](schoolDistrict)  
@@ -10,4 +10,4 @@
 - Country: [link](country)  
 
 Notes:  
-- I only included places that have at least 1000 Asian people
+- I only included places that have at least 1000 asian people

@@ -8,29 +8,29 @@ import main.java.com.hey.Util;
 import main.java.com.hey.other.CensusMdGeneratorGeneric;
 import main.java.com.hey.us.census.ACS2021DataReader;
 
-public class BlackWomenBachelorsDegree extends CensusMdGeneratorGeneric {
+public class BlackPeopleBachelors extends CensusMdGeneratorGeneric {
 
 	@Override
 	protected String getMainHeaderText() {
-		return "Percentage of black women over the age of 25 with a bachelor's degree or higher in the USA sorted in descending order by";
+		return "Percentage of black people over the age of 25 with a bachelor's degree or higher in the USA sorted in descending order by";
 	}
 
 	@Override
 	protected String getRemainingHeaders() {
-		return "Population|% Black|% of black women with a bachelor's degree or higher|";
+		return "Population|% Black|% of black people with a bachelor's degree or higher|";
 	}
 
 	@Override
 	protected String[] getVariables() {
-		return new String[] { "C15002B_007E(num black women who are eligible)",
-				"C15002B_011E(num black women with bachelors)", "B02001_003E(number of black people)",
-				ACS2021DataReader.POPULATION };
+		return new String[] { "C15002B_001E(num black people who are eligible)",
+				"C15002B_006E(num black men with bachelors)", "B02001_003E(number of black people)",
+				ACS2021DataReader.POPULATION, "C15002B_011E(num black women with bachelors)" };
 	}
 
 	@Override
 	protected boolean removeRow(Map<String, String> map) {
-		int numBlackPeople = Integer.valueOf(map.get("B02001_003E(number of black people)"));
-		return numBlackPeople < 1000;
+		int numPeopleOfTheRace = Integer.valueOf(map.get("B02001_003E(number of black people)"));
+		return numPeopleOfTheRace < 1000;
 	}
 
 	@Override
@@ -39,8 +39,10 @@ public class BlackWomenBachelorsDegree extends CensusMdGeneratorGeneric {
 	}
 
 	private static double getBachelorsDegreePercent(Map<String, String> map) {
-		double numPeopleEligible = Double.valueOf(map.get("C15002B_007E(num black women who are eligible)"));
-		double numPeopleQualified = Double.valueOf(map.get("C15002B_011E(num black women with bachelors)"));
+		double numPeopleEligible = Double.valueOf(map.get("C15002B_001E(num black people who are eligible)"));
+		double numPeopleQualified = Double.valueOf(map.get("C15002B_006E(num black men with bachelors)"))
+				+ Double.valueOf(map.get("C15002B_011E(num black women with bachelors)"));
+		;
 		double fraction = (numPeopleQualified / numPeopleEligible) * 100;
 		double ret = Util.roundTwoDecimalPlaces(fraction);
 		return ret;
@@ -73,6 +75,6 @@ public class BlackWomenBachelorsDegree extends CensusMdGeneratorGeneric {
 	}
 
 	public static void main(String[] args) throws Exception {
-		new BlackWomenBachelorsDegree().doEverything();
+		new BlackPeopleBachelors().doEverything();
 	}
 }

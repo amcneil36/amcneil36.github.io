@@ -75,6 +75,6 @@ public class AsianWomenBachelors extends CensusMdGeneratorGeneric {
 	}
 
 	public static void main(String[] args) throws Exception {
-		new AsianMenBachelorsDegree().doEverything();
+		new AsianWomenBachelors().doEverything();
 	}
 }
