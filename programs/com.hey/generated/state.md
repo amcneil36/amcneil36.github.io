@@ -1,55 +1,55 @@
-This page is an analysis and visualization of data I queried from the US Census' American Community Survey 2020 5 year estimates API. To see the original, raw data that I retrieved from the API before analyzing it, navigate here: <a href="https://api.census.gov/data/2020/acs/acs5?get=NAME,B01003_001E,B23025_003E,B23025_005E&for=state:*">https://api.census.gov/data/2020/acs/acs5?get=NAME,B01003_001E,B23025_003E,B23025_005E&for=state:*</a>
+This page is an analysis and visualization of data I queried from the US Census' American Community Survey 2020 5 year estimates API. To see the original, raw data that I retrieved from the API before analyzing it, navigate here: <a href="https://api.census.gov/data/2020/acs/acs5?get=NAME,B19325_002E,B01003_001E,B19325_049E&for=state:*">https://api.census.gov/data/2020/acs/acs5?get=NAME,B19325_002E,B01003_001E,B19325_049E&for=state:*</a>
 
-|State|Population||Unemployment rate|
+|State|Population|Median household income of men|Median income of women|
 |---|---|---|---|
-|North Dakota|760394|3.1%|
-|Nebraska|1923826|3.39%|
-|South Dakota|879336|3.51%|
-|Wisconsin|5806975|3.55%|
-|Utah|3151239|3.62%|
-|New Hampshire|1355244|3.75%|
-|Vermont|624340|3.76%|
-|Minnesota|5600166|3.81%|
-|Iowa|3150011|3.92%|
-|Maine|1340825|4.04%|
-|Kansas|2912619|4.08%|
-|Montana|1061705|4.15%|
-|Idaho|1754367|4.21%|
-|Wyoming|581348|4.4%|
-|Missouri|6124160|4.51%|
-|Hawaii|1420074|4.55%|
-|Colorado|5684926|4.63%|
-|Virginia|8509358|4.63%|
-|Indiana|6696893|4.73%|
-|Washington|7512465|4.9%|
-|Massachusetts|6873003|5.09%|
-|Oklahoma|3949342|5.09%|
-|Maryland|6037624|5.17%|
-|Arkansas|3011873|5.19%|
-|Texas|28635442|5.3%|
-|Ohio|11675275|5.3%|
-|Tennessee|6772268|5.33%|
-|Pennsylvania|12794885|5.36%|
-|Kentucky|4461952|5.38%|
-|Florida|21216924|5.43%|
-|North Carolina|10386227|5.44%|
-|Oregon|4176346|5.46%|
-|Rhode Island|1057798|5.52%|
-|South Carolina|5091517|5.53%|
-|Alabama|4893186|5.58%|
-|Georgia|10516579|5.6%|
-|New York|19514849|5.7%|
-|New Jersey|8885418|5.78%|
-|Arizona|7174064|5.84%|
-|Delaware|967679|5.84%|
-|Illinois|12716164|5.96%|
-|Michigan|9973907|6.02%|
-|Connecticut|3570549|6.04%|
-|California|39346023|6.18%|
-|West Virginia|1807426|6.53%|
-|Louisiana|4664616|6.56%|
-|Nevada|3030281|6.57%|
-|New Mexico|2097021|6.58%|
-|District of Columbia|701974|7.12%|
-|Mississippi|2981835|7.13%|
-|Alaska|736990|7.18%|
+|Alaska|736990|$305350|$277118|
+|Colorado|5684926|$2328666|$2312613|
+|North Dakota|760394|$311222|$297556|
+|Wyoming|581348|$238485|$229945|
+|South Dakota|879336|$350626|$347195|
+|Utah|3151239|$1189511|$1187792|
+|Montana|1061705|$436214|$435265|
+|Nevada|3030281|$1227637|$1229893|
+|Hawaii|1420074|$580276|$583832|
+|Idaho|1754367|$691244|$695362|
+|Vermont|624340|$259548|$270488|
+|Nebraska|1923826|$756101|$770706|
+|New Hampshire|1355244|$564580|$581229|
+|Kansas|2912619|$1151163|$1174433|
+|Washington|7512465|$3051503|$3078254|
+|West Virginia|1807426|$739470|$766505|
+|New Mexico|2097021|$834171|$863052|
+|Iowa|3150011|$1256179|$1288199|
+|Rhode Island|1057798|$428146|$461075|
+|Maine|1340825|$550845|$584733|
+|Delaware|967679|$382040|$416455|
+|District of Columbia|701974|$277237|$314312|
+|Minnesota|5600166|$2236068|$2282073|
+|Oklahoma|3949342|$1549444|$1602110|
+|Wisconsin|5806975|$2351501|$2404783|
+|Oregon|4176346|$1702013|$1755593|
+|Arkansas|3011873|$1179728|$1249078|
+|Arizona|7174064|$2872044|$2943328|
+|Kentucky|4461952|$1768458|$1857337|
+|Connecticut|3570549|$1437152|$1536720|
+|Mississippi|2981835|$1144925|$1251448|
+|Louisiana|4664616|$1810945|$1937452|
+|Indiana|6696893|$2635151|$2762876|
+|Missouri|6124160|$2418811|$2562608|
+|Virginia|8509358|$3393138|$3563921|
+|South Carolina|5091517|$1999660|$2172887|
+|Alabama|4893186|$1904931|$2084343|
+|Tennessee|6772268|$2665244|$2856879|
+|Michigan|9973907|$4003560|$4196226|
+|Maryland|6037624|$2357559|$2566982|
+|Massachusetts|6873003|$2766209|$2991503|
+|New Jersey|8885418|$3519140|$3755973|
+|Illinois|12716164|$5045488|$5316575|
+|Ohio|11675275|$4627531|$4907751|
+|Pennsylvania|12794885|$5152460|$5459826|
+|Texas|28635442|$11086192|$11404873|
+|North Carolina|10386227|$4081467|$4403180|
+|Georgia|10516579|$4059104|$4388000|
+|California|39346023|$15759027|$16148824|
+|Florida|21216924|$8593468|$9135489|
+|New York|19514849|$7747167|$8389718|
