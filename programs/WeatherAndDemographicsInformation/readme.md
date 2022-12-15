@@ -54,8 +54,30 @@ This .csv is very similar to CountyStats.csv exept the data is provided on the S
 | Foreign Born % | The percent of residents born outside of the United States. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Sep 2021 |
 | Timezone | | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | Elevation (ft) | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
-| UV Index | | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
-| Single Population | The percent of residents who are single (not married). | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Sep 2021 |
+| UV Index | | [Best Places](https://www.bestplaces.net/) | Sep 2021 |  
+| Single Population | The percent of residents who are single (not married). | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Sep 2021 |  
+| Num Violent Crimes Per 100k residents | | [FBI](https://fbi.gov/) | Sep 2021 |  
+| Num Property Crimes Per 100k residents | | [FBI](https://fbi.gov/) | Sep 2021 |  
+| Labor Force Participation rate | | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Sep 2021 |  
+| Hottest month's avg low (F) | | [NOAA](https://www.noaa.gov/) | Sep 2021 |  
+| Coldest month's avg low (F) | | [NOAA](https://www.noaa.gov/) | Sep 2021 |  
+| Annual Relative Humidity (afternoon) | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
+| Summer Relative Humidity (afternoon) | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
+| Hottest month's avg heat index high (F) | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
+| Annual Sunshine - Percentage of Possible | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
+| Summer Sunshine - Percentage of Possible | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
+| Winter Sunshine - Percentage of Possible | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
+| Summer rainfall (in) | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
+| Winter rainfall (in) | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
+| Percent of days that include precipitation | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
+| Percent of Summer days that include precipitation | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
+| Percent of Winter days that include precipitation | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
+| Days of snow per year | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
+| Number of days with thunder per year | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
+| Land Area (sq mi) |  | [US Census](https://www.census.gov/en.html) | Feb 2021 |
+| Fips Code |  | [US Census](https://www.census.gov/en.html) | Feb 2021 |
+| Latitude | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
+| Longitude | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
 
 ## City vs USA Comparison (webpage)
 [CityVsUSAComparison](https://amcneil36.github.io/programs/cityVsUSAComparison/cityVsUSAComparison.html) shows which percentiles that each city's weather and demographics data fall under (in comparison to the rest of the USA cities). It uses the data from most of the columns from CityStats.csv.
