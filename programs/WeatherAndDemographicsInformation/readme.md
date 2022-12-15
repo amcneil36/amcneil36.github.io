@@ -37,9 +37,9 @@ This .csv is very similar to CountyStats.csv exept the data is provided on the S
 | Poverty Rate | The percent of families who are in poverty. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Sep 2021 |
 | Avg Apartment Monthly Rent | The average monthly cost of rent for apartments. | [Rent Cafe](https://www.rentcafe.com/) | Sep 2021 |
 | Avg Apartment Sqft | The average size of an apartment in square feet. | [Rent Cafe](https://www.rentcafe.com/) | Sep 2021 |
-| Median home price | | [realtor.com](https://www.realtor.com/) | Sep 2021 |
-| Median home square feet | | [realtor.com](https://www.realtor.com/) | Sep 2021 |
-| Median home cost per sq ft | | [realtor.com](https://www.realtor.com/) | Sep 2021 |
+| Median home price | | [Redfin](https://www.redfin.com/) | Sep 2021 |
+| Median home square feet | | [Redfin](https://www.redfin.com/) | Sep 2021 |
+| Median home cost per sq ft | | [Redfin](https://www.redfin.com/) | Sep 2021 |
 | Median home age | | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Feb 2021 |
 | Homeownership Rate | |[US Census ACS](https://www.census.gov/programs-surveys/acs) | Sep 2021 |
 | Air quality index | The quality of the air. Ranked from 1 (worst quality) to 100 (best quality). | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
