@@ -168,6 +168,7 @@ public abstract class CityStatsSuper {
 			try {
 				g.processState(stateName);
 			} catch (Exception e) {
+				System.out.println(stateName);
 				e.printStackTrace();
 			}
 		}

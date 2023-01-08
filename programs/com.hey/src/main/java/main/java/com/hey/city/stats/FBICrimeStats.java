@@ -11,8 +11,8 @@ import main.java.com.hey.Util;
 public class FBICrimeStats extends CityStats{
 
 	public static class FBIData{
-		int violentCrimeRate;
-		int propertyCrimeRate;
+		String violentCrimeRate = "N/A";
+		String propertyCrimeRate = "N/A";
 	}
 	Map<String, Map<String, FBIData>> mapOfStateToMap = new HashMap<>();
 	
@@ -66,21 +66,31 @@ public class FBICrimeStats extends CityStats{
 			Map<String, FBIData> mapOfCityToFbiData = new HashMap<>();
 			while (myReader.hasNextLine()) {
 				String line = myReader.nextLine();
-				if (arr.length != map.size() || line.contains(",,")) {
-					continue;
-				}
+				line = line.replace("\"Boston3,4\"", "Boston");
 				arr = line.split(",");
 				String cityName = arr[cityIdx].replace("2", "");
+				cityName = cityName.replace("3", "");
+				cityName = cityName.replace("4", "");
 				if (arr[populationIdx].contains("County")) { // some cities are called Reno, X County for example. we want to skip these
 					continue;
 				}
 				cityName = Util.removeStuffFromCityName(cityName);
+				String populationSt = arr[populationIdx];
+				if (populationSt.isEmpty()) {
+					continue;
+				}
 				double population = Integer.valueOf(arr[populationIdx]);
-				double violentCrimes = Integer.valueOf(arr[violentCrimeIdx]);
-				double propertyCrimes = Integer.valueOf(arr[propertyCrimeIdx]);
+				String violentCrimeSt = arr[violentCrimeIdx];
 				FBIData fbi = new FBIData();
-				fbi.violentCrimeRate = (int)((violentCrimes/population)*100000);
-				fbi.propertyCrimeRate = (int)((propertyCrimes/population)*100000);
+				if (!violentCrimeSt.isEmpty()) {
+					double violentCrimes = Integer.valueOf(arr[violentCrimeIdx]);	
+					fbi.violentCrimeRate = String.valueOf((int)((violentCrimes/population)*100000));
+				}
+				String propertyCrimesSt = arr[propertyCrimeIdx];
+				if (!propertyCrimesSt.isEmpty()) {
+					double propertyCrimes = Integer.valueOf(arr[propertyCrimeIdx]);
+					fbi.propertyCrimeRate = String.valueOf((int)((propertyCrimes/population)*100000));	
+				}
 				mapOfCityToFbiData.put(cityName, fbi);
 			}
 			mapOfStateToMap.put(stateName, mapOfCityToFbiData);
