@@ -12,7 +12,7 @@ public class NoopCityStats extends CityStats {
 
 	@Override
 	protected void updateData(Data data, String stateName) throws Exception {
-		
+
 		
 	}
 
