@@ -11,7 +11,7 @@ import main.java.com.hey.CityStats.Data;
 import main.java.com.hey.city.stats.NoopCityStats;
 
 public class MetroCsvs {
-	
+
 	public static String getMetroKey(CityStats.Data data) {
 		return data.metro + "," + data.metroPopulation;
 	}
@@ -22,7 +22,8 @@ public class MetroCsvs {
 		Map<String, List<CityStats.Data>> mapOfMetroNameToData = new HashMap<>();
 		for (CityStats.Data data : dataList) {
 			String metroKey = getMetroKey(data);
-			if (!data.metro.contains("None") && Integer.valueOf(data.metroPopulation) > 100000) {
+			if (!data.metro.contains("None") && !data.metroPopulation.equals("N/A")
+					&& Integer.valueOf(data.metroPopulation) > 100000) {
 				if (!mapOfMetroNameToData.containsKey(metroKey)) {
 					mapOfMetroNameToData.put(metroKey, new ArrayList<CityStats.Data>());
 				}
@@ -31,6 +32,7 @@ public class MetroCsvs {
 				mapOfMetroNameToData.put(metroKey, dataListFromMap);
 			}
 		}
+		System.out.println(mapOfMetroNameToData.keySet()); // keys correct
 		Set<String> keys = mapOfMetroNameToData.keySet();
 		for (String key : keys) {
 			List<CityStats.Data> metroDataList = mapOfMetroNameToData.get(key);
@@ -53,7 +55,7 @@ public class MetroCsvs {
 			mapOfStateToPopulation.put(state, pop);
 		}
 		Set<String> keys = mapOfStateToPopulation.keySet();
-		
+
 		String mostPopulatedState = "";
 		int maxPopulation = -1;
 		for (String key : keys) {

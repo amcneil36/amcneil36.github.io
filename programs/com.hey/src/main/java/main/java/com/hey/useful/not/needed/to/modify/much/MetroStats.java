@@ -53,7 +53,7 @@ public class MetroStats extends GenericStats {
 
 	@Override
 	public boolean isDataValid(Data data) {
-		return !data.metro.contains("None");
+		return !data.metro.contains("None") && !data.metroPopulation.equals("N/A");
 	}
 
 	@Override

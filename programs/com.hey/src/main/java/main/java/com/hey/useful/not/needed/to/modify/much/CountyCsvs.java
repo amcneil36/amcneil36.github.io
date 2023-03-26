@@ -21,7 +21,7 @@ public class CountyCsvs {
 		Map<String, List<CityStats.Data>> mapOfCountyNameToData = new HashMap<>();
 		for (CityStats.Data data : dataList) {
 			String countyKey = getCountyKey(data);
-			if (!data.metro.contains("None") && Integer.valueOf(data.metroPopulation) > 100000) {
+			if (!data.metro.contains("None") && !data.metroPopulation.equals("N/A") && Integer.valueOf(data.metroPopulation) > 100000) {
 				if (!mapOfCountyNameToData.containsKey(countyKey)) {
 					mapOfCountyNameToData.put(countyKey, new ArrayList<CityStats.Data>());
 				}
