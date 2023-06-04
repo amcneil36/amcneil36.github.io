@@ -16,6 +16,8 @@ import java.util.Scanner; // Import the Scanner class to read text files
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.jsoup.nodes.Element;
+
 import main.java.com.hey.CityStats;
 import main.java.com.hey.Util;
 import main.java.com.hey.useful.not.needed.to.modify.much.CreateBigCsv;
@@ -32,7 +34,7 @@ public class IndeedReader {
 	private static final Set<String> searchTermsSet = new HashSet<String>(Arrays.asList("Computer Science"));
 
 	private static boolean isCityValid(CityStats.Data data) {
-		return Integer.valueOf(data.population) > 200000;
+		return Integer.valueOf(data.population) > 400000;
 	}
 
 	private static final String outputSt = "Data queried from an Indeed.com search of the text 'Computer Science' for all USA cities with a population greater than 200k. (0 mile search radius)";
@@ -56,92 +58,132 @@ public class IndeedReader {
 	}
 
 	public static void main(String[] args) throws Exception {
-		populateMap();
-		Scanner scan = new Scanner(System.in);
-		long startTime = System.currentTimeMillis();
-		int numQueries = 0;
-		List<CityStats.Data> inputTemp = CreateBigCsv.readInput();
-		List<CityStats.Data> input = new ArrayList<>();
-		int numCitiesComplete = 0;
-		for (CityStats.Data data : inputTemp) {
-			data.cityName = fixString(data.cityName);
-			data.population = fixString(data.population);
-			data.stateName = fixString(data.stateName);
-			if (isCityValid(data)) {
-				input.add(data);
+		int numPostingsTemp = extractJobPostingsFromUrl("https://www.indeed.com/jobs?q=%22Computer+Science%22&l=Mesa%2C+az&radius=0");
+		System.out.println(numPostingsTemp);
+//		populateMap();
+//		Scanner scan = new Scanner(System.in);
+//		long startTime = System.currentTimeMillis();
+//		int numQueries = 0;
+//		List<CityStats.Data> inputTemp = CreateBigCsv.readInput();
+//		List<CityStats.Data> input = new ArrayList<>();
+//		int numCitiesComplete = 0;
+//		for (CityStats.Data data : inputTemp) {
+//			data.cityName = fixString(data.cityName);
+//			data.population = fixString(data.population);
+//			data.stateName = fixString(data.stateName);
+//			if (isCityValid(data)) {
+//				input.add(data);
+//			}
+//		}
+//
+//		int numCities = input.size();
+//		List<Data2> data2List = new ArrayList<>();
+//		for (CityStats.Data data : input) {
+//			String url = createUrl(data.cityName, data.stateName);
+//			Data2 data2 = new Data2();
+//			data2.data = data;
+//			;
+//			Map<Integer, Integer> mapOfNumPostingsToNumOccurrences = new HashMap<Integer, Integer>();
+//			data2.numPostings = -1;
+//			while (true) {
+//				int numPostingsTemp = extractJobPostingsFromUrl(url);
+//				numQueries++;
+//				if (numPostingsTemp == -1) {
+//					if (bannedIpAddresses.size() > 5) {
+//						bannedIpAddresses.clear();
+//					}
+//					bannedIpAddresses.add(getIpAddress());
+//					System.out.println("------------------------");
+//					System.out.println("found us on: " + data.cityName);
+//					System.out.println("num banned ip addresses: " + bannedIpAddresses.size());
+//					System.out.println("num queries ran: " + numQueries);
+//					long numMillisPassed = System.currentTimeMillis() - startTime;
+//					long numSeconds = numMillisPassed / 1000;
+//					System.out.println("num seconds passed between first query and last: " + numSeconds);
+//					System.out.println("switch ip addresses");
+//					int numSleeps = 0;
+//					boolean ipAddressChanged = true;
+//					while (bannedIpAddresses.contains(getIpAddress())) {
+//						TimeUnit.SECONDS.sleep(20);
+//						numSleeps++;
+//						if (numSleeps > 95) {
+//							System.out.println("have slept many times. automatically resuming.");
+//							ipAddressChanged = false;
+//							break;
+//						}
+//					}
+//					if (ipAddressChanged) {
+//						System.out.println("ip address changed. resuming");
+//					}
+//					waitForInternet();
+//					startTime = System.currentTimeMillis();
+//					numQueries = 0;
+//					System.out.println("------------------------");
+//					continue;
+//				}
+//				if (!mapOfNumPostingsToNumOccurrences.containsKey(numPostingsTemp)) {
+//					mapOfNumPostingsToNumOccurrences.put(numPostingsTemp, 1);
+//					continue;
+//				}
+//				Integer numOccurrences = mapOfNumPostingsToNumOccurrences.get(numPostingsTemp);
+//				if (numOccurrences == NUM_MATCHES_TO_LOOK_FOR - 1) {
+//					data2.numPostings = numPostingsTemp;
+//					break;
+//				} else {
+//					numOccurrences++;
+//					mapOfNumPostingsToNumOccurrences.put(numPostingsTemp, numOccurrences);
+//				}
+//			}
+//
+//			double postingsper100k = data2.numPostings * 100000 / Integer.valueOf(data.population);
+//			data2.postingsper100k = Math.round(postingsper100k * 100.0) / 100.0;
+//			numCitiesComplete++;
+//			System.out.println("(" + numCitiesComplete + "/" + numCities + "); " + "city: " + data.cityName + "; "
+//					+ "num postings: " + data2.numPostings + "; " + "postings per 100k: " + data2.postingsper100k
+//					+ " url: " + url);
+//			data2List.add(data2);
+//		}
+//		scan.close();
+//		writeTextToFile(data2List);
+
+	}
+	
+	private static int extractJobPostingsFromUrl(String url) {
+		Element element = null;
+		Element element2 = null;
+		try {
+			element = Util.RetrieveHtmlcodeFromPage(url);
+			if (element.text().length() == 0) {
+				// System.out.println("no text for url: " + url);
+				return -1;
 			}
-		}
-
-		int numCities = input.size();
-		List<Data2> data2List = new ArrayList<>();
-		for (CityStats.Data data : input) {
-			String url = createUrl(data.cityName, data.stateName);
-			Data2 data2 = new Data2();
-			data2.data = data;
-			;
-			Map<Integer, Integer> mapOfNumPostingsToNumOccurrences = new HashMap<Integer, Integer>();
-			data2.numPostings = -1;
-			while (true) {
-				int numPostingsTemp = 2;// extractJobPostingsFromUrl(url);
-				numQueries++;
-				if (numPostingsTemp == -1) {
-					if (bannedIpAddresses.size() > 5) {
-						bannedIpAddresses.clear();
-					}
-					bannedIpAddresses.add(getIpAddress());
-					System.out.println("------------------------");
-					System.out.println("found us on: " + data.cityName);
-					System.out.println("num banned ip addresses: " + bannedIpAddresses.size());
-					System.out.println("num queries ran: " + numQueries);
-					long numMillisPassed = System.currentTimeMillis() - startTime;
-					long numSeconds = numMillisPassed / 1000;
-					System.out.println("num seconds passed between first query and last: " + numSeconds);
-					System.out.println("switch ip addresses");
-					int numSleeps = 0;
-					boolean ipAddressChanged = true;
-					while (bannedIpAddresses.contains(getIpAddress())) {
-						TimeUnit.SECONDS.sleep(20);
-						numSleeps++;
-						if (numSleeps > 95) {
-							System.out.println("have slept many times. automatically resuming.");
-							ipAddressChanged = false;
-							break;
-						}
-					}
-					if (ipAddressChanged) {
-						System.out.println("ip address changed. resuming");
-					}
-					waitForInternet();
-					startTime = System.currentTimeMillis();
-					numQueries = 0;
-					System.out.println("------------------------");
-					continue;
-				}
-				if (!mapOfNumPostingsToNumOccurrences.containsKey(numPostingsTemp)) {
-					mapOfNumPostingsToNumOccurrences.put(numPostingsTemp, 1);
-					continue;
-				}
-				Integer numOccurrences = mapOfNumPostingsToNumOccurrences.get(numPostingsTemp);
-				if (numOccurrences == NUM_MATCHES_TO_LOOK_FOR - 1) {
-					data2.numPostings = numPostingsTemp;
-					break;
-				} else {
-					numOccurrences++;
-					mapOfNumPostingsToNumOccurrences.put(numPostingsTemp, numOccurrences);
-				}
+			Element element3 = element.getElementById("original_radius_result");
+			if (element3 != null) {
+				// System.out.println("url found no jobs: " + url);
+				// System.out.println(element3.text());
+				return 0;
 			}
-
-			double postingsper100k = data2.numPostings * 100000 / Integer.valueOf(data.population);
-			data2.postingsper100k = Math.round(postingsper100k * 100.0) / 100.0;
-			numCitiesComplete++;
-			System.out.println("(" + numCitiesComplete + "/" + numCities + "); " + "city: " + data.cityName + "; "
-					+ "num postings: " + data2.numPostings + "; " + "postings per 100k: " + data2.postingsper100k
-					+ " url: " + url);
-			data2List.add(data2);
+			element2 = element.getElementById("searchCountPages");
+			if (element2 == null) {
+				return 0;
+			}
+			String txt = element2.text();
+			int begIdx = "Page 1 of ".length();
+			int endIdx = txt.indexOf(" ", begIdx);
+			txt = txt.substring(begIdx, endIdx);
+			txt = txt.replace(",", "");
+			return Integer.valueOf(txt);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			System.out.println("exception at url: " + url);
+			if (element != null) {
+				System.out.println("element1 text: " + element.text());
+			}
+			if (element2 != null) {
+				System.out.println("element2 text: " + element2.text());
+			}
+			return -1;
 		}
-		scan.close();
-		writeTextToFile(data2List);
-
 	}
 
 	static void waitForInternet() {
