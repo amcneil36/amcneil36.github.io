@@ -38,7 +38,7 @@ public class IndeedReader {
 		return Integer.valueOf(data.population) > 400000;
 	}
 
-	private static final String outputSt = "Data queried from an Indeed.com search of the text 'Computer Science' for all USA cities with a population greater than 200k. (0 mile search radius)";
+	private static final String outputSt = "Data queried from an Indeed.com search of the text 'Computer Science' for all USA cities with a population greater than 400k. (0 mile search radius)";
 
 	/////////////////////////////////////////////////////////////////////////
 	private static final int NUM_MATCHES_TO_LOOK_FOR = 3;
@@ -73,82 +73,12 @@ public class IndeedReader {
 
 		for (CityStats.Data data : input) {
 			String url = createUrl(data.cityName, data.stateName);
-			System.out.println(Util.ReadTextFromPage(url));
 			Desktop.getDesktop().browse(new URI(url));
-			if (true) {
-				break;
-			}
 		}
+		
+		writeTextToFile(input);
 	}
-
-	private static int extractJobPostingsFromUrl(String url) {
-		Element element = null;
-		Element element2 = null;
-		try {
-			element = Util.RetrieveHtmlcodeFromPage(url);
-			if (element.text().length() == 0) {
-				// System.out.println("no text for url: " + url);
-				return -1;
-			}
-			Element element3 = element.getElementById("original_radius_result");
-			if (element3 != null) {
-				// System.out.println("url found no jobs: " + url);
-				// System.out.println(element3.text());
-				return 0;
-			}
-			element2 = element.getElementById("searchCountPages");
-			if (element2 == null) {
-				return 0;
-			}
-			String txt = element2.text();
-			int begIdx = "Page 1 of ".length();
-			int endIdx = txt.indexOf(" ", begIdx);
-			txt = txt.substring(begIdx, endIdx);
-			txt = txt.replace(",", "");
-			return Integer.valueOf(txt);
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			System.out.println("exception at url: " + url);
-			if (element != null) {
-				System.out.println("element1 text: " + element.text());
-			}
-			if (element2 != null) {
-				System.out.println("element2 text: " + element2.text());
-			}
-			return -1;
-		}
-	}
-
-	static void waitForInternet() {
-		while (!isInternetWorking()) {
-			try {
-				TimeUnit.SECONDS.sleep(1);
-			} catch (InterruptedException e) {
-			}
-		}
-	}
-
-	static boolean isInternetWorking() {
-		try {
-			Util.ReadTextFromPage("https://www.google.com");
-			return true;
-		} catch (Exception ex) {
-			return false;
-		}
-	}
-
-	private static String getIpAddress() {
-		InetAddress ip;
-		try {
-			ip = InetAddress.getLocalHost();
-			return ip.getHostAddress();
-
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-			return "";
-		}
-	}
-
+	
 	private static String createUrl(String cityName, String stateName) {
 		String url = "https://www.indeed.com/jobs?q=";
 
@@ -180,18 +110,17 @@ public class IndeedReader {
 
 	};
 
-	private static void writeTextToFile(List<Data2> list) {
+	private static void writeTextToFile(List<CityStats.Data> list) {
 
-		Collections.sort(list, c1);
 		try {
 			StringBuilder sb = new StringBuilder();
 			sb.append(
 					"city,state,population,number of job postings,job postings per 100k people,,,," + outputSt + "\n");
-			for (Data2 data : list) {
+			for (CityStats.Data data : list) {
 
-				sb.append(data.data.cityName).append(",").append(data.data.stateName).append(",")
-						.append(data.data.population).append(",").append(data.numPostings).append(",")
-						.append(data.postingsper100k).append("\n");
+				sb.append(data.cityName).append(",").append(data.stateName).append(",")
+						.append(data.population).append(",").append("").append(",")
+						.append("").append("\n");
 			}
 
 			String outputTitle = "output_";
