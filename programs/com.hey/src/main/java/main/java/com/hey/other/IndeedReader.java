@@ -1,8 +1,10 @@
 package main.java.com.hey.other;
 
+import java.awt.Desktop;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,7 +14,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner; // Import the Scanner class to read text files
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -58,96 +59,28 @@ public class IndeedReader {
 	}
 
 	public static void main(String[] args) throws Exception {
-		int numPostingsTemp = extractJobPostingsFromUrl("https://www.indeed.com/jobs?q=%22Computer+Science%22&l=Mesa%2C+az&radius=0");
-		System.out.println(numPostingsTemp);
-//		populateMap();
-//		Scanner scan = new Scanner(System.in);
-//		long startTime = System.currentTimeMillis();
-//		int numQueries = 0;
-//		List<CityStats.Data> inputTemp = CreateBigCsv.readInput();
-//		List<CityStats.Data> input = new ArrayList<>();
-//		int numCitiesComplete = 0;
-//		for (CityStats.Data data : inputTemp) {
-//			data.cityName = fixString(data.cityName);
-//			data.population = fixString(data.population);
-//			data.stateName = fixString(data.stateName);
-//			if (isCityValid(data)) {
-//				input.add(data);
-//			}
-//		}
-//
-//		int numCities = input.size();
-//		List<Data2> data2List = new ArrayList<>();
-//		for (CityStats.Data data : input) {
-//			String url = createUrl(data.cityName, data.stateName);
-//			Data2 data2 = new Data2();
-//			data2.data = data;
-//			;
-//			Map<Integer, Integer> mapOfNumPostingsToNumOccurrences = new HashMap<Integer, Integer>();
-//			data2.numPostings = -1;
-//			while (true) {
-//				int numPostingsTemp = extractJobPostingsFromUrl(url);
-//				numQueries++;
-//				if (numPostingsTemp == -1) {
-//					if (bannedIpAddresses.size() > 5) {
-//						bannedIpAddresses.clear();
-//					}
-//					bannedIpAddresses.add(getIpAddress());
-//					System.out.println("------------------------");
-//					System.out.println("found us on: " + data.cityName);
-//					System.out.println("num banned ip addresses: " + bannedIpAddresses.size());
-//					System.out.println("num queries ran: " + numQueries);
-//					long numMillisPassed = System.currentTimeMillis() - startTime;
-//					long numSeconds = numMillisPassed / 1000;
-//					System.out.println("num seconds passed between first query and last: " + numSeconds);
-//					System.out.println("switch ip addresses");
-//					int numSleeps = 0;
-//					boolean ipAddressChanged = true;
-//					while (bannedIpAddresses.contains(getIpAddress())) {
-//						TimeUnit.SECONDS.sleep(20);
-//						numSleeps++;
-//						if (numSleeps > 95) {
-//							System.out.println("have slept many times. automatically resuming.");
-//							ipAddressChanged = false;
-//							break;
-//						}
-//					}
-//					if (ipAddressChanged) {
-//						System.out.println("ip address changed. resuming");
-//					}
-//					waitForInternet();
-//					startTime = System.currentTimeMillis();
-//					numQueries = 0;
-//					System.out.println("------------------------");
-//					continue;
-//				}
-//				if (!mapOfNumPostingsToNumOccurrences.containsKey(numPostingsTemp)) {
-//					mapOfNumPostingsToNumOccurrences.put(numPostingsTemp, 1);
-//					continue;
-//				}
-//				Integer numOccurrences = mapOfNumPostingsToNumOccurrences.get(numPostingsTemp);
-//				if (numOccurrences == NUM_MATCHES_TO_LOOK_FOR - 1) {
-//					data2.numPostings = numPostingsTemp;
-//					break;
-//				} else {
-//					numOccurrences++;
-//					mapOfNumPostingsToNumOccurrences.put(numPostingsTemp, numOccurrences);
-//				}
-//			}
-//
-//			double postingsper100k = data2.numPostings * 100000 / Integer.valueOf(data.population);
-//			data2.postingsper100k = Math.round(postingsper100k * 100.0) / 100.0;
-//			numCitiesComplete++;
-//			System.out.println("(" + numCitiesComplete + "/" + numCities + "); " + "city: " + data.cityName + "; "
-//					+ "num postings: " + data2.numPostings + "; " + "postings per 100k: " + data2.postingsper100k
-//					+ " url: " + url);
-//			data2List.add(data2);
-//		}
-//		scan.close();
-//		writeTextToFile(data2List);
+		populateMap();
+		List<CityStats.Data> inputTemp = CreateBigCsv.readInput();
+		List<CityStats.Data> input = new ArrayList<>();
+		for (CityStats.Data data : inputTemp) {
+			data.cityName = fixString(data.cityName);
+			data.population = fixString(data.population);
+			data.stateName = fixString(data.stateName);
+			if (isCityValid(data)) {
+				input.add(data);
+			}
+		}
 
+		for (CityStats.Data data : input) {
+			String url = createUrl(data.cityName, data.stateName);
+			System.out.println(Util.ReadTextFromPage(url));
+			Desktop.getDesktop().browse(new URI(url));
+			if (true) {
+				break;
+			}
+		}
 	}
-	
+
 	private static int extractJobPostingsFromUrl(String url) {
 		Element element = null;
 		Element element2 = null;
