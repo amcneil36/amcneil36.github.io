@@ -6,7 +6,7 @@ import java.util.Map;
 
 import main.java.com.hey.Util;
 import main.java.com.hey.other.CensusMdGeneratorGeneric;
-import main.java.com.hey.us.census.ACS2021DataReader;
+import main.java.com.hey.us.census.ACSDataReader;
 
 public class MenOutEarningWomen extends CensusMdGeneratorGeneric {
 
@@ -22,13 +22,13 @@ public class MenOutEarningWomen extends CensusMdGeneratorGeneric {
 
 	@Override
 	protected String[] getVariables() {
-		return new String[] { "B19325_002E(median income men)", ACS2021DataReader.POPULATION,
+		return new String[] { "B19325_002E(median income men)", ACSDataReader.POPULATION,
 				"B19325_049E(median income women)" };
 	}
 
 	@Override
 	protected boolean removeRow(Map<String, String> map) {
-		int numPeople = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
+		int numPeople = Integer.valueOf(map.get(ACSDataReader.POPULATION));
 		return numPeople < 1000;
 	}
 
@@ -50,7 +50,7 @@ public class MenOutEarningWomen extends CensusMdGeneratorGeneric {
 	protected Object[] getRemainingRowArray(Map<String, String> map) {
 		int menIncome = Integer.valueOf(map.get("B19325_002E(median income men)"));
 		int womenIncome = Integer.valueOf(map.get("B19325_049E(median income women)"));
-		double totalPopulation = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
+		double totalPopulation = Integer.valueOf(map.get(ACSDataReader.POPULATION));
 		return new Object[] { Util.getIntFromDouble(totalPopulation), "$" + menIncome, "$" + womenIncome };
 	}
 

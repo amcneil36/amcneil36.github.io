@@ -3,18 +3,18 @@ package main.java.com.hey.city.stats;
 import java.util.Map;
 
 import main.java.com.hey.CityStats;
-import main.java.com.hey.us.census.ACS2021DataReader;
-import main.java.com.hey.us.census.ACS2021DataReader.Result;
+import main.java.com.hey.us.census.ACSDataReader;
+import main.java.com.hey.us.census.ACSDataReader.Result;
 
 public class RaceEthnicity extends CityStats {
 
 	private static Map<String, Result> mapOfFipsCodeToResult;
 
-	private static String[] variables = new String[] { ACS2021DataReader.POPULATION, "B03002_003E(non-hispanic white)",
+	private static String[] variables = new String[] { ACSDataReader.POPULATION, "B03002_003E(non-hispanic white)",
 			"B02001_003E(black)", "B02001_005E(asian)", "B03001_003E(hispanic or latino)" };
 
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
+		mapOfFipsCodeToResult = ACSDataReader.getPlaceResults(variables);
 		RaceEthnicity rn = new RaceEthnicity();
 		rn.processAllStates();
 
@@ -30,7 +30,7 @@ public class RaceEthnicity extends CityStats {
 			return;
 		}
 		Result result = mapOfFipsCodeToResult.get(data.fipsCode);
-		double population = Double.valueOf(result.results.get(ACS2021DataReader.POPULATION));
+		double population = Double.valueOf(result.results.get(ACSDataReader.POPULATION));
 		double nonHispanicWhite = Double.valueOf(result.results.get("B03002_003E(non-hispanic white)"));
 		double black = Double.valueOf(result.results.get("B02001_003E(black)"));
 		double asian = Double.valueOf(result.results.get("B02001_005E(asian)"));

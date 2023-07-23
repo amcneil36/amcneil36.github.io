@@ -13,8 +13,9 @@ import org.jsoup.Jsoup;
 
 import main.java.com.hey.Util;
 
-public class ACS2021DataReader {
+public class ACSDataReader {
 
+	private static final String YEAR = "2021";
 	public static final String COUNTRY_SUFFIX = "&for=us:*";
 	public static final String REGION_SUFFIX = "&for=region:*";
 	public static final String STATE_SUFFIX = "&for=state:*";
@@ -77,7 +78,7 @@ public class ACS2021DataReader {
 	}
 
 	public static String createUrlFromVariablesAndSuffix(String[] variables, String urlSuffix) {
-		String url = "https://api.census.gov/data/2020/acs/acs5?get=NAME";
+		String url = "https://api.census.gov/data/" + YEAR + "/acs/acs5?get=NAME";
 		for (String variable : variables) {
 			url += ",";
 			if (variable.contains("(")) {
@@ -165,7 +166,7 @@ public class ACS2021DataReader {
 
 	public static void main(String[] args) throws Exception {
 		String[] variables = new String[] { "B20017B_001E(median earnings by black women)",
-				"B02001_003E(number of black people)", ACS2021DataReader.POPULATION };
+				"B02001_003E(number of black people)", ACSDataReader.POPULATION };
 		List<Map<String, String>> elementsList = getCountry(variables);
 		Iterator<Map<String, String>> iterator = elementsList.iterator();
 		while (iterator.hasNext()) {
@@ -181,7 +182,7 @@ public class ACS2021DataReader {
 		for (Map<String, String> map : elementsList) {
 			int income = Integer.valueOf(map.get("B20017B_001E(median earnings by black women)"));
 			double totalBlackPopulation = Integer.valueOf(map.get("B02001_003E(number of black people)"));
-			double totalPopulation = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
+			double totalPopulation = Integer.valueOf(map.get(ACSDataReader.POPULATION));
 			double percentBlack = Util.roundTwoDecimalPlaces(100 * totalBlackPopulation / totalPopulation);
 			System.out.println(map.get("NAME") + ": population=" + Util.getIntFromDouble(totalPopulation)
 					+ ", percent_black=" + percentBlack + "%" + ", median_income_of_black_women=$" + income);

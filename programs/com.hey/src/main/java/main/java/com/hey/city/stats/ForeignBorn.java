@@ -3,19 +3,19 @@ package main.java.com.hey.city.stats;
 import java.util.Map;
 
 import main.java.com.hey.CityStats;
-import main.java.com.hey.us.census.ACS2021DataReader;
-import main.java.com.hey.us.census.ACS2021DataReader.Result;
+import main.java.com.hey.us.census.ACSDataReader;
+import main.java.com.hey.us.census.ACSDataReader.Result;
 
 public class ForeignBorn extends CityStats {
 	
 	private static Map<String, Result> mapOfFipsCodeToResult;
-	private static String[] variables = new String[] { "B05006_001E(foreign born amount)", ACS2021DataReader.POPULATION};
+	private static String[] variables = new String[] { "B05006_001E(foreign born amount)", ACSDataReader.POPULATION};
 	
 	public static void main(String[] args) throws Exception {
 		// number of people with a bachelors or higher is number of people where
 		// bachelors is the highest they have + num people with masters + doctoral, etc
 		// all divided by the number of people over the age of 25
-		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
+		mapOfFipsCodeToResult = ACSDataReader.getPlaceResults(variables);
 		ForeignBorn foreignBorn = new ForeignBorn();
 		foreignBorn.processAllStates();
 

@@ -6,7 +6,7 @@ import java.util.Map;
 
 import main.java.com.hey.Util;
 import main.java.com.hey.other.CensusMdGeneratorGeneric;
-import main.java.com.hey.us.census.ACS2021DataReader;
+import main.java.com.hey.us.census.ACSDataReader;
 
 public class BachelorsDegree extends CensusMdGeneratorGeneric {
 
@@ -22,14 +22,14 @@ public class BachelorsDegree extends CensusMdGeneratorGeneric {
 
 	@Override
 	protected String[] getVariables() {
-		return new String[] { ACS2021DataReader.BACHELORS_DEGREE,
-				ACS2021DataReader.MASTERS_DEGREE, ACS2021DataReader.PROFESSIONAL_DEGREE, ACS2021DataReader.DOCTORATE_DEGREE,
-				ACS2021DataReader.NUM_PEOPLE_OVER_25_EDUCATION, ACS2021DataReader.POPULATION };
+		return new String[] { ACSDataReader.BACHELORS_DEGREE,
+				ACSDataReader.MASTERS_DEGREE, ACSDataReader.PROFESSIONAL_DEGREE, ACSDataReader.DOCTORATE_DEGREE,
+				ACSDataReader.NUM_PEOPLE_OVER_25_EDUCATION, ACSDataReader.POPULATION };
 	}
 
 	@Override
 	protected boolean removeRow(Map<String, String> map) {
-		int numPeople = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
+		int numPeople = Integer.valueOf(map.get(ACSDataReader.POPULATION));
 		return numPeople < 1000;
 	}
 
@@ -39,11 +39,11 @@ public class BachelorsDegree extends CensusMdGeneratorGeneric {
 	}
 	
 	private static double getBachelorsDegreePercent(Map<String, String> map) {
-		double numPeepsWithDegrees = Integer.valueOf(map.get(ACS2021DataReader.BACHELORS_DEGREE))
-				+ Integer.valueOf(map.get(ACS2021DataReader.MASTERS_DEGREE))
-				+ Integer.valueOf(map.get(ACS2021DataReader.PROFESSIONAL_DEGREE))
-				+ Integer.valueOf(map.get(ACS2021DataReader.DOCTORATE_DEGREE));
-		double numPeeps = Integer.valueOf(map.get(ACS2021DataReader.NUM_PEOPLE_OVER_25_EDUCATION));
+		double numPeepsWithDegrees = Integer.valueOf(map.get(ACSDataReader.BACHELORS_DEGREE))
+				+ Integer.valueOf(map.get(ACSDataReader.MASTERS_DEGREE))
+				+ Integer.valueOf(map.get(ACSDataReader.PROFESSIONAL_DEGREE))
+				+ Integer.valueOf(map.get(ACSDataReader.DOCTORATE_DEGREE));
+		double numPeeps = Integer.valueOf(map.get(ACSDataReader.NUM_PEOPLE_OVER_25_EDUCATION));
 		double fraction = (numPeepsWithDegrees / numPeeps) * 100;
 		fraction = Math.round(fraction * 100.0) / 100.0; // round two decimals
 		return fraction;
@@ -72,7 +72,7 @@ public class BachelorsDegree extends CensusMdGeneratorGeneric {
 	@Override
 	protected Object[] getRemainingRowArray(Map<String, String> map) {
 		double percentBachelors = getBachelorsDegreePercent(map);
-		double totalPopulation = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
+		double totalPopulation = Integer.valueOf(map.get(ACSDataReader.POPULATION));
 		return new Object[] { Util.getIntFromDouble(totalPopulation),percentBachelors + "%" };
 	}
 

@@ -6,7 +6,7 @@ import java.util.Map;
 
 import main.java.com.hey.Util;
 import main.java.com.hey.other.CensusMdGeneratorGeneric;
-import main.java.com.hey.us.census.ACS2021DataReader;
+import main.java.com.hey.us.census.ACSDataReader;
 
 public class MedianHouseholdIncome extends CensusMdGeneratorGeneric {
 
@@ -22,13 +22,13 @@ public class MedianHouseholdIncome extends CensusMdGeneratorGeneric {
 
 	@Override
 	protected String[] getVariables() {
-		return new String[] { ACS2021DataReader.MEDIAN_HOUSEHOLD_INCOME, ACS2021DataReader.POPULATION };
+		return new String[] { ACSDataReader.MEDIAN_HOUSEHOLD_INCOME, ACSDataReader.POPULATION };
 	}
 
 	@Override
 	protected boolean removeRow(Map<String, String> map) {
-		int numPeople = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
-		return numPeople < 1000 || map.get(ACS2021DataReader.MEDIAN_HOUSEHOLD_INCOME).contains("-");
+		int numPeople = Integer.valueOf(map.get(ACSDataReader.POPULATION));
+		return numPeople < 1000 || map.get(ACSDataReader.MEDIAN_HOUSEHOLD_INCOME).contains("-");
 	}
 
 	@Override
@@ -38,14 +38,14 @@ public class MedianHouseholdIncome extends CensusMdGeneratorGeneric {
 
 	@Override
 	protected void sortCollection(List<Map<String, String>> elementsList) {
-		Collections.sort(elementsList, (a, b) -> Integer.valueOf(b.get(ACS2021DataReader.MEDIAN_HOUSEHOLD_INCOME))
-				- Integer.valueOf(a.get(ACS2021DataReader.MEDIAN_HOUSEHOLD_INCOME)));
+		Collections.sort(elementsList, (a, b) -> Integer.valueOf(b.get(ACSDataReader.MEDIAN_HOUSEHOLD_INCOME))
+				- Integer.valueOf(a.get(ACSDataReader.MEDIAN_HOUSEHOLD_INCOME)));
 	}
 
 	@Override
 	protected Object[] getRemainingRowArray(Map<String, String> map) {
-		int income = Integer.valueOf(map.get(ACS2021DataReader.MEDIAN_HOUSEHOLD_INCOME));
-		double totalPopulation = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
+		int income = Integer.valueOf(map.get(ACSDataReader.MEDIAN_HOUSEHOLD_INCOME));
+		double totalPopulation = Integer.valueOf(map.get(ACSDataReader.POPULATION));
 		return new Object[] { Util.getIntFromDouble(totalPopulation), "$" + income };
 	}
 

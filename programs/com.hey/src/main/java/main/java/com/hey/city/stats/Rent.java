@@ -3,8 +3,8 @@ package main.java.com.hey.city.stats;
 import java.util.Map;
 
 import main.java.com.hey.CityStats;
-import main.java.com.hey.us.census.ACS2021DataReader;
-import main.java.com.hey.us.census.ACS2021DataReader.Result;
+import main.java.com.hey.us.census.ACSDataReader;
+import main.java.com.hey.us.census.ACSDataReader.Result;
 
 public class Rent extends CityStats {
 
@@ -13,7 +13,7 @@ public class Rent extends CityStats {
 	private static String[] variables = new String[] { "B25064_001E(median gross rent)" };
 
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
+		mapOfFipsCodeToResult = ACSDataReader.getPlaceResults(variables);
 
 		Rent rent = new Rent();
 		rent.processAllStates();

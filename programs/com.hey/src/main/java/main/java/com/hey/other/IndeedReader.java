@@ -35,21 +35,11 @@ public class IndeedReader {
 	private static final Set<String> searchTermsSet = new HashSet<String>(Arrays.asList("Computer Science"));
 
 	private static boolean isCityValid(CityStats.Data data) {
-		return Integer.valueOf(data.population) > 400000;
+		return Integer.valueOf(data.population) > 20000 && data.metro.contains("Miami-Fort Lauderdale-West Palm Beach");
 	}
 
 	private static final String outputSt = "Data queried from an Indeed.com search of the text 'Computer Science' for all USA cities with a population greater than 400k. (0 mile search radius)";
 
-	/////////////////////////////////////////////////////////////////////////
-	private static final int NUM_MATCHES_TO_LOOK_FOR = 3;
-
-	private static class Data2 {
-		CityStats.Data data;
-		int numPostings;
-		double postingsper100k;
-	}
-
-	// format csv to remove commas
 
 	private static String fixString(String st) {
 		if (st.charAt(0) == ' ') {
@@ -95,20 +85,6 @@ public class IndeedReader {
 		url += "&l=" + cityName.replace(" ", "+") + "%2C+" + map.get(stateName) + "&radius=0";
 		return url;
 	}
-
-	static Comparator<Data2> c1 = new Comparator<Data2>() {
-
-		public int compare(Data2 o1, Data2 o2) {
-			if (o1.postingsper100k > o2.postingsper100k) {
-				return -1;
-			} else if (o1.postingsper100k < o2.postingsper100k) {
-				return 1;
-			} else {
-				return 0;
-			}
-		}
-
-	};
 
 	private static void writeTextToFile(List<CityStats.Data> list) {
 

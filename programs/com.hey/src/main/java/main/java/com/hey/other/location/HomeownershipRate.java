@@ -6,7 +6,7 @@ import java.util.Map;
 
 import main.java.com.hey.Util;
 import main.java.com.hey.other.CensusMdGeneratorGeneric;
-import main.java.com.hey.us.census.ACS2021DataReader;
+import main.java.com.hey.us.census.ACSDataReader;
 
 public class HomeownershipRate extends CensusMdGeneratorGeneric {
 
@@ -23,12 +23,12 @@ public class HomeownershipRate extends CensusMdGeneratorGeneric {
 	@Override
 	protected String[] getVariables() {
 		return new String[] { "B25008_001E(total in homes)", "B25008_002E(owner occupied)",
-				ACS2021DataReader.POPULATION };
+				ACSDataReader.POPULATION };
 	}
 
 	@Override
 	protected boolean removeRow(Map<String, String> map) {
-		int numPeople = Integer.valueOf(map.get(ACS2021DataReader.POPULATION ));
+		int numPeople = Integer.valueOf(map.get(ACSDataReader.POPULATION ));
 		return numPeople < 1000;
 	}
 
@@ -64,7 +64,7 @@ public class HomeownershipRate extends CensusMdGeneratorGeneric {
 	@Override
 	protected Object[] getRemainingRowArray(Map<String, String> map) {
 		double percentQualified = getHomeOwnershipRatePercent(map);
-		double totalPopulation = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
+		double totalPopulation = Integer.valueOf(map.get(ACSDataReader.POPULATION));
 		return new Object[] { Util.getIntFromDouble(totalPopulation), percentQualified + "%" };
 	}
 

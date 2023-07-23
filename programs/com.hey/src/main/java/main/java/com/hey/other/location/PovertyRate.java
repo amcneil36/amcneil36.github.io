@@ -6,7 +6,7 @@ import java.util.Map;
 
 import main.java.com.hey.Util;
 import main.java.com.hey.other.CensusMdGeneratorGeneric;
-import main.java.com.hey.us.census.ACS2021DataReader;
+import main.java.com.hey.us.census.ACSDataReader;
 
 public class PovertyRate extends CensusMdGeneratorGeneric {
 
@@ -22,13 +22,13 @@ public class PovertyRate extends CensusMdGeneratorGeneric {
 
 	@Override
 	protected String[] getVariables() {
-		return new String[] { ACS2021DataReader.POPULATION,
+		return new String[] { ACSDataReader.POPULATION,
 				"B17020_001E(num people eligible for poverty)", "B17020_002E(num people in poverty)" };
 	}
 
 	@Override
 	protected boolean removeRow(Map<String, String> map) {
-		int numPeople = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
+		int numPeople = Integer.valueOf(map.get(ACSDataReader.POPULATION));
 		return numPeople < 1000;
 	}
 
@@ -64,7 +64,7 @@ public class PovertyRate extends CensusMdGeneratorGeneric {
 
 	@Override
 	protected Object[] getRemainingRowArray(Map<String, String> map) {
-		double totalPopulation = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
+		double totalPopulation = Integer.valueOf(map.get(ACSDataReader.POPULATION));
 		double povertyRate = getPovertyRate(map);
 		return new Object[] { Util.getIntFromDouble(totalPopulation), povertyRate + "%" };
 	}

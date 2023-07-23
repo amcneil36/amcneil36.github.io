@@ -4,8 +4,8 @@ import java.util.Map;
 
 import main.java.com.hey.CityStats;
 import main.java.com.hey.Util;
-import main.java.com.hey.us.census.ACS2021DataReader;
-import main.java.com.hey.us.census.ACS2021DataReader.Result;
+import main.java.com.hey.us.census.ACSDataReader;
+import main.java.com.hey.us.census.ACSDataReader.Result;
 
 public class UnemploymentRate extends CityStats {
 
@@ -23,7 +23,7 @@ public class UnemploymentRate extends CityStats {
 			"B23025_005E(unemployed in civilian labor force)" };
 
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
+		mapOfFipsCodeToResult = ACSDataReader.getPlaceResults(variables);
 
 		UnemploymentRate ur = new UnemploymentRate();
 		ur.processAllStates();

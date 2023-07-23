@@ -6,7 +6,7 @@ import java.util.Map;
 
 import main.java.com.hey.Util;
 import main.java.com.hey.other.CensusMdGeneratorGeneric;
-import main.java.com.hey.us.census.ACS2021DataReader;
+import main.java.com.hey.us.census.ACSDataReader;
 
 public class WhitePeopleHomeOwnershipRate extends CensusMdGeneratorGeneric {
 
@@ -24,7 +24,7 @@ public class WhitePeopleHomeOwnershipRate extends CensusMdGeneratorGeneric {
 	protected String[] getVariables() {
 		return new String[] { "B25003A_001E(num white people who are eligible)",
 				"B25003A_002E(num white ppl who own homes)", "B02001_002E(number of white people)",
-				ACS2021DataReader.POPULATION };
+				ACSDataReader.POPULATION };
 	}
 
 	@Override
@@ -68,7 +68,7 @@ public class WhitePeopleHomeOwnershipRate extends CensusMdGeneratorGeneric {
 	protected Object[] getRemainingRowArray(Map<String, String> map) {
 		double percentQualified = getHomeOwnershipRatePercent(map);
 		double totalPopulationOfRace = Integer.valueOf(map.get("B02001_002E(number of white people)"));
-		double totalPopulation = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
+		double totalPopulation = Integer.valueOf(map.get(ACSDataReader.POPULATION));
 		double percentOfTheRace = Util.roundTwoDecimalPlaces(100 * totalPopulationOfRace / totalPopulation);
 		return new Object[] { Util.getIntFromDouble(totalPopulation), percentOfTheRace + "%", percentQualified + "%" };
 	}

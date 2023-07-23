@@ -6,7 +6,7 @@ import java.util.Map;
 
 import main.java.com.hey.Util;
 import main.java.com.hey.other.CensusMdGeneratorGeneric;
-import main.java.com.hey.us.census.ACS2021DataReader;
+import main.java.com.hey.us.census.ACSDataReader;
 
 public class WhitePeopleUnemploymentRate extends CensusMdGeneratorGeneric {
 
@@ -22,7 +22,7 @@ public class WhitePeopleUnemploymentRate extends CensusMdGeneratorGeneric {
 
 	@Override
 	protected String[] getVariables() {
-		return new String[] { "B02001_002E(number of white people)", ACS2021DataReader.POPULATION,
+		return new String[] { "B02001_002E(number of white people)", ACSDataReader.POPULATION,
 				"C23002A_006E(white men 16-64 in labor force)",
 				"C23002A_008E(white men 16-64 in labor force unemployed",
 				"C23002A_019E(white women 16-64 in labor force)", "C23002A_021E(white women 16-64 unemployed)" };
@@ -68,7 +68,7 @@ public class WhitePeopleUnemploymentRate extends CensusMdGeneratorGeneric {
 	@Override
 	protected Object[] getRemainingRowArray(Map<String, String> map) {
 		double totalWhitePopulation = Integer.valueOf(map.get("B02001_002E(number of white people)"));
-		double totalPopulation = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
+		double totalPopulation = Integer.valueOf(map.get(ACSDataReader.POPULATION));
 		double percentWhite = Util.roundTwoDecimalPlaces(100 * totalWhitePopulation / totalPopulation);
 		double unemploymentRate = getUnemploymentRate(map);
 		return new Object[] { Util.getIntFromDouble(totalPopulation), percentWhite + "%", unemploymentRate + "%" };

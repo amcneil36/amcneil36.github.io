@@ -4,8 +4,8 @@ import java.util.Map;
 
 import main.java.com.hey.CityStats;
 import main.java.com.hey.Util;
-import main.java.com.hey.us.census.ACS2021DataReader;
-import main.java.com.hey.us.census.ACS2021DataReader.Result;
+import main.java.com.hey.us.census.ACSDataReader;
+import main.java.com.hey.us.census.ACSDataReader.Result;
 
 public class HomeOwnershipRate extends CityStats {
 
@@ -18,7 +18,7 @@ public class HomeOwnershipRate extends CityStats {
 	private static String[] variables = new String[] { "B25008_001E(total in homes)", "B25008_002E(owner occupied)" };
 
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
+		mapOfFipsCodeToResult = ACSDataReader.getPlaceResults(variables);
 		HomeOwnershipRate hr = new HomeOwnershipRate();
 		hr.processAllStates();
 

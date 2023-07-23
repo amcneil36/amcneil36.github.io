@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import main.java.com.hey.Util;
-import main.java.com.hey.us.census.ACS2021DataReader;
+import main.java.com.hey.us.census.ACSDataReader;
 
 public abstract class CensusMdGeneratorGeneric {
 
@@ -45,25 +45,25 @@ public abstract class CensusMdGeneratorGeneric {
         Util.deleteFilesInFolder("C:\\Users\\anmcneil\\amcneil36.github.io\\programs\\com.hey\\generated");
 		String[] variables = getVariables();
         Util.writeTextToFile("generated//main.md", "### " + getMainHeaderText() + getMainBodyText() + getMainFooterText());
-        doSuperEverythingResable(ACS2021DataReader.getZipCodes(variables), "Zip code", "zip code tabulation area",
+        doSuperEverythingResable(ACSDataReader.getZipCodes(variables), "Zip code", "zip code tabulation area",
 				"zipcode",
-				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.ZIP_CODE_SUFFIX));
-		doSuperEverythingResable(ACS2021DataReader.getPlaces(variables), "City/Town/CDP", "NAME", "cityTownCDP",
-				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.PLACE_SUFFIX));
-		doSuperEverythingResable(ACS2021DataReader.getSchoolDistricts(variables), "School District", "NAME",
-				"schoolDistrict", ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.SCHOOL_DISTRICT_SUFFIX));
-		doSuperEverythingResable(ACS2021DataReader.getCounties(variables), "County", "NAME", "county",
-				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.COUNTY_SUFFIX));
-		doSuperEverythingResable(ACS2021DataReader.getMetrosAndMicros(variables), "Metro/Micro", "NAME", "metroMicro",
-				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.METRO_MICRO_SUFFIX));
-		doSuperEverythingResable(ACS2021DataReader.getCombinedStatisticalAreas(variables), "Combined Statistical Area",
-				"NAME", "combinedStatisticalArea", ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.CSA_SUFFIX));
-		doSuperEverythingResable(ACS2021DataReader.getStates(variables), "State", "NAME", "state",
-				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.STATE_SUFFIX));
-		doSuperEverythingResable(ACS2021DataReader.getRegions(variables), "Region", "NAME", "region",
-				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.REGION_SUFFIX));
-		doSuperEverythingResable(ACS2021DataReader.getCountry(variables), "Country", "NAME", "country",
-				ACS2021DataReader.createUrlFromVariablesAndSuffix(variables, ACS2021DataReader.COUNTRY_SUFFIX));
+				ACSDataReader.createUrlFromVariablesAndSuffix(variables, ACSDataReader.ZIP_CODE_SUFFIX));
+		doSuperEverythingResable(ACSDataReader.getPlaces(variables), "City/Town/CDP", "NAME", "cityTownCDP",
+				ACSDataReader.createUrlFromVariablesAndSuffix(variables, ACSDataReader.PLACE_SUFFIX));
+		doSuperEverythingResable(ACSDataReader.getSchoolDistricts(variables), "School District", "NAME",
+				"schoolDistrict", ACSDataReader.createUrlFromVariablesAndSuffix(variables, ACSDataReader.SCHOOL_DISTRICT_SUFFIX));
+		doSuperEverythingResable(ACSDataReader.getCounties(variables), "County", "NAME", "county",
+				ACSDataReader.createUrlFromVariablesAndSuffix(variables, ACSDataReader.COUNTY_SUFFIX));
+		doSuperEverythingResable(ACSDataReader.getMetrosAndMicros(variables), "Metro/Micro", "NAME", "metroMicro",
+				ACSDataReader.createUrlFromVariablesAndSuffix(variables, ACSDataReader.METRO_MICRO_SUFFIX));
+		doSuperEverythingResable(ACSDataReader.getCombinedStatisticalAreas(variables), "Combined Statistical Area",
+				"NAME", "combinedStatisticalArea", ACSDataReader.createUrlFromVariablesAndSuffix(variables, ACSDataReader.CSA_SUFFIX));
+		doSuperEverythingResable(ACSDataReader.getStates(variables), "State", "NAME", "state",
+				ACSDataReader.createUrlFromVariablesAndSuffix(variables, ACSDataReader.STATE_SUFFIX));
+		doSuperEverythingResable(ACSDataReader.getRegions(variables), "Region", "NAME", "region",
+				ACSDataReader.createUrlFromVariablesAndSuffix(variables, ACSDataReader.REGION_SUFFIX));
+		doSuperEverythingResable(ACSDataReader.getCountry(variables), "Country", "NAME", "country",
+				ACSDataReader.createUrlFromVariablesAndSuffix(variables, ACSDataReader.COUNTRY_SUFFIX));
 
 	}
 

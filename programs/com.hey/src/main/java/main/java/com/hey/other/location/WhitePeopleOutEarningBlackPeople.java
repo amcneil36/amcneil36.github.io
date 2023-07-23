@@ -6,7 +6,7 @@ import java.util.Map;
 
 import main.java.com.hey.Util;
 import main.java.com.hey.other.CensusMdGeneratorGeneric;
-import main.java.com.hey.us.census.ACS2021DataReader;
+import main.java.com.hey.us.census.ACSDataReader;
 
 public class WhitePeopleOutEarningBlackPeople extends CensusMdGeneratorGeneric {
 
@@ -23,7 +23,7 @@ public class WhitePeopleOutEarningBlackPeople extends CensusMdGeneratorGeneric {
 	@Override
 	protected String[] getVariables() {
 		return new String[] { "B19013A_001E(median household income white families)",
-				"B02001_002E(number of white people)", ACS2021DataReader.POPULATION,
+				"B02001_002E(number of white people)", ACSDataReader.POPULATION,
 				"B19013B_001E(median household income black families)", "B02001_003E(number of black people)" };
 	}
 
@@ -52,7 +52,7 @@ public class WhitePeopleOutEarningBlackPeople extends CensusMdGeneratorGeneric {
 		int blackIncome = Integer.valueOf(map.get("B19013B_001E(median household income black families)"));
 		double totalWhitePopulation = Integer.valueOf(map.get("B02001_002E(number of white people)"));
 		double totalBlackPopulation = Integer.valueOf(map.get("B02001_003E(number of black people)"));
-		double totalPopulation = Integer.valueOf(map.get(ACS2021DataReader.POPULATION));
+		double totalPopulation = Integer.valueOf(map.get(ACSDataReader.POPULATION));
 		double percentWhite = Util.roundTwoDecimalPlaces(100 * totalWhitePopulation / totalPopulation);
 		double percentBlack = Util.roundTwoDecimalPlaces(100 * totalBlackPopulation / totalPopulation);
 		return new Object[] { Util.getIntFromDouble(totalPopulation), percentWhite + "%", percentBlack + "%", "$" + whiteIncome, "$" + blackIncome};

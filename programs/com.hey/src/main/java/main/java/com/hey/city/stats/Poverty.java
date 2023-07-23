@@ -3,8 +3,8 @@ package main.java.com.hey.city.stats;
 import java.util.Map;
 
 import main.java.com.hey.CityStats;
-import main.java.com.hey.us.census.ACS2021DataReader;
-import main.java.com.hey.us.census.ACS2021DataReader.Result;
+import main.java.com.hey.us.census.ACSDataReader;
+import main.java.com.hey.us.census.ACSDataReader.Result;
 
 public class Poverty extends CityStats {
 	
@@ -13,7 +13,7 @@ public class Poverty extends CityStats {
 	private static String[] variables = new String[] {"B17020_001E(num people eligible for poverty)", "B17020_002E(num people in poverty)"};
 
 	public static void main(String[] args) throws Exception {
-		mapOfFipsCodeToResult = ACS2021DataReader.getPlaceResults(variables);
+		mapOfFipsCodeToResult = ACSDataReader.getPlaceResults(variables);
 		Poverty poverty = new Poverty();
 		poverty.processAllStates();
 		
