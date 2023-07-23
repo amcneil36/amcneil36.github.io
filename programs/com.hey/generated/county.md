@@ -1,3112 +1,3109 @@
-This page is an analysis and visualization of data I queried from the US Census' American Community Survey 2020 5 year estimates API. To see the original, raw data that I retrieved from the API before analyzing it, navigate here: <a href="https://api.census.gov/data/2020/acs/acs5?get=NAME,B19325_002E,B01003_001E,B19325_049E&for=county:*">https://api.census.gov/data/2020/acs/acs5?get=NAME,B19325_002E,B01003_001E,B19325_049E&for=county:*</a>
+This page is an analysis and visualization of data I queried from the US Census' American Community Survey 2020 5 year estimates API. To see the original, raw data that I retrieved from the API before analyzing it, navigate here: <a href="https://api.census.gov/data/2021/acs/acs5?get=NAME,B25008_001E,B25008_002E,B01003_001E&for=county:*">https://api.census.gov/data/2021/acs/acs5?get=NAME,B25008_001E,B25008_002E,B01003_001E&for=county:*</a>
 
-|County|Population|Median household income of men|Median income of women|
-|---|---|---|---|
-|Onslow County, North Carolina|198377|$88686|$67532|
-|Kern County, California|892458|$347268|$328780|
-|Pinal County, Arizona|447559|$189775|$173649|
-|San Francisco County, California|874784|$394907|$379460|
-|Santa Clara County, California|1924379|$793949|$778795|
-|Kings County, California|151090|$65567|$50882|
-|Anderson County, Texas|57917|$30632|$18101|
-|Walker County, Texas|72295|$37660|$25765|
-|San Diego County, California|3323970|$1366697|$1355520|
-|Norfolk city, Virginia|244300|$106429|$96451|
-|Lassen County, California|30600|$17943|$8477|
-|Fremont County, Colorado|47725|$24692|$16935|
-|Centre County, Pennsylvania|162264|$74948|$67406|
-|Travis County, Texas|1250884|$515119|$507747|
-|Bee County, Texas|32609|$17052|$9785|
-|Fairbanks North Star Borough, Alaska|98455|$42594|$35404|
-|Pulaski County, Missouri|52359|$24582|$18151|
-|Monterey County, California|432977|$171722|$166092|
-|Yuma County, Arizona|211931|$86494|$80902|
-|Jefferson County, New York|111454|$46778|$41669|
-|Kitsap County, Washington|268945|$114137|$109084|
-|Union County, Florida|15282|$8969|$3952|
-|Leavenworth County, Kansas|81499|$35188|$30181|
-|Jones County, Texas|19874|$10967|$5983|
-|West Feliciana Parish, Louisiana|15441|$9157|$4300|
-|Jefferson County, Texas|253136|$103311|$98508|
-|Franklin County, New York|50389|$23498|$18864|
-|Ionia County, Michigan|64401|$28578|$23981|
-|DeSoto County, Florida|37371|$18062|$13468|
-|Howard County, Texas|36213|$17013|$12457|
-|St. Francois County, Missouri|66653|$29782|$25334|
-|Anchorage Municipality, Alaska|292090|$118404|$113969|
-|Tattnall County, Georgia|25392|$12666|$8407|
-|Union County, Pennsylvania|44831|$21329|$17080|
-|El Paso County, Colorado|710499|$286129|$281895|
-|Frio County, Texas|20013|$10241|$6099|
-|Story County, Iowa|97355|$43988|$39873|
-|Marion County, Ohio|65179|$28974|$24876|
-|Wichita County, Texas|132154|$55540|$51451|
-|Imperial County, California|180580|$70662|$66582|
-|Jackson County, Florida|47409|$22153|$18119|
-|Gallatin County, Montana|111401|$48354|$44353|
-|Clearfield County, Pennsylvania|79466|$35726|$31921|
-|Comanche County, Oklahoma|121374|$50432|$46654|
-|Tippecanoe County, Indiana|193302|$81978|$78225|
-|Christian County, Kentucky|71470|$29224|$25480|
-|Madison County, Ohio|44248|$20213|$16494|
-|Lincoln County, Arkansas|13278|$7563|$3867|
-|Randolph County, Illinois|31973|$15296|$11667|
-|Dodge County, Wisconsin|87569|$38547|$34925|
-|Riley County, Kansas|74059|$33658|$30059|
-|Polk County, Texas|50155|$22657|$19072|
-|Rusk County, Texas|53988|$23813|$20231|
-|Reeves County, Texas|15546|$8129|$4609|
-|Matanuska-Susitna Borough, Alaska|107360|$43460|$40003|
-|Yazoo County, Mississippi|28511|$13147|$9820|
-|Allen Parish, Louisiana|25572|$12052|$8800|
-|Oldham County, Kentucky|66508|$28068|$24902|
-|Amador County, California|39023|$18649|$15530|
-|Allegany County, Maryland|71002|$32009|$28908|
-|Ward County, North Dakota|68962|$29071|$25982|
-|Eagle County, Colorado|54960|$24144|$21064|
-|Pickaway County, Ohio|58112|$25543|$22467|
-|Chattahoochee County, Georgia|10470|$5734|$2675|
-|Ross County, Ohio|76816|$33222|$30177|
-|Vernon Parish, Louisiana|49315|$20918|$17909|
-|Monroe County, Florida|75137|$34230|$31223|
-|Greensville County, Virginia|11403|$6406|$3415|
-|Franklin County, Washington|93681|$35486|$32502|
-|LaPorte County, Indiana|110026|$46707|$43724|
-|Okeechobee County, Florida|41611|$18671|$15707|
-|Wyoming County, New York|40027|$18376|$15433|
-|St. Francis County, Arkansas|25477|$11909|$9013|
-|Somerset County, Pennsylvania|73844|$32958|$30068|
-|Grant Parish, Louisiana|22339|$10704|$7821|
-|Schuylkill County, Pennsylvania|141935|$60949|$58070|
-|Huntingdon County, Pennsylvania|45145|$20667|$17812|
-|Montgomery County, Virginia|98495|$44384|$41530|
-|Malheur County, Oregon|30632|$13529|$10694|
-|Prince George County, Virginia|38292|$17038|$14204|
-|Umatilla County, Oregon|77319|$31960|$29128|
-|Wakulla County, Florida|32855|$15009|$12188|
-|Santa Rosa County, Florida|179587|$74975|$72160|
-|Bradford County, Florida|27723|$12984|$10173|
-|Forest County, Pennsylvania|7190|$4901|$2105|
-|Wayne County, Pennsylvania|51268|$23589|$20801|
-|Potter County, Texas|118323|$46855|$44068|
-|Chippewa County, Michigan|37418|$17286|$14523|
-|Bledsoe County, Tennessee|14961|$7944|$5187|
-|San Luis Obispo County, California|282517|$121919|$119202|
-|Cumberland County, New Jersey|150085|$61287|$58651|
-|Telfair County, Georgia|15871|$8170|$5553|
-|Karnes County, Texas|15547|$7672|$5059|
-|DeKalb County, Missouri|11872|$6395|$3798|
-|Gratiot County, Michigan|40692|$18386|$15801|
-|Hardeman County, Tennessee|25247|$11974|$9397|
-|Columbia County, Florida|70898|$30331|$27755|
-|Greene County, Mississippi|13619|$7045|$4482|
-|Houghton County, Michigan|35890|$16246|$13689|
-|Okaloosa County, Florida|207430|$85493|$82957|
-|Jackson County, Michigan|158174|$66353|$63819|
-|Noble County, Ohio|14410|$7326|$4847|
-|Grimes County, Texas|28447|$12845|$10394|
-|Chippewa County, Wisconsin|64175|$27399|$24956|
-|Wheeler County, Georgia|7897|$4590|$2189|
-|Adams County, Colorado|509844|$199749|$197355|
-|Williams County, North Dakota|36044|$14660|$12276|
-|Graham County, Arizona|38304|$16078|$13698|
-|Gulf County, Florida|15073|$7816|$5441|
-|Claiborne Parish, Louisiana|15854|$7939|$5572|
-|Logan County, Colorado|22282|$10648|$8295|
-|Taylor County, Florida|21709|$10264|$7936|
-|Monongalia County, West Virginia|106196|$46980|$44660|
-|Stewart County, Georgia|6446|$4102|$1825|
-|King County, Washington|2225064|$924635|$922395|
-|Kenai Peninsula Borough, Alaska|58809|$25021|$22786|
-|Willacy County, Texas|21419|$9675|$7459|
-|Perry County, Illinois|21092|$9985|$7803|
-|Henry County, Indiana|48158|$21100|$18930|
-|Dixie County, Florida|16740|$8186|$6018|
-|Charlton County, Georgia|13032|$6560|$4393|
-|Mason County, Washington|65326|$28461|$26312|
-|Sussex County, Virginia|11202|$5960|$3826|
-|Pecos County, Texas|15725|$7294|$5179|
-|Elko County, Nevada|52537|$21477|$19364|
-|Madison County, Texas|14329|$6931|$4823|
-|Washington County, Florida|25094|$11569|$9466|
-|Washington County, Maryland|150575|$62876|$60774|
-|Phelps County, Missouri|44587|$19477|$17377|
-|Lake County, Tennessee|7273|$4287|$2189|
-|Crowley County, Colorado|5733|$3565|$1474|
-|Clinton County, New York|80320|$35237|$33166|
-|Hendry County, Florida|41472|$17157|$15089|
-|Cochise County, Arizona|126442|$52912|$50865|
-|Trousdale County, Tennessee|10910|$5602|$3580|
-|Lee County, Illinois|34204|$15342|$13320|
-|Hamilton County, Florida|14397|$7124|$5104|
-|Honolulu County, Hawaii|979682|$402855|$400835|
-|Beckham County, Oklahoma|21860|$9669|$7671|
-|Grand Forks County, North Dakota|70243|$29823|$27837|
-|Pershing County, Nevada|6591|$3786|$1831|
-|Lawrence County, Illinois|15830|$7633|$5680|
-|Utah County, Utah|621506|$224726|$222795|
-|Somerset County, Maryland|25699|$11972|$10049|
-|Edgefield County, South Carolina|27021|$12533|$10611|
-|Morgan County, Tennessee|21538|$10041|$8131|
-|Geary County, Kansas|33309|$12981|$11073|
-|East Feliciana Parish, Louisiana|19228|$9173|$7269|
-|Pine County, Minnesota|29254|$13243|$11351|
-|Summit County, Colorado|30735|$14192|$12304|
-|Wilcox County, Georgia|8701|$4606|$2723|
-|Childress County, Texas|7219|$3932|$2067|
-|Fannin County, Texas|35046|$15407|$13543|
-|Greene County, New York|47335|$21404|$19552|
-|North Slope Borough, Alaska|9375|$4577|$2734|
-|Otero County, New Mexico|66804|$27794|$25958|
-|Montcalm County, Michigan|63516|$26834|$25011|
-|Grays Harbor County, Washington|73769|$31593|$29775|
-|Greene County, North Carolina|20987|$9653|$7837|
-|Suwannee County, Florida|44290|$19186|$17377|
-|Houston County, Texas|22942|$10523|$8719|
-|Miami County, Indiana|35684|$15649|$13847|
-|White Pine County, Nevada|9570|$4927|$3134|
-|Tuolumne County, California|54147|$24253|$22471|
-|Brazoria County, Texas|368062|$144704|$142924|
-|Coos County, New Hampshire|31486|$14565|$12814|
-|Ector County, Texas|162067|$61022|$59280|
-|Powell County, Montana|6843|$3914|$2178|
-|Del Norte County, California|27692|$12184|$10451|
-|Avery County, North Carolina|17510|$8606|$6884|
-|Putnam County, Indiana|37419|$16607|$14886|
-|Grant County, Wisconsin|51570|$22196|$20487|
-|Washington County, New York|61304|$26759|$25052|
-|Brown County, Illinois|6599|$3635|$1939|
-|Medina County, Texas|50869|$21521|$19842|
-|Tyler County, Texas|21524|$9921|$8248|
-|Liberty County, Florida|8333|$4427|$2769|
-|Mitchell County, Texas|8256|$4300|$2642|
-|Lafayette County, Florida|8576|$4439|$2796|
-|Scurry County, Texas|16918|$7514|$5873|
-|Glades County, Florida|13777|$6863|$5228|
-|Baker County, Florida|28679|$12411|$10780|
-|Tallahatchie County, Mississippi|14041|$6685|$5054|
-|Chisago County, Minnesota|55844|$23549|$21924|
-|Juneau County, Wisconsin|26603|$11919|$10297|
-|Buckingham County, Virginia|17087|$8020|$6410|
-|Aleutians West Census Area, Alaska|5708|$3256|$1650|
-|Wise County, Virginia|38032|$16827|$15223|
-|Garza County, Texas|6028|$3515|$1927|
-|Sanpete County, Utah|30421|$12957|$11385|
-|Morgan County, Kentucky|13270|$6450|$4879|
-|Curry County, New Mexico|49502|$19946|$18397|
-|Washoe County, Nevada|464182|$190962|$189414|
-|Texas County, Oklahoma|20633|$8528|$6987|
-|Montgomery County, Illinois|28598|$12685|$11149|
-|Wayne County, Tennessee|16638|$7918|$6383|
-|Cayuga County, New York|76958|$33103|$31576|
-|Sunflower County, Mississippi|25759|$11271|$9766|
-|Sullivan County, New York|75329|$31823|$30329|
-|Adams County, Wisconsin|20208|$9645|$8160|
-|Franklin County, Florida|11914|$5910|$4427|
-|Richland County, Ohio|121043|$50418|$48941|
-|Lea County, New Mexico|70359|$27017|$25541|
-|Pike County, Missouri|18158|$8100|$6641|
-|Brazos County, Texas|226370|$94260|$92806|
-|Carlton County, Minnesota|35709|$15310|$13859|
-|Holmes County, Florida|19530|$8880|$7436|
-|Sherburne County, Minnesota|96015|$38290|$36848|
-|Caddo County, Oklahoma|29179|$12298|$10857|
-|Bibb County, Alabama|22374|$10082|$8655|
-|Carson City, Nevada|55244|$23662|$22241|
-|Gunnison County, Colorado|17119|$8132|$6721|
-|Butts County, Georgia|24463|$10883|$9482|
-|Weld County, Colorado|315389|$123878|$122478|
-|Hale County, Texas|33463|$13672|$12274|
-|Bent County, Colorado|5677|$3186|$1790|
-|Payne County, Oklahoma|81912|$35118|$33729|
-|Hardee County, Florida|27027|$11254|$9870|
-|East Carroll Parish, Louisiana|6947|$3413|$2043|
-|St. Lawrence County, New York|108352|$45886|$44518|
-|Essex County, New York|37281|$16937|$15578|
-|Johnson County, Missouri|53948|$22733|$21375|
-|Barbour County, Alabama|25026|$11034|$9681|
-|Seneca County, New York|34295|$15010|$13659|
-|Greene County, Pennsylvania|36484|$15986|$14637|
-|Jackson County, Wisconsin|20556|$9112|$7769|
-|Campbell County, Wyoming|46958|$18669|$17337|
-|Lincoln County, Colorado|5608|$2999|$1669|
-|Webster County, Iowa|36348|$15674|$14346|
-|Waushara County, Wisconsin|24256|$10972|$9651|
-|Belmont County, Ohio|67424|$29207|$27903|
-|Calhoun County, Georgia|6301|$3375|$2075|
-|Crawford County, Illinois|18833|$8564|$7268|
-|Rice County, Minnesota|66549|$27888|$26593|
-|Hancock County, Georgia|8500|$4493|$3203|
-|Hickman County, Tennessee|25017|$11039|$9752|
-|Lexington city, Virginia|7205|$4035|$2761|
-|Gilmer County, West Virginia|7970|$4111|$2841|
-|Brunswick County, Virginia|16336|$7743|$6480|
-|Johnson County, Illinois|12391|$5904|$4654|
-|Bon Homme County, South Dakota|6914|$3528|$2282|
-|Johnson County, Tennessee|17755|$8256|$7011|
-|Nottoway County, Virginia|15338|$7074|$5831|
-|Ford County, Kansas|33718|$13202|$11960|
-|Clinton County, Illinois|37549|$16112|$14874|
-|Fulton County, Illinois|34654|$15187|$13952|
-|Woodward County, Oklahoma|20352|$8706|$7472|
-|Camden County, Georgia|53960|$21982|$20752|
-|Calhoun County, Florida|14324|$6601|$5375|
-|Nye County, Nevada|45514|$20233|$19009|
-|Sullivan County, Indiana|20647|$9283|$8059|
-|McCreary County, Kentucky|17333|$7724|$6509|
-|Lapeer County, Michigan|87975|$37363|$36151|
-|Hot Spring County, Arkansas|33667|$14462|$13252|
-|McKean County, Pennsylvania|41021|$17815|$16606|
-|Mohave County, Arizona|210998|$91269|$90080|
-|Sublette County, Wyoming|9865|$4596|$3412|
-|Madison County, Florida|18557|$8462|$7283|
-|Laramie County, Wyoming|99272|$40658|$39483|
-|Gray County, Texas|22063|$9269|$8094|
-|Lee County, Arkansas|8963|$4397|$3223|
-|Dawson County, Texas|12849|$5614|$4441|
-|Grand County, Colorado|15536|$7287|$6133|
-|Richmond County, Virginia|8951|$4361|$3217|
-|Augusta County, Virginia|75754|$32540|$31399|
-|Routt County, Colorado|25317|$11420|$10279|
-|Albany County, Wyoming|38664|$17251|$16118|
-|Dooly County, Georgia|13571|$6437|$5304|
-|Cass County, North Dakota|179937|$73135|$72004|
-|Grant County, Washington|96648|$36921|$35793|
-|Fayette County, Illinois|21418|$9447|$8327|
-|Perry County, Indiana|19091|$8426|$7312|
-|Alfalfa County, Oklahoma|5791|$2965|$1852|
-|Johnson County, Georgia|9717|$4666|$3562|
-|Luce County, Michigan|6286|$3273|$2171|
-|Elmore County, Idaho|27043|$11163|$10066|
-|Branch County, Michigan|43428|$18104|$17009|
-|Martin County, Kentucky|11421|$5334|$4246|
-|Columbia County, Wisconsin|57331|$24210|$23123|
-|La Salle County, Texas|7551|$3741|$2662|
-|Winn Parish, Louisiana|14165|$6385|$5319|
-|Jefferson County, Illinois|37774|$15937|$14879|
-|Sweetwater County, Wyoming|43352|$17470|$16417|
-|Alger County, Michigan|9098|$4512|$3488|
-|Powhatan County, Virginia|29253|$13031|$12010|
-|Walla Walla County, Washington|60785|$25603|$24586|
-|Jack County, Texas|8888|$4170|$3162|
-|Chaffee County, Colorado|19977|$9263|$8255|
-|Brookings County, South Dakota|35115|$14990|$13996|
-|Live Oak County, Texas|12175|$5574|$4581|
-|Hartley County, Texas|5588|$2791|$1800|
-|Coffee County, Georgia|43070|$17648|$16664|
-|Carbon County, Wyoming|15073|$6546|$5567|
-|Garfield County, Colorado|59605|$23949|$22975|
-|Colfax County, Nebraska|10681|$4498|$3524|
-|Latah County, Idaho|40052|$17420|$16451|
-|Midland County, Texas|171238|$65143|$64177|
-|Bullock County, Alabama|10173|$4613|$3654|
-|Mississippi County, Missouri|13328|$5981|$5023|
-|Lee County, Virginia|23723|$10563|$9616|
-|Bastrop County, Texas|86839|$34831|$33886|
-|Boulder County, Colorado|324682|$137731|$136790|
-|Yankton County, South Dakota|22746|$9847|$8909|
-|Johnson County, Nebraska|5118|$2624|$1701|
-|Guadalupe County, New Mexico|4336|$2276|$1355|
-|Randolph County, Missouri|24769|$10631|$9718|
-|Elliott County, Kentucky|7461|$3634|$2724|
-|Baraga County, Michigan|8337|$4035|$3126|
-|Park County, Colorado|18345|$8468|$7562|
-|McKenzie County, North Dakota|13836|$5443|$4544|
-|Teton County, Wyoming|23356|$10298|$9402|
-|Greer County, Oklahoma|5790|$2801|$1907|
-|Moniteau County, Missouri|15907|$6739|$5847|
-|Clay County, Kentucky|20110|$8725|$7837|
-|DeWitt County, Texas|20217|$8664|$7779|
-|Macon County, Georgia|13107|$5990|$5107|
-|Nantucket County, Massachusetts|11212|$5332|$4451|
-|Meade County, South Dakota|28149|$11812|$10942|
-|Monroe County, Wisconsin|46155|$18675|$17809|
-|Stafford County, Virginia|150185|$59599|$58741|
-|Okfuskee County, Oklahoma|11987|$5258|$4405|
-|McCormick County, South Carolina|9495|$4731|$3881|
-|Clearwater County, Idaho|8735|$4234|$3385|
-|Preston County, West Virginia|33610|$14591|$13756|
-|Jefferson County, Florida|14278|$6601|$5774|
-|Vigo County, Indiana|107305|$44989|$44163|
-|Merced County, California|273661|$103699|$102875|
-|Texas County, Missouri|25518|$10967|$10154|
-|Cherokee County, Texas|52341|$21086|$20277|
-|Doddridge County, West Virginia|8499|$4133|$3332|
-|Evangeline Parish, Louisiana|33491|$13723|$12932|
-|Idaho County, Idaho|16511|$7335|$6548|
-|Southampton County, Virginia|17829|$7916|$7130|
-|Ellsworth County, Kansas|6176|$3000|$2219|
-|Val Verde County, Texas|49018|$19096|$18316|
-|Concho County, Texas|3018|$1697|$918|
-|Lake County, Colorado|7845|$3858|$3083|
-|Randolph County, West Virginia|28763|$12484|$11728|
-|Jasper County, Iowa|37032|$15498|$14743|
-|Whitman County, Washington|49577|$22057|$21303|
-|Nobles County, Minnesota|21667|$8674|$7921|
-|Finney County, Kansas|36451|$13951|$13200|
-|Blaine County, Oklahoma|9521|$4325|$3576|
-|Dodge County, Georgia|20725|$9071|$8331|
-|Humboldt County, Nevada|16834|$6907|$6169|
-|Izard County, Arkansas|13596|$6186|$5450|
-|Manassas Park city, Virginia|17548|$7215|$6479|
-|Manistee County, Michigan|24539|$10936|$10200|
-|Hughes County, Oklahoma|13265|$5680|$4946|
-|Gilchrist County, Florida|18245|$8057|$7328|
-|Granville County, North Carolina|59823|$25294|$24567|
-|Gogebic County, Michigan|14715|$6770|$6043|
-|Pawnee County, Kansas|6539|$3254|$2531|
-|Seward County, Kansas|21902|$8426|$7705|
-|Washington County, Missouri|24819|$10401|$9684|
-|Cole County, Missouri|76630|$31569|$30852|
-|Stark County, North Dakota|31164|$12379|$11667|
-|Page County, Iowa|15205|$6787|$6081|
-|Jefferson County, Oregon|24048|$10009|$9311|
-|Waupaca County, Wisconsin|50997|$21619|$20922|
-|Columbiana County, Ohio|102514|$43035|$42344|
-|Pittsburg County, Oklahoma|43955|$18245|$17556|
-|Yuba County, California|77524|$29970|$29283|
-|Bond County, Illinois|16520|$7332|$6646|
-|Southeast Fairbanks Census Area, Alaska|6911|$3006|$2330|
-|Kinney County, Texas|3674|$1986|$1314|
-|Stearns County, Minnesota|159788|$64866|$64198|
-|Summit County, Utah|41680|$17064|$16397|
-|Irwin County, Georgia|9379|$4235|$3574|
-|Chattooga County, Georgia|24826|$10425|$9765|
-|Mecosta County, Michigan|43481|$18768|$18112|
-|Winnebago County, Wisconsin|170924|$71284|$70632|
-|Pitkin County, Colorado|17980|$8107|$7462|
-|Walton County, Florida|71049|$29785|$29141|
-|Crawford County, Georgia|12267|$5462|$4818|
-|LaSalle Parish, Louisiana|14950|$6346|$5716|
-|Lake County, South Dakota|12747|$5586|$4956|
-|Mono County, California|14395|$6321|$5694|
-|Kodiak Island Borough, Alaska|13383|$5550|$4923|
-|Bland County, Virginia|6334|$3056|$2434|
-|Caldwell County, Texas|42817|$17609|$16987|
-|Jones County, Iowa|20575|$8807|$8186|
-|Callaway County, Missouri|44944|$18864|$18251|
-|Norton County, Kansas|5416|$2585|$1972|
-|Mountrail County, North Dakota|10348|$4258|$3647|
-|Northwest Arctic Borough, Alaska|7709|$2984|$2374|
-|Alexander County, North Carolina|37271|$15869|$15259|
-|Minnehaha County, South Dakota|191682|$75556|$74953|
-|Todd County, Minnesota|24603|$10160|$9561|
-|Hampton County, South Carolina|19223|$8212|$7614|
-|Platte County, Nebraska|33250|$13282|$12686|
-|Chugach Census Area, Alaska|6495|$2976|$2383|
-|Tyrrell County, North Carolina|3978|$2049|$1464|
-|Lauderdale County, Tennessee|25689|$10753|$10173|
-|Allendale County, South Carolina|8789|$4015|$3438|
-|Las Animas County, Colorado|14323|$6367|$5802|
-|Freestone County, Texas|19744|$8328|$7763|
-|Pleasants County, West Virginia|7457|$3457|$2894|
-|Prince of Wales-Hyder Census Area, Alaska|6338|$2838|$2275|
-|Moore County, Texas|21169|$7960|$7398|
-|Wilkinson County, Mississippi|8727|$3861|$3300|
-|Morgan County, Colorado|28617|$11492|$10933|
-|Webster County, Missouri|39127|$15408|$14851|
-|Anson County, North Carolina|24430|$10480|$9927|
-|Bethel Census Area, Alaska|18263|$6647|$6097|
-|Dawson County, Nebraska|23638|$9377|$8828|
-|Torrance County, New Mexico|15477|$6763|$6215|
-|Marlboro County, South Carolina|26376|$11296|$10749|
-|Lee County, Kentucky|7088|$3236|$2693|
-|Lake County, Oregon|7896|$3615|$3082|
-|Escambia County, Alabama|36775|$15243|$14711|
-|Lyon County, Kentucky|8226|$3916|$3387|
-|Catahoula Parish, Louisiana|9586|$4195|$3668|
-|Fremont County, Idaho|13111|$5489|$4962|
-|Schuyler County, Illinois|6897|$3237|$2711|
-|Atoka County, Oklahoma|13815|$5910|$5387|
-|Zavala County, Texas|11930|$4770|$4253|
-|Calhoun County, Texas|21470|$8868|$8354|
-|Mitchell County, Georgia|22072|$9262|$8751|
-|Oconto County, Wisconsin|37870|$16094|$15584|
-|Woods County, Oklahoma|8914|$3902|$3396|
-|Lincoln County, Nevada|5177|$2435|$1930|
-|Grayson County, Virginia|15651|$7001|$6501|
-|Phillips County, Colorado|4343|$1892|$1393|
-|Beadle County, South Dakota|18338|$7261|$6763|
-|Socorro County, New Mexico|16723|$6976|$6481|
-|Cooper County, Missouri|17522|$7408|$6914|
-|Union County, New Mexico|4106|$1913|$1419|
-|Kusilvak Census Area, Alaska|8298|$2946|$2455|
-|Goshen County, Wyoming|13301|$5774|$5286|
-|Stephens County, Texas|9358|$4017|$3529|
-|Juneau City and Borough, Alaska|32099|$13453|$12965|
-|Crawford County, Wisconsin|16155|$7047|$6560|
-|Toole County, Montana|4812|$2285|$1806|
-|Owen County, Indiana|20854|$8905|$8429|
-|Aleutians East Borough, Alaska|3389|$1756|$1281|
-|Christian County, Illinois|32705|$13894|$13420|
-|Dawson County, Montana|8824|$3879|$3410|
-|Prince Edward County, Virginia|22892|$10235|$9770|
-|Jefferson County, Iowa|18153|$7810|$7348|
-|Lunenburg County, Virginia|12294|$5375|$4918|
-|Steuben County, Indiana|34591|$14645|$14193|
-|Beauregard Parish, Louisiana|37387|$15127|$14676|
-|Sheboygan County, Wisconsin|115152|$47372|$46928|
-|Morton County, North Dakota|31118|$12784|$12344|
-|Lenawee County, Michigan|98310|$40936|$40497|
-|Roseau County, Minnesota|15259|$6337|$5899|
-|Nome Census Area, Alaska|10009|$3744|$3310|
-|Sevier County, Utah|21475|$8379|$7947|
-|Richland County, Montana|11097|$4578|$4148|
-|Treutlen County, Georgia|6787|$2918|$2498|
-|Wright County, Minnesota|136387|$52658|$52241|
-|Limestone County, Texas|23364|$9729|$9313|
-|Sawyer County, Wisconsin|16477|$7156|$6747|
-|Richland County, North Dakota|16245|$6850|$6441|
-|Deer Lodge County, Montana|9153|$4305|$3897|
-|Greenlee County, Arizona|9465|$3841|$3435|
-|Haskell County, Texas|5711|$2627|$2223|
-|Box Elder County, Utah|54953|$20473|$20070|
-|Swisher County, Texas|7403|$3164|$2761|
-|Livingston County, Illinois|35757|$14977|$14576|
-|Cibola County, New Mexico|26763|$10980|$10580|
-|Stutsman County, North Dakota|20879|$8884|$8485|
-|Johnson County, Wyoming|8518|$3748|$3350|
-|La Paz County, Arizona|21035|$9300|$8903|
-|Lander County, Nevada|5565|$2360|$1964|
-|Pike County, Pennsylvania|55660|$24183|$23787|
-|Price County, Wisconsin|13351|$5980|$5591|
-|Portage County, Wisconsin|70822|$29994|$29608|
-|Pennington County, South Dakota|112504|$45551|$45168|
-|Hampshire County, West Virginia|23304|$10072|$9694|
-|Mariposa County, California|17319|$7664|$7290|
-|Colusa County, California|21491|$8497|$8124|
-|Gooding County, Idaho|15280|$6121|$5750|
-|Dunn County, North Dakota|4362|$1920|$1550|
-|Meeker County, Minnesota|23149|$9455|$9090|
-|Nolan County, Texas|14901|$6021|$5657|
-|Ketchikan Gateway Borough, Alaska|13833|$5872|$5510|
-|New Kent County, Virginia|22310|$9479|$9119|
-|Issaquena County, Mississippi|1223|$713|$353|
-|Craven County, North Carolina|102290|$42002|$41649|
-|Terry County, Texas|12408|$4947|$4594|
-|Oceana County, Michigan|26545|$10991|$10638|
-|Trempealeau County, Wisconsin|29525|$11854|$11503|
-|Northumberland County, Pennsylvania|91234|$38433|$38084|
-|Osage County, Missouri|13613|$5695|$5350|
-|Cass County, Minnesota|29462|$12313|$11973|
-|Wayne County, Georgia|29959|$12081|$11743|
-|Buchanan County, Missouri|87904|$35822|$35488|
-|Brooks County, Texas|7100|$3028|$2694|
-|Montgomery County, Indiana|38295|$15747|$15420|
-|Washington County, Georgia|20316|$8514|$8189|
-|Cassia County, Idaho|23847|$8965|$8640|
-|Liberty County, Georgia|62039|$23544|$23220|
-|LaSalle County, Illinois|108998|$45187|$44864|
-|Marquette County, Michigan|66403|$28399|$28082|
-|Madison County, Arkansas|16393|$6801|$6485|
-|Lee County, South Carolina|17144|$7386|$7076|
-|Kalkaska County, Michigan|17725|$7484|$7174|
-|Caldwell Parish, Louisiana|9959|$4172|$3864|
-|Knox County, Illinois|50052|$21078|$20772|
-|Lake County, Minnesota|10571|$4668|$4364|
-|Henry County, Iowa|19889|$8316|$8014|
-|Newton County, Indiana|13981|$5923|$5623|
-|Owyhee County, Idaho|11724|$4770|$4471|
-|Hutchinson County, Texas|21105|$8530|$8236|
-|Hubbard County, Minnesota|21287|$8920|$8628|
-|Weston County, Wyoming|6942|$3053|$2762|
-|Hyde County, North Carolina|5089|$2233|$1943|
-|Hemphill County, Texas|3901|$1632|$1343|
-|Yukon-Koyukuk Census Area, Alaska|5305|$2167|$1879|
-|San Miguel County, Colorado|8110|$3612|$3324|
-|Newton County, Texas|13788|$5911|$5625|
-|Lampasas County, Texas|21152|$8914|$8629|
-|Blaine County, Idaho|22729|$9533|$9250|
-|Jefferson County, Idaho|29238|$10703|$10428|
-|Adams County, Washington|19702|$7027|$6753|
-|Menifee County, Kentucky|6463|$2798|$2526|
-|George County, Mississippi|24098|$9542|$9274|
-|Gilpin County, Colorado|6108|$2791|$2524|
-|Craig County, Oklahoma|14274|$5994|$5729|
-|Lyon County, Nevada|55667|$23145|$22882|
-|Sargent County, North Dakota|3899|$1763|$1501|
-|Delaware County, New York|44676|$19479|$19220|
-|Storey County, Nevada|4086|$1882|$1624|
-|Wilkin County, Minnesota|6264|$2701|$2444|
-|Menominee County, Michigan|22902|$9912|$9656|
-|Calhoun County, Iowa|9656|$4095|$3842|
-|Crawford County, Indiana|10582|$4450|$4198|
-|Weber County, Utah|255284|$97766|$97515|
-|Benton County, Oregon|92168|$40155|$39904|
-|Elk County, Pennsylvania|30077|$12832|$12582|
-|Taylor County, Wisconsin|20320|$8345|$8096|
-|Sullivan County, Pennsylvania|6038|$2881|$2633|
-|Caribou County, Idaho|7028|$2848|$2601|
-|Duval County, Texas|11194|$4498|$4252|
-|Converse County, Wyoming|13842|$5603|$5359|
-|Clark County, Wisconsin|34668|$13205|$12961|
-|Broadwater County, Montana|6080|$2693|$2453|
-|Perry County, Pennsylvania|46133|$19098|$18859|
-|Caswell County, North Carolina|22619|$9713|$9476|
-|Bowie County, Texas|93622|$37736|$37501|
-|Baker County, Oregon|16090|$6848|$6614|
-|Grant County, Kansas|7324|$2778|$2544|
-|Teton County, Idaho|11776|$4788|$4555|
-|Churchill County, Nevada|24606|$10030|$9799|
-|Mackinac County, Michigan|10781|$4841|$4610|
-|Silver Bow County, Montana|34895|$14561|$14332|
-|Culberson County, Texas|2183|$938|$709|
-|Kewaunee County, Wisconsin|20398|$8566|$8340|
-|Grant County, South Dakota|7125|$3047|$2822|
-|Sanders County, Montana|11804|$5154|$4930|
-|Denali Borough, Alaska|2502|$1267|$1044|
-|Teller County, Colorado|24981|$10855|$10632|
-|Marquette County, Wisconsin|15380|$6566|$6343|
-|Wasatch County, Utah|33053|$12331|$12111|
-|Seward County, Nebraska|17217|$7081|$6863|
-|Menard County, Texas|2108|$1007|$789|
-|Reynolds County, Missouri|6274|$2788|$2571|
-|Sequatchie County, Tennessee|14936|$6441|$6225|
-|Klickitat County, Washington|22055|$9407|$9192|
-|Lincoln County, Wisconsin|27687|$11928|$11714|
-|Kidder County, North Dakota|2468|$1124|$911|
-|Buffalo County, Wisconsin|13087|$5554|$5342|
-|Butte County, Idaho|2603|$1153|$942|
-|McLean County, North Dakota|9531|$4011|$3800|
-|Morgan County, Illinois|34012|$14418|$14210|
-|Pendleton County, Kentucky|14587|$6022|$5817|
-|McDowell County, West Virginia|18083|$7613|$7409|
-|Nicollet County, Minnesota|34176|$14018|$13815|
-|Polk County, Wisconsin|43549|$18163|$17960|
-|Hudspeth County, Texas|4687|$2031|$1828|
-|Towner County, North Dakota|2191|$1000|$798|
-|Big Horn County, Wyoming|11809|$4805|$4605|
-|Pend Oreille County, Washington|13588|$5881|$5681|
-|Trinity County, California|12541|$5471|$5271|
-|Dallam County, Texas|7272|$2706|$2507|
-|Stanley County, South Dakota|3058|$1389|$1190|
-|Hoonah-Angoon Census Area, Alaska|2135|$1041|$843|
-|Power County, Idaho|7635|$2926|$2729|
-|Platte County, Wyoming|8572|$3749|$3554|
-|Mercer County, North Dakota|8359|$3497|$3302|
-|Rio Grande County, Colorado|11300|$4715|$4521|
-|Morrow County, Oregon|11425|$4510|$4316|
-|Carroll County, Kentucky|10691|$4303|$4109|
-|San Saba County, Texas|6004|$2604|$2411|
-|Glenn County, California|28060|$11020|$10827|
-|Briscoe County, Texas|1348|$678|$487|
-|Sitka City and Borough, Alaska|8569|$3640|$3450|
-|Pendleton County, West Virginia|6968|$3090|$2901|
-|Wrangell City and Borough, Alaska|2510|$1139|$951|
-|Baldwin County, Georgia|45072|$19131|$18944|
-|Miami County, Kansas|33740|$13596|$13409|
-|Lee County, Iowa|33946|$14011|$13825|
-|Dakota County, Nebraska|20124|$7675|$7490|
-|Marshall County, South Dakota|4881|$2055|$1871|
-|Lincoln County, Wyoming|19640|$7712|$7530|
-|Haines Borough, Alaska|2547|$984|$803|
-|Inyo County, California|17930|$7514|$7333|
-|Garfield County, Utah|5000|$2112|$1932|
-|Perry County, Arkansas|10342|$4345|$4165|
-|Uinta County, Wyoming|20374|$7825|$7645|
-|Burnett County, Wisconsin|15363|$6676|$6496|
-|Rice County, Kansas|9532|$3964|$3787|
-|Isanti County, Minnesota|40004|$16158|$15983|
-|Marshall County, Minnesota|9353|$3875|$3702|
-|Washington County, Colorado|4869|$2083|$1910|
-|Hall County, Nebraska|61338|$23647|$23474|
-|Parmer County, Texas|9639|$3753|$3580|
-|Costilla County, Colorado|3810|$1740|$1568|
-|Bottineau County, North Dakota|6418|$2716|$2545|
-|Chickasaw County, Iowa|11970|$4917|$4747|
-|Hamilton County, Kansas|2552|$1032|$862|
-|Edmunds County, South Dakota|3876|$1611|$1441|
-|Stevens County, Kansas|5498|$2169|$1999|
-|Hardy County, West Virginia|13789|$5797|$5628|
-|De Baca County, New Mexico|1995|$772|$603|
-|Beaver County, Utah|6594|$2508|$2340|
-|Bayfield County, Wisconsin|15088|$6563|$6395|
-|Dillingham Census Area, Alaska|4934|$1889|$1722|
-|Prowers County, Colorado|12035|$4824|$4657|
-|Owen County, Kentucky|10847|$4520|$4354|
-|Delta County, Colorado|30758|$13013|$12850|
-|Mineral County, Montana|4330|$1907|$1744|
-|Pembina County, North Dakota|6850|$2913|$2750|
-|Mower County, Minnesota|39931|$15874|$15711|
-|Hardin County, Illinois|3890|$1803|$1641|
-|Ransom County, North Dakota|5258|$2260|$2099|
-|Washakie County, Wyoming|7933|$3317|$3157|
-|Louisa County, Iowa|11125|$4626|$4466|
-|Sevier County, Arkansas|16947|$6502|$6343|
-|Aurora County, South Dakota|2757|$1163|$1004|
-|Warren County, Ohio|232540|$93179|$93021|
-|Reagan County, Texas|3766|$1440|$1282|
-|Franklin County, Idaho|13736|$5191|$5034|
-|Arenac County, Michigan|15013|$6485|$6328|
-|Harding County, South Dakota|1178|$575|$418|
-|McCone County, Montana|1826|$817|$661|
-|Douglas County, Nevada|48486|$21166|$21011|
-|Stanton County, Nebraska|5946|$2431|$2276|
-|Sibley County, Minnesota|14871|$6094|$5940|
-|Moffat County, Colorado|13150|$5257|$5104|
-|Lemhi County, Idaho|7929|$3462|$3309|
-|Edwards County, Texas|1944|$892|$739|
-|Knox County, Indiana|36833|$15251|$15099|
-|Washington County, Kansas|5474|$2305|$2153|
-|Madison County, Montana|8530|$3794|$3643|
-|West Carroll Parish, Louisiana|10934|$4506|$4356|
-|Renville County, Minnesota|14572|$5960|$5812|
-|Allegany County, New York|46304|$19445|$19298|
-|San Benito County, California|61547|$24364|$24217|
-|Missaukee County, Michigan|15075|$6184|$6037|
-|Vilas County, Wisconsin|21923|$9564|$9418|
-|Meagher County, Montana|1795|$810|$664|
-|Lake County, Michigan|11805|$5179|$5035|
-|Lincoln County, Idaho|5342|$2096|$1953|
-|Lynn County, Texas|5886|$2353|$2210|
-|Steele County, Minnesota|36710|$14625|$14482|
-|Doniphan County, Kansas|7616|$3270|$3128|
-|Dickenson County, Virginia|14524|$6186|$6045|
-|Ste. Genevieve County, Missouri|17887|$7477|$7336|
-|McCulloch County, Texas|7970|$3310|$3169|
-|Shelby County, Missouri|5975|$2471|$2333|
-|Kingsbury County, South Dakota|4936|$2066|$1928|
-|Jackson County, Minnesota|9873|$4123|$3985|
-|Douglas County, Minnesota|37820|$15566|$15429|
-|Union County, Kentucky|14582|$6275|$6140|
-|Morrill County, Nebraska|4711|$1979|$1844|
-|Blanco County, Texas|11733|$5102|$4967|
-|Sherman County, Oregon|1686|$775|$641|
-|Crawford County, Michigan|13904|$5971|$5838|
-|Catron County, New Mexico|3547|$1658|$1525|
-|Le Sueur County, Minnesota|28425|$11488|$11358|
-|Fayette County, West Virginia|43087|$17904|$17774|
-|Ward County, Texas|11745|$4560|$4430|
-|Scott County, Kansas|4893|$1958|$1828|
-|Keokuk County, Iowa|10163|$4217|$4088|
-|Lee County, Georgia|29735|$11696|$11568|
-|Pope County, Illinois|4177|$1910|$1782|
-|Winkler County, Texas|7822|$3026|$2898|
-|Lake of the Woods County, Minnesota|3747|$1656|$1529|
-|Daniels County, Montana|1705|$779|$652|
-|Allen County, Ohio|102808|$41698|$41571|
-|Roberts County, South Dakota|10310|$4040|$3913|
-|Kleberg County, Texas|30725|$12291|$12165|
-|Ashland County, Wisconsin|15524|$6458|$6333|
-|Carbon County, Montana|10689|$4642|$4517|
-|Duchesne County, Utah|19950|$7211|$7086|
-|Millard County, Utah|12963|$4857|$4733|
-|Green Lake County, Wisconsin|18807|$7778|$7654|
-|Bertie County, North Carolina|19081|$8275|$8151|
-|Cascade County, Montana|81576|$33052|$32929|
-|Jennings County, Indiana|27639|$11225|$11103|
-|Oldham County, Texas|2110|$856|$734|
-|Chautauqua County, Kansas|3280|$1412|$1290|
-|Cavalier County, North Dakota|3769|$1622|$1500|
-|Carroll County, Mississippi|9972|$4287|$4166|
-|Jackson Parish, Louisiana|15822|$6605|$6486|
-|San Patricio County, Texas|66969|$26101|$25982|
-|Sutton County, Texas|3793|$1467|$1348|
-|Delaware County, Iowa|17107|$6933|$6815|
-|Adams County, Idaho|4200|$1886|$1769|
-|Modoc County, California|8853|$3761|$3645|
-|Colfax County, New Mexico|12106|$5221|$5105|
-|Searcy County, Arkansas|7898|$3377|$3262|
-|Okanogan County, Washington|42080|$17046|$16931|
-|Barron County, Wisconsin|45182|$18567|$18452|
-|Juab County, Utah|11623|$4220|$4106|
-|Hamlin County, South Dakota|6104|$2299|$2185|
-|McHenry County, North Dakota|5825|$2401|$2288|
-|Madison County, Idaho|39725|$15403|$15291|
-|Greene County, Illinois|12988|$5446|$5334|
-|Switzerland County, Indiana|10727|$4320|$4209|
-|Crook County, Wyoming|7502|$3023|$2912|
-|Saguache County, Colorado|6730|$2784|$2674|
-|Union County, South Dakota|15659|$6306|$6196|
-|Alcona County, Michigan|10396|$4715|$4606|
-|Lyman County, South Dakota|3831|$1508|$1399|
-|Uintah County, Utah|35736|$12958|$12850|
-|Scott County, Arkansas|10269|$4151|$4043|
-|Saunders County, Nebraska|21356|$8607|$8499|
-|Ware County, Georgia|35745|$14413|$14305|
-|Itasca County, Minnesota|45180|$18825|$18719|
-|Gonzales County, Texas|20828|$8128|$8022|
-|Sherman County, Texas|3046|$1275|$1169|
-|Steele County, North Dakota|1817|$787|$681|
-|Lewis County, Missouri|9898|$4071|$3966|
-|Clearwater County, Minnesota|8872|$3577|$3474|
-|Ottawa County, Kansas|5776|$2423|$2320|
-|Gaines County, Texas|21077|$7411|$7309|
-|Judith Basin County, Montana|1968|$871|$769|
-|Hamilton County, New York|4454|$2039|$1938|
-|Carroll County, Illinois|14398|$6130|$6029|
-|Coleman County, Texas|8281|$3470|$3370|
-|Kanabec County, Minnesota|16205|$6742|$6643|
-|Carroll County, Virginia|29911|$12808|$12709|
-|Pamlico County, North Carolina|12673|$5645|$5546|
-|Langlade County, Wisconsin|19167|$8142|$8043|
-|Jerome County, Idaho|24074|$8955|$8857|
-|Sully County, South Dakota|1278|$588|$490|
-|Piscataquis County, Maine|16864|$7344|$7247|
-|Grant County, Minnesota|5962|$2445|$2348|
-|Pulaski County, Virginia|34113|$14635|$14538|
-|Jasper County, South Carolina|29558|$12277|$12180|
-|Dolores County, Colorado|1896|$879|$783|
-|Rio Blanco County, Colorado|6369|$2583|$2487|
-|Van Buren County, Iowa|7104|$2933|$2837|
-|Latimer County, Oklahoma|10239|$4258|$4162|
-|Deuel County, South Dakota|4309|$1779|$1683|
-|Roger Mills County, Oklahoma|3635|$1473|$1378|
-|Tillman County, Oklahoma|7347|$3006|$2911|
-|Iberville Parish, Louisiana|32626|$13579|$13485|
-|Grant County, West Virginia|11565|$4959|$4865|
-|Pepin County, Wisconsin|7261|$3044|$2950|
-|Mitchell County, Kansas|6053|$2501|$2407|
-|Gallatin County, Kentucky|8760|$3557|$3463|
-|Coosa County, Alabama|10696|$4679|$4586|
-|Dawson County, Georgia|25277|$10682|$10589|
-|Polk County, Minnesota|31384|$12516|$12424|
-|Scott County, Virginia|21761|$9304|$9212|
-|Jefferson County, Montana|12069|$5091|$4999|
-|Forest County, Wisconsin|9003|$3804|$3712|
-|Newaygo County, Michigan|48687|$19921|$19829|
-|Moody County, South Dakota|6508|$2602|$2510|
-|Murray County, Oklahoma|13972|$5708|$5617|
-|Florence County, Wisconsin|4312|$1921|$1830|
-|Granite County, Montana|3325|$1477|$1386|
-|Eastland County, Texas|18289|$7597|$7507|
-|Martin County, Texas|5676|$2095|$2005|
-|Woodson County, Kansas|3117|$1360|$1270|
-|Banks County, Georgia|18900|$7763|$7675|
-|Clay County, Nebraska|6193|$2512|$2425|
-|Clayton County, Iowa|17527|$7262|$7175|
-|Grand County, Utah|9698|$4045|$3959|
-|Oneida County, Idaho|4429|$1733|$1648|
-|Kit Carson County, Colorado|7246|$2900|$2816|
-|Cotton County, Oklahoma|5783|$2397|$2314|
-|Los Alamos County, New Mexico|18976|$7766|$7683|
-|Huerfano County, Colorado|6769|$3039|$2958|
-|Nelson County, North Dakota|2864|$1261|$1180|
-|Yuma County, Colorado|10013|$3924|$3844|
-|Jackson County, Iowa|19348|$7944|$7864|
-|Keweenaw County, Michigan|2102|$969|$890|
-|Fulton County, Pennsylvania|14492|$6105|$6026|
-|Fergus County, Montana|11167|$4670|$4592|
-|Taylor County, Iowa|6160|$2512|$2434|
-|Perkins County, South Dakota|2996|$1256|$1178|
-|Morrison County, Minnesota|33119|$13314|$13237|
-|Stillwater County, Montana|9562|$4005|$3928|
-|Sioux County, Iowa|34900|$13533|$13456|
-|Crawford County, Kansas|38874|$15965|$15888|
-|Perkins County, Nebraska|2889|$1185|$1109|
-|Benewah County, Idaho|9231|$3793|$3717|
-|Oliver County, North Dakota|1962|$805|$729|
-|Susquehanna County, Pennsylvania|40604|$17238|$17162|
-|Stafford County, Kansas|4125|$1692|$1616|
-|Spencer County, Kentucky|18945|$7782|$7708|
-|Yellow Medicine County, Minnesota|9775|$3980|$3906|
-|Lee County, Texas|17174|$7036|$6963|
-|Eureka County, Nevada|1839|$741|$669|
-|Linn County, Kansas|9687|$3998|$3926|
-|McDonald County, Missouri|22882|$9039|$8968|
-|Walsh County, North Dakota|10642|$4333|$4262|
-|Concordia Parish, Louisiana|19533|$7865|$7795|
-|Osceola County, Michigan|23323|$9618|$9548|
-|Barber County, Kansas|4493|$1793|$1723|
-|Dixon County, Nebraska|5682|$2294|$2225|
-|Cochran County, Texas|2860|$1162|$1094|
-|Glasscock County, Texas|1447|$681|$613|
-|Logan County, North Dakota|1743|$775|$707|
-|Kane County, Utah|7658|$3180|$3113|
-|Wabasha County, Minnesota|21564|$8913|$8846|
-|Jefferson County, Kansas|18974|$7779|$7712|
-|Pottawatomie County, Kansas|24203|$9147|$9080|
-|Buffalo County, South Dakota|2005|$730|$663|
-|Dodge County, Minnesota|20807|$8211|$8145|
-|Cedar County, Missouri|14144|$5687|$5621|
-|Monroe County, Ohio|13827|$5805|$5741|
-|Pocahontas County, West Virginia|8382|$3620|$3557|
-|Spencer County, Indiana|20364|$8401|$8338|
-|Putnam County, Illinois|5720|$2447|$2384|
-|Sioux County, North Dakota|4339|$1582|$1519|
-|Wayne County, Utah|2698|$1092|$1030|
-|Manassas city, Virginia|41038|$15932|$15870|
-|Marinette County, Wisconsin|40312|$17112|$17050|
-|Rock County, Nebraska|1430|$629|$567|
-|Grand Isle County, Vermont|7075|$3079|$3017|
-|Worth County, Iowa|7422|$3122|$3060|
-|Montmorency County, Michigan|9270|$4114|$4052|
-|Greenwood County, Kansas|6010|$2507|$2446|
-|Tucker County, West Virginia|6943|$3076|$3016|
-|Castro County, Texas|7561|$2898|$2838|
-|Elbert County, Colorado|26230|$10959|$10900|
-|Cherry County, Nebraska|5801|$2383|$2324|
-|Grant County, North Dakota|2318|$980|$921|
-|Aitkin County, Minnesota|15826|$6888|$6829|
-|Crane County, Texas|4739|$1784|$1726|
-|Harmon County, Oklahoma|2663|$1085|$1027|
-|Allamakee County, Iowa|13761|$5560|$5502|
-|Piute County, Utah|1870|$811|$754|
-|King George County, Virginia|26679|$10578|$10522|
-|Lafayette County, Wisconsin|16682|$6723|$6668|
-|Carter County, Montana|1305|$575|$521|
-|Clarke County, Iowa|9383|$3728|$3674|
-|Skagway Municipality, Alaska|1300|$603|$550|
-|Hardin County, Iowa|16924|$7135|$7082|
-|Long County, Georgia|19236|$7394|$7343|
-|Martin County, Indiana|10169|$4171|$4120|
-|Traill County, North Dakota|7999|$3289|$3238|
-|Conejos County, Colorado|8130|$3233|$3183|
-|Ontonagon County, Michigan|5802|$2663|$2613|
-|Motley County, Texas|1362|$583|$534|
-|Iowa County, Wisconsin|23632|$9641|$9592|
-|Mercer County, Ohio|41034|$16116|$16067|
-|Campbell County, South Dakota|1458|$634|$585|
-|Dade County, Missouri|7571|$3181|$3133|
-|Garfield County, Nebraska|2081|$885|$837|
-|Eddy County, New Mexico|57865|$22569|$22521|
-|Hand County, South Dakota|3064|$1279|$1231|
-|Frontier County, Nebraska|2636|$1126|$1079|
-|Jackson County, Colorado|1316|$620|$573|
-|Valley County, Montana|7424|$3047|$3000|
-|Bear Lake County, Idaho|6054|$2405|$2358|
-|Clark County, Kansas|2006|$818|$771|
-|Clay County, Georgia|2931|$1304|$1258|
-|Coffey County, Kansas|8218|$3436|$3390|
-|Gregory County, South Dakota|4193|$1703|$1657|
-|Spink County, South Dakota|6438|$2644|$2599|
-|Irion County, Texas|1553|$634|$590|
-|Lewis County, New York|26456|$10762|$10719|
-|Rusk County, Wisconsin|14074|$5895|$5852|
-|Custer County, Idaho|4193|$1817|$1774|
-|Butler County, Kansas|66890|$26536|$26493|
-|La Plata County, Colorado|56138|$23723|$23681|
-|Miner County, South Dakota|2213|$905|$863|
-|Mille Lacs County, Minnesota|25963|$10442|$10401|
-|Cuming County, Nebraska|8882|$3562|$3522|
-|Osceola County, Iowa|6016|$2445|$2405|
-|Sierra County, New Mexico|10988|$4814|$4774|
-|Edmonson County, Kentucky|12195|$5193|$5153|
-|Calhoun County, Illinois|4782|$2001|$1962|
-|Day County, South Dakota|5452|$2291|$2252|
-|Clear Creek County, Colorado|9533|$4217|$4179|
-|Hancock County, Kentucky|8748|$3531|$3494|
-|Lucas County, Iowa|8556|$3496|$3460|
-|Grant County, Oregon|7174|$3109|$3073|
-|Chase County, Kansas|2604|$1082|$1046|
-|Morgan County, Utah|11950|$4245|$4210|
-|Keith County, Nebraska|8048|$3356|$3321|
-|Divide County, North Dakota|2289|$970|$935|
-|Carroll County, Indiana|20137|$8306|$8272|
-|Livingston County, New York|63218|$27124|$27090|
-|Boise County, Idaho|7625|$3371|$3337|
-|Harper County, Oklahoma|3730|$1478|$1444|
-|Wise County, Texas|67884|$27100|$27067|
-|Sedgwick County, Colorado|2306|$896|$864|
-|Iron County, Wisconsin|5679|$2514|$2482|
-|Warren County, Indiana|8219|$3397|$3365|
-|Roscommon County, Michigan|23863|$10526|$10494|
-|Alpine County, California|1159|$491|$460|
-|Clark County, South Dakota|3715|$1429|$1399|
-|Franklin County, Indiana|22750|$9181|$9152|
-|Benson County, North Dakota|6860|$2467|$2438|
-|Ramsey County, North Dakota|11521|$4620|$4591|
-|Emmet County, Iowa|9322|$3895|$3867|
-|Schleicher County, Texas|2898|$1144|$1116|
-|Douglas County, Washington|42520|$16747|$16720|
-|Camden County, North Carolina|10654|$4344|$4317|
-|Logan County, Kansas|2789|$1125|$1098|
-|Red Lake County, Minnesota|4005|$1616|$1590|
-|Quitman County, Georgia|2290|$1028|$1002|
-|Lincoln County, Kansas|3013|$1228|$1202|
-|Rawlins County, Kansas|2490|$1031|$1005|
-|Bath County, Virginia|4248|$1886|$1861|
-|Franklin County, Iowa|10091|$4084|$4059|
-|Lyon County, Iowa|11800|$4523|$4498|
-|Ziebach County, South Dakota|2767|$1075|$1050|
-|Kimball County, Nebraska|3576|$1529|$1505|
-|Cheyenne County, Colorado|1999|$754|$730|
-|Hanson County, South Dakota|3423|$1291|$1267|
-|Burke County, North Dakota|2142|$851|$827|
-|Emmons County, North Dakota|3262|$1364|$1340|
-|Bollinger County, Missouri|12181|$5043|$5020|
-|Ohio County, Indiana|5890|$2490|$2467|
-|Wirt County, West Virginia|5764|$2394|$2371|
-|Clark County, Missouri|6783|$2762|$2740|
-|Luna County, New Mexico|24022|$9372|$9350|
-|Buena Vista County, Iowa|19950|$7870|$7848|
-|Sheridan County, Kansas|2515|$1023|$1001|
-|Todd County, Kentucky|12334|$4799|$4778|
-|Jackson County, Tennessee|11767|$5029|$5008|
-|Nemaha County, Kansas|10109|$3948|$3927|
-|Corson County, South Dakota|4106|$1428|$1407|
-|Wabaunsee County, Kansas|6877|$2781|$2760|
-|Custer County, South Dakota|8826|$3910|$3890|
-|Bailey County, Texas|6916|$2718|$2699|
-|Hodgeman County, Kansas|1872|$783|$764|
-|Adams County, North Dakota|2271|$934|$915|
-|Crittenden County, Kentucky|8940|$3654|$3635|
-|Matagorda County, Texas|36791|$14392|$14374|
-|Archer County, Texas|8754|$3623|$3605|
-|Minidoka County, Idaho|20817|$7911|$7893|
-|Pickett County, Tennessee|5068|$2104|$2087|
-|Monroe County, Missouri|8630|$3586|$3569|
-|Garfield County, Washington|2258|$984|$967|
-|Lincoln County, Washington|10732|$4447|$4430|
-|Dickens County, Texas|2182|$924|$907|
-|Box Butte County, Nebraska|10845|$4299|$4283|
-|Phillips County, Montana|4032|$1622|$1606|
-|Foard County, Texas|1207|$537|$521|
-|Barry County, Michigan|61045|$25059|$25043|
-|Jewell County, Kansas|2854|$1203|$1187|
-|Howard County, Nebraska|6428|$2561|$2546|
-|Plumas County, California|18844|$8131|$8116|
-|Calumet County, Wisconsin|50005|$20238|$20223|
-|Clay County, Texas|10444|$4387|$4373|
-|Jim Hogg County, Texas|5187|$1806|$1792|
-|Denver County, Colorado|715878|$298625|$298611|
-|Oscoda County, Michigan|8282|$3487|$3473|
-|Kingfisher County, Oklahoma|15811|$6114|$6100|
-|Osage County, Oklahoma|47074|$19382|$19368|
-|Sheridan County, North Dakota|1289|$569|$555|
-|Bracken County, Kentucky|8308|$3337|$3323|
-|Redwood County, Minnesota|15193|$6034|$6021|
-|Hitchcock County, Nebraska|2788|$1120|$1107|
-|Musselshell County, Montana|4682|$1993|$1980|
-|Prairie County, Montana|1162|$478|$465|
-|Wallace County, Kansas|1583|$621|$609|
-|Comanche County, Texas|13597|$5557|$5546|
-|Jo Daviess County, Illinois|21429|$9095|$9085|
-|Foster County, North Dakota|3231|$1326|$1316|
-|Davis County, Utah|350761|$128386|$128377|
-|Petersburg Borough, Alaska|3278|$1405|$1396|
-|Harlan County, Nebraska|3380|$1370|$1361|
-|Vinton County, Ohio|13045|$5340|$5331|
-|LaGrange County, Indiana|39537|$14455|$14446|
-|Douglas County, South Dakota|2913|$1174|$1165|
-|Hansford County, Texas|5431|$2079|$2071|
-|Clay County, Kansas|8030|$3242|$3234|
-|Lamoille County, Vermont|25376|$10523|$10516|
-|Hardeman County, Texas|3958|$1667|$1660|
-|Grant County, Oklahoma|4369|$1764|$1757|
-|Yoakum County, Texas|8612|$3109|$3102|
-|Clinton County, Kentucky|10175|$4198|$4191|
-|Garden County, Nebraska|1916|$789|$783|
-|Wheeler County, Texas|5187|$2041|$2035|
-|LaMoure County, North Dakota|4225|$1700|$1694|
-|Lane County, Kansas|1523|$634|$628|
-|Gosper County, Nebraska|2001|$874|$869|
-|Eddy County, North Dakota|2262|$944|$939|
-|Phillips County, Kansas|5297|$2160|$2155|
-|Montgomery County, Georgia|9069|$3764|$3760|
-|Noble County, Indiana|47640|$18960|$18956|
-|Vernon County, Wisconsin|30759|$12069|$12066|
-|Fayette County, Iowa|19604|$8078|$8075|
-|Stanton County, Kansas|2030|$786|$783|
-|Tyler County, West Virginia|8736|$3667|$3665|
-|Cumberland County, Illinois|10787|$4376|$4374|
-|Monroe County, Georgia|27455|$11362|$11360|
-|Hyde County, South Dakota|1446|$599|$597|
-|Roosevelt County, New Mexico|18723|$7471|$7469|
-|Kittson County, Minnesota|4272|$1769|$1768|
-|Chouteau County, Montana|5731|$2337|$2337|
-|Cherokee County, Iowa|11281|$4606|$4606|
-|Unicoi County, Tennessee|17821|$7728|$7729|
-|Emery County, Utah|10099|$3830|$3831|
-|Greeley County, Nebraska|2361|$957|$959|
-|Copper River Census Area, Alaska|2894|$1080|$1083|
-|Beaver County, Oklahoma|5326|$2101|$2104|
-|Edwards County, Kansas|2822|$1145|$1148|
-|Daviess County, Missouri|8294|$3279|$3283|
-|Crawford County, Iowa|16998|$6767|$6771|
-|Harper County, Kansas|5506|$2189|$2193|
-|Schuyler County, New York|17845|$7536|$7541|
-|Wibaux County, Montana|1037|$412|$418|
-|Gove County, Kansas|2650|$1045|$1051|
-|Sheridan County, Montana|3389|$1375|$1382|
-|Marion County, Kansas|11865|$4895|$4902|
-|King and Queen County, Virginia|7011|$2989|$2997|
-|Howard County, Missouri|10022|$4112|$4120|
-|Beaverhead County, Montana|9454|$4071|$4079|
-|Jefferson County, Oklahoma|6084|$2408|$2416|
-|Otter Tail County, Minnesota|58416|$23917|$23925|
-|Mellette County, South Dakota|2065|$758|$767|
-|Renville County, North Dakota|2387|$929|$938|
-|Trego County, Kansas|2802|$1195|$1204|
-|Butler County, Kentucky|12756|$5187|$5196|
-|Taliaferro County, Georgia|1596|$702|$712|
-|Dundy County, Nebraska|1928|$759|$770|
-|Hidalgo County, New Mexico|4234|$1694|$1705|
-|Fulton County, Kentucky|6064|$2469|$2480|
-|Polk County, Tennessee|16807|$7114|$7126|
-|Mahnomen County, Minnesota|5508|$2012|$2024|
-|Ferry County, Washington|7643|$3308|$3321|
-|Dunn County, Wisconsin|45029|$18859|$18872|
-|Koochiching County, Minnesota|12355|$5288|$5302|
-|Knox County, Missouri|3948|$1592|$1606|
-|Boyd County, Nebraska|1882|$787|$801|
-|Worth County, Missouri|2001|$831|$846|
-|Davis County, Iowa|8977|$3373|$3388|
-|McIntosh County, North Dakota|2535|$1076|$1091|
-|Somervell County, Texas|8958|$3655|$3671|
-|Throckmorton County, Texas|1500|$620|$636|
-|Braxton County, West Virginia|14032|$5853|$5870|
-|Cheyenne County, Nebraska|9428|$3814|$3831|
-|Carson County, Texas|5957|$2414|$2431|
-|Gray County, Kansas|6020|$2283|$2300|
-|Crosby County, Texas|5753|$2249|$2267|
-|Jasper County, Illinois|9547|$3874|$3892|
-|Dewey County, Oklahoma|4885|$1874|$1892|
-|McPherson County, South Dakota|2316|$928|$946|
-|Breathitt County, Kentucky|12802|$5304|$5323|
-|Watonwan County, Minnesota|10903|$4339|$4359|
-|Dickey County, North Dakota|4857|$1947|$1967|
-|Smith County, Kansas|3594|$1497|$1517|
-|Essex County, Vermont|6179|$2647|$2669|
-|Crockett County, Texas|3393|$1340|$1362|
-|Golden Valley County, North Dakota|1796|$744|$766|
-|Maries County, Missouri|8791|$3663|$3686|
-|Butler County, Nebraska|7997|$3240|$3263|
-|Nemaha County, Nebraska|6978|$2872|$2895|
-|Custer County, Nebraska|10788|$4310|$4333|
-|Decatur County, Iowa|7908|$3224|$3247|
-|Morgan County, West Virginia|17800|$7614|$7637|
-|Muhlenberg County, Kentucky|30815|$12853|$12876|
-|Sierra County, California|2898|$1255|$1279|
-|Meade County, Kansas|4120|$1622|$1646|
-|Cedar County, Nebraska|8483|$3329|$3354|
-|Douglas County, Wisconsin|43497|$18199|$18224|
-|Elk County, Kansas|2502|$1013|$1038|
-|Lincoln County, Minnesota|5641|$2246|$2271|
-|Webster County, Nebraska|3497|$1410|$1436|
-|Turner County, South Dakota|8325|$3315|$3341|
-|Douglas County, Missouri|13335|$5428|$5456|
-|Yell County, Arkansas|21425|$8601|$8629|
-|Guthrie County, Iowa|10702|$4375|$4403|
-|Presque Isle County, Michigan|12687|$5535|$5563|
-|Pratt County, Kansas|9324|$3680|$3708|
-|Union County, Illinois|16829|$6933|$6962|
-|Marion County, Kentucky|19257|$7692|$7722|
-|Knox County, Texas|3679|$1428|$1458|
-|Cook County, Minnesota|5402|$2335|$2366|
-|Upton County, Texas|3651|$1408|$1439|
-|Norman County, Minnesota|6466|$2601|$2633|
-|Griggs County, North Dakota|2314|$953|$986|
-|Potter County, Pennsylvania|16685|$6931|$6964|
-|DeKalb County, Tennessee|20104|$8238|$8271|
-|Ritchie County, West Virginia|9747|$4047|$4081|
-|Sherman County, Nebraska|3015|$1240|$1274|
-|Thayer County, Nebraska|5000|$2011|$2045|
-|Atascosa County, Texas|50194|$19467|$19501|
-|Dewey County, South Dakota|5841|$1972|$2006|
-|Boone County, Nebraska|5228|$2084|$2119|
-|Polk County, Nebraska|5208|$2101|$2136|
-|Nevada County, Arkansas|8249|$3321|$3357|
-|Baca County, Colorado|3570|$1452|$1488|
-|Cass County, Nebraska|26022|$10426|$10462|
-|Faribault County, Minnesota|13727|$5594|$5631|
-|Sweet Grass County, Montana|3676|$1503|$1541|
-|Greeley County, Kansas|1156|$427|$466|
-|Genesee County, New York|57554|$23950|$23990|
-|Webster County, West Virginia|8289|$3446|$3486|
-|Runnels County, Texas|10280|$4125|$4165|
-|Cowley County, Kansas|35090|$14101|$14141|
-|Decatur County, Kansas|2826|$1163|$1203|
-|Swift County, Minnesota|9329|$3774|$3815|
-|Montgomery County, Arkansas|8964|$3791|$3832|
-|Nodaway County, Missouri|22199|$9629|$9670|
-|Antelope County, Nebraska|6315|$2509|$2550|
-|McCook County, South Dakota|5543|$2115|$2156|
-|Boone County, Iowa|26381|$10869|$10910|
-|Gibson County, Indiana|33711|$13556|$13597|
-|Jackson County, Oklahoma|24808|$9732|$9773|
-|Traverse County, Minnesota|3282|$1371|$1413|
-|Sanborn County, South Dakota|2372|$919|$961|
-|Love County, Oklahoma|10128|$4007|$4049|
-|Ralls County, Missouri|10258|$4197|$4240|
-|Holt County, Nebraska|10123|$3983|$4026|
-|Stark County, Illinois|5393|$2213|$2256|
-|Osborne County, Kansas|3494|$1421|$1464|
-|Esmeralda County, Nevada|1030|$433|$477|
-|Jeff Davis County, Texas|2245|$977|$1021|
-|Coal County, Oklahoma|5577|$2211|$2255|
-|Morris County, Kansas|5551|$2263|$2308|
-|Chippewa County, Minnesota|11876|$4751|$4797|
-|Rich County, Utah|2415|$875|$921|
-|Benton County, Missouri|19305|$8279|$8325|
-|Adams County, Iowa|3633|$1478|$1524|
-|Bowman County, North Dakota|3091|$1204|$1250|
-|Richardson County, Nebraska|7913|$3252|$3299|
-|Ness County, Kansas|2838|$1138|$1185|
-|Pope County, Minnesota|11107|$4576|$4624|
-|Atchison County, Missouri|5180|$2145|$2193|
-|Garfield County, Montana|1051|$405|$453|
-|Wheeler County, Oregon|1417|$576|$624|
-|Caledonia County, Vermont|30027|$12658|$12707|
-|Mills County, Texas|4877|$2051|$2100|
-|Winnebago County, Iowa|10474|$4306|$4355|
-|Wright County, Iowa|12644|$5002|$5052|
-|Haskell County, Kansas|3990|$1515|$1565|
-|Mercer County, Missouri|3623|$1434|$1485|
-|Webster County, Georgia|2587|$1044|$1095|
-|Jerauld County, South Dakota|2009|$795|$846|
-|Carroll County, Ohio|27195|$11298|$11349|
-|Cheyenne County, Kansas|2639|$1063|$1114|
-|Walworth County, South Dakota|5431|$2157|$2208|
-|Richland County, Wisconsin|17408|$7139|$7191|
-|Fentress County, Tennessee|18405|$7600|$7652|
-|Franklin County, Nebraska|2970|$1230|$1283|
-|Monroe County, West Virginia|13344|$5556|$5610|
-|Cimarron County, Oklahoma|2159|$817|$871|
-|Gilliam County, Oregon|1896|$783|$837|
-|Lac qui Parle County, Minnesota|6645|$2759|$2814|
-|Nance County, Nebraska|3525|$1417|$1472|
-|Nuckolls County, Nebraska|4204|$1719|$1774|
-|Teton County, Montana|6127|$2413|$2468|
-|Palo Alto County, Iowa|8941|$3581|$3636|
-|Sioux County, Nebraska|1298|$472|$528|
-|Ellis County, Oklahoma|3936|$1571|$1627|
-|Shackelford County, Texas|3291|$1320|$1376|
-|Greene County, Indiana|32174|$13225|$13281|
-|Lewis County, Idaho|3850|$1536|$1592|
-|Iron County, Michigan|11099|$4772|$4829|
-|Fall River County, South Dakota|6721|$2861|$2918|
-|Caldwell County, Missouri|9052|$3627|$3685|
-|Mercer County, Illinois|15503|$6377|$6435|
-|Tuscola County, Michigan|52683|$21975|$22033|
-|Wichita County, Kansas|2112|$842|$900|
-|Schley County, Georgia|5215|$2098|$2157|
-|Dickinson County, Kansas|18614|$7517|$7576|
-|Adair County, Iowa|7048|$2867|$2927|
-|Robertson County, Kentucky|2139|$816|$877|
-|Wyoming County, Pennsylvania|27078|$11372|$11433|
-|Wolfe County, Kentucky|7188|$2884|$2946|
-|Carter County, Missouri|6085|$2481|$2543|
-|Perry County, Tennessee|8020|$3235|$3297|
-|Tripp County, South Dakota|5448|$2160|$2222|
-|Chambers County, Texas|42571|$16378|$16442|
-|Potter County, South Dakota|2311|$901|$965|
-|Warren County, Pennsylvania|39466|$16590|$16655|
-|Franklin County, Kansas|25643|$10261|$10326|
-|Rush County, Kansas|2953|$1195|$1260|
-|Island County, Washington|84187|$35518|$35584|
-|Gage County, Nebraska|21548|$8732|$8798|
-|Fisher County, Texas|3827|$1526|$1592|
-|Ogemaw County, Michigan|20895|$8860|$8926|
-|Big Stone County, Minnesota|4974|$2008|$2075|
-|Pierce County, Nebraska|7132|$2812|$2879|
-|Pulaski County, Indiana|12482|$5080|$5147|
-|Valencia County, New Mexico|76518|$30903|$30970|
-|Kingman County, Kansas|7173|$2923|$2990|
-|Iosco County, Michigan|25213|$10861|$10929|
-|Collingsworth County, Texas|2939|$1114|$1183|
-|Hancock County, Iowa|10709|$4373|$4443|
-|Calaveras County, California|45828|$19787|$19857|
-|Reno County, Kansas|62421|$25392|$25462|
-|Deuel County, Nebraska|1770|$704|$775|
-|Appling County, Georgia|18428|$7284|$7355|
-|Avoyelles Parish, Louisiana|40465|$16247|$16318|
-|Chicot County, Arkansas|10433|$4156|$4227|
-|Harrison County, Iowa|14043|$5681|$5753|
-|Columbia County, Washington|4024|$1664|$1737|
-|Furnas County, Nebraska|4712|$1905|$1978|
-|Codington County, South Dakota|28133|$11220|$11293|
-|Pulaski County, Illinois|5414|$2199|$2273|
-|Putnam County, Missouri|4746|$1878|$1953|
-|Rosebud County, Montana|9065|$3451|$3526|
-|Hancock County, Tennessee|6568|$2677|$2752|
-|McLean County, Kentucky|9202|$3706|$3781|
-|Tooele County, Utah|69740|$25488|$25564|
-|Brown County, Nebraska|2887|$1153|$1229|
-|Chase County, Nebraska|3707|$1460|$1536|
-|Pawnee County, Nebraska|2640|$1042|$1118|
-|Jackson County, South Dakota|3296|$1174|$1250|
-|Sherman County, Kansas|5904|$2343|$2419|
-|Donley County, Texas|3317|$1340|$1417|
-|Howard County, Iowa|9201|$3596|$3673|
-|Murray County, Minnesota|8247|$3349|$3427|
-|Calhoun County, Arkansas|5160|$2165|$2243|
-|Fallon County, Montana|2975|$1109|$1187|
-|Hill County, Montana|16422|$6227|$6305|
-|Iowa County, Iowa|16155|$6511|$6589|
-|Sumner County, Kansas|22928|$9172|$9250|
-|Van Buren County, Tennessee|5813|$2412|$2492|
-|Kiowa County, Kansas|2483|$948|$1028|
-|Sterling County, Texas|1274|$414|$495|
-|McIntosh County, Oklahoma|19677|$8206|$8287|
-|Jackson County, Kansas|13249|$5226|$5307|
-|Merrick County, Nebraska|7826|$3162|$3244|
-|Edwards County, Illinois|6431|$2580|$2662|
-|Gallatin County, Illinois|4983|$2016|$2098|
-|Fremont County, Iowa|6895|$2802|$2884|
-|Paulding County, Ohio|18742|$7512|$7594|
-|Hot Springs County, Wyoming|4550|$1861|$1944|
-|Houston County, Tennessee|8201|$3322|$3405|
-|Valley County, Idaho|11085|$4722|$4806|
-|Wahkiakum County, Washington|4318|$1784|$1868|
-|Camas County, Idaho|1069|$386|$471|
-|Mahaska County, Iowa|22351|$8896|$8981|
-|Comanche County, Kansas|1759|$706|$791|
-|Marshall County, Kansas|9713|$3839|$3924|
-|St. Clair County, Missouri|9455|$3917|$4003|
-|Lewis County, West Virginia|16024|$6521|$6607|
-|Powder River County, Montana|1634|$668|$755|
-|Schoolcraft County, Michigan|8031|$3415|$3502|
-|Armstrong County, Texas|1950|$741|$829|
-|Harrison County, Missouri|8427|$3307|$3396|
-|Holt County, Missouri|4374|$1773|$1862|
-|Lake and Peninsula Borough, Alaska|1156|$408|$497|
-|Fillmore County, Nebraska|5542|$2291|$2381|
-|Orange County, Indiana|19552|$7924|$8014|
-|Oglethorpe County, Georgia|15040|$6089|$6180|
-|Ida County, Iowa|6862|$2693|$2785|
-|Presidio County, Texas|6808|$2688|$2780|
-|Hood River County, Oregon|23270|$9366|$9458|
-|Ballard County, Kentucky|7914|$3242|$3334|
-|Green County, Kentucky|11000|$4505|$4597|
-|Carlisle County, Kentucky|4738|$1866|$1959|
-|Kandiyohi County, Minnesota|42909|$16974|$17068|
-|Mills County, Iowa|15023|$6046|$6141|
-|Scott County, Illinois|4982|$2012|$2107|
-|Fillmore County, Minnesota|21031|$8296|$8393|
-|White County, Indiana|24163|$9721|$9818|
-|Cottonwood County, Minnesota|11279|$4437|$4535|
-|Randolph County, Arkansas|17934|$7175|$7273|
-|Kiowa County, Colorado|1463|$500|$598|
-|Brown County, Indiana|15093|$6430|$6528|
-|Meigs County, Tennessee|12237|$5062|$5161|
-|Pondera County, Montana|5911|$2307|$2406|
-|Stevens County, Minnesota|9770|$3975|$4075|
-|Andrew County, Missouri|17554|$7099|$7199|
-|Sullivan County, Missouri|6163|$2456|$2556|
-|Chenango County, New York|47527|$19663|$19763|
-|Delta County, Michigan|35874|$15027|$15127|
-|Becker County, Minnesota|34227|$13628|$13729|
-|Goliad County, Texas|7578|$3055|$3157|
-|Seneca County, Ohio|55251|$22695|$22797|
-|Rooks County, Kansas|4985|$1970|$2072|
-|Kearney County, Nebraska|6588|$2547|$2650|
-|Monroe County, Iowa|7761|$3088|$3191|
-|Henderson County, Illinois|6737|$2814|$2917|
-|Houston County, Minnesota|18670|$7583|$7687|
-|Amelia County, Virginia|12970|$5324|$5428|
-|O'Brien County, Iowa|13796|$5493|$5597|
-|Schuyler County, Missouri|4550|$1735|$1840|
-|Wayne County, Nebraska|9388|$3881|$3987|
-|Humboldt County, Iowa|9518|$3756|$3862|
-|Cleburne County, Arkansas|25063|$10538|$10644|
-|Johnston County, Oklahoma|11028|$4366|$4473|
-|Pennington County, Minnesota|14110|$5639|$5747|
-|Menominee County, Wisconsin|4566|$1639|$1747|
-|Boone County, West Virginia|21897|$8992|$9101|
-|Orleans County, Vermont|26843|$11207|$11316|
-|De Witt County, Illinois|15764|$6435|$6544|
-|Navajo County, Arizona|110271|$42994|$43103|
-|Anderson County, Kansas|7877|$3053|$3162|
-|Washington County, Idaho|10128|$4032|$4142|
-|Lamb County, Texas|13018|$4947|$5057|
-|Faulk County, South Dakota|2315|$890|$1000|
-|Red Willow County, Nebraska|10725|$4336|$4447|
-|Deaf Smith County, Texas|18617|$6806|$6918|
-|Leslie County, Kentucky|10081|$4100|$4212|
-|Monroe County, Kentucky|10616|$4249|$4361|
-|Brule County, South Dakota|5233|$2018|$2131|
-|Scotland County, Missouri|4923|$1792|$1906|
-|Calhoun County, West Virginia|7185|$2984|$3098|
-|Shoshone County, Idaho|12700|$5248|$5362|
-|Cass County, Illinois|12324|$4850|$4964|
-|Martin County, Minnesota|19737|$8020|$8135|
-|Knox County, Nebraska|8400|$3307|$3422|
-|Atkinson County, Georgia|8311|$3176|$3291|
-|Sheridan County, Wyoming|30397|$12475|$12590|
-|Major County, Oklahoma|7654|$2933|$3048|
-|Meade County, Kentucky|28379|$11521|$11637|
-|Cumberland County, Virginia|9869|$4199|$4315|
-|Magoffin County, Kentucky|12346|$4931|$5047|
-|Butler County, Iowa|14508|$5846|$5963|
-|Hall County, Texas|3025|$1171|$1288|
-|Brantley County, Georgia|18924|$7543|$7660|
-|Phelps County, Nebraska|9050|$3566|$3684|
-|Saline County, Nebraska|14221|$5587|$5705|
-|Hamilton County, Texas|8434|$3447|$3567|
-|Cheboygan County, Michigan|25435|$10974|$11094|
-|Republic County, Kansas|4607|$1826|$1946|
-|Crook County, Oregon|23733|$9864|$9985|
-|Larue County, Kentucky|14269|$5781|$5902|
-|Wayne County, Kentucky|20447|$8434|$8556|
-|Gentry County, Missouri|6576|$2524|$2646|
-|Harney County, Oregon|7310|$2980|$3102|
-|Lewis County, Kentucky|13345|$5370|$5493|
-|Valley County, Nebraska|4100|$1618|$1741|
-|Marion County, Georgia|8450|$3412|$3535|
-|Stonewall County, Texas|1412|$506|$629|
-|Haakon County, South Dakota|1935|$673|$797|
-|Newton County, Arkansas|7753|$3237|$3362|
-|Baker County, Georgia|3090|$1289|$1414|
-|Ochiltree County, Texas|9907|$3606|$3731|
-|Pawnee County, Oklahoma|16402|$6538|$6663|
-|Skamania County, Washington|11906|$4986|$5112|
-|Union County, Indiana|7140|$2893|$3020|
-|Posey County, Indiana|25480|$10388|$10515|
-|Montgomery County, Iowa|10016|$3976|$4103|
-|Osage County, Kansas|15855|$6364|$6491|
-|Saline County, Missouri|22932|$9242|$9370|
-|Floyd County, Texas|5782|$2189|$2317|
-|Charles Mix County, South Dakota|9324|$3423|$3551|
-|Middlesex County, Virginia|10642|$4531|$4660|
-|Washburn County, Wisconsin|15726|$6584|$6713|
-|San Juan County, Utah|15295|$5680|$5810|
-|Bacon County, Georgia|11140|$4276|$4406|
-|Stone County, Mississippi|18282|$7466|$7596|
-|Benton County, Iowa|25558|$10285|$10415|
-|Charlotte County, Virginia|11953|$4877|$5008|
-|Madison County, Nebraska|35023|$13692|$13823|
-|Boundary County, Idaho|12156|$4863|$4994|
-|Pierce County, North Dakota|4061|$1584|$1715|
-|Pike County, Arkansas|10714|$4340|$4472|
-|Baylor County, Texas|3560|$1370|$1502|
-|Wilson County, Kansas|8600|$3395|$3527|
-|Ashtabula County, Ohio|97416|$39799|$39932|
-|Moore County, Tennessee|6396|$2634|$2768|
-|Ray County, Missouri|22900|$9240|$9374|
-|Nowata County, Oklahoma|10243|$4083|$4217|
-|Clay County, Illinois|13217|$5311|$5446|
-|Livingston County, Michigan|190832|$79151|$79286|
-|Adair County, Oklahoma|22171|$8539|$8674|
-|Cloud County, Kansas|8831|$3448|$3583|
-|Todd County, South Dakota|10308|$3279|$3414|
-|Webster County, Kentucky|13021|$5193|$5328|
-|Fleming County, Kentucky|14519|$5726|$5862|
-|Coke County, Texas|3298|$1294|$1431|
-|Benton County, Indiana|8695|$3389|$3526|
-|Putnam County, Ohio|33836|$13217|$13354|
-|Nicholas County, Kentucky|7189|$2843|$2981|
-|Echols County, Georgia|3944|$1560|$1698|
-|Jackson County, Arkansas|16908|$6994|$7132|
-|Russell County, Kansas|6896|$2729|$2867|
-|Clay County, West Virginia|8599|$3440|$3579|
-|Burleson County, Texas|18237|$7384|$7523|
-|Carbon County, Utah|20401|$7946|$8085|
-|Washita County, Oklahoma|11066|$4321|$4460|
-|Kossuth County, Iowa|14864|$6056|$6195|
-|Warren County, Virginia|39888|$16269|$16409|
-|Tama County, Iowa|16962|$6708|$6848|
-|Park County, Montana|16513|$7004|$7145|
-|Powell County, Kentucky|12283|$4787|$4929|
-|Gladwin County, Michigan|25312|$10624|$10766|
-|Wayne County, Iowa|6426|$2459|$2601|
-|Hart County, Kentucky|18833|$7447|$7590|
-|Thurston County, Nebraska|7218|$2446|$2590|
-|Cameron County, Pennsylvania|4512|$1885|$2029|
-|Wasco County, Oregon|26274|$10590|$10735|
-|Marshall County, Illinois|11562|$4729|$4874|
-|Hamilton County, Illinois|8151|$3279|$3424|
-|Graham County, Kansas|2464|$944|$1089|
-|Patrick County, Virginia|17660|$7482|$7628|
-|Itawamba County, Mississippi|23396|$9568|$9714|
-|Bath County, Kentucky|12421|$4825|$4971|
-|Clarke County, Virginia|14498|$6093|$6241|
-|Juniata County, Pennsylvania|24657|$10022|$10170|
-|Le Flore County, Oklahoma|49999|$19865|$20013|
-|Washington County, Illinois|13967|$5700|$5848|
-|Barnes County, North Dakota|10592|$4356|$4504|
-|Dickinson County, Michigan|25373|$10563|$10711|
-|Wheatland County, Montana|2138|$813|$962|
-|Noble County, Oklahoma|11263|$4441|$4590|
-|Clare County, Michigan|30655|$12742|$12892|
-|Jay County, Indiana|20697|$8125|$8277|
-|Sac County, Iowa|9711|$3877|$4030|
-|Saluda County, South Carolina|20292|$8190|$8343|
-|Chariton County, Missouri|7449|$2953|$3108|
-|Jackson County, Texas|14822|$5735|$5890|
-|Cameron Parish, Louisiana|6963|$2808|$2964|
-|Roane County, West Virginia|13831|$5635|$5791|
-|Jefferson County, Mississippi|7129|$2823|$2979|
-|Bingham County, Idaho|46246|$17149|$17306|
-|Marshall County, Oklahoma|16688|$6693|$6850|
-|Pocahontas County, Iowa|6725|$2685|$2843|
-|Poquoson city, Virginia|12121|$4947|$5106|
-|Union Parish, Louisiana|22270|$9081|$9241|
-|Cass County, Iowa|12990|$5259|$5419|
-|Hamilton County, Iowa|14905|$5984|$6144|
-|Pike County, Indiana|12364|$5001|$5161|
-|Clinch County, Georgia|6648|$2578|$2738|
-|Archuleta County, Colorado|13588|$5672|$5833|
-|Taylor County, West Virginia|16817|$6941|$7102|
-|Vermillion County, Indiana|15485|$6308|$6469|
-|Brewster County, Texas|9231|$3794|$3955|
-|Blackford County, Indiana|11926|$4801|$4963|
-|Washington County, Alabama|16336|$6751|$6914|
-|Upshur County, West Virginia|24451|$10109|$10272|
-|Floyd County, Iowa|15713|$6297|$6460|
-|Clark County, Illinois|15602|$6286|$6450|
-|Wallowa County, Oregon|7065|$2911|$3075|
-|Audubon County, Iowa|5528|$2199|$2364|
-|Grundy County, Iowa|12262|$4885|$5050|
-|Dawes County, Nebraska|8685|$3598|$3764|
-|Blaine County, Montana|6698|$2417|$2583|
-|Allen County, Kentucky|21065|$8374|$8540|
-|Shelby County, Ohio|48610|$19254|$19421|
-|Tillamook County, Oregon|26782|$11187|$11354|
-|Marion County, Iowa|33193|$13346|$13513|
-|Mitchell County, Iowa|10588|$4190|$4357|
-|Hutchinson County, South Dakota|7308|$2790|$2958|
-|Otsego County, Michigan|24613|$10112|$10281|
-|Rappahannock County, Virginia|7360|$2983|$3153|
-|Hamilton County, Nebraska|9219|$3637|$3809|
-|Barton County, Missouri|11732|$4673|$4845|
-|Wilson County, Texas|50110|$20122|$20294|
-|Glacier County, Montana|13706|$4933|$5105|
-|Trigg County, Kentucky|14569|$5882|$6054|
-|Ouray County, Colorado|4890|$2065|$2238|
-|Rains County, Texas|12001|$4949|$5122|
-|Stone County, Arkansas|12582|$5213|$5387|
-|Choctaw County, Mississippi|8206|$3265|$3439|
-|Trimble County, Kentucky|8528|$3419|$3595|
-|Shannon County, Missouri|8207|$3274|$3450|
-|Sheridan County, Nebraska|5215|$2042|$2219|
-|Perry County, Ohio|36076|$14480|$14657|
-|Hettinger County, North Dakota|2510|$948|$1126|
-|Kiowa County, Oklahoma|8816|$3450|$3629|
-|Cannon County, Tennessee|14374|$5827|$6006|
-|Buchanan County, Virginia|21374|$9134|$9314|
-|Benton County, Minnesota|40476|$15803|$15984|
-|Tensas Parish, Louisiana|4435|$1744|$1925|
-|Morgan County, Ohio|14557|$5965|$6146|
-|Twiggs County, Georgia|8195|$3345|$3526|
-|Roosevelt County, Montana|11091|$3881|$4063|
-|Decatur County, Indiana|26587|$10606|$10788|
-|Wexford County, Michigan|33433|$13379|$13561|
-|Smith County, Tennessee|19926|$8033|$8217|
-|Brown County, Kansas|9575|$3668|$3852|
-|Lafayette County, Missouri|32697|$13188|$13373|
-|Wells County, North Dakota|3889|$1509|$1694|
-|Miller County, Missouri|25369|$10116|$10302|
-|Mitchell County, North Carolina|14959|$6274|$6462|
-|Wayne County, Missouri|13058|$5361|$5550|
-|Benton County, Mississippi|8275|$3442|$3631|
-|Kemper County, Mississippi|9829|$4051|$4240|
-|Buchanan County, Iowa|21141|$8152|$8343|
-|Bates County, Missouri|16282|$6476|$6668|
-|Randolph County, Georgia|6888|$2595|$2787|
-|Cottle County, Texas|1624|$536|$728|
-|Ringgold County, Iowa|4922|$1879|$2071|
-|Burt County, Nebraska|6503|$2553|$2746|
-|Covington city, Virginia|5653|$2151|$2345|
-|Ellis County, Kansas|28747|$11609|$11803|
-|Hockley County, Texas|22986|$8922|$9117|
-|Garrett County, Maryland|29155|$12320|$12515|
-|Breckinridge County, Kentucky|20283|$8161|$8357|
-|Kearny County, Kansas|3863|$1354|$1551|
-|Lawrence County, South Dakota|25806|$10983|$11181|
-|Grundy County, Missouri|9885|$3849|$4049|
-|Lawrence County, Arkansas|16511|$6670|$6871|
-|Carroll County, Missouri|8723|$3456|$3657|
-|Candler County, Georgia|10834|$4207|$4408|
-|Pike County, Illinois|15571|$6229|$6430|
-|Morton County, Kansas|2656|$960|$1163|
-|Wayne County, Illinois|16309|$6518|$6722|
-|Tipton County, Indiana|15154|$6205|$6409|
-|Cass County, Michigan|51613|$21362|$21567|
-|Morgan County, Missouri|20438|$8177|$8383|
-|Rush County, Indiana|16632|$6730|$6937|
-|Iron County, Missouri|10150|$4126|$4334|
-|Mercer County, Kentucky|21690|$8792|$9001|
-|Madison County, Missouri|12176|$4863|$5073|
-|Charles City County, Virginia|6965|$2954|$3165|
-|Ozark County, Missouri|9138|$3792|$4003|
-|Kimble County, Texas|4375|$1765|$1976|
-|Mason County, Illinois|13486|$5498|$5709|
-|Franklin County, Alabama|31587|$12405|$12617|
-|Alleghany County, North Carolina|11085|$4672|$4884|
-|Madison County, Iowa|16148|$6332|$6544|
-|Grayson County, Kentucky|26313|$10464|$10676|
-|Cleveland County, Arkansas|8063|$3163|$3376|
-|Franklin County, Texas|10767|$4230|$4443|
-|Wadena County, Minnesota|13681|$5281|$5495|
-|Mineral County, West Virginia|27047|$11209|$11423|
-|Knott County, Kentucky|15041|$6177|$6392|
-|Columbia County, New York|60016|$25847|$26064|
-|Oneida County, Wisconsin|35480|$15106|$15323|
-|Piatt County, Illinois|16412|$6593|$6811|
-|Mathews County, Virginia|8760|$3806|$4025|
-|Carroll County, New Hampshire|48461|$21078|$21297|
-|Custer County, Oklahoma|28929|$11311|$11530|
-|Hickman County, Kentucky|4461|$1764|$1983|
-|Jasper County, Indiana|33433|$13481|$13701|
-|Morrow County, Ohio|35148|$14290|$14511|
-|Logan County, Arkansas|21619|$8794|$9015|
-|Cumberland County, Kentucky|6660|$2605|$2826|
-|Refugio County, Texas|7015|$2729|$2951|
-|Freeborn County, Minnesota|30465|$12351|$12574|
-|Shawano County, Wisconsin|40813|$16734|$16958|
-|Lewis County, Tennessee|12131|$4887|$5112|
-|Orange County, Vermont|28873|$12152|$12381|
-|Haskell County, Oklahoma|12688|$4991|$5220|
-|Livingston County, Kentucky|9172|$3638|$3868|
-|Bourbon County, Kansas|14539|$5612|$5843|
-|Clay County, Tennessee|7640|$3053|$3285|
-|Columbia County, Oregon|52117|$21540|$21772|
-|Ohio County, Kentucky|24081|$9464|$9696|
-|Lipscomb County, Texas|3301|$1146|$1379|
-|Craig County, Virginia|5103|$2045|$2279|
-|Bennett County, South Dakota|3430|$1113|$1347|
-|Oregon County, Missouri|10561|$4179|$4414|
-|Fountain County, Indiana|16456|$6636|$6871|
-|Andrews County, Texas|18227|$6682|$6917|
-|Floyd County, Virginia|15766|$6562|$6798|
-|Jackson County, Kentucky|13368|$5326|$5562|
-|Douglas County, Illinois|19551|$7664|$7902|
-|Montgomery County, Missouri|11414|$4555|$4795|
-|Winneshiek County, Iowa|20090|$8443|$8683|
-|Custer County, Montana|11563|$4665|$4905|
-|Greene County, Iowa|8923|$3529|$3770|
-|Leake County, Mississippi|22791|$8945|$9186|
-|Jefferson County, Nebraska|7102|$2819|$3061|
-|Madison Parish, Louisiana|11137|$4325|$4567|
-|Fulton County, Arkansas|12301|$4991|$5235|
-|Montgomery County, North Carolina|27223|$11204|$11448|
-|Hertford County, North Carolina|23752|$9957|$10202|
-|Hickory County, Missouri|9452|$3971|$4217|
-|Highland County, Virginia|2202|$844|$1090|
-|Lafayette County, Arkansas|6728|$2717|$2963|
-|Miller County, Georgia|5725|$2199|$2447|
-|Custer County, Colorado|4941|$2084|$2335|
-|Natrona County, Wyoming|80067|$31891|$32142|
-|Ripley County, Missouri|13484|$5354|$5606|
-|Rock County, Minnesota|9386|$3623|$3877|
-|St. Croix County, Wisconsin|89702|$35597|$35851|
-|Leon County, Texas|17325|$6898|$7153|
-|Daviess County, Indiana|33277|$12462|$12718|
-|Huron County, Michigan|31105|$12980|$13236|
-|Rolette County, North Dakota|14437|$5005|$5261|
-|Alamosa County, Colorado|16153|$6284|$6541|
-|San Miguel County, New Mexico|27546|$11624|$11883|
-|McIntosh County, Georgia|14217|$5994|$6254|
-|Franklin County, Mississippi|7716|$2974|$3234|
-|Dent County, Missouri|15518|$6221|$6482|
-|Mason County, Texas|4248|$1584|$1845|
-|Thomas County, Kansas|7748|$2999|$3260|
-|Caldwell County, Kentucky|12679|$5028|$5289|
-|Clay County, Arkansas|14710|$5927|$6190|
-|Lincoln County, Georgia|7929|$3205|$3469|
-|Davison County, South Dakota|19890|$7930|$8194|
-|Hill County, Texas|36109|$14475|$14740|
-|Charlevoix County, Michigan|26197|$10961|$11227|
-|Ottawa County, Ohio|40557|$17176|$17443|
-|Wilbarger County, Texas|12717|$5042|$5309|
-|St. Louis County, Minnesota|199499|$83932|$84201|
-|Glascock County, Georgia|2984|$1119|$1388|
-|Mineral County, Nevada|4487|$1818|$2088|
-|Raleigh County, West Virginia|74452|$30657|$30928|
-|Nelson County, Virginia|14812|$6170|$6442|
-|Gilmer County, Georgia|30986|$12926|$13199|
-|Menard County, Illinois|12261|$4869|$5143|
-|Wabash County, Illinois|11390|$4508|$4782|
-|Rockbridge County, Virginia|22728|$9599|$9875|
-|Pushmataha County, Oklahoma|11055|$4378|$4654|
-|Colorado County, Texas|21357|$8404|$8681|
-|Hillsdale County, Michigan|45707|$18652|$18929|
-|Alexander County, Illinois|6011|$2260|$2538|
-|Pacific County, Washington|22121|$9482|$9761|
-|Warren County, Tennessee|40971|$16450|$16731|
-|Macon County, Missouri|15154|$5960|$6241|
-|Chelan County, Washington|76653|$30686|$30968|
-|Fremont County, Wyoming|39711|$15508|$15790|
-|Antrim County, Michigan|23301|$9861|$10143|
-|Quay County, New Mexico|8265|$3170|$3452|
-|Hancock County, Illinois|17820|$7249|$7532|
-|Liberty County, Montana|2455|$853|$1136|
-|Webster County, Mississippi|9727|$3772|$4055|
-|Bandera County, Texas|22770|$9668|$9952|
-|Payette County, Idaho|23705|$9113|$9397|
-|Appanoose County, Iowa|12462|$4931|$5215|
-|Metcalfe County, Kentucky|10062|$3897|$4182|
-|Grant County, Kentucky|25107|$9558|$9844|
-|Gasconade County, Missouri|14673|$5948|$6235|
-|Broomfield County, Colorado|69444|$28167|$28454|
-|Austin County, Texas|29892|$11845|$12132|
-|Talbot County, Georgia|6245|$2555|$2842|
-|Surry County, Virginia|6459|$2616|$2904|
-|Emanuel County, Georgia|22525|$8751|$9040|
-|Dickinson County, Iowa|17260|$7143|$7432|
-|Warren County, Georgia|5259|$2025|$2314|
-|St. Mary's County, Maryland|113182|$45090|$45380|
-|Henry County, Kentucky|15999|$6325|$6616|
-|Sharp County, Arkansas|17217|$7028|$7320|
-|Heard County, Georgia|11785|$4669|$4961|
-|Grundy County, Tennessee|13371|$5341|$5633|
-|Marshall County, West Virginia|30900|$12819|$13112|
-|Adams County, Nebraska|31541|$12498|$12791|
-|Adams County, Ohio|27685|$11011|$11304|
-|Shelby County, Iowa|11544|$4609|$4904|
-|Effingham County, Illinois|34151|$13570|$13865|
-|Lancaster County, Nebraska|315976|$127650|$127946|
-|Cedar County, Iowa|18475|$7443|$7739|
-|Marathon County, Wisconsin|135485|$54797|$55093|
-|Harvey County, Kansas|34434|$13704|$14000|
-|Brown County, Minnesota|25076|$10133|$10430|
-|Cherokee County, Alabama|26035|$10854|$11152|
-|Starke County, Indiana|22996|$9135|$9433|
-|Nicholas County, West Virginia|24857|$10156|$10454|
-|Marion County, Texas|9987|$4086|$4384|
-|Edgar County, Illinois|17272|$7115|$7414|
-|Lincoln County, West Virginia|20617|$8223|$8523|
-|Hocking County, Ohio|28306|$11501|$11802|
-|Richland County, Illinois|15677|$6178|$6481|
-|DeKalb County, Indiana|43193|$17126|$17430|
-|Dukes County, Massachusetts|17430|$7379|$7683|
-|Turner County, Georgia|7920|$3010|$3314|
-|Pipestone County, Minnesota|9163|$3440|$3744|
-|Meigs County, Ohio|22974|$9288|$9593|
-|Washington County, Iowa|22100|$8642|$8949|
-|Estill County, Kentucky|14187|$5725|$6034|
-|Watauga County, North Carolina|55669|$24773|$25083|
-|Clay County, Iowa|16138|$6399|$6710|
-|Caroline County, Virginia|30581|$12096|$12407|
-|Clay County, South Dakota|14076|$5875|$6186|
-|Lincoln County, Montana|19845|$8349|$8662|
-|Otoe County, Nebraska|15965|$6222|$6535|
-|Jackson County, West Virginia|28793|$11656|$11970|
-|Klamath County, Oregon|67606|$27516|$27831|
-|Williams County, Ohio|36760|$14814|$15130|
-|Indiana County, Pennsylvania|84463|$35845|$36161|
-|Schoharie County, New York|31189|$13202|$13519|
-|Callahan County, Texas|13959|$5584|$5902|
-|Dallas County, Arkansas|7114|$2874|$3193|
-|Prairie County, Arkansas|8138|$3218|$3539|
-|Pierce County, Georgia|19336|$7461|$7782|
-|White County, Illinois|13712|$5482|$5803|
-|Lawrence County, Kentucky|15604|$6067|$6388|
-|Lincoln County, Missouri|57590|$22620|$22942|
-|Orleans County, New York|40624|$17038|$17360|
-|Perry County, Missouri|19227|$7591|$7914|
-|Kittitas County, Washington|47097|$20049|$20373|
-|Big Horn County, Montana|13302|$4598|$4922|
-|Green County, Wisconsin|36790|$14895|$15219|
-|Boyd County, Kentucky|47361|$19330|$19654|
-|Blue Earth County, Minnesota|67368|$27941|$28266|
-|Real County, Texas|3429|$1261|$1586|
-|Goodhue County, Minnesota|46330|$18789|$19115|
-|San Augustine County, Texas|8260|$3320|$3646|
-|Benzie County, Michigan|17703|$7371|$7697|
-|Butte County, South Dakota|10295|$3916|$4242|
-|Grant County, Arkansas|18229|$7264|$7592|
-|Pender County, North Carolina|61891|$25145|$25473|
-|Clinton County, Missouri|20503|$8193|$8522|
-|San Jacinto County, Texas|28574|$11534|$11863|
-|Lewis County, Washington|79430|$32535|$32865|
-|Fulton County, Indiana|20069|$7872|$8202|
-|Lake County, California|64276|$26314|$26644|
-|Van Buren County, Arkansas|16578|$6861|$7191|
-|Sanilac County, Michigan|41179|$16867|$17197|
-|Mason County, Kentucky|17122|$6773|$7105|
-|Franklin County, Arkansas|17785|$7078|$7410|
-|Simpson County, Kentucky|18319|$7100|$7433|
-|Trinity County, Texas|14689|$5988|$6322|
-|Red River Parish, Louisiana|8462|$3227|$3563|
-|Gem County, Idaho|17771|$7034|$7371|
-|Evans County, Georgia|10671|$3978|$4317|
-|West Baton Rouge Parish, Louisiana|26395|$10377|$10717|
-|Mayes County, Oklahoma|41098|$16419|$16759|
-|Niobrara County, Wyoming|2377|$817|$1159|
-|Delta County, Texas|5277|$2006|$2348|
-|Jefferson County, Pennsylvania|43570|$17780|$18123|
-|Siskiyou County, California|43516|$17933|$18277|
-|Jasper County, Georgia|14074|$5460|$5805|
-|Limestone County, Alabama|96921|$39455|$39800|
-|Decatur County, Tennessee|11663|$4658|$5005|
-|Cache County, Utah|126336|$46970|$47318|
-|Ford County, Illinois|13155|$5208|$5557|
-|Otero County, Colorado|18284|$7173|$7522|
-|Labette County, Kansas|19938|$7797|$8146|
-|Crawford County, Missouri|23984|$9578|$9929|
-|Page County, Virginia|23862|$9805|$10156|
-|Bamberg County, South Carolina|14236|$5791|$6142|
-|Cass County, Indiana|37727|$15139|$15490|
-|Coryell County, Texas|75576|$30208|$30560|
-|Marshall County, Iowa|39804|$15530|$15882|
-|Harrison County, Ohio|15132|$6109|$6462|
-|Carroll County, Iowa|20150|$7947|$8300|
-|Tazewell County, Virginia|41201|$17156|$17511|
-|Union County, Iowa|12303|$4857|$5212|
-|Washington County, Indiana|27942|$11210|$11565|
-|Iron County, Utah|53148|$20072|$20428|
-|Scott County, Indiana|23785|$9540|$9896|
-|Brown County, Ohio|43508|$17540|$17896|
-|Terrell County, Georgia|8654|$3295|$3651|
-|Wapello County, Iowa|35102|$14046|$14405|
-|Washington County, Kentucky|12044|$4646|$5006|
-|Dare County, North Carolina|36698|$15350|$15710|
-|Brooke County, West Virginia|22162|$9313|$9673|
-|Bremer County, Iowa|25032|$10051|$10412|
-|Grady County, Oklahoma|55315|$22069|$22431|
-|Lincoln County, Oklahoma|34936|$13856|$14219|
-|Washington County, Nebraska|20546|$8036|$8401|
-|Wyandot County, Ohio|21907|$8784|$9149|
-|Walthall County, Mississippi|14423|$5689|$6054|
-|Norton city, Virginia|3969|$1519|$1886|
-|Harrison County, Indiana|40164|$16196|$16563|
-|Lamar County, Alabama|13854|$5465|$5835|
-|Clay County, Indiana|26231|$10440|$10810|
-|Boyle County, Kentucky|30090|$12418|$12789|
-|Gates County, North Carolina|11519|$4642|$5015|
-|Woodford County, Illinois|38503|$15254|$15627|
-|Shelby County, Texas|25263|$9699|$10072|
-|Wyoming County, West Virginia|20890|$8537|$8911|
-|Emporia city, Virginia|5408|$1863|$2238|
-|Russell County, Virginia|26937|$11188|$11564|
-|Bonner County, Idaho|44688|$18559|$18936|
-|Lawrence County, Mississippi|12595|$4829|$5206|
-|Montgomery County, Kansas|32114|$12697|$13075|
-|Rhea County, Tennessee|32964|$13193|$13572|
-|Mason County, Michigan|29062|$11926|$12306|
-|Jones County, North Carolina|9453|$3822|$4203|
-|Moultrie County, Illinois|14557|$5585|$5966|
-|Scott County, Tennessee|22020|$8682|$9065|
-|Champaign County, Ohio|38861|$15727|$16110|
-|McLeod County, Minnesota|35788|$14328|$14712|
-|Fairfax city, Virginia|23312|$9314|$9698|
-|Carroll County, Arkansas|28062|$11292|$11677|
-|Burleigh County, North Dakota|95509|$38180|$38566|
-|Perry County, Mississippi|11981|$4666|$5053|
-|Owsley County, Kentucky|4416|$1670|$2057|
-|Bartholomew County, Indiana|83280|$33131|$33519|
-|Lincoln County, New Mexico|19640|$8173|$8561|
-|Monona County, Iowa|8675|$3399|$3788|
-|Leelanau County, Michigan|21649|$9214|$9603|
-|Winston County, Mississippi|18116|$7202|$7593|
-|Currituck County, North Carolina|27210|$10948|$11340|
-|Garvin County, Oklahoma|27789|$10826|$11218|
-|Sullivan County, New Hampshire|43173|$18101|$18494|
-|Alpena County, Michigan|28431|$11873|$12268|
-|Sabine Parish, Louisiana|23915|$9444|$9840|
-|Clay County, North Carolina|11150|$4518|$4915|
-|Amite County, Mississippi|12341|$4896|$5293|
-|Sharkey County, Mississippi|4427|$1592|$1989|
-|Jasper County, Mississippi|16454|$6468|$6866|
-|Tolland County, Connecticut|150947|$64825|$65225|
-|Benton County, Tennessee|16133|$6538|$6939|
-|Clinton County, Indiana|32186|$12399|$12801|
-|Graham County, North Carolina|8501|$3349|$3752|
-|Madison County, Virginia|13208|$5296|$5701|
-|Wilkes County, Georgia|9797|$3843|$4249|
-|Adair County, Kentucky|19366|$7950|$8356|
-|Giles County, Virginia|16760|$6777|$7186|
-|Hughes County, South Dakota|17560|$6767|$7177|
-|Yamhill County, Oregon|106087|$43198|$43609|
-|Union County, Tennessee|19678|$7877|$8288|
-|Madison County, North Carolina|21608|$9062|$9474|
-|Snyder County, Pennsylvania|40452|$16563|$16976|
-|Adams County, Indiana|35544|$12807|$13223|
-|Cherokee County, Kansas|20017|$7875|$8291|
-|Cheatham County, Tennessee|40539|$16457|$16874|
-|Swain County, North Carolina|14241|$5551|$5969|
-|Johnson County, Arkansas|26475|$10366|$10785|
-|Linn County, Missouri|12004|$4621|$5042|
-|Door County, Wisconsin|27621|$11773|$12194|
-|Henry County, Missouri|21854|$8711|$9133|
-|Buffalo County, Nebraska|49594|$19736|$20158|
-|Knox County, Maine|39809|$16828|$17251|
-|Crow Wing County, Minnesota|64775|$26406|$26831|
-|Lamar County, Georgia|18834|$7617|$8043|
-|Fayette County, Alabama|16406|$6591|$7017|
-|Warren County, Missouri|35090|$13903|$14330|
-|Mora County, New Mexico|4500|$1786|$2214|
-|Cleburne County, Alabama|14952|$5862|$6291|
-|Monroe County, Arkansas|6879|$2613|$3042|
-|Tunica County, Mississippi|9807|$3489|$3918|
-|Lanier County, Georgia|10534|$4074|$4506|
-|Greene County, Georgia|17808|$7285|$7718|
-|Humphreys County, Mississippi|8198|$2991|$3424|
-|Young County, Texas|17961|$6966|$7400|
-|Woodruff County, Arkansas|6477|$2436|$2870|
-|Van Wert County, Ohio|28213|$11189|$11623|
-|Fulton County, New York|53452|$22081|$22517|
-|Culpeper County, Virginia|51935|$20502|$20938|
-|Muscatine County, Iowa|42703|$16752|$17189|
-|Oktibbeha County, Mississippi|49593|$20929|$21367|
-|Seminole County, Georgia|8218|$3134|$3574|
-|Putnam County, Georgia|21906|$9014|$9455|
-|Boone County, Illinois|53293|$21197|$21638|
-|Russell County, Kentucky|17846|$7059|$7501|
-|Wetzel County, West Virginia|15291|$6137|$6579|
-|Perry County, Kentucky|26266|$10402|$10844|
-|Zapata County, Texas|14243|$4876|$5320|
-|Taylor County, Georgia|8126|$3178|$3623|
-|Marshall County, Mississippi|35502|$14412|$14858|
-|Harrison County, Kentucky|18763|$7445|$7891|
-|Polk County, Arkansas|19999|$7912|$8359|
-|Dimmit County, Texas|10232|$3660|$4108|
-|Brown County, South Dakota|38988|$15361|$15809|
-|Rockcastle County, Kentucky|16795|$6690|$7139|
-|Henry County, Ohio|27068|$10733|$11184|
-|Oglala Lakota County, South Dakota|14277|$4668|$5119|
-|Oswego County, New York|117630|$48431|$48883|
-|Guernsey County, Ohio|38996|$15834|$16288|
-|Stewart County, Tennessee|13553|$5379|$5835|
-|Rabun County, Georgia|16859|$7119|$7576|
-|Aransas County, Texas|24220|$10039|$10497|
-|Franklin County, Vermont|49275|$19945|$20404|
-|Harris County, Georgia|34676|$14118|$14577|
-|Allen County, Kansas|12503|$4868|$5327|
-|Burke County, North Carolina|90148|$38035|$38496|
-|Milam County, Texas|24797|$9748|$10209|
-|Holmes County, Ohio|43954|$16113|$16574|
-|Plaquemines Parish, Louisiana|23305|$8867|$9329|
-|Lavaca County, Texas|20072|$7825|$8287|
-|McPherson County, Kansas|28557|$11485|$11949|
-|Lowndes County, Alabama|9936|$3828|$4295|
-|Lyon County, Minnesota|25696|$9833|$10300|
-|Screven County, Georgia|13977|$5555|$6022|
-|Northumberland County, Virginia|12151|$5056|$5524|
-|Asotin County, Washington|22636|$9152|$9622|
-|Columbus County, North Carolina|55659|$22868|$23338|
-|Dade County, Georgia|16183|$6567|$7037|
-|Chaves County, New Mexico|64912|$25246|$25716|
-|Buena Vista city, Virginia|6477|$2424|$2896|
-|Dubois County, Indiana|42534|$16717|$17189|
-|Barbour County, West Virginia|16543|$6696|$7169|
-|Hart County, Georgia|25981|$10455|$10933|
-|Shelby County, Illinois|21623|$8671|$9150|
-|New London County, Connecticut|266868|$112029|$112509|
-|Wilkinson County, Georgia|8945|$3394|$3874|
-|Warren County, Illinois|16981|$6744|$7224|
-|Whitley County, Indiana|33899|$13487|$13967|
-|Bosque County, Texas|18428|$7368|$7849|
-|Jefferson County, Wisconsin|84837|$34936|$35417|
-|St. Helena Parish, Louisiana|10227|$3980|$4463|
-|McClain County, Oklahoma|39921|$15537|$16020|
-|Appomattox County, Virginia|15814|$6269|$6754|
-|Botetourt County, Virginia|33440|$13949|$14437|
-|Saline County, Kansas|54384|$21684|$22173|
-|Huntington County, Indiana|36351|$14713|$15203|
-|Marion County, Arkansas|16586|$6801|$7291|
-|Garfield County, Oklahoma|61555|$24072|$24563|
-|Humphreys County, Tennessee|18528|$7347|$7838|
-|Quitman County, Mississippi|7038|$2582|$3074|
-|Tioga County, Pennsylvania|40759|$16815|$17308|
-|Montezuma County, Colorado|26266|$10530|$11024|
-|Little River County, Arkansas|12345|$4779|$5274|
-|Berrien County, Georgia|19206|$7455|$7950|
-|Barry County, Missouri|35615|$14203|$14700|
-|Randolph County, Indiana|24694|$9803|$10301|
-|Union County, Mississippi|28578|$11051|$11550|
-|Clay County, Alabama|13285|$5253|$5753|
-|San Juan County, Washington|16953|$7332|$7833|
-|Logan County, Ohio|45315|$18090|$18591|
-|Cooke County, Texas|40428|$15985|$16487|
-|Fayette County, Indiana|23068|$9260|$9762|
-|Curry County, Oregon|22889|$9871|$10374|
-|Neosho County, Kansas|16008|$6104|$6608|
-|Yancey County, North Carolina|17870|$7344|$7850|
-|Johnson County, Kentucky|22427|$8924|$9430|
-|Westmoreland County, Virginia|17873|$7283|$7790|
-|Sabine County, Texas|10470|$4233|$4741|
-|Jenkins County, Georgia|8787|$3287|$3796|
-|Darke County, Ohio|51387|$20457|$20967|
-|Ravalli County, Montana|43424|$18184|$18696|
-|Scotland County, North Carolina|34921|$13849|$14361|
-|Clarendon County, South Carolina|33865|$14015|$14528|
-|Maverick County, Texas|58098|$21251|$21764|
-|Scott County, Mississippi|28288|$10729|$11242|
-|St. Joseph County, Michigan|60789|$24014|$24528|
-|Clinton County, Pennsylvania|38549|$15785|$16300|
-|Crenshaw County, Alabama|13826|$5391|$5907|
-|Winston County, Alabama|23712|$9613|$10132|
-|Brown County, Texas|37805|$15372|$15894|
-|King William County, Virginia|16985|$6629|$7157|
-|Plymouth County, Iowa|25141|$9768|$10298|
-|Grant County, New Mexico|27391|$11211|$11742|
-|Conway County, Arkansas|20895|$8187|$8719|
-|Logan County, Illinois|28818|$11878|$12412|
-|Montague County, Texas|19640|$7673|$8208|
-|Poweshiek County, Iowa|18391|$7449|$7986|
-|Stevens County, Washington|45233|$18403|$18941|
-|Conecuh County, Alabama|12219|$4789|$5332|
-|Defiance County, Ohio|38024|$15200|$15743|
-|Hardin County, Ohio|31393|$12541|$13086|
-|Goochland County, Virginia|23472|$9806|$10352|
-|Anderson County, Kentucky|22580|$8813|$9359|
-|Winona County, Minnesota|50744|$21315|$21862|
-|Putnam County, New York|98714|$41309|$41856|
-|Warren County, North Carolina|19746|$8155|$8702|
-|McCurtain County, Oklahoma|32913|$12652|$13199|
-|Kay County, Oklahoma|44074|$17198|$17748|
-|Chester County, Tennessee|17260|$6800|$7350|
-|Addison County, Vermont|36947|$15703|$16255|
-|Bannock County, Idaho|86742|$33751|$34305|
-|Kosciusko County, Indiana|79156|$31464|$32022|
-|Ripley County, Indiana|28457|$11190|$11749|
-|Alleghany County, Virginia|15030|$6076|$6636|
-|Preble County, Ohio|40995|$16479|$17040|
-|Lincoln County, Nebraska|35042|$13785|$14347|
-|York County, Nebraska|13671|$5237|$5799|
-|Perquimans County, North Carolina|13513|$5395|$5958|
-|Perry County, Alabama|9104|$3451|$4015|
-|Blount County, Alabama|57755|$23061|$23626|
-|Crockett County, Tennessee|14310|$5483|$6048|
-|Claiborne County, Mississippi|9042|$3448|$4013|
-|Smyth County, Virginia|30539|$12567|$13133|
-|Wilcox County, Alabama|10552|$3970|$4537|
-|Lawrence County, Missouri|38241|$14838|$15405|
-|Galax city, Virginia|6402|$2193|$2761|
-|Carter County, Kentucky|26976|$10587|$11155|
-|Wright County, Missouri|18256|$6951|$7520|
-|Brooks County, Georgia|15548|$6053|$6622|
-|Casey County, Kentucky|15968|$6223|$6792|
-|Jeff Davis County, Georgia|15063|$5595|$6165|
-|Emmet County, Michigan|33175|$13762|$14333|
-|Morris County, Texas|12357|$4703|$5275|
-|Choctaw County, Oklahoma|14727|$5581|$6154|
-|Panola County, Texas|23186|$9094|$9668|
-|Arlington County, Virginia|236434|$99621|$100196|
-|Tioga County, New York|48431|$19825|$20400|
-|Lincoln County, Kentucky|24493|$9555|$10133|
-|Manitowoc County, Wisconsin|78977|$32574|$33152|
-|Carroll County, Tennessee|27841|$11127|$11705|
-|Camden County, Missouri|45823|$19396|$19975|
-|Ashe County, North Carolina|27009|$11281|$11862|
-|Beltrami County, Minnesota|46784|$18095|$18677|
-|McDowell County, North Carolina|45402|$18653|$19235|
-|Randolph County, Alabama|22732|$9096|$9678|
-|Gallia County, Ohio|29995|$11840|$12422|
-|Jefferson Davis County, Mississippi|11182|$4365|$4947|
-|Madison County, Georgia|29624|$11646|$12229|
-|Letcher County, Kentucky|21936|$8696|$9280|
-|Dodge County, Nebraska|36565|$14303|$14888|
-|Park County, Wyoming|29273|$11836|$12424|
-|Bedford County, Tennessee|48937|$18965|$19553|
-|Smith County, Mississippi|15919|$6131|$6720|
-|Pickens County, Georgia|32002|$13106|$13697|
-|Bradley County, Arkansas|10805|$3982|$4574|
-|Logan County, West Virginia|32593|$13221|$13816|
-|Garrard County, Kentucky|17554|$6911|$7510|
-|Pierce County, Wisconsin|42336|$17246|$17847|
-|Union County, Oregon|26502|$10553|$11154|
-|Llano County, Texas|21452|$9107|$9710|
-|Tom Green County, Texas|118645|$47120|$47723|
-|Frederick County, Virginia|88054|$35447|$36052|
-|Howard County, Arkansas|13267|$4922|$5527|
-|Logan County, Oklahoma|47401|$18933|$19540|
-|Jefferson County, Georgia|15489|$5951|$6559|
-|Falls Church city, Virginia|14309|$5405|$6014|
-|Stanly County, North Carolina|62050|$25249|$25859|
-|Ogle County, Illinois|50793|$20454|$21066|
-|Saline County, Illinois|23735|$9435|$10048|
-|Overton County, Tennessee|22171|$8820|$9434|
-|Bryan County, Georgia|38321|$14169|$14784|
-|Lake County, Montana|30383|$11936|$12552|
-|Missoula County, Montana|119062|$49992|$50609|
-|Somerset County, Maine|50573|$21067|$21687|
-|Franklin County, North Carolina|68027|$27568|$28188|
-|Jackson County, Illinois|57517|$24052|$24675|
-|Sauk County, Wisconsin|64152|$25721|$26345|
-|Macon County, Tennessee|24208|$9230|$9854|
-|Queen Anne's County, Maryland|50163|$20382|$21006|
-|Lincoln County, Tennessee|34158|$13628|$14252|
-|Titus County, Texas|32709|$12088|$12713|
-|Jefferson County, Washington|31825|$13991|$14617|
-|Jersey County, Illinois|21776|$8811|$9438|
-|Wayne County, Mississippi|20344|$7734|$8363|
-|Henry County, Alabama|17123|$6803|$7433|
-|Chickasaw County, Mississippi|17060|$6433|$7063|
-|Massac County, Illinois|14041|$5418|$6048|
-|Franklin Parish, Louisiana|20109|$7613|$8244|
-|Montgomery County, Mississippi|9956|$3676|$4307|
-|Waller County, Texas|53626|$21006|$21638|
-|Jackson County, Ohio|32440|$12709|$13341|
-|Clatsop County, Oregon|39656|$16433|$17065|
-|Monroe County, Illinois|34444|$13758|$14390|
-|Colquitt County, Georgia|45510|$17514|$18150|
-|Wood County, Texas|45054|$18658|$19298|
-|Jim Wells County, Texas|40796|$15307|$15948|
-|Armstrong County, Pennsylvania|65356|$27198|$27839|
-|Greene County, Alabama|8221|$3067|$3709|
-|Cross County, Arkansas|16576|$6320|$6963|
-|Richland Parish, Louisiana|20251|$7878|$8524|
-|Haralson County, Georgia|29608|$11551|$12199|
-|Pike County, Georgia|18565|$7270|$7919|
-|Auglaize County, Ohio|45709|$18041|$18690|
-|Marion County, Alabama|29818|$12074|$12724|
-|Red River County, Texas|12115|$4740|$5392|
-|Mingo County, West Virginia|23808|$9401|$10053|
-|Iroquois County, Illinois|27437|$11001|$11654|
-|Barton County, Kansas|26209|$10127|$10780|
-|Calhoun County, South Carolina|14608|$5843|$6496|
-|Pike County, Ohio|27914|$10934|$11588|
-|Salt Lake County, Utah|1146215|$443124|$443780|
-|Grundy County, Illinois|50798|$19850|$20506|
-|Montrose County, Colorado|42280|$17085|$17741|
-|Covington County, Mississippi|18810|$7160|$7816|
-|Cattaraugus County, New York|76750|$31057|$31715|
-|Whiteside County, Illinois|55583|$22441|$23099|
-|Fayette County, Texas|25247|$10161|$10823|
-|Franklin County, Maine|29933|$12456|$13121|
-|Yalobusha County, Mississippi|12276|$4668|$5335|
-|Cherokee County, North Carolina|28413|$11992|$12660|
-|Grainger County, Tennessee|23268|$9439|$10108|
-|Washington County, Maine|31378|$12899|$13570|
-|Franklin County, Georgia|23015|$9055|$9731|
-|Yadkin County, North Carolina|37589|$15251|$15928|
-|Carbon County, Pennsylvania|63964|$26642|$27321|
-|Calhoun County, Mississippi|14417|$5464|$6143|
-|Wythe County, Virginia|28725|$11745|$12425|
-|Stone County, Missouri|31875|$13482|$14165|
-|Seminole County, Oklahoma|24624|$9472|$10155|
-|Atchison County, Kansas|16210|$6256|$6943|
-|Wabash County, Indiana|31198|$12680|$13369|
-|Robertson County, Texas|17094|$6513|$7202|
-|Independence County, Arkansas|37585|$14732|$15423|
-|Marion County, Mississippi|24785|$9643|$10337|
-|Bienville Parish, Louisiana|13391|$5034|$5729|
-|Bourbon County, Kentucky|19998|$7767|$8462|
-|Camp County, Texas|12938|$4683|$5379|
-|Palo Pinto County, Texas|28792|$11233|$11929|
-|Gila County, Arizona|53846|$22113|$22809|
-|Orange County, Virginia|36501|$14723|$15420|
-|Louisa County, Virginia|36654|$14857|$15556|
-|Steuben County, New York|95843|$39127|$39829|
-|Northampton County, Virginia|11826|$4569|$5274|
-|Ben Hill County, Georgia|16889|$6488|$7193|
-|Nez Perce County, Idaho|40468|$16327|$17032|
-|Allegan County, Michigan|117104|$46567|$47272|
-|Choctaw County, Alabama|12755|$4995|$5701|
-|Bristol city, Virginia|17059|$6787|$7498|
-|Williamson County, Illinois|66929|$26973|$27685|
-|Taos County, New Mexico|32759|$13661|$14375|
-|Fayette County, Tennessee|40612|$16791|$17505|
-|Northampton County, North Carolina|19672|$8061|$8776|
-|Marshall County, Indiana|46336|$18046|$18761|
-|Caroline County, Maryland|33260|$13024|$13742|
-|Arkansas County, Arkansas|17761|$6793|$7511|
-|Gloucester County, Virginia|37362|$15319|$16040|
-|Van Buren County, Michigan|75416|$30102|$30826|
-|Murray County, Georgia|39789|$15510|$16236|
-|Polk County, Missouri|32031|$12639|$13366|
-|Early County, Georgia|10218|$3699|$4426|
-|Desha County, Arkansas|11538|$4184|$4913|
-|Bedford County, Pennsylvania|48154|$19898|$20628|
-|Bleckley County, Georgia|12870|$5045|$5776|
-|Clinton County, Ohio|42000|$16618|$17350|
-|Mecklenburg County, Virginia|30726|$12641|$13374|
-|Poinsett County, Arkansas|23747|$9163|$9899|
-|Cook County, Georgia|17217|$6433|$7169|
-|Bradford County, Pennsylvania|60721|$24408|$25147|
-|Wells County, Indiana|28010|$10756|$11497|
-|Walworth County, Wisconsin|103391|$42635|$43378|
-|Putnam County, Tennessee|78542|$32139|$32884|
-|Bell County, Kentucky|26426|$10516|$11263|
-|Greene County, Virginia|19734|$7499|$8247|
-|Okmulgee County, Oklahoma|38553|$15154|$15902|
-|Pickens County, South Carolina|125381|$52601|$53351|
-|Hardin County, Tennessee|25665|$10374|$11125|
-|Dinwiddie County, Virginia|28686|$11441|$12193|
-|Towns County, Georgia|11815|$4940|$5693|
-|McNairy County, Tennessee|25814|$10267|$11023|
-|Franklin city, Virginia|8015|$2791|$3548|
-|Marshall County, Kentucky|31225|$12618|$13378|
-|Huron County, Ohio|58271|$22988|$23748|
-|Montour County, Pennsylvania|18178|$7216|$7976|
-|Whitley County, Kentucky|36252|$13917|$14681|
-|Bureau County, Illinois|32878|$13223|$13987|
-|Marion County, Tennessee|28639|$11466|$12231|
-|Jackson County, Indiana|44077|$17238|$18004|
-|Hendricks County, Indiana|166806|$65957|$66724|
-|Wilkes County, North Carolina|68341|$28150|$28918|
-|Oconee County, Georgia|39194|$15018|$15786|
-|Adams County, Mississippi|31103|$12421|$13190|
-|Ashley County, Arkansas|20000|$7691|$8461|
-|Nelson County, Kentucky|45915|$18117|$18890|
-|Shelby County, Indiana|44559|$17675|$18448|
-|Morgan County, Georgia|18832|$7296|$8070|
-|Clarion County, Pennsylvania|38633|$15938|$16714|
-|Monroe County, Tennessee|46413|$18777|$19554|
-|Hale County, Alabama|14754|$5527|$6305|
-|Sumter County, Florida|129938|$60680|$61461|
-|Marion County, Missouri|28572|$11110|$11893|
-|Jones County, Georgia|28622|$11270|$12053|
-|Henry County, Illinois|49032|$19698|$20482|
-|Uvalde County, Texas|26899|$10087|$10874|
-|Bullitt County, Kentucky|80921|$32889|$33676|
-|Noxubee County, Mississippi|10566|$3839|$4628|
-|Ottawa County, Oklahoma|31283|$11981|$12772|
-|Wharton County, Texas|41672|$15975|$16766|
-|Vermilion County, Illinois|76704|$30424|$31222|
-|Giles County, Tennessee|29403|$11800|$12599|
-|Macoupin County, Illinois|45243|$18317|$19117|
-|Tishomingo County, Mississippi|19396|$7574|$8376|
-|Dearborn County, Indiana|49612|$19913|$20716|
-|Pettis County, Missouri|42421|$16392|$17197|
-|Sandusky County, Ohio|58801|$23575|$24380|
-|Chowan County, North Carolina|13995|$5457|$6264|
-|Tippah County, Mississippi|21976|$8327|$9140|
-|Drew County, Arkansas|18263|$7089|$7903|
-|Franklin County, Illinois|38688|$15442|$16260|
-|Boone County, Arkansas|37525|$14810|$15630|
-|Bonneville County, Idaho|116970|$43000|$43820|
-|Polk County, Georgia|42251|$16294|$17116|
-|Rutland County, Vermont|58527|$24675|$25498|
-|Essex County, Virginia|10960|$4260|$5084|
-|Knox County, Kentucky|31288|$12213|$13037|
-|Waseca County, Minnesota|18658|$7141|$7967|
-|Marshall County, Tennessee|33708|$13215|$14042|
-|Geneva County, Alabama|26383|$10425|$11253|
-|Peach County, Georgia|27502|$10984|$11812|
-|Assumption Parish, Louisiana|22236|$8708|$9537|
-|Madison County, Indiana|129486|$52822|$53651|
-|Coshocton County, Ohio|36558|$14331|$15161|
-|Scott County, Kentucky|55961|$21696|$22528|
-|Jefferson Davis Parish, Louisiana|31425|$11996|$12829|
-|Upshur County, Texas|41386|$16201|$17038|
-|Logan County, Kentucky|27049|$10447|$11289|
-|Meriwether County, Georgia|21080|$8261|$9103|
-|Grenada County, Mississippi|20927|$7938|$8782|
-|Laclede County, Missouri|35680|$13759|$14604|
-|Coffee County, Alabama|52238|$20580|$21426|
-|Fannin County, Georgia|25797|$10748|$11594|
-|Burnet County, Texas|47548|$19279|$20125|
-|Fayette County, Ohio|28609|$11071|$11918|
-|Henderson County, Tennessee|27956|$10927|$11776|
-|New Madrid County, Missouri|17275|$6502|$7355|
-|Jefferson County, Tennessee|54162|$22367|$23227|
-|Washington Parish, Louisiana|46325|$18189|$19050|
-|Rowan County, Kentucky|24534|$9803|$10668|
-|Taylor County, Kentucky|25572|$9947|$10816|
-|Greenbrier County, West Virginia|34893|$14237|$15109|
-|Jasper County, Texas|35562|$13819|$14691|
-|Crawford County, Ohio|41603|$16641|$17514|
-|Sequoyah County, Oklahoma|41687|$16338|$17211|
-|Kendall County, Texas|45491|$18049|$18927|
-|Marion County, West Virginia|56233|$22986|$23866|
-|Venango County, Pennsylvania|51355|$21214|$22095|
-|Dallas County, Missouri|16841|$6316|$7199|
-|Isle of Wight County, Virginia|37107|$14957|$15841|
-|Vernon County, Missouri|20560|$7814|$8698|
-|Worth County, Georgia|20346|$7867|$8752|
-|Fulton County, Ohio|42186|$16558|$17445|
-|Washington County, Vermont|58336|$24236|$25126|
-|Chemung County, New York|84115|$34159|$35049|
-|Waldo County, Maine|39723|$16386|$17278|
-|Rio Arriba County, New Mexico|38962|$15301|$16194|
-|Kent County, Maryland|19456|$8037|$8931|
-|Montgomery County, New York|49294|$19568|$20465|
-|Pittsylvania County, Virginia|60867|$25398|$26300|
-|Lewis and Clark County, Montana|68714|$27766|$28671|
-|Weakley County, Tennessee|33377|$13589|$14496|
-|Attala County, Mississippi|18308|$6773|$7681|
-|Hopkins County, Texas|36708|$14129|$15040|
-|Montgomery County, Kentucky|28042|$10843|$11757|
-|Herkimer County, New York|61738|$25241|$26155|
-|Newton County, Missouri|58288|$22903|$23817|
-|Franklin County, Tennessee|41999|$17159|$18076|
-|Tehama County, California|64176|$25300|$26218|
-|Hancock County, West Virginia|29118|$11865|$12784|
-|Mifflin County, Pennsylvania|46179|$18334|$19255|
-|White County, Georgia|29962|$12330|$13252|
-|Shenandoah County, Virginia|43441|$17483|$18406|
-|Pontotoc County, Mississippi|31996|$11986|$12915|
-|Sarpy County, Nebraska|183956|$70493|$71425|
-|Washington County, Virginia|54005|$22628|$23560|
-|Flathead County, Montana|102001|$41290|$42223|
-|Elbert County, Georgia|19164|$7391|$8326|
-|Clinton County, Michigan|78957|$31847|$32784|
-|Washington County, North Carolina|11788|$4435|$5373|
-|Chilton County, Alabama|44147|$17312|$18251|
-|St. Martin Parish, Louisiana|53607|$20969|$21910|
-|Delaware County, Oklahoma|42741|$17357|$18298|
-|Alcorn County, Mississippi|37058|$14620|$15562|
-|Pointe Coupee Parish, Louisiana|21883|$8471|$9414|
-|Prentiss County, Mississippi|25155|$9684|$10628|
-|Apache County, Arizona|71714|$27477|$28421|
-|Union County, Georgia|23999|$9975|$10920|
-|Accomack County, Virginia|32560|$13008|$13958|
-|Lumpkin County, Georgia|33009|$13598|$14549|
-|Hancock County, Ohio|75765|$30468|$31421|
-|Marion County, Illinois|37524|$14665|$15620|
-|Waynesboro city, Virginia|22300|$8491|$9452|
-|Harlan County, Kentucky|26307|$10135|$11099|
-|Whitfield County, Georgia|104122|$40469|$41434|
-|Lincoln County, Maine|34415|$14343|$15311|
-|Polk County, North Carolina|20682|$8527|$9501|
-|Washington County, Ohio|60217|$24766|$25740|
-|Washington County, Texas|35275|$13964|$14938|
-|Sagadahoc County, Maine|35720|$14630|$15604|
-|Yates County, New York|24981|$9678|$10653|
-|Hoke County, North Carolina|54590|$20419|$21394|
-|Holmes County, Mississippi|17414|$6403|$7379|
-|Belknap County, New Hampshire|61174|$25515|$26494|
-|Miller County, Arkansas|43515|$17023|$18002|
-|Campbell County, Tennessee|39818|$16076|$17055|
-|Falls County, Texas|17281|$6603|$7583|
-|Dale County, Alabama|49293|$19430|$20412|
-|Athens County, Ohio|65945|$28608|$29596|
-|Claiborne County, Tennessee|31827|$12970|$13965|
-|Sutter County, California|96315|$37296|$38293|
-|Hardin County, Kentucky|109627|$43130|$44128|
-|Robertson County, Tennessee|70982|$28008|$29009|
-|Jackson County, Georgia|70467|$27351|$28355|
-|Pearl River County, Mississippi|55512|$22080|$23087|
-|Winchester city, Virginia|27912|$10807|$11815|
-|Cerro Gordo County, Iowa|42672|$17125|$18134|
-|Gillespie County, Texas|26668|$10671|$11681|
-|Obion County, Tennessee|30343|$11975|$12986|
-|Grady County, Georgia|24693|$9336|$10347|
-|Geauga County, Ohio|93657|$37788|$38811|
-|Simpson County, Mississippi|26818|$10278|$11306|
-|Parke County, Indiana|16912|$6377|$7419|
-|Haywood County, Tennessee|17391|$6571|$7613|
-|Clinton County, Iowa|46734|$18494|$19539|
-|Abbeville County, South Carolina|24582|$9734|$10779|
-|Graves County, Kentucky|37125|$14386|$15435|
-|Morgan County, Indiana|70141|$28147|$29197|
-|Summers County, West Virginia|12710|$4980|$6031|
-|Champaign County, Illinois|210006|$87966|$89017|
-|Clarke County, Mississippi|15612|$5853|$6904|
-|Stoddard County, Missouri|29255|$11483|$12535|
-|Creek County, Oklahoma|71505|$28284|$29336|
-|Oxford County, Maine|57741|$24049|$25103|
-|Cecil County, Maryland|102889|$41378|$42433|
-|McDonough County, Illinois|30107|$12375|$13432|
-|St. Mary Parish, Louisiana|50020|$19462|$20521|
-|Lancaster County, Virginia|10686|$4261|$5321|
-|Tate County, Mississippi|28419|$10957|$12018|
-|Mendocino County, California|87110|$35255|$36317|
-|Hancock County, Indiana|76614|$30444|$31506|
-|Sussex County, New Jersey|140996|$58960|$60023|
-|Crisp County, Georgia|22509|$8525|$9589|
-|Lawrence County, Tennessee|43780|$16831|$17898|
-|St. James Parish, Louisiana|21142|$8093|$9162|
-|Cherokee County, Oklahoma|48871|$19412|$20485|
-|Aroostook County, Maine|67431|$28149|$29225|
-|Shiawassee County, Michigan|68176|$27772|$28850|
-|Scott County, Minnesota|147201|$56425|$57504|
-|De Soto Parish, Louisiana|27395|$10414|$11494|
-|Coos County, Oregon|64175|$26666|$27746|
-|Jefferson County, West Virginia|56922|$22752|$23833|
-|Cortland County, New York|47618|$19618|$20699|
-|Pickens County, Alabama|20049|$7866|$8958|
-|Washington County, Wisconsin|135529|$55198|$56290|
-|Cocke County, Tennessee|35797|$14356|$15448|
-|Kauai County, Hawaii|71949|$28841|$29937|
-|Rogers County, Oklahoma|92052|$36655|$37751|
-|Columbia County, Arkansas|23620|$9221|$10319|
-|Sumter County, Alabama|12595|$4745|$5847|
-|Crawford County, Arkansas|63118|$24682|$25784|
-|Morehouse Parish, Louisiana|25189|$9501|$10607|
-|Wood County, Wisconsin|72892|$29352|$30459|
-|Douglas County, Kansas|121304|$50884|$51991|
-|Marengo County, Alabama|19138|$7160|$8270|
-|Mason County, West Virginia|26700|$10538|$11649|
-|Barnwell County, South Carolina|21170|$8019|$9135|
-|Ada County, Idaho|469473|$188879|$189999|
-|Floyd County, Kentucky|35931|$14191|$15311|
-|St. Clair County, Alabama|88929|$35504|$36628|
-|Decatur County, Georgia|26595|$10110|$11234|
-|DeKalb County, Alabama|71430|$28017|$29142|
-|St. Charles Parish, Louisiana|52856|$20600|$21725|
-|Carver County, Minnesota|103561|$39910|$41037|
-|Highland County, Ohio|43080|$16781|$17910|
-|Pemiscot County, Missouri|16330|$5852|$6984|
-|Benton County, Washington|200715|$77527|$78660|
-|Anoka County, Minnesota|353775|$141498|$142638|
-|Webster Parish, Louisiana|38813|$15199|$16339|
-|Nassau County, Florida|85762|$35295|$36436|
-|Napa County, California|138572|$57142|$58287|
-|Wayne County, New York|90103|$36530|$37677|
-|Navarro County, Texas|49475|$18740|$19887|
-|Warren County, Iowa|50867|$19695|$20849|
-|Effingham County, Georgia|62241|$23663|$24823|
-|Adair County, Missouri|25468|$10139|$11301|
-|Wayne County, West Virginia|39952|$16049|$17213|
-|Monroe County, Alabama|21006|$8098|$9264|
-|Calloway County, Kentucky|38991|$15978|$17144|
-|Greene County, Arkansas|45197|$17425|$18595|
-|Chesterfield County, South Carolina|45833|$18142|$19312|
-|Levy County, Florida|40979|$16552|$17725|
-|Cullman County, Alabama|83345|$33369|$34543|
-|Stephens County, Oklahoma|43401|$17004|$18184|
-|Coffee County, Tennessee|56024|$21803|$22983|
-|Tipton County, Tennessee|61562|$24047|$25231|
-|Stokes County, North Carolina|45688|$18807|$19992|
-|Lawrence County, Indiana|45552|$18136|$19323|
-|Pope County, Arkansas|63926|$25241|$26432|
-|Lawrence County, Alabama|32969|$12910|$14101|
-|Ouachita County, Arkansas|23597|$8981|$10173|
-|Salem city, Virginia|25290|$10152|$11347|
-|Amherst County, Virginia|31782|$12682|$13878|
-|Pasquotank County, North Carolina|39775|$15569|$16766|
-|Burke County, Georgia|22567|$8244|$9442|
-|Hempstead County, Arkansas|21695|$7925|$9125|
-|Tallapoosa County, Alabama|40450|$16151|$17354|
-|Dickson County, Tennessee|53289|$21001|$22206|
-|Gordon County, Georgia|57756|$22542|$23748|
-|Clay County, Mississippi|19515|$7329|$8536|
-|Pontotoc County, Oklahoma|38385|$14721|$15931|
-|Santa Barbara County, California|444895|$180337|$181549|
-|Boone County, Indiana|66875|$25517|$26730|
-|Richmond County, North Carolina|44759|$17625|$18842|
-|Newton County, Mississippi|21215|$7818|$9041|
-|Howell County, Missouri|40130|$15483|$16708|
-|Fauquier County, Virginia|70353|$27937|$29169|
-|Windham County, Vermont|42628|$17552|$18786|
-|Wagoner County, Oklahoma|80264|$31506|$32743|
-|Jefferson County, Arkansas|68123|$27286|$28524|
-|Cowlitz County, Washington|108399|$43363|$44606|
-|Lincoln Parish, Louisiana|47118|$19024|$20269|
-|Phillips County, Arkansas|18151|$6525|$7775|
-|Butler County, Missouri|42570|$16556|$17814|
-|Greenup County, Kentucky|35359|$13914|$15172|
-|Clark County, Arkansas|22341|$8757|$10018|
-|Newberry County, South Carolina|38329|$15098|$16361|
-|Humboldt County, California|136101|$56575|$57842|
-|DeKalb County, Illinois|104588|$42347|$43617|
-|Henry County, Tennessee|32251|$12751|$14021|
-|Martinsville city, Virginia|12646|$4406|$5677|
-|Hunterdon County, New Jersey|125063|$52607|$53878|
-|Lincoln County, South Dakota|58887|$21790|$23062|
-|Colleton County, South Carolina|37624|$14758|$16041|
-|Mississippi County, Arkansas|41396|$15570|$16856|
-|Putnam County, West Virginia|56604|$22549|$23841|
-|Des Moines County, Iowa|39227|$15281|$16573|
-|St. Bernard Parish, Louisiana|46694|$17436|$18729|
-|Williamsburg city, Virginia|15034|$6248|$7544|
-|Scotts Bluff County, Nebraska|35884|$13559|$14859|
-|Colonial Heights city, Virginia|17283|$6328|$7632|
-|Scott County, Missouri|38538|$14743|$16049|
-|White County, Tennessee|27087|$10411|$11718|
-|Chester County, South Carolina|32260|$12484|$13791|
-|Upson County, Georgia|26329|$10091|$11410|
-|Outagamie County, Wisconsin|186829|$74613|$75935|
-|Carter County, Tennessee|56452|$23345|$24668|
-|Madison County, New York|70990|$29315|$30641|
-|Sampson County, North Carolina|63284|$24598|$25931|
-|Clarke County, Alabama|23866|$9178|$10517|
-|Clay County, Minnesota|64029|$24716|$26058|
-|Franklin County, Virginia|56231|$23149|$24491|
-|Radford city, Virginia|17833|$7353|$8698|
-|Neshoba County, Mississippi|29250|$10660|$12007|
-|Newport County, Rhode Island|82731|$34988|$36340|
-|Johnson County, Texas|171359|$66680|$68033|
-|McDuffie County, Georgia|21404|$7847|$9206|
-|Warren County, New York|64187|$26679|$28044|
-|Cass County, Texas|30002|$11560|$12930|
-|Carter County, Oklahoma|48380|$18488|$19862|
-|Loudon County, Tennessee|53169|$21619|$22996|
-|Lyon County, Kansas|33237|$12832|$14209|
-|Ashland County, Ohio|53533|$21166|$22552|
-|Stephenson County, Illinois|44683|$17723|$19113|
-|Orange County, Texas|83776|$32557|$33950|
-|Union County, Arkansas|39089|$14889|$16291|
-|Roane County, Tennessee|53331|$21960|$23363|
-|Baxter County, Arkansas|41673|$17209|$18612|
-|Hopkins County, Kentucky|45044|$17590|$18994|
-|Windsor County, Vermont|55191|$22840|$24246|
-|Woodbury County, Iowa|102687|$39475|$40884|
-|Dyer County, Tennessee|37201|$14257|$15671|
-|Franklin County, Missouri|103629|$41400|$42822|
-|Washington County, Arkansas|236198|$93322|$94744|
-|Fairfield County, South Carolina|22406|$8759|$10187|
-|Orange County, New York|382077|$150260|$151693|
-|Bedford County, Virginia|78965|$32382|$33817|
-|Davie County, North Carolina|42543|$16890|$18325|
-|Covington County, Alabama|37096|$14495|$15937|
-|Warrick County, Indiana|62608|$24590|$26036|
-|Woodford County, Kentucky|26486|$10165|$11616|
-|Bennington County, Vermont|35649|$14371|$15823|
-|Hood County, Texas|60025|$24089|$25544|
-|Transylvania County, North Carolina|34039|$14104|$15561|
-|Union County, South Carolina|27325|$10541|$12001|
-|Jackson County, North Carolina|43435|$18086|$19557|
-|Bryan County, Oklahoma|47325|$18285|$19757|
-|Johnson County, Iowa|150819|$61901|$63375|
-|Jefferson County, Indiana|32167|$12639|$14117|
-|St. John the Baptist Parish, Louisiana|43055|$16388|$17884|
-|Caldwell County, North Carolina|82056|$33585|$35090|
-|Chambers County, Alabama|33427|$13073|$14579|
-|Dunklin County, Missouri|29657|$10918|$12428|
-|Sumter County, Georgia|29714|$11290|$12803|
-|York County, Virginia|68389|$26854|$28368|
-|Calvert County, Maryland|92094|$36696|$38210|
-|Laurel County, Kentucky|60631|$23801|$25315|
-|Pike County, Kentucky|58595|$23615|$25141|
-|El Dorado County, California|190345|$79090|$80621|
-|Dubuque County, Iowa|97193|$38663|$40199|
-|Clallam County, Washington|76482|$32069|$33616|
-|Salem County, New Jersey|62754|$25064|$26612|
-|Scioto County, Ohio|75441|$30267|$31820|
-|Putnam County, Florida|73784|$29557|$31111|
-|Pike County, Alabama|33274|$13217|$14774|
-|Erath County, Texas|42226|$16672|$18229|
-|Williamsburg County, South Carolina|30810|$12038|$13596|
-|Monroe County, Indiana|147318|$63313|$64875|
-|Clark County, Kentucky|36152|$14009|$15572|
-|Iberia Parish, Louisiana|70763|$26913|$28481|
-|Hawkins County, Tennessee|56735|$23082|$24653|
-|Hamblen County, Tennessee|64479|$25297|$26870|
-|Fayette County, Pennsylvania|130329|$54099|$55674|
-|Jackson County, Alabama|51765|$20667|$22244|
-|Shelby County, Kentucky|48100|$18729|$20319|
-|Macon County, North Carolina|35172|$14213|$15808|
-|Macon County, Alabama|18437|$7100|$8697|
-|Person County, North Carolina|39561|$15666|$17265|
-|Fairfield County, Ohio|156204|$62022|$63631|
-|Lincoln County, North Carolina|84580|$34233|$35845|
-|Twin Falls County, Idaho|86198|$32339|$33954|
-|Stephens County, Georgia|25934|$9833|$11455|
-|Windham County, Connecticut|116657|$48117|$49743|
-|Parker County, Texas|138447|$54467|$56093|
-|Panola County, Mississippi|34079|$12686|$14314|
-|Adams County, Illinois|65670|$25767|$27398|
-|Liberty County, Texas|86173|$32702|$34334|
-|Dallas County, Iowa|90418|$33790|$35430|
-|Canadian County, Oklahoma|144610|$55784|$57427|
-|Tift County, Georgia|40590|$15274|$16920|
-|Grafton County, New Hampshire|90331|$38417|$40065|
-|Midland County, Michigan|83445|$33565|$35220|
-|Pulaski County, Georgia|11185|$3970|$5626|
-|Starr County, Texas|64032|$22339|$23997|
-|Toombs County, Georgia|26947|$9673|$11337|
-|Boone County, Kentucky|132368|$51095|$52764|
-|Yakima County, Washington|250649|$93281|$94951|
-|Van Zandt County, Texas|55970|$21891|$23565|
-|Coahoma County, Mississippi|22685|$7931|$9605|
-|Oneida County, New York|229074|$93573|$95249|
-|Livingston County, Missouri|14969|$5310|$6991|
-|Washington County, Oklahoma|51995|$19985|$21672|
-|Bay County, Florida|180076|$73257|$74947|
-|Oconee County, South Carolina|78314|$31909|$33599|
-|Martin County, North Carolina|22644|$8555|$10246|
-|Worcester County, Maryland|51967|$21476|$23167|
-|Hopewell city, Virginia|22500|$7901|$9594|
-|Ulster County, New York|178371|$75526|$77221|
-|Natchitoches Parish, Louisiana|38505|$14675|$16375|
-|Hardin County, Texas|57356|$22007|$23707|
-|Coles County, Illinois|51065|$20845|$22550|
-|Bladen County, North Carolina|33209|$12917|$14625|
-|Harrison County, Texas|66547|$25520|$27229|
-|Tuscarawas County, Ohio|92165|$36533|$38253|
-|McMinn County, Tennessee|53392|$21256|$22977|
-|Charlottesville city, Virginia|47217|$19509|$21232|
-|Henderson County, Kentucky|45550|$17597|$19321|
-|Campbell County, Virginia|55406|$22305|$24030|
-|Skagit County, Washington|127442|$51269|$53000|
-|Grand Traverse County, Michigan|92640|$37828|$39571|
-|Montgomery County, Tennessee|204992|$78101|$79845|
-|Acadia Parish, Louisiana|62371|$23617|$25361|
-|Harrison County, West Virginia|67620|$26915|$28666|
-|Halifax County, Virginia|34295|$13394|$15157|
-|Marshall County, Alabama|96137|$37244|$39009|
-|Bartow County, Georgia|106456|$41777|$43542|
-|Butler County, Alabama|19726|$7162|$8928|
-|Duplin County, North Carolina|58965|$22780|$24548|
-|Platte County, Missouri|102848|$40463|$42237|
-|Santa Cruz County, Arizona|46594|$17198|$18974|
-|Fond du Lac County, Wisconsin|102654|$41423|$43201|
-|Barren County, Kentucky|44026|$16781|$18561|
-|St. Clair County, Michigan|159285|$65367|$67148|
-|Ozaukee County, Wisconsin|89179|$35994|$37777|
-|Tompkins County, New York|102237|$44100|$45888|
-|Lafayette County, Mississippi|54059|$21922|$23718|
-|Miami County, Ohio|106074|$42138|$43936|
-|Walker County, Georgia|69398|$27589|$29394|
-|Kerr County, Texas|52195|$21082|$22891|
-|Walker County, Alabama|63802|$25174|$26998|
-|Monroe County, Mississippi|35559|$13568|$15393|
-|Lonoke County, Arkansas|73163|$27988|$29814|
-|Ohio County, West Virginia|41875|$16713|$18542|
-|San Juan County, New Mexico|125608|$48100|$49929|
-|Chautauqua County, New York|127584|$52213|$54045|
-|Knox County, Ohio|61776|$24176|$26008|
-|Eau Claire County, Wisconsin|104132|$42352|$44185|
-|Greene County, Tennessee|69077|$28238|$30071|
-|Carteret County, North Carolina|69301|$28807|$30641|
-|Copiah County, Mississippi|28339|$10564|$12400|
-|Cheshire County, New Hampshire|76040|$31493|$33332|
-|Wayne County, Ohio|116063|$45442|$47289|
-|Cumberland County, Tennessee|60016|$24697|$26544|
-|Hancock County, Mississippi|47339|$18830|$20690|
-|Bulloch County, Georgia|77719|$31431|$33296|
-|Hancock County, Maine|54832|$22671|$24538|
-|Cherokee County, South Carolina|57110|$22161|$24034|
-|Muskegon County, Michigan|173679|$69357|$71249|
-|Erie County, Ohio|74419|$30089|$31989|
-|Lawrence County, Ohio|59901|$23609|$25511|
-|Polk County, Oregon|84730|$33540|$35443|
-|Bristol County, Rhode Island|48645|$19749|$21654|
-|Muskogee County, Oklahoma|68451|$26307|$28215|
-|Jessamine County, Kentucky|53476|$20431|$22340|
-|Kendall County, Illinois|127583|$47890|$49800|
-|Barrow County, Georgia|81294|$30893|$32805|
-|Snohomish County, Washington|811572|$328139|$330060|
-|Douglas County, Oregon|110015|$45275|$47199|
-|Rockwall County, Texas|101175|$38525|$40456|
-|Lincoln County, Mississippi|34197|$12836|$14772|
-|Franklin County, Kentucky|50744|$19964|$21914|
-|Harnett County, North Carolina|134328|$51357|$53313|
-|Dillon County, South Carolina|30473|$11069|$13025|
-|Penobscot County, Maine|151696|$63665|$65627|
-|Talbot County, Maryland|37087|$14774|$16740|
-|Jefferson County, Ohio|65943|$26799|$28771|
-|Bossier Parish, Louisiana|126952|$49311|$51284|
-|Cleveland County, Oklahoma|282189|$115217|$117190|
-|Surry County, North Carolina|71904|$28767|$30743|
-|Bolivar County, Mississippi|31253|$11386|$13363|
-|Pottawattamie County, Iowa|93478|$36667|$38656|
-|Lincoln County, Oregon|49336|$20183|$22174|
-|Campbell County, Kentucky|93608|$37668|$39664|
-|Pulaski County, Kentucky|64789|$25446|$27447|
-|Berkeley County, West Virginia|117615|$46411|$48416|
-|Harrisonburg city, Virginia|53558|$22042|$24048|
-|Vermilion Parish, Louisiana|59787|$22597|$24603|
-|Eaton County, Michigan|109730|$44499|$46515|
-|Halifax County, North Carolina|50678|$19837|$21860|
-|Mercer County, Pennsylvania|110519|$45736|$47771|
-|Autauga County, Alabama|55639|$21495|$23539|
-|Adams County, Pennsylvania|102627|$41841|$43885|
-|Monroe County, Pennsylvania|168824|$70290|$72335|
-|Maui County, Hawaii|166657|$67115|$69168|
-|Isabella County, Michigan|70363|$29091|$31147|
-|Kankakee County, Illinois|109924|$43700|$45758|
-|Dorchester County, Maryland|31994|$12203|$14267|
-|Franklin County, Massachusetts|70529|$29286|$31350|
-|Rockingham County, Virginia|81138|$32157|$34230|
-|Larimer County, Colorado|350523|$145976|$148055|
-|Nevada County, California|99417|$41739|$43819|
-|Angelina County, Texas|87119|$33301|$35387|
-|Fredericksburg city, Virginia|29059|$10829|$12919|
-|Bay County, Michigan|103506|$42234|$44330|
-|Haywood County, North Carolina|61862|$25313|$27429|
-|Sevier County, Tennessee|98007|$39664|$41781|
-|Hunt County, Texas|96202|$37592|$39713|
-|Lafourche Parish, Louisiana|97980|$38360|$40482|
-|Audrain County, Missouri|25336|$9255|$11391|
-|Henderson County, Texas|81969|$32728|$34870|
-|Leflore County, Mississippi|28764|$9940|$12084|
-|Linn County, Oregon|127216|$50718|$52871|
-|Lenoir County, North Carolina|56350|$21805|$23972|
-|Terrebonne Parish, Louisiana|111297|$42765|$44933|
-|Wyandotte County, Kansas|165447|$62169|$64344|
-|Butler County, Pennsylvania|187798|$77511|$79690|
-|Victoria County, Texas|92044|$35230|$37413|
-|Warren County, Mississippi|46030|$17401|$19586|
-|Henry County, Virginia|51032|$20336|$22545|
-|Gibson County, Tennessee|49193|$18608|$20817|
-|Otsego County, New York|59593|$24799|$27012|
-|Jones County, Mississippi|68307|$25884|$28123|
-|Lamar County, Texas|49705|$18864|$21119|
-|Hall County, Georgia|201434|$78681|$80946|
-|Christian County, Missouri|87324|$33368|$35634|
-|Staunton city, Virginia|24660|$9228|$11499|
-|Warren County, New Jersey|105730|$43407|$45678|
-|Fluvanna County, Virginia|26873|$10119|$12391|
-|Wayne County, Indiana|66176|$25919|$28192|
-|Anderson County, Tennessee|76513|$30483|$32761|
-|Douglas County, Colorado|344280|$135146|$137426|
-|Gadsden County, Florida|45787|$17595|$19877|
-|Hays County, Texas|222827|$88856|$91139|
-|Comal County, Texas|148921|$59529|$61813|
-|Pike County, Mississippi|39365|$14318|$16609|
-|Rowan County, North Carolina|140978|$56472|$58782|
-|Russell County, Alabama|57938|$21888|$24205|
-|Habersham County, Georgia|45204|$17233|$19555|
-|Kershaw County, South Carolina|65926|$25571|$27899|
-|Lee County, North Carolina|61083|$23252|$25589|
-|Ascension Parish, Louisiana|125061|$47358|$49713|
-|Union County, Ohio|57871|$21896|$24265|
-|Beaufort County, North Carolina|47160|$18560|$20935|
-|Monroe County, Michigan|150000|$60820|$63197|
-|White County, Arkansas|78725|$30583|$32978|
-|Wood County, Ohio|130662|$53169|$55575|
-|Josephine County, Oregon|87097|$35357|$37772|
-|Carroll County, Maryland|168233|$68164|$70586|
-|Crawford County, Pennsylvania|85074|$34125|$36554|
-|Berkeley County, South Carolina|222103|$87687|$90122|
-|Muskingum County, Ohio|86033|$33720|$36164|
-|Jefferson County, Missouri|224777|$89668|$92117|
-|Randolph County, North Carolina|143460|$57317|$59775|
-|Rutherford County, North Carolina|66741|$26641|$29099|
-|Cape May County, New Jersey|92701|$38435|$40909|
-|Mesa County, Colorado|152962|$61499|$63985|
-|Kenton County, Kentucky|166552|$65441|$67928|
-|Hawaii County, Hawaii|201350|$81212|$83710|
-|Thomas County, Georgia|44545|$16640|$19149|
-|Ontario County, New York|109774|$44668|$47177|
-|Kenosha County, Wisconsin|168998|$67527|$70067|
-|Taney County, Missouri|55563|$21665|$24218|
-|Cabell County, West Virginia|93328|$37679|$40236|
-|Colbert County, Alabama|54957|$21428|$23991|
-|Lauderdale County, Mississippi|75557|$29106|$31670|
-|Warren County, Kentucky|130836|$51653|$54230|
-|Rock Island County, Illinois|142801|$56817|$59397|
-|Guadalupe County, Texas|163030|$63503|$66085|
-|Merrimack County, New Hampshire|150902|$62458|$65043|
-|Kaufman County, Texas|129792|$48685|$51271|
-|Laurens County, South Carolina|66990|$26079|$28683|
-|Morgan County, Alabama|119352|$47115|$49721|
-|Floyd County, Indiana|77879|$30414|$33022|
-|Tazewell County, Illinois|132524|$52506|$55123|
-|Marion County, South Carolina|30954|$11196|$13813|
-|Lycoming County, Pennsylvania|114014|$46003|$48620|
-|Crittenden County, Arkansas|48381|$17411|$20060|
-|Coconino County, Arizona|142254|$57802|$60455|
-|Columbia County, Pennsylvania|65390|$26613|$29267|
-|Bell County, Texas|355700|$134627|$137281|
-|Delaware County, Ohio|205454|$79339|$81998|
-|Androscoggin County, Maine|107958|$42904|$45576|
-|Martin County, Florida|160420|$68269|$70945|
-|Hanover County, Virginia|106538|$42545|$45225|
-|Yellowstone County, Montana|160390|$63092|$65779|
-|McHenry County, Illinois|307291|$123257|$125947|
-|Livingston Parish, Louisiana|140524|$53947|$56647|
-|Kootenai County, Idaho|161676|$64223|$66930|
-|Racine County, Wisconsin|195859|$77927|$80636|
-|Canyon County, Idaho|223890|$84211|$86921|
-|Cambria County, Pennsylvania|131611|$54136|$56846|
-|Black Hawk County, Iowa|131813|$52507|$55238|
-|Dutchess County, New York|293524|$123277|$126014|
-|McKinley County, New Mexico|71956|$25993|$28744|
-|Rensselaer County, New York|159013|$65338|$68110|
-|Daviess County, Kentucky|101001|$38765|$41577|
-|Porter County, Indiana|169482|$68211|$71035|
-|Spotsylvania County, Virginia|134683|$52263|$55099|
-|Medina County, Ohio|179116|$71976|$74826|
-|Cape Girardeau County, Missouri|78834|$30989|$33847|
-|Randall County, Texas|136005|$53003|$55875|
-|Madison County, Kentucky|92090|$36631|$39504|
-|Petersburg city, Virginia|30791|$11211|$14102|
-|Wood County, West Virginia|84387|$33401|$36298|
-|Deschutes County, Oregon|191749|$78660|$81558|
-|Talladega County, Alabama|80244|$31732|$34633|
-|Lancaster County, South Carolina|95378|$37528|$40429|
-|Saline County, Arkansas|120990|$47457|$50367|
-|Lawrence County, Pennsylvania|86148|$34604|$37538|
-|Mercer County, West Virginia|59370|$23152|$26087|
-|Litchfield County, Connecticut|181143|$76068|$79042|
-|Marion County, Oregon|343742|$135266|$138252|
-|Lamar County, Mississippi|62693|$23365|$26369|
-|Forsyth County, Georgia|236605|$90400|$93409|
-|Catoosa County, Georgia|67181|$25935|$28951|
-|Laurens County, Georgia|47404|$17318|$20337|
-|Benton County, Arkansas|273510|$105271|$108296|
-|Tulare County, California|463955|$170904|$173933|
-|Spalding County, Georgia|66043|$25045|$28074|
-|Walton County, Georgia|93284|$35795|$38846|
-|Cass County, Missouri|104687|$40495|$43555|
-|Strafford County, New Hampshire|130161|$53653|$56719|
-|Dallas County, Alabama|38184|$13771|$16850|
-|Nacogdoches County, Texas|65080|$24682|$27785|
-|Elkhart County, Indiana|205184|$77494|$80598|
-|Highlands County, Florida|104574|$43372|$46495|
-|Jackson County, Mississippi|142872|$56244|$59368|
-|James City County, Virginia|76032|$30342|$33486|
-|McCracken County, Kentucky|65485|$25104|$28264|
-|Grant County, Indiana|66055|$25723|$28886|
-|Washington County, Mississippi|45072|$16120|$19288|
-|Lee County, Alabama|163461|$65722|$68897|
-|Brown County, Wisconsin|262559|$103782|$106961|
-|Sebastian County, Arkansas|127670|$49561|$52749|
-|Wayne County, North Carolina|123785|$48063|$51263|
-|Blair County, Pennsylvania|122495|$49408|$52616|
-|Lowndes County, Mississippi|58896|$22009|$25251|
-|Danville city, Virginia|40668|$14953|$18206|
-|Washington County, Utah|172127|$65914|$69168|
-|Wilson County, Tennessee|140604|$54939|$58196|
-|Vance County, North Carolina|44614|$16312|$19574|
-|Johnson County, Indiana|156148|$60457|$63720|
-|Lake County, Illinois|699682|$279804|$283071|
-|Howard County, Indiana|82486|$31852|$35129|
-|Lebanon County, Pennsylvania|140410|$55312|$58598|
-|Pueblo County, Colorado|167412|$66606|$69893|
-|Calhoun County, Michigan|133943|$52727|$56017|
-|Iredell County, North Carolina|178853|$71127|$74435|
-|Troup County, Georgia|70095|$26229|$29549|
-|Cumberland County, Pennsylvania|251487|$102959|$106283|
-|Jasper County, Missouri|120528|$46027|$49366|
-|Sandoval County, New Mexico|144954|$57072|$60430|
-|Pottawatomie County, Oklahoma|72511|$27497|$30860|
-|St. Landry Parish, Louisiana|82786|$30429|$33796|
-|Elmore County, Alabama|81526|$31607|$34977|
-|La Crosse County, Wisconsin|118168|$47719|$51107|
-|Jefferson County, Colorado|578795|$240895|$244291|
-|Suffolk city, Virginia|91383|$34772|$38177|
-|Cumberland County, North Carolina|334562|$130499|$133907|
-|Ellis County, Texas|179484|$68407|$71815|
-|Bradley County, Tennessee|106924|$42208|$45627|
-|Butte County, California|223344|$91328|$94760|
-|Prince William County, Virginia|466834|$179145|$182578|
-|Franklin County, Pennsylvania|154954|$61537|$64972|
-|Rock County, Wisconsin|162532|$64069|$67507|
-|Craighead County, Arkansas|109081|$41538|$44995|
-|Greene County, Ohio|167867|$67946|$71404|
-|Washington County, Minnesota|259072|$101860|$105365|
-|Saratoga County, New York|229313|$94275|$97792|
-|Santa Cruz County, California|273170|$113273|$116813|
-|Georgetown County, South Carolina|62150|$24722|$28276|
-|Maury County, Tennessee|94615|$36304|$39868|
-|Chatham County, North Carolina|72853|$28671|$32250|
-|Kennebec County, Maine|122158|$49663|$53253|
-|Cleveland County, North Carolina|97765|$38268|$41862|
-|Lowndes County, Georgia|116436|$44521|$48164|
-|Columbia County, Georgia|154257|$59189|$62861|
-|Washington County, Tennessee|128874|$52392|$56072|
-|Scott County, Iowa|172938|$67523|$71211|
-|Clark County, Indiana|117410|$45830|$49528|
-|Shasta County, California|179267|$71738|$75467|
-|Berrien County, Michigan|153797|$61222|$64962|
-|Clermont County, Ohio|205616|$81451|$85200|
-|Portage County, Ohio|162476|$67086|$70846|
-|Portsmouth city, Virginia|94961|$36147|$39923|
-|Rockingham County, New Hampshire|308211|$128260|$132040|
-|Chittenden County, Vermont|163414|$67960|$71744|
-|Floyd County, Georgia|97805|$37671|$41468|
-|Gregg County, Texas|123633|$46475|$50329|
-|Rockingham County, North Carolina|91051|$36039|$39895|
-|Whatcom County, Washington|224538|$92206|$96080|
-|Taylor County, Texas|137521|$52492|$56370|
-|Hillsborough County, New Hampshire|415305|$171040|$174931|
-|Catawba County, North Carolina|158507|$62942|$66891|
-|Roanoke County, Virginia|94103|$37401|$41357|
-|Forrest County, Mississippi|75162|$28217|$32188|
-|Moore County, North Carolina|99263|$38808|$42798|
-|Grayson County, Texas|133527|$51557|$55564|
-|Broome County, New York|192042|$78740|$82758|
-|Carroll County, Georgia|118692|$45713|$49765|
-|Edgecombe County, North Carolina|52069|$19158|$23211|
-|Linn County, Iowa|225601|$89043|$93112|
-|Lauderdale County, Alabama|92870|$36842|$40927|
-|Darlington County, South Carolina|66858|$25330|$29420|
-|Etowah County, Alabama|102721|$40232|$44341|
-|Faulkner County, Arkansas|124800|$48446|$52572|
-|Lee County, Mississippi|85304|$31653|$35788|
-|Coweta County, Georgia|145839|$56353|$60546|
-|Blount County, Tennessee|131641|$52952|$57196|
-|Fayette County, Georgia|113544|$44473|$48719|
-|Olmsted County, Minnesota|156446|$60010|$64264|
-|Berkshire County, Massachusetts|125927|$52287|$56559|
-|Solano County, California|444538|$179056|$183346|
-|Doña Ana County, New Mexico|217696|$84494|$88789|
-|Clay County, Florida|215294|$85119|$89430|
-|Nash County, North Carolina|94287|$36551|$40887|
-|Middlesex County, Connecticut|162742|$67819|$72156|
-|Washington County, Pennsylvania|207081|$84686|$89056|
-|Garland County, Arkansas|99043|$39183|$43579|
-|Licking County, Ohio|175409|$68744|$73149|
-|Luzerne County, Pennsylvania|317547|$130863|$135272|
-|Sumter County, South Carolina|106675|$40371|$44834|
-|Tangipahoa Parish, Louisiana|133753|$50811|$55297|
-|Washington County, Rhode Island|126139|$52584|$57082|
-|Union County, North Carolina|235767|$90330|$94846|
-|Loudoun County, Virginia|405312|$152967|$157491|
-|Washtenaw County, Michigan|368385|$153735|$158276|
-|Erie County, Pennsylvania|272046|$109918|$114462|
-|Beaufort County, South Carolina|189732|$77793|$82369|
-|Delaware County, Indiana|114461|$46387|$50981|
-|Flagler County, Florida|112854|$46373|$51046|
-|Citrus County, Florida|147938|$62656|$67378|
-|Ottawa County, Michigan|289162|$113694|$118443|
-|Madison County, Mississippi|105482|$39492|$44248|
-|Clark County, Ohio|134409|$52382|$57153|
-|Calhoun County, Alabama|114324|$44586|$49359|
-|Harrison County, Mississippi|206169|$80067|$84843|
-|Dorchester County, South Carolina|161309|$61979|$66797|
-|Santa Fe County, New Mexico|150319|$61707|$66534|
-|Escambia County, Florida|316691|$128029|$132883|
-|Johnston County, North Carolina|203308|$77906|$82769|
-|Davidson County, North Carolina|166837|$66034|$70907|
-|Paulding County, Georgia|164440|$62172|$67053|
-|Frederick County, Maryland|255955|$101175|$106058|
-|Roanoke city, Virginia|99122|$37659|$42572|
-|Kane County, Illinois|531756|$208263|$213187|
-|Rapides Parish, Louisiana|130376|$49366|$54312|
-|Henderson County, North Carolina|116298|$46579|$51567|
-|Greenwood County, South Carolina|70672|$26221|$31224|
-|Sullivan County, Tennessee|157707|$63988|$68998|
-|Schenectady County, New York|155086|$61139|$66160|
-|Wilson County, North Carolina|81579|$30546|$35576|
-|Glynn County, Georgia|85008|$32316|$37401|
-|Houston County, Alabama|105319|$40105|$45227|
-|Macon County, Illinois|104688|$40096|$45219|
-|McLean County, Illinois|172164|$68144|$73305|
-|Charlotte County, Florida|185926|$81352|$86580|
-|Sumner County, Tennessee|187680|$72995|$78246|
-|Dane County, Wisconsin|542459|$222508|$227769|
-|Robeson County, North Carolina|131656|$49509|$54788|
-|Albemarle County, Virginia|108819|$42722|$48048|
-|Rockdale County, Georgia|90155|$33429|$38770|
-|Cherokee County, Georgia|253780|$98952|$104342|
-|Williamson County, Tennessee|232380|$88054|$93464|
-|Wicomico County, Maryland|103222|$39513|$44981|
-|Hampton city, Virginia|135169|$52866|$58362|
-|Lynchburg city, Virginia|80970|$31256|$36764|
-|Calcasieu Parish, Louisiana|202858|$77328|$82916|
-|Hudson County, New Jersey|671923|$274193|$279856|
-|Madison County, Tennessee|97838|$37000|$42665|
-|Lubbock County, Texas|308392|$120615|$126316|
-|Niagara County, New York|210145|$84966|$90685|
-|Kent County, Rhode Island|164122|$66562|$72351|
-|Mahoning County, Ohio|228452|$92567|$98386|
-|Beaver County, Pennsylvania|164781|$66309|$72149|
-|Madera County, California|155925|$57087|$62967|
-|Clay County, Missouri|246480|$95598|$101521|
-|Vanderburgh County, Indiana|181548|$71415|$77349|
-|Muscogee County, Georgia|195418|$74242|$80196|
-|Brunswick County, North Carolina|137303|$57022|$63001|
-|Trumbull County, Ohio|199144|$79888|$85958|
-|Rankin County, Mississippi|154119|$59431|$65508|
-|Orangeburg County, South Carolina|86953|$32534|$38625|
-|Yavapai County, Arizona|232396|$97689|$103855|
-|Pierce County, Washington|891862|$355178|$361353|
-|Jackson County, Oregon|218781|$87525|$93718|
-|Lake County, Ohio|229755|$93145|$99352|
-|Northampton County, Pennsylvania|304233|$124457|$130665|
-|Newton County, Georgia|109835|$40179|$46399|
-|Boone County, Missouri|179704|$71376|$77619|
-|Nueces County, Texas|362151|$141149|$147412|
-|Lorain County, Ohio|309134|$123591|$129868|
-|Spokane County, Washington|513402|$206406|$212689|
-|Houston County, Georgia|155317|$58039|$64328|
-|Peoria County, Illinois|181111|$69258|$75673|
-|Charles County, Maryland|161448|$61711|$68145|
-|Saginaw County, Michigan|191166|$75534|$81977|
-|Webb County, Texas|274847|$96506|$102953|
-|Alexandria city, Virginia|158309|$63239|$69724|
-|Marin County, California|259441|$105400|$111888|
-|Clarke County, Georgia|126952|$50828|$57351|
-|Chesapeake city, Virginia|242647|$93823|$100362|
-|Shawnee County, Kansas|177293|$68024|$74570|
-|San Joaquin County, California|751615|$288009|$294667|
-|Harford County, Maryland|253736|$100437|$107128|
-|Cabarrus County, North Carolina|211605|$80201|$86913|
-|York County, Maine|206074|$83903|$90625|
-|Collier County, Florida|379345|$159576|$166313|
-|Aiken County, South Carolina|169947|$66385|$73176|
-|Kalamazoo County, Michigan|264322|$104989|$111803|
-|Kanawha County, West Virginia|181014|$72132|$78998|
-|Newport News city, Virginia|179582|$68582|$75516|
-|Baldwin County, Alabama|218289|$86321|$93278|
-|Rutherford County, Tennessee|324139|$125448|$132406|
-|Galveston County, Texas|337600|$131471|$138441|
-|Lafayette Parish, Louisiana|243692|$94033|$101115|
-|Indian River County, Florida|156964|$64690|$71809|
-|Stanislaus County, California|546235|$207885|$215093|
-|Osceola County, Florida|363666|$141763|$148981|
-|Ouachita Parish, Louisiana|154679|$57748|$64976|
-|Dougherty County, Georgia|88696|$31880|$39114|
-|Hernando County, Florida|190700|$77392|$84653|
-|Clackamas County, Oregon|415084|$167374|$174643|
-|Kent County, Delaware|179124|$68799|$76080|
-|Fresno County, California|990204|$373245|$380528|
-|Yolo County, California|218774|$86788|$94076|
-|DeSoto County, Mississippi|182256|$68503|$75810|
-|Richmond County, Georgia|202178|$77992|$85316|
-|St. Johns County, Florida|255410|$101403|$108771|
-|McLennan County, Texas|254045|$97401|$104789|
-|Lackawanna County, Pennsylvania|210162|$83704|$91121|
-|Rockland County, New York|325213|$120538|$127958|
-|York County, Pennsylvania|447628|$179469|$186963|
-|Shelby County, Alabama|216350|$83735|$91247|
-|Douglas County, Georgia|145063|$53449|$61035|
-|Lane County, Oregon|377749|$156452|$164133|
-|Orange County, North Carolina|146354|$57754|$65457|
-|Thurston County, Washington|284698|$113095|$120821|
-|Clark County, Washington|481950|$189648|$197392|
-|Waukesha County, Wisconsin|402637|$162601|$170413|
-|Fayette County, Kentucky|322200|$128864|$136713|
-|Will County, Illinois|689704|$271675|$279580|
-|Anderson County, South Carolina|200183|$77273|$85184|
-|Winnebago County, Illinois|283635|$110367|$118374|
-|St. Joseph County, Indiana|270881|$105023|$113030|
-|St. Tammany Parish, Louisiana|258447|$99942|$107986|
-|Burlington County, New Jersey|446301|$181186|$189327|
-|Anne Arundel County, Maryland|575421|$229918|$238069|
-|St. Charles County, Missouri|398472|$156924|$165094|
-|Dakota County, Minnesota|425271|$165546|$173726|
-|Madison County, Illinois|264403|$104210|$112405|
-|Sussex County, Delaware|230249|$93097|$101364|
-|Sedgwick County, Kansas|515416|$198261|$206577|
-|Ingham County, Michigan|290923|$117438|$125766|
-|Berks County, Pennsylvania|419062|$166966|$175302|
-|Tuscaloosa County, Alabama|208854|$81948|$90289|
-|Montgomery County, Texas|590188|$226769|$235179|
-|Washington County, Oregon|595761|$237189|$245678|
-|Gaston County, North Carolina|222119|$86082|$94703|
-|Westmoreland County, Pennsylvania|350722|$144917|$153585|
-|Arapahoe County, Colorado|649980|$257402|$266144|
-|Howard County, Maryland|322407|$124773|$133530|
-|Lexington County, South Carolina|295033|$114945|$123780|
-|St. Lucie County, Florida|320914|$129846|$138704|
-|Sangamon County, Illinois|195963|$75608|$84516|
-|Hamilton County, Indiana|330455|$124194|$133178|
-|Polk County, Iowa|485418|$187480|$196474|
-|Florence County, South Carolina|138237|$51022|$60116|
-|Smith County, Texas|230184|$86990|$96104|
-|Somerset County, New Jersey|330151|$131443|$140596|
-|Gloucester County, New Jersey|291745|$115349|$124518|
-|Greene County, Missouri|291574|$115736|$124931|
-|Alamance County, North Carolina|166144|$63284|$72490|
-|Dauphin County, Pennsylvania|277071|$108042|$117279|
-|Atlantic County, New Jersey|264650|$104574|$113873|
-|Butler County, Ohio|382129|$149470|$158776|
-|Chester County, Pennsylvania|521980|$207925|$217310|
-|Madison County, Alabama|367686|$145843|$155501|
-|Barnstable County, Massachusetts|213505|$88971|$98723|
-|Cumberland County, Maine|294520|$119888|$129717|
-|Mercer County, New Jersey|368085|$146852|$156706|
-|Virginia Beach city, Virginia|450882|$178697|$188609|
-|Bibb County, Georgia|153026|$55961|$65879|
-|Alachua County, Florida|268105|$108768|$118702|
-|Spartanburg County, South Carolina|313791|$121817|$131778|
-|Allen County, Indiana|375520|$142600|$152718|
-|Lehigh County, Pennsylvania|367338|$144197|$154511|
-|Douglas County, Nebraska|565739|$216728|$227049|
-|St. Clair County, Illinois|261186|$99900|$110424|
-|Placer County, California|391799|$155024|$165612|
-|St. Louis city, Missouri|304709|$122130|$132792|
-|York County, South Carolina|273887|$104175|$114865|
-|San Mateo County, California|765623|$312155|$322888|
-|Multnomah County, Oregon|809869|$335930|$346668|
-|Morris County, New Jersey|492715|$199145|$210031|
-|Albany County, New York|306165|$124300|$135461|
-|Hampshire County, Massachusetts|161361|$65646|$76850|
-|Ventura County, California|845599|$337368|$348761|
-|Pitt County, North Carolina|179961|$68256|$79820|
-|Buncombe County, North Carolina|259576|$104137|$115755|
-|Williamson County, Texas|570437|$218977|$230658|
-|Henry County, Georgia|229994|$85495|$97430|
-|New Hanover County, North Carolina|231448|$92063|$104009|
-|Stark County, Ohio|371516|$147017|$159075|
-|Chatham County, Georgia|289649|$112818|$124913|
-|Richmond city, Virginia|229233|$91231|$103558|
-|Kent County, Michigan|652617|$254488|$266879|
-|Lake County, Florida|356115|$143569|$156204|
-|Cameron County, Texas|422135|$151834|$164610|
-|Horry County, South Carolina|344186|$140044|$152997|
-|Sonoma County, California|496801|$201734|$214964|
-|Caddo Parish, Louisiana|243243|$90756|$104090|
-|Johnson County, Kansas|597574|$232115|$245514|
-|Bucks County, Pennsylvania|627668|$255489|$269045|
-|Montgomery County, Alabama|226451|$84154|$97732|
-|Hamilton County, Tennessee|364718|$143752|$157561|
-|Lancaster County, Pennsylvania|543050|$211462|$225300|
-|Middlesex County, New Jersey|825015|$331240|$345264|
-|Manatee County, Florida|393847|$160282|$174419|
-|El Paso County, Texas|836915|$316893|$331056|
-|Passaic County, New Jersey|502763|$194189|$208611|
-|Charleston County, South Carolina|407543|$162628|$177118|
-|Clark County, Nevada|2228866|$891673|$906287|
-|Chesterfield County, Virginia|348500|$133040|$147659|
-|Union County, New Jersey|555208|$216107|$230760|
-|Fairfax County, Virginia|1149439|$455115|$469936|
-|Knox County, Tennessee|466184|$184996|$199831|
-|Richland County, South Carolina|414660|$163121|$177960|
-|Volusia County, Florida|546107|$225824|$240770|
-|Durham County, North Carolina|317665|$123279|$138410|
-|Brevard County, Florida|594001|$244928|$260203|
-|Worcester County, Massachusetts|826655|$334526|$349879|
-|Lucas County, Ohio|430319|$166163|$181566|
-|Ramsey County, Minnesota|546598|$211616|$227275|
-|Marion County, Florida|360210|$144316|$160242|
-|Jefferson Parish, Louisiana|434903|$169033|$185046|
-|Bernalillo County, New Mexico|679037|$270516|$286671|
-|Leon County, Florida|291863|$115234|$131405|
-|Genesee County, Michigan|406770|$157564|$173826|
-|Hinds County, Mississippi|235604|$85808|$102460|
-|Seminole County, Florida|466695|$184929|$201597|
-|Richmond County, New York|475596|$186741|$203419|
-|Pasco County, Florida|539885|$216421|$233265|
-|Plymouth County, Massachusetts|518597|$205694|$222952|
-|Polk County, Florida|705735|$279706|$296971|
-|Hennepin County, Minnesota|1255296|$502863|$520335|
-|Greenville County, South Carolina|516126|$199637|$217152|
-|Lake County, Indiana|485983|$187450|$205002|
-|Summit County, Ohio|540810|$214873|$232728|
-|Denton County, Texas|861690|$334438|$352375|
-|Hampden County, Massachusetts|466647|$183349|$201303|
-|Onondaga County, New York|461591|$181346|$199394|
-|Fort Bend County, Texas|790892|$296859|$315140|
-|Henrico County, Virginia|330076|$124754|$143198|
-|Riverside County, California|2437864|$956944|$975474|
-|Lee County, Florida|756570|$314075|$332669|
-|Monmouth County, New Jersey|620821|$248211|$266820|
-|Tulsa County, Oklahoma|650291|$247058|$265826|
-|Collin County, Texas|1006038|$386815|$405595|
-|New Castle County, Delaware|558306|$220144|$239011|
-|Providence County, Rhode Island|636161|$254263|$273648|
-|San Bernardino County, California|2162532|$834623|$854250|
-|Bristol County, Massachusetts|563301|$224129|$243786|
-|DuPage County, Illinois|926005|$367048|$386734|
-|Pulaski County, Arkansas|393078|$148353|$168041|
-|Camden County, New Jersey|506721|$195685|$215423|
-|Clayton County, Georgia|287560|$100309|$120154|
-|Pima County, Arizona|1038476|$419462|$439930|
-|East Baton Rouge Parish, Louisiana|443158|$169169|$189664|
-|Mobile County, Alabama|413977|$156345|$176912|
-|Oklahoma County, Oklahoma|792668|$300464|$321185|
-|Forsyth County, North Carolina|378499|$142838|$163698|
-|Sarasota County, Florida|427766|$178635|$199756|
-|Hidalgo County, Texas|861137|$302669|$324193|
-|Orleans Parish, Louisiana|391249|$151853|$173470|
-|Montgomery County, Ohio|531988|$206180|$228252|
-|Delaware County, Pennsylvania|565328|$219623|$243074|
-|Ocean County, New Jersey|602018|$228045|$251770|
-|Gwinnett County, Georgia|926414|$348792|$373552|
-|Cobb County, Georgia|756653|$292238|$317593|
-|Jackson County, Missouri|700733|$268446|$293924|
-|Montgomery County, Pennsylvania|827180|$327482|$353160|
-|Macomb County, Michigan|870893|$347259|$373809|
-|Davidson County, Tennessee|690540|$270260|$297116|
-|Fairfield County, Connecticut|944306|$372161|$399789|
-|Hartford County, Connecticut|892153|$355689|$383655|
-|Monroe County, New York|743084|$293686|$322191|
-|Norfolk County, Massachusetts|703740|$277610|$306213|
-|Suffolk County, New York|1481364|$599260|$628031|
-|Jefferson County, Kentucky|768419|$298733|$327774|
-|Suffolk County, Massachusetts|801162|$330306|$359633|
-|Contra Costa County, California|1147788|$452500|$481985|
-|Guilford County, North Carolina|532956|$202659|$232467|
-|Oakland County, Michigan|1255340|$505672|$535584|
-|Bergen County, New Jersey|931275|$370066|$400178|
-|Hamilton County, Ohio|815790|$314253|$344472|
-|Essex County, Massachusetts|787038|$309034|$340973|
-|Bexar County, Texas|1978826|$762599|$794820|
-|Duval County, Florida|948651|$367414|$399778|
-|Erie County, New York|918873|$366690|$399128|
-|Orange County, Florida|1373784|$544237|$576814|
-|Essex County, New Jersey|798698|$303095|$336489|
-|Wake County, North Carolina|1091662|$421146|$454749|
-|Milwaukee County, Wisconsin|949180|$361891|$395728|
-|Alameda County, California|1661584|$670527|$704450|
-|New Haven County, Connecticut|855733|$340444|$374601|
-|Franklin County, Ohio|1304715|$505915|$541081|
-|Westchester County, New York|968738|$379759|$415535|
-|Fulton County, Georgia|1051550|$412606|$449261|
-|District of Columbia, District of Columbia|701974|$277237|$314312|
-|Prince George's County, Maryland|910551|$350964|$388548|
-|Jefferson County, Alabama|658615|$247233|$285525|
-|Middlesex County, Massachusetts|1605899|$652660|$691148|
-|Hillsborough County, Florida|1451358|$571568|$610429|
-|Baltimore city, Maryland|602274|$229165|$268230|
-|Montgomery County, Maryland|1047661|$402991|$442806|
-|Marion County, Indiana|957337|$358776|$398734|
-|Sacramento County, California|1537948|$596906|$637455|
-|Nassau County, New York|1355683|$537892|$578896|
-|Pinellas County, Florida|970985|$400154|$441605|
-|Allegheny County, Pennsylvania|1218380|$492505|$536646|
-|DeKalb County, Georgia|755287|$281355|$325642|
-|Mecklenburg County, North Carolina|1095170|$416843|$462598|
-|Baltimore County, Maryland|828193|$316511|$362779|
-|Dallas County, Texas|2622634|$999748|$1047569|
-|Palm Beach County, Florida|1482057|$599907|$649230|
-|Harris County, Texas|4680609|$1791765|$1841931|
-|Shelby County, Tennessee|936611|$345054|$395465|
-|St. Louis County, Missouri|996179|$380454|$434931|
-|Orange County, California|3170345|$1270840|$1325428|
-|Tarrant County, Texas|2077153|$784521|$839301|
-|Broward County, Florida|1942273|$773007|$828478|
-|Cuyahoga County, Ohio|1241475|$483630|$545336|
-|Maricopa County, Arizona|4412779|$1737640|$1804249|
-|Wayne County, Michigan|1753059|$668458|$740674|
-|Queens County, New York|2270976|$904449|$980738|
-|Miami-Dade County, Florida|2705528|$1081849|$1165067|
-|Bronx County, New York|1427056|$521138|$608527|
-|New York County, New York|1629153|$670610|$758944|
-|Philadelphia County, Pennsylvania|1581531|$600198|$689544|
-|Kings County, New York|2576771|$964370|$1111211|
-|Cook County, Illinois|5169517|$2031024|$2198478|
-|Los Angeles County, California|10040682|$4025047|$4209639|
+|County|Population|Homeownership rate|
+|---|---|---|
+|Sterling County, Texas|1391|94.86%|
+|Storey County, Nevada|4047|93.49%|
+|Elbert County, Colorado|25897|93.11%|
+|Powhatan County, Virginia|29979|93.06%|
+|Cameron Parish, Louisiana|5650|92.52%|
+|Washington County, Alabama|15574|92.21%|
+|Grant County, North Dakota|2351|91.82%|
+|Calhoun County, Illinois|4537|91.8%|
+|Piute County, Utah|1809|91.58%|
+|Park County, Colorado|17384|91.05%|
+|Leelanau County, Michigan|22251|90.91%|
+|Keweenaw County, Michigan|2052|90.58%|
+|Ontonagon County, Michigan|5891|90.49%|
+|Weston County, Wyoming|6891|90.4%|
+|Oneida County, Idaho|4514|90.24%|
+|Wahkiakum County, Washington|4373|90.15%|
+|Florence County, Wisconsin|4542|90.1%|
+|Presque Isle County, Michigan|12976|89.95%|
+|Benzie County, Michigan|17926|89.88%|
+|Chisago County, Minnesota|56328|89.82%|
+|Davis County, Iowa|9066|89.74%|
+|Geauga County, Ohio|95408|89.37%|
+|Smith County, Mississippi|14483|89.3%|
+|New Kent County, Virginia|22519|89.18%|
+|Hanson County, South Dakota|3429|89.15%|
+|Pope County, Illinois|3820|88.97%|
+|Meagher County, Montana|1932|88.96%|
+|Lake of the Woods County, Minnesota|3757|88.92%|
+|Oldham County, Kentucky|67586|88.75%|
+|Campbell County, South Dakota|1548|88.72%|
+|Lapeer County, Michigan|88644|88.66%|
+|Dolores County, Colorado|2288|88.59%|
+|Montmorency County, Michigan|9164|88.48%|
+|Harris County, Georgia|34316|88.45%|
+|Monroe County, Illinois|34732|88.35%|
+|Antrim County, Michigan|23427|88.35%|
+|Knox County, Missouri|3782|88.25%|
+|Dodge County, Minnesota|20798|88.24%|
+|Isanti County, Minnesota|40604|88.22%|
+|Sherburne County, Minnesota|96295|88.22%|
+|Livingston County, Michigan|193234|88.21%|
+|Northumberland County, Virginia|11965|88.21%|
+|Mills County, Texas|4520|88.17%|
+|Ralls County, Missouri|10318|88.1%|
+|Doddridge County, West Virginia|7929|88.07%|
+|Wilson County, Texas|49374|88.03%|
+|Goochland County, Virginia|24300|88.03%|
+|Grand Isle County, Vermont|7249|88.01%|
+|Tyler County, West Virginia|8397|87.99%|
+|Lac qui Parle County, Minnesota|6753|87.83%|
+|Griggs County, North Dakota|2242|87.81%|
+|Alcona County, Michigan|10138|87.78%|
+|Schoolcraft County, Michigan|8004|87.76%|
+|Gladwin County, Michigan|25344|87.69%|
+|Mora County, New Mexico|4232|87.69%|
+|Botetourt County, Virginia|33542|87.67%|
+|King William County, Virginia|17511|87.62%|
+|LaGrange County, Indiana|40085|87.58%|
+|Morgan County, West Virginia|17144|87.54%|
+|Jerauld County, South Dakota|1811|87.37%|
+|Brown County, Indiana|15444|87.35%|
+|Pike County, Georgia|18754|87.34%|
+|Dixie County, Florida|16701|87.33%|
+|Fluvanna County, Virginia|27078|87.31%|
+|Delaware County, Iowa|17508|87.3%|
+|Putnam County, Ohio|34395|87.28%|
+|Webster County, Georgia|2372|87.2%|
+|Spencer County, Kentucky|19256|87.15%|
+|Hamilton County, New York|5068|87.04%|
+|Hunterdon County, New Jersey|128807|87.01%|
+|Moore County, Tennessee|6481|87.0%|
+|Marshall County, Minnesota|9082|86.92%|
+|Barry County, Michigan|62014|86.89%|
+|Comanche County, Texas|13540|86.85%|
+|Clarke County, Mississippi|15678|86.84%|
+|Collingsworth County, Texas|2948|86.82%|
+|Morgan County, Utah|12162|86.82%|
+|Bandera County, Texas|20839|86.78%|
+|Red Lake County, Minnesota|3921|86.73%|
+|Pike County, Indiana|12220|86.72%|
+|Sheridan County, North Dakota|1328|86.67%|
+|Adams County, Indiana|35685|86.66%|
+|Meeker County, Minnesota|23268|86.65%|
+|Murray County, Minnesota|8224|86.65%|
+|Osage County, Missouri|13372|86.62%|
+|Kanabec County, Minnesota|16004|86.6%|
+|Grundy County, Iowa|12336|86.59%|
+|Currituck County, North Carolina|27575|86.58%|
+|Sussex County, New Jersey|144492|86.52%|
+|Norman County, Minnesota|6500|86.51%|
+|Hickory County, Missouri|8429|86.51%|
+|Allegan County, Michigan|119418|86.49%|
+|Mitchell County, Texas|8903|86.46%|
+|Jasper County, Mississippi|16406|86.41%|
+|Tooele County, Utah|71340|86.41%|
+|Denali Borough, Alaska|2187|86.39%|
+|Carver County, Minnesota|105694|86.39%|
+|Arenac County, Michigan|15009|86.38%|
+|Gilpin County, Colorado|5812|86.37%|
+|Lyon County, Iowa|11953|86.37%|
+|Manistee County, Michigan|24939|86.35%|
+|Johnson County, Illinois|13238|86.28%|
+|Cavalier County, North Dakota|3725|86.28%|
+|Sumter County, Florida|127335|86.22%|
+|Carroll County, Maryland|172148|86.21%|
+|Miner County, South Dakota|2293|86.21%|
+|Graham County, Kansas|2444|86.17%|
+|Oscoda County, Michigan|8206|86.16%|
+|Franklin County, Idaho|14036|86.13%|
+|McHenry County, North Dakota|5420|86.13%|
+|Woodson County, Kansas|3162|86.12%|
+|Broadwater County, Montana|6641|86.12%|
+|Harlan County, Nebraska|3216|86.09%|
+|Daniels County, Montana|1739|86.08%|
+|Jasper County, Illinois|9324|86.05%|
+|Trego County, Kansas|2825|86.03%|
+|Benton County, Iowa|25654|86.02%|
+|Crane County, Texas|4654|85.99%|
+|Webster County, Nebraska|3442|85.97%|
+|Greeley County, Nebraska|2219|85.96%|
+|Pleasants County, West Virginia|7623|85.96%|
+|Calvert County, Maryland|92515|85.95%|
+|Grant County, South Dakota|7550|85.94%|
+|Lake County, Minnesota|10835|85.91%|
+|Wright County, Minnesota|139890|85.91%|
+|Putnam County, New York|97960|85.91%|
+|Scott County, Minnesota|149568|85.88%|
+|Twiggs County, Georgia|8034|85.82%|
+|Oconto County, Wisconsin|38691|85.81%|
+|Oliver County, North Dakota|1850|85.78%|
+|Todd County, Minnesota|25121|85.77%|
+|Goliad County, Texas|7085|85.77%|
+|Harper County, Oklahoma|3358|85.75%|
+|Nance County, Nebraska|3389|85.74%|
+|Harrison County, Indiana|39516|85.71%|
+|Schleicher County, Texas|2547|85.71%|
+|Forsyth County, Georgia|245754|85.7%|
+|Mitchell County, Iowa|10526|85.69%|
+|Jersey County, Illinois|21533|85.67%|
+|Kingsbury County, South Dakota|5131|85.67%|
+|Logan County, North Dakota|1814|85.66%|
+|Spencer County, Indiana|19949|85.65%|
+|Monroe County, Iowa|7589|85.64%|
+|Kewaunee County, Wisconsin|20535|85.64%|
+|Alger County, Michigan|8911|85.59%|
+|Perry County, Mississippi|11611|85.59%|
+|Edmonson County, Kentucky|12165|85.56%|
+|Franklin County, Indiana|22769|85.54%|
+|Kittson County, Minnesota|4213|85.54%|
+|Jefferson County, Kansas|18391|85.53%|
+|Smith County, Kansas|3588|85.53%|
+|Logan County, Oklahoma|49005|85.53%|
+|Dearborn County, Indiana|50494|85.5%|
+|Fillmore County, Minnesota|21179|85.48%|
+|Washington County, Minnesota|264818|85.48%|
+|Jefferson County, Montana|12057|85.47%|
+|Armstrong County, Texas|1980|85.45%|
+|Boise County, Idaho|7549|85.43%|
+|Oceana County, Michigan|26555|85.43%|
+|Marshall County, Kentucky|31662|85.37%|
+|Yellow Medicine County, Minnesota|9616|85.36%|
+|Lake County, Michigan|12248|85.33%|
+|Ness County, Kansas|2717|85.3%|
+|Piatt County, Illinois|16664|85.29%|
+|Stanley County, South Dakota|2963|85.29%|
+|Pope County, Minnesota|11216|85.25%|
+|Ste. Genevieve County, Missouri|18406|85.24%|
+|Shackelford County, Texas|3145|85.24%|
+|Oneida County, Wisconsin|37468|85.22%|
+|Bremer County, Iowa|24863|85.17%|
+|Rockwall County, Texas|105227|85.16%|
+|Platte County, Wyoming|8607|85.12%|
+|Pine County, Minnesota|28997|85.1%|
+|Tuscola County, Michigan|53288|85.08%|
+|Dickinson County, Michigan|25954|85.07%|
+|Van Buren County, Iowa|7196|85.05%|
+|Mercer County, North Dakota|8405|85.05%|
+|Henderson County, Illinois|6485|85.03%|
+|St. James Parish, Louisiana|20390|85.01%|
+|Morgan County, Missouri|20883|84.94%|
+|Putnam County, West Virginia|57385|84.94%|
+|Aitkin County, Minnesota|15747|84.92%|
+|Chickasaw County, Iowa|12021|84.91%|
+|Sabine County, Texas|9974|84.91%|
+|Stone County, Missouri|31018|84.9%|
+|Kalkaska County, Michigan|17813|84.89%|
+|Union County, Ohio|61769|84.89%|
+|Newaygo County, Michigan|49653|84.87%|
+|Calumet County, Wisconsin|52128|84.85%|
+|Woodford County, Illinois|38571|84.84%|
+|Ascension Parish, Louisiana|125289|84.82%|
+|Stillwater County, Montana|8916|84.79%|
+|Polk County, Nebraska|5223|84.74%|
+|Bollinger County, Missouri|10758|84.72%|
+|Deuel County, Nebraska|1878|84.67%|
+|Lewis County, New York|26681|84.67%|
+|Suffolk County, New York|1522998|84.66%|
+|Warren County, Iowa|51862|84.64%|
+|Carroll County, Mississippi|10053|84.64%|
+|Cedar County, Nebraska|8401|84.64%|
+|Custer County, South Dakota|8360|84.64%|
+|St. Charles County, Missouri|402377|84.63%|
+|Emmons County, North Dakota|3316|84.63%|
+|Leslie County, Kentucky|10622|84.61%|
+|Kendall County, Illinois|130757|84.6%|
+|East Feliciana Parish, Louisiana|19588|84.59%|
+|Scott County, Illinois|4923|84.58%|
+|Haakon County, South Dakota|1868|84.56%|
+|Calhoun County, Arkansas|4811|84.55%|
+|Custer County, Colorado|4720|84.54%|
+|Grant County, West Virginia|11063|84.53%|
+|Osceola County, Michigan|22917|84.51%|
+|Taliaferro County, Georgia|1574|84.5%|
+|Hardin County, Texas|56124|84.47%|
+|Schuyler County, Illinois|6953|84.45%|
+|Whitley County, Indiana|34048|84.43%|
+|Monroe County, Michigan|154068|84.43%|
+|Wilkin County, Minnesota|6495|84.43%|
+|Marshall County, South Dakota|4373|84.42%|
+|Mills County, Iowa|14658|84.41%|
+|Bottineau County, North Dakota|6442|84.41%|
+|Oconee County, Georgia|41006|84.38%|
+|Jackson County, Kentucky|13029|84.35%|
+|Waushara County, Wisconsin|24527|84.35%|
+|Hyde County, South Dakota|1381|84.32%|
+|Knox County, Texas|3384|84.3%|
+|Boone County, Illinois|53592|84.29%|
+|Lyon County, Kentucky|8700|84.27%|
+|Jefferson County, Idaho|30427|84.26%|
+|Roseau County, Minnesota|15321|84.25%|
+|Medina County, Ohio|181448|84.25%|
+|Starke County, Indiana|23275|84.24%|
+|Henry County, Alabama|17165|84.23%|
+|Pocahontas County, West Virginia|8006|84.2%|
+|Will County, Illinois|696403|84.16%|
+|Perkins County, Nebraska|2865|84.15%|
+|Colorado County, Texas|20559|84.14%|
+|Koochiching County, Minnesota|12203|84.1%|
+|Houston County, Minnesota|18806|84.09%|
+|Pike County, Pennsylvania|58345|84.08%|
+|Jefferson Davis County, Mississippi|11372|84.06%|
+|Iowa County, Iowa|16596|84.02%|
+|Muhlenberg County, Kentucky|31011|84.02%|
+|Tipton County, Indiana|15290|84.01%|
+|Aurora County, South Dakota|2649|84.01%|
+|Washington County, Indiana|28025|83.98%|
+|Elk County, Pennsylvania|31037|83.98%|
+|Bear Lake County, Idaho|6327|83.96%|
+|Crawford County, Michigan|13102|83.96%|
+|Burnett County, Wisconsin|16356|83.96%|
+|Nassau County, New York|1391678|83.91%|
+|Pierce County, North Dakota|4038|83.89%|
+|Delaware County, Ohio|211121|83.89%|
+|Greene County, Mississippi|13653|83.87%|
+|Chambers County, Texas|45257|83.87%|
+|Hanover County, Virginia|109232|83.87%|
+|Cheboygan County, Michigan|25654|83.86%|
+|Iron County, Michigan|11580|83.86%|
+|Walthall County, Mississippi|13981|83.86%|
+|Hubbard County, Minnesota|21219|83.85%|
+|Cass County, Nebraska|26546|83.85%|
+|Hancock County, Illinois|17750|83.84%|
+|Fremont County, Idaho|13370|83.83%|
+|Ogemaw County, Michigan|20745|83.82%|
+|Sullivan County, Pennsylvania|5935|83.8%|
+|Gray County, Kansas|5720|83.79%|
+|Itasca County, Minnesota|44969|83.78%|
+|Clearwater County, Minnesota|8525|83.77%|
+|Sioux County, Iowa|35647|83.73%|
+|Iosco County, Michigan|25262|83.73%|
+|Martin County, Indiana|9885|83.71%|
+|Madison County, Iowa|16414|83.71%|
+|Clinton County, Michigan|78895|83.71%|
+|Crook County, Wyoming|7185|83.71%|
+|Poquoson city, Virginia|12382|83.7%|
+|Guthrie County, Iowa|10599|83.69%|
+|McLean County, North Dakota|9788|83.69%|
+|Parker County, Texas|144803|83.69%|
+|Scotland County, Missouri|4760|83.65%|
+|Edmunds County, South Dakota|4005|83.64%|
+|Wirt County, West Virginia|5264|83.64%|
+|Faulk County, South Dakota|2157|83.63%|
+|Williamson County, Tennessee|242386|83.63%|
+|Boone County, Indiana|69839|83.61%|
+|McCook County, South Dakota|5676|83.61%|
+|Wabasha County, Minnesota|21425|83.59%|
+|Jackson County, Iowa|19499|83.58%|
+|Lincoln County, Minnesota|5655|83.58%|
+|Posey County, Indiana|25301|83.54%|
+|Le Sueur County, Minnesota|28567|83.54%|
+|Iron County, Wisconsin|6074|83.54%|
+|Marion County, Kansas|11877|83.53%|
+|Hamlin County, South Dakota|6127|83.52%|
+|Otter Tail County, Minnesota|59728|83.51%|
+|DeKalb County, Indiana|43059|83.49%|
+|Pendleton County, West Virginia|6249|83.49%|
+|Benton County, Missouri|19351|83.48%|
+|Concho County, Texas|3181|83.46%|
+|Buchanan County, Iowa|20598|83.45%|
+|Livingston Parish, Louisiana|141057|83.45%|
+|Carlton County, Minnesota|36145|83.44%|
+|Putnam County, Missouri|4715|83.43%|
+|Wyoming County, West Virginia|21581|83.43%|
+|Converse County, Wyoming|13702|83.43%|
+|Bedford County, Virginia|79183|83.42%|
+|Rusk County, Wisconsin|14182|83.41%|
+|Worth County, Missouri|2004|83.4%|
+|Franklin County, Nebraska|2914|83.38%|
+|Essex County, Vermont|5972|83.38%|
+|Charlevoix County, Michigan|26109|83.37%|
+|Door County, Wisconsin|29713|83.37%|
+|McIntosh County, Georgia|11291|83.36%|
+|Breckinridge County, Kentucky|20345|83.33%|
+|Mercer County, Missouri|3561|83.32%|
+|Camden County, North Carolina|10353|83.32%|
+|Clark County, South Dakota|3791|83.28%|
+|Saunders County, Nebraska|22008|83.26%|
+|Clear Creek County, Colorado|9427|83.25%|
+|Mercer County, Ohio|42154|83.25%|
+|Ottawa County, Ohio|40479|83.23%|
+|Caribou County, Idaho|7003|83.21%|
+|Lawrence County, Indiana|45133|83.21%|
+|Clare County, Michigan|30827|83.21%|
+|Switzerland County, Indiana|9870|83.18%|
+|McCone County, Montana|1805|83.17%|
+|Gloucester County, New Jersey|300821|83.15%|
+|Preston County, West Virginia|34266|83.12%|
+|Hancock County, Indiana|78616|83.11%|
+|McHenry County, Illinois|310749|83.1%|
+|Dickinson County, Iowa|17536|83.1%|
+|Cass County, Minnesota|29917|83.1%|
+|Adams County, Wisconsin|20505|83.1%|
+|Montcalm County, Michigan|66430|83.09%|
+|Washington County, Illinois|13827|83.08%|
+|Cedar County, Iowa|18494|83.08%|
+|Fallon County, Montana|3074|83.08%|
+|Braxton County, West Virginia|12702|83.08%|
+|Wakulla County, Florida|33144|83.07%|
+|Menominee County, Michigan|23477|83.04%|
+|Garfield County, Nebraska|1889|83.04%|
+|Graham County, North Carolina|8089|83.02%|
+|Wichita County, Kansas|2150|83.0%|
+|Cass County, Michigan|51632|83.0%|
+|Traverse County, Minnesota|3362|83.0%|
+|Catron County, New Mexico|3581|83.0%|
+|Nassau County, Florida|88492|82.97%|
+|Wabash County, Illinois|11414|82.92%|
+|Archer County, Texas|8616|82.91%|
+|Taylor County, Iowa|5932|82.9%|
+|St. Croix County, Wisconsin|92495|82.9%|
+|Bullitt County, Kentucky|81729|82.88%|
+|Polk County, Wisconsin|44806|82.88%|
+|Ida County, Iowa|6979|82.86%|
+|Livingston County, Kentucky|8989|82.86%|
+|Torrance County, New Mexico|15150|82.86%|
+|Union County, North Carolina|235699|82.85%|
+|Kershaw County, South Carolina|64989|82.85%|
+|Lincoln County, Maine|35065|82.84%|
+|Mason County, West Virginia|25667|82.84%|
+|Lemhi County, Idaho|7948|82.82%|
+|Charles City County, Virginia|6817|82.82%|
+|Shelby County, Alabama|220780|82.81%|
+|LaMoure County, North Dakota|4173|82.81%|
+|Taylor County, Wisconsin|19960|82.8%|
+|Lincoln County, West Virginia|20625|82.78%|
+|Fayette County, Texas|24445|82.77%|
+|Morgan County, Indiana|71394|82.76%|
+|Benton County, Mississippi|7687|82.76%|
+|Hutchinson County, Texas|20801|82.76%|
+|Holmes County, Ohio|44166|82.75%|
+|Marshall County, Kansas|9995|82.74%|
+|Butte County, South Dakota|10167|82.74%|
+|Beauregard Parish, Louisiana|36417|82.73%|
+|Norton County, Kansas|5457|82.71%|
+|Warren County, Missouri|35033|82.71%|
+|Jackson County, Minnesota|10016|82.7%|
+|Blount County, Alabama|58884|82.69%|
+|Gilchrist County, Florida|17759|82.69%|
+|Lafayette County, Florida|8343|82.68%|
+|Howard County, Nebraska|6461|82.67%|
+|McCormick County, South Carolina|9584|82.66%|
+|George County, Mississippi|24260|82.65%|
+|Washington County, Nebraska|20699|82.65%|
+|Monroe County, Georgia|27825|82.64%|
+|Crawford County, Indiana|10511|82.64%|
+|Goodhue County, Minnesota|47503|82.63%|
+|Jewell County, Kansas|2927|82.62%|
+|Howard County, Missouri|10147|82.62%|
+|Grundy County, Tennessee|13471|82.62%|
+|Washington County, Kansas|5531|82.61%|
+|Valencia County, New Mexico|75992|82.59%|
+|Bucks County, Pennsylvania|643872|82.59%|
+|Ottawa County, Michigan|293713|82.57%|
+|Jennings County, Indiana|27619|82.56%|
+|Louisa County, Virginia|37136|82.56%|
+|Allegany County, New York|46654|82.54%|
+|Adams County, Iowa|3697|82.53%|
+|Waseca County, Minnesota|18972|82.53%|
+|Gasconade County, Missouri|14803|82.53%|
+|Adams County, Idaho|4321|82.52%|
+|Cleveland County, Arkansas|7632|82.5%|
+|Ellsworth County, Kansas|6403|82.5%|
+|Anoka County, Minnesota|360773|82.5%|
+|Warrick County, Indiana|63575|82.48%|
+|Butler County, Nebraska|8354|82.47%|
+|McLean County, Kentucky|9182|82.46%|
+|Baraga County, Michigan|8249|82.46%|
+|Skamania County, Washington|11973|82.46%|
+|Ballard County, Kentucky|7814|82.44%|
+|Bayfield County, Wisconsin|16031|82.44%|
+|Columbia County, Georgia|154274|82.41%|
+|Pocahontas County, Iowa|7091|82.4%|
+|Huron County, Michigan|31542|82.37%|
+|Renville County, Minnesota|14768|82.37%|
+|Floyd County, Virginia|15536|82.36%|
+|Vilas County, Wisconsin|22813|82.36%|
+|Charlotte County, Florida|184837|82.34%|
+|Fayette County, Georgia|117828|82.34%|
+|Pottawatomie County, Kansas|25082|82.34%|
+|Perry County, Pennsylvania|45879|82.32%|
+|Vernon County, Wisconsin|30719|82.32%|
+|Bedford County, Pennsylvania|47729|82.31%|
+|Ottawa County, Kansas|5778|82.3%|
+|Waldo County, Maine|39618|82.3%|
+|Fulton County, Ohio|42709|82.29%|
+|Stephens County, Texas|9142|82.29%|
+|Harford County, Maryland|259162|82.28%|
+|Boyd County, Nebraska|1812|82.27%|
+|Rockingham County, New Hampshire|312771|82.26%|
+|Clay County, Nebraska|6104|82.25%|
+|Dickinson County, Kansas|18572|82.24%|
+|Choctaw County, Mississippi|8264|82.24%|
+|Boone County, West Virginia|22059|82.24%|
+|Allamakee County, Iowa|14068|82.23%|
+|Furnas County, Nebraska|4655|82.23%|
+|Highland County, Virginia|2229|82.23%|
+|LaSalle Parish, Louisiana|14770|82.22%|
+|Mathews County, Virginia|8548|82.22%|
+|Middlesex County, Virginia|10686|82.21%|
+|Hale County, Alabama|14819|82.2%|
+|Miami County, Kansas|33968|82.19%|
+|Somerset County, Pennsylvania|74331|82.18%|
+|Fulton County, Arkansas|12072|82.17%|
+|Cherokee County, North Carolina|28515|82.17%|
+|Gaines County, Texas|21167|82.17%|
+|Wayne County, New York|91332|82.15%|
+|Hamilton County, Nebraska|9376|82.14%|
+|Hampshire County, West Virginia|23214|82.14%|
+|Marshall County, West Virginia|30813|82.12%|
+|Paulding County, Ohio|18858|82.11%|
+|Citrus County, Florida|151888|82.1%|
+|Knox County, Maine|40519|82.1%|
+|Jones County, Texas|19721|82.1%|
+|Hendricks County, Indiana|172100|82.09%|
+|Queen Anne's County, Maryland|49702|82.08%|
+|Ripley County, Missouri|11032|82.08%|
+|Warren County, Ohio|239556|82.08%|
+|Trigg County, Kentucky|14067|82.06%|
+|St. Charles Parish, Louisiana|52411|82.06%|
+|Newton County, Texas|12532|82.05%|
+|Boone County, Nebraska|5413|82.04%|
+|Lincoln County, Wyoming|19457|82.04%|
+|St. Johns County, Florida|265724|82.03%|
+|Custer County, Idaho|4273|82.03%|
+|Decatur County, Tennessee|11460|82.03%|
+|Sac County, Iowa|9829|82.01%|
+|Lincoln County, New Mexico|20084|82.0%|
+|Becker County, Minnesota|34995|81.99%|
+|Barnstable County, Massachusetts|227942|81.98%|
+|Stanton County, Nebraska|5877|81.97%|
+|Carroll County, New Hampshire|49961|81.94%|
+|Dickey County, North Dakota|5013|81.92%|
+|Liberty County, Texas|89948|81.91%|
+|Somervell County, Texas|9170|81.91%|
+|Fall River County, South Dakota|6979|81.89%|
+|Garrard County, Kentucky|17018|81.88%|
+|Sibley County, Minnesota|14948|81.88%|
+|Gentry County, Missouri|6231|81.87%|
+|Sully County, South Dakota|1279|81.85%|
+|Douglas County, Colorado|351929|81.84%|
+|Garrett County, Maryland|28955|81.83%|
+|Brunswick County, North Carolina|133789|81.83%|
+|Turner County, South Dakota|8621|81.83%|
+|Orleans County, Vermont|27317|81.83%|
+|Buffalo County, Wisconsin|13314|81.82%|
+|Clinton County, Illinois|37048|81.79%|
+|Craig County, Virginia|4914|81.78%|
+|Shawano County, Wisconsin|40836|81.78%|
+|Brown County, Minnesota|25894|81.76%|
+|Taylor County, West Virginia|16727|81.76%|
+|Hancock County, Maine|55417|81.75%|
+|Golden Valley County, North Dakota|1812|81.75%|
+|San Juan County, Utah|14610|81.75%|
+|Nicholas County, West Virginia|24770|81.75%|
+|Rusk County, Texas|52542|81.74%|
+|Mason County, Texas|3948|81.73%|
+|Washburn County, Wisconsin|16561|81.73%|
+|Wood County, Texas|44615|81.71%|
+|Tucker County, West Virginia|6822|81.7%|
+|Boone County, Iowa|26721|81.69%|
+|Burt County, Nebraska|6705|81.67%|
+|Orange County, Vermont|29286|81.67%|
+|Newton County, Indiana|13865|81.64%|
+|St. Clair County, Michigan|160067|81.64%|
+|White County, Indiana|24593|81.63%|
+|Butler County, Pennsylvania|192561|81.62%|
+|Tioga County, New York|48567|81.61%|
+|Redwood County, Minnesota|15435|81.6%|
+|Gloucester County, Virginia|38586|81.6%|
+|Alpena County, Michigan|28913|81.59%|
+|Chariton County, Missouri|7432|81.58%|
+|Carroll County, Indiana|20288|81.54%|
+|Waukesha County, Wisconsin|405332|81.53%|
+|Jones County, Iowa|20680|81.52%|
+|Renville County, North Dakota|2328|81.52%|
+|Westmoreland County, Pennsylvania|355107|81.52%|
+|Nuckolls County, Nebraska|4125|81.51%|
+|Mineral County, West Virginia|27045|81.51%|
+|Pacific County, Washington|22974|81.49%|
+|Jefferson County, Missouri|225913|81.48%|
+|Uinta County, Wyoming|20514|81.48%|
+|Stafford County, Kansas|4106|81.47%|
+|Ritchie County, West Virginia|8676|81.46%|
+|Barnes County, North Dakota|10869|81.45%|
+|Franklin County, Virginia|54829|81.45%|
+|Clark County, Illinois|15587|81.44%|
+|Wetzel County, West Virginia|14629|81.44%|
+|Morrison County, Minnesota|33876|81.43%|
+|Calhoun County, South Carolina|14198|81.42%|
+|Putnam County, Illinois|5638|81.41%|
+|Hamilton County, Texas|8211|81.41%|
+|Ringgold County, Iowa|4739|81.4%|
+|Pipestone County, Minnesota|9370|81.39%|
+|Warren County, Indiana|8430|81.35%|
+|Hancock County, Iowa|10837|81.35%|
+|Forest County, Pennsylvania|7121|81.33%|
+|Wyoming County, New York|40679|81.32%|
+|Morrow County, Ohio|34892|81.32%|
+|Lincoln County, Oklahoma|33650|81.32%|
+|Steele County, Minnesota|37363|81.31%|
+|Jasper County, Indiana|33006|81.29%|
+|McLeod County, Minnesota|36662|81.28%|
+|Delta County, Michigan|36836|81.26%|
+|Wise County, Texas|67877|81.26%|
+|Fillmore County, Nebraska|5561|81.25%|
+|Ohio County, Indiana|5931|81.24%|
+|Plymouth County, Massachusetts|527602|81.23%|
+|Scott County, Virginia|21576|81.23%|
+|Nelson County, North Dakota|3035|81.22%|
+|Campbell County, Wyoming|46758|81.22%|
+|Harrison County, Ohio|14623|81.21%|
+|McPherson County, South Dakota|2245|81.19%|
+|Jefferson County, West Virginia|57542|81.17%|
+|Walsh County, North Dakota|10631|81.16%|
+|Shelby County, Illinois|21160|81.15%|
+|Van Buren County, Arkansas|15851|81.14%|
+|Hamilton County, Kansas|2572|81.14%|
+|Assumption Parish, Louisiana|21366|81.14%|
+|Fayette County, Tennessee|41584|81.14%|
+|Wells County, North Dakota|4031|81.13%|
+|Baker County, Florida|28003|81.12%|
+|Pepin County, Wisconsin|7328|81.12%|
+|McClain County, Oklahoma|41258|81.11%|
+|Coosa County, Alabama|10442|81.09%|
+|Missaukee County, Michigan|15038|81.07%|
+|Jeff Davis County, Texas|2021|81.07%|
+|Linn County, Kansas|9667|81.05%|
+|Sanilac County, Michigan|40829|81.04%|
+|Bon Homme County, South Dakota|7020|81.01%|
+|Lincoln County, Wisconsin|28378|81.01%|
+|Grant County, Minnesota|6045|81.0%|
+|Callahan County, Texas|13781|81.0%|
+|Pike County, Illinois|14923|80.99%|
+|Perry County, Indiana|19151|80.97%|
+|Price County, Wisconsin|14003|80.96%|
+|Jo Daviess County, Illinois|21995|80.94%|
+|Wayne County, Pennsylvania|51244|80.94%|
+|Watonwan County, Minnesota|11223|80.93%|
+|Caroline County, Virginia|30861|80.93%|
+|Moultrie County, Illinois|14634|80.92%|
+|Medina County, Texas|50458|80.92%|
+|Worth County, Iowa|7450|80.91%|
+|Pawnee County, Nebraska|2564|80.9%|
+|Lee County, Texas|17393|80.9%|
+|Wells County, Indiana|28103|80.88%|
+|Conejos County, Colorado|7579|80.87%|
+|Osage County, Kansas|15811|80.87%|
+|Mercer County, Illinois|15779|80.86%|
+|Davie County, North Carolina|42543|80.86%|
+|Major County, Oklahoma|7753|80.86%|
+|Wexford County, Michigan|33552|80.85%|
+|Beaver County, Utah|6962|80.85%|
+|Coffey County, Kansas|8361|80.84%|
+|Ionia County, Michigan|66564|80.83%|
+|Franklin County, Missouri|104331|80.83%|
+|Valley County, Nebraska|4031|80.83%|
+|Gogebic County, Michigan|14858|80.81%|
+|Patrick County, Virginia|17661|80.8%|
+|Wayne County, Tennessee|16350|80.79%|
+|Sevier County, Utah|21471|80.79%|
+|Granite County, Montana|3333|80.78%|
+|Lampasas County, Texas|21443|80.78%|
+|Alleghany County, Virginia|15266|80.78%|
+|Jackson County, Tennessee|11626|80.77%|
+|Marshall County, Illinois|11781|80.76%|
+|Armstrong County, Pennsylvania|65967|80.76%|
+|Van Buren County, Michigan|75550|80.75%|
+|Washington County, Wisconsin|136300|80.73%|
+|Jones County, Georgia|28297|80.71%|
+|Winneshiek County, Iowa|20100|80.7%|
+|Belknap County, New Hampshire|63395|80.69%|
+|Fayette County, West Virginia|41056|80.69%|
+|Carter County, Kentucky|26820|80.68%|
+|Wagoner County, Oklahoma|80509|80.68%|
+|Roane County, West Virginia|14129|80.68%|
+|Bibb County, Alabama|22412|80.67%|
+|Henry County, Illinois|49412|80.67%|
+|Emmet County, Michigan|33946|80.66%|
+|Morgan County, Ohio|13955|80.66%|
+|Hancock County, Kentucky|9050|80.65%|
+|Calhoun County, Iowa|9962|80.64%|
+|Steele County, North Dakota|1870|80.64%|
+|Hood County, Texas|60521|80.64%|
+|Forest County, Wisconsin|9184|80.64%|
+|Hodgeman County, Kansas|1851|80.63%|
+|Warren County, Pennsylvania|38791|80.63%|
+|Union County, Georgia|24183|80.62%|
+|Macon County, Missouri|15222|80.62%|
+|Burke County, North Dakota|2177|80.62%|
+|Henry County, Iowa|20488|80.6%|
+|Austin County, Texas|30132|80.6%|
+|Clay County, Texas|10236|80.6%|
+|St. Tammany Parish, Louisiana|262799|80.58%|
+|Gallatin County, Illinois|5038|80.57%|
+|Cottonwood County, Minnesota|11484|80.56%|
+|Langlade County, Wisconsin|19469|80.56%|
+|Spink County, South Dakota|6408|80.55%|
+|Cumberland County, Illinois|10528|80.54%|
+|Rush County, Kansas|2883|80.54%|
+|Morgan County, Kentucky|13772|80.53%|
+|Clark County, Missouri|6649|80.51%|
+|Clay County, West Virginia|8176|80.51%|
+|Polk County, North Carolina|19413|80.49%|
+|Oxford County, Maine|57807|80.46%|
+|Nicollet County, Minnesota|34295|80.45%|
+|Edwards County, Illinois|6233|80.44%|
+|Wayne County, Iowa|6504|80.44%|
+|Hillsdale County, Michigan|45673|80.44%|
+|Anderson County, Kentucky|23646|80.43%|
+|Taos County, New Mexico|34322|80.43%|
+|Henry County, Ohio|27618|80.43%|
+|Potter County, South Dakota|2613|80.43%|
+|Pearl River County, Mississippi|55972|80.42%|
+|Newton County, Arkansas|7343|80.41%|
+|Hamilton County, Indiana|341616|80.41%|
+|Jasper County, Texas|33369|80.4%|
+|Marion County, Mississippi|24609|80.39%|
+|White County, Tennessee|27134|80.39%|
+|Davis County, Utah|358831|80.38%|
+|Hettinger County, North Dakota|2502|80.37%|
+|Douglas County, Missouri|11808|80.36%|
+|Lincoln County, Washington|10798|80.36%|
+|Loudoun County, Virginia|413574|80.34%|
+|Apache County, Arizona|66473|80.33%|
+|Plymouth County, Iowa|25543|80.33%|
+|Gove County, Kansas|2774|80.32%|
+|Litchfield County, Connecticut|185175|80.31%|
+|Douglas County, Minnesota|38742|80.31%|
+|Morrill County, Nebraska|4595|80.31%|
+|Dawson County, Georgia|26202|80.3%|
+|Kiowa County, Kansas|2457|80.3%|
+|Camden County, Missouri|43053|80.3%|
+|Roscommon County, Michigan|23458|80.29%|
+|Perkins County, South Dakota|2977|80.29%|
+|Carroll County, Iowa|20756|80.27%|
+|Lincoln County, Arkansas|13092|80.24%|
+|Palo Alto County, Iowa|8996|80.24%|
+|Lucas County, Iowa|8650|80.23%|
+|Foster County, North Dakota|3396|80.23%|
+|Ozaukee County, Wisconsin|91029|80.23%|
+|Sublette County, Wyoming|8830|80.23%|
+|Sagadahoc County, Maine|36530|80.22%|
+|Madison County, New York|68466|80.22%|
+|Kane County, Utah|7635|80.22%|
+|Andrew County, Missouri|18023|80.21%|
+|Iroquois County, Illinois|27362|80.2%|
+|Menard County, Illinois|12343|80.18%|
+|Greenup County, Kentucky|35996|80.17%|
+|Faribault County, Minnesota|13933|80.16%|
+|Kaufman County, Texas|140145|80.16%|
+|Rock County, Minnesota|9718|80.14%|
+|Randolph County, Alabama|21984|80.13%|
+|Fayette County, Illinois|21514|80.13%|
+|Clark County, Wisconsin|34655|80.13%|
+|Limestone County, Alabama|101217|80.12%|
+|Delta County, Texas|5251|80.11%|
+|Tyler County, Texas|20032|80.11%|
+|Sandoval County, New Mexico|147327|80.1%|
+|Tazewell County, Illinois|131977|80.09%|
+|Freeborn County, Minnesota|30882|80.09%|
+|Stafford County, Virginia|154204|80.07%|
+|Marinette County, Wisconsin|41720|80.07%|
+|Kossuth County, Iowa|14823|80.06%|
+|Madison County, Virginia|13731|80.06%|
+|Somerset County, Maine|50424|80.04%|
+|Van Zandt County, Texas|58782|80.04%|
+|Isle of Wight County, Virginia|38301|80.04%|
+|Lenawee County, Michigan|99346|80.03%|
+|Scurry County, Texas|16985|80.03%|
+|Matanuska-Susitna Borough, Alaska|106807|80.02%|
+|Fort Bend County, Texas|806497|80.01%|
+|Winnebago County, Iowa|10743|80.0%|
+|Union Parish, Louisiana|21272|80.0%|
+|Habersham County, Georgia|45767|79.99%|
+|Shannon County, Missouri|7185|79.99%|
+|Garden County, Nebraska|1726|79.99%|
+|Washington County, Maine|31003|79.96%|
+|Dubois County, Indiana|43474|79.95%|
+|Lincoln County, Missouri|58689|79.95%|
+|Grayson County, Virginia|15418|79.95%|
+|Iowa County, Wisconsin|23715|79.95%|
+|Pender County, North Carolina|59964|79.94%|
+|Owen County, Kentucky|11160|79.93%|
+|Webster County, Mississippi|9938|79.93%|
+|Brown County, Nebraska|2752|79.93%|
+|Llano County, Texas|21246|79.93%|
+|Copper River Census Area, Alaska|2635|79.92%|
+|Glades County, Florida|12183|79.92%|
+|Polk County, Tennessee|17502|79.92%|
+|Madison County, Arkansas|16496|79.91%|
+|Ford County, Illinois|13589|79.89%|
+|Ripley County, Indiana|28953|79.89%|
+|Traill County, North Dakota|8008|79.88%|
+|Jasper County, Iowa|37686|79.87%|
+|Potter County, Pennsylvania|16478|79.87%|
+|Georgetown County, South Carolina|62992|79.87%|
+|Noble County, Indiana|47293|79.86%|
+|Chenango County, New York|47407|79.86%|
+|Rogers County, Oklahoma|94637|79.86%|
+|Adams County, Pennsylvania|103782|79.86%|
+|Choctaw County, Alabama|12792|79.84%|
+|Marion County, Iowa|33381|79.84%|
+|Washington County, Pennsylvania|209090|79.84%|
+|Izard County, Arkansas|13653|79.83%|
+|Saline County, Illinois|23869|79.83%|
+|Rock County, Nebraska|1321|79.83%|
+|Marquette County, Wisconsin|15515|79.83%|
+|Douglas County, Illinois|19708|79.82%|
+|Franklin County, Vermont|49752|79.81%|
+|Clay County, North Carolina|10997|79.8%|
+|Cotton County, Oklahoma|5603|79.8%|
+|Pennington County, Minnesota|14063|79.79%|
+|Gates County, North Carolina|10584|79.77%|
+|Jefferson County, Washington|32590|79.76%|
+|Alexander County, Illinois|5488|79.75%|
+|Rice County, Kansas|9464|79.75%|
+|Phillips County, Montana|4233|79.74%|
+|Huntingdon County, Pennsylvania|44458|79.74%|
+|Crittenden County, Kentucky|8997|79.73%|
+|Lafourche Parish, Louisiana|97677|79.73%|
+|Midland County, Michigan|83467|79.73%|
+|Moniteau County, Missouri|15723|79.73%|
+|Augusta County, Virginia|76948|79.73%|
+|Casey County, Kentucky|15863|79.72%|
+|Carson County, Texas|5856|79.72%|
+|Clinton County, Missouri|21095|79.71%|
+|Rio Arriba County, New Mexico|40347|79.71%|
+|St. Martin Parish, Louisiana|52222|79.7%|
+|Hand County, South Dakota|3061|79.7%|
+|Livingston County, New York|62253|79.69%|
+|Simpson County, Mississippi|26064|79.68%|
+|Washington County, Florida|24906|79.67%|
+|Butler County, Iowa|14421|79.67%|
+|Mille Lacs County, Minnesota|26397|79.67%|
+|Stone County, Arkansas|12364|79.66%|
+|Monroe County, Ohio|13514|79.65%|
+|Ravalli County, Montana|43790|79.64%|
+|Buchanan County, Virginia|20615|79.64%|
+|Cherokee County, Alabama|24975|79.63%|
+|Sheridan County, Kansas|2459|79.63%|
+|St. John the Baptist Parish, Louisiana|42704|79.63%|
+|Orange County, Virginia|36001|79.63%|
+|Lowndes County, Alabama|10334|79.62%|
+|Gratiot County, Michigan|41758|79.62%|
+|San Jacinto County, Texas|27380|79.62%|
+|Meigs County, Ohio|22361|79.61%|
+|Lake County, Colorado|7417|79.59%|
+|St. Clair County, Alabama|90412|79.58%|
+|Guadalupe County, New Mexico|4465|79.58%|
+|Levy County, Florida|42392|79.57%|
+|Sussex County, Delaware|234045|79.56%|
+|Massac County, Illinois|14280|79.56%|
+|Defiance County, Ohio|38329|79.55%|
+|Van Buren County, Tennessee|6083|79.53%|
+|Emmet County, Iowa|9433|79.52%|
+|Crow Wing County, Minnesota|65879|79.52%|
+|Cumberland County, Virginia|9669|79.52%|
+|Montgomery County, Arkansas|8525|79.51%|
+|Lee County, Iowa|33724|79.48%|
+|Osceola County, Iowa|6168|79.48%|
+|Wyoming County, Pennsylvania|26389|79.47%|
+|Washington County, Rhode Island|129735|79.47%|
+|Dickson County, Tennessee|54000|79.47%|
+|Martin County, Florida|158323|79.46%|
+|Talbot County, Georgia|5837|79.45%|
+|Cook County, Minnesota|5574|79.45%|
+|Burnet County, Texas|48424|79.45%|
+|Butte County, Idaho|2573|79.44%|
+|Cambria County, Pennsylvania|134048|79.44%|
+|Monroe County, Pennsylvania|168128|79.44%|
+|Bond County, Illinois|16804|79.43%|
+|Bristol County, Rhode Island|50672|79.43%|
+|Addison County, Vermont|37306|79.43%|
+|Doniphan County, Kansas|7549|79.39%|
+|Nemaha County, Kansas|10197|79.39%|
+|Frederick County, Maryland|267498|79.39%|
+|Lincoln County, Tennessee|35042|79.39%|
+|Warren County, Illinois|16887|79.38%|
+|Comanche County, Kansas|1809|79.38%|
+|Russell County, Kansas|6747|79.38%|
+|Noble County, Ohio|14166|79.37%|
+|Pamlico County, North Carolina|12293|79.36%|
+|Douglas County, South Dakota|2838|79.36%|
+|Keokuk County, Iowa|10050|79.33%|
+|Grand Traverse County, Michigan|94562|79.32%|
+|Charles County, Maryland|165209|79.31%|
+|Boone County, Kentucky|134599|79.29%|
+|Upshur County, West Virginia|23965|79.29%|
+|Wabaunsee County, Kansas|6881|79.28%|
+|Sheridan County, Montana|3522|79.28%|
+|Pembina County, North Dakota|6912|79.28%|
+|Lafayette County, Wisconsin|16662|79.28%|
+|Franklin County, Maine|29487|79.27%|
+|Monmouth County, New Jersey|642160|79.27%|
+|Oglethorpe County, Georgia|14779|79.26%|
+|Montgomery County, Illinois|28482|79.25%|
+|Audubon County, Iowa|5657|79.25%|
+|Madison County, Montana|8499|79.25%|
+|Calaveras County, California|45349|79.24%|
+|Jasper County, Georgia|14478|79.24%|
+|Cape May County, New Jersey|95488|79.24%|
+|Amelia County, Virginia|13220|79.24%|
+|Teller County, Colorado|24607|79.23%|
+|Cass County, Missouri|106966|79.22%|
+|Belmont County, Ohio|67077|79.22%|
+|Houston County, Tennessee|8238|79.22%|
+|Lincoln County, North Carolina|85670|79.21%|
+|Marion County, Arkansas|16750|79.2%|
+|Towns County, Georgia|12300|79.19%|
+|Otsego County, Michigan|25016|79.19%|
+|Avery County, North Carolina|17747|79.19%|
+|Comal County, Texas|156257|79.18%|
+|Spotsylvania County, Virginia|138493|79.18%|
+|Limestone County, Texas|22252|79.17%|
+|Jackson County, Georgia|73839|79.16%|
+|Greene County, Illinois|12187|79.16%|
+|Person County, North Carolina|38999|79.16%|
+|Carroll County, Ohio|26866|79.16%|
+|Roger Mills County, Oklahoma|3477|79.16%|
+|Wayne County, Mississippi|19824|79.15%|
+|Crawford County, Illinois|18825|79.14%|
+|Monona County, Iowa|8732|79.13%|
+|Blackford County, Indiana|12139|79.12%|
+|Parke County, Indiana|16316|79.12%|
+|Juniata County, Pennsylvania|23607|79.12%|
+|Auglaize County, Ohio|46282|79.11%|
+|Alleghany County, North Carolina|10910|79.1%|
+|Winston County, Alabama|23650|79.09%|
+|Hardin County, Illinois|3700|79.09%|
+|Washington County, Missouri|23791|79.08%|
+|Manitowoc County, Wisconsin|81103|79.08%|
+|Baldwin County, Alabama|227131|79.06%|
+|Saline County, Arkansas|122308|79.06%|
+|Amador County, California|40095|79.06%|
+|Moore County, North Carolina|98618|79.05%|
+|Butler County, Kansas|67404|79.04%|
+|Lewis County, Kentucky|13103|79.04%|
+|Rio Blanco County, Colorado|6495|79.03%|
+|Stark County, Illinois|5436|79.03%|
+|Bland County, Virginia|6278|79.03%|
+|Covington County, Mississippi|18491|79.02%|
+|Lamar County, Georgia|18482|79.01%|
+|Muskegon County, Michigan|175633|79.01%|
+|Los Alamos County, New Mexico|19169|79.01%|
+|Little River County, Arkansas|12104|79.0%|
+|Washington County, Kentucky|11957|79.0%|
+|Amite County, Mississippi|12718|79.0%|
+|Ray County, Missouri|23080|79.0%|
+|Atoka County, Oklahoma|14080|79.0%|
+|Clarke County, Virginia|14726|78.99%|
+|Pushmataha County, Oklahoma|10891|78.98%|
+|Pike County, Arkansas|10234|78.97%|
+|Shiawassee County, Michigan|68203|78.97%|
+|St. Clair County, Missouri|9235|78.97%|
+|Lincoln County, Nevada|4600|78.96%|
+|Garfield County, Washington|2278|78.96%|
+|Hernando County, Florida|192128|78.95%|
+|Aransas County, Texas|24149|78.95%|
+|Middlesex County, Connecticut|164568|78.94%|
+|Valley County, Idaho|11476|78.94%|
+|Guadalupe County, Texas|169477|78.93%|
+|Santa Rosa County, Florida|184345|78.92%|
+|De Witt County, Illinois|15653|78.92%|
+|Union County, Illinois|17259|78.92%|
+|Decatur County, Kansas|2792|78.92%|
+|Bay County, Michigan|104050|78.92%|
+|Hancock County, Mississippi|45911|78.92%|
+|Clay County, Indiana|26397|78.91%|
+|Marshall County, Indiana|46175|78.91%|
+|Johnson County, Tennessee|17912|78.91%|
+|Keith County, Nebraska|8312|78.9%|
+|Lancaster County, South Carolina|94653|78.9%|
+|Carroll County, Virginia|29123|78.89%|
+|Mason County, Illinois|13225|78.88%|
+|Shelby County, Iowa|11750|78.88%|
+|Charlton County, Georgia|12416|78.87%|
+|Ozark County, Missouri|8664|78.87%|
+|Reynolds County, Missouri|6138|78.87%|
+|Effingham County, Illinois|34576|78.86%|
+|James City County, Virginia|77733|78.86%|
+|Wayne County, West Virginia|39337|78.86%|
+|Cleburne County, Alabama|15046|78.85%|
+|Porter County, Indiana|172353|78.84%|
+|Cumberland County, Tennessee|60568|78.82%|
+|Waupaca County, Wisconsin|51769|78.82%|
+|Wright County, Missouri|18244|78.81%|
+|Susquehanna County, Pennsylvania|38892|78.81%|
+|Howard County, Iowa|9456|78.79%|
+|Webster County, Missouri|38978|78.79%|
+|Pointe Coupee Parish, Louisiana|20951|78.77%|
+|Wallace County, Kansas|1529|78.76%|
+|Pierce County, Nebraska|7266|78.75%|
+|Burlington County, New Jersey|460102|78.75%|
+|Bledsoe County, Tennessee|14863|78.74%|
+|Barrow County, Georgia|82138|78.73%|
+|Green County, Wisconsin|37098|78.73%|
+|Jackson County, West Virginia|28011|78.72%|
+|Clay County, Alabama|14184|78.71%|
+|Gulf County, Florida|15205|78.71%|
+|Daviess County, Missouri|8427|78.71%|
+|Roanoke County, Virginia|96303|78.71%|
+|Hot Spring County, Arkansas|33096|78.7%|
+|Bowman County, North Dakota|3024|78.7%|
+|Alfalfa County, Oklahoma|5744|78.7%|
+|Osborne County, Kansas|3512|78.69%|
+|Dixon County, Nebraska|5632|78.69%|
+|Chester County, Pennsylvania|531704|78.69%|
+|Box Elder County, Utah|56891|78.68%|
+|Perry County, Missouri|19007|78.67%|
+|Owen County, Indiana|21280|78.66%|
+|Dakota County, Minnesota|435863|78.66%|
+|Hansford County, Texas|5332|78.66%|
+|Hamilton County, Illinois|8021|78.65%|
+|Harrison County, Iowa|14589|78.65%|
+|Piscataquis County, Maine|16760|78.65%|
+|York County, Maine|210486|78.65%|
+|Clearfield County, Pennsylvania|80667|78.64%|
+|Green Lake County, Wisconsin|18990|78.64%|
+|Wabash County, Indiana|31120|78.63%|
+|Loudon County, Tennessee|54349|78.63%|
+|Stewart County, Tennessee|13569|78.63%|
+|Williams County, Ohio|37026|78.62%|
+|Windsor County, Vermont|57593|78.62%|
+|Holt County, Missouri|4295|78.61%|
+|Yates County, New York|24808|78.61%|
+|McDowell County, West Virginia|19334|78.61%|
+|Franklin County, Florida|12232|78.6%|
+|Lander County, Nevada|5729|78.6%|
+|Hocking County, Ohio|28180|78.59%|
+|Lamar County, Alabama|13929|78.58%|
+|Jefferson County, Mississippi|7286|78.58%|
+|Freestone County, Texas|19478|78.57%|
+|Nelson County, Kentucky|46440|78.56%|
+|Chatham County, North Carolina|75070|78.56%|
+|Gilmer County, West Virginia|7516|78.56%|
+|Gosper County, Nebraska|1811|78.55%|
+|Ochiltree County, Texas|10063|78.55%|
+|Hickman County, Tennessee|24848|78.54%|
+|Polk County, Texas|49372|78.54%|
+|Fauquier County, Virginia|72416|78.54%|
+|Frederick County, Virginia|90287|78.54%|
+|Juneau County, Wisconsin|26595|78.53%|
+|Fulton County, Pennsylvania|14529|78.52%|
+|Crawford County, Wisconsin|16167|78.51%|
+|Stevens County, Washington|46057|78.5%|
+|Judith Basin County, Montana|2004|78.49%|
+|Blanco County, Texas|11313|78.49%|
+|Greene County, Virginia|20374|78.48%|
+|Bingham County, Idaho|47540|78.47%|
+|Lawrence County, Pennsylvania|86311|78.47%|
+|Luce County, Michigan|5520|78.46%|
+|Wayne County, Ohio|116858|78.45%|
+|Richland County, Wisconsin|17353|78.44%|
+|Duchesne County, Utah|19651|78.43%|
+|Overton County, Tennessee|22364|78.4%|
+|Mason County, Michigan|29103|78.39%|
+|Logan County, Ohio|45997|78.39%|
+|Ashe County, North Carolina|26598|78.38%|
+|Lee County, Kentucky|7263|78.37%|
+|Mineral County, Montana|4490|78.37%|
+|Fairfield County, Ohio|157622|78.36%|
+|Wayne County, Illinois|16250|78.35%|
+|Sullivan County, Indiana|20814|78.35%|
+|Chester County, South Carolina|32273|78.34%|
+|Union County, Iowa|12193|78.32%|
+|Clay County, Illinois|13313|78.31%|
+|Morris County, New Jersey|508347|78.31%|
+|Morgan County, Tennessee|21158|78.31%|
+|Big Horn County, Wyoming|11671|78.31%|
+|Chester County, Tennessee|17278|78.3%|
+|Humphreys County, Tennessee|18956|78.3%|
+|Rabun County, Georgia|16731|78.29%|
+|Deuel County, South Dakota|4283|78.29%|
+|Stonewall County, Texas|1358|78.29%|
+|Jefferson Davis Parish, Louisiana|32270|78.28%|
+|Linn County, Missouri|11962|78.28%|
+|Adams County, North Dakota|2237|78.28%|
+|Miller County, Missouri|24643|78.27%|
+|Lewis County, Tennessee|12485|78.27%|
+|Larue County, Kentucky|14768|78.26%|
+|Effingham County, Georgia|63448|78.25%|
+|Brown County, Illinois|6330|78.25%|
+|Merrimack County, New Hampshire|152983|78.25%|
+|Greene County, New York|48026|78.24%|
+|Rutland County, Vermont|60662|78.22%|
+|Thayer County, Nebraska|5053|78.21%|
+|Preble County, Ohio|41027|78.21%|
+|Dickens County, Texas|1569|78.21%|
+|Boundary County, Idaho|11966|78.2%|
+|Barber County, Kansas|4178|78.2%|
+|Columbia County, Wisconsin|58219|78.2%|
+|Morris County, Kansas|5377|78.19%|
+|Rankin County, Mississippi|156052|78.19%|
+|Randolph County, Indiana|24681|78.17%|
+|Osage County, Oklahoma|46140|78.17%|
+|Sharp County, Arkansas|17243|78.16%|
+|Summit County, Utah|42156|78.16%|
+|Schoharie County, New York|29936|78.15%|
+|Dare County, North Carolina|36718|78.15%|
+|Wadena County, Minnesota|14009|78.14%|
+|Ashland County, Ohio|52658|78.14%|
+|Juab County, Utah|11648|78.14%|
+|Franklin County, Texas|10413|78.13%|
+|Caledonia County, Vermont|30402|78.13%|
+|Carroll County, Illinois|15586|78.11%|
+|Perry County, Ohio|35439|78.11%|
+|Schuylkill County, Pennsylvania|143308|78.11%|
+|Panola County, Texas|22583|78.11%|
+|Cheatham County, Tennessee|40878|78.09%|
+|Greene County, Pennsylvania|36248|78.08%|
+|Elk County, Kansas|2466|78.07%|
+|Lincoln County, Kansas|2952|78.07%|
+|Martin County, Kentucky|11394|78.07%|
+|Brantley County, Georgia|18072|78.06%|
+|Louisa County, Iowa|10891|78.06%|
+|Cumberland County, Kentucky|6023|78.06%|
+|Attala County, Mississippi|18025|78.06%|
+|Greene County, Indiana|30924|78.05%|
+|Transylvania County, North Carolina|32979|78.05%|
+|Lancaster County, Virginia|10916|78.05%|
+|Kosciusko County, Indiana|80151|78.03%|
+|Floyd County, Iowa|15672|78.03%|
+|Jackson County, Ohio|32531|78.03%|
+|Calhoun County, Florida|13863|78.01%|
+|Steuben County, Indiana|34379|78.01%|
+|Snyder County, Pennsylvania|39877|78.01%|
+|Rockcastle County, Kentucky|16167|78.0%|
+|Sanpete County, Utah|28458|78.0%|
+|Ashley County, Arkansas|19362|77.99%|
+|Clinton County, Iowa|46589|77.99%|
+|Wilson County, Tennessee|144748|77.99%|
+|Edwards County, Kansas|2911|77.98%|
+|Eaton County, Michigan|108972|77.97%|
+|Colfax County, Nebraska|10608|77.97%|
+|Hancock County, Tennessee|6695|77.97%|
+|Chase County, Nebraska|3694|77.96%|
+|Live Oak County, Texas|11378|77.96%|
+|Itawamba County, Mississippi|23863|77.95%|
+|DeKalb County, Missouri|11639|77.95%|
+|Chesterfield County, Virginia|359798|77.95%|
+|Indian River County, Florida|158002|77.94%|
+|Union County, Indiana|7098|77.94%|
+|Clark County, Kansas|1994|77.94%|
+|Dubuque County, Iowa|98687|77.93%|
+|Pickett County, Tennessee|5021|77.92%|
+|Bastrop County, Texas|94887|77.92%|
+|Jackson County, Michigan|160765|77.91%|
+|Somerset County, New Jersey|343950|77.91%|
+|Morgan County, Georgia|19694|77.88%|
+|Linn County, Iowa|228567|77.88%|
+|Power County, Idaho|7854|77.87%|
+|Trimble County, Kentucky|8502|77.87%|
+|Vermilion Parish, Louisiana|57775|77.87%|
+|Flathead County, Montana|103400|77.87%|
+|Grant County, Oregon|7225|77.87%|
+|Mason County, Washington|64964|77.87%|
+|Fannin County, Georgia|25198|77.86%|
+|Madison County, Missouri|12597|77.86%|
+|Dallas County, Iowa|96604|77.85%|
+|Hot Springs County, Wyoming|4673|77.84%|
+|Burleson County, Texas|17687|77.83%|
+|Montague County, Texas|19850|77.83%|
+|Pickens County, Georgia|32814|77.81%|
+|Richardson County, Nebraska|7893|77.81%|
+|Jackson County, Alabama|52548|77.8%|
+|Herkimer County, New York|60596|77.8%|
+|Jefferson County, Pennsylvania|44491|77.8%|
+|White County, Illinois|13959|77.79%|
+|Lawrence County, Tennessee|43967|77.79%|
+|Carlisle County, Kentucky|4821|77.78%|
+|Smith County, Tennessee|19820|77.78%|
+|Callaway County, Missouri|44449|77.77%|
+|Platte County, Nebraska|34123|77.77%|
+|Refugio County, Texas|6822|77.77%|
+|Dickenson County, Virginia|14256|77.77%|
+|Floyd County, Indiana|79594|77.74%|
+|Aroostook County, Maine|67272|77.74%|
+|O'Brien County, Iowa|14139|77.72%|
+|Yadkin County, North Carolina|37198|77.72%|
+|Clarke County, Alabama|23346|77.71%|
+|York County, Nebraska|14164|77.7%|
+|Ocean County, New Jersey|630057|77.7%|
+|Saratoga County, New York|235010|77.7%|
+|Hampton County, South Carolina|19227|77.7%|
+|Kendall County, Texas|43842|77.7%|
+|Montgomery County, Indiana|37967|77.69%|
+|Fulton County, Illinois|34022|77.68%|
+|Vernon County, Missouri|19831|77.68%|
+|Orleans County, New York|40588|77.68%|
+|Van Wert County, Ohio|28808|77.67%|
+|Wythe County, Virginia|28347|77.67%|
+|Bath County, Kentucky|12680|77.66%|
+|Caldwell County, Missouri|8856|77.66%|
+|Dade County, Missouri|7584|77.66%|
+|Clayton County, Iowa|17173|77.65%|
+|Liberty County, Florida|7987|77.63%|
+|Rice County, Minnesota|66795|77.63%|
+|Brazoria County, Texas|368575|77.63%|
+|Jenkins County, Georgia|8693|77.62%|
+|Columbia County, Oregon|52381|77.61%|
+|Hawkins County, Tennessee|56803|77.61%|
+|Cecil County, Maryland|103370|77.6%|
+|Prentiss County, Mississippi|25022|77.6%|
+|Powder River County, Montana|1759|77.6%|
+|McIntosh County, Oklahoma|19105|77.6%|
+|Bennington County, Vermont|37235|77.6%|
+|Metcalfe County, Kentucky|10275|77.58%|
+|Nelson County, Virginia|14795|77.58%|
+|Cherokee County, Georgia|262155|77.57%|
+|Catahoula Parish, Louisiana|9117|77.57%|
+|Madison County, North Carolina|21269|77.57%|
+|Christian County, Missouri|87824|77.56%|
+|Alexander County, North Carolina|36491|77.56%|
+|Irion County, Texas|1555|77.56%|
+|Lawrence County, Alabama|33089|77.55%|
+|Conecuh County, Alabama|11778|77.54%|
+|Vinton County, Ohio|12853|77.54%|
+|Sawyer County, Wisconsin|17813|77.54%|
+|Fremont County, Iowa|6702|77.53%|
+|Marion County, Tennessee|28679|77.53%|
+|Venango County, Pennsylvania|50810|77.52%|
+|El Dorado County, California|190568|77.51%|
+|Gallia County, Ohio|29369|77.51%|
+|Lincoln County, Montana|19674|77.5%|
+|Lee County, South Carolina|16730|77.49%|
+|Fremont County, Colorado|49007|77.48%|
+|Paulding County, Georgia|165688|77.48%|
+|Martin County, Minnesota|20070|77.48%|
+|Grimes County, Texas|28878|77.48%|
+|Wright County, Iowa|12978|77.47%|
+|Perry County, Illinois|21158|77.46%|
+|St. Lawrence County, New York|108836|77.46%|
+|Appomattox County, Virginia|16039|77.46%|
+|Yancey County, North Carolina|18357|77.45%|
+|Coweta County, Georgia|144928|77.44%|
+|Chautauqua County, Kansas|3394|77.44%|
+|Sweet Grass County, Montana|3690|77.44%|
+|Campbell County, Kentucky|93023|77.43%|
+|Elmore County, Alabama|87146|77.42%|
+|McPherson County, Kansas|30059|77.42%|
+|Henry County, Tennessee|32298|77.42%|
+|Alpine County, California|1344|77.41%|
+|Merrick County, Nebraska|7687|77.41%|
+|McKean County, Pennsylvania|40652|77.4%|
+|Rains County, Texas|12013|77.4%|
+|Orange County, Texas|85045|77.37%|
+|Lawrence County, Mississippi|12055|77.36%|
+|Wyandot County, Ohio|21933|77.36%|
+|Caswell County, North Carolina|22785|77.35%|
+|Tioga County, Pennsylvania|41089|77.35%|
+|Lamb County, Texas|13147|77.35%|
+|Washington County, Virginia|53997|77.34%|
+|Cannon County, Tennessee|14309|77.32%|
+|Cooper County, Missouri|17397|77.3%|
+|Eddy County, North Dakota|2378|77.3%|
+|Phillips County, Colorado|4497|77.29%|
+|La Salle County, Texas|6956|77.29%|
+|Henry County, Indiana|48857|77.28%|
+|Unicoi County, Tennessee|17891|77.28%|
+|Hemphill County, Texas|3450|77.28%|
+|Uintah County, Utah|35488|77.28%|
+|Trempealeau County, Wisconsin|30504|77.28%|
+|Muscatine County, Iowa|43145|77.27%|
+|Sherman County, Nebraska|2986|77.27%|
+|Coos County, New Hampshire|31360|77.27%|
+|Ransom County, North Dakota|5679|77.27%|
+|Stone County, Mississippi|18356|77.26%|
+|Fulton County, Indiana|20400|77.24%|
+|Allen County, Kentucky|20604|77.24%|
+|Richland County, Illinois|15876|77.23%|
+|Huntington County, Indiana|36572|77.23%|
+|Steuben County, New York|94153|77.22%|
+|Bureau County, Illinois|33338|77.21%|
+|Ellis County, Texas|187984|77.21%|
+|Macomb County, Michigan|879123|77.19%|
+|Wayne County, Nebraska|9590|77.19%|
+|Bosque County, Texas|18275|77.17%|
+|Brown County, Ohio|43694|77.15%|
+|Roane County, Tennessee|53313|77.15%|
+|Rooks County, Kansas|4975|77.14%|
+|Adair County, Kentucky|18832|77.14%|
+|Beaver County, Pennsylvania|168260|77.14%|
+|Day County, South Dakota|5487|77.14%|
+|Robertson County, Texas|16839|77.14%|
+|San Juan County, Washington|17631|77.14%|
+|Ontario County, New York|112060|77.13%|
+|Beaver County, Oklahoma|5100|77.13%|
+|Brooke County, West Virginia|22603|77.13%|
+|Grundy County, Illinois|52364|77.12%|
+|Marathon County, Wisconsin|137597|77.12%|
+|Upshur County, Texas|40781|77.11%|
+|Wallowa County, Oregon|7330|77.1%|
+|Zapata County, Texas|13945|77.09%|
+|Brevard County, Florida|601573|77.08%|
+|Vermillion County, Indiana|15477|77.08%|
+|Lafayette County, Arkansas|6373|77.07%|
+|Washakie County, Wyoming|7768|77.07%|
+|Meade County, Kentucky|29735|77.06%|
+|Musselshell County, Montana|4813|77.06%|
+|Socorro County, New Mexico|16605|77.06%|
+|Sequatchie County, Tennessee|15727|77.06%|
+|Washington County, Ohio|59942|77.05%|
+|Wasatch County, Utah|34028|77.05%|
+|Cherokee County, Iowa|11606|77.03%|
+|McIntosh County, North Dakota|2568|77.03%|
+|St. Joseph County, Michigan|60828|77.02%|
+|Newton County, Mississippi|21385|77.01%|
+|Sanders County, Montana|12298|77.01%|
+|Stokes County, North Carolina|44588|76.99%|
+|Johnson County, Indiana|159739|76.97%|
+|Anderson County, Kansas|7800|76.97%|
+|Haywood County, North Carolina|61695|76.96%|
+|Pierce County, Wisconsin|42204|76.96%|
+|Crawford County, Pennsylvania|84495|76.94%|
+|Atascosa County, Texas|48684|76.93%|
+|Neosho County, Kansas|15926|76.91%|
+|Monroe County, Missouri|8643|76.91%|
+|Howard County, Maryland|329248|76.9%|
+|Montgomery County, Pennsylvania|850890|76.9%|
+|Harrison County, West Virginia|66222|76.9%|
+|Essex County, New York|37501|76.87%|
+|Knox County, Nebraska|8434|76.85%|
+|Fayette County, Pennsylvania|129443|76.85%|
+|Phelps County, Nebraska|8972|76.84%|
+|Kimble County, Texas|4295|76.84%|
+|Lake County, Ohio|232202|76.83%|
+|Adams County, Illinois|65878|76.82%|
+|Otsego County, New York|58952|76.82%|
+|Valley County, Montana|7553|76.81%|
+|Schuyler County, New York|17920|76.81%|
+|Chase County, Kansas|2583|76.8%|
+|Lawrence County, Kentucky|16274|76.8%|
+|Delaware County, New York|44644|76.8%|
+|Anne Arundel County, Maryland|584064|76.79%|
+|Meigs County, Tennessee|12622|76.79%|
+|Caldwell County, Kentucky|12641|76.78%|
+|Jackson County, Wisconsin|21004|76.78%|
+|Sauk County, Wisconsin|65428|76.77%|
+|Abbeville County, South Carolina|24374|76.76%|
+|Garfield County, Utah|5061|76.76%|
+|Grainger County, Tennessee|23377|76.75%|
+|Covington County, Alabama|37490|76.74%|
+|Macoupin County, Illinois|45152|76.74%|
+|Lipscomb County, Texas|3138|76.74%|
+|Ward County, Texas|11375|76.74%|
+|Westmoreland County, Virginia|18324|76.74%|
+|Orange County, Indiana|19752|76.73%|
+|Humboldt County, Iowa|9622|76.73%|
+|York County, Pennsylvania|454605|76.73%|
+|Camp County, Texas|12498|76.72%|
+|Benewah County, Idaho|9509|76.71%|
+|Kingfisher County, Oklahoma|15272|76.71%|
+|Greene County, Iowa|8831|76.7%|
+|Putnam County, Georgia|21870|76.69%|
+|Crawford County, Georgia|12159|76.67%|
+|Washington County, Idaho|10425|76.67%|
+|Pike County, Kentucky|58914|76.67%|
+|West Carroll Parish, Louisiana|9959|76.67%|
+|Mecosta County, Michigan|40051|76.67%|
+|Tama County, Iowa|17079|76.66%|
+|Greenwood County, Kansas|6049|76.66%|
+|Idaho County, Idaho|16494|76.65%|
+|Lincoln County, South Dakota|63233|76.64%|
+|Trousdale County, Tennessee|11463|76.64%|
+|Barron County, Wisconsin|46529|76.64%|
+|Box Butte County, Nebraska|10821|76.63%|
+|Autauga County, Alabama|58239|76.62%|
+|Walker County, Alabama|65194|76.61%|
+|Polk County, Minnesota|31303|76.61%|
+|Lincoln County, Mississippi|34910|76.61%|
+|Harrison County, Texas|68674|76.61%|
+|Greene County, Georgia|18461|76.6%|
+|Genesee County, New York|58387|76.6%|
+|Lexington County, South Carolina|291723|76.6%|
+|Baca County, Colorado|3519|76.59%|
+|King George County, Virginia|26597|76.59%|
+|Southampton County, Virginia|18028|76.59%|
+|Perry County, Arkansas|10056|76.58%|
+|Walton County, Georgia|95453|76.58%|
+|DuPage County, Illinois|934094|76.58%|
+|Haskell County, Kansas|3803|76.58%|
+|Outagamie County, Wisconsin|189620|76.58%|
+|Pinal County, Arizona|420625|76.57%|
+|Nevada County, California|102090|76.57%|
+|Nez Perce County, Idaho|41820|76.57%|
+|Oakland County, Michigan|1271983|76.57%|
+|Cheyenne County, Kansas|2647|76.55%|
+|Washington County, New York|61504|76.55%|
+|Emery County, Utah|9839|76.55%|
+|Johnston County, North Carolina|211320|76.54%|
+|Edwards County, Texas|1366|76.54%|
+|Pulaski County, Illinois|5279|76.53%|
+|Cass County, Indiana|37918|76.53%|
+|Sargent County, North Dakota|3839|76.53%|
+|Wheeler County, Georgia|7568|76.52%|
+|Republic County, Kansas|4707|76.52%|
+|Blount County, Tennessee|134042|76.52%|
+|Weber County, Utah|259390|76.52%|
+|Wood County, West Virginia|84678|76.51%|
+|Grady County, Oklahoma|54739|76.5%|
+|McNairy County, Tennessee|25916|76.5%|
+|Kandiyohi County, Minnesota|43504|76.49%|
+|Rockingham County, Virginia|83090|76.49%|
+|Wilcox County, Alabama|10686|76.47%|
+|Gibson County, Indiana|33017|76.47%|
+|Flagler County, Florida|113888|76.45%|
+|Saline County, Nebraska|14395|76.45%|
+|Perry County, Tennessee|8313|76.45%|
+|Lake County, Illinois|714484|76.44%|
+|Randolph County, West Virginia|28150|76.44%|
+|Jackson County, Colorado|1375|76.43%|
+|Terrebonne Parish, Louisiana|110100|76.42%|
+|Kennebec County, Maine|123293|76.42%|
+|Foard County, Texas|1087|76.42%|
+|Monroe County, Mississippi|34448|76.41%|
+|Warren County, New Jersey|109354|76.4%|
+|Seneca County, New York|33900|76.4%|
+|Clarendon County, South Carolina|31613|76.4%|
+|Pend Oreille County, Washington|13302|76.39%|
+|Burleigh County, North Dakota|97895|76.38%|
+|Lamoille County, Vermont|25920|76.38%|
+|Marion County, Alabama|29392|76.37%|
+|Carroll County, Arkansas|28154|76.37%|
+|Grant County, Arkansas|17912|76.37%|
+|Sumner County, Kansas|22603|76.37%|
+|Lane County, Kansas|1504|76.36%|
+|Donley County, Texas|3266|76.36%|
+|Curry County, Oregon|23234|76.34%|
+|Montrose County, Colorado|42328|76.33%|
+|Tuolumne County, California|55243|76.32%|
+|Worcester County, Maryland|52322|76.32%|
+|Union County, Mississippi|27775|76.32%|
+|Whiteside County, Illinois|55932|76.31%|
+|Harrison County, Missouri|8229|76.29%|
+|Fisher County, Texas|3720|76.29%|
+|Winkler County, Texas|7629|76.29%|
+|Cass County, Illinois|13058|76.27%|
+|Kenai Peninsula Borough, Alaska|58711|76.26%|
+|Marion County, Georgia|7563|76.26%|
+|Kane County, Illinois|518648|76.26%|
+|Grant County, Kansas|7430|76.26%|
+|Mower County, Minnesota|39985|76.26%|
+|Franklin County, North Carolina|67598|76.26%|
+|Calhoun County, Texas|20367|76.26%|
+|Swift County, Minnesota|9810|76.24%|
+|Monroe County, West Virginia|12492|76.24%|
+|Mifflin County, Pennsylvania|46156|76.23%|
+|Clay County, Florida|216308|76.21%|
+|Clearwater County, Idaho|8719|76.2%|
+|Elliott County, Kentucky|7414|76.2%|
+|Towner County, North Dakota|2190|76.2%|
+|Aiken County, South Carolina|168045|76.2%|
+|Routt County, Colorado|24899|76.19%|
+|Jackson County, Kansas|13287|76.19%|
+|Phillips County, Kansas|5022|76.19%|
+|Hamilton County, Iowa|15073|76.18%|
+|Olmsted County, Minnesota|160928|76.18%|
+|Iron County, Missouri|9606|76.17%|
+|Millard County, Utah|12860|76.16%|
+|King and Queen County, Virginia|6690|76.16%|
+|Jefferson County, Wisconsin|84808|76.16%|
+|Runnels County, Texas|9887|76.15%|
+|Giles County, Virginia|16764|76.15%|
+|Pickens County, Alabama|19240|76.14%|
+|Madison County, Mississippi|108248|76.14%|
+|Edgefield County, South Carolina|25938|76.14%|
+|White County, Georgia|27886|76.13%|
+|Marquette County, Michigan|66380|76.12%|
+|Cattaraugus County, New York|77211|76.12%|
+|Russell County, Virginia|25932|76.12%|
+|Goshen County, Wyoming|12642|76.12%|
+|Lawrence County, Illinois|15465|76.11%|
+|Bailey County, Texas|6968|76.11%|
+|Gilmer County, Georgia|31047|76.1%|
+|Jefferson County, Illinois|37362|76.1%|
+|Mercer County, Kentucky|22470|76.1%|
+|Douglas County, Nevada|49158|76.1%|
+|Lake County, South Dakota|11358|76.1%|
+|Crawford County, Arkansas|60483|76.09%|
+|Hutchinson County, South Dakota|7412|76.09%|
+|Yankton County, South Dakota|23213|76.09%|
+|Greene County, Tennessee|69926|76.08%|
+|Cass County, Iowa|13158|76.06%|
+|Ohio County, Kentucky|23861|76.06%|
+|Dewey County, Oklahoma|4548|76.06%|
+|Montgomery County, Texas|607999|76.06%|
+|Bonner County, Idaho|46481|76.05%|
+|Nemaha County, Nebraska|7025|76.05%|
+|Prince William County, Virginia|477224|76.04%|
+|Chippewa County, Wisconsin|65877|76.04%|
+|Randolph County, Illinois|30632|76.03%|
+|Fountain County, Indiana|16422|76.03%|
+|Webster County, West Virginia|8415|76.01%|
+|Clark County, Indiana|120185|75.98%|
+|Branch County, Michigan|44677|75.98%|
+|Dinwiddie County, Virginia|28040|75.98%|
+|Polk County, Arkansas|19476|75.95%|
+|Cameron County, Pennsylvania|4596|75.94%|
+|Franklin County, Illinois|38068|75.93%|
+|Kearney County, Nebraska|6639|75.93%|
+|Haskell County, Oklahoma|11711|75.93%|
+|Wilkinson County, Mississippi|8706|75.92%|
+|Summers County, West Virginia|12125|75.92%|
+|Tolland County, Connecticut|150120|75.91%|
+|Prairie County, Arkansas|8306|75.89%|
+|Clermont County, Ohio|207650|75.89%|
+|Halifax County, Virginia|34228|75.89%|
+|Wood County, Wisconsin|74107|75.89%|
+|Grant Parish, Louisiana|22236|75.88%|
+|Pawnee County, Oklahoma|15687|75.88%|
+|Weld County, Colorado|322424|75.87%|
+|Hart County, Kentucky|19194|75.86%|
+|Lewis County, West Virginia|16966|75.86%|
+|Walker County, Georgia|67772|75.85%|
+|Dawson County, Montana|9003|75.85%|
+|Niagara County, New York|212808|75.85%|
+|Bradford County, Pennsylvania|60233|75.85%|
+|Floyd County, Texas|5478|75.84%|
+|Tallapoosa County, Alabama|41284|75.82%|
+|Lewis and Clark County, Montana|70340|75.82%|
+|Canadian County, Oklahoma|151174|75.82%|
+|Oswego County, New York|118019|75.81%|
+|Mitchell County, North Carolina|14951|75.81%|
+|Pittsylvania County, Virginia|60833|75.81%|
+|Kent County, Rhode Island|169345|75.79%|
+|Rockbridge County, Virginia|22663|75.79%|
+|DeSoto County, Mississippi|183220|75.78%|
+|Texas County, Missouri|24866|75.78%|
+|Jefferson County, Tennessee|54358|75.78%|
+|Lyon County, Nevada|58029|75.77%|
+|Putnam County, Indiana|36838|75.76%|
+|Columbiana County, Ohio|102331|75.73%|
+|Fairfield County, South Carolina|21186|75.73%|
+|Huerfano County, Colorado|6787|75.71%|
+|Dukes County, Massachusetts|20277|75.71%|
+|St. Louis County, Minnesota|200311|75.71%|
+|Licking County, Ohio|177454|75.71%|
+|Miami County, Ohio|107899|75.7%|
+|Hoonah-Angoon Census Area, Alaska|2327|75.67%|
+|Jefferson County, Florida|14405|75.63%|
+|Oconee County, South Carolina|77932|75.62%|
+|Union County, South Dakota|16424|75.62%|
+|Washington County, Vermont|59609|75.62%|
+|Cass County, Texas|28692|75.61%|
+|Cullman County, Alabama|87129|75.59%|
+|Gem County, Idaho|18692|75.59%|
+|Pulaski County, Indiana|12496|75.59%|
+|St. Mary's County, Maryland|113209|75.59%|
+|Burke County, North Carolina|87829|75.59%|
+|Colleton County, South Carolina|38520|75.59%|
+|Jones County, North Carolina|9326|75.58%|
+|Amherst County, Virginia|31381|75.58%|
+|Newton County, Missouri|58634|75.56%|
+|Morton County, North Dakota|32916|75.56%|
+|Milam County, Texas|24895|75.56%|
+|Atchison County, Kansas|16382|75.55%|
+|Sandusky County, Ohio|59013|75.55%|
+|Pierce County, Georgia|19644|75.54%|
+|Mackinac County, Michigan|10814|75.54%|
+|Cumberland County, Pennsylvania|257333|75.53%|
+|Saline County, Missouri|23278|75.52%|
+|Wilkes County, North Carolina|66335|75.52%|
+|Clarke County, Iowa|9736|75.51%|
+|Big Stone County, Minnesota|5155|75.51%|
+|Red River County, Texas|11685|75.51%|
+|Warren County, Virginia|40442|75.51%|
+|Portage County, Wisconsin|70378|75.51%|
+|Laramie County, Wyoming|99905|75.51%|
+|Dallas County, Missouri|16946|75.5%|
+|Gregory County, South Dakota|4004|75.49%|
+|Henderson County, Texas|81717|75.49%|
+|Grayson County, Kentucky|26351|75.48%|
+|Creek County, Oklahoma|71879|75.48%|
+|Perry County, Kentucky|28421|75.47%|
+|Marion County, Kentucky|19556|75.45%|
+|Seward County, Nebraska|17605|75.45%|
+|Union County, Tennessee|19597|75.45%|
+|Ouray County, Colorado|4850|75.44%|
+|Scott County, Tennessee|21855|75.43%|
+|Christian County, Illinois|34038|75.42%|
+|Champaign County, Ohio|38678|75.41%|
+|Lincoln County, Kentucky|24314|75.39%|
+|Lewis County, Missouri|10031|75.38%|
+|Columbia County, New York|61587|75.38%|
+|Fond du Lac County, Wisconsin|103890|75.38%|
+|Granville County, North Carolina|60854|75.37%|
+|Johnson County, Texas|177022|75.37%|
+|Reagan County, Texas|3363|75.37%|
+|Scott County, Kentucky|56267|75.36%|
+|Pontotoc County, Mississippi|31136|75.36%|
+|Monroe County, Alabama|20115|75.34%|
+|Madison County, Ohio|43947|75.33%|
+|Natrona County, Wyoming|79382|75.33%|
+|Webster County, Kentucky|12994|75.32%|
+|Blair County, Pennsylvania|123132|75.32%|
+|Starr County, Texas|65568|75.32%|
+|Fayette County, Iowa|19582|75.3%|
+|McMinn County, Tennessee|53065|75.3%|
+|Rio Grande County, Colorado|11476|75.29%|
+|Jay County, Indiana|20570|75.29%|
+|Mingo County, West Virginia|23821|75.28%|
+|Decatur County, Iowa|7718|75.27%|
+|Meade County, South Dakota|29561|75.26%|
+|Sarasota County, Florida|429336|75.25%|
+|Clay County, Kansas|8085|75.25%|
+|Kiowa County, Colorado|1414|75.22%|
+|Lee County, Georgia|32547|75.22%|
+|Sheboygan County, Wisconsin|117528|75.22%|
+|Chippewa County, Michigan|37091|75.21%|
+|Hardin County, Tennessee|26722|75.2%|
+|Johnson County, Kansas|605154|75.19%|
+|Clackamas County, Oregon|418577|75.19%|
+|Williamsburg County, South Carolina|31279|75.19%|
+|Hill County, Texas|35686|75.19%|
+|Placer County, California|400330|75.18%|
+|Walton County, Florida|73456|75.18%|
+|Swain County, North Carolina|14166|75.18%|
+|Anderson County, South Carolina|202223|75.18%|
+|Lewis County, Idaho|3613|75.17%|
+|Carbon County, Montana|10488|75.17%|
+|Pickaway County, Ohio|58458|75.17%|
+|Johnson County, Georgia|9272|75.15%|
+|Howard County, Indiana|83349|75.15%|
+|Adams County, Nebraska|31284|75.15%|
+|Madison County, Illinois|266112|75.14%|
+|Red River Parish, Louisiana|7787|75.14%|
+|Kusilvak Census Area, Alaska|8354|75.13%|
+|Stephens County, Georgia|26641|75.13%|
+|Lavaca County, Texas|20287|75.13%|
+|Carroll County, Tennessee|28370|75.12%|
+|Marion County, Florida|370372|75.11%|
+|Taylor County, Florida|21762|75.11%|
+|Tishomingo County, Mississippi|18945|75.11%|
+|Culpeper County, Virginia|52021|75.11%|
+|Campbell County, Virginia|55656|75.1%|
+|Grafton County, New Hampshire|91025|75.09%|
+|Cleburne County, Arkansas|24848|75.07%|
+|Kinney County, Texas|3199|75.07%|
+|Sumner County, Tennessee|193036|75.06%|
+|Nicholas County, Kentucky|7517|75.05%|
+|Madison County, Texas|13579|75.05%|
+|Perquimans County, North Carolina|13002|75.04%|
+|Yoakum County, Texas|7707|75.04%|
+|Allen Parish, Louisiana|23085|75.03%|
+|Lawrence County, Ohio|58570|75.02%|
+|Richland County, North Dakota|16546|75.01%|
+|Thomas County, Kansas|7902|75.0%|
+|Cumberland County, Maine|300776|75.0%|
+|Otoe County, Nebraska|15916|75.0%|
+|Marion County, West Virginia|56256|74.99%|
+|Daviess County, Indiana|33281|74.97%|
+|Sarpy County, Nebraska|188464|74.97%|
+|Monroe County, Tennessee|46041|74.96%|
+|Coleman County, Texas|7848|74.96%|
+|Maries County, Missouri|8457|74.95%|
+|Logan County, West Virginia|32786|74.94%|
+|Monroe County, Wisconsin|46091|74.94%|
+|Costilla County, Colorado|3517|74.92%|
+|Winona County, Minnesota|49889|74.91%|
+|Catoosa County, Georgia|67579|74.9%|
+|Lee County, Illinois|34373|74.9%|
+|Fentress County, Tennessee|18385|74.9%|
+|Raleigh County, West Virginia|74929|74.9%|
+|Sweetwater County, Wyoming|42459|74.9%|
+|Henderson County, North Carolina|115613|74.88%|
+|Hall County, Texas|2875|74.88%|
+|Barbour County, West Virginia|15600|74.88%|
+|Fleming County, Kentucky|14996|74.87%|
+|Fannin County, Texas|35453|74.86%|
+|Union County, Arkansas|39262|74.84%|
+|Oldham County, Texas|2251|74.84%|
+|Tate County, Mississippi|28123|74.83%|
+|Grant County, Oklahoma|4166|74.83%|
+|Mercer County, Pennsylvania|111216|74.83%|
+|Pecos County, Texas|15202|74.83%|
+|Dodge County, Wisconsin|89274|74.83%|
+|Norfolk County, Massachusetts|720403|74.82%|
+|Surry County, North Carolina|71439|74.82%|
+|Union County, Pennsylvania|43094|74.8%|
+|Chesapeake city, Virginia|247172|74.8%|
+|Hardin County, Iowa|16997|74.79%|
+|Baxter County, Arkansas|41476|74.78%|
+|Noble County, Oklahoma|11020|74.76%|
+|Falls County, Texas|17074|74.76%|
+|Marshall County, Mississippi|34031|74.75%|
+|Williamson County, Illinois|67271|74.74%|
+|Wilkinson County, Georgia|8931|74.73%|
+|Montgomery County, Kansas|31679|74.73%|
+|Wayne County, Missouri|11298|74.73%|
+|Reeves County, Texas|14584|74.73%|
+|Jefferson County, Indiana|33000|74.72%|
+|Tipton County, Tennessee|60868|74.7%|
+|Greenbrier County, West Virginia|33307|74.7%|
+|Sheridan County, Wyoming|30812|74.7%|
+|Claiborne County, Mississippi|9115|74.69%|
+|Bonneville County, Idaho|121771|74.65%|
+|Banks County, Georgia|18061|74.64%|
+|Carter County, Missouri|5365|74.63%|
+|Northumberland County, Pennsylvania|91853|74.63%|
+|Colbert County, Alabama|56789|74.62%|
+|Lake County, Florida|375059|74.62%|
+|Decatur County, Indiana|26466|74.62%|
+|Newberry County, South Carolina|37842|74.62%|
+|Greene County, Alabama|7851|74.61%|
+|Zavala County, Texas|9900|74.61%|
+|Prince of Wales-Hyder Census Area, Alaska|5886|74.59%|
+|Moody County, South Dakota|6335|74.59%|
+|Gila County, Arizona|53211|74.58%|
+|Gallatin County, Kentucky|8694|74.58%|
+|Carbon County, Pennsylvania|64792|74.57%|
+|Marion County, Illinois|37781|74.56%|
+|Sullivan County, New Hampshire|43105|74.56%|
+|Franklin County, Pennsylvania|155592|74.55%|
+|Ohio County, West Virginia|42443|74.55%|
+|Fayette County, Alabama|16365|74.54%|
+|Clinton County, Indiana|33010|74.54%|
+|Bourbon County, Kansas|14410|74.54%|
+|Labette County, Kansas|20222|74.54%|
+|Letcher County, Kentucky|21784|74.54%|
+|Franklin County, Tennessee|42528|74.54%|
+|Montezuma County, Colorado|25916|74.53%|
+|Ogle County, Illinois|51787|74.53%|
+|Marshall County, Oklahoma|15361|74.53%|
+|Kent County, Michigan|654958|74.52%|
+|Etowah County, Alabama|103468|74.51%|
+|Northampton County, Pennsylvania|311359|74.49%|
+|Indiana County, Pennsylvania|83620|74.48%|
+|Palo Pinto County, Texas|28303|74.47%|
+|Marshall County, Iowa|40137|74.46%|
+|Tazewell County, Virginia|40615|74.46%|
+|McKinley County, New Mexico|72946|74.45%|
+|Saluda County, South Carolina|19008|74.45%|
+|Highlands County, Florida|101174|74.44%|
+|Coshocton County, Ohio|36621|74.44%|
+|Graves County, Kentucky|36796|74.43%|
+|Coal County, Oklahoma|5294|74.43%|
+|Henderson County, Tennessee|27800|74.43%|
+|Suwannee County, Florida|43514|74.42%|
+|Appling County, Georgia|18509|74.42%|
+|Buena Vista County, Iowa|20723|74.41%|
+|DeKalb County, Alabama|71554|74.4%|
+|Berrien County, Michigan|154263|74.4%|
+|Portage County, Ohio|161897|74.4%|
+|Love County, Oklahoma|10105|74.4%|
+|Logan County, Illinois|28238|74.39%|
+|Montgomery County, Missouri|11384|74.39%|
+|Huron County, Ohio|58583|74.39%|
+|Canyon County, Idaho|227367|74.38%|
+|Laurel County, Kentucky|62090|74.38%|
+|Delaware County, Oklahoma|40688|74.38%|
+|Livingston County, Illinois|35902|74.37%|
+|Berkshire County, Massachusetts|129089|74.37%|
+|Stanly County, North Carolina|62148|74.37%|
+|Waller County, Texas|55505|74.37%|
+|Lorain County, Ohio|311737|74.36%|
+|Darke County, Ohio|51839|74.35%|
+|Berkeley County, West Virginia|120460|74.35%|
+|Union County, Kentucky|13786|74.34%|
+|Hancock County, Ohio|75139|74.34%|
+|Covington city, Virginia|5716|74.34%|
+|Magoffin County, Kentucky|11818|74.33%|
+|Jackson County, Texas|14971|74.33%|
+|Silver Bow County, Montana|35017|74.32%|
+|Stephens County, Oklahoma|42983|74.32%|
+|Pendleton County, Kentucky|14625|74.3%|
+|Highland County, Ohio|43162|74.3%|
+|Trinity County, Texas|13695|74.3%|
+|Grundy County, Missouri|9901|74.29%|
+|Haines Borough, Alaska|2098|74.27%|
+|Union County, New Mexico|4122|74.27%|
+|Scott County, Arkansas|9928|74.25%|
+|Calhoun County, Michigan|134207|74.24%|
+|Carteret County, North Carolina|67944|74.24%|
+|Lynn County, Texas|5587|74.24%|
+|Lincoln County, Georgia|7686|74.23%|
+|Lumpkin County, Georgia|33188|74.21%|
+|Jackson County, Mississippi|142993|74.21%|
+|Henry County, Virginia|51077|74.21%|
+|San Miguel County, New Mexico|27357|74.2%|
+|York County, South Carolina|276569|74.2%|
+|Clay County, Tennessee|7568|74.19%|
+|Upton County, Texas|3340|74.18%|
+|LaSalle County, Illinois|109986|74.15%|
+|Leake County, Mississippi|21452|74.15%|
+|Hardin County, Ohio|30738|74.15%|
+|Bath County, Virginia|4243|74.14%|
+|Washita County, Oklahoma|11014|74.13%|
+|Perry County, Alabama|8702|74.12%|
+|Cheyenne County, Colorado|1691|74.11%|
+|Chilton County, Alabama|44857|74.09%|
+|Crenshaw County, Alabama|13300|74.09%|
+|LaPorte County, Indiana|112184|74.09%|
+|Brown County, Kansas|9532|74.09%|
+|Mitchell County, Kansas|5884|74.09%|
+|St. Lucie County, Florida|324599|74.08%|
+|Breathitt County, Kentucky|13652|74.08%|
+|Deer Lodge County, Montana|9380|74.08%|
+|Washington County, Texas|35561|74.08%|
+|Talbot County, Maryland|37510|74.07%|
+|Schley County, Georgia|4622|74.06%|
+|McCulloch County, Texas|7676|74.06%|
+|Ross County, Ohio|77205|74.05%|
+|Park County, Wyoming|29664|74.04%|
+|Knox County, Ohio|62399|74.03%|
+|Seneca County, Ohio|55166|74.02%|
+|Jones County, Mississippi|67374|74.01%|
+|Teton County, Montana|6173|74.01%|
+|Nye County, Nevada|50096|74.01%|
+|Benton County, Indiana|8687|74.0%|
+|Dorchester County, South Carolina|160180|74.0%|
+|Jeff Davis County, Georgia|14753|73.99%|
+|Nowata County, Oklahoma|9484|73.99%|
+|Adair County, Iowa|7439|73.98%|
+|Copiah County, Mississippi|28453|73.98%|
+|Franklin County, Kansas|25953|73.94%|
+|Cabarrus County, North Carolina|221200|73.94%|
+|Wilson County, Kansas|8713|73.93%|
+|Douglas County, Wisconsin|44034|73.93%|
+|Screven County, Georgia|14028|73.92%|
+|Henry County, Georgia|236615|73.88%|
+|Cheshire County, New Hampshire|76473|73.87%|
+|Crook County, Oregon|24300|73.87%|
+|Bates County, Missouri|16100|73.86%|
+|Dundy County, Nebraska|1900|73.86%|
+|Jackson County, Indiana|45948|73.84%|
+|Sabine Parish, Louisiana|22377|73.84%|
+|Nobles County, Minnesota|22223|73.83%|
+|Macon County, North Carolina|36532|73.83%|
+|Kootenai County, Idaho|168317|73.82%|
+|Harvey County, Kansas|34006|73.82%|
+|Washington County, Iowa|22525|73.8%|
+|Houghton County, Michigan|37485|73.8%|
+|Carroll County, Missouri|8564|73.8%|
+|Robertson County, Tennessee|72309|73.8%|
+|Ada County, Idaho|485246|73.78%|
+|Penobscot County, Maine|152211|73.78%|
+|Dutchess County, New York|296012|73.78%|
+|Columbia County, Pennsylvania|65013|73.78%|
+|Hart County, Georgia|25808|73.77%|
+|Leon County, Texas|15877|73.77%|
+|Franklin County, Iowa|10056|73.76%|
+|Poweshiek County, Iowa|18628|73.76%|
+|West Baton Rouge Parish, Louisiana|27064|73.75%|
+|Sanborn County, South Dakota|2371|73.75%|
+|Shelby County, Indiana|44825|73.74%|
+|Ouachita County, Arkansas|22858|73.73%|
+|Brown County, Texas|38085|73.73%|
+|Windham County, Vermont|45811|73.73%|
+|Irwin County, Georgia|9615|73.72%|
+|Cherokee County, Kansas|19507|73.72%|
+|Ferry County, Washington|7198|73.72%|
+|Buckingham County, Virginia|16832|73.71%|
+|Galax city, Virginia|6681|73.7%|
+|Cherokee County, Texas|50564|73.69%|
+|Park County, Montana|17072|73.67%|
+|Kemper County, Mississippi|9211|73.66%|
+|Franklin County, Massachusetts|71085|73.65%|
+|Cayuga County, New York|76644|73.65%|
+|Dallas County, Arkansas|6645|73.64%|
+|Gage County, Nebraska|21706|73.64%|
+|Cerro Gordo County, Iowa|43185|73.63%|
+|De Soto Parish, Louisiana|26803|73.63%|
+|Franklin County, Mississippi|7705|73.63%|
+|Carter County, Tennessee|56314|73.63%|
+|Stephenson County, Illinois|44817|73.62%|
+|Santa Fe County, New Mexico|153632|73.62%|
+|McDowell County, North Carolina|44527|73.62%|
+|Mayes County, Oklahoma|39303|73.62%|
+|Yukon-Koyukuk Census Area, Alaska|5433|73.61%|
+|Hughes County, South Dakota|17829|73.61%|
+|Sullivan County, Tennessee|157843|73.59%|
+|Iredell County, North Carolina|183965|73.58%|
+|Searcy County, Arkansas|7872|73.57%|
+|Okfuskee County, Oklahoma|11444|73.56%|
+|Berkeley County, South Carolina|224806|73.56%|
+|Pennington County, South Dakota|108707|73.55%|
+|Bradley County, Arkansas|10597|73.54%|
+|Reno County, Kansas|62071|73.53%|
+|Benton County, Tennessee|15872|73.53%|
+|La Plata County, Colorado|55673|73.52%|
+|Delaware County, Pennsylvania|573883|73.52%|
+|Bryan County, Georgia|43278|73.47%|
+|Hancock County, West Virginia|29223|73.47%|
+|Todd County, Kentucky|12206|73.46%|
+|Harney County, Oregon|7454|73.45%|
+|Madison County, Georgia|29906|73.44%|
+|Cibola County, New Mexico|27284|73.44%|
+|Spartanburg County, South Carolina|322864|73.43%|
+|Ashland County, Wisconsin|16002|73.43%|
+|Bartholomew County, Indiana|81759|73.42%|
+|Elkhart County, Indiana|206314|73.42%|
+|Morgan County, Alabama|122608|73.41%|
+|Sedgwick County, Colorado|2459|73.41%|
+|Sullivan County, Missouri|6045|73.4%|
+|Tyrrell County, North Carolina|3436|73.39%|
+|White Pine County, Nevada|9192|73.38%|
+|Caldwell County, North Carolina|80705|73.38%|
+|Red Willow County, Nebraska|10724|73.37%|
+|Maury County, Tennessee|99011|73.37%|
+|Richmond County, New York|493194|73.36%|
+|Edgar County, Illinois|16998|73.35%|
+|Rutherford County, North Carolina|64592|73.34%|
+|Gray County, Texas|21398|73.34%|
+|Montour County, Pennsylvania|18198|73.32%|
+|Jefferson County, Colorado|580130|73.31%|
+|Montgomery County, Georgia|8701|73.3%|
+|Utah County, Utah|648265|73.3%|
+|Newton County, Georgia|111262|73.29%|
+|Iberville Parish, Louisiana|30651|73.29%|
+|Jack County, Texas|8494|73.29%|
+|Allen County, Indiana|381839|73.27%|
+|Hitchcock County, Nebraska|2630|73.26%|
+|Adams County, Ohio|27564|73.26%|
+|Claiborne County, Tennessee|31958|73.26%|
+|Young County, Texas|17894|73.26%|
+|Rich County, Utah|2507|73.26%|
+|Franklin County, New York|47996|73.25%|
+|Harper County, Kansas|5525|73.24%|
+|Butler County, Kentucky|12413|73.24%|
+|Warren County, New York|65692|73.24%|
+|Clinton County, Pennsylvania|37824|73.24%|
+|Johnson County, Arkansas|25853|73.23%|
+|Pitkin County, Colorado|17471|73.23%|
+|Bleckley County, Georgia|12562|73.23%|
+|Lancaster County, Pennsylvania|550480|73.23%|
+|Kiowa County, Oklahoma|8518|73.22%|
+|Estill County, Kentucky|14157|73.21%|
+|Marshall County, Tennessee|33909|73.21%|
+|Clay County, Kentucky|20484|73.2%|
+|Clarion County, Pennsylvania|37571|73.18%|
+|Hockley County, Texas|21670|73.17%|
+|Gadsden County, Florida|44233|73.16%|
+|Hampshire County, Massachusetts|161810|73.16%|
+|Humboldt County, Nevada|17218|73.16%|
+|Jefferson County, Ohio|65620|73.16%|
+|Johnson County, Nebraska|5298|73.15%|
+|Cowley County, Kansas|34769|73.14%|
+|Benton County, Minnesota|41087|73.14%|
+|Seminole County, Georgia|9108|73.13%|
+|Modoc County, California|8723|73.12%|
+|Saginaw County, Michigan|190540|73.12%|
+|Salem County, New Jersey|64752|73.09%|
+|Clark County, Kentucky|36716|73.06%|
+|Lafayette County, Missouri|32752|73.06%|
+|Harmon County, Oklahoma|2540|73.06%|
+|Clay County, Iowa|16410|73.05%|
+|Morrow County, Oregon|11964|73.04%|
+|Caroline County, Maryland|33234|73.03%|
+|Trumbull County, Ohio|202199|73.03%|
+|Laurens County, South Carolina|67148|73.03%|
+|Floyd County, Kentucky|36127|73.02%|
+|Noxubee County, Mississippi|10410|73.01%|
+|Berks County, Pennsylvania|426967|73.01%|
+|Hancock County, Georgia|8652|72.99%|
+|Logan County, Arkansas|21299|72.96%|
+|Cloud County, Kansas|9037|72.95%|
+|Dunn County, North Dakota|4054|72.95%|
+|Ulster County, New York|181862|72.94%|
+|Shenandoah County, Virginia|44037|72.94%|
+|Polk County, Missouri|31541|72.93%|
+|Des Moines County, Iowa|39069|72.92%|
+|Yellowstone County, Montana|163593|72.91%|
+|Henry County, Missouri|21884|72.9%|
+|Josephine County, Oregon|87686|72.9%|
+|Beaufort County, South Carolina|186007|72.9%|
+|St. Helena Parish, Louisiana|10881|72.89%|
+|Island County, Washington|85938|72.87%|
+|Wilcox County, Georgia|8841|72.86%|
+|Ashtabula County, Ohio|97869|72.86%|
+|Lonoke County, Arkansas|73824|72.84%|
+|Dade County, Georgia|16313|72.84%|
+|Beaufort County, North Carolina|44898|72.84%|
+|Richmond County, Virginia|8902|72.84%|
+|Blaine County, Idaho|23868|72.83%|
+|Randolph County, North Carolina|143735|72.83%|
+|Moffat County, Colorado|13240|72.82%|
+|Shoshone County, Idaho|13124|72.81%|
+|Cedar County, Missouri|14184|72.81%|
+|Marion County, Texas|9748|72.81%|
+|Schuyler County, Missouri|4094|72.8%|
+|Grant County, New Mexico|28178|72.8%|
+|Haskell County, Texas|5420|72.8%|
+|San Augustine County, Texas|7964|72.8%|
+|Kimball County, Nebraska|3583|72.76%|
+|Pasco County, Florida|551598|72.74%|
+|Randolph County, Arkansas|18442|72.73%|
+|Barry County, Missouri|34648|72.73%|
+|Bertie County, North Carolina|18105|72.73%|
+|Marshall County, Alabama|97179|72.72%|
+|Erie County, Ohio|75560|72.72%|
+|Pratt County, Kansas|9266|72.71%|
+|Powell County, Kentucky|13050|72.71%|
+|Knott County, Kentucky|14506|72.7%|
+|Graham County, Arizona|38145|72.68%|
+|Boone County, Arkansas|37445|72.67%|
+|Nevada County, Arkansas|8340|72.67%|
+|Greer County, Oklahoma|5548|72.67%|
+|Titus County, Texas|31327|72.65%|
+|Sampson County, North Carolina|59468|72.64%|
+|Johnston County, Oklahoma|10446|72.64%|
+|Horry County, South Carolina|344865|72.63%|
+|Washington County, Oklahoma|52382|72.62%|
+|Genesee County, Michigan|406400|72.59%|
+|Lewis County, Washington|81214|72.59%|
+|Pittsburg County, Oklahoma|43836|72.58%|
+|Lake County, Indiana|495925|72.56%|
+|Holmes County, Florida|19622|72.5%|
+|Bannock County, Idaho|86362|72.5%|
+|Allen County, Kansas|12557|72.5%|
+|Tuscarawas County, Ohio|93025|72.5%|
+|Surry County, Virginia|6563|72.5%|
+|Shelby County, Missouri|6087|72.49%|
+|Rhea County, Tennessee|32723|72.49%|
+|York County, Virginia|69635|72.49%|
+|Dent County, Missouri|14585|72.48%|
+|Giles County, Tennessee|30197|72.48%|
+|Audrain County, Missouri|25223|72.47%|
+|Talladega County, Alabama|81850|72.46%|
+|Manatee County, Florida|394824|72.46%|
+|Logan County, Kentucky|27319|72.46%|
+|Muskingum County, Ohio|86346|72.45%|
+|Davidson County, North Carolina|168002|72.44%|
+|Wise County, Virginia|36531|72.44%|
+|Scott County, Iowa|174170|72.43%|
+|San Saba County, Texas|5775|72.43%|
+|Green County, Kentucky|11141|72.42%|
+|Henry County, Kentucky|15691|72.41%|
+|Lebanon County, Pennsylvania|142486|72.41%|
+|Clallam County, Washington|76727|72.41%|
+|Greeley County, Kansas|1257|72.4%|
+|Eureka County, Nevada|1603|72.4%|
+|Butler County, Alabama|19181|72.39%|
+|Montgomery County, New York|49539|72.39%|
+|Payette County, Idaho|24928|72.38%|
+|Seward County, Kansas|22223|72.35%|
+|Yamhill County, Oregon|107024|72.35%|
+|Crawford County, Missouri|23204|72.33%|
+|Twin Falls County, Idaho|89128|72.32%|
+|Chickasaw County, Mississippi|17100|72.3%|
+|Burke County, Georgia|24231|72.27%|
+|Lee County, Mississippi|83388|72.26%|
+|Crawford County, Iowa|16555|72.25%|
+|Southeast Fairbanks Census Area, Alaska|6849|72.24%|
+|Gillespie County, Texas|26730|72.21%|
+|Mahoning County, Ohio|229044|72.19%|
+|Clinton County, Ohio|42046|72.17%|
+|Bracken County, Kentucky|8394|72.16%|
+|Grant County, Wisconsin|52210|72.16%|
+|Prowers County, Colorado|11966|72.15%|
+|Tattnall County, Georgia|23211|72.15%|
+|Miami County, Indiana|36100|72.15%|
+|Sangamon County, Illinois|196759|72.14%|
+|Madison County, Nebraska|35553|72.14%|
+|Shelby County, Ohio|48307|72.14%|
+|Hood River County, Oregon|23915|72.13%|
+|DeWitt County, Texas|19834|72.12%|
+|Salem city, Virginia|25335|72.12%|
+|Yavapai County, Arizona|233789|72.11%|
+|Yuma County, Colorado|9944|72.11%|
+|Scotts Bluff County, Nebraska|36229|72.11%|
+|Mecklenburg County, Virginia|30347|72.09%|
+|Kanawha County, West Virginia|181953|72.09%|
+|Mesa County, Colorado|154685|72.08%|
+|Grant County, Indiana|66802|72.08%|
+|Hickman County, Kentucky|4529|72.07%|
+|St. Louis County, Missouri|1001982|72.07%|
+|Jackson County, Florida|48067|72.06%|
+|West Feliciana Parish, Louisiana|15334|72.06%|
+|Clay County, Minnesota|64975|72.06%|
+|Chautauqua County, New York|128042|72.06%|
+|Guernsey County, Ohio|38542|72.06%|
+|Salt Lake County, Utah|1173331|72.06%|
+|Brown County, South Dakota|38471|72.05%|
+|Clinton County, New York|80095|72.04%|
+|Lycoming County, Pennsylvania|114274|72.04%|
+|Rockingham County, North Carolina|90903|71.99%|
+|Walworth County, South Dakota|5355|71.99%|
+|Putnam County, Florida|73147|71.98%|
+|Clay County, Missouri|250134|71.98%|
+|Montgomery County, North Carolina|25891|71.98%|
+|Teton County, Idaho|11490|71.97%|
+|Pope County, Arkansas|63234|71.96%|
+|Minidoka County, Idaho|21393|71.96%|
+|Rowan County, North Carolina|145784|71.96%|
+|Woods County, Oklahoma|8731|71.96%|
+|Cherokee County, South Carolina|56204|71.95%|
+|Klickitat County, Washington|22478|71.95%|
+|Antelope County, Nebraska|6310|71.94%|
+|Echols County, Georgia|3691|71.93%|
+|Eastland County, Texas|17785|71.93%|
+|Delta County, Colorado|31133|71.91%|
+|Cheyenne County, Nebraska|9575|71.91%|
+|Owyhee County, Idaho|11815|71.9%|
+|Pettis County, Missouri|42919|71.89%|
+|Clinch County, Georgia|6737|71.88%|
+|Vermilion County, Illinois|74953|71.88%|
+|Baylor County, Texas|3491|71.87%|
+|Northampton County, North Carolina|17917|71.86%|
+|Winston County, Mississippi|17846|71.85%|
+|Rock County, Wisconsin|163522|71.85%|
+|Ellis County, Oklahoma|3813|71.84%|
+|Chaffee County, Colorado|19436|71.82%|
+|Sierra County, New Mexico|11512|71.81%|
+|Wolfe County, Kentucky|6666|71.8%|
+|Okeechobee County, Florida|39716|71.79%|
+|Okmulgee County, Oklahoma|37046|71.79%|
+|Sierra County, California|3079|71.78%|
+|Scott County, Indiana|24290|71.78%|
+|Pottawattamie County, Iowa|93571|71.78%|
+|Cole County, Missouri|77412|71.78%|
+|Hardeman County, Tennessee|25612|71.78%|
+|Randall County, Texas|139176|71.78%|
+|Johnson County, Wyoming|8457|71.77%|
+|Marengo County, Alabama|19397|71.76%|
+|Meade County, Kansas|4089|71.76%|
+|Fairfax city, Virginia|23980|71.76%|
+|Caldwell County, Texas|45286|71.74%|
+|Tillman County, Oklahoma|7070|71.73%|
+|Avoyelles Parish, Louisiana|39880|71.72%|
+|Franklin County, Alabama|32034|71.7%|
+|Lake County, Montana|31030|71.7%|
+|Beadle County, South Dakota|18959|71.7%|
+|Le Flore County, Oklahoma|48436|71.68%|
+|Randolph County, Missouri|24880|71.67%|
+|Madison County, Alabama|382149|71.65%|
+|Platte County, Missouri|105189|71.65%|
+|Columbia County, Arkansas|22947|71.64%|
+|Powell County, Montana|6955|71.64%|
+|Columbia County, Washington|3969|71.64%|
+|Gooding County, Idaho|15422|71.63%|
+|Butler County, Ohio|387830|71.63%|
+|Woodford County, Kentucky|26758|71.6%|
+|Hamilton County, Florida|13973|71.59%|
+|Kingman County, Kansas|7495|71.59%|
+|Windham County, Connecticut|116503|71.57%|
+|Boyle County, Kentucky|30469|71.57%|
+|Crosby County, Texas|5265|71.57%|
+|Walworth County, Wisconsin|105945|71.57%|
+|Jefferson County, Oregon|24232|71.56%|
+|Broomfield County, Colorado|72697|71.55%|
+|Calcasieu Parish, Louisiana|212646|71.55%|
+|Kent County, Delaware|180078|71.54%|
+|Bartow County, Georgia|107868|71.54%|
+|St. Joseph County, Indiana|272049|71.53%|
+|Allegany County, Maryland|68684|71.53%|
+|Lawrence County, Missouri|38123|71.53%|
+|Calhoun County, West Virginia|6420|71.53%|
+|Union County, Florida|16141|71.52%|
+|Barnwell County, South Carolina|20801|71.52%|
+|Pike County, Missouri|18052|71.51%|
+|Coke County, Texas|3288|71.51%|
+|Greenville County, South Carolina|519178|71.5%|
+|Dawson County, Texas|12371|71.5%|
+|Calhoun County, Alabama|116425|71.49%|
+|Lincoln County, Idaho|5184|71.49%|
+|Kenton County, Kentucky|168264|71.46%|
+|Murray County, Georgia|39853|71.45%|
+|Holt County, Nebraska|10175|71.45%|
+|Presidio County, Texas|6328|71.45%|
+|Lyon County, Minnesota|25477|71.44%|
+|Caddo County, Oklahoma|27253|71.43%|
+|Stevens County, Minnesota|9669|71.42%|
+|Custer County, Nebraska|10625|71.41%|
+|Columbus County, North Carolina|51474|71.4%|
+|Morgan County, Illinois|33189|71.38%|
+|Columbia County, Florida|69265|71.37%|
+|Carbon County, Utah|20208|71.37%|
+|Shelby County, Texas|24254|71.36%|
+|Grays Harbor County, Washington|74737|71.35%|
+|Inyo County, California|18804|71.34%|
+|Brunswick County, Virginia|16044|71.34%|
+|Hardy County, West Virginia|14269|71.34%|
+|Polk County, Iowa|488871|71.33%|
+|Petersburg Borough, Alaska|3368|71.32%|
+|Chippewa County, Minnesota|12509|71.32%|
+|Baker County, Oregon|16539|71.32%|
+|Codington County, South Dakota|28289|71.31%|
+|Webster County, Iowa|37114|71.29%|
+|Pulaski County, Kentucky|64717|71.29%|
+|Stearns County, Minnesota|157638|71.29%|
+|Crowley County, Colorado|6018|71.28%|
+|Acadia Parish, Louisiana|58200|71.28%|
+|Pottawatomie County, Oklahoma|72331|71.28%|
+|Bladen County, North Carolina|30105|71.27%|
+|Geneva County, Alabama|26604|71.26%|
+|Warren County, Tennessee|40801|71.26%|
+|Lauderdale County, Alabama|93342|71.22%|
+|Chesterfield County, South Carolina|43655|71.22%|
+|Kitsap County, Washington|273072|71.22%|
+|Franklin County, Arkansas|17159|71.21%|
+|Deschutes County, Oregon|194964|71.21%|
+|Galveston County, Texas|347084|71.21%|
+|Orange County, New York|398277|71.2%|
+|Benton County, Washington|204551|71.2%|
+|Woodruff County, Arkansas|6333|71.19%|
+|Fayette County, Indiana|23393|71.17%|
+|Shelby County, Kentucky|47523|71.17%|
+|Elko County, Nevada|53420|71.16%|
+|Pickens County, South Carolina|129617|71.15%|
+|Williamson County, Texas|591759|71.15%|
+|Beltrami County, Minnesota|46033|71.14%|
+|Hidalgo County, New Mexico|4214|71.14%|
+|Lawrence County, Arkansas|16292|71.13%|
+|Plumas County, California|19631|71.13%|
+|Atchison County, Missouri|5312|71.13%|
+|Kidder County, North Dakota|2397|71.13%|
+|Bienville Parish, Louisiana|13130|71.12%|
+|DeSoto County, Florida|34027|71.11%|
+|Catawba County, North Carolina|159852|71.11%|
+|Tippah County, Mississippi|21877|71.08%|
+|Midland County, Texas|166964|71.08%|
+|Stanton County, Kansas|2088|71.07%|
+|Jasper County, South Carolina|28363|71.07%|
+|Swisher County, Texas|7055|71.06%|
+|San Juan County, New Mexico|122912|71.03%|
+|Logan County, Colorado|21765|71.0%|
+|Uvalde County, Texas|24918|70.99%|
+|Madison County, Indiana|130037|70.98%|
+|Suffolk city, Virginia|93268|70.98%|
+|Skagit County, Washington|128228|70.97%|
+|Oneida County, New York|232034|70.96%|
+|Jim Wells County, Texas|39203|70.96%|
+|Haralson County, Georgia|29685|70.93%|
+|Johnson County, Kentucky|22794|70.93%|
+|Strafford County, New Hampshire|130598|70.93%|
+|Motley County, Texas|1269|70.92%|
+|St. Bernard Parish, Louisiana|43821|70.91%|
+|Carter County, Montana|1349|70.9%|
+|Douglas County, Oregon|110680|70.9%|
+|Macon County, Illinois|104331|70.89%|
+|Warren County, North Carolina|18889|70.89%|
+|Mohave County, Arizona|211274|70.88%|
+|Independence County, Arkansas|37796|70.88%|
+|Lee County, Florida|752251|70.88%|
+|Harrison County, Kentucky|18690|70.88%|
+|Sequoyah County, Oklahoma|39652|70.87%|
+|Volusia County, Florida|548783|70.84%|
+|Morris County, Texas|11988|70.83%|
+|Grant County, Kentucky|24918|70.81%|
+|Livingston County, Missouri|15001|70.79%|
+|Navajo County, Arizona|106609|70.78%|
+|Tangipahoa Parish, Louisiana|132492|70.78%|
+|Hillsborough County, New Hampshire|420504|70.78%|
+|Navarro County, Texas|51908|70.78%|
+|Mariposa County, California|17225|70.74%|
+|Stark County, Ohio|374712|70.74%|
+|Rock Island County, Illinois|144694|70.73%|
+|Collier County, Florida|372797|70.68%|
+|Blaine County, Oklahoma|8799|70.66%|
+|Heard County, Georgia|11440|70.65%|
+|Lee County, Virginia|22482|70.62%|
+|Morehouse Parish, Louisiana|25852|70.61%|
+|Erie County, Pennsylvania|271903|70.61%|
+|Archuleta County, Colorado|13267|70.6%|
+|New London County, Connecticut|269131|70.6%|
+|Russell County, Kentucky|17909|70.6%|
+|Howell County, Missouri|39753|70.58%|
+|Murray County, Oklahoma|13874|70.57%|
+|Macon County, Tennessee|24954|70.57%|
+|Chemung County, New York|84456|70.56%|
+|Colfax County, New Mexico|12406|70.55%|
+|Cochise County, Arizona|125092|70.54%|
+|Concordia Parish, Louisiana|18989|70.54%|
+|McCreary County, Kentucky|17044|70.53%|
+|Neshoba County, Mississippi|29153|70.53%|
+|Manassas city, Virginia|42596|70.53%|
+|La Paz County, Arizona|16845|70.52%|
+|Saguache County, Colorado|6369|70.52%|
+|Racine County, Wisconsin|197379|70.52%|
+|Cortland County, New York|46984|70.51%|
+|McCurtain County, Oklahoma|31112|70.5%|
+|Carbon County, Wyoming|14714|70.5%|
+|Bee County, Texas|31191|70.49%|
+|New Castle County, Delaware|567769|70.46%|
+|Sevier County, Tennessee|98088|70.46%|
+|Woodbury County, Iowa|105102|70.45%|
+|Gilliam County, Oregon|1954|70.45%|
+|Anderson County, Tennessee|76683|70.45%|
+|Howard County, Texas|34620|70.44%|
+|Snohomish County, Washington|820024|70.42%|
+|Pershing County, Nevada|6668|70.41%|
+|Atkinson County, Georgia|8269|70.4%|
+|Hill County, Montana|16297|70.4%|
+|Warren County, Mississippi|45141|70.39%|
+|Cherokee County, Oklahoma|47307|70.39%|
+|Worcester County, Massachusetts|856858|70.38%|
+|Kankakee County, Illinois|108104|70.36%|
+|St. Francois County, Missouri|67168|70.35%|
+|Denton County, Texas|885012|70.34%|
+|Asotin County, Washington|22285|70.34%|
+|Matagorda County, Texas|36323|70.33%|
+|Appanoose County, Iowa|12310|70.32%|
+|Calhoun County, Mississippi|13420|70.31%|
+|Jackson County, Arkansas|16878|70.3%|
+|Buffalo County, Nebraska|49840|70.3%|
+|Sutton County, Texas|3417|70.29%|
+|Garfield County, Colorado|61221|70.27%|
+|Lincoln County, Nebraska|34906|70.23%|
+|Allegheny County, Pennsylvania|1246116|70.23%|
+|Tallahatchie County, Mississippi|12917|70.22%|
+|Winn Parish, Louisiana|13875|70.2%|
+|Carroll County, Georgia|118402|70.18%|
+|Colonial Heights city, Virginia|18127|70.17%|
+|Cimarron County, Oklahoma|2271|70.15%|
+|DeKalb County, Tennessee|19875|70.15%|
+|Craig County, Oklahoma|14172|70.14%|
+|Fairfax County, Virginia|1146825|70.14%|
+|Hughes County, Oklahoma|13406|70.13%|
+|Clay County, Georgia|2883|70.12%|
+|Bacon County, Georgia|11163|70.11%|
+|Nome Census Area, Alaska|10070|70.1%|
+|Lea County, New Mexico|72743|70.1%|
+|Franklin County, Georgia|23256|70.09%|
+|Androscoggin County, Maine|110378|70.09%|
+|Daviess County, Kentucky|102488|70.08%|
+|Custer County, Montana|11968|70.05%|
+|Greene County, Ohio|167043|70.05%|
+|Hidalgo County, Texas|865677|70.05%|
+|Charles Mix County, South Dakota|9346|70.03%|
+|Wood County, Ohio|131930|70.02%|
+|Yell County, Arkansas|20489|69.99%|
+|Adams County, Colorado|514969|69.96%|
+|Crawford County, Ohio|41939|69.96%|
+|Fremont County, Wyoming|39434|69.96%|
+|Shawnee County, Kansas|179053|69.95%|
+|Camden County, New Jersey|521194|69.95%|
+|Fulton County, New York|53588|69.94%|
+|Lincoln County, Oregon|49866|69.93%|
+|Knox County, Illinois|50193|69.92%|
+|Dawson County, Nebraska|24031|69.9%|
+|Sherman County, Texas|2357|69.9%|
+|Albemarle County, Virginia|111438|69.9%|
+|Wayne County, Indiana|66588|69.87%|
+|Winnebago County, Wisconsin|171304|69.87%|
+|Cape Girardeau County, Missouri|81086|69.85%|
+|Garza County, Texas|5734|69.84%|
+|Darlington County, South Carolina|63433|69.83%|
+|Dillingham Census Area, Alaska|4899|69.82%|
+|Scott County, Mississippi|28062|69.82%|
+|Collin County, Texas|1039812|69.82%|
+|Maverick County, Texas|57769|69.82%|
+|Chowan County, North Carolina|13796|69.81%|
+|Page County, Virginia|23734|69.8%|
+|Stutsman County, North Dakota|21678|69.79%|
+|Las Animas County, Colorado|14531|69.77%|
+|Quitman County, Georgia|2249|69.76%|
+|Pike County, Ohio|27271|69.76%|
+|Summit County, Ohio|540567|69.76%|
+|Pulaski County, Virginia|33893|69.74%|
+|Niobrara County, Wyoming|2486|69.74%|
+|Hoke County, North Carolina|52169|69.73%|
+|Bamberg County, South Carolina|13525|69.73%|
+|Hudspeth County, Texas|3322|69.73%|
+|Meriwether County, Georgia|20659|69.71%|
+|Nottoway County, Virginia|15667|69.69%|
+|Stevens County, Kansas|5320|69.66%|
+|Stoddard County, Missouri|28812|69.66%|
+|Hall County, Georgia|201703|69.65%|
+|Houston County, Texas|22288|69.63%|
+|Saline County, Kansas|54378|69.62%|
+|Cooke County, Texas|41215|69.61%|
+|Smith County, Texas|231429|69.61%|
+|Ramsey County, North Dakota|11638|69.58%|
+|Owsley County, Kentucky|4094|69.56%|
+|White County, Arkansas|77075|69.55%|
+|Harlan County, Kentucky|26921|69.55%|
+|Montgomery County, Iowa|10327|69.54%|
+|Custer County, Oklahoma|28564|69.54%|
+|Brown County, Wisconsin|267364|69.54%|
+|Laclede County, Missouri|35898|69.53%|
+|Pinellas County, Florida|957989|69.5%|
+|Erie County, New York|949715|69.49%|
+|Scioto County, Ohio|74392|69.49%|
+|Rawlins County, Kansas|2531|69.48%|
+|Bergen County, New Jersey|952979|69.48%|
+|Hunt County, Texas|98783|69.47%|
+|Franklin Parish, Louisiana|19964|69.46%|
+|Anderson County, Texas|58133|69.46%|
+|Kenosha County, Wisconsin|168743|69.46%|
+|Minnehaha County, South Dakota|194884|69.43%|
+|Crockett County, Tennessee|14012|69.43%|
+|Monroe County, Kentucky|11269|69.41%|
+|Chambers County, Alabama|34834|69.4%|
+|Eddy County, New Mexico|61096|69.4%|
+|Hopkins County, Kentucky|45432|69.39%|
+|Wayne County, Kentucky|19743|69.39%|
+|Kent County, Maryland|19335|69.38%|
+|McLean County, Illinois|171455|69.37%|
+|Luzerne County, Pennsylvania|324825|69.37%|
+|Coos County, Oregon|64619|69.35%|
+|Fairfield County, Connecticut|956446|69.34%|
+|Cochran County, Texas|2553|69.34%|
+|Tripp County, South Dakota|5615|69.33%|
+|Hendry County, Florida|39439|69.31%|
+|Baltimore County, Maryland|850702|69.31%|
+|Churchill County, Nevada|25077|69.3%|
+|Dunn County, Wisconsin|45254|69.29%|
+|Robertson County, Kentucky|2196|69.28%|
+|Calloway County, Kentucky|37291|69.25%|
+|Telfair County, Georgia|12860|69.24%|
+|Cascade County, Montana|84178|69.24%|
+|Butts County, Georgia|24950|69.23%|
+|Oregon County, Missouri|8891|69.22%|
+|Richland County, Montana|11375|69.22%|
+|Andrews County, Texas|18184|69.22%|
+|Franklin County, Washington|95313|69.22%|
+|Berrien County, Georgia|18195|69.21%|
+|Gwinnett County, Georgia|948505|69.21%|
+|Simpson County, Kentucky|19324|69.21%|
+|Alamance County, North Carolina|169185|69.21%|
+|Worth County, Georgia|20824|69.2%|
+|Douglas County, Georgia|143520|69.19%|
+|Hawaii County, Hawaii|200468|69.19%|
+|Gonzales County, Texas|19720|69.19%|
+|Beckham County, Oklahoma|22349|69.18%|
+|Cleveland County, North Carolina|98898|69.17%|
+|Wharton County, Texas|41602|69.16%|
+|Lassen County, California|32949|69.15%|
+|McCracken County, Kentucky|67394|69.15%|
+|Lunenburg County, Virginia|11982|69.15%|
+|Madison County, Florida|18051|69.12%|
+|Mason County, Kentucky|17103|69.11%|
+|Woodward County, Oklahoma|20591|69.11%|
+|Logan County, Kansas|2777|69.09%|
+|Barton County, Missouri|11712|69.09%|
+|Dallam County, Texas|7135|69.08%|
+|Drew County, Arkansas|17511|69.07%|
+|Wheatland County, Montana|2082|69.07%|
+|Onondaga County, New York|474621|69.07%|
+|Knox County, Indiana|36362|69.06%|
+|Jackson Parish, Louisiana|15214|69.06%|
+|St. Clair County, Illinois|258597|69.05%|
+|Washington County, Utah|176533|69.05%|
+|Dodge County, Georgia|20089|69.04%|
+|Clark County, Ohio|136032|69.04%|
+|Hamblen County, Tennessee|64184|69.04%|
+|Benton County, Arkansas|278774|69.02%|
+|Stark County, North Dakota|32710|69.02%|
+|Page County, Iowa|15250|69.01%|
+|Smyth County, Virginia|29960|69.01%|
+|Panola County, Mississippi|33300|69.0%|
+|Wayne County, Utah|2500|69.0%|
+|Brooks County, Georgia|16254|68.98%|
+|Elbert County, Georgia|19453|68.98%|
+|Mahaska County, Iowa|22132|68.96%|
+|Cocke County, Tennessee|35896|68.96%|
+|Peoria County, Illinois|182439|68.94%|
+|Karnes County, Texas|14823|68.94%|
+|Davison County, South Dakota|19944|68.93%|
+|Mercer County, West Virginia|59892|68.92%|
+|Jefferson County, Nebraska|7213|68.88%|
+|Alcorn County, Mississippi|34964|68.86%|
+|Ector County, Texas|161258|68.86%|
+|Seminole County, Oklahoma|23798|68.85%|
+|Grayson County, Texas|134205|68.84%|
+|Real County, Texas|2852|68.83%|
+|Walla Walla County, Washington|62168|68.83%|
+|Harding County, South Dakota|1179|68.82%|
+|Lake County, California|67749|68.8%|
+|Schenectady County, New York|157515|68.79%|
+|Tom Green County, Texas|119048|68.78%|
+|Douglas County, Washington|42622|68.78%|
+|Howard County, Arkansas|12894|68.77%|
+|Rush County, Indiana|16706|68.77%|
+|Dawes County, Nebraska|8383|68.77%|
+|Quay County, New Mexico|8675|68.77%|
+|Jerome County, Idaho|24081|68.75%|
+|Riverside County, California|2409331|68.74%|
+|Atlantic County, New Jersey|273865|68.74%|
+|Taney County, Missouri|55854|68.73%|
+|Marion County, Ohio|65515|68.72%|
+|Kalamazoo County, Michigan|261280|68.71%|
+|Thurston County, Washington|290642|68.71%|
+|Washington County, Colorado|4834|68.7%|
+|Cobb County, Georgia|762500|68.7%|
+|Marion County, Missouri|28564|68.69%|
+|Del Norte County, California|27655|68.68%|
+|Bedford County, Tennessee|49754|68.68%|
+|Lincoln County, Colorado|5630|68.66%|
+|Clay County, Mississippi|18768|68.65%|
+|Wheeler County, Oregon|1477|68.63%|
+|Boyd County, Kentucky|48447|68.61%|
+|Cowlitz County, Washington|109457|68.6%|
+|Larimer County, Colorado|354670|68.59%|
+|Jefferson County, Oklahoma|5491|68.59%|
+|Hopkins County, Texas|36666|68.59%|
+|Arkansas County, Arkansas|17273|68.58%|
+|Cassia County, Idaho|24469|68.58%|
+|Santa Cruz County, Arizona|47463|68.54%|
+|Garland County, Arkansas|99694|68.54%|
+|Cuming County, Nebraska|9035|68.54%|
+|Carroll County, Kentucky|10808|68.53%|
+|Yuma County, Arizona|202944|68.52%|
+|Lafayette Parish, Louisiana|241173|68.52%|
+|St. Landry Parish, Louisiana|82999|68.52%|
+|Beaverhead County, Montana|9391|68.51%|
+|Garvin County, Oklahoma|25949|68.51%|
+|Fergus County, Montana|11464|68.5%|
+|Divide County, North Dakota|2196|68.5%|
+|Juneau City and Borough, Alaska|32240|68.48%|
+|Washington County, Maryland|153956|68.48%|
+|Peach County, Georgia|27822|68.44%|
+|Moore County, Texas|21494|68.43%|
+|Greene County, North Carolina|20524|68.42%|
+|Lawrence County, South Dakota|25687|68.42%|
+|Hartford County, Connecticut|898636|68.41%|
+|Wapello County, Iowa|35343|68.4%|
+|Ottawa County, Oklahoma|30568|68.38%|
+|Mono County, California|13291|68.37%|
+|Duplin County, North Carolina|49836|68.37%|
+|Wibaux County, Montana|1018|68.36%|
+|Washington County, Tennessee|132067|68.36%|
+|Jessamine County, Kentucky|53016|68.35%|
+|Lackawanna County, Pennsylvania|215529|68.35%|
+|Knox County, Tennessee|475286|68.34%|
+|Eagle County, Colorado|55693|68.33%|
+|El Paso County, Colorado|722736|68.33%|
+|Dakota County, Nebraska|21284|68.33%|
+|Bay County, Florida|181384|68.32%|
+|Palm Beach County, Florida|1481233|68.3%|
+|Finney County, Kansas|38338|68.3%|
+|Conway County, Arkansas|20687|68.29%|
+|Cabell County, West Virginia|94622|68.28%|
+|Washington Parish, Louisiana|45794|68.27%|
+|Coffee County, Tennessee|57227|68.26%|
+|Stewart County, Georgia|5347|68.24%|
+|Chaves County, New Mexico|65014|68.24%|
+|Broome County, New York|198591|68.23%|
+|Throckmorton County, Texas|1426|68.23%|
+|Adair County, Oklahoma|19839|68.21%|
+|Treutlen County, Georgia|6410|68.2%|
+|McDuffie County, Georgia|21727|68.19%|
+|Claiborne Parish, Louisiana|14456|68.19%|
+|Clark County, Washington|496494|68.19%|
+|Chugach Census Area, Alaska|7015|68.15%|
+|Weakley County, Tennessee|32948|68.15%|
+|Angelina County, Texas|86584|68.13%|
+|Baker County, Georgia|2928|68.12%|
+|Newport County, Rhode Island|85525|68.1%|
+|Montgomery County, Maryland|1057201|68.09%|
+|Somerset County, Maryland|24834|68.09%|
+|Kay County, Oklahoma|44019|68.08%|
+|Duval County, Texas|10001|68.08%|
+|Allen County, Ohio|102462|68.05%|
+|Umatilla County, Oregon|79509|68.05%|
+|Houston County, Georgia|161177|68.03%|
+|Clinton County, Kentucky|9372|68.03%|
+|Bradley County, Tennessee|107845|68.03%|
+|Gibson County, Tennessee|50278|68.03%|
+|Orange County, North Carolina|147376|67.99%|
+|Iberia Parish, Louisiana|70518|67.98%|
+|Richland County, Ohio|124504|67.98%|
+|Victoria County, Texas|91280|67.97%|
+|Vanderburgh County, Indiana|179695|67.93%|
+|Winnebago County, Illinois|285471|67.91%|
+|Wake County, North Carolina|1112883|67.91%|
+|Taylor County, Kentucky|25948|67.89%|
+|Charlotte County, Virginia|11605|67.89%|
+|Frontier County, Nebraska|2512|67.88%|
+|Muskogee County, Oklahoma|66881|67.88%|
+|Willacy County, Texas|20423|67.87%|
+|Sitka City and Borough, Alaska|8518|67.85%|
+|Monroe County, New York|757332|67.82%|
+|Barton County, Kansas|25708|67.81%|
+|Washington County, North Carolina|11183|67.81%|
+|Rolette County, North Dakota|12508|67.81%|
+|Grenada County, Mississippi|21621|67.79%|
+|Seminole County, Florida|467382|67.76%|
+|Pulaski County, Georgia|10001|67.75%|
+|Val Verde County, Texas|47767|67.75%|
+|Richmond County, North Carolina|43301|67.71%|
+|Sussex County, Virginia|10960|67.7%|
+|Coffee County, Alabama|53043|67.69%|
+|Hardee County, Florida|25632|67.69%|
+|Barren County, Kentucky|44277|67.68%|
+|Latimer County, Oklahoma|9555|67.67%|
+|Pueblo County, Colorado|167453|67.62%|
+|Rutherford County, Tennessee|335595|67.62%|
+|Briscoe County, Texas|1266|67.61%|
+|Hardeman County, Texas|3567|67.61%|
+|Fulton County, Kentucky|6507|67.6%|
+|Hall County, Nebraska|62616|67.6%|
+|Essex County, Massachusetts|804598|67.59%|
+|Hennepin County, Minnesota|1270283|67.58%|
+|Tehama County, California|65345|67.57%|
+|Lee County, Alabama|172223|67.56%|
+|Ellis County, Kansas|28893|67.56%|
+|Caldwell Parish, Louisiana|9707|67.56%|
+|Wasco County, Oregon|26603|67.56%|
+|Contra Costa County, California|1161643|67.54%|
+|Ketchikan Gateway Borough, Alaska|13939|67.51%|
+|Nantucket County, Massachusetts|13795|67.51%|
+|St. Mary Parish, Louisiana|49818|67.5%|
+|Gaston County, North Carolina|226097|67.5%|
+|Carter County, Oklahoma|48102|67.5%|
+|Hartley County, Texas|5465|67.49%|
+|Arapahoe County, Colorado|651621|67.46%|
+|Rockdale County, Georgia|92983|67.45%|
+|Union County, South Carolina|27306|67.45%|
+|Cross County, Arkansas|16935|67.43%|
+|San Patricio County, Texas|68600|67.39%|
+|Polk County, Florida|713148|67.38%|
+|Rosebud County, Montana|8464|67.37%|
+|Pierce County, Washington|910225|67.35%|
+|Rensselaer County, New York|161125|67.33%|
+|Rappahannock County, Virginia|7400|67.33%|
+|Menifee County, Kentucky|6149|67.32%|
+|La Crosse County, Wisconsin|120291|67.32%|
+|Gordon County, Georgia|57274|67.3%|
+|Butler County, Missouri|42314|67.28%|
+|Bristol County, Massachusetts|576070|67.26%|
+|Douglas County, Nebraska|578771|67.26%|
+|Evangeline Parish, Louisiana|32538|67.25%|
+|Benson County, North Dakota|6090|67.24%|
+|Pawnee County, Kansas|6356|67.21%|
+|Mahnomen County, Minnesota|5429|67.21%|
+|Doña Ana County, New Mexico|218157|67.19%|
+|Linn County, Oregon|127200|67.19%|
+|Bradford County, Florida|27928|67.14%|
+|Polk County, Oregon|86347|67.14%|
+|Dooly County, Georgia|11546|67.12%|
+|Leavenworth County, Kansas|81601|67.12%|
+|Lamar County, Mississippi|63610|67.11%|
+|Maui County, Hawaii|164568|67.1%|
+|Black Hawk County, Iowa|131396|67.1%|
+|Cleveland County, Oklahoma|292110|67.1%|
+|Iron County, Utah|55839|67.09%|
+|Clay County, Arkansas|14661|67.08%|
+|Grand County, Colorado|15629|67.07%|
+|Tillamook County, Oregon|27129|67.06%|
+|Cache County, Utah|131703|67.03%|
+|Rockland County, New York|336485|66.99%|
+|Jackson County, Oregon|221662|66.97%|
+|Lamar County, Texas|49932|66.97%|
+|Henrico County, Virginia|331924|66.97%|
+|Sherman County, Kansas|5965|66.96%|
+|Bossier Parish, Louisiana|128508|66.95%|
+|Chittenden County, Vermont|167523|66.94%|
+|Eau Claire County, Wisconsin|105206|66.94%|
+|Virginia Beach city, Virginia|457658|66.93%|
+|Choctaw County, Oklahoma|14307|66.92%|
+|Hyde County, North Carolina|4697|66.9%|
+|Tensas Parish, Louisiana|4269|66.89%|
+|Pondera County, Montana|5974|66.86%|
+|Dauphin County, Pennsylvania|284199|66.85%|
+|Okanogan County, Washington|41966|66.83%|
+|Sherman County, Oregon|1784|66.82%|
+|Grand County, Utah|9630|66.82%|
+|Jefferson County, Alabama|672550|66.81%|
+|Orangeburg County, South Carolina|84909|66.81%|
+|Spokane County, Washington|531477|66.78%|
+|Union County, Oregon|26255|66.74%|
+|Dodge County, Nebraska|37249|66.71%|
+|Luna County, New Mexico|25282|66.71%|
+|Hempstead County, Arkansas|20352|66.7%|
+|Henderson County, Kentucky|45102|66.69%|
+|Otero County, New Mexico|67298|66.68%|
+|Whitfield County, Georgia|103076|66.66%|
+|Middlesex County, Massachusetts|1623411|66.62%|
+|Buncombe County, North Carolina|266981|66.61%|
+|Escambia County, Alabama|36879|66.57%|
+|Hamilton County, Tennessee|363790|66.55%|
+|Plaquemines Parish, Louisiana|23536|66.54%|
+|Anson County, North Carolina|22388|66.54%|
+|Sumter County, South Carolina|105537|66.54%|
+|Cumberland County, New Jersey|154921|66.53%|
+|Whitley County, Kentucky|36578|66.5%|
+|Essex County, Virginia|10621|66.48%|
+|Wheeler County, Texas|5091|66.46%|
+|Okaloosa County, Florida|209230|66.45%|
+|Pontotoc County, Oklahoma|38102|66.45%|
+|San Benito County, California|63329|66.44%|
+|Osceola County, Florida|380331|66.44%|
+|Manassas Park city, Virginia|17081|66.44%|
+|Glynn County, Georgia|84373|66.43%|
+|Tuscaloosa County, Alabama|223945|66.41%|
+|Big Horn County, Montana|13198|66.39%|
+|Fayette County, Ohio|28897|66.37%|
+|Kearny County, Kansas|4019|66.36%|
+|Pima County, Arizona|1035063|66.32%|
+|Prince George County, Virginia|42170|66.32%|
+|Pike County, Mississippi|40262|66.31%|
+|Sullivan County, New York|78230|66.31%|
+|McDonough County, Illinois|27743|66.3%|
+|Cameron County, Texas|420554|66.3%|
+|Campbell County, Tennessee|39388|66.29%|
+|Jefferson County, Iowa|15846|66.28%|
+|Middlesex County, New Jersey|858770|66.26%|
+|Montgomery County, Kentucky|28084|66.25%|
+|Klamath County, Oregon|68899|66.25%|
+|Delaware County, Indiana|112480|66.23%|
+|Lehigh County, Pennsylvania|372492|66.22%|
+|Sheridan County, Nebraska|5150|66.2%|
+|Chattooga County, Georgia|24898|66.16%|
+|Rowan County, Kentucky|24654|66.16%|
+|Miller County, Arkansas|42875|66.14%|
+|Blue Earth County, Minnesota|68575|66.14%|
+|Greenwood County, South Carolina|69338|66.13%|
+|Turner County, Georgia|8856|66.12%|
+|Greene County, Arkansas|45665|66.11%|
+|El Paso County, Texas|860485|66.1%|
+|Adams County, Mississippi|29927|66.04%|
+|Bernalillo County, New Mexico|674919|66.04%|
+|Sumter County, Alabama|12482|66.03%|
+|New Haven County, Connecticut|864751|66.03%|
+|Hertford County, North Carolina|22010|66.03%|
+|Jasper County, Missouri|122059|66.02%|
+|Gunnison County, Colorado|16851|65.98%|
+|Dorchester County, Maryland|32486|65.98%|
+|Siskiyou County, California|44151|65.94%|
+|Kerr County, Texas|52411|65.94%|
+|Scott County, Missouri|38161|65.9%|
+|Vigo County, Indiana|106523|65.89%|
+|Marlboro County, South Carolina|26912|65.89%|
+|Phelps County, Missouri|44692|65.86%|
+|Harnett County, North Carolina|133074|65.86%|
+|Washtenaw County, Michigan|372428|65.84%|
+|Nash County, North Carolina|94628|65.82%|
+|Montgomery County, Mississippi|9948|65.81%|
+|Jim Hogg County, Texas|4864|65.81%|
+|Mobile County, Alabama|414620|65.79%|
+|Florence County, South Carolina|137276|65.79%|
+|Robeson County, North Carolina|118836|65.78%|
+|Crockett County, Texas|2939|65.78%|
+|Ford County, Kansas|34426|65.77%|
+|Mercer County, New Jersey|384951|65.72%|
+|Forsyth County, North Carolina|380583|65.71%|
+|Candler County, Georgia|10885|65.68%|
+|Houston County, Alabama|106355|65.64%|
+|Faulkner County, Arkansas|123191|65.64%|
+|Miller County, Georgia|5984|65.63%|
+|Texas County, Oklahoma|21448|65.63%|
+|Sedgwick County, Kansas|520467|65.62%|
+|Garfield County, Oklahoma|62628|65.6%|
+|Hays County, Texas|234573|65.6%|
+|Clatsop County, Oregon|40720|65.59%|
+|Maricopa County, Arizona|4367186|65.57%|
+|Lee County, North Carolina|62676|65.57%|
+|Poinsett County, Arkansas|23212|65.53%|
+|Wayne County, Michigan|1789781|65.53%|
+|Northwest Arctic Borough, Alaska|7776|65.49%|
+|Marin County, California|262387|65.49%|
+|Buchanan County, Missouri|85545|65.46%|
+|Gallatin County, Montana|116725|65.44%|
+|Webb County, Texas|266963|65.42%|
+|Centre County, Pennsylvania|158879|65.41%|
+|Charleston County, South Carolina|404946|65.35%|
+|Warren County, Georgia|5218|65.33%|
+|Lancaster County, Nebraska|320301|65.28%|
+|Morgan County, Colorado|28868|65.23%|
+|Martin County, North Carolina|22213|65.21%|
+|Greensville County, Virginia|11465|65.19%|
+|Madison County, Kentucky|92194|65.04%|
+|Erath County, Texas|42288|65.04%|
+|Shasta County, California|181935|65.03%|
+|Prince Edward County, Virginia|21887|65.01%|
+|Johnson County, Missouri|53889|64.99%|
+|Whatcom County, Washington|224533|64.95%|
+|Webster Parish, Louisiana|37356|64.88%|
+|Anchorage Municipality, Alaska|292545|64.85%|
+|Craven County, North Carolina|101405|64.84%|
+|Aleutians East Borough, Alaska|3409|64.82%|
+|Obion County, Tennessee|30722|64.82%|
+|Lyon County, Kansas|32318|64.8%|
+|Washington County, Georgia|20052|64.78%|
+|Yalobusha County, Mississippi|12586|64.78%|
+|Blaine County, Montana|7051|64.76%|
+|Mineral County, Nevada|4552|64.76%|
+|Rapides Parish, Louisiana|130459|64.75%|
+|Otero County, Colorado|18665|64.7%|
+|Franklin County, Kentucky|51319|64.7%|
+|Napa County, California|138795|64.68%|
+|Kauai County, Hawaii|73247|64.68%|
+|Childress County, Texas|6784|64.68%|
+|Putnam County, Tennessee|78955|64.67%|
+|Boulder County, Colorado|328713|64.66%|
+|Deaf Smith County, Texas|18675|64.65%|
+|Pike County, Alabama|33176|64.64%|
+|Ward County, North Dakota|69686|64.63%|
+|Colquitt County, Georgia|45800|64.58%|
+|Isabella County, Michigan|65623|64.54%|
+|Allendale County, South Carolina|8304|64.54%|
+|Brookings County, South Dakota|34315|64.49%|
+|New Madrid County, Missouri|16658|64.47%|
+|Bethel Census Area, Alaska|18514|64.45%|
+|Morton County, Kansas|2744|64.45%|
+|Westchester County, New York|999723|64.44%|
+|Calhoun County, Georgia|5668|64.37%|
+|Bowie County, Texas|92957|64.37%|
+|Wilkes County, Georgia|9643|64.34%|
+|Yuba County, California|80404|64.33%|
+|Lafayette County, Mississippi|55727|64.33%|
+|Chouteau County, Montana|5896|64.33%|
+|Skagway Municipality, Alaska|1329|64.32%|
+|Chelan County, Washington|78508|64.32%|
+|Sharkey County, Mississippi|4160|64.31%|
+|Lucas County, Ohio|431212|64.31%|
+|Kit Carson County, Colorado|7071|64.29%|
+|Jefferson County, Georgia|15708|64.27%|
+|Jefferson County, Texas|256755|64.26%|
+|Holmes County, Mississippi|17243|64.22%|
+|Bell County, Kentucky|24674|64.21%|
+|Polk County, Georgia|42692|64.2%|
+|Ware County, Georgia|36084|64.2%|
+|Dallas County, Alabama|39162|64.16%|
+|Sevier County, Arkansas|16074|64.16%|
+|Accomack County, Virginia|33388|64.16%|
+|Waynesboro city, Virginia|22149|64.16%|
+|Latah County, Idaho|39464|64.15%|
+|Bullock County, Alabama|10386|64.14%|
+|Kittitas County, Washington|44147|64.14%|
+|Lanier County, Georgia|9874|64.13%|
+|Coles County, Illinois|47542|64.12%|
+|Ramsey County, Minnesota|549377|64.12%|
+|Washington County, Oregon|596969|64.12%|
+|Montgomery County, Tennessee|216172|64.1%|
+|Escambia County, Florida|318828|64.08%|
+|Prince George's County, Maryland|957767|64.08%|
+|Dunklin County, Missouri|28592|64.07%|
+|Wayne County, North Carolina|117692|64.06%|
+|Hampden County, Massachusetts|466265|64.05%|
+|Clark County, Arkansas|21569|64.04%|
+|Adair County, Missouri|25339|64.01%|
+|Terry County, Texas|11937|64.01%|
+|Grant County, Washington|97874|63.97%|
+|Taylor County, Georgia|7857|63.91%|
+|Johnson County, Iowa|151833|63.91%|
+|Jefferson County, Kentucky|780449|63.81%|
+|Lauderdale County, Mississippi|73756|63.78%|
+|Macon County, Alabama|19490|63.71%|
+|Bourbon County, Kentucky|20281|63.71%|
+|McDonald County, Missouri|23267|63.69%|
+|Tarrant County, Texas|2091953|63.68%|
+|Glacier County, Montana|13827|63.67%|
+|Gregg County, Texas|123744|63.67%|
+|Tift County, Georgia|41148|63.64%|
+|Montgomery County, Ohio|536136|63.61%|
+|Russell County, Alabama|58695|63.51%|
+|Early County, Georgia|10813|63.41%|
+|Bryan County, Oklahoma|45809|63.39%|
+|Jefferson County, Arkansas|68199|63.36%|
+|Dane County, Wisconsin|555474|63.33%|
+|Ventura County, California|845255|63.32%|
+|Jefferson Parish, Louisiana|439402|63.32%|
+|Solano County, California|451432|63.29%|
+|Scott County, Kansas|5163|63.28%|
+|Roosevelt County, Montana|10884|63.28%|
+|Spalding County, Georgia|66722|63.26%|
+|Long County, Georgia|16398|63.21%|
+|Wichita County, Texas|129419|63.21%|
+|Broward County, Florida|1934551|63.2%|
+|Dyer County, Tennessee|36975|63.2%|
+|Elmore County, Idaho|28396|63.16%|
+|Trinity County, California|15818|63.14%|
+|Bexar County, Texas|1990522|63.1%|
+|Lowndes County, Mississippi|58904|63.07%|
+|Floyd County, Georgia|98210|63.05%|
+|Pasquotank County, North Carolina|40240|63.05%|
+|Knox County, Kentucky|30367|63.01%|
+|Upson County, Georgia|27424|62.97%|
+|Madison County, Tennessee|98373|62.97%|
+|Coryell County, Texas|81692|62.94%|
+|Ingham County, Michigan|285660|62.93%|
+|Barbour County, Alabama|25259|62.84%|
+|Hamilton County, Ohio|826790|62.84%|
+|Cook County, Georgia|17188|62.83%|
+|Dimmit County, Texas|8840|62.83%|
+|Watauga County, North Carolina|54077|62.82%|
+|Hardin County, Kentucky|110134|62.81%|
+|Glascock County, Georgia|2903|62.8%|
+|Albany County, New York|314679|62.78%|
+|Yakima County, Washington|255151|62.78%|
+|Roberts County, South Dakota|10254|62.77%|
+|DeKalb County, Illinois|100922|62.74%|
+|Bristol city, Virginia|16996|62.7%|
+|East Baton Rouge Parish, Louisiana|455447|62.68%|
+|Nodaway County, Missouri|21571|62.67%|
+|New Hanover County, North Carolina|225175|62.66%|
+|Jackson County, Oklahoma|24960|62.66%|
+|Marion County, Oregon|344037|62.66%|
+|Coconino County, Arizona|144942|62.65%|
+|Nolan County, Texas|14727|62.62%|
+|Fairbanks North Star Borough, Alaska|97149|62.61%|
+|Richland Parish, Louisiana|20110|62.61%|
+|Wrangell City and Borough, Alaska|2162|62.59%|
+|Monroe County, Arkansas|6903|62.59%|
+|Parmer County, Texas|9874|62.58%|
+|Baldwin County, Georgia|43876|62.52%|
+|Brule County, South Dakota|5247|62.52%|
+|San Luis Obispo County, California|282771|62.51%|
+|Guilford County, North Carolina|537113|62.49%|
+|Northampton County, Virginia|12226|62.42%|
+|McLennan County, Texas|258031|62.4%|
+|Grady County, Georgia|26076|62.39%|
+|Missoula County, Montana|117379|62.39%|
+|Brewster County, Texas|9501|62.38%|
+|Tulsa County, Oklahoma|664084|62.35%|
+|Taylor County, Texas|141739|62.35%|
+|Boone County, Missouri|182170|62.31%|
+|Cuyahoga County, Ohio|1263667|62.23%|
+|Mountrail County, North Dakota|9717|62.21%|
+|Chicot County, Arkansas|10405|62.2%|
+|Hillsborough County, Florida|1444359|62.18%|
+|Jackson County, Missouri|713229|62.11%|
+|Glenn County, California|28675|62.1%|
+|Castro County, Texas|7450|62.09%|
+|Thomas County, Georgia|45669|62.04%|
+|Wilbarger County, Texas|12887|62.0%|
+|Madera County, California|156304|61.98%|
+|Ben Hill County, Georgia|17237|61.9%|
+|Athens County, Ohio|62933|61.9%|
+|San Mateo County, California|762488|61.86%|
+|Cook County, Illinois|5265398|61.8%|
+|Nacogdoches County, Texas|64822|61.79%|
+|Wyandotte County, Kansas|168333|61.76%|
+|Lyman County, South Dakota|3746|61.76%|
+|Coffee County, Georgia|43048|61.71%|
+|Crawford County, Kansas|39018|61.65%|
+|Caddo Parish, Louisiana|239775|61.65%|
+|Sonoma County, California|492498|61.61%|
+|Halifax County, North Carolina|49291|61.6%|
+|Mellette County, South Dakota|1916|61.58%|
+|Monongalia County, West Virginia|105695|61.53%|
+|Menominee County, Wisconsin|4318|61.51%|
+|Brooks County, Texas|7100|61.5%|
+|Lane County, Oregon|380532|61.49%|
+|Falls Church city, Virginia|14494|61.48%|
+|Laurens County, Georgia|49202|61.47%|
+|King County, Washington|2240876|61.45%|
+|Honolulu County, Hawaii|1015167|61.44%|
+|Sebastian County, Arkansas|127941|61.38%|
+|Ouachita Parish, Louisiana|160227|61.36%|
+|Prairie County, Montana|1227|61.35%|
+|Yazoo County, Mississippi|27924|61.31%|
+|Toombs County, Georgia|26956|61.29%|
+|Decatur County, Georgia|29020|61.28%|
+|McKenzie County, North Dakota|13762|61.26%|
+|Desha County, Arkansas|11530|61.23%|
+|Hale County, Texas|32879|61.21%|
+|Summit County, Colorado|31042|61.19%|
+|Forrest County, Mississippi|77743|61.19%|
+|Roosevelt County, New Mexico|19223|61.19%|
+|San Bernardino County, California|2171071|61.16%|
+|Warren County, Kentucky|133216|61.16%|
+|Cherry County, Nebraska|5505|61.15%|
+|Oklahoma County, Oklahoma|790938|61.14%|
+|Union County, New Jersey|571963|61.11%|
+|Pulaski County, Arkansas|397931|61.1%|
+|Nueces County, Texas|353594|61.1%|
+|Richland County, South Carolina|414719|61.08%|
+|Craighead County, Arkansas|109875|61.07%|
+|Mendocino County, California|91534|61.06%|
+|Greene County, Missouri|296875|61.06%|
+|Wayne County, Georgia|30118|61.01%|
+|Evans County, Georgia|10761|60.97%|
+|Mitchell County, Georgia|21940|60.95%|
+|Camas County, Idaho|1044|60.92%|
+|Carson City, Nevada|57957|60.92%|
+|Camden County, Georgia|54256|60.91%|
+|Jackson County, North Carolina|42983|60.83%|
+|Troup County, Georgia|69483|60.73%|
+|Frio County, Texas|18428|60.71%|
+|Staunton city, Virginia|25358|60.58%|
+|Adams County, Washington|20353|60.54%|
+|Washoe County, Nevada|479758|60.51%|
+|Teton County, Wyoming|23319|60.45%|
+|Marion County, South Carolina|29585|60.44%|
+|Cass County, North Dakota|182992|60.4%|
+|Quitman County, Mississippi|6327|60.38%|
+|Humphreys County, Mississippi|7916|60.36%|
+|Culberson County, Texas|2209|60.28%|
+|Vance County, North Carolina|42650|60.24%|
+|Colusa County, California|21780|60.14%|
+|Cottle County, Texas|1560|60.13%|
+|Santa Cruz County, California|272138|60.1%|
+|Mecklenburg County, North Carolina|1100984|60.04%|
+|Edgecombe County, North Carolina|49609|59.99%|
+|Williams County, North Dakota|38460|59.99%|
+|Haywood County, Tennessee|17912|59.99%|
+|Mississippi County, Missouri|12976|59.98%|
+|Story County, Iowa|98106|59.93%|
+|Malheur County, Oregon|31313|59.9%|
+|Providence County, Rhode Island|656672|59.73%|
+|Emanuel County, Georgia|22739|59.69%|
+|Monroe County, Indiana|140189|59.69%|
+|Martin County, Texas|5213|59.69%|
+|Liberty County, Montana|2026|59.66%|
+|Monroe County, Florida|82244|59.6%|
+|Multnomah County, Oregon|810011|59.59%|
+|Duval County, Florida|983153|59.55%|
+|Stanislaus County, California|550842|59.52%|
+|Sutter County, California|99080|59.5%|
+|Tippecanoe County, Indiana|185961|59.39%|
+|Mississippi County, Arkansas|41061|59.37%|
+|Humboldt County, California|137014|59.36%|
+|Tompkins County, New York|105638|59.3%|
+|Kern County, California|905644|59.27%|
+|Lake County, Oregon|8119|59.27%|
+|San Joaquin County, California|771406|59.24%|
+|Wicomico County, Maryland|103223|59.23%|
+|Marion County, Indiana|969542|59.21%|
+|Hinds County, Mississippi|230772|59.19%|
+|Harrison County, Mississippi|207382|59.16%|
+|Kleberg County, Texas|31015|59.16%|
+|Travis County, Texas|1267795|59.08%|
+|Sacramento County, California|1571767|59.07%|
+|Lenoir County, North Carolina|55344|58.99%|
+|Harris County, Texas|4697957|58.97%|
+|Menard County, Texas|1981|58.96%|
+|Lubbock County, Texas|308580|58.94%|
+|San Miguel County, Colorado|8084|58.91%|
+|Benton County, Oregon|94667|58.89%|
+|Wilson County, North Carolina|78844|58.75%|
+|Butte County, California|217884|58.63%|
+|Potter County, Texas|119043|58.62%|
+|Sioux County, Nebraska|1081|58.46%|
+|Montgomery County, Alabama|229072|58.34%|
+|Pemiscot County, Missouri|15949|58.33%|
+|Imperial County, California|180051|58.3%|
+|Santa Clara County, California|1932022|58.25%|
+|Alamosa County, Colorado|16377|58.24%|
+|Norton city, Virginia|3696|58.24%|
+|Orange County, Florida|1409949|58.19%|
+|Durham County, North Carolina|320146|58.12%|
+|DeKalb County, Georgia|758634|58.06%|
+|Washington County, Arkansas|242793|58.04%|
+|Clay County, South Dakota|14816|58.04%|
+|Alachua County, Florida|276171|57.99%|
+|Hampton city, Virginia|136748|57.96%|
+|Scotland County, North Carolina|34345|57.94%|
+|Champaign County, Illinois|206583|57.93%|
+|Chatham County, Georgia|294815|57.85%|
+|Jefferson County, New York|117634|57.82%|
+|Sumter County, Georgia|29690|57.71%|
+|Crittenden County, Arkansas|48338|57.57%|
+|Thurston County, Nebraska|6806|57.54%|
+|Shelby County, Tennessee|929178|57.54%|
+|Bent County, Colorado|5861|57.44%|
+|Lauderdale County, Tennessee|25406|57.4%|
+|Onslow County, North Carolina|201597|57.31%|
+|Fulton County, Georgia|1054286|57.27%|
+|Martinsville city, Virginia|13476|57.27%|
+|Bell County, Texas|364703|57.23%|
+|Curry County, New Mexico|48716|57.15%|
+|Toole County, Montana|5013|57.12%|
+|Clark County, Nevada|2231147|57.12%|
+|Orange County, California|3182923|57.04%|
+|Davidson County, Tennessee|708490|57.02%|
+|Dale County, Alabama|49443|56.94%|
+|Walker County, Texas|76506|56.88%|
+|Bolivar County, Mississippi|31301|56.82%|
+|Fayette County, Kentucky|321354|56.8%|
+|Alameda County, California|1673133|56.74%|
+|Franklin County, Ohio|1313598|56.53%|
+|Tulare County, California|470999|56.42%|
+|Leflore County, Mississippi|28555|56.42%|
+|Vernon Parish, Louisiana|49064|56.21%|
+|Glasscock County, Texas|1221|56.18%|
+|Pulaski County, Missouri|53460|56.16%|
+|Jackson County, Illinois|53676|56.09%|
+|Portsmouth city, Virginia|97454|55.95%|
+|Macon County, Georgia|12330|55.94%|
+|Douglas County, Kansas|118690|55.94%|
+|Lowndes County, Georgia|117437|55.93%|
+|Madison Parish, Louisiana|10297|55.9%|
+|Dillon County, South Carolina|28527|55.84%|
+|San Diego County, California|3296317|55.69%|
+|Philadelphia County, Pennsylvania|1596865|55.68%|
+|Lee County, Arkansas|8832|55.65%|
+|Leon County, Florida|290965|55.58%|
+|Natchitoches Parish, Louisiana|37896|55.56%|
+|Bulloch County, Georgia|79635|55.46%|
+|Kodiak Island Borough, Alaska|13218|55.33%|
+|Grand Forks County, North Dakota|73101|55.2%|
+|Comanche County, Oklahoma|121502|55.1%|
+|Miami-Dade County, Florida|2690113|54.94%|
+|Bibb County, Georgia|156711|54.91%|
+|Albany County, Wyoming|37311|54.91%|
+|Montgomery County, Virginia|99294|54.87%|
+|Dallas County, Texas|2604722|54.83%|
+|Payne County, Oklahoma|81817|54.72%|
+|Roanoke city, Virginia|99578|54.6%|
+|Sunflower County, Mississippi|26295|54.5%|
+|Fresno County, California|1003150|54.45%|
+|Madison County, Idaho|50979|54.45%|
+|Denver County, Colorado|706799|54.32%|
+|Oktibbeha County, Mississippi|51339|54.22%|
+|Kings County, California|151887|54.11%|
+|Buena Vista city, Virginia|6649|54.05%|
+|Coahoma County, Mississippi|21839|54.0%|
+|East Carroll Parish, Louisiana|7502|53.97%|
+|Pitt County, North Carolina|170600|53.9%|
+|Terrell County, Georgia|9102|53.54%|
+|Cumberland County, North Carolina|333582|53.52%|
+|Lincoln Parish, Louisiana|48415|53.41%|
+|Passaic County, New Jersey|521067|53.06%|
+|North Slope Borough, Alaska|10865|53.02%|
+|Dewey County, South Dakota|5343|52.85%|
+|St. Francis County, Arkansas|23623|52.81%|
+|Richmond County, Georgia|205772|52.67%|
+|Milwaukee County, Wisconsin|939123|52.67%|
+|Yolo County, California|216703|52.6%|
+|Clayton County, Georgia|294335|52.4%|
+|Lynchburg city, Virginia|78973|52.38%|
+|Orleans Parish, Louisiana|383974|52.34%|
+|De Baca County, New Mexico|1873|52.1%|
+|Crisp County, Georgia|20524|52.03%|
+|Washington County, Mississippi|45616|51.96%|
+|Baltimore city, Maryland|592211|51.9%|
+|Oglala Lakota County, South Dakota|13835|51.89%|
+|Brazos County, Texas|231095|51.84%|
+|Santa Barbara County, California|447651|51.49%|
+|Whitman County, Washington|48197|51.35%|
+|Merced County, California|279150|50.86%|
+|Williamsburg city, Virginia|15299|50.53%|
+|Phillips County, Arkansas|16923|50.4%|
+|Lake County, Tennessee|7187|50.29%|
+|Danville city, Virginia|42556|50.05%|
+|Jackson County, South Dakota|2868|49.98%|
+|Essex County, New Jersey|852720|49.77%|
+|Muscogee County, Georgia|204366|49.73%|
+|Christian County, Kentucky|72377|49.58%|
+|Los Angeles County, California|10019635|49.5%|
+|Monterey County, California|438953|49.34%|
+|Newport News city, Virginia|185069|49.32%|
+|St. Louis city, Missouri|302787|49.3%|
+|Franklin city, Virginia|8249|48.54%|
+|Winchester city, Virginia|28194|48.28%|
+|Queens County, New York|2393104|48.16%|
+|Hopewell city, Virginia|23020|47.76%|
+|Liberty County, Georgia|64334|47.68%|
+|Arlington County, Virginia|235764|47.65%|
+|Lexington city, Virginia|7287|47.46%|
+|Riley County, Kansas|72602|47.11%|
+|Ziebach County, South Dakota|2479|46.55%|
+|Norfolk city, Virginia|238556|45.91%|
+|Randolph County, Georgia|6503|45.56%|
+|Greenlee County, Arizona|9542|45.39%|
+|District of Columbia, District of Columbia|683154|45.21%|
+|Richmond city, Virginia|225676|44.63%|
+|Bennett County, South Dakota|3411|44.3%|
+|Corson County, South Dakota|3965|44.25%|
+|Radford city, Virginia|16205|43.94%|
+|Dougherty County, Georgia|86825|43.93%|
+|San Francisco County, California|865933|43.87%|
+|Clarke County, Georgia|128195|43.79%|
+|Fredericksburg city, Virginia|28027|43.43%|
+|Alexandria city, Virginia|158185|43.19%|
+|Charlottesville city, Virginia|46597|42.45%|
+|Geary County, Kansas|36514|42.04%|
+|Buffalo County, South Dakota|1974|41.1%|
+|Issaquena County, Mississippi|1111|40.46%|
+|Sioux County, North Dakota|3993|40.39%|
+|Petersburg city, Virginia|33229|39.07%|
+|Suffolk County, Massachusetts|792647|38.98%|
+|Todd County, South Dakota|9434|38.93%|
+|Harrisonburg city, Virginia|52062|38.48%|
+|Tunica County, Mississippi|9949|36.74%|
+|Emporia city, Virginia|5761|35.57%|
+|Kings County, New York|2712360|34.27%|
+|Hudson County, New Jersey|713264|34.21%|
+|New York County, New York|1669127|24.45%|
+|Aleutians West Census Area, Alaska|5251|22.29%|
+|Bronx County, New York|1468262|21.15%|
+|Chattahoochee County, Georgia|9533|20.54%|
