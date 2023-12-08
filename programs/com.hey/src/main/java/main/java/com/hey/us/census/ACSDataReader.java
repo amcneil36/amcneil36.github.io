@@ -15,7 +15,7 @@ import main.java.com.hey.Util;
 
 public class ACSDataReader {
 
-	private static final String YEAR = "2021";
+	private static final String YEAR = "2022";
 	public static final String COUNTRY_SUFFIX = "&for=us:*";
 	public static final String REGION_SUFFIX = "&for=region:*";
 	public static final String STATE_SUFFIX = "&for=state:*";

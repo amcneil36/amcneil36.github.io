@@ -1,55 +1,55 @@
-This page is an analysis and visualization of data I queried from the US Census' American Community Survey 2020 5 year estimates API. To see the original, raw data that I retrieved from the API before analyzing it, navigate here: <a href="https://api.census.gov/data/2021/acs/acs5?get=NAME,B25008_001E,B25008_002E,B01003_001E&for=state:*">https://api.census.gov/data/2021/acs/acs5?get=NAME,B25008_001E,B25008_002E,B01003_001E&for=state:*</a>
+This page is an analysis and visualization of data I queried from the US Census' American Community Survey 2020 5 year estimates API. To see the original, raw data that I retrieved from the API before analyzing it, navigate here: <a href="https://api.census.gov/data/2022/acs/acs5?get=NAME,B25008_001E,B25008_002E,B01003_001E&for=state:*">https://api.census.gov/data/2022/acs/acs5?get=NAME,B25008_001E,B25008_002E,B01003_001E&for=state:*</a>
 
 |State|Population|Homeownership rate|
 |---|---|---|
-|Maine|1357046|77.03%|
-|Minnesota|5670472|76.12%|
-|West Virginia|1801049|76.06%|
-|New Hampshire|1372175|75.88%|
-|Vermont|641637|75.37%|
-|Michigan|10062512|75.15%|
-|Iowa|3179090|74.88%|
-|Wyoming|576641|74.56%|
-|Utah|3231370|74.1%|
-|Idaho|1811617|73.63%|
-|Indiana|6751340|73.03%|
-|Delaware|981892|72.86%|
-|Pennsylvania|12970650|72.68%|
-|South Dakota|881785|71.8%|
-|Montana|1077978|71.7%|
-|South Carolina|5078903|71.51%|
-|Alabama|4997675|71.39%|
-|Wisconsin|5871661|71.19%|
-|Nebraska|1951480|70.94%|
-|Missouri|6141534|70.83%|
-|New Mexico|2109366|70.41%|
-|Kansas|2932099|70.15%|
-|Maryland|6148545|70.1%|
-|Kentucky|4494141|70.01%|
-|Illinois|12821813|70.0%|
-|Mississippi|2967023|69.94%|
-|Connecticut|3605330|69.74%|
-|Ohio|11769923|69.72%|
-|Virginia|8582479|69.01%|
-|Colorado|5723176|68.97%|
-|Tennessee|6859497|68.69%|
-|Louisiana|4657305|68.49%|
-|North Dakota|773344|68.21%|
-|Alaska|735951|68.04%|
-|North Carolina|10367022|67.83%|
-|Arkansas|3006309|67.58%|
-|Oklahoma|3948136|67.58%|
-|Arizona|7079203|67.12%|
-|Massachusetts|6991852|66.89%|
-|New Jersey|9234024|66.67%|
-|Florida|21339762|66.61%|
-|Washington|7617364|66.54%|
-|Georgia|10625615|66.37%|
-|Rhode Island|1091949|66.15%|
-|Oregon|4207177|65.9%|
-|Texas|28862581|65.88%|
-|Hawaii|1453498|63.34%|
-|Nevada|3059238|59.29%|
-|New York|20114745|57.62%|
-|California|39455353|57.07%|
-|District of Columbia|683154|45.21%|
+|Maine|1366949|77.12%|
+|Minnesota|5695292|76.58%|
+|New Hampshire|1379610|76.51%|
+|Vermont|643816|76.35%|
+|West Virginia|1792967|76.31%|
+|Michigan|10057921|75.66%|
+|Wyoming|577929|75.18%|
+|Iowa|3188836|75.1%|
+|Utah|3283809|74.63%|
+|Idaho|1854109|74.09%|
+|Indiana|6784403|73.49%|
+|Delaware|993635|73.29%|
+|Pennsylvania|12989208|72.89%|
+|South Carolina|5142750|72.29%|
+|South Dakota|890342|72.17%|
+|Alabama|5028092|71.94%|
+|Montana|1091840|71.83%|
+|Wisconsin|5882128|71.66%|
+|New Mexico|2112463|71.2%|
+|Missouri|6154422|71.15%|
+|Nebraska|1958939|71.01%|
+|Kansas|2935922|70.66%|
+|Illinois|12757634|70.52%|
+|Maryland|6161707|70.52%|
+|Kentucky|4502935|70.41%|
+|Mississippi|2958846|70.31%|
+|Ohio|11774683|70.19%|
+|Connecticut|3611317|69.86%|
+|Virginia|8624511|69.42%|
+|Colorado|5770790|69.39%|
+|Louisiana|4640546|69.16%|
+|Tennessee|6923772|69.04%|
+|Alaska|734821|68.81%|
+|North Dakota|776874|68.51%|
+|North Carolina|10470214|68.37%|
+|Arkansas|3018669|68.14%|
+|Arizona|7172282|67.78%|
+|Oklahoma|3970497|67.71%|
+|Florida|21634529|67.31%|
+|Georgia|10722325|67.05%|
+|Massachusetts|6984205|67.03%|
+|Washington|7688549|66.99%|
+|New Jersey|9249063|66.96%|
+|Rhode Island|1094250|66.86%|
+|Oregon|4229374|66.15%|
+|Texas|29243342|66.13%|
+|Hawaii|1450589|63.98%|
+|Nevada|3104817|60.03%|
+|New York|19994379|57.81%|
+|California|39356104|57.48%|
+|District of Columbia|670587|45.32%|
