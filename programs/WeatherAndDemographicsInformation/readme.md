@@ -1,5 +1,7 @@
-# Weather and Demographics Information for all USA cities
-This webpage has USA weather and demographics data .csv's, which can be viewed at various levels of granularity: city, county, metro, and state. Any granularity that is less granular than a city has the calculations done by using weighted averages of the city data except for the population column (which is a sum). This is so a city of 10 people doesn't have the same influence as a city of 1,000,000 people. This makes the statistics more representative of a typical person living there.
+# USA Weather and Demographics Information
+This webpage has USA weather and demographics data .csv's, which can be viewed at various levels of granularity: city, county, metro, and state. It can tell you things like, for example, what is the median household income in Los Angeles, California? Or, what is the homeownership rate in Pinellas County?
+
+All geographies larger than a city have calculations done by using weighted averages of the city data except for the population column (which is a sum). This is so a city of 10 people doesn't have the same influence as a city of 1,000,000 people. This makes the statistics more representative of a typical person living there.
 
 |Granularity|Link|
 |---|---|
