@@ -1,16 +1,12 @@
 # Weather and Demographics Information for all USA cities
+This webpage has USA weather and demographics data .csv's, which can be viewed at various levels of granularity: city, county, metro, and state. Any granularity that is less granular than a city has the calculations done by using weighted averages of the city data except for the population column (which is a sum). This is so a city of 10 people doesn't have the same influence as a city of 1,000,000 people. This makes the statistics more representative of a typical person living there.
 
-## Weather and Demographics data calculated on the city level (CityStats.csv)
-CityStats.csv is a .csv file with weather and demographics information for all USA cities. The .csv file can be found here: <a href="https://amcneil36.github.io/programs/CityStats/CityStats.csv" download>https://amcneil36.github.io/programs/CityStats/CityStats.csv</a>
-
-## Weather and Demographics data calculated on the county level (CountyStats.csv)
-CountyStats.csv is a .csv file with weather and demographics data for all USA counties. All data is on the county level. This means that you can see things like the average summer high for the county. All numbers in this .csv (including population density) are calculated from using a weighted average except for the county population column. The county population is just a sum of the population of all cities in the county. The weighted average is used for the rest of the columns so that a city of 10 people has less influence on the data than a city of 1,000,000 people. This is so the statistics are representative of a typical person living there. The data for this .csv was calculated from using the data from CityStats.csv. CountyStats.csv can be found here: <a href="https://amcneil36.github.io/programs/CountyStats/CountyStats.csv" download>https://amcneil36.github.io/programs/CountyStats/CountyStats.csv</a>
-
-## Weather and Demographics data calculated on the metro level (MetroStats.csv)
-This .csv is very similar to CountyStats.csv exept the data is provided on the metro level as opposed to the county level. MetroStats.csv can be found here: <a href="https://amcneil36.github.io/programs/MetroStats/MetroStats.csv" download>https://amcneil36.github.io/programs/MetroStats/MetroStats.csv</a>
-
-## Weather and Demographics data calculated on the State level (StateStats.csv)
-This .csv is very similar to CountyStats.csv exept the data is provided on the State level as opposed to the county level. StateStats.csv can be found here: <a href="https://amcneil36.github.io/programs/StateStats/StateStats.csv" download>https://amcneil36.github.io/programs/StateStats/StateStats.csv</a>
+|Granularity|Link|
+|---|---|
+|City|<a href="https://amcneil36.github.io/programs/CityStats/CityStats.csv" download>https://amcneil36.github.io/programs/CityStats/CityStats.csv</a>|
+|County|<a href="https://amcneil36.github.io/programs/CountyStats/CountyStats.csv" download>https://amcneil36.github.io/programs/CountyStats/CountyStats.csv</a>|
+|Metro|<a href="https://amcneil36.github.io/programs/MetroStats/MetroStats.csv" download>https://amcneil36.github.io/programs/MetroStats/MetroStats.csv</a>|
+|State|<a href="https://amcneil36.github.io/programs/StateStats/StateStats.csv" download>https://amcneil36.github.io/programs/StateStats/StateStats.csv</a>|
 
 ## Datapoints
 
