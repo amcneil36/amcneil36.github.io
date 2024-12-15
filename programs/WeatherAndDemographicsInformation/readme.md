@@ -16,8 +16,8 @@ All geographies larger than a city have calculations done by using weighted aver
 | ----------- | ----------- | ----------- | ----------- |
 | City      | The city/town/CDP that all of the data in the row corresponds to. | [Best Places](https://www.bestplaces.net/)| Dec 2021 |
 | State   |    | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
-| Population |  | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2023 |
-| People per sq mi |  | [US Census](https://www.census.gov/en.html) | Dec 2023 |
+| Population |  | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2024 |
+| People per sq mi |  | [US Census](https://www.census.gov/en.html) | Dec 2024 |
 | Metro Name | The name of the Metropolitan Statistical Area (MSA). | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | Metro Population | The population of the Metropolitan Statistical Area (MSA). | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | Hottest month's avg high (F) | Average high for the hottest month based on historical data. | [NOAA](https://www.noaa.gov/) | Oct 2021 |
@@ -29,34 +29,34 @@ All geographies larger than a city have calculations done by using weighted aver
 | Avg Summer Dew Point | The average summer dew point. This number is calculated by averaging the dew points from July, August, and September. | [NOAA](https://www.noaa.gov/) | Sep 2021 |
 | Avg Annual Dew Point | The average dew point for the year. | [NOAA](https://www.noaa.gov/) | Sep 2021 |
 | Average yearly windspeed (mph) | The average windspeed from averaging the average windspeeds for all 12 months. | [NOAA](https://www.noaa.gov/) | Mar 2021 |
-| Median age | | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2023 |
-| % with at least Bachelor's | Percent of residents over the age of 25 with a Bachelor's degree. Includes those who have a graduate degree. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2023 |
-| Median household income | | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2023 |
-| Poverty Rate | The percent of families who are in poverty. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2023 |
+| Median age | | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2024 |
+| % with at least Bachelor's | Percent of residents over the age of 25 with a Bachelor's degree. Includes those who have a graduate degree. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2024 |
+| Median household income | | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2024 |
+| Poverty Rate | The percent of families who are in poverty. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2024 |
 | Avg Apartment Monthly Rent | The average monthly cost of rent for apartments. | [Rent Cafe](https://www.rentcafe.com/) | Sep 2021 |
 | Avg Apartment Sqft | The average size of an apartment in square feet. | [Rent Cafe](https://www.rentcafe.com/) | Sep 2021 |
 | Median home price | | [Redfin](https://www.redfin.com/) | Sep 2021 |
 | Median home square feet | | [Redfin](https://www.redfin.com/) | Sep 2021 |
 | Median home cost per sq ft | | [Redfin](https://www.redfin.com/) | Sep 2021 |
-| Median home age | | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2023 |
-| Homeownership Rate | |[US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2023 |
+| Median home age | | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2024 |
+| Homeownership Rate | |[US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2024 |
 | Air quality index | The quality of the air. Ranked from 1 (worst quality) to 100 (best quality). | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
-| Unemployment rate | | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2023 |
+| Unemployment rate | | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2024 |
 | County   |  | [Best Places](https://www.bestplaces.net/)| Feb 2021 |
 | % Democrat | The percent of residents who are democrat. Tracked at the county level. | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
 | % Republican | The percent of residents who are republican. Tracked at the county level. | [Best Places](https://www.bestplaces.net/) | Feb 2021 |
-| % Asian | The percent of residents who identified as Asian only. This includes Hispanic and non-hispanic Asian residents. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2023 |
-| % Black | The percent of residents who identified as Black only. This includes Hispanic and non-hispanic Black residents. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2023 |
-| % Non-Hispanic White | The percent of residents who identified as White only. This does not include hispanic residents. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2023 |
-| % Hispanic | The percent of residents who identified as Hispanic. This includes Hispanic residents of any race. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2023 |
-| Foreign Born % | The percent of residents born outside of the United States. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2023 |
+| % Asian | The percent of residents who identified as Asian only. This includes Hispanic and non-hispanic Asian residents. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2024 |
+| % Black | The percent of residents who identified as Black only. This includes Hispanic and non-hispanic Black residents. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2024 |
+| % Non-Hispanic White | The percent of residents who identified as White only. This does not include hispanic residents. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2024 |
+| % Hispanic | The percent of residents who identified as Hispanic. This includes Hispanic residents of any race. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2024 |
+| Foreign Born % | The percent of residents born outside of the United States. | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2024 |
 | Timezone | | [Best Places](https://www.bestplaces.net/) | Sep 2021 |
 | Elevation (ft) | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
 | UV Index | | [Best Places](https://www.bestplaces.net/) | Sep 2021 |  
-| Single Population | The percent of residents who are single (not married). | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2023 |  
+| Single Population | The percent of residents who are single (not married). | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2024 |  
 | Num Violent Crimes Per 100k residents | | [FBI](https://fbi.gov/) | Sep 2021 |  
 | Num Property Crimes Per 100k residents | | [FBI](https://fbi.gov/) | Sep 2021 |  
-| Labor Force Participation rate | | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2023 |  
+| Labor Force Participation rate | | [US Census ACS](https://www.census.gov/programs-surveys/acs) | Dec 2024 |  
 | Hottest month's avg low (F) | | [NOAA](https://www.noaa.gov/) | Sep 2021 |  
 | Coldest month's avg low (F) | | [NOAA](https://www.noaa.gov/) | Sep 2021 |  
 | Annual Relative Humidity (afternoon) | | [NOAA](https://www.noaa.gov/) | Sep 2021 |
