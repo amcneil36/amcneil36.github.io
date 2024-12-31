@@ -64,6 +64,7 @@
   <summary>Miscellaneous</summary>  
 <ul>
   <li><a href="https://amcneil36.github.io/blogs/ab-testing">A/B testing</a></li>
+  <li><a href="https://amcneil36.github.io/blogs/monitoring">Monitoring</a></li>
   <li><a href="https://amcneil36.github.io/blogs/defect-management-recommendations">Defect Management Recommendations</a></li>
   <li><a href="https://amcneil36.github.io/blogs/technical-debt-recommendations">Technical Debt Recommendations</a></li>
   <li><a href="https://amcneil36.github.io/blogs/scrum-vs-kanban-when-to-use-which">Scrum vs Kanban: When to use which?</a></li>
