@@ -1,3 +1,5 @@
+## A/B Testing
+
 ### Motivation for A/B Testing
 Suppose you have an idea for a feature for your app. You think it's a good idea. But you don't know with 100% confidence that users will like it. Maybe you are 80% confident. It's worth a try, but how do we know if users will like it? Suppose you do the code change and release it to all of the users and a few days later, the number of daily active users (DAU) on your app increases. Was the increase due to your feature or was it due to some other reason? There could have been, for example, meaning other features released on the same day. Or maybe it became the weekend and your app just has more usage on the weekend. This is where A/B testing comes into play. 
 
