@@ -18,8 +18,10 @@ class ETF:
             if len(line) == 0: # last line
                 break
             parsed_line = line.split(',')
-            symbol = parsed_line[0]
-            weight = float(parsed_line[1])
+            symbol = parsed_line[1]
+            if symbol == "-":
+                symbol = parsed_line[0].replace(" ", "_")
+            weight = float(parsed_line[2])
             holding = Holding(symbol, weight)
             holdings.append(holding)
         return holdings
@@ -46,12 +48,38 @@ def compute_overlap(etf1: ETF, etf2: ETF) -> float:
     total_weight1 = sum(holdings1.values())
     total_weight2 = sum(holdings2.values())
     
-    # Calculate the overlap
+    # Create a list to store the data for each common symbol
+    overlap_data = []
+    
+    # Calculate the overlap and store the data for each common symbol
     total_overlap = 0.0
     for symbol in common_symbols:
         weight1 = holdings1[symbol]
         weight2 = holdings2[symbol]
-        total_overlap += min(weight1, weight2)
+        
+        # Calculate the overlap for the current symbol as the minimum of the two weights
+        overlap_weight = min(weight1, weight2)
+        total_overlap += overlap_weight
+        
+        # Calculate the percentage weights for ETF1 and ETF2
+        percent_weight1 = (weight1 / total_weight1) * 100
+        percent_weight2 = (weight2 / total_weight2) * 100
+        overlap_percent = (overlap_weight / total_weight1) * 100  # Percent overlap relative to ETF1
+        
+        # Append the data to the list
+        overlap_data.append((symbol, percent_weight1, percent_weight2, overlap_percent))
+    
+    # Sort the data by overlap percentage in descending order
+    overlap_data.sort(key=lambda x: x[3], reverse=True)
+    
+    # Print the table header
+    print(f"{'Symbol':<10} {'ETF1 % Weight':<20} {'ETF2 % Weight':<20} {'Overlap %':<20}")
+    print("-" * 70)
+    
+    # Print the rows in sorted order
+    for row in overlap_data:
+        symbol, percent_weight1, percent_weight2, overlap_percent = row
+        print(f"{symbol:<10} {percent_weight1:<20.2f} {percent_weight2:<20.2f} {overlap_percent:<20.2f}")
     
     # Normalize the total overlap by the total weight of both ETFs
     total_weight = total_weight1 + total_weight2
