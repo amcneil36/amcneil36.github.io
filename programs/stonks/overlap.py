@@ -102,26 +102,33 @@ def compute_etf_overlap(etf1: ETF, etf2: ETF, print_overlap: bool = False, inclu
     
 class Basket:
     def __init__(self, etfs: dict[str, float]):
-        combined_holdings: dict[str, float] = {}
-        name = "{"
+        self.holdings: list[(Etf, float)] = []
+        
+        self.name = "{"
         for etf_name, etf_weight in etfs.items():
             etf = ETF(etf_name)
-            name+= etf_name + "=" + str(100*etf_weight) + "%,"
+            self.name+= etf_name + "=" + str(100*etf_weight) + "%,"
+            tup = (etf, etf_weight)
+            self.holdings.append(tup)
+        self.name = self.name[:-1] + "}"
+
+    def to_combined_etf(self)->ETF:
+        combined_holdings: dict[str, float] = {}
+        for etf, etf_weight in self.holdings:
             for symbol, symbol_weight in etf.holdings.items():
                 combined_weight = symbol_weight * etf_weight
                 if symbol in combined_holdings:
                     combined_holdings[symbol] += combined_weight
                 else:
                     combined_holdings[symbol] = combined_weight
-        name = name[:-1] + "}"
-        self.etf = ETF(name, combined_holdings)
+        return ETF(self.name, combined_holdings)        
 
 def compute_basket_overlap(basket1: Basket, basket2: Basket, print_overlap: bool = False, include_all: bool = False) -> float:
-    return compute_etf_overlap(basket1.etf, basket2.etf, print_overlap, include_all)
+    return compute_etf_overlap(basket1.to_combined_etf(), basket2.to_combined_etf(), print_overlap, include_all)
 
 #etf1 = ETF("spyg")
 #etf2 = ETF("spyv")
 #overlap = compute_etf_overlap(etf1, etf2, True)
-basket1 = Basket(etfs={'spy': 1})
-basket2 = Basket(etfs={'spyg': 0.5, 'spyv': 0.5})
+basket1 = Basket(etfs={'spyg': 1})
+basket2 = Basket(etfs={'spyv': 1})
 overlap = compute_basket_overlap(basket1, basket2, True)
