@@ -77,22 +77,25 @@ def compute_etf_overlap(etf1: ETF, etf2: ETF, print_overlap: bool = False, inclu
             row = overlap_data[i]
             symbol, percent_weight1, percent_weight2, overlap_percent = row
             print(f"{symbol:<10} {percent_weight1:<20.2f} {percent_weight2:<20.2f} {overlap_percent:<20.2f}")
-        print("--------------------------------------------------------------------")
-        print(f"Weighted overlap percentage: {overlap_percentage}%")
+        print("-" * 70)
+        print(f"{etf1.name} and {etf2.name} overlap: {overlap_percentage}%")
     return round(overlap_percentage, 1)
     
 class Basket:
     def __init__(self, etfs: dict[str, float]):
         combined_holdings: dict[str, float] = {}
+        name = "{"
         for etf_name, etf_weight in etfs.items():
             etf = ETF(etf_name)
+            name+= etf_name + ": " + str(etf_weight) + ","
             for symbol, symbol_weight in etf.holdings.items():
                 combined_weight = symbol_weight * etf_weight
                 if symbol in combined_holdings:
                     combined_holdings[symbol] += combined_weight
                 else:
                     combined_holdings[symbol] = combined_weight
-        self.etf = ETF("combined", combined_holdings)
+        name = name[:-1] + "}"
+        self.etf = ETF(name, combined_holdings)
 
 def compute_basket_overlap(basket1: Basket, basket2: Basket, print_overlap: bool = False, include_all: bool = False) -> float:
     return compute_etf_overlap(basket1.etf, basket2.etf, print_overlap, include_all)
