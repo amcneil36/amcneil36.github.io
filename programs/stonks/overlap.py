@@ -24,10 +24,11 @@ class ETF:
             holdings.append(holding)
         return holdings
             
-    def __init__(self, url: str):
+    def __init__(self, name: str):
+        url = "https://raw.githubusercontent.com/amcneil36/amcneil36.github.io/refs/heads/master/programs/stonks/etfs/" + name + ".csv"
         self.holdings: list[Holding] = self._fetch_holdings(url)
         filename = url.split('/')[-1]
-        self.name: str = filename.split('.')[0]
+        self.name: str = name
 
-spy = ETF("https://raw.githubusercontent.com/amcneil36/amcneil36.github.io/refs/heads/master/programs/stonks/etfs/spy.csv")
+spy = ETF("spy")
 print(spy.name)
