@@ -31,22 +31,17 @@ class ETF:
         for symbol, symbol_weight in self.holdings.items():
             print(symbol + ": " + str(symbol_weight))
     
-def compute_etf_overlap(etf1: ETF, etf2: ETF, print_overlap: bool = False) -> float:
-    # Get the holdings dictionaries (symbols as keys and weights as values) for both ETFs
+def compute_etf_overlap(etf1: ETF, etf2: ETF, print_overlap: bool = False, include_all: bool = False) -> float:
     holdings1 = etf1.holdings
     holdings2 = etf2.holdings
     
-    # Find the common symbols between the two ETFs
     common_symbols = set(holdings1.keys()).intersection(holdings2.keys())
     
-    # Calculate the total weight in both ETFs
     total_weight1 = sum(holdings1.values())
     total_weight2 = sum(holdings2.values())
     
-    # Create a list to store the data for each common symbol
     overlap_data = []
     
-    # Calculate the overlap and store the data for each common symbol
     total_overlap = 0.0
     for symbol in common_symbols:
         weight1 = holdings1[symbol]
@@ -64,6 +59,10 @@ def compute_etf_overlap(etf1: ETF, etf2: ETF, print_overlap: bool = False) -> fl
         # Append the data to the list
         overlap_data.append((symbol, percent_weight1, percent_weight2, overlap_percent))
     
+        # Normalize the total overlap by the total weight of both ETFs
+    total_weight = total_weight1 + total_weight2
+    overlap_percentage = (2 * total_overlap / total_weight) * 100  # Normalized to percentage
+    overlap_percentage = round(overlap_percentage, 1)
     # Sort the data by overlap percentage in descending order
     if print_overlap:
         overlap_data.sort(key=lambda x: x[3], reverse=True)
@@ -71,14 +70,15 @@ def compute_etf_overlap(etf1: ETF, etf2: ETF, print_overlap: bool = False) -> fl
         print(f"{'Symbol':<10} {'ETF1 % Weight':<20} {'ETF2 % Weight':<20} {'Overlap %':<20}")
         print("-" * 70)
         # Print the rows in sorted order
-        for row in overlap_data:
+        num_rows = len(overlap_data)
+        if not include_all:
+            num_rows = min(10, num_rows)
+        for i in range(num_rows):
+            row = overlap_data[i]
             symbol, percent_weight1, percent_weight2, overlap_percent = row
             print(f"{symbol:<10} {percent_weight1:<20.2f} {percent_weight2:<20.2f} {overlap_percent:<20.2f}")
-    
-    # Normalize the total overlap by the total weight of both ETFs
-    total_weight = total_weight1 + total_weight2
-    overlap_percentage = (2 * total_overlap / total_weight) * 100  # Normalized to percentage
-    
+        print("--------------------------------------------------------------------")
+        print(f"Weighted overlap percentage: {overlap_percentage}%")
     return round(overlap_percentage, 1)
     
 class Basket:
@@ -89,28 +89,26 @@ class Basket:
             for symbol, symbol_weight in etf.holdings.items():
                 combined_weight = symbol_weight * etf_weight
                 if symbol in combined_holdings:
-                    print("foo: " + str(symbol))
                     combined_holdings[symbol] += combined_weight
                 else:
                     combined_holdings[symbol] = combined_weight
         self.etf = ETF("combined", combined_holdings)
 
-def compute_basket_overlap(basket1: Basket, basket2: Basket) -> float:
-    return compute_etf_overlap(basket1.etf, basket2.etf)
+def compute_basket_overlap(basket1: Basket, basket2: Basket, print_overlap: bool = False, include_all: bool = False) -> float:
+    return compute_etf_overlap(basket1.etf, basket2.etf, print_overlap, include_all)
 
 etf1 = ETF("spyv")
 etf2 = ETF("spyg")
 
 # Calculate the weighted overlap
-overlap = compute_etf_overlap(etf1, etf2)
-print(f"Weighted overlap percentage: {overlap}%")
+#overlap = compute_etf_overlap(etf1, etf2, True)
 
 # Define two baskets
-basket1 = Basket(etfs={'spy': 1, 'spy': 1})
+basket1 = Basket(etfs={'spyg': 0.5, 'spyv': 0.5})
 #new_etf = basket1.to_combined_etf()
 #basket1.etf.print_etf()
 
-#basket2 = Basket(etfs={'spy': 1})
+basket2 = Basket(etfs={'spy': 1})
 
-#overlap = compute_basket_overlap(basket1, basket2)
+overlap = compute_basket_overlap(basket1, basket2, True)
 #print(f"Basket Overlap: {overlap}%")
