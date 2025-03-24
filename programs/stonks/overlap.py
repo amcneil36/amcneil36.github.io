@@ -65,8 +65,8 @@ def compute_etf_overlap(etf1: ETF, etf2: ETF, print_overlap: bool = False, inclu
     overlap_percentage = round(overlap_percentage, 1)
 
     # Find symbols that are only in one ETF or the other
-    unique_etf1 = set(holdings1.keys()) - set(holdings2.keys())
-    unique_etf2 = set(holdings2.keys()) - set(holdings1.keys())
+    common_in_etf1 = set(holdings1.keys()).intersection(set(holdings2.keys()))
+    common_in_etf2 = set(holdings2.keys()).intersection(set(holdings1.keys()))
     
     if print_overlap:
         # Sort the data by overlap percentage in descending order
@@ -90,8 +90,8 @@ def compute_etf_overlap(etf1: ETF, etf2: ETF, print_overlap: bool = False, inclu
         print(f"{etf1.name} and {etf2.name} overlap: {overlap_percentage}%")
         
         # Print the number of unique symbols
-        print(f"Number of symbols in {etf1.name} that are not in {etf2.name}: {len(unique_etf1)} of {len(etf1.holdings)} ({100*round(len(unique_etf1)/len(etf1.holdings),1)}%)")
-        print(f"Number of symbols in {etf2.name} that are not in {etf1.name}: {len(unique_etf2)} of {len(etf2.holdings)} ({100*round(len(unique_etf2)/len(etf2.holdings),1)}%)")
+        print(f"Number of symbols in {etf1.name} that are in {etf2.name}: {len(common_in_etf1)} of {len(etf1.holdings)} ({100*round(len(common_in_etf1)/len(etf1.holdings),1)}%)")
+        print(f"Number of symbols in {etf2.name} that are in {etf1.name}: {len(common_in_etf2)} of {len(etf2.holdings)} ({100*round(len(common_in_etf2)/len(etf2.holdings),1)}%)")
     
     return round(overlap_percentage, 1)
     
