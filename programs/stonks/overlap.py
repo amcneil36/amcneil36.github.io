@@ -12,10 +12,11 @@ class ETF:
         for line in lines:
             if len(line) == 0: # last line
                 break
+            line = line.replace('\ufeff', '')
             parsed_line = line.split(',')
-            symbol = parsed_line[1]
-            if symbol == "-":
-                symbol = parsed_line[0].replace(" ", "_")
+            symbol = parsed_line[0]
+            if symbol == "":
+                symbol = parsed_line[1].replace(" ", "_")
             weight = float(parsed_line[2])
             holdings[symbol] = weight
         return holdings
@@ -35,7 +36,6 @@ class ETF:
 def compute_etf_overlap(etf1: ETF, etf2: ETF, print_overlap: bool = False, include_all: bool = False) -> float:
     holdings1 = etf1.holdings
     holdings2 = etf2.holdings
-    
     common_symbols = set(holdings1.keys()).intersection(holdings2.keys())
     
     total_weight1 = sum(holdings1.values())
@@ -158,9 +158,9 @@ def compute_weights(etf_to_recreate: str, etfs_to_use_to_recreate: list[str], pr
     
     return weight_dict
 
-#etf1 = ETF("spyg")
-#etf2 = ETF("spyv")
-#overlap = compute_etf_overlap(etf1, etf2, True)
+#etf1 = ETF("SPYG")
+#etf2 = ETF("SPYV")
+#overlap = compute_etf_overlap(etf1, etf2, True, False)
 #basket1 = Basket(etfs={'spyg': 1})
 #basket2 = Basket(etfs={'spyv': 1})
 #overlap = compute_basket_overlap(basket1, basket2, False)
