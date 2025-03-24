@@ -102,15 +102,16 @@ def compute_etf_overlap(etf1: ETF, etf2: ETF, print_overlap: bool = False, inclu
     
 class Basket:
     def __init__(self, etfs: dict[str, float]):
-        self.holdings: list[(Etf, float)] = []
+        holdings = []
         
-        self.name = "{"
+        name = "{"
         for etf_name, etf_weight in etfs.items():
             etf = ETF(etf_name)
-            self.name+= etf_name + "=" + str(100*etf_weight) + "%,"
+            name+= etf_name + "=" + str(100*etf_weight) + "%,"
             tup = (etf, etf_weight)
-            self.holdings.append(tup)
-        self.name = self.name[:-1] + "}"
+            holdings.append(tup)
+        self.name = name[:-1] + "}"
+        self.holdings: list[(Etf, float)] = holdings
 
     def to_combined_etf(self)->ETF:
         combined_holdings: dict[str, float] = {}
