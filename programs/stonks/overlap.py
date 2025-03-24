@@ -100,18 +100,9 @@ class Basket:
 def compute_basket_overlap(basket1: Basket, basket2: Basket, print_overlap: bool = False, include_all: bool = False) -> float:
     return compute_etf_overlap(basket1.etf, basket2.etf, print_overlap, include_all)
 
-etf1 = ETF("spyv")
-etf2 = ETF("spyg")
-
-# Calculate the weighted overlap
-#overlap = compute_etf_overlap(etf1, etf2, True)
-
-# Define two baskets
-basket1 = Basket(etfs={'spyg': 0.5, 'spyv': 0.5})
-#new_etf = basket1.to_combined_etf()
-#basket1.etf.print_etf()
-
-basket2 = Basket(etfs={'spy': 1})
-
+#etf1 = ETF("spyv")
+#etf2 = ETF("spyg")
+#overlap - compute_etf_overlap(etf1, etf2, True)
+basket1 = Basket(etfs={'spyg': 1})
+basket2 = Basket(etfs={'spyv': 1})
 overlap = compute_basket_overlap(basket1, basket2, True)
-#print(f"Basket Overlap: {overlap}%")
