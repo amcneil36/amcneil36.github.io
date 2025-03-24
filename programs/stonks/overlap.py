@@ -165,4 +165,4 @@ def compute_weights(etf_to_recreate: str, etfs_to_use_to_recreate: list[str], pr
 #basket2 = Basket(etfs={'spyv': 1})
 #overlap = compute_basket_overlap(basket1, basket2, False)
 
-d = compute_weights('spy', ['spyg', 'spyv'], True)
+d = compute_weights('SPY', ['SPYG', 'SPYV'], True)
