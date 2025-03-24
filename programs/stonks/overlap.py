@@ -113,7 +113,7 @@ class Basket:
 def compute_basket_overlap(basket1: Basket, basket2: Basket, print_overlap: bool = False, include_all: bool = False) -> float:
     return compute_etf_overlap(basket1.to_combined_etf(), basket2.to_combined_etf(), print_overlap, include_all)
 
-def compute_weights(etf_to_recreate: str, etfs_to_use_to_recreate: list[str]) -> dict[str, float]:
+def compute_weights(etf_to_recreate: str, etfs_to_use_to_recreate: list[str], print_output: bool = False) -> dict[str, float]:
     # Step 1: Create an ETF object for the target ETF using the name provided
     target_etf = ETF(etf_to_recreate)
     target_holdings = target_etf.holdings
@@ -144,14 +144,25 @@ def compute_weights(etf_to_recreate: str, etfs_to_use_to_recreate: list[str]) ->
     # Step 5: Return the weights as a dictionary, keyed by ETF name
     weight_dict = {etfs_to_use_to_recreate[i]: round(normalized_weights[i], 2) for i in range(len(etfs_to_use_to_recreate))}
 
+    if print_output:
+        # Step 6: Print out the relevant details if print_output is True
+        print(f"Re-creating {etf_to_recreate} from the {", ".join(etfs_to_use_to_recreate)}...")
+        print("-" * 70)
+        for key, value in weight_dict.items():
+            print(f"{key}: {value}%")
+        print("-" * 70)
+        # Step 7: Compute overlap between the target ETF and the weighted combination
+        combined_etf = Basket({etf_name: weight / 100 for etf_name, weight in weight_dict.items()}).to_combined_etf()
+        overlap_percentage = compute_etf_overlap(target_etf, combined_etf)
+        print(f"Percent overlap with {etf_to_recreate}: {overlap_percentage}%")
+    
     return weight_dict
 
 #etf1 = ETF("spyg")
 #etf2 = ETF("spyv")
 #overlap = compute_etf_overlap(etf1, etf2, True)
-basket1 = Basket(etfs={'spyg': 1})
-basket2 = Basket(etfs={'spyv': 1})
-overlap = compute_basket_overlap(basket1, basket2, False)
+#basket1 = Basket(etfs={'spyg': 1})
+#basket2 = Basket(etfs={'spyv': 1})
+#overlap = compute_basket_overlap(basket1, basket2, False)
 
-d = compute_weights('spy', ['spyg', 'spyv'])
-print(d)
+d = compute_weights('spy', ['spyg', 'spyv'], True)
