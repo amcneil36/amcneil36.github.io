@@ -40,42 +40,27 @@ def compute_etf_overlap(etf1: ETF, etf2: ETF, print_overlap: bool = False, inclu
     
     total_weight1 = sum(holdings1.values())
     total_weight2 = sum(holdings2.values())
-    
     overlap_data = []
-    
     total_overlap = 0.0
     for symbol in common_symbols:
         weight1 = holdings1[symbol]
         weight2 = holdings2[symbol]
-        
-        # Calculate the overlap for the current symbol as the minimum of the two weights
         overlap_weight = min(weight1, weight2)
         total_overlap += overlap_weight
-        
-        # Calculate the percentage weights for ETF1 and ETF2
         percent_weight1 = (weight1 / total_weight1) * 100
         percent_weight2 = (weight2 / total_weight2) * 100
         overlap_percent = (overlap_weight / total_weight1) * 100  # Percent overlap relative to ETF1
-        
-        # Append the data to the list
         overlap_data.append((symbol, percent_weight1, percent_weight2, overlap_percent))
-    
-    # Calculate the total overlap percentage
+
     total_weight = total_weight1 + total_weight2
     overlap_percentage = (2 * total_overlap / total_weight) * 100  # Normalized to percentage
     overlap_percentage = round(overlap_percentage, 1)
 
-    # Find symbols that are only in one ETF or the other
     common_in_etf1 = set(holdings1.keys()).intersection(set(holdings2.keys()))
     common_in_etf2 = set(holdings2.keys()).intersection(set(holdings1.keys()))
     
     if print_overlap:
-        # Sort the data by overlap percentage in descending order
         overlap_data.sort(key=lambda x: x[3], reverse=True)
-        
-
-        
-        # Print the rows in sorted order
         num_rows = len(overlap_data)
         if not include_all:
             num_rows = min(10, num_rows)
