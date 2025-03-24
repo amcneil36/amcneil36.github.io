@@ -35,8 +35,8 @@ class ETF:
     def get_holdings(self) -> dict[str, float]:
         """Returns a dictionary with symbols as keys and their respective weights as values."""
         return {holding.symbol: holding.weight for holding in self.holdings}
-
-def compute_overlap(etf1: ETF, etf2: ETF) -> float:
+        
+def compute_etf_overlap(etf1: ETF, etf2: ETF) -> float:
     # Get the holdings dictionaries (symbols as keys and weights as values) for both ETFs
     holdings1 = etf1.get_holdings()
     holdings2 = etf2.get_holdings()
@@ -85,11 +85,20 @@ def compute_overlap(etf1: ETF, etf2: ETF) -> float:
     total_weight = total_weight1 + total_weight2
     overlap_percentage = (2 * total_overlap / total_weight) * 100  # Normalized to percentage
     
-    return overlap_percentage
+    return round(overlap_percentage, 1)
+    
 
 etf1 = ETF("spyg")
 etf2 = ETF("spyv")
 
 # Calculate the weighted overlap
-overlap = compute_overlap(etf1, etf2)
+overlap = compute_etf_overlap(etf1, etf2)
 print(f"Weighted overlap percentage: {overlap}%")
+
+# Define two baskets
+#basket1 = Basket(name="Basket 1", etfs={'spyg': 0.5, 'spyv': 0.5})
+#basket2 = Basket(name="Basket 2", etfs={'spy': 1})
+
+# Compute the overlap between the two baskets
+#overlap = compute_basket_overlap(basket1, basket2)
+#print(f"Basket Overlap: {overlap}%")
