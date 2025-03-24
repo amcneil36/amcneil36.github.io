@@ -158,11 +158,10 @@ def compute_weights(etf_to_recreate: str, etfs_to_use_to_recreate: list[str], pr
     
     return weight_dict
 
-#etf1 = ETF("SPYG")
-#etf2 = ETF("SPYV")
-#overlap = compute_etf_overlap(etf1, etf2, True, False)
-#basket1 = Basket(etfs={'spyg': 1})
-#basket2 = Basket(etfs={'spyv': 1})
-#overlap = compute_basket_overlap(basket1, basket2, False)
 
-d = compute_weights('SPY', ['SPYG', 'SPYV'], True)
+#compute_etf_overlap(ETF("VIOG"), ETF("VIOV"), True, False)
+compute_weights('VTI', ['SPYG', 'SPYV', 'IVOG', 'IVOV', 'VIOG', 'VIOV'], True)
+
+#basket1 = Basket(etfs={'VTI': 1})
+#basket2 = Basket(etfs={'SPY': 0.85, 'IVOO': 0.1, 'VIOO': 0.05})
+#overlap = compute_basket_overlap(basket1, basket2, True)
