@@ -2,7 +2,6 @@ import urllib.request
 from html.parser import HTMLParser
 
 class ETF:
-    
     def _fetch_holdings(self, url: str) -> dict[str, float]:
         response = urllib.request.urlopen(url)
         html_content = response.read().decode('utf-8')
@@ -28,6 +27,10 @@ class ETF:
         else:
             self.holdings: dict[str, float] = holdings
         
+    def print_etf(self):
+        for symbol, symbol_weight in self.holdings.items():
+            print(symbol + ": " + str(symbol_weight))
+    
 def compute_etf_overlap(etf1: ETF, etf2: ETF, print_overlap: bool = False) -> float:
     # Get the holdings dictionaries (symbols as keys and weights as values) for both ETFs
     holdings1 = etf1.holdings
@@ -80,45 +83,34 @@ def compute_etf_overlap(etf1: ETF, etf2: ETF, print_overlap: bool = False) -> fl
     
 class Basket:
     def __init__(self, etfs: dict[str, float]):
-        self.etfs: dict[ETF, float] = {}
-        for key, value in etfs.items():
-            self.etfs[ETF(key)] = value
+        combined_holdings: dict[str, float] = {}
+        for etf_name, etf_weight in etfs.items():
+            etf = ETF(etf_name)
+            for symbol, symbol_weight in etf.holdings.items():
+                combined_weight = symbol_weight * etf_weight
+                if symbol in combined_holdings:
+                    print("foo: " + str(symbol))
+                    combined_holdings[symbol] += combined_weight
+                else:
+                    combined_holdings[symbol] = combined_weight
+        self.etf = ETF("combined", combined_holdings)
 
 def compute_basket_overlap(basket1: Basket, basket2: Basket) -> float:
-    # Initialize the total weighted overlap
-    total_overlap = 0.0
-    
-    # Iterate over each ETF in basket1
-    for etf1, weight1 in basket1.etfs.items():
-        # For each ETF in basket1, compare with each ETF in basket2
-        for etf2, weight2 in basket2.etfs.items():
-            # Compute the overlap between the two ETFs
-            overlap_percentage = compute_etf_overlap(etf1, etf2)
-            
-            # Weight the overlap by the ETF weights in the baskets
-            weighted_overlap = (overlap_percentage / 100) * weight1 * weight2
-            total_overlap += weighted_overlap
-    
-    # Normalize by the total weight of both baskets
-    total_weight_basket1 = sum(basket1.etfs.values())
-    total_weight_basket2 = sum(basket2.etfs.values())
-    total_weight = total_weight_basket1 + total_weight_basket2
-    
-    # Return the final basket overlap as a percentage
-    basket_overlap_percentage = (2 * total_overlap / total_weight) * 100
-    return round(basket_overlap_percentage, 1)
+    return compute_etf_overlap(basket1.etf, basket2.etf)
 
-etf1 = ETF("spyg")
-etf2 = ETF("spyv")
+etf1 = ETF("spyv")
+etf2 = ETF("spyg")
 
 # Calculate the weighted overlap
-#overlap = compute_etf_overlap(etf1, etf2)
-#print(f"Weighted overlap percentage: {overlap}%")
+overlap = compute_etf_overlap(etf1, etf2)
+print(f"Weighted overlap percentage: {overlap}%")
 
 # Define two baskets
-basket1 = Basket(etfs={'spyg': 0.5, 'spyv': 0.5})
-basket2 = Basket(etfs={'spyg': 0.5, 'spyv': 0.5})
+basket1 = Basket(etfs={'spy': 1, 'spy': 1})
+#new_etf = basket1.to_combined_etf()
+#basket1.etf.print_etf()
 
-# Compute the overlap between the two baskets
-overlap = compute_basket_overlap(basket1, basket2)
-print(f"Basket Overlap: {overlap}%")
+#basket2 = Basket(etfs={'spy': 1})
+
+#overlap = compute_basket_overlap(basket1, basket2)
+#print(f"Basket Overlap: {overlap}%")
