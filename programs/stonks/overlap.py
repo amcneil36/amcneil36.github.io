@@ -1,5 +1,6 @@
 import urllib.request
 from html.parser import HTMLParser
+import numpy as np
 
 class ETF:
     def _fetch_holdings(self, url: str) -> dict[str, float]:
@@ -127,9 +128,45 @@ class Basket:
 def compute_basket_overlap(basket1: Basket, basket2: Basket, print_overlap: bool = False, include_all: bool = False) -> float:
     return compute_etf_overlap(basket1.to_combined_etf(), basket2.to_combined_etf(), print_overlap, include_all)
 
+def compute_weights(etf_to_recreate: str, etfs_to_use_to_recreate: list[str]) -> dict[str, float]:
+    # Step 1: Create an ETF object for the target ETF using the name provided
+    target_etf = ETF(etf_to_recreate)
+    target_holdings = target_etf.holdings
+    symbols = list(target_holdings.keys())
+    
+    # Step 2: Prepare the weight matrix for the ETFs to use to recreate the target ETF
+    weight_matrix = []
+    for etf_name in etfs_to_use_to_recreate:
+        etf = ETF(etf_name)
+        etf_holdings = etf.holdings
+        etf_weights = [etf_holdings.get(symbol, 0) for symbol in symbols]
+        weight_matrix.append(etf_weights)
+    
+    # Convert the weight matrix to a numpy array for matrix operations
+    weight_matrix = np.array(weight_matrix).T  # Transpose so that rows are symbols and columns are ETFs
+
+    # Step 3: Solve the least squares problem to find the weights for each ETF
+    target_values = np.array([target_holdings.get(symbol, 0) for symbol in symbols])
+    
+    # We want to minimize the difference: weight_matrix * x = target_values, where x are the ETF weights
+    # Use numpy's lstsq (least squares) function to solve this
+    weights, _, _, _ = np.linalg.lstsq(weight_matrix, target_values, rcond=None)
+
+    # Step 4: Normalize the weights to add up to 100%
+    total_weight = np.sum(weights)
+    normalized_weights = weights / total_weight * 100  # Convert to percentage
+    
+    # Step 5: Return the weights as a dictionary, keyed by ETF name
+    weight_dict = {etfs_to_use_to_recreate[i]: round(normalized_weights[i], 2) for i in range(len(etfs_to_use_to_recreate))}
+
+    return weight_dict
+
 #etf1 = ETF("spyg")
 #etf2 = ETF("spyv")
 #overlap = compute_etf_overlap(etf1, etf2, True)
 basket1 = Basket(etfs={'spyg': 1})
 basket2 = Basket(etfs={'spyv': 1})
-overlap = compute_basket_overlap(basket1, basket2, True)
+overlap = compute_basket_overlap(basket1, basket2, False)
+
+d = compute_weights('spy', ['spyg', 'spyv'])
+print(d)
