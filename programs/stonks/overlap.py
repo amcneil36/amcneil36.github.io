@@ -146,7 +146,7 @@ def compute_weights(etf_to_recreate: str, etfs_to_use_to_recreate: list[str], pr
 
     if print_output:
         # Step 6: Print out the relevant details if print_output is True
-        print(f"Re-creating {etf_to_recreate} from the {", ".join(etfs_to_use_to_recreate)}...")
+        print(f"Re-creating {etf_to_recreate} from {", ".join(etfs_to_use_to_recreate)}...")
         print("-" * 70)
         for key, value in weight_dict.items():
             print(f"{key}: {value}%")
@@ -159,9 +159,9 @@ def compute_weights(etf_to_recreate: str, etfs_to_use_to_recreate: list[str], pr
     return weight_dict
 
 
-# compute_etf_overlap(ETF("VIOG"), ETF("VIOV"), True, False)
-# compute_weights('VTI', ['SPYG', 'SPYV', 'IVOG', 'IVOV', 'VIOG', 'VIOV'], True)
-# compute_weights('VTI', ['VOX', 'VCR', 'VDC', 'VDE', 'VFH', 'VHT', 'VIS', 'VGT', 'VAW', 'VNQ', 'VPU'], True)
+#compute_etf_overlap(ETF("VIOG"), ETF("VIOV"), True, False)
+#compute_weights('VTI', ['SPYG', 'SPYV', 'IVOG', 'IVOV', 'VIOG', 'VIOV'], True)
+#compute_weights('VTI', ['VOX', 'VCR', 'VDC', 'VDE', 'VFH', 'VHT', 'VIS', 'VGT', 'VAW', 'VNQ', 'VPU'], True)
 
 #basket1 = Basket(etfs={'VTI': 1})
 #basket2 = Basket(etfs={'SPY': 0.85, 'IVOO': 0.1, 'VIOO': 0.05})
