@@ -5,10 +5,12 @@ class Holding:
     def __init__(self, symbol: str, weight: float):
         self.symbol = symbol
         self.weight = weight
-    
+
 class ETF:
-    name: str
-    holdings: list[Holding]
+    def __init__(self, url: str):
+        self.holdings = fetch_holdings(url)
+        filename = url.split('/')[-1]
+        self.name = filename.split('.')[0]
 
 def fetch_holdings(url: str):
     response = urllib.request.urlopen(url)
@@ -26,4 +28,5 @@ def fetch_holdings(url: str):
         holdings.append(holding)
 
 spy_url = "https://raw.githubusercontent.com/amcneil36/amcneil36.github.io/refs/heads/master/programs/stonks/etfs/spy.csv"
-fetch_holdings(spy_url)
+spy = ETF(spy_url)
+print(spy.name)
