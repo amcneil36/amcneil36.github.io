@@ -20,7 +20,7 @@ class ETF:
         return holdings
 
     def __init__(self, name: str, holdings: dict[str, float] = {}):
-        self.name: str = name
+        self.name: str = name.upper()
         if not holdings:
             url = "https://raw.githubusercontent.com/amcneil36/amcneil36.github.io/refs/heads/master/programs/stonks/etfs/" + name + ".csv"
             self.holdings: dict[str, float] = self._fetch_holdings(url)
@@ -72,15 +72,20 @@ def compute_etf_overlap(etf1: ETF, etf2: ETF, print_overlap: bool = False, inclu
         # Sort the data by overlap percentage in descending order
         overlap_data.sort(key=lambda x: x[3], reverse=True)
         
-        # Print the table header
-        print("Holdings in both etfs")
-        print(f"{'Symbol':<10} {'ETF1 % Weight':<20} {'ETF2 % Weight':<20} {'Overlap %':<20}")
-        print("-" * 70)
+
         
         # Print the rows in sorted order
         num_rows = len(overlap_data)
         if not include_all:
             num_rows = min(10, num_rows)
+        # Print the table header
+        if num_rows == 10 and not include_all:
+            print(f"Top 10 holdings in both {etf1.name} and {etf2.name}:")
+        else:
+            print(f"All holdings in both {etf1.name} and {etf2.name}:")
+        print("")
+        print(f"{'Symbol':<10} {'ETF1 % Weight':<20} {'ETF2 % Weight':<20} {'Overlap %':<20}")
+        print("-" * 70)
         for i in range(num_rows):
             row = overlap_data[i]
             symbol, percent_weight1, percent_weight2, overlap_percent = row
@@ -90,8 +95,8 @@ def compute_etf_overlap(etf1: ETF, etf2: ETF, print_overlap: bool = False, inclu
         print(f"{etf1.name} and {etf2.name} overlap: {overlap_percentage}%")
         
         # Print the number of unique symbols
-        print(f"Number of symbols in {etf1.name} that are in {etf2.name}: {len(common_in_etf1)} of {len(etf1.holdings)} ({100*round(len(common_in_etf1)/len(etf1.holdings),1)}%)")
-        print(f"Number of symbols in {etf2.name} that are in {etf1.name}: {len(common_in_etf2)} of {len(etf2.holdings)} ({100*round(len(common_in_etf2)/len(etf2.holdings),1)}%)")
+        print(f"Number of symbols in {etf1.name} that are also in {etf2.name}: {len(common_in_etf1)} of {len(etf1.holdings)} ({100*round(len(common_in_etf1)/len(etf1.holdings),1)}%)")
+        print(f"Number of symbols in {etf2.name} that are also in {etf1.name}: {len(common_in_etf2)} of {len(etf2.holdings)} ({100*round(len(common_in_etf2)/len(etf2.holdings),1)}%)")
     
     return round(overlap_percentage, 1)
     
@@ -101,7 +106,7 @@ class Basket:
         name = "{"
         for etf_name, etf_weight in etfs.items():
             etf = ETF(etf_name)
-            name+= etf_name + ": " + str(etf_weight) + ","
+            name+= etf_name + "=" + str(100*etf_weight) + "%,"
             for symbol, symbol_weight in etf.holdings.items():
                 combined_weight = symbol_weight * etf_weight
                 if symbol in combined_holdings:
@@ -114,9 +119,9 @@ class Basket:
 def compute_basket_overlap(basket1: Basket, basket2: Basket, print_overlap: bool = False, include_all: bool = False) -> float:
     return compute_etf_overlap(basket1.etf, basket2.etf, print_overlap, include_all)
 
-etf1 = ETF("spyg")
-etf2 = ETF("spyv")
-overlap = compute_etf_overlap(etf1, etf2, True)
-#basket1 = Basket(etfs={'spyg': 1})
-#basket2 = Basket(etfs={'spyv': 1})
-#overlap = compute_basket_overlap(basket1, basket2, True)
+#etf1 = ETF("spyg")
+#etf2 = ETF("spyv")
+#overlap = compute_etf_overlap(etf1, etf2, True)
+basket1 = Basket(etfs={'spy': 1})
+basket2 = Basket(etfs={'spyg': 0.5, 'spyv': 0.5})
+overlap = compute_basket_overlap(basket1, basket2, True)
