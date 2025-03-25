@@ -165,17 +165,27 @@ def compute_weights(etf_to_recreate: str, etfs_to_use_to_recreate: list[str], pr
     return weight_dict
 
 
-#etf = ETF("XLC")
+#etf = ETF("VB")
 #etf.print_etf()
 #compute_etf_overlap(ETF("VIOG"), ETF("VIOV"), True, False)
+total_snp = 'SPTM'
+total_stock = 'VTI'
 growth_value_snp_cap_etfs = ['SPYG', 'SPYV', 'IVOG', 'IVOV', 'VIOG', 'VIOV']
+cap_etfs = ['VV', 'VB', 'VO']
+snp_cap_etfs = ['VOO', 'IVOO', 'VIOO']
 vanguard_sector_etfs = ['VOX', 'VCR', 'VDC', 'VDE', 'VFH', 'VHT', 'VIS', 'VGT', 'VAW', 'VNQ', 'VPU']
 spdr_sector_etfs = ['XLC', 'XLP', 'XLE', 'XLF', 'XLV', 'XLI', 'XLB', 'XLRE', 'XLK', 'XLU', 'XLY']
 fidelity_sector_etfs = ['FCOM', 'FDIS', 'FENY', 'FHLC', 'FIDU', 'FMAT', 'FNCL', 'FREL', 'FSTA', 'FTEC', 'FUTY']
-#compute_weights('SPTM', growth_value_snp_cap_etfs, True)
-#compute_weights('VTI', vanguard_sector_etfs, True)
-#compute_weights('VTI', spdr_sector_etfs, True)
-#compute_weights('VTI', fidelity_sector_etfs, True)
+
+
+#compute_weights(total_snp, snp_cap_etfs, True)
+#compute_weights(total_stock, fidelity_sector_etfs, True)
+
+#===============================================================================================
+#compute_weights(total_stock, cap_etfs, True)
+#compute_weights(total_snp, growth_value_snp_cap_etfs, True)
+#compute_weights(total_stock, vanguard_sector_etfs, True)
+#compute_weights(total_stock, spdr_sector_etfs, True)
 
 #basket1 = Basket(etfs={'VTI': 1})
 #basket2 = Basket(etfs={'SPY': 0.85, 'IVOO': 0.1, 'VIOO': 0.05})
