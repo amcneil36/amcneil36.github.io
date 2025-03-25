@@ -148,7 +148,7 @@ def compute_weights(etf_to_recreate: str, etfs_to_use_to_recreate: list[str], pr
     normalized_weights = weights / total_weight * 100  # Convert to percentage
     
     # Step 5: Return the weights as a dictionary, keyed by ETF name
-    weight_dict = {etfs_to_use_to_recreate[i]: round(normalized_weights[i], 2) for i in range(len(etfs_to_use_to_recreate))}
+    weight_dict = {etfs_to_use_to_recreate[i]: round(normalized_weights[i], 1) for i in range(len(etfs_to_use_to_recreate))}
 
     if print_output:
         # Step 6: Print out the relevant details if print_output is True
@@ -178,12 +178,12 @@ spdr_sector_etfs = ['XLC', 'XLP', 'XLE', 'XLF', 'XLV', 'XLI', 'XLB', 'XLRE', 'XL
 fidelity_sector_etfs = ['FCOM', 'FDIS', 'FENY', 'FHLC', 'FIDU', 'FMAT', 'FNCL', 'FREL', 'FSTA', 'FTEC', 'FUTY']
 
 
-#compute_weights(total_snp, snp_cap_etfs, True)
+#compute_weights(total_snp, growth_value_snp_cap_etfs, True)
 #compute_weights(total_stock, fidelity_sector_etfs, True)
 
 #===============================================================================================
+#compute_weights(total_snp, snp_cap_etfs, True)
 #compute_weights(total_stock, cap_etfs, True)
-#compute_weights(total_snp, growth_value_snp_cap_etfs, True)
 #compute_weights(total_stock, vanguard_sector_etfs, True)
 #compute_weights(total_stock, spdr_sector_etfs, True)
 
