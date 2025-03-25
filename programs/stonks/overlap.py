@@ -7,16 +7,18 @@ class ETF:
         response = urllib.request.urlopen(url)
         html_content = response.read().decode('utf-8')
         lines = html_content.split('\n')
-        
+        if lines[0].find("Basket Holdings"):
+            lines = lines[3:]        
         holdings: dict[str, float] = {}
         for line in lines:
-            if len(line) == 0: # last line
+            if len(line) == 0 or line.startswith("†"): # last line
                 break
             line = line.replace('\ufeff', '')
             parsed_line = line.split(',')
             symbol = parsed_line[0]
             if symbol == "":
                 symbol = parsed_line[1].replace(" ", "_")
+            print(line)
             weight = float(parsed_line[2])
             holdings[symbol] = weight
         return holdings
@@ -159,6 +161,8 @@ def compute_weights(etf_to_recreate: str, etfs_to_use_to_recreate: list[str], pr
     return weight_dict
 
 
+#etf = ETF("SPY")
+#etf.print_etf()
 #compute_etf_overlap(ETF("VIOG"), ETF("VIOV"), True, False)
 #compute_weights('VTI', ['SPYG', 'SPYV', 'IVOG', 'IVOV', 'VIOG', 'VIOV'], True)
 #compute_weights('VTI', ['VOX', 'VCR', 'VDC', 'VDE', 'VFH', 'VHT', 'VIS', 'VGT', 'VAW', 'VNQ', 'VPU'], True)
