@@ -7,10 +7,11 @@ class ETF:
         response = urllib.request.urlopen(url)
         html_content = response.read().decode('utf-8')
         lines = html_content.split('\n')
-        if lines[0].find("Basket Holdings"):
+        if lines[0].find("AS OF") != -1:
             lines = lines[3:]        
         holdings: dict[str, float] = {}
         for line in lines:
+            #print(line)
             if len(line) == 0 or line.startswith("†"): # last line
                 break
             line = line.replace('\ufeff', '')
@@ -18,7 +19,6 @@ class ETF:
             symbol = parsed_line[0]
             if symbol == "":
                 symbol = parsed_line[1].replace(" ", "_")
-            print(line)
             weight = float(parsed_line[2])
             holdings[symbol] = weight
         return holdings
@@ -32,6 +32,7 @@ class ETF:
             self.holdings: dict[str, float] = holdings
         
     def print_etf(self):
+        print("printing etf...")
         for symbol, symbol_weight in self.holdings.items():
             print(symbol + ": " + str(symbol_weight))
     
@@ -161,11 +162,12 @@ def compute_weights(etf_to_recreate: str, etfs_to_use_to_recreate: list[str], pr
     return weight_dict
 
 
-#etf = ETF("SPY")
+#etf = ETF("XLC")
 #etf.print_etf()
 #compute_etf_overlap(ETF("VIOG"), ETF("VIOV"), True, False)
 #compute_weights('VTI', ['SPYG', 'SPYV', 'IVOG', 'IVOV', 'VIOG', 'VIOV'], True)
 #compute_weights('VTI', ['VOX', 'VCR', 'VDC', 'VDE', 'VFH', 'VHT', 'VIS', 'VGT', 'VAW', 'VNQ', 'VPU'], True)
+#compute_weights('VOO', ['XLC', 'XLP', 'XLE', 'XLF', 'XLV', 'XLI', 'XLB', 'XLRE', 'XLK', 'XLU', 'XLY'], True)
 
 #basket1 = Basket(etfs={'VTI': 1})
 #basket2 = Basket(etfs={'SPY': 0.85, 'IVOO': 0.1, 'VIOO': 0.05})
