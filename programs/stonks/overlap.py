@@ -2,6 +2,8 @@ import urllib.request
 from html.parser import HTMLParser
 import numpy as np
 
+etf_dict: dict[str,dict[str, float]] = {}
+
 class ETF:
     def _fetch_holdings(self, url: str) -> dict[str, float]:
         response = urllib.request.urlopen(url)
@@ -11,7 +13,6 @@ class ETF:
             lines = lines[3:]        
         holdings: dict[str, float] = {}
         for line in lines:
-            #print(line)
             if len(line) == 0 or line.startswith("†"): # last line
                 break
             line = line.replace('\ufeff', '')
@@ -24,12 +25,14 @@ class ETF:
         return holdings
 
     def __init__(self, name: str, holdings: dict[str, float] = {}):
-        self.name: str = name.upper()
-        if not holdings:
+        if holdings:
+            self.holdings: dict[str, float] = holdings
+        elif name in etf_dict:
+            self.holdings = etf_dict[name]
+        else:
             url = "https://raw.githubusercontent.com/amcneil36/amcneil36.github.io/refs/heads/master/programs/stonks/etfs/" + name + ".csv"
             self.holdings: dict[str, float] = self._fetch_holdings(url)
-        else:
-            self.holdings: dict[str, float] = holdings
+            etf_dict[name] = self.holdings
         
     def print_etf(self):
         print("printing etf...")
@@ -165,10 +168,14 @@ def compute_weights(etf_to_recreate: str, etfs_to_use_to_recreate: list[str], pr
 #etf = ETF("XLC")
 #etf.print_etf()
 #compute_etf_overlap(ETF("VIOG"), ETF("VIOV"), True, False)
-#compute_weights('SPTM', ['SPYG', 'SPYV', 'IVOG', 'IVOV', 'VIOG', 'VIOV'], True)
-#compute_weights('VTI', ['VOX', 'VCR', 'VDC', 'VDE', 'VFH', 'VHT', 'VIS', 'VGT', 'VAW', 'VNQ', 'VPU'], True)
-#compute_weights('VTI', ['XLC', 'XLP', 'XLE', 'XLF', 'XLV', 'XLI', 'XLB', 'XLRE', 'XLK', 'XLU', 'XLY'], True)
-#compute_weights('VTI', ['FCOM', 'FDIS', 'FENY', 'FHLC', 'FIDU', 'FMAT', 'FNCL', 'FREL', 'FSTA', 'FTEC', 'FUTY'], True)
+growth_value_cap_etfs = ['SPYG', 'SPYV', 'IVOG', 'IVOV', 'VIOG', 'VIOV']
+vanguard_sector_etfs = ['VOX', 'VCR', 'VDC', 'VDE', 'VFH', 'VHT', 'VIS', 'VGT', 'VAW', 'VNQ', 'VPU']
+spdr_sector_etfs = ['XLC', 'XLP', 'XLE', 'XLF', 'XLV', 'XLI', 'XLB', 'XLRE', 'XLK', 'XLU', 'XLY']
+fidelity_sector_etfs = ['FCOM', 'FDIS', 'FENY', 'FHLC', 'FIDU', 'FMAT', 'FNCL', 'FREL', 'FSTA', 'FTEC', 'FUTY']
+#compute_weights('SPTM', growth_value_cap_etfs, True)
+#compute_weights('VTI', vanguard_sector_etfs, True)
+#compute_weights('VTI', spdr_sector_etfs, True)
+#compute_weights('VTI', fidelity_sector_etfs, True)
 
 #basket1 = Basket(etfs={'VTI': 1})
 #basket2 = Basket(etfs={'SPY': 0.85, 'IVOO': 0.1, 'VIOO': 0.05})
