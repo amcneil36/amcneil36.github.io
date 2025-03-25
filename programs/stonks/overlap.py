@@ -25,6 +25,7 @@ class ETF:
         return holdings
 
     def __init__(self, name: str, holdings: dict[str, float] = {}):
+        self.name = name
         if holdings:
             self.holdings: dict[str, float] = holdings
         elif name in etf_dict:
