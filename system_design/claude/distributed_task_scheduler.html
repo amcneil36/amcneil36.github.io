@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Distributed Task Scheduler - System Design</title>
+<style>
+  body { background: #0f0f0f; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; line-height: 1.7; }
+  h1 { color: #ff6f00; text-align: center; font-size: 2.2em; margin-bottom: 5px; }
+  h2 { color: #ffa726; border-bottom: 2px solid #ffa726; padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: #ffcc80; }
+  .section { background: #1a1a1a; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #2a2a2a; }
+  .diagram-box { background: #141414; border-radius: 10px; padding: 20px; margin: 15px 0; text-align: center; overflow-x: auto; }
+  .example { background: #1e2a1e; border-left: 4px solid #66bb6a; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+  .deep-dive { background: #1a1a2e; border-left: 4px solid #ffa726; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+  .tradeoff { background: #2a1a1a; border-left: 4px solid #ff6b6b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+  th, td { border: 1px solid #333; padding: 10px 14px; text-align: left; }
+  th { background: #2a1e0a; color: #ffa726; }
+  code { background: #2a2a2a; padding: 2px 7px; border-radius: 4px; color: #ffcc80; font-size: 0.95em; }
+  .tag-pk { background: #4a2; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+  .tag-fk { background: #2a4a8a; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+  .tag-idx { background: #8a6a2a; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+  .tag-shard { background: #6a2a6a; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+  .tag-ttl { background: #8a2a2a; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 6px 0; }
+  .subtitle { text-align: center; color: #999; font-size: 1.1em; margin-bottom: 30px; }
+</style>
+</head>
+<body>
+
+<h1>⏱️ Distributed Task Scheduler — System Design</h1>
+<p class="subtitle">Cron-at-Scale, Delayed Execution, Priority Queues, Exactly-Once Delivery &amp; Dead Letter Handling</p>
+
+<!-- ==================== REQUIREMENTS ==================== -->
+<div class="section">
+<h2>Functional Requirements</h2>
+<ol>
+  <li><strong>Task Submission</strong> — Submit one-time or recurring tasks with execution time, priority, payload, and callback endpoint</li>
+  <li><strong>Cron Scheduling</strong> — Support cron expressions (minute/hour/day/month/weekday) with timezone awareness for recurring tasks</li>
+  <li><strong>Delayed Execution</strong> — Schedule tasks for future execution (seconds to months ahead) with guaranteed delivery</li>
+  <li><strong>Priority Queues</strong> — Multiple priority levels (CRITICAL, HIGH, MEDIUM, LOW) with preemptive scheduling for higher priorities</li>
+  <li><strong>At-Least-Once / Exactly-Once Delivery</strong> — Configurable delivery semantics with idempotency keys</li>
+  <li><strong>Dead Letter Queue (DLQ)</strong> — Failed tasks routed to DLQ after configurable retry policy (exponential backoff + jitter)</li>
+  <li><strong>Task Management</strong> — Cancel, pause, resume, query status of submitted tasks via API</li>
+  <li><strong>Observability</strong> — Execution metrics, latency histograms, failure rates, queue depth monitoring</li>
+</ol>
+</div>
+
+<div class="section">
+<h2>Non-Functional Requirements</h2>
+<ul>
+  <li><strong>Scale</strong> — 100M+ scheduled tasks, 1M+ executions/minute at peak, 10K+ concurrent worker processes</li>
+  <li><strong>Timing Accuracy</strong> — &lt;1 second jitter for immediate tasks, &lt;5 second jitter for scheduled tasks</li>
+  <li><strong>Durability</strong> — Zero task loss. All submitted tasks persisted before acknowledgement.</li>
+  <li><strong>Availability</strong> — 99.99% uptime. Scheduler, queue, and worker tiers all independently fault-tolerant</li>
+  <li><strong>Consistency</strong> — No double-execution for exactly-once tasks (distributed locking + idempotency tokens)</li>
+  <li><strong>Latency</strong> — &lt;50ms task submission API response; &lt;100ms scheduling decision time</li>
+  <li><strong>Multi-Tenancy</strong> — Per-tenant rate limits, quota, isolation; fair scheduling across tenants</li>
+</ul>
+</div>
+
+<!-- ==================== FLOW 1: TASK SUBMISSION ==================== -->
+<div class="section">
+<h2>Flow 1: Task Submission &amp; Scheduling</h2>
+
+<div class="diagram-box">
+<svg viewBox="0 0 1050 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ah1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ffa726"/>
+    </marker>
+  </defs>
+  <!-- Clients -->
+  <rect x="10" y="40" width="120" height="50" rx="8" fill="#2e7d32"/>
+  <text x="70" y="65" text-anchor="middle" fill="white" font-size="11">Service A (API)</text>
+  <text x="70" y="80" text-anchor="middle" fill="white" font-size="10">Submit Task</text>
+  <rect x="10" y="110" width="120" height="50" rx="8" fill="#2e7d32"/>
+  <text x="70" y="135" text-anchor="middle" fill="white" font-size="11">Service B (Cron)</text>
+  <text x="70" y="150" text-anchor="middle" fill="white" font-size="10">Recurring Job</text>
+  <rect x="10" y="180" width="120" height="50" rx="8" fill="#2e7d32"/>
+  <text x="70" y="205" text-anchor="middle" fill="white" font-size="11">Admin UI</text>
+  <text x="70" y="220" text-anchor="middle" fill="white" font-size="10">Manual Trigger</text>
+
+  <!-- API Gateway -->
+  <rect x="190" y="100" width="130" height="60" rx="8" fill="#e65100"/>
+  <text x="255" y="125" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
+  <text x="255" y="142" text-anchor="middle" fill="white" font-size="10">(Auth + Rate Limit)</text>
+
+  <!-- Scheduler Service -->
+  <rect x="380" y="40" width="160" height="65" rx="8" fill="#1565c0"/>
+  <text x="460" y="65" text-anchor="middle" fill="white" font-size="12">Scheduler Service</text>
+  <text x="460" y="82" text-anchor="middle" fill="white" font-size="10">(Validate + Persist + Ack)</text>
+
+  <!-- Task Store -->
+  <rect x="380" y="140" width="160" height="55" rx="10" fill="#5d4037"/>
+  <text x="460" y="163" text-anchor="middle" fill="white" font-size="12">Task Store (DB)</text>
+  <text x="460" y="180" text-anchor="middle" fill="white" font-size="10">(PostgreSQL + Sharded)</text>
+
+  <!-- Timer Wheel -->
+  <rect x="610" y="40" width="150" height="65" rx="8" fill="#7b1fa2"/>
+  <text x="685" y="65" text-anchor="middle" fill="white" font-size="12">Timer Wheel</text>
+  <text x="685" y="82" text-anchor="middle" fill="white" font-size="10">(Hierarchical, per-shard)</text>
+
+  <!-- Ready Queue -->
+  <rect x="610" y="140" width="150" height="55" rx="8" fill="#c62828"/>
+  <text x="685" y="163" text-anchor="middle" fill="white" font-size="12">Ready Queue</text>
+  <text x="685" y="180" text-anchor="middle" fill="white" font-size="10">(Kafka / Redis Sorted Set)</text>
+
+  <!-- Cron Evaluator -->
+  <rect x="380" y="240" width="160" height="55" rx="8" fill="#006064"/>
+  <text x="460" y="263" text-anchor="middle" fill="white" font-size="12">Cron Evaluator</text>
+  <text x="460" y="280" text-anchor="middle" fill="white" font-size="10">(Next-fire Calculator)</text>
+
+  <!-- Time Partition Scanner -->
+  <rect x="610" y="240" width="150" height="55" rx="8" fill="#37474f"/>
+  <text x="685" y="263" text-anchor="middle" fill="white" font-size="11">Partition Scanner</text>
+  <text x="685" y="280" text-anchor="middle" fill="white" font-size="10">(Poll for due tasks)</text>
+
+  <!-- Arrows -->
+  <line x1="130" y1="65" x2="188" y2="118" stroke="#ffa726" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="130" y1="135" x2="188" y2="130" stroke="#ffa726" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="130" y1="205" x2="188" y2="142" stroke="#ffa726" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="320" y1="130" x2="378" y2="72" stroke="#ffa726" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="460" y1="105" x2="460" y2="138" stroke="#ffa726" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="540" y1="72" x2="608" y2="72" stroke="#ffa726" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="685" y1="105" x2="685" y2="138" stroke="#ffa726" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="460" y1="195" x2="460" y2="238" stroke="#ffa726" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah1)"/>
+  <line x1="540" y1="267" x2="608" y2="267" stroke="#ffa726" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="685" y1="240" x2="685" y2="197" stroke="#ffa726" stroke-width="2" marker-end="url(#ah1)"/>
+</svg>
+</div>
+
+<h3>Submission Steps</h3>
+<ol>
+  <li><strong>API Validation</strong> — Client submits task: <code>POST /api/v1/tasks</code> with body <code>{"task_type": "send_email", "execute_at": "2026-02-10T09:00:00Z", "priority": "HIGH", "payload": {...}, "idempotency_key": "abc123", "retry_policy": {"max_retries": 3, "backoff": "exponential"}}</code>. Gateway validates auth (JWT/API key), rate limits per tenant, validates schema.</li>
+  <li><strong>Persistence</strong> — Scheduler Service writes task to Task Store (PostgreSQL). Task status: <code>SCHEDULED</code>. Write is synchronous — API returns 202 Accepted only after DB commit. Task ID (UUIDv7, time-ordered) returned to client.</li>
+  <li><strong>Timer Wheel Insertion</strong> — For near-future tasks (&lt;1 hour), inserted into in-memory Hierarchical Timer Wheel (HTW). For far-future tasks, stored in DB only — a Partition Scanner polls periodically.</li>
+  <li><strong>Cron Evaluation</strong> — For recurring tasks, Cron Evaluator calculates next fire time using cron expression + timezone. Creates the next scheduled instance. After each execution, the evaluator re-calculates and schedules the next instance (no pre-creation of all future runs).</li>
+  <li><strong>Ready Queue</strong> — When <code>execute_at</code> time arrives, task is moved from timer wheel → Ready Queue (Kafka topic partitioned by priority, or Redis Sorted Set with score = timestamp). Workers consume from Ready Queue.</li>
+</ol>
+
+<div class="example">
+  <strong>Example — Delayed email reminder:</strong><br>
+  E-commerce service schedules: <code>POST /api/v1/tasks</code> body: <code>{"task_type": "abandoned_cart_email", "execute_at": "2026-02-09T22:00:00Z", "priority": "MEDIUM", "payload": {"user_id": "u_789", "cart_id": "c_456", "items": ["Widget A", "Gadget B"]}, "idempotency_key": "cart-reminder-c_456", "callback_url": "https://email-service/send"}</code><br>
+  Response: <code>{"task_id": "01952a3b-...", "status": "SCHEDULED", "execute_at": "2026-02-09T22:00:00Z"}</code><br>
+  At 22:00 UTC, task fires → worker POSTs to callback_url with payload → email sent → task status: COMPLETED.
+</div>
+
+<div class="deep-dive">
+  <strong>Deep Dive — Hierarchical Timer Wheel (HTW):</strong><br>
+  Inspired by Hashed and Hierarchical Timing Wheels (Varghese &amp; Lauck, 1987). Structure: multiple wheel levels — <em>second wheel</em> (60 slots), <em>minute wheel</em> (60 slots), <em>hour wheel</em> (24 slots). A task at T+3h47m22s is placed in hour wheel slot 3. When hour 3 ticks, tasks are cascaded down to minute wheel slot 47. When minute 47 ticks, cascaded to second wheel slot 22. When slot fires, task moves to Ready Queue. Insertion: O(1). Firing: O(1) amortized. Memory: minimal — only near-future tasks in memory. Each scheduler shard runs its own HTW for its partition of tasks.
+</div>
+
+<div class="deep-dive">
+  <strong>Deep Dive — Partition Scanner (Long-Duration Tasks):</strong><br>
+  Tasks scheduled far in the future (hours to months) stay in the database only — no in-memory representation. A <strong>Partition Scanner</strong> runs every 30-60 seconds per shard:<br>
+  <code>SELECT task_id, execute_at, priority FROM tasks WHERE shard_id = :s AND status = 'SCHEDULED' AND execute_at <= NOW() + INTERVAL '5 minutes' ORDER BY execute_at LIMIT 1000</code><br>
+  Matching tasks are loaded into the Timer Wheel for precise sub-second firing. The scan window (5 minutes ahead) ensures tasks are always loaded before their deadline. Index on <code>(shard_id, status, execute_at)</code> makes this query efficient even with billions of rows.
+</div>
+</div>
+
+<!-- ==================== FLOW 2: EXECUTION ==================== -->
+<div class="section">
+<h2>Flow 2: Task Execution &amp; Worker Pool</h2>
+
+<div class="diagram-box">
+<svg viewBox="0 0 1000 370" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ffa726"/>
+    </marker>
+  </defs>
+  <!-- Ready Queue -->
+  <rect x="10" y="120" width="140" height="60" rx="8" fill="#c62828"/>
+  <text x="80" y="145" text-anchor="middle" fill="white" font-size="12">Ready Queue</text>
+  <text x="80" y="162" text-anchor="middle" fill="white" font-size="10">(Priority-Ordered)</text>
+
+  <!-- Worker Pool -->
+  <rect x="210" y="40" width="140" height="50" rx="8" fill="#1565c0"/>
+  <text x="280" y="62" text-anchor="middle" fill="white" font-size="11">Worker Pod 1</text>
+  <text x="280" y="78" text-anchor="middle" fill="white" font-size="10">(Claim + Execute)</text>
+  <rect x="210" y="105" width="140" height="50" rx="8" fill="#1565c0"/>
+  <text x="280" y="127" text-anchor="middle" fill="white" font-size="11">Worker Pod 2</text>
+  <rect x="210" y="170" width="140" height="50" rx="8" fill="#1565c0"/>
+  <text x="280" y="192" text-anchor="middle" fill="white" font-size="11">Worker Pod N</text>
+
+  <!-- Distributed Lock -->
+  <rect x="210" y="250" width="140" height="50" rx="8" fill="#7b1fa2"/>
+  <text x="280" y="272" text-anchor="middle" fill="white" font-size="11">Distributed Lock</text>
+  <text x="280" y="288" text-anchor="middle" fill="white" font-size="10">(Redis / ZooKeeper)</text>
+
+  <!-- Execution -->
+  <rect x="420" y="60" width="150" height="55" rx="8" fill="#e65100"/>
+  <text x="495" y="83" text-anchor="middle" fill="white" font-size="11">Task Executor</text>
+  <text x="495" y="100" text-anchor="middle" fill="white" font-size="10">(HTTP/gRPC Callback)</text>
+
+  <!-- Target Services -->
+  <rect x="640" y="30" width="130" height="45" rx="8" fill="#2e7d32"/>
+  <text x="705" y="57" text-anchor="middle" fill="white" font-size="11">Email Service</text>
+  <rect x="640" y="90" width="130" height="45" rx="8" fill="#2e7d32"/>
+  <text x="705" y="117" text-anchor="middle" fill="white" font-size="11">Payment Service</text>
+  <rect x="640" y="150" width="130" height="45" rx="8" fill="#2e7d32"/>
+  <text x="705" y="177" text-anchor="middle" fill="white" font-size="11">Analytics Service</text>
+
+  <!-- Result Handler -->
+  <rect x="420" y="160" width="150" height="55" rx="8" fill="#006064"/>
+  <text x="495" y="183" text-anchor="middle" fill="white" font-size="11">Result Handler</text>
+  <text x="495" y="200" text-anchor="middle" fill="white" font-size="10">(Ack / Retry / DLQ)</text>
+
+  <!-- Retry Queue -->
+  <rect x="420" y="260" width="150" height="50" rx="8" fill="#c62828"/>
+  <text x="495" y="283" text-anchor="middle" fill="white" font-size="11">Retry Queue</text>
+  <text x="495" y="298" text-anchor="middle" fill="white" font-size="10">(Exp Backoff + Jitter)</text>
+
+  <!-- DLQ -->
+  <rect x="640" y="260" width="130" height="50" rx="8" fill="#37474f"/>
+  <text x="705" y="283" text-anchor="middle" fill="white" font-size="11">Dead Letter Queue</text>
+  <text x="705" y="298" text-anchor="middle" fill="white" font-size="10">(Manual Review)</text>
+
+  <!-- Arrows -->
+  <line x1="150" y1="140" x2="208" y2="70" stroke="#ffa726" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="150" y1="150" x2="208" y2="130" stroke="#ffa726" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="150" y1="160" x2="208" y2="195" stroke="#ffa726" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="350" y1="65" x2="418" y2="82" stroke="#ffa726" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="350" y1="130" x2="418" y2="90" stroke="#ffa726" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="570" y1="77" x2="638" y2="52" stroke="#ffa726" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="570" y1="87" x2="638" y2="112" stroke="#ffa726" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="570" y1="97" x2="638" y2="172" stroke="#ffa726" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="495" y1="115" x2="495" y2="158" stroke="#ffa726" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="495" y1="215" x2="495" y2="258" stroke="#ffa726" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="570" y1="285" x2="638" y2="285" stroke="#ffa726" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="280" y1="220" x2="280" y2="248" stroke="#ffa726" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah2)"/>
+</svg>
+</div>
+
+<h3>Execution Steps</h3>
+<ol>
+  <li><strong>Task Claiming</strong> — Worker pulls task from Ready Queue. For exactly-once: worker acquires distributed lock (Redis <code>SET task:{id}:lock {worker_id} NX EX 300</code>) before processing. Lock TTL = expected execution time + buffer. Kafka-based: consumer group assigns partitions, at-least-once delivery with idempotency key dedup.</li>
+  <li><strong>Execution</strong> — Worker invokes the task's callback: HTTP POST to <code>callback_url</code> with payload, or gRPC call, or inline function execution (for co-located tasks). Timeout: configurable per task type (default 30s). Worker sends heartbeat to extend lock TTL for long-running tasks.</li>
+  <li><strong>Result Handling</strong> — On success (HTTP 2xx): mark task <code>COMPLETED</code>, release lock, record execution duration. On failure (HTTP 4xx/5xx or timeout): increment retry count, calculate next retry time using exponential backoff with jitter: <code>delay = min(base * 2^attempt + random(0, base), max_delay)</code>.</li>
+  <li><strong>Retry Policy</strong> — Task re-enqueued to Retry Queue with new <code>execute_at = NOW() + backoff_delay</code>. Retry Queue feeds back into Timer Wheel. Example: retries at 1s, 2s, 4s, 8s, 16s, 32s, 60s, 60s, 60s (max 9 retries).</li>
+  <li><strong>Dead Letter Queue</strong> — After max retries exhausted, task moved to DLQ with full execution history (all attempt timestamps, error responses, stack traces). DLQ tasks require manual review or automated remediation. Alert fires on DLQ depth threshold.</li>
+</ol>
+
+<div class="example">
+  <strong>Example — Payment retry flow:</strong><br>
+  Task: charge customer subscription renewal. Attempt 1: payment gateway returns 503 (overloaded) → retry at +2s.<br>
+  Attempt 2: timeout after 30s → retry at +4s + 1.3s jitter = +5.3s.<br>
+  Attempt 3: payment gateway returns 200 OK → task COMPLETED.<br>
+  Idempotency key <code>sub-renew-u789-2026-02</code> ensures even if worker crashes mid-execution and another worker retries, the payment gateway deduplicates the charge.
+</div>
+
+<div class="deep-dive">
+  <strong>Deep Dive — Exactly-Once Delivery:</strong><br>
+  True exactly-once is impossible in distributed systems (Two Generals' Problem). Practical approach: <strong>at-least-once delivery + idempotent execution</strong>.<br>
+  1. <em>Producer side</em>: client provides <code>idempotency_key</code>. Scheduler deduplicates submissions within a window (check Redis/DB: <code>SET idempotency:{key} {task_id} NX EX 86400</code>).<br>
+  2. <em>Consumer side</em>: worker passes idempotency key to target service. Target service maintains idempotency store (Redis hash or DB table). Before executing side effects, checks if key already processed.<br>
+  3. <em>Fencing tokens</em>: distributed lock returns a monotonically increasing token. Worker includes token in callback. Target service rejects requests with stale tokens (from previous lock holder who may still be running after lock expiry).
+</div>
+
+<div class="deep-dive">
+  <strong>Deep Dive — Exponential Backoff with Full Jitter:</strong><br>
+  Formula: <code>sleep = random_between(0, min(cap, base * 2^attempt))</code><br>
+  Where <code>base = 1 second</code>, <code>cap = 60 seconds</code>. Full jitter (vs. equal jitter or decorrelated jitter) provides the best spread to avoid thundering herd when many tasks fail simultaneously. AWS recommends full jitter for retries. Example progression: attempt 0: 0-1s, attempt 1: 0-2s, attempt 2: 0-4s, attempt 3: 0-8s, attempt 4: 0-16s, attempt 5: 0-32s, attempt 6+: 0-60s. The randomization ensures retry storms don't create synchronized load spikes on downstream services.
+</div>
+</div>
+
+<!-- ==================== FLOW 3: CRON & RECURRING ==================== -->
+<div class="section">
+<h2>Flow 3: Cron Scheduling &amp; Recurring Tasks</h2>
+
+<div class="diagram-box">
+<svg viewBox="0 0 950 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ffa726"/>
+    </marker>
+  </defs>
+  <!-- Cron Definition -->
+  <rect x="10" y="110" width="140" height="60" rx="8" fill="#2e7d32"/>
+  <text x="80" y="135" text-anchor="middle" fill="white" font-size="11">Cron Job Definition</text>
+  <text x="80" y="152" text-anchor="middle" fill="white" font-size="10">"0 9 * * MON-FRI"</text>
+
+  <!-- Cron Registry -->
+  <rect x="200" y="50" width="150" height="55" rx="8" fill="#7b1fa2"/>
+  <text x="275" y="73" text-anchor="middle" fill="white" font-size="12">Cron Registry</text>
+  <text x="275" y="90" text-anchor="middle" fill="white" font-size="10">(Job Definitions DB)</text>
+
+  <!-- Cron Trigger Service -->
+  <rect x="200" y="140" width="150" height="55" rx="8" fill="#1565c0"/>
+  <text x="275" y="163" text-anchor="middle" fill="white" font-size="12">Cron Trigger Service</text>
+  <text x="275" y="180" text-anchor="middle" fill="white" font-size="10">(Leader-Elected)</text>
+
+  <!-- Next Fire Calculator -->
+  <rect x="410" y="50" width="160" height="55" rx="8" fill="#006064"/>
+  <text x="490" y="73" text-anchor="middle" fill="white" font-size="11">Next Fire Calculator</text>
+  <text x="490" y="90" text-anchor="middle" fill="white" font-size="10">(Quartz-like Engine)</text>
+
+  <!-- Task Creator -->
+  <rect x="410" y="140" width="160" height="55" rx="8" fill="#e65100"/>
+  <text x="490" y="163" text-anchor="middle" fill="white" font-size="12">Task Instance Creator</text>
+  <text x="490" y="180" text-anchor="middle" fill="white" font-size="10">(Create One-Time Task)</text>
+
+  <!-- Overlap Policy -->
+  <rect x="410" y="230" width="160" height="55" rx="8" fill="#c62828"/>
+  <text x="490" y="253" text-anchor="middle" fill="white" font-size="11">Overlap Policy Engine</text>
+  <text x="490" y="270" text-anchor="middle" fill="white" font-size="10">(Skip / Queue / Allow)</text>
+
+  <!-- Back to Scheduler -->
+  <rect x="640" y="140" width="150" height="55" rx="8" fill="#1565c0"/>
+  <text x="715" y="163" text-anchor="middle" fill="white" font-size="12">Scheduler Service</text>
+  <text x="715" y="180" text-anchor="middle" fill="white" font-size="10">(Timer Wheel)</text>
+
+  <!-- Execution History -->
+  <rect x="640" y="230" width="150" height="55" rx="8" fill="#37474f"/>
+  <text x="715" y="253" text-anchor="middle" fill="white" font-size="11">Execution History</text>
+  <text x="715" y="270" text-anchor="middle" fill="white" font-size="10">(Per-Job Audit Log)</text>
+
+  <!-- Arrows -->
+  <line x1="150" y1="130" x2="198" y2="80" stroke="#ffa726" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="150" y1="145" x2="198" y2="165" stroke="#ffa726" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="350" y1="77" x2="408" y2="77" stroke="#ffa726" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="350" y1="167" x2="408" y2="167" stroke="#ffa726" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="490" y1="105" x2="490" y2="138" stroke="#ffa726" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="490" y1="195" x2="490" y2="228" stroke="#ffa726" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah3)"/>
+  <line x1="570" y1="167" x2="638" y2="167" stroke="#ffa726" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="715" y1="195" x2="715" y2="228" stroke="#ffa726" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah3)"/>
+</svg>
+</div>
+
+<h3>Cron Scheduling Steps</h3>
+<ol>
+  <li><strong>Job Registration</strong> — Client registers recurring job: <code>POST /api/v1/cron-jobs</code> with <code>{"name": "daily_report", "cron": "0 9 * * MON-FRI", "timezone": "America/New_York", "task_type": "generate_report", "payload": {...}, "overlap_policy": "SKIP"}</code>. Job definition persisted in Cron Registry.</li>
+  <li><strong>Next Fire Calculation</strong> — Cron Trigger Service (leader-elected via ZooKeeper/etcd) evaluates all active cron jobs. For each: parse cron expression, compute next fire time respecting timezone and DST transitions. Uses Quartz-like CronExpression parser supporting: <code>L</code> (last day), <code>W</code> (nearest weekday), <code>#</code> (nth weekday of month).</li>
+  <li><strong>Instance Creation</strong> — At the computed fire time, Trigger Service creates a one-time task instance (same as regular task submission). The instance inherits payload, priority, retry policy from the cron job definition.</li>
+  <li><strong>Overlap Policy</strong> — Before creating a new instance, checks if previous instance is still running:<br>
+    • <strong>SKIP</strong>: Don't create new instance if previous still executing (prevents pile-up)<br>
+    • <strong>QUEUE</strong>: Create instance but delay until previous completes<br>
+    • <strong>ALLOW</strong>: Create regardless (allow parallel executions)<br>
+    • <strong>CANCEL_RUNNING</strong>: Cancel previous, start new
+  </li>
+  <li><strong>Re-scheduling</strong> — After instance executes (success or exhausted retries), Trigger Service computes next fire time and schedules next instance. Execution history maintained for debugging and SLA reporting.</li>
+</ol>
+
+<div class="example">
+  <strong>Example — Weekday report generation:</strong><br>
+  Cron: <code>0 9 * * MON-FRI</code> (TZ: America/New_York)<br>
+  Monday 9:00 AM ET → Trigger Service creates task → worker calls Report Service → generates PDF → uploads to S3 → sends Slack notification → task COMPLETED.<br>
+  Next fire: Tuesday 9:00 AM ET. During EST→EDT transition (March clock forward): no 2:00 AM fire for <code>0 2 * * *</code> (skipped); for EDT→EST (November clock back): fires only once (dedup by instance ID).
+</div>
+
+<div class="deep-dive">
+  <strong>Deep Dive — DST &amp; Timezone Handling:</strong><br>
+  Timezone-aware scheduling is surprisingly complex. Problems: <em>Spring forward</em> — 2:00 AM doesn't exist in America/New_York on the transition day. If cron fires at 2:30 AM, skip or fire at 3:00 AM? <em>Fall back</em> — 1:30 AM occurs twice. Fire once or twice? Industry convention (adopted by Quartz, Kubernetes CronJob, Temporal.io): spring forward → fire at next valid time (3:00 AM); fall back → fire on first occurrence only. Implementation: store cron in local timezone string, use IANA tz database (via Go's <code>time.LoadLocation</code> or Java's <code>ZoneId</code>). Never convert cron to UTC — it breaks on DST transitions. Always compute next fire time using the timezone-aware library.
+</div>
+</div>
+
+<!-- ==================== COMBINED ARCHITECTURE ==================== -->
+<div class="section">
+<h2>Combined Architecture</h2>
+
+<div class="diagram-box">
+<svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ffa726"/>
+    </marker>
+  </defs>
+  <!-- Clients -->
+  <rect x="10" y="30" width="120" height="45" rx="8" fill="#2e7d32"/>
+  <text x="70" y="57" text-anchor="middle" fill="white" font-size="11">API Clients</text>
+  <rect x="10" y="90" width="120" height="45" rx="8" fill="#2e7d32"/>
+  <text x="70" y="117" text-anchor="middle" fill="white" font-size="11">Internal Services</text>
+  <rect x="10" y="150" width="120" height="45" rx="8" fill="#2e7d32"/>
+  <text x="70" y="177" text-anchor="middle" fill="white" font-size="11">Admin Dashboard</text>
+
+  <!-- API Gateway -->
+  <rect x="180" y="70" width="130" height="55" rx="8" fill="#e65100"/>
+  <text x="245" y="93" text-anchor="middle" fill="white" font-size="11">API Gateway</text>
+  <text x="245" y="110" text-anchor="middle" fill="white" font-size="10">Auth + Rate Limit</text>
+
+  <!-- Scheduler Service -->
+  <rect x="370" y="30" width="150" height="50" rx="8" fill="#1565c0"/>
+  <text x="445" y="52" text-anchor="middle" fill="white" font-size="11">Scheduler Shard 1</text>
+  <text x="445" y="68" text-anchor="middle" fill="white" font-size="10">(Timer Wheel)</text>
+  <rect x="370" y="95" width="150" height="50" rx="8" fill="#1565c0"/>
+  <text x="445" y="117" text-anchor="middle" fill="white" font-size="11">Scheduler Shard N</text>
+
+  <!-- Cron Trigger -->
+  <rect x="370" y="170" width="150" height="45" rx="8" fill="#006064"/>
+  <text x="445" y="197" text-anchor="middle" fill="white" font-size="11">Cron Trigger (Leader)</text>
+
+  <!-- Task Store -->
+  <rect x="600" y="30" width="150" height="55" rx="10" fill="#5d4037"/>
+  <text x="675" y="52" text-anchor="middle" fill="white" font-size="11">Task Store (PG)</text>
+  <text x="675" y="70" text-anchor="middle" fill="white" font-size="10">Sharded by task_id</text>
+
+  <!-- Ready Queue -->
+  <rect x="600" y="105" width="150" height="50" rx="8" fill="#c62828"/>
+  <text x="675" y="127" text-anchor="middle" fill="white" font-size="11">Ready Queue (Kafka)</text>
+  <text x="675" y="145" text-anchor="middle" fill="white" font-size="10">Priority Partitions</text>
+
+  <!-- Lock Service -->
+  <rect x="600" y="175" width="150" height="45" rx="8" fill="#7b1fa2"/>
+  <text x="675" y="202" text-anchor="middle" fill="white" font-size="11">Lock Service (Redis)</text>
+
+  <!-- Worker Pool -->
+  <rect x="830" y="30" width="140" height="50" rx="8" fill="#1565c0"/>
+  <text x="900" y="52" text-anchor="middle" fill="white" font-size="11">Worker Pod 1</text>
+  <text x="900" y="68" text-anchor="middle" fill="white" font-size="10">(Execute + Callback)</text>
+  <rect x="830" y="95" width="140" height="50" rx="8" fill="#1565c0"/>
+  <text x="900" y="117" text-anchor="middle" fill="white" font-size="11">Worker Pod N</text>
+
+  <!-- DLQ -->
+  <rect x="830" y="170" width="140" height="45" rx="8" fill="#37474f"/>
+  <text x="900" y="197" text-anchor="middle" fill="white" font-size="11">Dead Letter Queue</text>
+
+  <!-- Metrics -->
+  <rect x="370" y="260" width="150" height="50" rx="8" fill="#006064"/>
+  <text x="445" y="282" text-anchor="middle" fill="white" font-size="11">Prometheus Metrics</text>
+  <text x="445" y="298" text-anchor="middle" fill="white" font-size="10">+ Grafana Dashboards</text>
+
+  <!-- Alerting -->
+  <rect x="600" y="260" width="150" height="50" rx="8" fill="#c62828"/>
+  <text x="675" y="282" text-anchor="middle" fill="white" font-size="11">Alert Manager</text>
+  <text x="675" y="298" text-anchor="middle" fill="white" font-size="10">PagerDuty / Slack</text>
+
+  <!-- Config Store -->
+  <rect x="830" y="260" width="140" height="50" rx="8" fill="#37474f"/>
+  <text x="900" y="282" text-anchor="middle" fill="white" font-size="11">Config Store (etcd)</text>
+  <text x="900" y="298" text-anchor="middle" fill="white" font-size="10">Leader Election</text>
+
+  <!-- Arrows -->
+  <line x1="130" y1="52" x2="178" y2="87" stroke="#ffa726" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="130" y1="112" x2="178" y2="97" stroke="#ffa726" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="130" y1="172" x2="178" y2="107" stroke="#ffa726" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="310" y1="87" x2="368" y2="55" stroke="#ffa726" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="310" y1="100" x2="368" y2="120" stroke="#ffa726" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="520" y1="55" x2="598" y2="55" stroke="#ffa726" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="520" y1="120" x2="598" y2="125" stroke="#ffa726" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="520" y1="192" x2="598" y2="197" stroke="#ffa726" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="750" y1="55" x2="828" y2="55" stroke="#ffa726" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="750" y1="130" x2="828" y2="115" stroke="#ffa726" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="750" y1="197" x2="828" y2="192" stroke="#ffa726" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="445" y1="215" x2="445" y2="258" stroke="#ffa726" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah4)"/>
+  <line x1="520" y1="285" x2="598" y2="285" stroke="#ffa726" stroke-width="1.5" marker-end="url(#ah4)"/>
+</svg>
+</div>
+
+<div class="example">
+  <strong>Example — Full end-to-end flow:</strong><br>
+  1. E-commerce service → API Gateway → Scheduler Shard 3 (hash(task_id) % N) → persists to Task Store (PostgreSQL shard 3)<br>
+  2. Task: <code>execute_at = NOW() + 30 minutes</code> → Partition Scanner loads into Timer Wheel in 25 minutes<br>
+  3. Timer Wheel fires → task pushed to Kafka Ready Queue (partition = MEDIUM priority)<br>
+  4. Worker Pod 7 consumes → acquires Redis lock <code>task:{id}:lock</code> → HTTP POST to Payment Service callback<br>
+  5. Payment Service returns 200 → Worker releases lock → updates Task Store: status=COMPLETED, duration=1.2s<br>
+  6. Prometheus scrapes: <code>task_execution_duration_seconds{task_type="charge_subscription"}</code> → Grafana dashboard updates<br>
+  7. If DLQ depth &gt; 100 → AlertManager → PagerDuty page to on-call engineer
+</div>
+</div>
+
+<!-- ==================== DATABASE SCHEMA ==================== -->
+<div class="section">
+<h2>Database Schema</h2>
+
+<h3>PostgreSQL — Task Store (Sharded by task_id)</h3>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+  <tr><td><code>task_id</code></td><td>UUID (v7) <span class="tag-pk">PK</span></td><td>Time-ordered UUID. Shard key: <code>task_id % num_shards</code></td></tr>
+  <tr><td><code>tenant_id</code></td><td>VARCHAR(64) <span class="tag-idx">IDX</span></td><td>Multi-tenant isolation key</td></tr>
+  <tr><td><code>task_type</code></td><td>VARCHAR(128) <span class="tag-idx">IDX</span></td><td>Task category: "send_email", "charge_payment", "generate_report"</td></tr>
+  <tr><td><code>status</code></td><td>ENUM <span class="tag-idx">IDX</span></td><td>SCHEDULED, READY, RUNNING, COMPLETED, FAILED, DEAD_LETTERED, CANCELLED</td></tr>
+  <tr><td><code>priority</code></td><td>SMALLINT</td><td>0=CRITICAL, 1=HIGH, 2=MEDIUM, 3=LOW</td></tr>
+  <tr><td><code>execute_at</code></td><td>TIMESTAMPTZ <span class="tag-idx">IDX</span></td><td>Scheduled execution time (UTC stored, TZ-aware)</td></tr>
+  <tr><td><code>payload</code></td><td>JSONB</td><td>Task payload (max 256KB). Compressed for large payloads.</td></tr>
+  <tr><td><code>callback_url</code></td><td>TEXT</td><td>HTTP/gRPC endpoint to invoke on execution</td></tr>
+  <tr><td><code>callback_method</code></td><td>VARCHAR(8)</td><td>POST, PUT, gRPC</td></tr>
+  <tr><td><code>idempotency_key</code></td><td>VARCHAR(256) <span class="tag-idx">IDX UNIQUE</span></td><td>Dedup key (scoped per tenant). Nullable.</td></tr>
+  <tr><td><code>retry_count</code></td><td>SMALLINT</td><td>Current retry attempt (0-indexed)</td></tr>
+  <tr><td><code>max_retries</code></td><td>SMALLINT</td><td>Max retry attempts before DLQ</td></tr>
+  <tr><td><code>last_error</code></td><td>TEXT</td><td>Last execution error message / HTTP status</td></tr>
+  <tr><td><code>cron_job_id</code></td><td>UUID <span class="tag-fk">FK→cron_jobs</span></td><td>Parent cron job (null for one-time tasks)</td></tr>
+  <tr><td><code>shard_id</code></td><td>INT <span class="tag-shard">SHARD</span></td><td>Scheduler shard assignment (hash-based)</td></tr>
+  <tr><td><code>locked_by</code></td><td>VARCHAR(128)</td><td>Worker ID holding execution lock</td></tr>
+  <tr><td><code>locked_until</code></td><td>TIMESTAMPTZ</td><td>Lock expiry time</td></tr>
+  <tr><td><code>created_at</code></td><td>TIMESTAMPTZ</td><td>Submission time</td></tr>
+  <tr><td><code>started_at</code></td><td>TIMESTAMPTZ</td><td>Execution start time</td></tr>
+  <tr><td><code>completed_at</code></td><td>TIMESTAMPTZ</td><td>Execution completion time</td></tr>
+</table>
+
+<h3>Critical Indexes</h3>
+<table>
+  <tr><th>Index</th><th>Columns</th><th>Purpose</th></tr>
+  <tr><td>Partition Scanner</td><td><code>(shard_id, status, execute_at)</code></td><td>Find due tasks per shard. Most critical query. Partial index: <code>WHERE status = 'SCHEDULED'</code></td></tr>
+  <tr><td>Tenant Lookup</td><td><code>(tenant_id, status, created_at DESC)</code></td><td>Task status dashboard per tenant</td></tr>
+  <tr><td>Idempotency</td><td><code>(tenant_id, idempotency_key)</code> UNIQUE</td><td>Dedup on submission. Scoped per tenant.</td></tr>
+  <tr><td>Stale Lock Finder</td><td><code>(status, locked_until)</code> WHERE status='RUNNING'</td><td>Find tasks with expired locks for recovery</td></tr>
+  <tr><td>DLQ Query</td><td><code>(status, task_type)</code> WHERE status='DEAD_LETTERED'</td><td>DLQ review and manual replay</td></tr>
+</table>
+
+<h3>Cron Jobs Table</h3>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+  <tr><td><code>cron_job_id</code></td><td>UUID <span class="tag-pk">PK</span></td><td>Job definition ID</td></tr>
+  <tr><td><code>tenant_id</code></td><td>VARCHAR(64) <span class="tag-idx">IDX</span></td><td>Owner tenant</td></tr>
+  <tr><td><code>name</code></td><td>VARCHAR(256)</td><td>Human-readable job name</td></tr>
+  <tr><td><code>cron_expression</code></td><td>VARCHAR(128)</td><td>Standard cron: "0 9 * * MON-FRI"</td></tr>
+  <tr><td><code>timezone</code></td><td>VARCHAR(64)</td><td>IANA timezone: "America/New_York"</td></tr>
+  <tr><td><code>task_type</code></td><td>VARCHAR(128)</td><td>Task type for generated instances</td></tr>
+  <tr><td><code>payload_template</code></td><td>JSONB</td><td>Template payload (can include <code>{{fire_time}}</code> variables)</td></tr>
+  <tr><td><code>overlap_policy</code></td><td>ENUM</td><td>SKIP, QUEUE, ALLOW, CANCEL_RUNNING</td></tr>
+  <tr><td><code>next_fire_at</code></td><td>TIMESTAMPTZ <span class="tag-idx">IDX</span></td><td>Pre-computed next fire time</td></tr>
+  <tr><td><code>enabled</code></td><td>BOOLEAN</td><td>Active/paused toggle</td></tr>
+  <tr><td><code>last_fired_at</code></td><td>TIMESTAMPTZ</td><td>Last successful trigger time</td></tr>
+</table>
+
+<div class="deep-dive">
+  <strong>Deep Dive — Sharding Strategy:</strong><br>
+  Tasks are sharded across PostgreSQL instances by <code>task_id % num_shards</code> (consistent hashing for rebalancing). Each scheduler shard owns a range of task shards — ensuring that Timer Wheel loading and Partition Scanner queries are localized to one DB shard. <strong>Shard rebalancing</strong>: when adding scheduler instances, use consistent hashing ring (virtual nodes) to minimize task redistribution. During rebalance, both old and new owners scan for tasks — dedup via distributed lock prevents double-execution. Target: 16-64 DB shards, 8-32 scheduler instances.
+</div>
+</div>
+
+<!-- ==================== CACHE ==================== -->
+<div class="section">
+<h2>Cache &amp; Queue Deep Dive</h2>
+
+<h3>Caching Layers</h3>
+<table>
+  <tr><th>Cache</th><th>Technology</th><th>Strategy</th><th>Eviction</th><th>Details</th></tr>
+  <tr><td>Idempotency Cache</td><td>Redis</td><td>Write-through</td><td>TTL (24h)</td><td><code>SET idempotency:{tenant}:{key} {task_id} NX EX 86400</code>. Fast dedup on submission. DB is source of truth.</td></tr>
+  <tr><td>Task Status Cache</td><td>Redis</td><td>Write-behind</td><td>TTL (5 min)</td><td>Cache hot task statuses for dashboard queries. Invalidated on status change.</td></tr>
+  <tr><td>Cron Definition Cache</td><td>Local (in-process)</td><td>Periodic refresh</td><td>30s TTL</td><td>Cron Trigger Service caches all active job definitions. Refresh from DB every 30s.</td></tr>
+  <tr><td>Distributed Lock</td><td>Redis (Redlock)</td><td>Acquire/Release</td><td>TTL per lock</td><td>Worker lock: TTL = task timeout + 30s buffer. Heartbeat extends TTL every 10s for long-running tasks.</td></tr>
+</table>
+
+<h3>Queue Architecture (Kafka)</h3>
+<table>
+  <tr><th>Topic</th><th>Partitions</th><th>Purpose</th></tr>
+  <tr><td><code>ready-tasks-critical</code></td><td>32</td><td>Critical priority tasks. Separate topic for isolation — never starved by lower priorities.</td></tr>
+  <tr><td><code>ready-tasks-high</code></td><td>64</td><td>High priority. Most task types.</td></tr>
+  <tr><td><code>ready-tasks-medium</code></td><td>64</td><td>Medium priority. Bulk operations, reports.</td></tr>
+  <tr><td><code>ready-tasks-low</code></td><td>32</td><td>Low priority. Analytics, cleanup jobs.</td></tr>
+  <tr><td><code>task-results</code></td><td>32</td><td>Execution results: success/failure status, duration, error details.</td></tr>
+  <tr><td><code>dead-letter</code></td><td>16</td><td>Failed tasks after max retries. Alerts on consumer lag.</td></tr>
+</table>
+
+<div class="deep-dive">
+  <strong>Deep Dive — Priority Scheduling with Weighted Consumers:</strong><br>
+  Workers subscribe to multiple priority topics with weighted consumption. Configuration: <code>critical:high:medium:low = 4:3:2:1</code>. Worker fetches 4 messages from critical per 1 from low. Implementation: each worker runs multiple Kafka consumers with different <code>max.poll.records</code> settings. Alternative: single consumer with priority-aware message selection using Kafka headers. During peak load: low-priority queues may accumulate — acceptable. If critical queue depth &gt; 1000: auto-scale worker pods (HPA based on Kafka consumer group lag metric).
+</div>
+</div>
+
+<!-- ==================== SCALING ==================== -->
+<div class="section">
+<h2>Scaling Considerations</h2>
+
+<h3>Scaling by Tier</h3>
+<table>
+  <tr><th>Tier</th><th>Scaling Strategy</th><th>Key Metric</th><th>Auto-Scale Trigger</th></tr>
+  <tr><td>API Gateway</td><td>Horizontal (stateless pods)</td><td>Requests/sec</td><td>CPU &gt; 60% or RPS &gt; 10K/pod</td></tr>
+  <tr><td>Scheduler Service</td><td>Horizontal + shard assignment</td><td>Tasks managed per shard</td><td>Manual shard rebalance (add scheduler → consistent hash redistribution)</td></tr>
+  <tr><td>Task Store (PostgreSQL)</td><td>Horizontal sharding (Citus/Vitess)</td><td>Queries/sec, storage</td><td>Add shard at 80% capacity. Online shard split.</td></tr>
+  <tr><td>Ready Queue (Kafka)</td><td>Add partitions + brokers</td><td>Consumer lag, throughput</td><td>Partition count = max worker parallelism. Add brokers for throughput.</td></tr>
+  <tr><td>Worker Pool</td><td>Horizontal (K8s HPA)</td><td>Queue depth, CPU</td><td>Kafka consumer lag &gt; 5000 → scale up. Lag = 0 for 5m → scale down.</td></tr>
+  <tr><td>Lock Service (Redis)</td><td>Redis Cluster (hash slots)</td><td>Operations/sec, memory</td><td>Add nodes at 70% memory. 16384 hash slot rebalance.</td></tr>
+</table>
+
+<h3>Multi-Region Deployment</h3>
+<ul>
+  <li><strong>Active-Active</strong> — Scheduler instances in each region. Tasks pinned to region of submission (data locality). Cross-region failover via DNS (Route53 health check).</li>
+  <li><strong>Global Tasks</strong> — Some tasks need exactly-once globally (not per-region). Use global lock with Redis Cluster spanning regions (higher latency) or central coordination service.</li>
+  <li><strong>Data Replication</strong> — PostgreSQL streaming replication (async, &lt;1s lag) to standby region. On failover: promote standby, redirect traffic, re-scan for missed tasks.</li>
+</ul>
+
+<div class="deep-dive">
+  <strong>Deep Dive — Stale Lock Recovery:</strong><br>
+  Problem: worker crashes mid-execution without releasing lock. Lock TTL expires but task status still RUNNING. Solution: <strong>Stale Lock Sweeper</strong> runs every 60s per shard:<br>
+  <code>SELECT task_id FROM tasks WHERE status = 'RUNNING' AND locked_until < NOW() - INTERVAL '30 seconds'</code><br>
+  Matched tasks: reset status to SCHEDULED (for retry) or DEAD_LETTERED (if max retries reached). Sweeper also checks Redis lock state to confirm lock actually expired (avoid race with slow-but-alive workers). <strong>Heartbeat protocol</strong>: workers extend lock TTL every 10s by <code>PEXPIRE task:{id}:lock 300000</code>. If heartbeat stops, lock naturally expires.
+</div>
+</div>
+
+<!-- ==================== TRADEOFFS ==================== -->
+<div class="section">
+<h2>Tradeoffs &amp; Alternative Approaches</h2>
+
+<div class="tradeoff">
+  <strong>Tradeoff — Pull-Based (Kafka) vs. Push-Based (Timer-Triggered) Workers:</strong><br>
+  <em>Pull-based</em>: Workers poll Kafka for ready tasks. Advantage: natural backpressure — workers only fetch what they can handle, Kafka handles persistence and replay. Disadvantage: polling adds latency (up to <code>fetch.max.wait.ms</code>, typically 100-500ms). <em>Push-based</em>: Timer fires → directly dispatches to worker via gRPC. Advantage: lower latency (&lt;10ms). Disadvantage: requires worker health tracking, backpressure is harder (must implement admission control). Best hybrid: Kafka for durability + reliable delivery, with aggressive polling (10ms intervals) for latency-sensitive tasks.
+</div>
+
+<div class="tradeoff">
+  <strong>Tradeoff — PostgreSQL vs. Cassandra for Task Store:</strong><br>
+  <em>PostgreSQL (chosen)</em>: Strong consistency, complex queries (range scans on execute_at, joins for cron jobs), transactional updates (status + lock atomically). Disadvantage: sharding requires Citus/Vitess, max ~100 shards practical. <em>Cassandra</em>: Linear horizontal scale to 1000s of nodes, great write throughput. Disadvantage: no range scans on non-partition-key columns (Partition Scanner query is expensive), eventual consistency complicates exactly-once. Best for: PostgreSQL for &lt;100M tasks, Cassandra/ScyllaDB for &gt;1B tasks with relaxed consistency.
+</div>
+
+<div class="tradeoff">
+  <strong>Tradeoff — In-Memory Timer Wheel vs. Database Polling Only:</strong><br>
+  <em>Timer Wheel</em>: O(1) insert/fire, sub-second accuracy. Disadvantage: state lost on crash (must recover from DB), memory proportional to near-future tasks. <em>DB Polling only</em>: simpler architecture, no state to lose on crash. Disadvantage: polling interval = minimum jitter (1-5 seconds), higher DB load. Hybrid approach (chosen): DB for durability, Timer Wheel for precision. Recovery on crash: Partition Scanner immediately loads all due tasks from DB.
+</div>
+
+<h3>Alternative Approaches</h3>
+<table>
+  <tr><th>Approach</th><th>Technology</th><th>When to Prefer</th></tr>
+  <tr><td>Workflow Engine</td><td>Temporal.io, Apache Airflow, Cadence</td><td>Complex multi-step workflows with dependencies, human-in-the-loop steps</td></tr>
+  <tr><td>Cloud-Native Scheduler</td><td>AWS Step Functions, CloudWatch Events, Cloud Scheduler</td><td>Cloud-first, managed service, lower operational burden</td></tr>
+  <tr><td>Message Queue + Delay</td><td>RabbitMQ (delayed message exchange), SQS (delay queues)</td><td>Simple delayed tasks without complex scheduling (max 15min delay for SQS)</td></tr>
+  <tr><td>Database-Only</td><td>pg_cron, MySQL Event Scheduler</td><td>Simple cron within database. Low scale, single-node.</td></tr>
+  <tr><td>Kubernetes CronJob</td><td>K8s native CronJob resource</td><td>Container-oriented workloads, already in K8s, moderate scale</td></tr>
+  <tr><td>Redis-Based</td><td>BullMQ (Node.js), Celery Beat (Python)</td><td>Single-language ecosystem, moderate scale, quick to implement</td></tr>
+</table>
+</div>
+
+<!-- ==================== ADDITIONAL ==================== -->
+<div class="section">
+<h2>Additional Information</h2>
+
+<h3>API Design</h3>
+<table>
+  <tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+  <tr><td><code>/api/v1/tasks</code></td><td>POST</td><td>Submit new task. Returns 202 + task_id. Body: task_type, execute_at, priority, payload, callback_url, idempotency_key, retry_policy.</td></tr>
+  <tr><td><code>/api/v1/tasks/{id}</code></td><td>GET</td><td>Get task status, execution history, next retry time.</td></tr>
+  <tr><td><code>/api/v1/tasks/{id}/cancel</code></td><td>POST</td><td>Cancel scheduled/queued task. Returns 409 if already running.</td></tr>
+  <tr><td><code>/api/v1/tasks/{id}/retry</code></td><td>POST</td><td>Manually retry a failed/dead-lettered task.</td></tr>
+  <tr><td><code>/api/v1/cron-jobs</code></td><td>POST</td><td>Register recurring job. Body: name, cron_expression, timezone, task_type, payload_template, overlap_policy.</td></tr>
+  <tr><td><code>/api/v1/cron-jobs/{id}</code></td><td>PATCH</td><td>Update cron expression, pause/resume, modify payload.</td></tr>
+  <tr><td><code>/api/v1/cron-jobs/{id}/trigger</code></td><td>POST</td><td>Manually trigger a cron job instance (bypass schedule).</td></tr>
+  <tr><td><code>/api/v1/tasks?tenant_id=X&status=FAILED</code></td><td>GET</td><td>List tasks with filters. Pagination: cursor-based (task_id).</td></tr>
+</table>
+
+<h3>Observability &amp; Monitoring</h3>
+<ul>
+  <li><strong>Metrics (Prometheus)</strong>:
+    <code>task_submitted_total{task_type, priority, tenant}</code>,
+    <code>task_executed_total{task_type, status}</code>,
+    <code>task_execution_duration_seconds{task_type}</code> (histogram),
+    <code>task_scheduling_delay_seconds</code> (actual_fire - scheduled_fire),
+    <code>ready_queue_depth{priority}</code>,
+    <code>dlq_depth{task_type}</code>
+  </li>
+  <li><strong>Distributed Tracing</strong> — OpenTelemetry trace from submission → scheduling → queue → worker → callback. Trace ID propagated in task metadata for end-to-end visibility.</li>
+  <li><strong>SLOs</strong> — Scheduling accuracy: 99.9% of tasks fire within 5s of execute_at. Task success rate: 99.5% complete without DLQ. API latency: p99 &lt; 100ms.</li>
+  <li><strong>Alerting</strong> — DLQ depth &gt; 100 → P2 page. Scheduling delay p95 &gt; 10s → P1 page. Task Store replication lag &gt; 5s → P1 page.</li>
+</ul>
+
+<h3>Multi-Tenancy &amp; Fair Scheduling</h3>
+<ul>
+  <li><strong>Tenant Quotas</strong> — Per-tenant limits: max scheduled tasks (10K default), max executions/minute (1K default), max payload size (256KB). Configurable per plan tier.</li>
+  <li><strong>Fair Queuing</strong> — Weighted Fair Queuing (WFQ) at the worker level: even if Tenant A submits 100x more tasks than Tenant B, Tenant B's tasks get fair share of execution capacity. Implemented via per-tenant virtual clock in the scheduler.</li>
+  <li><strong>Isolation</strong> — Tenant A's task failures don't affect Tenant B's DLQ metrics. Separate Kafka consumer groups per high-value tenant for critical isolation.</li>
+  <li><strong>Billing</strong> — Metered by: task submissions, successful executions, execution duration (compute-seconds), payload storage. Usage tracked via event stream to billing service.</li>
+</ul>
+</div>
+
+</body>
+</html>

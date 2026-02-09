@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glassdoor - System Design</title>
+<style>
+:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--heading:#0CAA41;--accent:#00A36C;--accent2:#7CB342;--accent3:#2196F3;--muted:#888}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
+h1{color:var(--heading);font-size:2.2rem;border-bottom:3px solid var(--heading);padding-bottom:.5rem;margin-bottom:1.5rem}
+h2{color:var(--accent2);margin:2rem 0 1rem;font-size:1.5rem}
+h3{color:var(--accent);margin:1.5rem 0 .75rem;font-size:1.2rem}
+h4{color:var(--accent3);margin:1rem 0 .5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
+ul,ol{margin:.75rem 0 .75rem 1.5rem}
+li{margin:.4rem 0}
+code{background:#2d2d2d;padding:.2rem .5rem;border-radius:4px;font-size:.9rem;color:#f8f8f2}
+pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:1rem 0}
+pre code{padding:0;background:none}
+.tag{display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600;margin:.2rem}
+.tag-pk{background:#E53935;color:#fff}
+.tag-fk{background:#1E88E5;color:#fff}
+.tag-idx{background:#43A047;color:#fff}
+.tag-shard{background:#FB8C00;color:#fff}
+svg text{font-family:'Segoe UI',system-ui,sans-serif}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.pro{background:#1b3a1b;border:1px solid #2d5a2d;border-radius:8px;padding:1rem}
+.con{background:#3a1b1b;border:1px solid #5a2d2d;border-radius:8px;padding:1rem}
+</style>
+</head>
+<body>
+
+<h1>🏢 Glassdoor - System Design</h1>
+
+<div class="card">
+<h2>Functional Requirements</h2>
+<ol>
+<li><strong>Company Reviews & Ratings:</strong> Anonymous employee reviews (overall, culture, management, compensation, work-life balance), CEO approval rating, "recommend to friend" metric, pros/cons structure</li>
+<li><strong>Salary Data & Job Search:</strong> Crowdsourced salary reports by role/location/experience, salary estimator, job listings with employer branding, application tracking</li>
+<li><strong>Interview Experiences:</strong> Anonymous interview question sharing, difficulty rating, offer/no-offer outcome, interview process timeline, company-specific question database</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Scale:</strong> 55M+ monthly visitors, 100M+ reviews/salary reports, 2M+ employer profiles, 10M+ job listings</li>
+<li><strong>Anonymity:</strong> Reviewer identity must be cryptographically protected — even Glassdoor staff cannot link review to individual</li>
+<li><strong>Integrity:</strong> Fake review detection >95% accuracy; employer cannot manipulate ratings or suppress negative reviews</li>
+<li><strong>SEO:</strong> Company pages must rank #1 for "{company} reviews" — 60%+ traffic from organic search</li>
+<li><strong>Latency:</strong> Company page load &lt;1.5s, salary search &lt;500ms, job search &lt;800ms</li>
+</ul>
+</div>
+
+<!-- ============ FLOW 1: REVIEW SUBMISSION ============ -->
+<h2>Flow 1: Anonymous Review Submission & Moderation</h2>
+<div class="card">
+<svg viewBox="0 0 1000 320" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#0CAA41"/></marker></defs>
+<rect x="20" y="50" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Employee</text><text x="80" y="87" text-anchor="middle" fill="#fff" font-size="10">(Anonymous)</text>
+<rect x="190" y="50" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Review Service</text><text x="255" y="87" text-anchor="middle" fill="#fff" font-size="10">(Anonymizer)</text>
+<rect x="370" y="20" width="130" height="50" rx="8" fill="#E53935"/><text x="435" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Fraud Detection</text><text x="435" y="57" text-anchor="middle" fill="#fff" font-size="10">(ML Classifier)</text>
+<rect x="370" y="90" width="130" height="50" rx="8" fill="#9C27B0"/><text x="435" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Content Mod</text><text x="435" y="127" text-anchor="middle" fill="#fff" font-size="10">(Policy Check)</text>
+<rect x="560" y="50" width="130" height="50" rx="8" fill="#795548"/><text x="625" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Review DB</text><text x="625" y="87" text-anchor="middle" fill="#fff" font-size="10">(PostgreSQL)</text>
+<rect x="740" y="50" width="130" height="50" rx="8" fill="#00897B"/><text x="805" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Rating Aggregator</text><text x="805" y="87" text-anchor="middle" fill="#fff" font-size="10">(Real-Time Calc)</text>
+<line x1="140" y1="75" x2="185" y2="75" stroke="#0CAA41" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="320" y1="65" x2="365" y2="45" stroke="#0CAA41" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="320" y1="85" x2="365" y2="110" stroke="#0CAA41" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="500" y1="75" x2="555" y2="75" stroke="#0CAA41" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="690" y1="75" x2="735" y2="75" stroke="#0CAA41" stroke-width="2" marker-end="url(#ah)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Employee submits review: overall rating (1-5), pros, cons, advice to management, employment status, job title, location</li>
+<li>Review Service anonymizes: strips PII, assigns anonymous review_id, stores user→review mapping in separate encrypted table (inaccessible to content systems)</li>
+<li>Fraud Detection ML classifier scores review: fake probability based on IP patterns, submission velocity, text analysis, account age, email domain verification</li>
+<li>Content Moderation checks policy: no naming individuals, no confidential business info, no threats/harassment, meets minimum length</li>
+<li>Approved reviews persisted to PostgreSQL; rejected reviews sent to human moderation queue</li>
+<li>Rating Aggregator recalculates company scores: weighted average (recent reviews weighted more), Bayesian smoothing for companies with few reviews</li>
+<li>"Give to Get" model: user must contribute (review or salary) to unlock full access to others' contributions</li>
+</ol>
+
+<h3>Example</h3>
+<p>Software engineer at TechCorp submits review: 4/5 overall, "Great engineering culture, competitive pay" (pro), "Long hours during launches" (con). Fraud ML scores 0.05 (legitimate). Content mod passes (no PII, meets policy). Published within 24 hours. TechCorp's rating recalculated: 4.1 → 4.12 (from 3,200 reviews). Review visible on TechCorp's Glassdoor page, indexed by Google within 4 hours.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>Anonymity Architecture</h4>
+<p><strong>Separation:</strong> User identity table and review content table in separate databases with different access controls</p>
+<p><strong>Encryption:</strong> User→review mapping encrypted with HSM-stored keys; requires multi-party approval to decrypt (legal subpoena only)</p>
+<p><strong>No Fingerprinting:</strong> Review metadata stripped of identifiable signals: exact submission time randomized (±hours), IP not stored with review</p>
+<p><strong>Legal:</strong> First Amendment protection for anonymous speech; Glassdoor has fought subpoenas to protect reviewer identity</p>
+</div>
+<div class="card">
+<h4>Fake Review Detection</h4>
+<p><strong>Features:</strong> Account age, email domain (company email vs. disposable), submission patterns, text sentiment vs. rating, IP clustering</p>
+<p><strong>Employer Manipulation:</strong> Detect when employer encourages mass positive reviews — burst detection, text similarity within company</p>
+<p><strong>Competitor Attacks:</strong> Detect coordinated negative reviews — IP correlation, timing patterns, reviewer profile analysis</p>
+<p><strong>Model:</strong> Gradient boosted trees with SMOTE oversampling (fake reviews are minority class)</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 2: SALARY DATA ============ -->
+<h2>Flow 2: Salary Data & Estimation</h2>
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>User submits salary report: base salary, bonus, stock, total comp, job title, experience level, location, company</li>
+<li>Salary data anonymized and aggregated — individual salaries never displayed; minimum 5 reports per role/company to show data</li>
+<li>Salary Estimator ML model: predicts expected salary range for role × location × experience × company size × industry</li>
+<li>Data displayed as ranges (25th, 50th, 75th percentiles) with confidence intervals based on sample size</li>
+<li>Pay transparency: comparison tools show "You're paid X% below/above market" relative to similar roles</li>
+</ol>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>Salary Estimation Model</h4>
+<p><strong>Model:</strong> Quantile regression (XGBoost) predicting 25th/50th/75th percentile compensation</p>
+<p><strong>Features:</strong> Job title (normalized via NLP), location (cost-of-living adjusted), years of experience, company size, industry, education</p>
+<p><strong>Title Normalization:</strong> NLP model maps 100K+ unique job titles to ~5,000 canonical titles (e.g., "SWE III" → "Senior Software Engineer")</p>
+<p><strong>Refresh:</strong> Model retrained monthly with new salary reports; stale data (>3 years) down-weighted</p>
+</div>
+<div class="card">
+<h4>K-Anonymity for Privacy</h4>
+<p><strong>Threshold:</strong> Salary data only shown when k≥5 reports exist for a specific combination (company × role × location)</p>
+<p><strong>Generalization:</strong> If insufficient data, broaden scope: specific city → metro area → state → national</p>
+<p><strong>Suppression:</strong> Outlier salaries (>3σ from mean) suppressed to prevent individual identification</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 3: JOB SEARCH ============ -->
+<h2>Flow 3: Job Search & Application</h2>
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>User searches jobs by keyword, location, salary range, company rating, remote/hybrid/onsite</li>
+<li>Elasticsearch query with BM25 + personalization boost (past search behavior, saved jobs, profile data)</li>
+<li>Job listings enriched with Glassdoor-specific data: company rating, salary range, interview difficulty, CEO approval</li>
+<li>Application: Easy Apply (hosted form) or redirect to employer ATS (Workday, Greenhouse, Lever)</li>
+<li>Application tracking: status updates pulled from ATS integrations where available</li>
+<li>Job ads: sponsored listings from employers (CPC auction model) ranked alongside organic results</li>
+</ol>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>Job Search Ranking</h4>
+<p><strong>Organic:</strong> BM25 text relevance × recency × company rating × salary match × location proximity</p>
+<p><strong>Sponsored:</strong> CPC bid × relevance × expected CTR (ML predicted) — blended into organic results with "Sponsored" label</p>
+<p><strong>Personalization:</strong> User's profile (skills, experience, industry) → collaborative filtering for "Jobs you might like" recommendations</p>
+</div>
+<div class="card">
+<h4>Employer Branding</h4>
+<p><strong>Enhanced Profile:</strong> Paid employers get: custom photos/videos, "Why Join Us" section, featured reviews, response to reviews</p>
+<p><strong>Analytics:</strong> Employer dashboard: page views, review trends, competitor benchmarking, candidate pipeline metrics</p>
+<p><strong>Revenue:</strong> Employer branding + job ads = primary revenue model (~$300M+ ARR)</p>
+</div>
+</div>
+</div>
+
+<!-- ============ DATABASE SCHEMA ============ -->
+<h2>Database Schema</h2>
+<div class="grid">
+<div class="card">
+<h3>PostgreSQL — Reviews & Companies</h3>
+<pre><code>CREATE TABLE companies (
+  company_id     BIGINT PRIMARY KEY,    <span class="tag tag-pk">PK</span>
+  name           VARCHAR(255),          <span class="tag tag-idx">INDEX</span>
+  slug           VARCHAR(255) UNIQUE,   <span class="tag tag-idx">INDEX</span>
+  industry       VARCHAR(100),
+  size_range     VARCHAR(30),  -- 1-50, 51-200, 201-500, ...
+  headquarters   VARCHAR(200),
+  website        TEXT,
+  overall_rating DECIMAL(2,1),
+  culture_rating DECIMAL(2,1),
+  comp_rating    DECIMAL(2,1),
+  wlb_rating     DECIMAL(2,1),
+  mgmt_rating    DECIMAL(2,1),
+  ceo_approval   DECIMAL(4,1),  -- percentage
+  recommend_pct  DECIMAL(4,1),
+  review_count   INT DEFAULT 0,
+  salary_count   INT DEFAULT 0,
+  interview_count INT DEFAULT 0,
+  is_premium     BOOLEAN DEFAULT FALSE,
+  updated_at     TIMESTAMP
+);
+
+CREATE TABLE reviews (
+  review_id      BIGINT PRIMARY KEY,    <span class="tag tag-pk">PK</span>
+  company_id     BIGINT,                <span class="tag tag-fk">FK</span> <span class="tag tag-idx">INDEX</span>
+  anonymous_id   UUID,  -- NOT linked to user table
+  overall_rating TINYINT,
+  culture_rating TINYINT,
+  comp_rating    TINYINT,
+  wlb_rating     TINYINT,
+  mgmt_rating    TINYINT,
+  job_title      VARCHAR(200),
+  location       VARCHAR(200),
+  employment_status VARCHAR(20),  -- current, former
+  pros           TEXT,
+  cons           TEXT,
+  advice         TEXT,
+  recommend      BOOLEAN,
+  ceo_opinion    VARCHAR(20),  -- approve, disapprove, no_opinion
+  helpful_count  INT DEFAULT 0,
+  status         VARCHAR(20),  -- pending, approved, rejected
+  created_at     TIMESTAMP             <span class="tag tag-idx">INDEX</span>
+);</code></pre>
+</div>
+
+<div class="card">
+<h3>Salary & Interview Data</h3>
+<pre><code>CREATE TABLE salary_reports (
+  report_id      BIGINT PRIMARY KEY,    <span class="tag tag-pk">PK</span>
+  company_id     BIGINT,                <span class="tag tag-fk">FK</span> <span class="tag tag-idx">INDEX</span>
+  job_title_raw  VARCHAR(200),
+  job_title_norm VARCHAR(200),          <span class="tag tag-idx">INDEX</span>
+  location       VARCHAR(200),
+  experience_yrs SMALLINT,
+  base_salary    INT,
+  bonus          INT,
+  stock_grants   INT,
+  total_comp     INT,
+  currency       CHAR(3),
+  pay_period     VARCHAR(20),  -- annual, monthly, hourly
+  created_at     TIMESTAMP
+);
+
+CREATE TABLE interview_reviews (
+  interview_id   BIGINT PRIMARY KEY,    <span class="tag tag-pk">PK</span>
+  company_id     BIGINT,                <span class="tag tag-fk">FK</span> <span class="tag tag-idx">INDEX</span>
+  job_title      VARCHAR(200),
+  difficulty     TINYINT,  -- 1-5
+  experience     VARCHAR(20),  -- positive, neutral, negative
+  outcome        VARCHAR(20),  -- offer, no_offer, declined
+  application_source VARCHAR(30),
+  process_description TEXT,
+  questions      TEXT[],  -- array of interview questions
+  duration_days  INT,
+  created_at     TIMESTAMP
+);</code></pre>
+</div>
+</div>
+
+<!-- ============ CACHE & CDN ============ -->
+<h2>Cache & CDN Deep Dive</h2>
+<div class="card">
+<div class="grid">
+<div class="card">
+<h4>CDN (Cloudflare)</h4>
+<p><strong>Pages:</strong> Company pages server-side rendered and cached at CDN edge (TTL: 1hr) — critical for SEO</p>
+<p><strong>Static:</strong> Images, JS bundles, CSS cached with immutable hashed URLs (max-age: 1yr)</p>
+<p><strong>Purge:</strong> New review approved → CDN purge for that company's page (instant refresh)</p>
+</div>
+<div class="card">
+<h4>Redis Cache</h4>
+<p><strong>Company Ratings:</strong> Aggregated ratings cached per company (TTL: 5min, invalidated on new review)</p>
+<p><strong>Salary Aggregates:</strong> Percentile salary data cached per company×role (TTL: 1hr)</p>
+<p><strong>Hot Companies:</strong> Top 1,000 companies' full page data pre-cached (covers 80% of traffic)</p>
+</div>
+</div>
+</div>
+
+<!-- ============ SCALING ============ -->
+<h2>Scaling & Load Balancing</h2>
+<div class="card">
+<ul>
+<li><strong>SEO-Optimized SSR:</strong> Company pages pre-rendered (Gatsby/Next.js ISR) for Google crawling; CDN-cached for performance</li>
+<li><strong>Database:</strong> PostgreSQL primary + 3 read replicas; read-heavy workload (99% reads, 1% writes)</li>
+<li><strong>Elasticsearch:</strong> Job search + review search on ES cluster; company-level sharding; reindexed hourly from PostgreSQL</li>
+<li><strong>Review Pipeline:</strong> Kafka-based async processing — fraud detection, content moderation, rating aggregation all asynchronous</li>
+<li><strong>Auto-Scale:</strong> Traffic spikes during "best places to work" announcements, layoff news, earnings seasons</li>
+</ul>
+</div>
+
+<!-- ============ TRADEOFFS ============ -->
+<h2>Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="pro"><h4>✅ "Give to Get" Model</h4><ul><li>Ensures constant fresh data supply (users must contribute to access)</li><li>Self-sustaining content ecosystem</li><li>Higher engagement and time-on-site</li></ul></div>
+<div class="con"><h4>❌ "Give to Get" Model</h4><ul><li>Creates friction — some users leave rather than contribute</li><li>May incentivize low-quality "minimum effort" reviews</li><li>Competitors with free access (Indeed, Blind) attract users unwilling to contribute</li></ul></div>
+</div>
+
+<!-- ============ ADDITIONAL INFO ============ -->
+<h2>Additional Information</h2>
+<div class="card">
+<ul>
+<li><strong>Fishbowl Acquisition (2024):</strong> Glassdoor acquired Fishbowl (professional social network) — adds community discussions alongside reviews, creating a more engaged user base.</li>
+<li><strong>Employer Response:</strong> Premium employers can publicly respond to reviews (without knowing reviewer identity). Studies show employer responses increase applicant trust even for negative reviews.</li>
+<li><strong>Legal Framework:</strong> Section 230 (Communications Decency Act) protects Glassdoor from liability for user-generated reviews. Companies cannot sue Glassdoor for hosting negative reviews.</li>
+<li><strong>Data Licensing:</strong> Glassdoor licenses aggregated (anonymized) salary and review data to HR analytics firms, compensation benchmarking services, and academic researchers.</li>
+</ul>
+</div>
+
+</body>
+</html>

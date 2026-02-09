@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salesforce - System Design</title>
+<style>
+  body { background: #0f0f0f; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; line-height: 1.7; }
+  h1 { color: #00a1e0; text-align: center; font-size: 2.2em; margin-bottom: 5px; }
+  h2 { color: #1b96ff; border-bottom: 2px solid #1b96ff; padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: #04844b; }
+  .section { background: #1a1a1a; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #2a2a2a; }
+  .diagram-box { background: #141414; border-radius: 10px; padding: 20px; margin: 15px 0; text-align: center; overflow-x: auto; }
+  .example { background: #1a2e1a; border-left: 4px solid #04844b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+  .deep-dive { background: #1a1a2e; border-left: 4px solid #1b96ff; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+  .tradeoff { background: #2a1a1a; border-left: 4px solid #ff6b6b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+  th, td { border: 1px solid #333; padding: 10px 14px; text-align: left; }
+  th { background: #1a2e3e; color: #1b96ff; }
+  code { background: #2a2a2a; padding: 2px 7px; border-radius: 4px; color: #1b96ff; font-size: 0.95em; }
+  .tag-pk { background: #4a2; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+  .tag-fk { background: #2a4a8a; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+  .tag-idx { background: #8a6a2a; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+  .tag-shard { background: #6a2a6a; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+  .tag-poly { background: #8a2a4a; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 6px 0; }
+  .subtitle { text-align: center; color: #999; font-size: 1.1em; margin-bottom: 30px; }
+</style>
+</head>
+<body>
+
+<h1>☁️ Salesforce — System Design</h1>
+<p class="subtitle">Multi-Tenant CRM Platform, Metadata-Driven Architecture, Force.com &amp; Lightning Platform</p>
+
+<!-- ==================== REQUIREMENTS ==================== -->
+<div class="section">
+<h2>Functional Requirements</h2>
+<ol>
+  <li><strong>CRM Core</strong> — Manage accounts, contacts, opportunities, leads, cases with full CRUD, workflow automation, and relationship tracking</li>
+  <li><strong>Multi-Tenant Customization</strong> — Per-tenant custom objects, fields, page layouts, validation rules, and business logic without code deployment</li>
+  <li><strong>Declarative Automation</strong> — Flow Builder, Process Builder, Workflow Rules, Approval Processes for no-code business automation</li>
+  <li><strong>Programmatic Platform</strong> — Apex (server-side), Lightning Web Components (client-side), Visualforce, SOQL/SOSL query languages</li>
+  <li><strong>APIs &amp; Integration</strong> — REST API, SOAP API, Bulk API, Streaming API, Pub/Sub API for external system integration</li>
+  <li><strong>Analytics &amp; Reporting</strong> — Report Builder, dashboards, Einstein Analytics (Tableau CRM), predictive scoring</li>
+  <li><strong>AppExchange Ecosystem</strong> — Marketplace for managed/unmanaged packages; ISV platform with packaging and licensing</li>
+</ol>
+</div>
+
+<div class="section">
+<h2>Non-Functional Requirements</h2>
+<ul>
+  <li><strong>Multi-Tenancy</strong> — 100K+ orgs share same infrastructure; strict tenant isolation with zero data leakage</li>
+  <li><strong>Availability</strong> — 99.99%+ uptime (trust.salesforce.com SLA); active-active data centers per instance</li>
+  <li><strong>Scalability</strong> — Handle orgs from 5 users to 100K+ users; billions of records across tenants</li>
+  <li><strong>Governor Limits</strong> — Per-transaction resource limits (CPU, SOQL queries, DML rows) to prevent tenant "noisy neighbor" problems</li>
+  <li><strong>Security</strong> — Field-Level Security (FLS), Record-Level Security (sharing rules, OWD), Shield Platform Encryption (AES-256), HIPAA/SOC2/FedRAMP compliance</li>
+  <li><strong>Performance</strong> — &lt;300ms API response time (p95), real-time streaming for change events</li>
+  <li><strong>Global</strong> — 60+ instances across NA, EU, APAC; data residency compliance (Hyperforce)</li>
+</ul>
+</div>
+
+<!-- ==================== FLOW 1: MULTI-TENANT DATA ==================== -->
+<div class="section">
+<h2>Flow 1: Multi-Tenant Data Architecture &amp; Metadata Engine</h2>
+
+<div class="diagram-box">
+<svg viewBox="0 0 1050 430" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ah1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#1b96ff"/>
+    </marker>
+  </defs>
+  <!-- Tenants -->
+  <rect x="10" y="40" width="120" height="50" rx="8" fill="#2e7d32"/>
+  <text x="70" y="70" text-anchor="middle" fill="white" font-size="11">Org A (50 users)</text>
+  <rect x="10" y="110" width="120" height="50" rx="8" fill="#2e7d32"/>
+  <text x="70" y="140" text-anchor="middle" fill="white" font-size="11">Org B (5K users)</text>
+  <rect x="10" y="180" width="120" height="50" rx="8" fill="#2e7d32"/>
+  <text x="70" y="210" text-anchor="middle" fill="white" font-size="11">Org C (50K users)</text>
+
+  <!-- App Server -->
+  <rect x="190" y="90" width="150" height="70" rx="8" fill="#1565c0"/>
+  <text x="265" y="118" text-anchor="middle" fill="white" font-size="12">App Server Pod</text>
+  <text x="265" y="138" text-anchor="middle" fill="white" font-size="10">Metadata Runtime Engine</text>
+
+  <!-- Metadata Cache -->
+  <rect x="190" y="200" width="150" height="55" rx="8" fill="#006064"/>
+  <text x="265" y="225" text-anchor="middle" fill="white" font-size="11">Metadata Cache</text>
+  <text x="265" y="242" text-anchor="middle" fill="white" font-size="10">(In-Memory per Pod)</text>
+
+  <!-- UDD (Universal Data Dictionary) -->
+  <rect x="410" y="30" width="160" height="60" rx="8" fill="#7b1fa2"/>
+  <text x="490" y="55" text-anchor="middle" fill="white" font-size="11">Metadata Tables</text>
+  <text x="490" y="72" text-anchor="middle" fill="white" font-size="10">(CustomObject, CustomField)</text>
+
+  <!-- Shared Data Tables -->
+  <rect x="410" y="120" width="160" height="60" rx="8" fill="#c62828"/>
+  <text x="490" y="145" text-anchor="middle" fill="white" font-size="11">Data Tables</text>
+  <text x="490" y="162" text-anchor="middle" fill="white" font-size="10">(MT_Data, MT_Data_Extra)</text>
+
+  <!-- Pivot Tables -->
+  <rect x="410" y="210" width="160" height="60" rx="8" fill="#e65100"/>
+  <text x="490" y="235" text-anchor="middle" fill="white" font-size="11">Pivot Tables</text>
+  <text x="490" y="252" text-anchor="middle" fill="white" font-size="10">(MT_Indexes, Relationships)</text>
+
+  <!-- Oracle DB -->
+  <rect x="650" y="100" width="140" height="65" rx="10" fill="#5d4037"/>
+  <text x="720" y="127" text-anchor="middle" fill="white" font-size="12">Oracle RAC</text>
+  <text x="720" y="147" text-anchor="middle" fill="white" font-size="10">(Shared DB Instance)</text>
+
+  <!-- Search Index -->
+  <rect x="650" y="210" width="140" height="55" rx="8" fill="#006064"/>
+  <text x="720" y="232" text-anchor="middle" fill="white" font-size="11">Search Index</text>
+  <text x="720" y="250" text-anchor="middle" fill="white" font-size="10">(Solr / Custom)</text>
+
+  <!-- File Storage -->
+  <rect x="650" y="300" width="140" height="55" rx="8" fill="#37474f"/>
+  <text x="720" y="322" text-anchor="middle" fill="white" font-size="11">File Storage</text>
+  <text x="720" y="340" text-anchor="middle" fill="white" font-size="10">(Content Delivery)</text>
+
+  <!-- Org Partition Key -->
+  <rect x="860" y="120" width="150" height="55" rx="8" fill="#6a2a6a"/>
+  <text x="935" y="142" text-anchor="middle" fill="white" font-size="11">OrgID Partition</text>
+  <text x="935" y="158" text-anchor="middle" fill="white" font-size="10">(Tenant Isolation Key)</text>
+
+  <!-- Arrows -->
+  <line x1="130" y1="65" x2="188" y2="110" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="130" y1="135" x2="188" y2="125" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="130" y1="205" x2="188" y2="145" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="340" y1="110" x2="408" y2="60" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="340" y1="125" x2="408" y2="150" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="340" y1="140" x2="408" y2="240" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="570" y1="60" x2="648" y2="120" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="570" y1="150" x2="648" y2="132" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="570" y1="240" x2="648" y2="237" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="790" y1="132" x2="858" y2="140" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah1)"/>
+  <line x1="265" y1="160" x2="265" y2="198" stroke="#1b96ff" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah1)"/>
+</svg>
+</div>
+
+<h3>Multi-Tenant Data Steps</h3>
+<ol>
+  <li><strong>Shared Database, Shared Schema</strong> — All tenants (orgs) share the same Oracle RAC database. Tenant isolation is enforced by <code>OrgID</code> column present on every data row. Every SQL query includes <code>WHERE OrgID = :orgId</code> — guaranteed by the platform, never by developer code.</li>
+  <li><strong>Metadata-Driven Architecture</strong> — Custom objects and fields are NOT physical database columns. Instead, metadata tables store the "virtual" schema: <code>CustomObject</code> (object definitions), <code>CustomField</code> (field definitions with data type, length, required, unique constraints). The runtime engine translates SOQL to SQL against generic data tables.</li>
+  <li><strong>Universal Data Dictionary (UDD)</strong> — Physical data table has generic columns: <code>Value0</code> through <code>Value500</code> (varchar), with the metadata engine mapping virtual field → physical column slot. Custom fields like <code>Revenue__c</code> might map to <code>Value47</code> for Org A but <code>Value12</code> for Org B.</li>
+  <li><strong>Pivot Tables for Indexes</strong> — Since data is in generic varchar columns, standard B-tree indexes can't efficiently serve custom field queries. Pivot tables (MT_Indexes) denormalize: <code>(OrgID, KeyPrefix, FieldNum, StringValue, DataID)</code>. Custom indexes create entries in pivot tables for WHERE clause optimization.</li>
+  <li><strong>Metadata Cache</strong> — Each app server pod caches compiled metadata (object definitions, field maps, validation rules, triggers) in-memory. Cache is invalidated on metadata changes via a global invalidation bus. Cold start: ~2-5 seconds to load org metadata. Warm: sub-ms lookups.</li>
+</ol>
+
+<div class="example">
+  <strong>Example — Custom object query:</strong><br>
+  Admin creates custom object <code>Invoice__c</code> with fields: <code>Amount__c</code> (Currency), <code>Due_Date__c</code> (Date), <code>Account__c</code> (Lookup).<br>
+  Developer writes SOQL: <code>SELECT Id, Amount__c, Due_Date__c FROM Invoice__c WHERE Amount__c > 10000 AND Account__c = '001xxx'</code><br>
+  Runtime engine translates to SQL: <code>SELECT DataID, Value12, Value13 FROM MT_Data d JOIN MT_Indexes i ON d.DataID = i.DataID WHERE d.OrgID = 'ORG123' AND d.KeyPrefix = 'a0B' AND i.FieldNum = 12 AND CAST(i.StringValue AS NUMBER) > 10000 AND d.Value14 = '001xxx'</code>
+</div>
+
+<div class="deep-dive">
+  <strong>Deep Dive — Polymorphic Data Storage:</strong><br>
+  The <code>MT_Data</code> table stores all custom object data across all tenants. Physical schema:<br>
+  • <code>OrgID</code> <span class="tag-shard">PARTITION</span> — 15-char tenant identifier<br>
+  • <code>KeyPrefix</code> — 3-char object type identifier (e.g., "001" for Account, "a0B" for custom object)<br>
+  • <code>DataID</code> <span class="tag-pk">PK</span> — 18-char globally unique record ID<br>
+  • <code>Value0..Value500</code> — Generic VARCHAR2(4000) columns for custom field data<br>
+  • <code>Name</code> — Record name (auto-number or text)<br>
+  • <code>CreatedDate</code>, <code>LastModifiedDate</code>, <code>CreatedById</code>, <code>LastModifiedById</code> — Audit fields<br>
+  • <code>IsDeleted</code> — Soft delete flag (Recycle Bin support, 15-day retention)<br>
+  All data types (Number, Date, Boolean, Picklist) are stored as VARCHAR and cast at query time by the metadata engine. This is the fundamental tradeoff: flexibility over raw query performance.
+</div>
+
+<div class="deep-dive">
+  <strong>Deep Dive — Governor Limits (Noisy Neighbor Prevention):</strong><br>
+  Per-transaction limits in Apex execution context:<br>
+  • <strong>SOQL Queries</strong>: 100 (synchronous), 200 (asynchronous)<br>
+  • <strong>SOQL Rows Retrieved</strong>: 50,000<br>
+  • <strong>DML Statements</strong>: 150<br>
+  • <strong>DML Rows</strong>: 10,000<br>
+  • <strong>CPU Time</strong>: 10,000ms (sync), 60,000ms (async)<br>
+  • <strong>Heap Size</strong>: 6MB (sync), 12MB (async)<br>
+  • <strong>Callouts</strong>: 100 per transaction, 120s total timeout<br>
+  • <strong>Future Calls</strong>: 50 per transaction<br>
+  These limits ensure no single tenant's code execution can monopolize shared app server resources. Violations throw <code>System.LimitException</code>.
+</div>
+</div>
+
+<!-- ==================== FLOW 2: API & INTEGRATION ==================== -->
+<div class="section">
+<h2>Flow 2: API Layer &amp; Integration Architecture</h2>
+
+<div class="diagram-box">
+<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#1b96ff"/>
+    </marker>
+  </defs>
+  <!-- External Client -->
+  <rect x="10" y="130" width="120" height="55" rx="8" fill="#2e7d32"/>
+  <text x="70" y="153" text-anchor="middle" fill="white" font-size="11">External Client</text>
+  <text x="70" y="170" text-anchor="middle" fill="white" font-size="10">(REST/SOAP)</text>
+
+  <!-- API Gateway -->
+  <rect x="180" y="60" width="140" height="55" rx="8" fill="#f58220"/>
+  <text x="250" y="83" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
+  <text x="250" y="100" text-anchor="middle" fill="white" font-size="10">(OAuth2 + Rate Limit)</text>
+
+  <!-- API Types -->
+  <rect x="180" y="140" width="140" height="45" rx="8" fill="#1565c0"/>
+  <text x="250" y="167" text-anchor="middle" fill="white" font-size="11">REST API (v59.0)</text>
+  <rect x="180" y="200" width="140" height="45" rx="8" fill="#1565c0"/>
+  <text x="250" y="227" text-anchor="middle" fill="white" font-size="11">Bulk API 2.0</text>
+  <rect x="180" y="260" width="140" height="45" rx="8" fill="#1565c0"/>
+  <text x="250" y="287" text-anchor="middle" fill="white" font-size="11">Streaming / Pub/Sub</text>
+
+  <!-- Auth -->
+  <rect x="390" y="40" width="150" height="55" rx="8" fill="#7b1fa2"/>
+  <text x="465" y="63" text-anchor="middle" fill="white" font-size="11">OAuth 2.0 Provider</text>
+  <text x="465" y="80" text-anchor="middle" fill="white" font-size="10">(JWT Bearer, Web Flow)</text>
+
+  <!-- Platform Core -->
+  <rect x="390" y="130" width="150" height="65" rx="8" fill="#c62828"/>
+  <text x="465" y="155" text-anchor="middle" fill="white" font-size="12">Platform Core</text>
+  <text x="465" y="172" text-anchor="middle" fill="white" font-size="10">(CRUD + Security + Triggers)</text>
+
+  <!-- Event Bus -->
+  <rect x="390" y="230" width="150" height="55" rx="8" fill="#006064"/>
+  <text x="465" y="253" text-anchor="middle" fill="white" font-size="11">Platform Event Bus</text>
+  <text x="465" y="270" text-anchor="middle" fill="white" font-size="10">(Pub/Sub, CDC)</text>
+
+  <!-- MuleSoft -->
+  <rect x="610" y="60" width="140" height="55" rx="8" fill="#00695c"/>
+  <text x="680" y="83" text-anchor="middle" fill="white" font-size="11">MuleSoft Anypoint</text>
+  <text x="680" y="100" text-anchor="middle" fill="white" font-size="10">(Integration Hub)</text>
+
+  <!-- External Systems -->
+  <rect x="810" y="40" width="130" height="45" rx="8" fill="#37474f"/>
+  <text x="875" y="67" text-anchor="middle" fill="white" font-size="11">ERP (SAP/Oracle)</text>
+  <rect x="810" y="100" width="130" height="45" rx="8" fill="#37474f"/>
+  <text x="875" y="127" text-anchor="middle" fill="white" font-size="11">Marketing Cloud</text>
+  <rect x="810" y="160" width="130" height="45" rx="8" fill="#37474f"/>
+  <text x="875" y="187" text-anchor="middle" fill="white" font-size="11">Data Warehouse</text>
+
+  <!-- Arrows -->
+  <line x1="130" y1="155" x2="178" y2="88" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="130" y1="157" x2="178" y2="162" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="130" y1="165" x2="178" y2="222" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="130" y1="170" x2="178" y2="282" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="320" y1="87" x2="388" y2="67" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="320" y1="162" x2="388" y2="162" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="320" y1="282" x2="388" y2="257" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="540" y1="87" x2="608" y2="87" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="750" y1="80" x2="808" y2="62" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="750" y1="87" x2="808" y2="122" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah2)"/>
+  <line x1="750" y1="95" x2="808" y2="182" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah2)"/>
+</svg>
+</div>
+
+<h3>API &amp; Integration Steps</h3>
+<ol>
+  <li><strong>Authentication</strong> — OAuth 2.0 flows: Web Server Flow (authorization code + PKCE for web apps), JWT Bearer Flow (server-to-server, signed with X.509 cert), Username-Password Flow (legacy), Device Flow. Token endpoint: <code>POST /services/oauth2/token</code>. Access token: 2-hour TTL, refresh token: revocable.</li>
+  <li><strong>REST API</strong> — Resource-based: <code>GET /services/data/v59.0/sobjects/Account/001xxx</code> (read record), <code>PATCH</code> (update), <code>POST</code> (create), <code>DELETE</code> (soft delete). Composite API: <code>/services/data/v59.0/composite</code> for batching up to 25 subrequests in one call. SObject Tree API for hierarchical inserts.</li>
+  <li><strong>Bulk API 2.0</strong> — For large data loads (millions of records). Create job → upload CSV data → server processes in background → poll for status → download results. Uses chunked upload. Server processes 10K records/batch. Parallel processing across app server pods.</li>
+  <li><strong>Streaming API &amp; Platform Events</strong> — CometD long-polling for PushTopics (SOQL-based change notifications) and Change Data Capture (CDC) events. Platform Events: custom pub/sub. gRPC-based Pub/Sub API (new): subscribe to event channels with replay support. Event Bus uses Apache Kafka internally.</li>
+  <li><strong>MuleSoft Integration</strong> — Anypoint Platform provides ESB (Enterprise Service Bus), API management, DataWeave transformation language, 400+ pre-built connectors (SAP, Workday, AWS, Slack). Runs on CloudHub (managed runtime) or on-premise Mule Runtime.</li>
+</ol>
+
+<div class="example">
+  <strong>Example — Bulk data sync from ERP:</strong><br>
+  1. External ETL authenticates: <code>POST /services/oauth2/token</code> with JWT Bearer → receives access_token<br>
+  2. Create Bulk Job: <code>POST /services/data/v59.0/jobs/ingest</code> body: <code>{"object": "Account", "operation": "upsert", "externalIdFieldName": "ERP_ID__c"}</code><br>
+  3. Upload CSV: <code>PUT /services/data/v59.0/jobs/ingest/{jobId}/batches</code> with 500K Account rows<br>
+  4. Close job: <code>PATCH /services/data/v59.0/jobs/ingest/{jobId}</code> body: <code>{"state": "UploadComplete"}</code><br>
+  5. Platform processes in parallel chunks → triggers fire on upserted records → CDC events published for downstream consumers<br>
+  6. Poll results: <code>GET /services/data/v59.0/jobs/ingest/{jobId}</code> → <code>{"state": "JobComplete", "numberRecordsProcessed": 500000, "numberRecordsFailed": 23}</code>
+</div>
+
+<div class="deep-dive">
+  <strong>Deep Dive — Platform Events (Kafka-Backed):</strong><br>
+  Platform Events are custom event definitions (like custom objects but for events). Schema defined declaratively: <code>Order_Event__e</code> with fields <code>Order_Id__c</code>, <code>Status__c</code>, <code>Amount__c</code>. Published via Apex: <code>EventBus.publish(new Order_Event__e(...))</code> or REST API: <code>POST /services/data/v59.0/sobjects/Order_Event__e</code>. Subscribers: Apex triggers, Flows, CometD clients, gRPC Pub/Sub clients. Internally backed by Apache Kafka with 72-hour retention. <code>ReplayId</code> allows consumers to replay from any point. Delivery guarantee: at-least-once. Rate limits: 250K events/hour (standard), 25M/hour (high-volume).
+</div>
+
+<div class="deep-dive">
+  <strong>Deep Dive — API Rate Limiting:</strong><br>
+  Salesforce enforces per-org API call limits based on edition and licenses:<br>
+  • Enterprise Edition: 1,000 calls per user license per 24 hours (min 15,000 per org)<br>
+  • Unlimited Edition: 5,000 calls per user license per 24 hours<br>
+  • Bulk API: separate limit — 15,000 batches per 24 hours<br>
+  • Streaming API: 2,000 concurrent CometD clients<br>
+  Response headers include: <code>Sforce-Limit-Info: api-usage=1234/100000</code>. When approaching limits: use Composite API (1 call = 25 operations), Bulk API for large operations, caching on client side. HTTP 403 with <code>REQUEST_LIMIT_EXCEEDED</code> when exceeded.
+</div>
+</div>
+
+<!-- ==================== FLOW 3: AUTOMATION ==================== -->
+<div class="section">
+<h2>Flow 3: Automation &amp; Trigger Execution Engine</h2>
+
+<div class="diagram-box">
+<svg viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#1b96ff"/>
+    </marker>
+  </defs>
+  <!-- DML Operation -->
+  <rect x="10" y="130" width="120" height="55" rx="8" fill="#2e7d32"/>
+  <text x="70" y="153" text-anchor="middle" fill="white" font-size="12">DML Operation</text>
+  <text x="70" y="170" text-anchor="middle" fill="white" font-size="10">(Insert/Update)</text>
+
+  <!-- Before Triggers -->
+  <rect x="170" y="50" width="130" height="50" rx="8" fill="#1565c0"/>
+  <text x="235" y="72" text-anchor="middle" fill="white" font-size="11">Before Triggers</text>
+  <text x="235" y="88" text-anchor="middle" fill="white" font-size="10">(Apex, Validation)</text>
+
+  <!-- Validation Rules -->
+  <rect x="170" y="120" width="130" height="50" rx="8" fill="#7b1fa2"/>
+  <text x="235" y="142" text-anchor="middle" fill="white" font-size="11">Validation Rules</text>
+  <text x="235" y="158" text-anchor="middle" fill="white" font-size="10">(Formula-based)</text>
+
+  <!-- Duplicate Rules -->
+  <rect x="170" y="190" width="130" height="50" rx="8" fill="#7b1fa2"/>
+  <text x="235" y="212" text-anchor="middle" fill="white" font-size="11">Duplicate Rules</text>
+  <text x="235" y="228" text-anchor="middle" fill="white" font-size="10">(Matching Rules)</text>
+
+  <!-- DB Save -->
+  <rect x="350" y="130" width="130" height="55" rx="8" fill="#c62828"/>
+  <text x="415" y="153" text-anchor="middle" fill="white" font-size="12">Database Save</text>
+  <text x="415" y="170" text-anchor="middle" fill="white" font-size="10">(Commit Point)</text>
+
+  <!-- After Triggers -->
+  <rect x="530" y="50" width="130" height="50" rx="8" fill="#1565c0"/>
+  <text x="595" y="72" text-anchor="middle" fill="white" font-size="11">After Triggers</text>
+  <text x="595" y="88" text-anchor="middle" fill="white" font-size="10">(Apex Logic)</text>
+
+  <!-- Flows -->
+  <rect x="530" y="120" width="130" height="50" rx="8" fill="#e65100"/>
+  <text x="595" y="142" text-anchor="middle" fill="white" font-size="11">Record-Triggered</text>
+  <text x="595" y="158" text-anchor="middle" fill="white" font-size="10">Flows</text>
+
+  <!-- Rollup Summaries -->
+  <rect x="530" y="190" width="130" height="50" rx="8" fill="#e65100"/>
+  <text x="595" y="212" text-anchor="middle" fill="white" font-size="11">Rollup Summary</text>
+  <text x="595" y="228" text-anchor="middle" fill="white" font-size="10">Field Updates</text>
+
+  <!-- Async -->
+  <rect x="710" y="50" width="140" height="50" rx="8" fill="#006064"/>
+  <text x="780" y="72" text-anchor="middle" fill="white" font-size="11">@future / Queueable</text>
+  <text x="780" y="88" text-anchor="middle" fill="white" font-size="10">(Async Apex)</text>
+
+  <!-- Platform Events -->
+  <rect x="710" y="120" width="140" height="50" rx="8" fill="#006064"/>
+  <text x="780" y="142" text-anchor="middle" fill="white" font-size="11">Platform Events</text>
+  <text x="780" y="158" text-anchor="middle" fill="white" font-size="10">(Publish CDC)</text>
+
+  <!-- Outbound Messages -->
+  <rect x="710" y="190" width="140" height="50" rx="8" fill="#37474f"/>
+  <text x="780" y="212" text-anchor="middle" fill="white" font-size="11">Outbound Message</text>
+  <text x="780" y="228" text-anchor="middle" fill="white" font-size="10">(SOAP Callback)</text>
+
+  <!-- Arrows -->
+  <line x1="130" y1="145" x2="168" y2="80" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="130" y1="155" x2="168" y2="145" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="130" y1="165" x2="168" y2="215" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="300" y1="80" x2="348" y2="150" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="300" y1="145" x2="348" y2="155" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="300" y1="215" x2="348" y2="165" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="480" y1="150" x2="528" y2="75" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="480" y1="157" x2="528" y2="145" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="480" y1="165" x2="528" y2="215" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="660" y1="75" x2="708" y2="75" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="660" y1="145" x2="708" y2="145" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah3)"/>
+  <line x1="660" y1="215" x2="708" y2="215" stroke="#1b96ff" stroke-width="2" marker-end="url(#ah3)"/>
+</svg>
+</div>
+
+<h3>Trigger Execution Order</h3>
+<ol>
+  <li><strong>System Validation</strong> — Required fields, field formats, field length, unique constraints</li>
+  <li><strong>Before Triggers</strong> — Apex triggers fire. Can modify field values on <code>Trigger.new</code> (no DML needed). Used for: default values, field normalization, cross-record validation.</li>
+  <li><strong>Custom Validation Rules</strong> — Formula-based rules evaluated. If any rule fails → <code>FIELD_CUSTOM_VALIDATION_EXCEPTION</code> → entire transaction rolls back.</li>
+  <li><strong>Duplicate Rules</strong> — Matching rules check for duplicates (fuzzy match on Name, Email, etc). Block or alert based on rule configuration.</li>
+  <li><strong>Database Save</strong> — Record committed to database (but transaction not yet committed to user).</li>
+  <li><strong>After Triggers</strong> — Apex triggers fire with record IDs now available. Used for: creating related records, sending notifications, complex business logic. Can cause re-entry (cascading triggers up to 16 levels).</li>
+  <li><strong>Record-Triggered Flows</strong> — Declarative automation runs. Before-save flows (fast field updates), after-save flows (create records, send emails, call subflows).</li>
+  <li><strong>Assignment Rules, Auto-Response, Escalation Rules</strong> — Lead/Case routing automation.</li>
+  <li><strong>Rollup Summary Fields</strong> — Parent record aggregate fields recalculated (SUM, COUNT, MIN, MAX of child records).</li>
+  <li><strong>Post-Commit</strong> — Platform Events published, @future methods enqueued, outbound messages sent.</li>
+</ol>
+
+<div class="example">
+  <strong>Example — Opportunity closed-won automation:</strong><br>
+  Sales rep updates Opportunity StageName to "Closed Won".<br>
+  1. Before trigger: Apex sets <code>Close_Date__c = TODAY()</code> if null<br>
+  2. Validation rule: <code>AND(ISPICKVAL(StageName, "Closed Won"), ISBLANK(Amount))</code> → blocks if no Amount<br>
+  3. Save to DB<br>
+  4. After trigger: creates Revenue_Recognition__c record, updates Account.Last_Won_Date__c<br>
+  5. Flow: sends email to Finance team, creates Task for account manager follow-up<br>
+  6. Rollup: Account.Total_Won_Opps__c recalculated<br>
+  7. CDC event published → ERP system receives and creates invoice
+</div>
+
+<div class="deep-dive">
+  <strong>Deep Dive — Apex Execution Context &amp; Bulkification:</strong><br>
+  Apex triggers receive up to 200 records per execution (bulk DML). Developers must write "bulkified" code: no SOQL/DML inside loops. Pattern:<br>
+  <code>trigger AccountTrigger on Account (before update) {</code><br>
+  <code>&nbsp;&nbsp;Set&lt;Id&gt; accountIds = new Set&lt;Id&gt;();</code><br>
+  <code>&nbsp;&nbsp;for (Account a : Trigger.new) { accountIds.add(a.Id); }</code><br>
+  <code>&nbsp;&nbsp;Map&lt;Id, List&lt;Contact&gt;&gt; contactMap = ... // single SOQL for all</code><br>
+  <code>&nbsp;&nbsp;for (Account a : Trigger.new) { /* process using map */ }</code><br>
+  <code>}</code><br>
+  Non-bulkified code hitting governor limits is the #1 cause of production errors on the platform.
+</div>
+</div>
+
+<!-- ==================== COMBINED ARCHITECTURE ==================== -->
+<div class="section">
+<h2>Combined Architecture</h2>
+
+<div class="diagram-box">
+<svg viewBox="0 0 1100 530" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#1b96ff"/>
+    </marker>
+  </defs>
+  <!-- Clients -->
+  <rect x="10" y="30" width="120" height="45" rx="8" fill="#2e7d32"/>
+  <text x="70" y="57" text-anchor="middle" fill="white" font-size="11">Browser (LWC)</text>
+  <rect x="10" y="90" width="120" height="45" rx="8" fill="#2e7d32"/>
+  <text x="70" y="117" text-anchor="middle" fill="white" font-size="11">Mobile (SF App)</text>
+  <rect x="10" y="150" width="120" height="45" rx="8" fill="#2e7d32"/>
+  <text x="70" y="177" text-anchor="middle" fill="white" font-size="11">API Clients</text>
+  <rect x="10" y="210" width="120" height="45" rx="8" fill="#2e7d32"/>
+  <text x="70" y="237" text-anchor="middle" fill="white" font-size="11">AppExchange</text>
+
+  <!-- CDN + Edge -->
+  <rect x="180" y="30" width="130" height="50" rx="8" fill="#37474f"/>
+  <text x="245" y="52" text-anchor="middle" fill="white" font-size="11">Akamai CDN</text>
+  <text x="245" y="68" text-anchor="middle" fill="white" font-size="10">(Static Assets)</text>
+
+  <!-- Load Balancer -->
+  <rect x="180" y="100" width="130" height="50" rx="8" fill="#e65100"/>
+  <text x="245" y="122" text-anchor="middle" fill="white" font-size="11">Load Balancer</text>
+  <text x="245" y="138" text-anchor="middle" fill="white" font-size="10">(L7 + WAF)</text>
+
+  <!-- App Servers -->
+  <rect x="370" y="30" width="150" height="50" rx="8" fill="#1565c0"/>
+  <text x="445" y="52" text-anchor="middle" fill="white" font-size="11">App Server Pod 1</text>
+  <text x="445" y="68" text-anchor="middle" fill="white" font-size="10">(Java + Metadata RT)</text>
+  <rect x="370" y="95" width="150" height="50" rx="8" fill="#1565c0"/>
+  <text x="445" y="117" text-anchor="middle" fill="white" font-size="11">App Server Pod N</text>
+  <text x="445" y="133" text-anchor="middle" fill="white" font-size="10">(Java + Metadata RT)</text>
+
+  <!-- Metadata Cache -->
+  <rect x="370" y="170" width="150" height="45" rx="8" fill="#006064"/>
+  <text x="445" y="197" text-anchor="middle" fill="white" font-size="11">Metadata Cache Layer</text>
+
+  <!-- Database -->
+  <rect x="600" y="30" width="150" height="55" rx="10" fill="#5d4037"/>
+  <text x="675" y="52" text-anchor="middle" fill="white" font-size="11">Oracle RAC (Primary)</text>
+  <text x="675" y="70" text-anchor="middle" fill="white" font-size="10">MT_Data + Metadata</text>
+  <rect x="600" y="100" width="150" height="45" rx="10" fill="#5d4037"/>
+  <text x="675" y="127" text-anchor="middle" fill="white" font-size="10">Oracle RAC (Standby)</text>
+
+  <!-- Search -->
+  <rect x="600" y="170" width="150" height="45" rx="8" fill="#006064"/>
+  <text x="675" y="197" text-anchor="middle" fill="white" font-size="11">Search (Solr Cluster)</text>
+
+  <!-- Event Bus -->
+  <rect x="370" y="250" width="150" height="50" rx="8" fill="#7b1fa2"/>
+  <text x="445" y="272" text-anchor="middle" fill="white" font-size="11">Event Bus (Kafka)</text>
+  <text x="445" y="288" text-anchor="middle" fill="white" font-size="10">Platform Events + CDC</text>
+
+  <!-- Async Engine -->
+  <rect x="600" y="250" width="150" height="50" rx="8" fill="#e65100"/>
+  <text x="675" y="272" text-anchor="middle" fill="white" font-size="11">Async Engine</text>
+  <text x="675" y="288" text-anchor="middle" fill="white" font-size="10">Batch/Queueable/Future</text>
+
+  <!-- Functions / Heroku -->
+  <rect x="370" y="330" width="150" height="45" rx="8" fill="#00695c"/>
+  <text x="445" y="357" text-anchor="middle" fill="white" font-size="11">Salesforce Functions</text>
+
+  <!-- Einstein -->
+  <rect x="600" y="330" width="150" height="45" rx="8" fill="#7b1fa2"/>
+  <text x="675" y="357" text-anchor="middle" fill="white" font-size="11">Einstein AI Platform</text>
+
+  <!-- Hyperforce -->
+  <rect x="830" y="30" width="150" height="55" rx="8" fill="#1565c0"/>
+  <text x="905" y="52" text-anchor="middle" fill="white" font-size="11">Hyperforce (AWS)</text>
+  <text x="905" y="70" text-anchor="middle" fill="white" font-size="10">Public Cloud Infra</text>
+
+  <!-- Data Cloud -->
+  <rect x="830" y="110" width="150" height="55" rx="8" fill="#4a148c"/>
+  <text x="905" y="132" text-anchor="middle" fill="white" font-size="11">Data Cloud (CDP)</text>
+  <text x="905" y="150" text-anchor="middle" fill="white" font-size="10">Unified Customer Data</text>
+
+  <!-- Shield -->
+  <rect x="830" y="195" width="150" height="50" rx="8" fill="#c62828"/>
+  <text x="905" y="217" text-anchor="middle" fill="white" font-size="11">Shield Encryption</text>
+  <text x="905" y="233" text-anchor="middle" fill="white" font-size="10">AES-256, Event Monitoring</text>
+
+  <!-- MuleSoft -->
+  <rect x="830" y="270" width="150" height="50" rx="8" fill="#00695c"/>
+  <text x="905" y="292" text-anchor="middle" fill="white" font-size="11">MuleSoft Anypoint</text>
+  <text x="905" y="308" text-anchor="middle" fill="white" font-size="10">Integration Platform</text>
+
+  <!-- Arrows -->
+  <line x1="130" y1="52" x2="178" y2="52" stroke="#1b96ff" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="130" y1="112" x2="178" y2="120" stroke="#1b96ff" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="130" y1="172" x2="178" y2="130" stroke="#1b96ff" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="310" y1="55" x2="368" y2="55" stroke="#1b96ff" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="310" y1="125" x2="368" y2="120" stroke="#1b96ff" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="520" y1="55" x2="598" y2="55" stroke="#1b96ff" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="520" y1="120" x2="598" y2="120" stroke="#1b96ff" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="520" y1="192" x2="598" y2="192" stroke="#1b96ff" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="520" y1="275" x2="598" y2="275" stroke="#1b96ff" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="750" y1="57" x2="828" y2="57" stroke="#1b96ff" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="750" y1="120" x2="828" y2="137" stroke="#1b96ff" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="750" y1="192" x2="828" y2="220" stroke="#1b96ff" stroke-width="1.5" marker-end="url(#ah4)"/>
+  <line x1="750" y1="275" x2="828" y2="290" stroke="#1b96ff" stroke-width="1.5" marker-end="url(#ah4)"/>
+</svg>
+</div>
+
+<div class="example">
+  <strong>Example — Full CRM flow (lead-to-cash):</strong><br>
+  1. Marketing Cloud captures web form → creates Lead in Salesforce via REST API<br>
+  2. Lead Assignment Rule routes to sales rep based on territory (zip code matching)<br>
+  3. Rep qualifies → converts Lead → creates Account + Contact + Opportunity<br>
+  4. Einstein Lead Scoring (logistic regression on 50+ features) predicts conversion probability: 78%<br>
+  5. Opportunity moves through stages → CPQ generates quote → DocuSign for e-signature<br>
+  6. Closed Won → after trigger creates Order, Revenue Schedule → Platform Event published<br>
+  7. MuleSoft integration syncs to NetSuite ERP for invoicing → Data Cloud unifies customer profile<br>
+  8. Dashboard shows pipeline: $2.3M weighted, 42 open opps, 28-day avg sales cycle
+</div>
+</div>
+
+<!-- ==================== DATABASE SCHEMA ==================== -->
+<div class="section">
+<h2>Database Schema</h2>
+
+<h3>Core CRM Objects (Standard SObjects)</h3>
+<table>
+  <tr><th>Object</th><th>Key Fields</th><th>Relationships</th></tr>
+  <tr>
+    <td>Account</td>
+    <td><code>Id</code> <span class="tag-pk">PK</span>, <code>Name</code>, <code>Industry</code>, <code>AnnualRevenue</code>, <code>BillingCity/State/Country</code>, <code>OwnerId</code> <span class="tag-fk">FK→User</span>, <code>ParentId</code> <span class="tag-fk">FK→Account</span>, <code>RecordTypeId</code></td>
+    <td>Parent Account (self-ref), Owner (User), Contacts (1:M), Opportunities (1:M), Cases (1:M)</td>
+  </tr>
+  <tr>
+    <td>Contact</td>
+    <td><code>Id</code> <span class="tag-pk">PK</span>, <code>FirstName</code>, <code>LastName</code>, <code>Email</code> <span class="tag-idx">IDX</span>, <code>Phone</code>, <code>AccountId</code> <span class="tag-fk">FK→Account</span>, <code>OwnerId</code> <span class="tag-fk">FK→User</span></td>
+    <td>Account (M:1), Opportunities (M:M via OpportunityContactRole), Cases (1:M)</td>
+  </tr>
+  <tr>
+    <td>Opportunity</td>
+    <td><code>Id</code> <span class="tag-pk">PK</span>, <code>Name</code>, <code>Amount</code>, <code>StageName</code> <span class="tag-idx">IDX</span>, <code>CloseDate</code> <span class="tag-idx">IDX</span>, <code>Probability</code>, <code>AccountId</code> <span class="tag-fk">FK→Account</span>, <code>OwnerId</code> <span class="tag-fk">FK→User</span></td>
+    <td>Account (M:1), Products (M:M via OpportunityLineItem), Contacts (M:M)</td>
+  </tr>
+  <tr>
+    <td>Lead</td>
+    <td><code>Id</code> <span class="tag-pk">PK</span>, <code>FirstName</code>, <code>LastName</code>, <code>Company</code>, <code>Email</code> <span class="tag-idx">IDX</span>, <code>Status</code>, <code>LeadSource</code>, <code>ConvertedAccountId</code>, <code>ConvertedContactId</code>, <code>ConvertedOpportunityId</code></td>
+    <td>Converted to Account+Contact+Opportunity on conversion</td>
+  </tr>
+  <tr>
+    <td>Case</td>
+    <td><code>Id</code> <span class="tag-pk">PK</span>, <code>Subject</code>, <code>Description</code>, <code>Status</code>, <code>Priority</code>, <code>ContactId</code> <span class="tag-fk">FK→Contact</span>, <code>AccountId</code> <span class="tag-fk">FK→Account</span>, <code>OwnerId</code></td>
+    <td>Account (M:1), Contact (M:1), CaseComments (1:M), Solutions (M:M)</td>
+  </tr>
+</table>
+
+<h3>Physical Multi-Tenant Table (Internal)</h3>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+  <tr><td><code>OrgID</code></td><td>VARCHAR(15) <span class="tag-shard">PARTITION</span></td><td>Tenant identifier — partition key for all queries</td></tr>
+  <tr><td><code>KeyPrefix</code></td><td>VARCHAR(3)</td><td>Object type identifier (e.g., "001"=Account, "003"=Contact)</td></tr>
+  <tr><td><code>DataID</code></td><td>VARCHAR(18) <span class="tag-pk">PK</span></td><td>Globally unique record ID (includes KeyPrefix + 15-char ID)</td></tr>
+  <tr><td><code>Name</code></td><td>VARCHAR(255)</td><td>Record Name field</td></tr>
+  <tr><td><code>Value0..Value500</code></td><td>VARCHAR(4000)</td><td>Generic columns for custom/standard field data</td></tr>
+  <tr><td><code>Clob0..Clob5</code></td><td>CLOB</td><td>Large text/rich text fields (up to 131,072 characters)</td></tr>
+  <tr><td><code>CreatedDate</code></td><td>TIMESTAMP</td><td>Record creation timestamp</td></tr>
+  <tr><td><code>LastModifiedDate</code></td><td>TIMESTAMP <span class="tag-idx">IDX</span></td><td>Last modification timestamp</td></tr>
+  <tr><td><code>IsDeleted</code></td><td>BOOLEAN</td><td>Soft delete (Recycle Bin)</td></tr>
+</table>
+
+<div class="deep-dive">
+  <strong>Deep Dive — Custom Indexes (Pivot Tables):</strong><br>
+  Standard B-tree indexes on <code>Value0</code> through <code>Value500</code> would be inefficient (all orgs' data mixed). Instead, Salesforce uses <strong>pivot tables</strong> for custom indexes:<br>
+  <code>MT_Indexes(OrgID, KeyPrefix, FieldNum, StringValue, NumValue, DateValue, DataID)</code><br>
+  When admin creates a custom index on <code>Invoice__c.Amount__c</code>, platform creates pivot table entries: one row per record with <code>NumValue = amount</code>. SOQL <code>WHERE Amount__c > 10000</code> becomes a range scan on pivot table's <code>NumValue</code> column with standard B-tree index. Skinny tables: for extreme performance, Salesforce support can create "skinny tables" — physical denormalized tables with org's specific columns, bypassing the generic data table for critical queries.
+</div>
+</div>
+
+<!-- ==================== CACHE ==================== -->
+<div class="section">
+<h2>Cache &amp; Performance Deep Dive</h2>
+
+<h3>Caching Layers</h3>
+<table>
+  <tr><th>Cache Layer</th><th>Strategy</th><th>Eviction</th><th>Details</th></tr>
+  <tr><td>Metadata Cache (per-pod)</td><td>Compiled definitions</td><td>Invalidation-based (event bus)</td><td>Object/field definitions, validation rules, triggers compiled and cached per app server. Cold load: 2-5s. Invalidated on metadata deploy.</td></tr>
+  <tr><td>Platform Cache (Org)</td><td>Programmatic (Apex <code>Cache.Org</code>)</td><td>TTL (up to 48 hours) + LRU</td><td>Developer-controlled cache. Session cache (per-user) and Org cache (shared). 10MB default, up to 100MB purchased. Backed by distributed cache (memcached-like).</td></tr>
+  <tr><td>Query Result Cache</td><td>Auto-cached repeated SOQL</td><td>Record modification invalidation</td><td>Identical SOQL queries return cached results if underlying data unchanged. Cache key: org + query hash + field security context.</td></tr>
+  <tr><td>CDN (Akamai)</td><td>Static assets</td><td>Version-based</td><td>Lightning component bundles, images, static resources. URL-versioned for cache busting.</td></tr>
+  <tr><td>Browser Cache (LDS)</td><td>Lightning Data Service</td><td>Record change notification</td><td>Client-side record cache with optimistic UI updates. Shared across components. Wire service invalidation.</td></tr>
+</table>
+
+<h3>Performance Best Practices</h3>
+<ul>
+  <li><strong>Selective Queries</strong> — SOQL queries must be selective (return &lt;10% of object's records). Non-selective queries on objects with &gt;200K records are blocked.</li>
+  <li><strong>Compound Indexes</strong> — Standard indexes on Id, Name, RecordTypeId, foreign key fields. Custom indexes added by admin. Two-column skinny indexes for frequent filter combinations.</li>
+  <li><strong>Async Processing</strong> — Batch Apex for processing millions of records (up to 50M). Queueable Apex for chained async jobs. Scheduled Apex for cron-based execution.</li>
+  <li><strong>Big Objects</strong> — For billion-record storage (e.g., telemetry, audit logs). Stored outside MT_Data in dedicated Hadoop/HBase storage. Queryable via Async SOQL.</li>
+</ul>
+</div>
+
+<!-- ==================== SCALING ==================== -->
+<div class="section">
+<h2>Scaling Considerations</h2>
+
+<h3>Multi-Tenant Scaling Architecture</h3>
+<table>
+  <tr><th>Component</th><th>Scaling Strategy</th><th>Key Metric</th></tr>
+  <tr><td>App Servers</td><td>Horizontal (add pods per instance)</td><td>~100-200 concurrent transactions per pod</td></tr>
+  <tr><td>Database (Oracle RAC)</td><td>Vertical + Active-Active nodes</td><td>Thousands of orgs per DB instance</td></tr>
+  <tr><td>Instance Segmentation</td><td>Orgs assigned to instances (NA44, EU25, etc.)</td><td>~10K-70K orgs per instance</td></tr>
+  <tr><td>Hyperforce</td><td>Public cloud (AWS) infrastructure</td><td>Independent K8s clusters per region</td></tr>
+  <tr><td>Search (Solr)</td><td>Per-org sharding, replicated clusters</td><td>~500ms SOSL query (p95)</td></tr>
+  <tr><td>Event Bus</td><td>Kafka clusters per data center</td><td>250K events/hour standard, 25M high-volume</td></tr>
+</table>
+
+<h3>Large Org Handling</h3>
+<ul>
+  <li><strong>Data Skew</strong> — Orgs with very large record counts (&gt;10M) may cause lock contention. Mitigation: defer sharing calculations, async triggers, optimistic locking.</li>
+  <li><strong>Dedicated Infrastructure</strong> — Very large customers get dedicated database instances or Hyperforce deployment.</li>
+  <li><strong>Org Split</strong> — Extreme cases: migrate org to less-loaded instance during maintenance window. Instance-to-instance migration with minimal downtime.</li>
+  <li><strong>Hyperforce</strong> — Next-gen infrastructure running Salesforce on public cloud (AWS). Benefits: data residency compliance, elastic scaling, modernized deployment. Each org runs in isolated Kubernetes namespace.</li>
+</ul>
+</div>
+
+<!-- ==================== TRADEOFFS ==================== -->
+<div class="section">
+<h2>Tradeoffs &amp; Alternative Approaches</h2>
+
+<div class="tradeoff">
+  <strong>Tradeoff — Multi-Tenant Shared DB vs. Database-per-Tenant:</strong><br>
+  <em>Shared DB (Salesforce model)</em>: All orgs in same Oracle instance. Advantage: operational simplicity (one DB to manage), efficient resource sharing. Disadvantage: noisy neighbor risk (mitigated by governor limits), no per-tenant tuning. <em>Database-per-tenant (e.g., AWS RDS per customer)</em>: Perfect isolation, per-tenant scaling. Disadvantage: operational overhead scales with tenant count, expensive for small tenants. Salesforce's approach works because governor limits are extremely effective at preventing noisy neighbors.
+</div>
+
+<div class="tradeoff">
+  <strong>Tradeoff — Metadata-Driven vs. Physical Schema:</strong><br>
+  <em>Metadata-driven (Salesforce)</em>: Custom objects stored in generic varchar columns. Advantage: instant schema changes (no ALTER TABLE), unlimited customization per tenant. Disadvantage: all data is VARCHAR → no native type enforcement by DB, query plans are complex, JOIN performance limited. <em>Physical schema</em>: real columns per field. Advantage: native type enforcement, optimal query plans, standard indexing. Disadvantage: schema changes require DDL, can't scale to 100K tenants with different schemas.
+</div>
+
+<div class="tradeoff">
+  <strong>Tradeoff — Governor Limits vs. Unlimited Resources:</strong><br>
+  Governor limits constrain what developers can do per transaction. They prevent: N+1 SOQL patterns, infinite loops, excessive DML. Advantage: platform stability guaranteed, fair resource sharing. Disadvantage: steep learning curve, limits complex business logic, forces awkward patterns (bulkification). Alternative: quota-based billing (charge per CPU-second like AWS Lambda) — more flexible but harder to predict costs.
+</div>
+
+<h3>Alternative Approaches</h3>
+<table>
+  <tr><th>Approach</th><th>Technology</th><th>When to Prefer</th></tr>
+  <tr><td>Open-Source CRM</td><td>SuiteCRM, Odoo, ERPNext</td><td>Budget-constrained, need full customization control, self-hosted</td></tr>
+  <tr><td>Modern CRM</td><td>HubSpot, Pipedrive, Freshsales</td><td>SMB focus, simpler UI, lower cost, marketing-first</td></tr>
+  <tr><td>Custom Build</td><td>PostgreSQL + React + Node.js</td><td>Highly unique workflows, no multi-tenancy needed, engineering resources available</td></tr>
+  <tr><td>Enterprise CRM</td><td>Microsoft Dynamics 365, SAP CRM</td><td>Existing Microsoft/SAP ecosystem, tight ERP integration needed</td></tr>
+  <tr><td>Low-Code Platform</td><td>OutSystems, Mendix, Appian</td><td>Custom apps beyond CRM, broader low-code requirements</td></tr>
+</table>
+</div>
+
+<!-- ==================== ADDITIONAL ==================== -->
+<div class="section">
+<h2>Additional Information</h2>
+
+<h3>SOQL (Salesforce Object Query Language)</h3>
+<table>
+  <tr><th>Feature</th><th>Syntax</th><th>Notes</th></tr>
+  <tr><td>Basic Query</td><td><code>SELECT Id, Name FROM Account WHERE Industry = 'Tech'</code></td><td>No SELECT * — must enumerate fields. Respects FLS.</td></tr>
+  <tr><td>Relationship Query</td><td><code>SELECT Name, (SELECT LastName FROM Contacts) FROM Account</code></td><td>Parent-to-child subquery. Up to 20 child relationships.</td></tr>
+  <tr><td>Cross-Object</td><td><code>SELECT Account.Name, Amount FROM Opportunity</code></td><td>Child-to-parent dot notation. Up to 5 levels.</td></tr>
+  <tr><td>Aggregate</td><td><code>SELECT Industry, COUNT(Id) FROM Account GROUP BY Industry</code></td><td>SUM, AVG, MIN, MAX, COUNT. HAVING clause supported.</td></tr>
+  <tr><td>Date Literals</td><td><code>WHERE CreatedDate = LAST_N_DAYS:30</code></td><td>TODAY, YESTERDAY, LAST_WEEK, THIS_QUARTER, etc.</td></tr>
+  <tr><td>Polymorphic</td><td><code>SELECT Id, What.Type FROM Task WHERE What.Type = 'Account'</code></td><td>TYPEOF for polymorphic lookups (WhoId, WhatId).</td></tr>
+</table>
+
+<h3>Security Model (Defense in Depth)</h3>
+<ul>
+  <li><strong>Org-Level</strong> — Login IP ranges, login hours, session timeout, MFA enforcement</li>
+  <li><strong>Object-Level (Profiles/Permission Sets)</strong> — CRUD permissions per object. Profile: baseline. Permission Set: additive grants.</li>
+  <li><strong>Field-Level Security (FLS)</strong> — Per-field read/edit visibility. Enforced in UI, API, reports. Developers must explicitly check with <code>Schema.sObjectType.Account.fields.Revenue__c.isAccessible()</code></li>
+  <li><strong>Record-Level</strong> — Organization-Wide Defaults (OWD): Private/Public Read/Public Read-Write per object. Sharing Rules: criteria-based or owner-based grants. Manual Sharing. Role Hierarchy: upward visibility. Territory Management for geographic access.</li>
+  <li><strong>Shield Platform Encryption</strong> — AES-256 encryption at rest. Tenant-specific keys (BYOK supported via key management service). Deterministic encryption for filtered queries on encrypted fields. Event Monitoring: API call logging, Login Forensics, Transaction Security policies.</li>
+</ul>
+
+<h3>Einstein AI Platform</h3>
+<ul>
+  <li><strong>Einstein Prediction Builder</strong> — No-code ML: predict any custom field value. Logistic regression for binary outcomes, gradient boosted trees for scoring. Trained on org's own data.</li>
+  <li><strong>Einstein Bots</strong> — NLU-powered chatbots for Service Cloud. Intent classification + entity extraction. Seamless escalation to human agent.</li>
+  <li><strong>Einstein GPT</strong> — Generative AI integration. Draft emails, summarize cases, generate knowledge articles. Trust Layer: prompt injection defense, PII masking, toxicity detection, audit logging.</li>
+  <li><strong>Einstein Discovery</strong> — Automated analytics: finds patterns, predicts outcomes, recommends actions. Built on Tableau/CRM Analytics engine.</li>
+</ul>
+</div>
+
+</body>
+</html>
