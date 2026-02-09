@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credit Karma - System Design</title>
+<style>
+:root{--bg:#0f0f0f;--surface:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--accent:#00B140;--accent2:#0077C5;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem;max-width:1400px;margin:0 auto}
+h1{color:var(--accent);font-size:2.2rem;border-bottom:3px solid var(--accent);padding-bottom:.5rem;margin-bottom:1.5rem}
+h2{color:var(--accent2);margin:2rem 0 1rem;font-size:1.5rem}
+h3{color:#81D4FA;margin:1.5rem 0 .75rem}
+h4{color:#CE93D8;margin:1rem 0 .5rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{border:1px solid var(--border);padding:.75rem;text-align:left;font-size:.95rem}
+th{background:#004d2a;color:var(--accent)}
+pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}
+code{color:#89DDFF;font-size:.9rem}
+svg text{font-family:'Segoe UI',system-ui,sans-serif}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.pro{border-left:4px solid #4CAF50;padding-left:1rem}
+.con{border-left:4px solid #f44336;padding-left:1rem}
+details{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin:.5rem 0}
+summary{cursor:pointer;font-weight:600;color:var(--accent)}
+.step{margin:.5rem 0;padding:.5rem 1rem;border-left:3px solid var(--accent2)}
+.tag-pk{background:#E91E63;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+.tag-fk{background:#2196F3;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+.tag-idx{background:#FF9800;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+.tag-shard{background:#9C27B0;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+</style>
+</head>
+<body>
+
+<h1>💳 Credit Karma — Credit Score & Financial Recommendations</h1>
+<p>Design a platform that provides free credit scores, credit monitoring, and personalized financial product recommendations (credit cards, loans, insurance) using a marketplace model where financial partners pay for qualified leads.</p>
+
+<h2>📋 Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Credit score & report</strong> — display VantageScore 3.0 from TransUnion/Equifax, updated weekly, with full credit report details</li>
+<li><strong>Credit monitoring</strong> — real-time alerts for new accounts, hard inquiries, delinquencies, balance changes</li>
+<li><strong>Product recommendations</strong> — personalized credit cards, loans, insurance based on credit profile and approval odds</li>
+<li><strong>Approval odds</strong> — ML-predicted likelihood of approval for each financial product before user applies</li>
+<li><strong>Credit score simulator</strong> — "what if" scenarios: what happens if I pay off $5K balance? Open a new card?</li>
+<li><strong>Credit factors</strong> — breakdown of what's helping/hurting score (utilization, payment history, age, etc.)</li>
+<li><strong>Identity monitoring</strong> — dark web monitoring, SSN exposure alerts, identity theft protection</li>
+</ul>
+</div>
+
+<h2>📋 Non-Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Scale</strong> — 130M+ members, 100M+ credit score pulls/week</li>
+<li><strong>Data security</strong> — PII/SSN encryption (AES-256), SOC 2, FCRA compliance</li>
+<li><strong>Freshness</strong> — credit score updated weekly; monitoring alerts within minutes of bureau updates</li>
+<li><strong>Personalization accuracy</strong> — approval odds predictions within ±5% of actual approval rates</li>
+<li><strong>Availability</strong> — 99.99% for core score display and monitoring</li>
+<li><strong>Revenue optimization</strong> — maximize match rate (user gets approved for recommended product) to increase partner satisfaction and CPA revenue</li>
+</ul>
+</div>
+
+<h2>🔄 Flow 1: Credit Score Retrieval & Display</h2>
+<svg viewBox="0 0 1000 300" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="a1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#00B140"/></marker></defs>
+<rect x="20" y="60" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="90" text-anchor="middle" fill="white" font-size="13">Member</text>
+<rect x="175" y="60" width="130" height="50" rx="8" fill="#E65100"/><text x="240" y="90" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
+<rect x="350" y="60" width="130" height="50" rx="8" fill="#1565C0"/><text x="415" y="80" text-anchor="middle" fill="white" font-size="12">Score Service</text>
+<rect x="530" y="30" width="140" height="50" rx="8" fill="#00695C"/><text x="600" y="60" text-anchor="middle" fill="white" font-size="12">Score Cache</text>
+<rect x="530" y="100" width="140" height="50" rx="8" fill="#6A1B9A"/><text x="600" y="120" text-anchor="middle" fill="white" font-size="12">Bureau Adapter</text><text x="600" y="135" text-anchor="middle" fill="white" font-size="10">(TransUnion/Equifax)</text>
+<rect x="720" y="100" width="130" height="50" rx="8" fill="#4E342E"/><text x="785" y="120" text-anchor="middle" fill="white" font-size="12">Credit Bureau</text><text x="785" y="135" text-anchor="middle" fill="white" font-size="10">API</text>
+<rect x="350" y="200" width="130" height="50" rx="8" fill="#1565C0"/><text x="415" y="220" text-anchor="middle" fill="white" font-size="12">Factor Analysis</text><text x="415" y="235" text-anchor="middle" fill="white" font-size="10">Engine</text>
+<line x1="130" y1="85" x2="170" y2="85" stroke="#00B140" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="305" y1="85" x2="345" y2="85" stroke="#00B140" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="480" y1="70" x2="525" y2="55" stroke="#00B140" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="480" y1="100" x2="525" y2="125" stroke="#00B140" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="670" y1="125" x2="715" y2="125" stroke="#FF9800" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="415" y1="110" x2="415" y2="195" stroke="#81D4FA" stroke-width="2" marker-end="url(#a1)"/>
+<text x="485" y="25" fill="#aaa" font-size="10">cache hit (weekly refresh)</text>
+<text x="485" y="165" fill="#aaa" font-size="10">cache miss → pull from bureau</text>
+</svg>
+
+<div class="step"><strong>Step 1:</strong> Member opens app. Score Service checks cache for latest score (refreshed weekly on schedule)</div>
+<div class="step"><strong>Step 2:</strong> If cache hit, return cached score + credit report summary. If stale, Bureau Adapter pulls fresh data</div>
+<div class="step"><strong>Step 3:</strong> Bureau API call (TransUnion/Equifax) via HTTPS with mutual TLS. Soft pull — no impact on credit score</div>
+<div class="step"><strong>Step 4:</strong> Factor Analysis Engine computes score factors: utilization ratio, payment history %, avg account age, new accounts, mix</div>
+<div class="step"><strong>Step 5:</strong> Response assembled: score (300-850), trend chart, factor breakdown, personalized tips</div>
+
+<details><summary>Deep Dive: Credit Bureau Integration</summary>
+<div class="card">
+<pre><code>// Credit bureau data pull:
+// Two types: Hard Pull (affects score, requires consent)
+//            Soft Pull (no impact, used by Credit Karma)
+
+// Credit Karma uses SOFT INQUIRY via:
+// - TransUnion TrueVision API
+// - Equifax ConsumerConnect API
+
+// Data returned (simplified):
+{
+  "consumer": {
+    "ssn_last4": "1234",
+    "name": "John Doe"
+  },
+  "score": {
+    "model": "VantageScore3.0",
+    "value": 742,
+    "factors": [
+      {"code": "01", "description": "Payment history", "impact": "high_positive"},
+      {"code": "14", "description": "Credit utilization", "impact": "medium_negative"},
+      {"code": "07", "description": "Account age", "impact": "low_positive"}
+    ]
+  },
+  "tradelines": [
+    {
+      "creditor": "Chase Bank",
+      "account_type": "credit_card",
+      "credit_limit": 15000,
+      "current_balance": 3200,
+      "payment_status": "current",
+      "opened_date": "2019-03-15",
+      "utilization": 0.213
+    }
+    // ... all accounts
+  ],
+  "inquiries": [ /* hard inquiries last 2 years */ ],
+  "public_records": [ /* bankruptcies, liens, etc. */ ]
+}
+
+// Pull frequency: weekly per member (contractual with bureaus)
+// Batch pull: overnight job processes ~18M scores/night
+// Real-time pull: on-demand for new signups or force refresh</code></pre>
+</div>
+</details>
+
+<h2>🔄 Flow 2: Personalized Product Recommendations</h2>
+<svg viewBox="0 0 1050 300" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="a2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#0077C5"/></marker></defs>
+<rect x="20" y="60" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="90" text-anchor="middle" fill="white" font-size="12">Member Profile</text>
+<rect x="175" y="60" width="130" height="50" rx="8" fill="#1565C0"/><text x="240" y="80" text-anchor="middle" fill="white" font-size="12">Recommendation</text><text x="240" y="95" text-anchor="middle" fill="white" font-size="10">Engine</text>
+<rect x="350" y="30" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="415" y="50" text-anchor="middle" fill="white" font-size="12">Approval Odds</text><text x="415" y="65" text-anchor="middle" fill="white" font-size="10">ML Model</text>
+<rect x="350" y="100" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="415" y="120" text-anchor="middle" fill="white" font-size="12">Revenue</text><text x="415" y="135" text-anchor="middle" fill="white" font-size="10">Optimization</text>
+<rect x="530" y="60" width="140" height="50" rx="8" fill="#E65100"/><text x="600" y="80" text-anchor="middle" fill="white" font-size="12">Ranked Product</text><text x="600" y="95" text-anchor="middle" fill="white" font-size="10">Feed</text>
+<rect x="720" y="30" width="140" height="50" rx="8" fill="#4E342E"/><text x="790" y="60" text-anchor="middle" fill="white" font-size="12">Partner Product DB</text>
+<rect x="720" y="100" width="140" height="50" rx="8" fill="#00695C"/><text x="790" y="120" text-anchor="middle" fill="white" font-size="12">Click → Apply</text><text x="790" y="135" text-anchor="middle" fill="white" font-size="10">Tracking</text>
+<line x1="130" y1="85" x2="170" y2="85" stroke="#0077C5" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="305" y1="75" x2="345" y2="55" stroke="#0077C5" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="305" y1="95" x2="345" y2="125" stroke="#0077C5" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="480" y1="55" x2="525" y2="75" stroke="#0077C5" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="480" y1="125" x2="525" y2="95" stroke="#0077C5" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="670" y1="80" x2="715" y2="55" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="670" y1="90" x2="715" y2="125" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
+</svg>
+
+<div class="step"><strong>Step 1:</strong> Member's credit profile + demographics fed to Recommendation Engine</div>
+<div class="step"><strong>Step 2:</strong> Approval Odds ML model predicts P(approval) for each product in partner catalog using member's credit features</div>
+<div class="step"><strong>Step 3:</strong> Revenue Optimization balances member value (best product for user) with business value (CPA from partner)</div>
+<div class="step"><strong>Step 4:</strong> Ranked product feed displayed with approval odds badges ("Excellent", "Very Good", "Good", "Fair")</div>
+<div class="step"><strong>Step 5:</strong> Click-through tracked. When member applies and is approved, partner pays CPA ($50-$200 per credit card, $20-$100 per loan)</div>
+
+<details><summary>Deep Dive: Approval Odds ML Model</summary>
+<div class="card">
+<pre><code>// Approval Odds = Credit Karma's core differentiator
+// Predict P(approval | user_profile, product_criteria) before user applies
+
+// Training data:
+// - Historical applications through Credit Karma (millions)
+// - Outcome: approved / denied (feedback from partners)
+// - Features: credit score, utilization, payment history, income, etc.
+
+// Model architecture: Gradient Boosted Trees (XGBoost/LightGBM)
+// Why not deep learning? Tabular data + need for interpretability
+
+// Features (per user × product pair):
+{
+  "user_features": {
+    "vantage_score": 742,
+    "total_utilization": 0.28,
+    "num_accounts": 8,
+    "avg_account_age_months": 54,
+    "num_hard_inquiries_12m": 2,
+    "has_derogatory": false,
+    "estimated_income": 85000
+  },
+  "product_features": {
+    "product_type": "credit_card",
+    "min_credit_score": 670,
+    "requires_no_bankruptcy": true,
+    "max_utilization": 0.50,
+    "issuer": "Chase"
+  },
+  "interaction_features": {
+    "score_margin": 72,  // user_score - min_score
+    "utilization_margin": 0.22  // max_util - user_util
+  }
+}
+
+// Output: P(approval) = 0.87 → displayed as "Excellent odds"
+// Thresholds: Excellent (>80%), Very Good (60-80%), Good (40-60%), Fair (<40%)
+
+// Calibration: Platt scaling to ensure predicted probabilities match actual rates
+// Metrics: AUC-ROC > 0.85, calibration error < 3%</code></pre>
+</div>
+</details>
+
+<details><summary>Deep Dive: Revenue Model (Marketplace Economics)</summary>
+<div class="card">
+<pre><code>// Credit Karma's revenue: 100% from partner referrals (free for members)
+// Revenue = Σ (clicks × conversion_rate × CPA_per_approval)
+
+// CPA rates by product type:
+// Credit cards: $50 - $200 per approved card
+// Personal loans: $20 - $100 per funded loan
+// Auto loans: $50 - $150 per funded loan
+// Mortgage: $100 - $500 per funded mortgage
+// Insurance: $5 - $50 per policy sold
+
+// Ranking optimization: multi-objective
+// Objective = α × P(approval) × user_value + β × CPA × P(click)
+// α, β tuned to balance member experience and revenue
+
+// Feedback loop:
+// Better recommendations → higher approval rates
+// Higher approval rates → partners pay more CPA
+// Higher CPA → more revenue → invest in better models
+// Better models → even better recommendations
+
+// A/B testing: continuous experiments on ranking algorithms
+// Guardrail metrics: member approval rate must not decrease
+// Revenue is secondary metric (don't sacrifice member trust)</code></pre>
+</div>
+</details>
+
+<h2>🔄 Flow 3: Credit Monitoring & Alerts</h2>
+<svg viewBox="0 0 1000 280" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="a3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#00B140"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#4E342E"/><text x="80" y="80" text-anchor="middle" fill="white" font-size="12">Credit Bureau</text><text x="80" y="95" text-anchor="middle" fill="white" font-size="10">Change Feed</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="255" y="80" text-anchor="middle" fill="white" font-size="12">Change Detection</text><text x="255" y="95" text-anchor="middle" fill="white" font-size="10">Pipeline</text>
+<rect x="370" y="60" width="130" height="50" rx="8" fill="#1565C0"/><text x="435" y="80" text-anchor="middle" fill="white" font-size="12">Alert Rules</text><text x="435" y="95" text-anchor="middle" fill="white" font-size="10">Engine</text>
+<rect x="550" y="30" width="130" height="50" rx="8" fill="#E65100"/><text x="615" y="60" text-anchor="middle" fill="white" font-size="12">Push Notification</text>
+<rect x="550" y="100" width="130" height="50" rx="8" fill="#E65100"/><text x="615" y="130" text-anchor="middle" fill="white" font-size="12">Email Service</text>
+<rect x="730" y="60" width="120" height="50" rx="8" fill="#2E7D32"/><text x="790" y="90" text-anchor="middle" fill="white" font-size="12">Member</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#00B140" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="320" y1="85" x2="365" y2="85" stroke="#00B140" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="500" y1="70" x2="545" y2="55" stroke="#00B140" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="500" y1="100" x2="545" y2="125" stroke="#00B140" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="680" y1="55" x2="725" y2="75" stroke="#00B140" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="680" y1="125" x2="725" y2="95" stroke="#00B140" stroke-width="2" marker-end="url(#a3)"/>
+</svg>
+
+<div class="step"><strong>Step 1:</strong> Credit bureaus send change notifications via batch feeds or real-time webhook (TransUnion Alert API)</div>
+<div class="step"><strong>Step 2:</strong> Change Detection compares new credit data against previous snapshot to identify material changes</div>
+<div class="step"><strong>Step 3:</strong> Alert Rules Engine categorizes: new account, hard inquiry, balance change >$500, delinquency, score change >20pts</div>
+<div class="step"><strong>Step 4:</strong> Alerts dispatched via push notification (critical) and email (summary), respecting member preferences</div>
+
+<h2>🏗️ Combined Architecture</h2>
+<svg viewBox="0 0 1100 480" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="ac" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#00B140"/></marker></defs>
+<text x="550" y="25" text-anchor="middle" fill="#00B140" font-size="16" font-weight="bold">Credit Karma Platform Architecture</text>
+<rect x="20" y="50" width="120" height="40" rx="8" fill="#2E7D32"/><text x="80" y="75" text-anchor="middle" fill="white" font-size="11">Web / Mobile App</text>
+<rect x="200" y="50" width="130" height="40" rx="8" fill="#E65100"/><text x="265" y="75" text-anchor="middle" fill="white" font-size="11">API Gateway</text>
+<rect x="400" y="40" width="120" height="35" rx="8" fill="#1565C0"/><text x="460" y="63" text-anchor="middle" fill="white" font-size="11">Score Service</text>
+<rect x="400" y="85" width="120" height="35" rx="8" fill="#1565C0"/><text x="460" y="108" text-anchor="middle" fill="white" font-size="11">Recs Engine</text>
+<rect x="400" y="130" width="120" height="35" rx="8" fill="#1565C0"/><text x="460" y="153" text-anchor="middle" fill="white" font-size="11">Monitoring Service</text>
+<rect x="400" y="175" width="120" height="35" rx="8" fill="#1565C0"/><text x="460" y="198" text-anchor="middle" fill="white" font-size="11">Simulator Service</text>
+<rect x="400" y="220" width="120" height="35" rx="8" fill="#1565C0"/><text x="460" y="243" text-anchor="middle" fill="white" font-size="11">Identity Service</text>
+<rect x="590" y="50" width="140" height="40" rx="8" fill="#6A1B9A"/><text x="660" y="75" text-anchor="middle" fill="white" font-size="11">ML Model Serving</text>
+<rect x="590" y="110" width="140" height="40" rx="8" fill="#4E342E"/><text x="660" y="135" text-anchor="middle" fill="white" font-size="11">PostgreSQL (Encrypted)</text>
+<rect x="590" y="170" width="140" height="40" rx="8" fill="#00695C"/><text x="660" y="195" text-anchor="middle" fill="white" font-size="11">Redis Cache</text>
+<rect x="590" y="230" width="140" height="40" rx="8" fill="#6A1B9A"/><text x="660" y="255" text-anchor="middle" fill="white" font-size="11">Kafka Event Bus</text>
+<rect x="800" y="50" width="150" height="40" rx="8" fill="#4E342E"/><text x="875" y="75" text-anchor="middle" fill="white" font-size="11">TransUnion / Equifax</text>
+<rect x="800" y="110" width="150" height="40" rx="8" fill="#E65100"/><text x="875" y="135" text-anchor="middle" fill="white" font-size="11">Partner APIs (Banks)</text>
+<rect x="800" y="170" width="150" height="40" rx="8" fill="#6A1B9A"/><text x="875" y="195" text-anchor="middle" fill="white" font-size="11">Dark Web Monitor</text>
+<rect x="200" y="350" width="130" height="40" rx="8" fill="#6A1B9A"/><text x="265" y="375" text-anchor="middle" fill="white" font-size="11">Analytics Pipeline</text>
+<rect x="400" y="350" width="120" height="40" rx="8" fill="#1565C0"/><text x="460" y="375" text-anchor="middle" fill="white" font-size="11">Notification Svc</text>
+<line x1="140" y1="70" x2="195" y2="70" stroke="#00B140" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="330" y1="70" x2="395" y2="57" stroke="#00B140" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="520" y1="57" x2="585" y2="70" stroke="#00B140" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="520" y1="102" x2="585" y2="70" stroke="#00B140" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="520" y1="147" x2="585" y2="130" stroke="#0077C5" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="730" y1="70" x2="795" y2="70" stroke="#FF9800" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="730" y1="130" x2="795" y2="130" stroke="#FF9800" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="730" y1="195" x2="795" y2="195" stroke="#FF9800" stroke-width="2" marker-end="url(#ac)"/>
+</svg>
+
+<h2>💾 Database Schema</h2>
+<div class="grid">
+<div class="card">
+<h3>PostgreSQL — Member & Credit Data</h3>
+<pre><code>CREATE TABLE members (
+  id UUID PRIMARY KEY, -- <span class="tag-pk">PK</span>
+  email_encrypted BYTEA NOT NULL,
+  ssn_encrypted BYTEA NOT NULL, -- AES-256-GCM
+  ssn_hash VARCHAR(64) NOT NULL UNIQUE, -- <span class="tag-idx">IDX</span> for lookup
+  full_name_encrypted BYTEA NOT NULL,
+  dob_encrypted BYTEA,
+  estimated_income INT,
+  zip_code VARCHAR(10),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE credit_scores (
+  id BIGSERIAL PRIMARY KEY,
+  member_id UUID NOT NULL REFERENCES members(id), -- <span class="tag-fk">FK</span>
+  bureau VARCHAR(15) NOT NULL, -- 'transunion'|'equifax'
+  score_model VARCHAR(20) NOT NULL, -- 'VantageScore3.0'
+  score INT NOT NULL, -- 300-850
+  factors JSONB NOT NULL, -- score factor codes
+  pulled_at TIMESTAMPTZ NOT NULL, -- <span class="tag-idx">IDX</span>
+  report_data_encrypted BYTEA NOT NULL
+);
+-- <span class="tag-idx">IDX</span>: (member_id, bureau, pulled_at DESC) for latest score
+-- Partitioned by pulled_at (monthly) for retention management
+
+CREATE TABLE credit_alerts (
+  id BIGSERIAL PRIMARY KEY,
+  member_id UUID NOT NULL, -- <span class="tag-fk">FK</span> <span class="tag-idx">IDX</span>
+  alert_type VARCHAR(30) NOT NULL, -- 'new_account'|'hard_inquiry'|'balance_change'
+  severity VARCHAR(10) NOT NULL, -- 'high'|'medium'|'low'
+  details JSONB NOT NULL,
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);</code></pre>
+</div>
+<div class="card">
+<h3>Product Recommendations</h3>
+<pre><code>CREATE TABLE partner_products (
+  id SERIAL PRIMARY KEY, -- <span class="tag-pk">PK</span>
+  partner_id INT NOT NULL, -- <span class="tag-fk">FK</span>
+  product_type VARCHAR(20) NOT NULL, -- <span class="tag-idx">IDX</span>
+  product_name VARCHAR(100) NOT NULL,
+  min_credit_score INT,
+  max_credit_score INT,
+  apr_range VARCHAR(20), -- '15.99%-24.99%'
+  annual_fee_cents INT,
+  signup_bonus TEXT,
+  cpa_cents INT NOT NULL, -- what partner pays per approval
+  is_active BOOLEAN DEFAULT true, -- <span class="tag-idx">IDX</span>
+  targeting_rules JSONB, -- additional criteria
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE recommendations (
+  id BIGSERIAL PRIMARY KEY,
+  member_id UUID NOT NULL, -- <span class="tag-fk">FK</span> <span class="tag-shard">SHARD</span>
+  product_id INT NOT NULL, -- <span class="tag-fk">FK</span>
+  approval_odds DECIMAL(4,3) NOT NULL,
+  rank_position INT NOT NULL,
+  score_at_recommendation INT, -- member's score when recommended
+  generated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE referral_events (
+  id BIGSERIAL PRIMARY KEY,
+  member_id UUID NOT NULL, -- <span class="tag-fk">FK</span>
+  product_id INT NOT NULL, -- <span class="tag-fk">FK</span>
+  event_type VARCHAR(20) NOT NULL, -- 'impression'|'click'|'apply'|'approved'
+  revenue_cents INT, -- populated on 'approved' event
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+-- <span class="tag-idx">IDX</span>: (member_id, event_type, created_at) for funnel analysis</code></pre>
+</div>
+</div>
+
+<h2>⚡ Cache & CDN Deep Dive</h2>
+<div class="card">
+<table>
+<tr><th>Layer</th><th>What</th><th>Strategy</th><th>TTL</th></tr>
+<tr><td>Redis — Score</td><td>Latest credit score per member</td><td>Write-through on weekly pull</td><td>7 days (until next pull)</td></tr>
+<tr><td>Redis — Recs</td><td>Pre-computed product recommendations</td><td>Batch generated nightly</td><td>24 hours</td></tr>
+<tr><td>Redis — Session</td><td>Auth tokens, member context</td><td>Write-through on login</td><td>30 minutes</td></tr>
+<tr><td>CDN</td><td>Product images, partner logos, static content</td><td>Immutable versioned URLs</td><td>30 days</td></tr>
+<tr><td>Local Cache</td><td>Partner product catalog</td><td>In-memory, refresh on change event</td><td>5 minutes</td></tr>
+</table>
+<pre><code>// Score caching strategy:
+// Members check score frequently but it only updates weekly
+// Cache key: score:{member_id}:{bureau}
+// Value: { score, factors, pulled_at, next_pull_date }
+// Hit rate: ~95% (most checks between weekly pulls)
+
+// Recommendation pre-computation:
+// Nightly batch job: for each member, compute top-20 products
+// Store in Redis sorted set: recs:{member_id} → product_ids with scores
+// On request: read pre-computed list, filter by real-time availability</code></pre>
+</div>
+
+<h2>📈 Scaling Considerations</h2>
+<div class="card">
+<ul>
+<li><strong>Batch credit pulls:</strong> 130M members × weekly = ~18M pulls/night. Bureau APIs have rate limits. Stagger pulls across the week. Prioritize active members (logged in last 7 days).</li>
+<li><strong>Recommendation batch:</strong> 130M members × 200 products × approval odds = 26B predictions/night. Use GPU inference cluster. Batch by credit score bands for efficient model serving.</li>
+<li><strong>Monitoring pipeline:</strong> TransUnion Alert API sends ~5M change notifications/day. Kafka-based stream processing with Flink. Alert deduplication via member_id windowing.</li>
+<li><strong>Data sharding:</strong> shard by member_id (UUID) for even distribution. All member data co-located on same shard for efficient joins.</li>
+</ul>
+</div>
+
+<h2>⚖️ Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="card pro"><h4>Free Model (Ad-Supported)</h4><ul><li>Massive user base (130M+)</li><li>Network effects: more users → better ML models</li><li>Trust: users don't feel sold to</li></ul></div>
+<div class="card con"><h4>Free Model (Ad-Supported)</h4><ul><li>Revenue depends on partner CPA rates</li><li>Must balance user value vs partner revenue</li><li>Regulatory scrutiny (is recommendation or advertisement?)</li></ul></div>
+<div class="card pro"><h4>Pre-Computed Recommendations</h4><ul><li>Sub-millisecond serving from cache</li><li>Consistent experience (no cold-start per request)</li><li>Batch inference is GPU-efficient</li></ul></div>
+<div class="card con"><h4>Pre-Computed Recommendations</h4><ul><li>Stale for 24h (product changes not reflected instantly)</li><li>Massive storage for 130M × 20 recs</li><li>Can't react to real-time context (browsing behavior)</li></ul></div>
+</div>
+
+<h2>🔄 Alternative Approaches</h2>
+<div class="grid">
+<div class="card"><h4>Real-Time Approval (Pre-Qualified Offers)</h4><p>Instead of predicting odds, partners pre-approve members in real-time. Partner's underwriting API called with member's consent. "You're pre-approved for Chase Sapphire" — much higher conversion. Requires deeper partner integration and data sharing agreements.</p></div>
+<div class="card"><h4>Open Banking Integration</h4><p>With member consent, access bank transaction data (via Plaid/MX). Richer financial profile: income verification, spending patterns, cash flow. Better approval predictions. Enables budgeting/savings recommendations beyond credit products.</p></div>
+</div>
+
+<h2>📚 Additional Information</h2>
+<div class="card">
+<ul>
+<li><strong>FCRA compliance:</strong> Fair Credit Reporting Act governs how credit data can be used. Credit Karma must have "permissible purpose" for soft pulls. Cannot share raw credit data with partners (only aggregated features).</li>
+<li><strong>VantageScore vs FICO:</strong> Credit Karma uses VantageScore 3.0 (free for soft pulls). Most lenders use FICO. Scores can differ by 20-40 points. This causes user confusion ("my Credit Karma score is 750 but lender says 710").</li>
+<li><strong>Score simulator:</strong> uses a simplified version of the VantageScore model to predict score changes. Not exact (scoring models are proprietary), but directionally accurate. "Pay down $2K → score likely increases 15-25 points."</li>
+<li><strong>Acquired by Intuit (2020):</strong> $7.1B acquisition. Integration with TurboTax creates financial platform: file taxes → see refund impact on credit → get recommended products.</li>
+</ul>
+</div>
+
+</body>
+</html>

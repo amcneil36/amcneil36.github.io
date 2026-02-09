@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gmail - System Design</title>
+<style>
+:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--heading:#EA4335;--accent:#4285F4;--accent2:#34A853;--accent3:#FBBC05;--muted:#888}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
+h1{color:var(--heading);font-size:2.2rem;border-bottom:3px solid var(--heading);padding-bottom:.5rem;margin-bottom:1.5rem}
+h2{color:var(--accent);margin:2rem 0 1rem;font-size:1.5rem}
+h3{color:var(--accent2);margin:1.5rem 0 .75rem;font-size:1.2rem}
+h4{color:var(--accent3);margin:1rem 0 .5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
+ul,ol{margin:.75rem 0 .75rem 1.5rem}
+li{margin:.4rem 0}
+code{background:#2d2d2d;padding:.2rem .5rem;border-radius:4px;font-size:.9rem;color:#f8f8f2}
+pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:1rem 0}
+pre code{padding:0;background:none}
+.tag{display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600;margin:.2rem}
+.tag-pk{background:#E53935;color:#fff}
+.tag-fk{background:#1E88E5;color:#fff}
+.tag-idx{background:#43A047;color:#fff}
+.tag-shard{background:#FB8C00;color:#fff}
+.tag-cache{background:#8E24AA;color:#fff}
+.tag-ttl{background:#00897B;color:#fff}
+svg text{font-family:'Segoe UI',system-ui,sans-serif}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.pro{background:#1b3a1b;border:1px solid #2d5a2d;border-radius:8px;padding:1rem}
+.con{background:#3a1b1b;border:1px solid #5a2d2d;border-radius:8px;padding:1rem}
+</style>
+</head>
+<body>
+
+<h1>📧 Gmail - System Design</h1>
+
+<!-- ============ FUNCTIONAL REQUIREMENTS ============ -->
+<div class="card">
+<h2>Functional Requirements</h2>
+<ol>
+<li><strong>Send & Receive Email:</strong> Compose, send, receive, and deliver emails with attachments (up to 25MB inline, 50MB receive)</li>
+<li><strong>Inbox Management:</strong> Labels, folders, starring, archiving, snoozing, threaded conversations, tabs (Primary/Social/Promotions)</li>
+<li><strong>Search:</strong> Full-text search across all mail, labels, attachments, date ranges — sub-second results over years of history</li>
+</ol>
+</div>
+
+<!-- ============ NON-FUNCTIONAL REQUIREMENTS ============ -->
+<div class="card">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Scale:</strong> 1.8B+ users, ~333B emails sent/day globally, 15GB free storage/user</li>
+<li><strong>Latency:</strong> Inbox load &lt;500ms, search &lt;1s, send &lt;2s perceived</li>
+<li><strong>Availability:</strong> 99.99% uptime (Google Workspace SLA)</li>
+<li><strong>Durability:</strong> Zero data loss — multi-region replication, 99.999999999% (11 nines) durability</li>
+<li><strong>Security:</strong> TLS in transit, at-rest encryption, SPF/DKIM/DMARC, phishing/spam detection</li>
+</ul>
+</div>
+
+<!-- ============ FLOW 1: SEND EMAIL ============ -->
+<h2>Flow 1: Sending an Email</h2>
+<div class="card">
+<svg viewBox="0 0 1000 370" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#4285F4"/></marker></defs>
+<rect x="20" y="50" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="80" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Client (Web/App)</text>
+<rect x="190" y="50" width="120" height="50" rx="8" fill="#4285F4"/><text x="250" y="80" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">API Gateway</text>
+<rect x="360" y="50" width="120" height="50" rx="8" fill="#4285F4"/><text x="420" y="80" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Compose Service</text>
+<rect x="530" y="20" width="120" height="50" rx="8" fill="#9C27B0"/><text x="590" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Spam/Phishing</text><text x="590" y="57" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Filter</text>
+<rect x="530" y="90" width="120" height="50" rx="8" fill="#FB8C00"/><text x="590" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Attachment</text><text x="590" y="127" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Service (GCS)</text>
+<rect x="700" y="50" width="120" height="50" rx="8" fill="#E53935"/><text x="760" y="80" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">SMTP Relay</text>
+<rect x="700" y="150" width="120" height="50" rx="8" fill="#795548"/><text x="760" y="172" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Sent Mail Store</text><text x="760" y="187" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Bigtable)</text>
+<rect x="360" y="200" width="120" height="50" rx="8" fill="#00897B"/><text x="420" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Outbound Queue</text><text x="420" y="237" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Pub/Sub)</text>
+<rect x="530" y="200" width="120" height="50" rx="8" fill="#4285F4"/><text x="590" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">DKIM Signer /</text><text x="590" y="237" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">SPF Validator</text>
+<rect x="700" y="280" width="120" height="50" rx="8" fill="#607D8B"/><text x="760" y="302" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Remote MTA</text><text x="760" y="317" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Recipient ISP)</text>
+<line x1="140" y1="75" x2="185" y2="75" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="310" y1="75" x2="355" y2="75" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="480" y1="65" x2="525" y2="50" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="480" y1="85" x2="525" y2="110" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="650" y1="45" x2="695" y2="65" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="480" y1="95" x2="420" y2="195" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="480" y1="225" x2="525" y2="225" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="650" y1="225" x2="695" y2="175" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="760" y1="100" x2="760" y2="145" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="760" y1="200" x2="760" y2="275" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Client sends composed email via HTTPS POST to API Gateway (or SMTP submission on port 587)</li>
+<li>Compose Service validates headers, body, recipients, rate limits, and drafts (stored in Bigtable)</li>
+<li>Attachments uploaded to Google Cloud Storage (GCS), referenced by blob ID in email metadata</li>
+<li>Spam/phishing filter scans outbound email (TensorFlow models for abuse prevention)</li>
+<li>Email enqueued to outbound Pub/Sub queue for asynchronous delivery</li>
+<li>DKIM signer adds cryptographic signature header; SPF TXT record validated for sender domain</li>
+<li>SMTP relay delivers to recipient MTA via STARTTLS (MX record lookup, retry with exponential backoff)</li>
+<li>Copy saved to sender's "Sent" folder in Bigtable; threading ID linked</li>
+</ol>
+
+<h3>Example</h3>
+<p>User sends email to colleague@company.com. Compose service validates, attachment (3MB PDF) uploaded to GCS, spam filter passes, DKIM signed with d=gmail.com selector, queued, SMTP relay resolves MX for company.com → delivers to corporate Exchange server over TLS 1.3.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>SMTP Protocol</h4>
+<p><strong>Protocol:</strong> SMTP (RFC 5321) over TCP port 25 (server-to-server) or 587 (submission with AUTH)</p>
+<p><strong>Commands:</strong> EHLO → MAIL FROM → RCPT TO → DATA → QUIT</p>
+<p><strong>STARTTLS:</strong> Opportunistic encryption upgrade; Gmail enforces TLS for 90%+ of outbound</p>
+<p><strong>Retry:</strong> Exponential backoff (1min → 5min → 15min → 1hr → 4hr) for up to 5 days per RFC 5321</p>
+</div>
+<div class="card">
+<h4>DKIM / SPF / DMARC</h4>
+<p><strong>DKIM:</strong> RSA-2048 signature over headers + body hash; selector rotated quarterly</p>
+<p><strong>SPF:</strong> DNS TXT record listing authorized sending IPs; soft fail (~all) vs hard fail (-all)</p>
+<p><strong>DMARC:</strong> Policy alignment — both DKIM and SPF must pass with From: domain alignment; p=reject for Google domains</p>
+</div>
+<div class="card">
+<h4>Attachment Storage</h4>
+<p><strong>Service:</strong> Google Cloud Storage (multi-region, Standard class)</p>
+<p><strong>Limit:</strong> 25MB per email (outbound), 50MB receive; larger files auto-redirect to Drive link</p>
+<p><strong>Dedup:</strong> Content-addressable storage — SHA-256 hash → blob; same attachment shared across copies</p>
+<p><strong>Virus Scan:</strong> Every attachment scanned by ClamAV + proprietary ML before delivery</p>
+</div>
+<div class="card">
+<h4>Outbound Queue</h4>
+<p><strong>System:</strong> Google Pub/Sub — at-least-once delivery, exactly-once processing via dedup ID</p>
+<p><strong>Partitioning:</strong> By recipient domain for batching — multiple emails to same domain sent in single SMTP session</p>
+<p><strong>Rate Limiting:</strong> Per-domain throttling to avoid being flagged as spam by recipient ISPs</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 2: RECEIVE & INBOX ============ -->
+<h2>Flow 2: Receiving Email & Inbox Delivery</h2>
+<div class="card">
+<svg viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#34A853"/></marker></defs>
+<rect x="20" y="50" width="120" height="50" rx="8" fill="#607D8B"/><text x="80" y="80" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Sender MTA</text>
+<rect x="190" y="50" width="120" height="50" rx="8" fill="#E53935"/><text x="250" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Inbound MX</text><text x="250" y="87" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Gateway</text>
+<rect x="360" y="20" width="130" height="50" rx="8" fill="#9C27B0"/><text x="425" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Spam Classifier</text><text x="425" y="57" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(TensorFlow)</text>
+<rect x="360" y="90" width="130" height="50" rx="8" fill="#FB8C00"/><text x="425" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Phishing / Malware</text><text x="425" y="127" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Scanner</text>
+<rect x="540" y="50" width="120" height="50" rx="8" fill="#4285F4"/><text x="600" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Delivery Service</text><text x="600" y="87" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Categorizer)</text>
+<rect x="710" y="20" width="120" height="50" rx="8" fill="#795548"/><text x="770" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Mailbox Store</text><text x="770" y="57" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Bigtable)</text>
+<rect x="710" y="90" width="120" height="50" rx="8" fill="#00897B"/><text x="770" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Index</text><text x="770" y="127" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Custom)</text>
+<rect x="540" y="180" width="120" height="50" rx="8" fill="#4285F4"/><text x="600" y="202" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Push Notifier</text><text x="600" y="217" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(FCM / APNs)</text>
+<rect x="710" y="180" width="120" height="50" rx="8" fill="#34A853"/><text x="770" y="202" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Client Sync</text><text x="770" y="217" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(IMAP / API)</text>
+<line x1="140" y1="75" x2="185" y2="75" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="310" y1="65" x2="355" y2="50" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="310" y1="85" x2="355" y2="110" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="490" y1="45" x2="535" y2="65" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="490" y1="115" x2="535" y2="85" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="660" y1="65" x2="705" y2="45" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="660" y1="85" x2="705" y2="110" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="600" y1="100" x2="600" y2="175" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="660" y1="205" x2="705" y2="205" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Sender MTA connects to Gmail MX (aspmx.l.google.com) on port 25 over STARTTLS</li>
+<li>Inbound gateway validates SPF, DKIM signature, DMARC alignment; rejects on hard fail</li>
+<li>TensorFlow spam classifier scores email (0-1.0); >0.7 → Spam folder, >0.95 → reject at SMTP level</li>
+<li>Phishing scanner checks URLs against Safe Browsing DB, attachment sandboxing via gVisor</li>
+<li>Delivery Service categorizes: Primary / Social / Promotions / Updates using ML classifier trained on user behavior</li>
+<li>Email written to Bigtable (mailbox row) with thread linking via References/In-Reply-To headers</li>
+<li>Search index updated asynchronously (body, headers, attachment text via OCR/Tika extraction)</li>
+<li>Push notification sent via FCM (Android) / APNs (iOS); IMAP IDLE notify for desktop clients</li>
+</ol>
+
+<h3>Example</h3>
+<p>Newsletter from service@shopify.com arrives. SPF passes (IP in Shopify's SPF record), DKIM valid. Spam score 0.15 — not spam. ML categorizer routes to "Promotions" tab. Stored in Bigtable under user's mailbox, indexed for search. No push notification (Promotions tab notifications disabled by user preference).</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>Spam Classification</h4>
+<p><strong>Model:</strong> TensorFlow deep neural network — features include sender reputation, content analysis, URL patterns, header anomalies, user feedback signals</p>
+<p><strong>Training:</strong> Continuously retrained on billions of labeled examples from user "Report Spam" / "Not Spam" actions</p>
+<p><strong>Accuracy:</strong> 99.9% spam detection, <0.05% false positive rate</p>
+<p><strong>RBL:</strong> Real-time blackhole lists consulted (Spamhaus, Barracuda) for known bad IPs</p>
+</div>
+<div class="card">
+<h4>Tab Categorization</h4>
+<p><strong>Categories:</strong> Primary, Social, Promotions, Updates, Forums — ML classifier per user</p>
+<p><strong>Features:</strong> Sender domain, List-Unsubscribe header presence, content keywords, user interaction history</p>
+<p><strong>Personalization:</strong> User drag-and-drop re-categorization feeds back into per-user model fine-tuning</p>
+</div>
+<div class="card">
+<h4>Thread Linking</h4>
+<p><strong>Algorithm:</strong> Match by Message-ID, In-Reply-To, References headers (RFC 5322)</p>
+<p><strong>Fallback:</strong> Subject normalization (strip Re:/Fwd: prefixes) + sender/recipient overlap heuristic</p>
+<p><strong>Storage:</strong> Conversation ID (thread_id) in Bigtable — all messages in thread share same key prefix</p>
+</div>
+<div class="card">
+<h4>IMAP Protocol</h4>
+<p><strong>Protocol:</strong> IMAP4rev1 (RFC 3501) over TLS port 993</p>
+<p><strong>IDLE:</strong> Long-lived TCP connection for push-like real-time notification (RFC 2177)</p>
+<p><strong>CONDSTORE:</strong> Conditional STORE for efficient sync — mod-sequence numbers track mailbox changes</p>
+<p><strong>Gmail Extensions:</strong> X-GM-LABELS for label sync, X-GM-THRID for thread ID mapping</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 3: SEARCH ============ -->
+<h2>Flow 3: Email Search</h2>
+<div class="card">
+<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FBBC05"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="90" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Client</text>
+<rect x="190" y="60" width="120" height="50" rx="8" fill="#4285F4"/><text x="250" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Frontend</text><text x="250" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Service</text>
+<rect x="360" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="425" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Query Parser</text><text x="425" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Structured)</text>
+<rect x="540" y="30" width="130" height="50" rx="8" fill="#00897B"/><text x="605" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Per-User Index</text><text x="605" y="67" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Inverted)</text>
+<rect x="540" y="100" width="130" height="50" rx="8" fill="#795548"/><text x="605" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Mailbox Store</text><text x="605" y="137" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Bigtable)</text>
+<rect x="720" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="785" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Ranking &</text><text x="785" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Snippeting</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#FBBC05" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="310" y1="85" x2="355" y2="85" stroke="#FBBC05" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="490" y1="75" x2="535" y2="55" stroke="#FBBC05" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="490" y1="95" x2="535" y2="120" stroke="#FBBC05" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="670" y1="55" x2="715" y2="75" stroke="#FBBC05" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="670" y1="125" x2="715" y2="95" stroke="#FBBC05" stroke-width="2" marker-end="url(#ah3)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>User types query (e.g., <code>from:boss@company.com has:attachment after:2024/01/01 budget</code>)</li>
+<li>Query parser tokenizes into structured operators: from_filter, has_attachment, date_range, full_text_terms</li>
+<li>Per-user inverted index consulted — each user has dedicated index partitions (not global web-scale index)</li>
+<li>Posting lists intersected: matching message IDs retrieved, filtered by date range predicate</li>
+<li>Full message metadata fetched from Bigtable for ranking (recency, sender importance, interaction history)</li>
+<li>Snippets generated by highlighting matching terms in message body (KWIC — keyword in context)</li>
+<li>Results returned ranked by relevance with pagination (cursor-based using message timestamp)</li>
+</ol>
+
+<h3>Example</h3>
+<p>Search <code>from:hr@company.com subject:benefits</code>. Parser extracts from: and subject: operators. Per-user index lookups: from:hr@company.com → {msg_42, msg_187, msg_301}, subject:benefits → {msg_42, msg_899}. Intersection: {msg_42}. Bigtable fetch for msg_42 metadata, snippet generated, returned in ~200ms.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>Per-User Index Architecture</h4>
+<p><strong>Design:</strong> Each user's mailbox has its own inverted index — not a shared global index</p>
+<p><strong>Reason:</strong> Privacy isolation (no cross-user data leaks), simpler ACL model</p>
+<p><strong>Storage:</strong> Index shards co-located with mailbox data in Bigtable for locality</p>
+<p><strong>Update:</strong> Near-real-time — new emails indexed within seconds of delivery</p>
+</div>
+<div class="card">
+<h4>Search Operators</h4>
+<p><strong>Supported:</strong> from:, to:, subject:, has:attachment, filename:, label:, after:, before:, is:starred, is:unread, larger:, in:anywhere</p>
+<p><strong>Boolean:</strong> AND (implicit), OR, NOT/- (negation)</p>
+<p><strong>Grouping:</strong> Parentheses for complex queries: <code>(from:a OR from:b) subject:meeting</code></p>
+</div>
+</div>
+</div>
+
+<!-- ============ COMBINED ARCHITECTURE ============ -->
+<h2>Combined Architecture</h2>
+<div class="card">
+<svg viewBox="0 0 1050 520" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#4285F4"/></marker></defs>
+<rect x="20" y="30" width="140" height="50" rx="8" fill="#34A853"/><text x="90" y="55" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Web Client</text><text x="90" y="70" text-anchor="middle" fill="#fff" font-size="10">(React SPA)</text>
+<rect x="20" y="100" width="140" height="50" rx="8" fill="#34A853"/><text x="90" y="125" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Mobile Apps</text><text x="90" y="140" text-anchor="middle" fill="#fff" font-size="10">(iOS / Android)</text>
+<rect x="20" y="170" width="140" height="50" rx="8" fill="#34A853"/><text x="90" y="195" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">IMAP/SMTP</text><text x="90" y="210" text-anchor="middle" fill="#fff" font-size="10">(3rd Party Clients)</text>
+<rect x="220" y="80" width="140" height="70" rx="8" fill="#FB8C00"/><text x="290" y="110" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Google Front End</text><text x="290" y="127" text-anchor="middle" fill="#fff" font-size="10">(GFE / L7 LB)</text>
+<rect x="420" y="20" width="130" height="50" rx="8" fill="#4285F4"/><text x="485" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Compose Service</text><text x="485" y="57" text-anchor="middle" fill="#fff" font-size="10">(Send Pipeline)</text>
+<rect x="420" y="90" width="130" height="50" rx="8" fill="#4285F4"/><text x="485" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Delivery Service</text><text x="485" y="127" text-anchor="middle" fill="#fff" font-size="10">(Receive Pipeline)</text>
+<rect x="420" y="160" width="130" height="50" rx="8" fill="#4285F4"/><text x="485" y="182" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Service</text><text x="485" y="197" text-anchor="middle" fill="#fff" font-size="10">(Per-User Index)</text>
+<rect x="610" y="20" width="130" height="50" rx="8" fill="#9C27B0"/><text x="675" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Spam / Phishing</text><text x="675" y="57" text-anchor="middle" fill="#fff" font-size="10">(TensorFlow)</text>
+<rect x="610" y="90" width="130" height="50" rx="8" fill="#9C27B0"/><text x="675" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Tab Categorizer</text><text x="675" y="127" text-anchor="middle" fill="#fff" font-size="10">(ML Classifier)</text>
+<rect x="800" y="20" width="130" height="50" rx="8" fill="#E53935"/><text x="865" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">SMTP Relay</text><text x="865" y="57" text-anchor="middle" fill="#fff" font-size="10">(Outbound)</text>
+<rect x="800" y="90" width="130" height="50" rx="8" fill="#E53935"/><text x="865" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">MX Gateway</text><text x="865" y="127" text-anchor="middle" fill="#fff" font-size="10">(Inbound)</text>
+<rect x="420" y="290" width="130" height="60" rx="8" fill="#795548"/><text x="485" y="315" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Bigtable</text><text x="485" y="332" text-anchor="middle" fill="#fff" font-size="10">(Mailbox + Index)</text>
+<rect x="610" y="290" width="130" height="60" rx="8" fill="#795548"/><text x="675" y="315" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Google Cloud</text><text x="675" y="332" text-anchor="middle" fill="#fff" font-size="10">Storage (Blobs)</text>
+<rect x="800" y="290" width="130" height="60" rx="8" fill="#00897B"/><text x="865" y="315" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Pub/Sub</text><text x="865" y="332" text-anchor="middle" fill="#fff" font-size="10">(Async Queues)</text>
+<rect x="220" y="400" width="140" height="50" rx="8" fill="#4285F4"/><text x="290" y="425" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Push Notifier</text><text x="290" y="440" text-anchor="middle" fill="#fff" font-size="10">(FCM / APNs)</text>
+<rect x="420" y="400" width="130" height="50" rx="8" fill="#00897B"/><text x="485" y="425" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Memcached</text><text x="485" y="440" text-anchor="middle" fill="#fff" font-size="10">(Session/Labels)</text>
+<line x1="160" y1="55" x2="215" y2="100" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="160" y1="125" x2="215" y2="115" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="160" y1="195" x2="215" y2="140" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="360" y1="100" x2="415" y2="45" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="360" y1="115" x2="415" y2="115" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="360" y1="130" x2="415" y2="185" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="550" y1="45" x2="605" y2="45" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="550" y1="115" x2="605" y2="115" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="740" y1="45" x2="795" y2="45" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="740" y1="115" x2="795" y2="115" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="485" y1="210" x2="485" y2="285" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="520" y1="140" x2="610" y2="290" stroke="#4285F4" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="865" y1="140" x2="865" y2="285" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="485" y1="350" x2="485" y2="395" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="420" y1="350" x2="350" y2="400" stroke="#4285F4" stroke-width="1.5" marker-end="url(#ah4)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Architecture Notes</h3>
+<ul>
+<li><strong>Google Front End (GFE):</strong> L7 load balancer handling TLS termination, DDoS mitigation, rate limiting — all Gmail traffic enters here</li>
+<li><strong>Bigtable:</strong> Primary storage for mailbox data — row key: <code>user_id#timestamp#msg_id</code>; column families for headers, body, labels, flags</li>
+<li><strong>Per-User Index:</strong> Co-located with mailbox in Bigtable — inverted index mapping terms → message IDs within a single user's data</li>
+<li><strong>Pub/Sub:</strong> Decouples send/receive pipelines — delivery retries, webhook notifications, analytics all consume from shared topics</li>
+<li><strong>Colossus (GFS v2):</strong> Underlying distributed filesystem for Bigtable and GCS — handles replication and erasure coding</li>
+</ul>
+</div>
+
+<!-- ============ DATABASE SCHEMA ============ -->
+<h2>Database Schema</h2>
+<div class="grid">
+<div class="card">
+<h3>Bigtable — Mailbox Table</h3>
+<pre><code>Row Key: {user_id}#{reverse_timestamp}#{message_id}
+Column Families:
+  headers:
+    - from         (string)
+    - to           (string[])
+    - cc           (string[])
+    - subject      (string)
+    - date         (timestamp)
+    - message_id   (string, RFC 5322 Message-ID)
+    - in_reply_to  (string)
+    - references   (string[])
+  body:
+    - text_plain   (bytes, compressed)
+    - text_html    (bytes, compressed)
+    - snippet      (string, first 200 chars)
+  meta:
+    - thread_id    (string)  <span class="tag tag-idx">INDEX</span>
+    - labels       (string[], e.g., ["INBOX","UNREAD","IMPORTANT"])
+    - category     (enum: primary|social|promotions|updates|forums)
+    - is_read      (bool)
+    - is_starred   (bool)
+    - spam_score   (float)
+  attachments:
+    - att_0_name   (string)
+    - att_0_mime   (string)
+    - att_0_size   (int64)
+    - att_0_blob   (string → GCS reference)</code></pre>
+<p><span class="tag tag-shard">SHARD</span> Sharded by user_id — each user's data co-located on same Bigtable tablet</p>
+<p><span class="tag tag-pk">ROW KEY</span> Reverse timestamp ensures newest messages sort first in scan</p>
+</div>
+
+<div class="card">
+<h3>Bigtable — Per-User Search Index</h3>
+<pre><code>Row Key: {user_id}#idx#{term}
+Column Family:
+  postings:
+    - msg_ids     (sorted list of message_ids)
+    - positions   (term positions for snippet generation)
+    - doc_freq    (count of messages containing term)
+
+Terms indexed:
+  - Body tokens (stemmed, lowercased)
+  - Header values (from:, to:, subject:)
+  - Attachment filenames
+  - Label names
+  - Date ranges (bucketed by month)</code></pre>
+<p><span class="tag tag-idx">INDEX</span> One inverted index per user — privacy isolated, no cross-user leakage</p>
+</div>
+
+<div class="card">
+<h3>Labels & Filters (Spanner)</h3>
+<pre><code>CREATE TABLE user_labels (
+  user_id     STRING(36),   <span class="tag tag-pk">PK</span>
+  label_id    STRING(36),   <span class="tag tag-pk">PK</span>
+  name        STRING(256),
+  color       STRING(7),
+  type        STRING(20),   -- system | user
+  visibility  STRING(20),   -- show | hide
+  created_at  TIMESTAMP
+) PRIMARY KEY (user_id, label_id);
+
+CREATE TABLE user_filters (
+  user_id     STRING(36),   <span class="tag tag-pk">PK</span>
+  filter_id   STRING(36),   <span class="tag tag-pk">PK</span>
+  criteria    JSON,         -- {from, to, subject, has_words, size_gt}
+  actions     JSON,         -- {add_label, archive, delete, mark_read, forward}
+  created_at  TIMESTAMP
+) PRIMARY KEY (user_id, filter_id);</code></pre>
+</div>
+</div>
+
+<!-- ============ CACHE & CDN ============ -->
+<h2>Cache & CDN Deep Dive</h2>
+<div class="card">
+<div class="grid">
+<div class="card">
+<h4>Session & Label Cache</h4>
+<p><strong>System:</strong> Memcached (Google internal Memcache service)</p>
+<p><strong>Cached:</strong> User session, label list, unread counts, draft state, contact autocomplete</p>
+<p><strong>Strategy:</strong> Write-through for label changes; invalidate on new email delivery</p>
+<p><strong>TTL:</strong> 15 minutes for unread counts; session cache: tied to auth token expiry</p>
+</div>
+<div class="card">
+<h4>Attachment CDN</h4>
+<p><strong>System:</strong> Google's global edge network (same infra as YouTube/Drive)</p>
+<p><strong>Caching:</strong> Attachment thumbnails and previews cached at edge; full downloads proxied through GCS</p>
+<p><strong>Policy:</strong> Private cache-control (no public CDN caching for email content — privacy)</p>
+<p><strong>Auth:</strong> Signed URLs with 15-minute expiry for attachment download links</p>
+</div>
+<div class="card">
+<h4>Inbox Prefetch</h4>
+<p><strong>Strategy:</strong> First page of inbox (25 conversations) prefetched and cached on client</p>
+<p><strong>Service Worker:</strong> Web client uses service worker for offline inbox access</p>
+<p><strong>Delta Sync:</strong> Client sends last sync token → server returns only new/changed messages since</p>
+<p><strong>Compression:</strong> Protocol Buffers over gRPC — 60-80% smaller than JSON equivalent</p>
+</div>
+<div class="card">
+<h4>DNS & Routing Cache</h4>
+<p><strong>MX Cache:</strong> SMTP relay caches MX record lookups (TTL from DNS, min 5 minutes)</p>
+<p><strong>TLS Cache:</strong> SMTP TLS session tickets cached to avoid full handshake on repeated connections</p>
+<p><strong>Reputation Cache:</strong> Sender reputation scores cached per-domain (hourly refresh from scoring pipeline)</p>
+</div>
+</div>
+</div>
+
+<!-- ============ SCALING ============ -->
+<h2>Scaling & Load Balancing</h2>
+<div class="card">
+<ul>
+<li><strong>Google Front End (GFE):</strong> Anycast-based global load balancing — routes to nearest healthy datacenter; Maglev (kernel-bypass L4 LB) handles millions of connections per server</li>
+<li><strong>Bigtable Auto-Scaling:</strong> Tablets auto-split when size exceeds threshold; hotspot detection moves heavy-usage tablets to dedicated nodes</li>
+<li><strong>SMTP Relay Scaling:</strong> Horizontally scaled relay pool; per-destination-domain queues with configurable concurrency (avoid overwhelming small mail servers)</li>
+<li><strong>Multi-Region:</strong> User data replicated across 3+ zones within a region (synchronous); cross-region async for disaster recovery (RPO < 1 minute)</li>
+<li><strong>Borg (Kubernetes predecessor):</strong> All Gmail services run on Borg — auto-restart, bin-packing, priority-based scheduling</li>
+<li><strong>Batch Processing:</strong> Spam model retraining, storage reclamation, and analytics run on Flume/MapReduce pipelines during off-peak</li>
+</ul>
+</div>
+
+<!-- ============ TRADEOFFS ============ -->
+<h2>Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="pro">
+<h4>✅ Per-User Index</h4>
+<ul>
+<li>Perfect privacy isolation — no cross-user data leakage possible</li>
+<li>Simpler ACL model (no per-document permission checks)</li>
+<li>Index size per user is small → fast queries</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ Per-User Index</h4>
+<ul>
+<li>Cannot do cross-user analytics or global search</li>
+<li>Index maintenance overhead — billions of small indexes vs. one large one</li>
+<li>Cold start for new users requires index build from scratch</li>
+</ul>
+</div>
+<div class="pro">
+<h4>✅ Bigtable (NoSQL)</h4>
+<ul>
+<li>Handles massive write throughput (billions of emails/day)</li>
+<li>Flexible schema — easy to add new column families</li>
+<li>Horizontal scaling without application changes</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ Bigtable (NoSQL)</h4>
+<ul>
+<li>No SQL joins — application-level joins required for cross-entity queries</li>
+<li>Limited secondary indexing (must maintain manually)</li>
+<li>Eventual consistency for cross-region reads</li>
+</ul>
+</div>
+</div>
+
+<!-- ============ ALTERNATIVES ============ -->
+<h2>Alternative Approaches</h2>
+<div class="grid">
+<div class="card">
+<h4>Traditional RDBMS (PostgreSQL)</h4>
+<p>Could use sharded PostgreSQL (like Citus) for mailbox storage. Provides ACID transactions, rich querying, and built-in full-text search (tsvector). However, scaling to billions of users with billions of rows each is impractical without extreme sharding complexity.</p>
+</div>
+<div class="card">
+<h4>Elasticsearch for Search</h4>
+<p>Dedicated Elasticsearch cluster per user partition instead of Bigtable-embedded index. Better full-text capabilities (BM25 ranking, fuzzy matching) but adds operational complexity, higher memory cost, and cross-cluster coordination overhead.</p>
+</div>
+<div class="card">
+<h4>Event Sourcing Architecture</h4>
+<p>Store all mailbox mutations as immutable events (EmailReceived, LabelAdded, MessageDeleted). Rebuild current state from event log. Excellent for audit trails and undo, but read performance requires maintained projections (materialized views), adding complexity.</p>
+</div>
+</div>
+
+<!-- ============ ADDITIONAL INFO ============ -->
+<h2>Additional Information</h2>
+<div class="card">
+<ul>
+<li><strong>Confidential Mode:</strong> Time-expiring emails with revocable access — stored server-side, recipient gets a link (not full email body); SMS passcode for non-Gmail recipients</li>
+<li><strong>Google Workspace Vault:</strong> Legal hold and eDiscovery — all emails retained in immutable audit store regardless of user deletion</li>
+<li><strong>AMP for Email:</strong> Interactive emails (carousels, forms, real-time content) rendered via AMP runtime sandboxed within Gmail client</li>
+<li><strong>Smart Compose / Smart Reply:</strong> On-device LSTM/Transformer models suggest completions; server-side models for Smart Reply (3 suggestions). Federated learning for personalization without sending raw email content to training pipeline.</li>
+<li><strong>Storage Quota:</strong> 15GB shared across Gmail, Drive, Photos (free tier). Bigtable stores compressed — actual storage efficiency ~3-5x over raw size via Snappy compression + deduplication of repeated MIME parts.</li>
+<li><strong>Migration:</strong> Gmail Import supports IMAP pull from external providers; Google Takeout exports all email as MBOX format for data portability (GDPR compliance).</li>
+</ul>
+</div>
+
+</body>
+</html>

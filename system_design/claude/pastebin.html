@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: Pastebin</title>
+<style>body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:20px;background:#f5f5f5;color:#333}.container{max-width:1200px;margin:0 auto;background:#fff;padding:40px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.1)}h1{color:#1a73e8;border-bottom:3px solid #1a73e8;padding-bottom:10px}h2{color:#2c3e50;margin-top:40px;border-left:4px solid #1a73e8;padding-left:12px}h3{color:#34495e}h4{color:#555}.diagram{background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:20px;margin:20px 0;overflow-x:auto}.example{background:#e8f5e9;border-left:4px solid #4caf50;padding:15px;margin:15px 0;border-radius:4px}.deep-dive{background:#e3f2fd;border-left:4px solid #2196f3;padding:15px;margin:15px 0;border-radius:4px}.tradeoff{background:#fff3e0;border-left:4px solid #ff9800;padding:15px;margin:15px 0;border-radius:4px}.alternative{background:#fce4ec;border-left:4px solid #e91e63;padding:15px;margin:15px 0;border-radius:4px}table{border-collapse:collapse;width:100%;margin:15px 0}th,td{border:1px solid #ddd;padding:10px 14px;text-align:left}th{background:#1a73e8;color:#fff}tr:nth-child(even){background:#f9f9f9}code{background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:.9em}.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.85em;margin:2px}.tag-pk{background:#ffeb3b;color:#333}.tag-fk{background:#ce93d8;color:#333}.tag-idx{background:#80cbc4;color:#333}ul,ol{line-height:1.8}svg text{font-family:'Segoe UI',Arial,sans-serif}</style>
+</head>
+<body>
+<div class="container">
+<h1>System Design: Pastebin</h1>
+
+<h2>Functional Requirements</h2>
+<ol>
+  <li><strong>Create paste</strong> – Users can upload text content and get a unique URL to share it.</li>
+  <li><strong>Read paste</strong> – Anyone with the URL can view the paste content.</li>
+  <li><strong>Expiration</strong> – Pastes can have configurable expiration (10 min, 1 hour, 1 day, 1 week, 1 month, never).</li>
+  <li><strong>Syntax highlighting</strong> – Pastes can specify a language for syntax highlighting.</li>
+  <li><strong>User accounts (optional)</strong> – Registered users can manage their pastes (edit, delete, view history).</li>
+  <li><strong>Private pastes</strong> – Pastes can be public (listed) or unlisted (only accessible via URL).</li>
+  <li><strong>Custom URL</strong> – Users can optionally specify a custom URL suffix.</li>
+</ol>
+
+<h2>Non-Functional Requirements</h2>
+<ol>
+  <li><strong>High availability</strong> – 99.9% uptime.</li>
+  <li><strong>Low latency</strong> – Paste read in &lt;100ms, creation in &lt;500ms.</li>
+  <li><strong>Scalability</strong> – Handle 5M pastes/day, 25M reads/day (5:1 read-to-write).</li>
+  <li><strong>Storage</strong> – Pastes up to 10MB in size; average ~10KB.</li>
+  <li><strong>Durability</strong> – Pastes must not be lost before expiration.</li>
+</ol>
+
+<h2>Flow 1: Creating a Paste</h2>
+<div class="diagram">
+<svg viewBox="0 0 950 320" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
+  <rect x="10" y="120" width="80" height="50" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
+  <text x="50" y="150" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">User</text>
+  <line x1="90" y1="145" x2="160" y2="145" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
+  <text x="125" y="135" text-anchor="middle" fill="#555" font-size="9">POST /paste</text>
+  <rect x="160" y="120" width="80" height="50" rx="8" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
+  <text x="200" y="143" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">API</text>
+  <text x="200" y="155" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">GW + LB</text>
+  <line x1="240" y1="145" x2="310" y2="145" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
+  <rect x="310" y="115" width="110" height="60" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
+  <text x="365" y="143" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Paste</text>
+  <text x="365" y="158" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Service</text>
+  <!-- To Object Storage -->
+  <line x1="420" y1="135" x2="510" y2="85" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
+  <text x="480" y="95" text-anchor="middle" fill="#555" font-size="8">Store content</text>
+  <rect x="510" y="60" width="100" height="45" rx="8" fill="#795548" stroke="#4e342e" stroke-width="2"/>
+  <text x="560" y="80" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Object Store</text>
+  <text x="560" y="93" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">(S3)</text>
+  <!-- To Metadata DB -->
+  <line x1="420" y1="155" x2="510" y2="195" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
+  <text x="480" y="190" text-anchor="middle" fill="#555" font-size="8">Store metadata</text>
+  <ellipse cx="565" cy="195" rx="45" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
+  <rect x="520" y="195" width="90" height="25" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
+  <ellipse cx="565" cy="220" rx="45" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
+  <line x1="520" y1="195" x2="520" y2="220" stroke="#d84315" stroke-width="1.5"/>
+  <line x1="610" y1="195" x2="610" y2="220" stroke="#d84315" stroke-width="1.5"/>
+  <text x="565" y="212" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Metadata DB</text>
+  <!-- KGS -->
+  <line x1="365" y1="115" x2="365" y2="50" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
+  <rect x="315" y="5" width="100" height="45" rx="8" fill="#673ab7" stroke="#4527a0" stroke-width="2"/>
+  <text x="365" y="32" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">KGS</text>
+</svg>
+</div>
+
+<div class="example">
+<h4>Example: Creating a code paste</h4>
+<p>Alice pastes a Python code snippet (500 bytes), selects language=Python, expiration=1 week. Client sends <strong>POST /api/v1/paste</strong> with <code>{content: "def hello()...", language: "python", expires_in: "7d"}</code>. The API Gateway routes to <strong>Paste Service</strong>. It obtains a unique 8-char key "xK9mL2pQ" from <strong>KGS</strong>, stores the content in <strong>S3</strong> at key <code>pastes/xK9mL2pQ</code>, and writes metadata to <strong>Metadata DB</strong> (MySQL): <code>{paste_id: "xK9mL2pQ", user_id: alice, language: "python", size: 500, created_at: now, expires_at: now+7d, visibility: "unlisted"}</code>. Returns <code>{url: "https://pastebin.com/xK9mL2pQ"}</code>.</p>
+</div>
+
+<h2>Flow 2: Reading a Paste</h2>
+<div class="diagram">
+<svg viewBox="0 0 900 250" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
+  <rect x="10" y="90" width="80" height="50" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
+  <text x="50" y="120" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">User</text>
+  <line x1="90" y1="115" x2="160" y2="115" stroke="#333" stroke-width="2" marker-end="url(#a2)"/>
+  <text x="125" y="105" text-anchor="middle" fill="#555" font-size="9">GET /xK9mL2pQ</text>
+  <rect x="160" y="90" width="80" height="50" rx="8" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
+  <text x="200" y="113" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">LB</text>
+  <line x1="240" y1="115" x2="310" y2="115" stroke="#333" stroke-width="2" marker-end="url(#a2)"/>
+  <rect x="310" y="90" width="100" height="50" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
+  <text x="360" y="120" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Paste Svc</text>
+  <!-- Cache check -->
+  <line x1="410" y1="105" x2="490" y2="55" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
+  <text x="465" y="68" text-anchor="middle" fill="#555" font-size="8">1. Cache?</text>
+  <ellipse cx="540" cy="45" rx="40" ry="10" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
+  <rect x="500" y="45" width="80" height="20" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
+  <ellipse cx="540" cy="65" rx="40" ry="10" fill="#00796b" stroke="#00695c" stroke-width="1.5"/>
+  <line x1="500" y1="45" x2="500" y2="65" stroke="#00695c" stroke-width="1.5"/>
+  <line x1="580" y1="45" x2="580" y2="65" stroke="#00695c" stroke-width="1.5"/>
+  <text x="540" y="59" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Redis</text>
+  <!-- S3 fallback -->
+  <line x1="410" y1="125" x2="490" y2="165" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
+  <text x="465" y="158" text-anchor="middle" fill="#555" font-size="8">2. S3</text>
+  <rect x="490" y="145" width="90" height="40" rx="6" fill="#795548" stroke="#4e342e" stroke-width="1.5"/>
+  <text x="535" y="170" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">S3</text>
+  <!-- Metadata DB -->
+  <line x1="360" y1="140" x2="360" y2="200" stroke="#333" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a2)"/>
+  <text x="360" y="190" text-anchor="start" fill="#555" font-size="8"> Check expiry</text>
+  <ellipse cx="360" cy="210" rx="40" ry="8" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
+  <rect x="320" y="210" width="80" height="16" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
+  <ellipse cx="360" cy="226" rx="40" ry="8" fill="#e64a19" stroke="#d84315" stroke-width="1"/>
+  <line x1="320" y1="210" x2="320" y2="226" stroke="#d84315" stroke-width="1"/>
+  <line x1="400" y1="210" x2="400" y2="226" stroke="#d84315" stroke-width="1"/>
+  <text x="360" y="222" text-anchor="middle" fill="#fff" font-size="7" font-weight="bold">Meta DB</text>
+</svg>
+</div>
+
+<div class="example">
+<h4>Example: Reading a paste (cache hit)</h4>
+<p>Bob visits <code>pastebin.com/xK9mL2pQ</code>. Client sends <strong>GET /api/v1/paste/xK9mL2pQ</strong>. Paste Service checks <strong>Redis Cache</strong> — hit! Returns the paste content with metadata (language, created_at). The HTML page renders with Python syntax highlighting.</p>
+</div>
+<div class="example">
+<h4>Example: Expired paste</h4>
+<p>Carol visits a paste that expired 2 days ago. Paste Service checks metadata — <code>expires_at &lt; now()</code>. Returns <strong>HTTP 404</strong> with "This paste has expired."</p>
+</div>
+
+<h2>Overall Combined Flow</h2>
+<div class="diagram">
+<svg viewBox="0 0 950 300" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
+  <rect x="10" y="120" width="70" height="45" rx="6" fill="#4caf50" stroke="#388e3c" stroke-width="1.5"/>
+  <text x="45" y="147" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Client</text>
+  <line x1="80" y1="142" x2="130" y2="142" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
+  <rect x="130" y="120" width="65" height="45" rx="6" fill="#ff9800" stroke="#f57c00" stroke-width="1.5"/>
+  <text x="162" y="147" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">LB</text>
+  <line x1="195" y1="142" x2="240" y2="142" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
+  <rect x="240" y="115" width="95" height="55" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
+  <text x="287" y="147" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Paste Svc</text>
+  <line x1="335" y1="132" x2="400" y2="80" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
+  <ellipse cx="440" cy="70" rx="35" ry="8" fill="#009688" stroke="#00695c" stroke-width="1"/>
+  <rect x="405" y="70" width="70" height="16" fill="#009688" stroke="#00695c" stroke-width="1"/>
+  <ellipse cx="440" cy="86" rx="35" ry="8" fill="#00796b" stroke="#00695c" stroke-width="1"/>
+  <line x1="405" y1="70" x2="405" y2="86" stroke="#00695c" stroke-width="1"/>
+  <line x1="475" y1="70" x2="475" y2="86" stroke="#00695c" stroke-width="1"/>
+  <text x="440" y="82" text-anchor="middle" fill="#fff" font-size="7" font-weight="bold">Redis</text>
+  <line x1="335" y1="152" x2="400" y2="195" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
+  <rect x="400" y="180" width="80" height="35" rx="6" fill="#795548" stroke="#4e342e" stroke-width="1.5"/>
+  <text x="440" y="202" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">S3</text>
+  <line x1="335" y1="142" x2="400" y2="142" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
+  <ellipse cx="440" cy="135" rx="40" ry="8" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
+  <rect x="400" y="135" width="80" height="16" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
+  <ellipse cx="440" cy="151" rx="40" ry="8" fill="#e64a19" stroke="#d84315" stroke-width="1"/>
+  <line x1="400" y1="135" x2="400" y2="151" stroke="#d84315" stroke-width="1"/>
+  <line x1="480" y1="135" x2="480" y2="151" stroke="#d84315" stroke-width="1"/>
+  <text x="440" y="147" text-anchor="middle" fill="#fff" font-size="7" font-weight="bold">Meta DB</text>
+  <line x1="287" y1="115" x2="287" y2="60" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
+  <rect x="250" y="20" width="75" height="40" rx="6" fill="#673ab7" stroke="#4527a0" stroke-width="1.5"/>
+  <text x="287" y="44" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">KGS</text>
+  <!-- Cleanup -->
+  <rect x="550" y="130" width="90" height="40" rx="6" fill="#e91e63" stroke="#ad1457" stroke-width="1.5"/>
+  <text x="595" y="155" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Cleanup Job</text>
+  <line x1="550" y1="150" x2="480" y2="145" stroke="#333" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a3)"/>
+  <line x1="550" y1="155" x2="480" y2="195" stroke="#333" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a3)"/>
+</svg>
+</div>
+
+<div class="example">
+<h4>Combined Example</h4>
+<p><strong>Write:</strong> User POSTs content → LB → Paste Svc → KGS gets unique key → content stored in S3 → metadata in MySQL → cached in Redis → return URL.<br/>
+<strong>Read:</strong> User GETs /key → LB → Paste Svc → Redis hit → return content. On cache miss: fetch from S3, check metadata for expiry → populate cache → return.<br/>
+<strong>Cleanup:</strong> Background Cleanup Job scans Metadata DB for expired pastes, deletes from S3 and Metadata DB.</p>
+</div>
+
+<h2>Database Schema</h2>
+
+<h3>SQL Table (MySQL)</h3>
+<h4>1. paste_metadata</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>paste_id</td><td>VARCHAR(8)</td><td><span class="tag tag-pk">PK</span></td><td>Unique paste key</td></tr>
+  <tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → users</span> <span class="tag tag-idx">B-tree Index</span></td><td>Creator (nullable)</td></tr>
+  <tr><td>s3_key</td><td>TEXT</td><td></td><td>S3 object key for content</td></tr>
+  <tr><td>language</td><td>VARCHAR(30)</td><td></td><td>Syntax highlighting language</td></tr>
+  <tr><td>size_bytes</td><td>INT</td><td></td><td>Content size in bytes</td></tr>
+  <tr><td>visibility</td><td>ENUM('public','unlisted')</td><td></td><td>Public or unlisted</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Creation time</td></tr>
+  <tr><td>expires_at</td><td>TIMESTAMP</td><td><span class="tag tag-idx">B-tree Index</span></td><td>Expiration time (nullable for never)</td></tr>
+  <tr><td>view_count</td><td>INT DEFAULT 0</td><td></td><td>Denormalized view count</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Metadata is small, relational (users → pastes), and requires indexed queries (find expired pastes, list user's pastes sorted by date). MySQL handles this well with ACID guarantees.</p>
+<p><strong>Index:</strong> B-tree index on <code>expires_at</code> for the cleanup job to efficiently find expired pastes (<code>WHERE expires_at < NOW() AND expires_at IS NOT NULL</code>). B-tree is chosen because it's a range query. B-tree index on <code>user_id</code> for "my pastes" listing.</p>
+<p><strong>Content stored in S3, not DB:</strong> Paste content can be up to 10MB. Storing large blobs in MySQL is inefficient and would bloat the DB. S3 is designed for blob storage with 11 9's of durability.</p>
+<p><strong>Sharding:</strong> Hash-based sharding on <code>paste_id</code> across MySQL instances. Since paste_ids are random strings, they distribute evenly.</p>
+
+<h2>Cache Deep Dive</h2>
+<div class="deep-dive">
+<h4>Redis Cache</h4>
+<p><strong>What's cached:</strong> Paste content + metadata for recently accessed pastes. Key: <code>paste:{paste_id}</code>. Value: JSON with content and metadata.</p>
+<p><strong>Caching strategy:</strong> <strong>Read-through with write-through.</strong> On create: write to S3 + DB + Redis. On read: check Redis first, if miss → fetch from S3 + DB → populate Redis.</p>
+<p><strong>Eviction:</strong> LRU. ~80% of reads go to ~20% of pastes (popular code snippets shared on forums).</p>
+<p><strong>Expiration:</strong> TTL = min(paste_expiry, 24 hours). Ensures expired pastes don't linger in cache.</p>
+</div>
+
+<div class="deep-dive">
+<h4>CDN</h4>
+<p><strong>CDN is appropriate</strong> for public/popular pastes. A CDN edge can cache paste content, reducing origin load. However, since pastes can be edited/deleted, CDN TTL should be short (5 minutes) with cache invalidation on update/delete.</p>
+</div>
+
+<h2>Scaling Considerations</h2>
+<ul>
+  <li><strong>Load Balancer:</strong> L7 LB with round-robin for stateless Paste Service instances.</li>
+  <li><strong>S3:</strong> Infinitely scalable object storage. No action needed.</li>
+  <li><strong>MySQL:</strong> Read replicas for read scaling. Sharding for write scaling.</li>
+  <li><strong>Redis:</strong> Cluster mode for cache scaling.</li>
+</ul>
+
+<h2>Tradeoffs and Deep Dives</h2>
+<div class="tradeoff">
+<h4>S3 vs. Database for Content Storage</h4>
+<p>S3 is cheaper ($0.023/GB/month), more durable (11 9's), and designed for blob storage. The tradeoff is an extra network hop to fetch content. For small pastes (&lt;1KB), storing inline in the DB would be faster. Hybrid approach: inline small pastes in the metadata DB, use S3 for large ones. We chose S3-only for simplicity.</p>
+</div>
+
+<h2>Alternative Approaches</h2>
+<div class="alternative">
+<h4>Alternative: Store everything in one DB</h4>
+<p>Use a single PostgreSQL instance with content stored as TEXT/BYTEA. Simpler architecture. Not chosen because large pastes would bloat the DB, and blob storage is S3's sweet spot.</p>
+</div>
+<div class="alternative">
+<h4>Alternative: Content-addressable storage (deduplication)</h4>
+<p>Hash paste content and use the hash as the S3 key. Identical pastes share storage. Saves space but adds complexity (reference counting for deletion). Not worth it at Pastebin's relatively small scale.</p>
+</div>
+
+<h2>Additional Information</h2>
+<h3>Abuse Prevention</h3>
+<p>Rate limit paste creation: 10 pastes/minute per IP, 50/hour per account. Content scanning for malware/phishing links. CAPTCHA for anonymous paste creation.</p>
+<h3>Cleanup Job</h3>
+<p>Runs every 5 minutes. Queries <code>SELECT paste_id, s3_key FROM paste_metadata WHERE expires_at < NOW() LIMIT 1000</code>. Deletes S3 objects and metadata rows in batches. Uses the B-tree index on <code>expires_at</code> for efficient scanning.</p>
+</div>
+</body>
+</html>

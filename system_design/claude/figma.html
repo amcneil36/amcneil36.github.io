@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Figma - System Design</title>
+<style>
+:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--heading:#A259FF;--accent:#1ABCFE;--accent2:#0ACF83;--accent3:#FF7262;--muted:#888}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
+h1{color:var(--heading);font-size:2.2rem;border-bottom:3px solid var(--heading);padding-bottom:.5rem;margin-bottom:1.5rem}
+h2{color:var(--accent);margin:2rem 0 1rem;font-size:1.5rem}
+h3{color:var(--accent2);margin:1.5rem 0 .75rem;font-size:1.2rem}
+h4{color:var(--accent3);margin:1rem 0 .5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
+ul,ol{margin:.75rem 0 .75rem 1.5rem}
+li{margin:.4rem 0}
+code{background:#2d2d2d;padding:.2rem .5rem;border-radius:4px;font-size:.9rem;color:#f8f8f2}
+pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:1rem 0}
+pre code{padding:0;background:none}
+.tag{display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600;margin:.2rem}
+.tag-pk{background:#E53935;color:#fff}
+.tag-fk{background:#1E88E5;color:#fff}
+.tag-idx{background:#43A047;color:#fff}
+.tag-shard{background:#FB8C00;color:#fff}
+.tag-cache{background:#8E24AA;color:#fff}
+.tag-ttl{background:#00897B;color:#fff}
+svg text{font-family:'Segoe UI',system-ui,sans-serif}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.pro{background:#1b3a1b;border:1px solid #2d5a2d;border-radius:8px;padding:1rem}
+.con{background:#3a1b1b;border:1px solid #5a2d2d;border-radius:8px;padding:1rem}
+</style>
+</head>
+<body>
+
+<h1>🎨 Figma - System Design</h1>
+
+<!-- ============ FUNCTIONAL REQUIREMENTS ============ -->
+<div class="card">
+<h2>Functional Requirements</h2>
+<ol>
+<li><strong>Real-Time Collaborative Editing:</strong> Multiple users simultaneously edit the same design file with live cursors, selections, and instant sync (&lt;100ms update propagation)</li>
+<li><strong>Canvas Rendering:</strong> Render complex vector graphics (paths, gradients, blurs, masks) at 60fps on infinite canvas with GPU acceleration via WebGL/WebGPU</li>
+<li><strong>Version History & Branching:</strong> Auto-save versions, named checkpoints, branch/merge workflows for design files, comment threads on specific objects</li>
+</ol>
+</div>
+
+<!-- ============ NON-FUNCTIONAL REQUIREMENTS ============ -->
+<div class="card">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Latency:</strong> Operation propagation &lt;100ms between collaborators (same region), &lt;250ms cross-region</li>
+<li><strong>Scale:</strong> 4M+ paying users, files with 100K+ objects, 100+ concurrent editors per file</li>
+<li><strong>Performance:</strong> 60fps rendering for complex designs; canvas zoom/pan at 60fps with 500K+ objects</li>
+<li><strong>Reliability:</strong> Zero data loss — every edit persisted; conflict-free multi-user editing</li>
+<li><strong>Offline:</strong> Graceful offline support — queue operations locally, reconcile on reconnect</li>
+</ul>
+</div>
+
+<!-- ============ FLOW 1: REAL-TIME COLLABORATION ============ -->
+<h2>Flow 1: Real-Time Collaborative Editing (CRDT-Based)</h2>
+<div class="card">
+<svg viewBox="0 0 1000 370" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#1ABCFE"/></marker></defs>
+<rect x="20" y="40" width="130" height="50" rx="8" fill="#34A853"/><text x="85" y="62" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Editor A</text><text x="85" y="77" text-anchor="middle" fill="#fff" font-size="10">(Browser/WASM)</text>
+<rect x="20" y="130" width="130" height="50" rx="8" fill="#34A853"/><text x="85" y="152" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Editor B</text><text x="85" y="167" text-anchor="middle" fill="#fff" font-size="10">(Browser/WASM)</text>
+<rect x="210" y="80" width="140" height="55" rx="8" fill="#607D8B"/><text x="280" y="102" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">WebSocket</text><text x="280" y="117" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Multiplexer</text>
+<rect x="410" y="80" width="140" height="55" rx="8" fill="#A259FF"/><text x="480" y="102" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Collaboration</text><text x="480" y="117" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Server (CRDT)</text>
+<rect x="610" y="50" width="130" height="50" rx="8" fill="#795548"/><text x="675" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Document Store</text><text x="675" y="87" text-anchor="middle" fill="#fff" font-size="10">(S3 + Metadata)</text>
+<rect x="610" y="120" width="130" height="50" rx="8" fill="#00897B"/><text x="675" y="142" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Op Log</text><text x="675" y="157" text-anchor="middle" fill="#fff" font-size="10">(Append-Only)</text>
+<rect x="410" y="210" width="140" height="50" rx="8" fill="#4285F4"/><text x="480" y="232" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Presence Service</text><text x="480" y="247" text-anchor="middle" fill="#fff" font-size="10">(Cursors/Selection)</text>
+<rect x="610" y="210" width="130" height="50" rx="8" fill="#E53935"/><text x="675" y="232" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Snapshot Service</text><text x="675" y="247" text-anchor="middle" fill="#fff" font-size="10">(Periodic Save)</text>
+<line x1="150" y1="65" x2="205" y2="95" stroke="#1ABCFE" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="150" y1="155" x2="205" y2="120" stroke="#1ABCFE" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="350" y1="107" x2="405" y2="107" stroke="#1ABCFE" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="550" y1="95" x2="605" y2="75" stroke="#1ABCFE" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="550" y1="120" x2="605" y2="140" stroke="#1ABCFE" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="480" y1="135" x2="480" y2="205" stroke="#1ABCFE" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="550" y1="235" x2="605" y2="235" stroke="#1ABCFE" stroke-width="2" marker-end="url(#ah)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Editor A opens file → WebSocket connection established to Collaboration Server (sticky to file shard)</li>
+<li>Server loads latest snapshot from S3 + replays ops from Op Log since snapshot → sends full state to client</li>
+<li>Client renders document using WebAssembly (Rust-compiled) + WebGL for GPU-accelerated 2D rendering</li>
+<li>Editor A moves a rectangle → local CRDT generates operation: <code>{op: "move", node_id: "abc", x: 150, y: 200, lamport: 42}</code></li>
+<li>Operation applied locally immediately (optimistic) and sent to server via WebSocket</li>
+<li>Collaboration Server receives op, validates, applies to server CRDT state, appends to Op Log</li>
+<li>Server broadcasts op to Editor B (and all other connected clients) via WebSocket multiplexer</li>
+<li>Editor B receives op, applies to local CRDT state — no conflicts due to CRDT convergence guarantees</li>
+<li>Presence Service tracks cursor positions, selections, and active user avatars — broadcast at 10Hz</li>
+<li>Snapshot Service periodically (every 30s or 50 ops) writes full document state to S3 as checkpoint</li>
+</ol>
+
+<h3>Example</h3>
+<p>Two designers work on a button component. Editor A changes the fill color to #A259FF while Editor B simultaneously changes the border radius to 8px. Both ops are independent (different properties on different or same node). CRDTs handle both as commutative operations — final state has both the color and border radius change regardless of operation order.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>CRDT (Conflict-Free Replicated Data Types)</h4>
+<p><strong>Type:</strong> Figma uses a custom CRDT optimized for tree-structured documents (not off-the-shelf Yjs/Automerge)</p>
+<p><strong>Operations:</strong> Set property, insert child, delete node, move node, reorder — all designed to be commutative and idempotent</p>
+<p><strong>Conflict Resolution:</strong> Last-Writer-Wins (LWW) for property conflicts using Lamport timestamps + client ID tiebreaker</p>
+<p><strong>Tree CRDT:</strong> Custom tree-move operation prevents cycles and orphans — challenging problem in CRDT literature (Martin Kleppmann's research)</p>
+<p><strong>Compression:</strong> Operations compressed via delta encoding — only changed properties transmitted</p>
+</div>
+<div class="card">
+<h4>WebSocket Multiplexer</h4>
+<p><strong>Protocol:</strong> WebSocket (wss://) with custom binary protocol (not JSON — too slow for 60fps updates)</p>
+<p><strong>Multiplexing:</strong> Single WS connection carries: ops, presence (cursors), comments, chat — tagged by channel type</p>
+<p><strong>Compression:</strong> Messages compressed with Brotli; binary serialization using FlatBuffers</p>
+<p><strong>Sticky Sessions:</strong> All editors of same file route to same collaboration server (consistent hashing by file_id)</p>
+<p><strong>Heartbeat:</strong> Ping/pong every 10s; reconnect with delta sync (replay missed ops from Op Log)</p>
+</div>
+<div class="card">
+<h4>Op Log (Append-Only)</h4>
+<p><strong>Storage:</strong> Ordered log of all operations per file — enables time-travel and version history</p>
+<p><strong>Format:</strong> Protobuf-encoded operations with Lamport timestamp, client_id, file_id</p>
+<p><strong>Compaction:</strong> Periodic compaction — merge consecutive ops on same node into single state op</p>
+<p><strong>Retention:</strong> Full op history retained for version history; compacted after 30 days for storage efficiency</p>
+</div>
+<div class="card">
+<h4>Presence (Cursors/Selection)</h4>
+<p><strong>Data:</strong> Cursor position (x, y), selection bounds, active tool, user avatar/name</p>
+<p><strong>Update Rate:</strong> Throttled to 10 updates/second per user (cursor smoothing on client via interpolation)</p>
+<p><strong>Protocol:</strong> UDP-like unreliable delivery (latest-wins) — stale cursor positions don't need guaranteed delivery</p>
+<p><strong>Fan-out:</strong> Presence updates broadcast to all connected editors of same file</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 2: CANVAS RENDERING ============ -->
+<h2>Flow 2: Canvas Rendering Pipeline</h2>
+<div class="card">
+<svg viewBox="0 0 1000 280" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#0ACF83"/></marker></defs>
+<rect x="20" y="60" width="130" height="50" rx="8" fill="#A259FF"/><text x="85" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Scene Graph</text><text x="85" y="97" text-anchor="middle" fill="#fff" font-size="10">(CRDT State)</text>
+<rect x="200" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="265" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Layout Engine</text><text x="265" y="97" text-anchor="middle" fill="#fff" font-size="10">(Constraint Solver)</text>
+<rect x="380" y="60" width="130" height="50" rx="8" fill="#E53935"/><text x="445" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Viewport Culling</text><text x="445" y="97" text-anchor="middle" fill="#fff" font-size="10">(Spatial Index)</text>
+<rect x="560" y="60" width="130" height="50" rx="8" fill="#FB8C00"/><text x="625" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Tessellation</text><text x="625" y="97" text-anchor="middle" fill="#fff" font-size="10">(Vectors→Triangles)</text>
+<rect x="740" y="60" width="130" height="50" rx="8" fill="#0ACF83"/><text x="805" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">WebGL Renderer</text><text x="805" y="97" text-anchor="middle" fill="#fff" font-size="10">(GPU Pipeline)</text>
+<line x1="150" y1="85" x2="195" y2="85" stroke="#0ACF83" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="330" y1="85" x2="375" y2="85" stroke="#0ACF83" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="510" y1="85" x2="555" y2="85" stroke="#0ACF83" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="690" y1="85" x2="735" y2="85" stroke="#0ACF83" stroke-width="2" marker-end="url(#ah2)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li><strong>Scene Graph:</strong> CRDT state forms a tree of design nodes — frames, rectangles, text, vectors, images, groups, components</li>
+<li><strong>Layout Engine:</strong> Auto Layout constraints resolved (Cassowary constraint solver) — parent→child flow, padding, spacing</li>
+<li><strong>Viewport Culling:</strong> R-tree spatial index determines which objects are visible in current viewport — skips offscreen objects entirely</li>
+<li><strong>Tessellation:</strong> Vector paths (Bézier curves) tessellated into triangle meshes for GPU rendering; cached per zoom level</li>
+<li><strong>WebGL Renderer:</strong> Custom fragment/vertex shaders handle fills, strokes, gradients, blurs, masks, blend modes at 60fps</li>
+<li><strong>Tile-Based Rendering:</strong> Canvas divided into tiles; only dirty tiles re-rendered on changes (incremental rendering)</li>
+</ol>
+
+<h3>Example</h3>
+<p>Designer zooms into a 50K-object Figma file. R-tree queries visible viewport → 200 objects visible. Layout engine resolves Auto Layout for 15 frames. Tessellator converts 200 vector objects to ~5K triangles. WebGL draws in single batch call with instanced rendering. Total frame time: ~8ms (120fps capable). Image fills use pre-loaded texture atlas.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>WebAssembly (WASM) Engine</h4>
+<p><strong>Language:</strong> Core rendering and CRDT engine written in Rust, compiled to WebAssembly</p>
+<p><strong>Performance:</strong> Near-native speed (~80-90% of native) — critical for real-time rendering pipeline</p>
+<p><strong>Memory:</strong> WASM linear memory for scene graph — avoids JavaScript GC pauses that would cause frame drops</p>
+<p><strong>Size:</strong> WASM binary ~4MB (compressed ~1.2MB with Brotli) — loaded once, cached via Service Worker</p>
+</div>
+<div class="card">
+<h4>WebGL / WebGPU Rendering</h4>
+<p><strong>Current:</strong> WebGL 2.0 — custom shaders for anti-aliased vector rendering (signed distance fields for text)</p>
+<p><strong>Future:</strong> WebGPU migration (compute shaders for blur/effects, better batching, lower driver overhead)</p>
+<p><strong>Batching:</strong> Draw calls batched by material (fill type, blend mode) — reduces GPU state changes</p>
+<p><strong>Texture Atlas:</strong> Image fills packed into texture atlases to minimize GPU texture binds</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 3: VERSION HISTORY ============ -->
+<h2>Flow 3: Version History & Branching</h2>
+<div class="card">
+<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FF7262"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="90" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Client</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Version Service</text>
+<rect x="370" y="30" width="130" height="50" rx="8" fill="#795548"/><text x="435" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Snapshot Store</text><text x="435" y="67" text-anchor="middle" fill="#fff" font-size="10">(S3)</text>
+<rect x="370" y="100" width="130" height="50" rx="8" fill="#00897B"/><text x="435" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Op Log DB</text><text x="435" y="137" text-anchor="middle" fill="#fff" font-size="10">(PostgreSQL)</text>
+<rect x="560" y="60" width="130" height="50" rx="8" fill="#A259FF"/><text x="625" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Diff Engine</text><text x="625" y="97" text-anchor="middle" fill="#fff" font-size="10">(Branch/Merge)</text>
+<rect x="740" y="60" width="130" height="50" rx="8" fill="#E53935"/><text x="805" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Thumbnail Gen</text><text x="805" y="97" text-anchor="middle" fill="#fff" font-size="10">(Headless Render)</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#FF7262" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="320" y1="75" x2="365" y2="55" stroke="#FF7262" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="320" y1="95" x2="365" y2="120" stroke="#FF7262" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="500" y1="55" x2="555" y2="75" stroke="#FF7262" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="500" y1="125" x2="555" y2="95" stroke="#FF7262" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="690" y1="85" x2="735" y2="85" stroke="#FF7262" stroke-width="2" marker-end="url(#ah3)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Auto-save: Snapshot Service writes full file state to S3 every 30 seconds (or after 50 operations)</li>
+<li>Named versions: User manually saves checkpoint → creates named snapshot with metadata (title, description)</li>
+<li>Version history: Client requests timeline → Version Service returns list of snapshots with thumbnails</li>
+<li>Restore: Loading a past version replays snapshot + ops up to that point; can create new branch from any version</li>
+<li>Branching: Creates a fork — copies snapshot + op log pointer; parallel editing proceeds independently</li>
+<li>Merge: Diff Engine compares two branches, identifies conflicts (same node modified in both), presents merge UI</li>
+<li>Thumbnails generated asynchronously by headless renderer for each snapshot</li>
+</ol>
+
+<h3>Example</h3>
+<p>Designer creates branch "v2-dark-mode" from main file. Makes extensive changes over 3 days. Team decides to merge back. Diff Engine identifies 45 modified objects — 3 have conflicts (same button modified in both branches). Merge UI shows side-by-side comparison for conflict resolution. After resolving, ops from branch replayed onto main.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>Snapshot Format</h4>
+<p><strong>Format:</strong> Custom binary format (Figma .fig) — scene graph serialized as flat array with parent pointers</p>
+<p><strong>Compression:</strong> Zstandard (zstd) compression — ~5:1 ratio for typical design files</p>
+<p><strong>Storage:</strong> S3 with versioning enabled; each snapshot is immutable blob with content-addressed key</p>
+<p><strong>Size:</strong> Typical file: 1-50MB compressed; complex files with images: 100MB+</p>
+</div>
+<div class="card">
+<h4>Branch Merge Strategy</h4>
+<p><strong>Algorithm:</strong> Three-way merge — common ancestor (branch point) vs. main vs. branch</p>
+<p><strong>Conflict:</strong> Same node + same property modified in both → manual resolution required</p>
+<p><strong>Auto-merge:</strong> Non-conflicting changes (different nodes, or different properties on same node) auto-merged</p>
+<p><strong>Structure:</strong> Node additions/deletions handled via tree CRDT semantics (no orphans/cycles)</p>
+</div>
+</div>
+</div>
+
+<!-- ============ COMBINED ARCHITECTURE ============ -->
+<h2>Combined Architecture</h2>
+<div class="card">
+<svg viewBox="0 0 1050 480" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#1ABCFE"/></marker></defs>
+<rect x="20" y="60" width="140" height="50" rx="8" fill="#34A853"/><text x="90" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Browser Clients</text><text x="90" y="97" text-anchor="middle" fill="#fff" font-size="10">(WASM + WebGL)</text>
+<rect x="20" y="140" width="140" height="50" rx="8" fill="#34A853"/><text x="90" y="162" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Desktop App</text><text x="90" y="177" text-anchor="middle" fill="#fff" font-size="10">(Electron)</text>
+<rect x="220" y="90" width="140" height="60" rx="8" fill="#FB8C00"/><text x="290" y="115" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Edge CDN</text><text x="290" y="132" text-anchor="middle" fill="#fff" font-size="10">(Cloudflare/Fastly)</text>
+<rect x="420" y="30" width="140" height="50" rx="8" fill="#A259FF"/><text x="490" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Collab Server</text><text x="490" y="67" text-anchor="middle" fill="#fff" font-size="10">(CRDT Engine)</text>
+<rect x="420" y="100" width="140" height="50" rx="8" fill="#4285F4"/><text x="490" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">REST API</text><text x="490" y="137" text-anchor="middle" fill="#fff" font-size="10">(Files, Teams, Auth)</text>
+<rect x="420" y="170" width="140" height="50" rx="8" fill="#4285F4"/><text x="490" y="192" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Plugin API</text><text x="490" y="207" text-anchor="middle" fill="#fff" font-size="10">(Sandboxed Runtime)</text>
+<rect x="620" y="30" width="140" height="50" rx="8" fill="#607D8B"/><text x="690" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">WebSocket Hub</text><text x="690" y="67" text-anchor="middle" fill="#fff" font-size="10">(Presence + Ops)</text>
+<rect x="620" y="100" width="140" height="50" rx="8" fill="#E53935"/><text x="690" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Export Service</text><text x="690" y="137" text-anchor="middle" fill="#fff" font-size="10">(SVG/PNG/PDF)</text>
+<rect x="820" y="30" width="140" height="50" rx="8" fill="#9C27B0"/><text x="890" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Thumbnail Gen</text><text x="890" y="67" text-anchor="middle" fill="#fff" font-size="10">(Headless Render)</text>
+<rect x="420" y="310" width="140" height="55" rx="8" fill="#795548"/><text x="490" y="332" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">PostgreSQL</text><text x="490" y="347" text-anchor="middle" fill="#fff" font-size="10">(Metadata + Auth)</text>
+<rect x="620" y="310" width="140" height="55" rx="8" fill="#795548"/><text x="690" y="332" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Amazon S3</text><text x="690" y="347" text-anchor="middle" fill="#fff" font-size="10">(Snapshots + Images)</text>
+<rect x="820" y="310" width="140" height="55" rx="8" fill="#00897B"/><text x="890" y="332" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Redis</text><text x="890" y="347" text-anchor="middle" fill="#fff" font-size="10">(Sessions + Cache)</text>
+<line x1="160" y1="85" x2="215" y2="110" stroke="#1ABCFE" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="160" y1="165" x2="215" y2="130" stroke="#1ABCFE" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="360" y1="110" x2="415" y2="55" stroke="#1ABCFE" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="360" y1="125" x2="415" y2="125" stroke="#1ABCFE" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="560" y1="55" x2="615" y2="55" stroke="#1ABCFE" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="560" y1="125" x2="615" y2="125" stroke="#1ABCFE" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="760" y1="55" x2="815" y2="55" stroke="#1ABCFE" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="490" y1="150" x2="490" y2="305" stroke="#1ABCFE" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="560" y1="80" x2="620" y2="310" stroke="#1ABCFE" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="690" y1="150" x2="690" y2="305" stroke="#1ABCFE" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="560" y1="140" x2="815" y2="330" stroke="#1ABCFE" stroke-width="1.5" marker-end="url(#ah4)"/>
+</svg>
+</div>
+
+<!-- ============ DATABASE SCHEMA ============ -->
+<h2>Database Schema</h2>
+<div class="grid">
+<div class="card">
+<h3>PostgreSQL — Metadata</h3>
+<pre><code>CREATE TABLE files (
+  file_id      UUID PRIMARY KEY,       <span class="tag tag-pk">PK</span>
+  name         VARCHAR(255),
+  team_id      UUID REFERENCES teams,  <span class="tag tag-fk">FK</span>
+  project_id   UUID,                   <span class="tag tag-fk">FK</span>
+  created_by   UUID REFERENCES users,  <span class="tag tag-fk">FK</span>
+  s3_snapshot  TEXT,     -- latest snapshot S3 key
+  op_log_seq   BIGINT,  -- latest op sequence number
+  thumbnail_url TEXT,
+  node_count   INT DEFAULT 0,
+  created_at   TIMESTAMPTZ,
+  updated_at   TIMESTAMPTZ             <span class="tag tag-idx">INDEX</span>
+);
+
+CREATE TABLE file_versions (
+  version_id   UUID PRIMARY KEY,       <span class="tag tag-pk">PK</span>
+  file_id      UUID REFERENCES files,  <span class="tag tag-fk">FK</span>
+  name         VARCHAR(255),
+  s3_snapshot  TEXT,     -- snapshot S3 key at this version
+  op_log_seq   BIGINT,  -- op sequence at this version
+  thumbnail_url TEXT,
+  created_by   UUID REFERENCES users,  <span class="tag tag-fk">FK</span>
+  created_at   TIMESTAMPTZ
+);
+CREATE INDEX idx_versions_file ON file_versions(file_id, created_at DESC);
+
+CREATE TABLE comments (
+  comment_id   UUID PRIMARY KEY,       <span class="tag tag-pk">PK</span>
+  file_id      UUID REFERENCES files,  <span class="tag tag-fk">FK</span>
+  node_id      VARCHAR(64),   -- design object the comment is attached to
+  author_id    UUID REFERENCES users,  <span class="tag tag-fk">FK</span>
+  body         TEXT,
+  resolved     BOOLEAN DEFAULT FALSE,
+  x            FLOAT,  y FLOAT,  -- pin position on canvas
+  created_at   TIMESTAMPTZ
+);
+CREATE INDEX idx_comments_file ON comments(file_id, resolved);</code></pre>
+</div>
+
+<div class="card">
+<h3>Op Log (PostgreSQL / DynamoDB)</h3>
+<pre><code>CREATE TABLE op_log (
+  file_id      UUID,              <span class="tag tag-pk">PK</span>
+  seq_num      BIGINT,            <span class="tag tag-pk">PK</span>
+  client_id    UUID,
+  lamport_ts   BIGINT,
+  op_type      VARCHAR(20),  -- set_prop, insert_child, delete, move
+  node_id      VARCHAR(64),
+  payload      JSONB,        -- operation-specific data
+  created_at   TIMESTAMPTZ,
+  PRIMARY KEY (file_id, seq_num)
+);</code></pre>
+<p><span class="tag tag-shard">SHARD</span> Partitioned by file_id — all ops for a file co-located</p>
+<p><strong>Alternative:</strong> DynamoDB with file_id as partition key, seq_num as sort key for infinite scalability</p>
+</div>
+</div>
+
+<!-- ============ CACHE & CDN ============ -->
+<h2>Cache & CDN Deep Dive</h2>
+<div class="card">
+<div class="grid">
+<div class="card">
+<h4>CDN (Static Assets)</h4>
+<p><strong>Provider:</strong> Cloudflare / Fastly</p>
+<p><strong>Cached:</strong> WASM binary, JS bundles, fonts, static images, shared component libraries</p>
+<p><strong>Policy:</strong> Immutable hashed filenames with max-age=31536000 (1 year); bust via filename hash change</p>
+</div>
+<div class="card">
+<h4>Image/Asset Cache</h4>
+<p><strong>Source:</strong> Design file images stored in S3; thumbnails pre-generated</p>
+<p><strong>Client Cache:</strong> IndexedDB for offline access — stores recently viewed file snapshots + image assets</p>
+<p><strong>Server Cache:</strong> Redis cache for file metadata, team/project structures (TTL: 5min, invalidate on mutation)</p>
+</div>
+<div class="card">
+<h4>Collaboration Cache</h4>
+<p><strong>In-Memory:</strong> Active files' CRDT state kept in Collaboration Server memory (~50MB per complex file)</p>
+<p><strong>Eviction:</strong> LRU eviction when no editors connected for 5 minutes; state persisted to S3 before eviction</p>
+<p><strong>Warm-Up:</strong> On first editor connect, load snapshot from S3 + replay ops (typically <500ms)</p>
+</div>
+</div>
+</div>
+
+<!-- ============ SCALING ============ -->
+<h2>Scaling & Load Balancing</h2>
+<div class="card">
+<ul>
+<li><strong>Collaboration Server:</strong> Horizontally scaled with consistent hashing by file_id — each file pinned to one server (single writer for ordering). If server dies, file reopened on another server and state reconstructed from S3 + Op Log.</li>
+<li><strong>WebSocket:</strong> L4 load balancer with sticky sessions (IP hash or connection ID) — ensures all ops for a file reach same collab server</li>
+<li><strong>REST API:</strong> Stateless services behind L7 LB (Envoy); auto-scaled based on request rate</li>
+<li><strong>Database:</strong> PostgreSQL with read replicas; op log tables partitioned by file_id; S3 for blob storage (effectively unlimited)</li>
+<li><strong>Multi-Region:</strong> Collaboration servers in US, EU, APAC — file assigned to region of majority of editors; cross-region ops have higher latency</li>
+</ul>
+</div>
+
+<!-- ============ TRADEOFFS ============ -->
+<h2>Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="pro">
+<h4>✅ CRDT vs OT (Operational Transformation)</h4>
+<ul>
+<li>No central ordering server required — CRDTs converge without coordination</li>
+<li>Better offline support — ops can be applied independently</li>
+<li>Mathematically proven convergence — no edge case bugs</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ CRDT vs OT</h4>
+<ul>
+<li>Higher metadata overhead (vector clocks, tombstones)</li>
+<li>Tombstone accumulation requires periodic garbage collection</li>
+<li>Tree move operations are notoriously complex in CRDT literature</li>
+</ul>
+</div>
+<div class="pro">
+<h4>✅ WASM + WebGL (Browser)</h4>
+<ul>
+<li>Zero install — runs in any browser, no desktop app required</li>
+<li>Instant updates — deploy new version server-side</li>
+<li>Cross-platform by default (macOS, Windows, Linux, ChromeOS)</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ WASM + WebGL (Browser)</h4>
+<ul>
+<li>Browser sandboxing limits GPU access (no Vulkan/Metal directly)</li>
+<li>4GB WASM memory limit (until Memory64 proposal ships)</li>
+<li>Font rendering inconsistencies across browsers/OSes</li>
+</ul>
+</div>
+</div>
+
+<!-- ============ ALTERNATIVES ============ -->
+<h2>Alternative Approaches</h2>
+<div class="grid">
+<div class="card">
+<h4>OT (Google Docs Model)</h4>
+<p>Operational Transformation with central server for operation ordering. Proven at Google scale (Docs, Sheets). Simpler per-operation, but requires ordered delivery and central coordinator — single point of contention for high-throughput editing.</p>
+</div>
+<div class="card">
+<h4>Native Desktop (Sketch Model)</h4>
+<p>Native macOS/Windows app using Metal/DirectX directly. 10x rendering performance for complex scenes, full GPU access, no browser limitations. But platform-specific codebases, no browser access, complex update distribution via App Store.</p>
+</div>
+<div class="card">
+<h4>Server-Side Rendering (Miro Model)</h4>
+<p>Render canvas on server, stream viewport as video/tiles to client. Enables thin clients (any device) and protects IP (design never leaves server). But high server cost (GPU per session), latency-sensitive, poor offline support.</p>
+</div>
+</div>
+
+<!-- ============ ADDITIONAL INFO ============ -->
+<h2>Additional Information</h2>
+<div class="card">
+<ul>
+<li><strong>Plugin Sandbox:</strong> Figma plugins run in a sandboxed JavaScript iframe (no DOM access) — communicate with main thread via postMessage API. Prevents plugins from accessing raw design data or crashing the editor.</li>
+<li><strong>Dev Mode:</strong> Inspection mode generates CSS/Swift/Kotlin code from design objects — layout constraints, colors, typography extracted programmatically from scene graph</li>
+<li><strong>Component System:</strong> Master component + instances form a prototype chain — instance overrides stored as sparse property deltas on top of master component</li>
+<li><strong>Variables & Design Tokens:</strong> Variables (colors, spacing, strings) stored as first-class entities in scene graph — referenced by alias, enabling theme switching and multi-mode design tokens</li>
+<li><strong>Font Loading:</strong> Fonts loaded from Google Fonts CDN or user-uploaded; local fonts accessed via Figma Font Helper (small native daemon that reads system fonts and serves them to the browser)</li>
+</ul>
+</div>
+
+</body>
+</html>

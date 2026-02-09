@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Recommendation Platform - System Design</title>
+<style>
+:root{--bg:#0f0f0f;--surface:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--accent:#FF0000;--accent2:#FF6F00;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem;max-width:1400px;margin:0 auto}
+h1{color:var(--accent);font-size:2.2rem;border-bottom:3px solid var(--accent);padding-bottom:.5rem;margin-bottom:1.5rem}
+h2{color:var(--accent2);margin:2rem 0 1rem;font-size:1.5rem}
+h3{color:#81D4FA;margin:1.5rem 0 .75rem}
+h4{color:#CE93D8;margin:1rem 0 .5rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{border:1px solid var(--border);padding:.75rem;text-align:left;font-size:.95rem}
+th{background:#5c0a0a;color:var(--accent)}
+pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}
+code{color:#89DDFF;font-size:.9rem}
+svg text{font-family:'Segoe UI',system-ui,sans-serif}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.pro{border-left:4px solid #4CAF50;padding-left:1rem}
+.con{border-left:4px solid #f44336;padding-left:1rem}
+details{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin:.5rem 0}
+summary{cursor:pointer;font-weight:600;color:var(--accent)}
+.step{margin:.5rem 0;padding:.5rem 1rem;border-left:3px solid var(--accent2)}
+.tag-pk{background:#E91E63;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+.tag-fk{background:#2196F3;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+.tag-idx{background:#FF9800;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+.tag-shard{background:#9C27B0;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+</style>
+</head>
+<body>
+
+<h1>🎬 Video Recommendation Platform</h1>
+<p>Design a recommendation system that personalizes video content for billions of users across a feed, handling the candidate generation → ranking → re-ranking pipeline with real-time feature serving and feedback loops.</p>
+
+<h2>📋 Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Personalized feed</strong> — generate ranked list of video recommendations for each user's homepage and "Up Next"</li>
+<li><strong>Candidate generation</strong> — retrieve 100s of candidates from millions of videos using multiple retrieval strategies</li>
+<li><strong>Ranking</strong> — score and rank candidates using deep learning model with user/video/context features</li>
+<li><strong>Real-time signals</strong> — incorporate live signals (just-watched, trending, session context) into recommendations</li>
+<li><strong>Multi-objective optimization</strong> — balance engagement (watch time), satisfaction (likes), and diversity (not all same genre)</li>
+<li><strong>Exploration vs exploitation</strong> — surface new/niche content alongside high-confidence recommendations</li>
+<li><strong>Content safety filtering</strong> — remove policy-violating content, apply age restrictions</li>
+</ul>
+</div>
+
+<h2>📋 Non-Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Latency</strong> — full recommendation pipeline &lt;200ms p99 (candidate gen + ranking + re-ranking)</li>
+<li><strong>Scale</strong> — 2B+ users, 800M+ videos, 1B+ recommendations served/day</li>
+<li><strong>Freshness</strong> — new videos eligible for recommendation within minutes of upload</li>
+<li><strong>Feature serving</strong> — 1000+ features per (user, video) pair served in &lt;10ms</li>
+<li><strong>Model freshness</strong> — ranking model updated daily; feature store updated in near-real-time</li>
+<li><strong>Availability</strong> — 99.99%; graceful degradation (serve popular videos if personalization fails)</li>
+</ul>
+</div>
+
+<h2>🔄 Flow 1: Candidate Generation (Retrieval)</h2>
+<svg viewBox="0 0 1050 320" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="a1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FF0000"/></marker></defs>
+<rect x="20" y="130" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="160" text-anchor="middle" fill="white" font-size="12">User Request</text>
+<rect x="190" y="130" width="130" height="50" rx="8" fill="#E65100"/><text x="255" y="160" text-anchor="middle" fill="white" font-size="12">Retrieval Mixer</text>
+<rect x="380" y="30" width="140" height="45" rx="8" fill="#1565C0"/><text x="450" y="57" text-anchor="middle" fill="white" font-size="11">Collaborative Filter</text>
+<rect x="380" y="90" width="140" height="45" rx="8" fill="#1565C0"/><text x="450" y="117" text-anchor="middle" fill="white" font-size="11">Two-Tower DNN</text>
+<rect x="380" y="150" width="140" height="45" rx="8" fill="#1565C0"/><text x="450" y="177" text-anchor="middle" fill="white" font-size="11">Content-Based</text>
+<rect x="380" y="210" width="140" height="45" rx="8" fill="#1565C0"/><text x="450" y="237" text-anchor="middle" fill="white" font-size="11">Trending / Popular</text>
+<rect x="380" y="270" width="140" height="45" rx="8" fill="#1565C0"/><text x="450" y="297" text-anchor="middle" fill="white" font-size="11">Graph-Based (Social)</text>
+<rect x="590" y="130" width="140" height="50" rx="8" fill="#6A1B9A"/><text x="660" y="150" text-anchor="middle" fill="white" font-size="12">Candidate Pool</text><text x="660" y="165" text-anchor="middle" fill="white" font-size="10">(~1000 videos)</text>
+<rect x="790" y="130" width="130" height="50" rx="8" fill="#00695C"/><text x="855" y="160" text-anchor="middle" fill="white" font-size="12">Dedup & Filter</text>
+<line x1="130" y1="155" x2="185" y2="155" stroke="#FF0000" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="320" y1="140" x2="375" y2="52" stroke="#FF0000" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="320" y1="145" x2="375" y2="112" stroke="#FF0000" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="320" y1="155" x2="375" y2="172" stroke="#FF0000" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="320" y1="165" x2="375" y2="232" stroke="#FF0000" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="320" y1="170" x2="375" y2="292" stroke="#FF0000" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="520" y1="52" x2="585" y2="140" stroke="#81D4FA" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="520" y1="112" x2="585" y2="145" stroke="#81D4FA" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="520" y1="172" x2="585" y2="150" stroke="#81D4FA" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="520" y1="232" x2="585" y2="160" stroke="#81D4FA" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="520" y1="292" x2="585" y2="165" stroke="#81D4FA" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="730" y1="155" x2="785" y2="155" stroke="#FF6F00" stroke-width="2" marker-end="url(#a1)"/>
+</svg>
+
+<div class="step"><strong>Step 1:</strong> Retrieval Mixer fans out to 5+ candidate generators in parallel (each returns ~200 candidates)</div>
+<div class="step"><strong>Step 2:</strong> Collaborative Filtering: "users like you watched X" via ALS matrix factorization embeddings</div>
+<div class="step"><strong>Step 3:</strong> Two-Tower DNN: user embedding ↔ video embedding dot product via ANN search (FAISS/ScaNN)</div>
+<div class="step"><strong>Step 4:</strong> Content-Based: similar to recently watched videos (topic, creator, audio features)</div>
+<div class="step"><strong>Step 5:</strong> Trending + Social: popular videos, friends' recent watches, subscription uploads</div>
+<div class="step"><strong>Step 6:</strong> Candidate Pool (~1000 unique videos) after dedup and safety filtering</div>
+
+<details><summary>Deep Dive: Two-Tower Model (YouTube DNN Paper)</summary>
+<div class="card">
+<pre><code>// Two-Tower Architecture (Google, 2019):
+// Separate user and item towers, trained jointly
+// At serving time: precompute all video embeddings, ANN search for user
+
+// User Tower (computed at request time):
+user_features = [
+  watch_history_embeddings,     // avg of last 50 watched video embeddings
+  search_query_embeddings,      // recent search terms
+  demographic_features,          // age, gender, country
+  context_features,              // time of day, device, day of week
+  engagement_history             // avg watch %, like rate
+]
+user_embedding = DNN(user_features) → 256-dim vector
+
+// Video Tower (precomputed offline for all videos):
+video_features = [
+  title_embedding,              // BERT encoding of title
+  visual_embedding,             // CNN features from thumbnail/frames
+  audio_embedding,              // audio content features
+  creator_embedding,            // creator's channel features
+  metadata                      // category, tags, duration, upload_time
+]
+video_embedding = DNN(video_features) → 256-dim vector
+
+// Retrieval: find top-K videos where dot(user_emb, video_emb) is highest
+// ANN search with ScaNN: search 800M videos in ~5ms
+// ScaNN partitions: 4000 clusters, search top-100 clusters
+// Asymmetric hashing: compress video embeddings to 32 bytes each
+// Total index: 800M × 32B = ~25GB (fits in memory per replica)
+
+// Training: in-batch sampled softmax
+// Positive: (user, video_watched)
+// Negatives: other videos in batch (efficient sampling)</code></pre>
+</div>
+</details>
+
+<h2>🔄 Flow 2: Ranking (Scoring & Ordering)</h2>
+<svg viewBox="0 0 1050 300" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="a2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FF6F00"/></marker></defs>
+<rect x="20" y="60" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="85" y="80" text-anchor="middle" fill="white" font-size="12">~1000 Candidates</text>
+<rect x="200" y="60" width="140" height="50" rx="8" fill="#00695C"/><text x="270" y="80" text-anchor="middle" fill="white" font-size="12">Feature Store</text><text x="270" y="95" text-anchor="middle" fill="white" font-size="10">(user+video+cross)</text>
+<rect x="400" y="60" width="150" height="50" rx="8" fill="#1565C0"/><text x="475" y="80" text-anchor="middle" fill="white" font-size="12">Deep Ranking Model</text><text x="475" y="95" text-anchor="middle" fill="white" font-size="10">(Multi-Task DNN)</text>
+<rect x="610" y="60" width="130" height="50" rx="8" fill="#E65100"/><text x="675" y="80" text-anchor="middle" fill="white" font-size="12">Multi-Objective</text><text x="675" y="95" text-anchor="middle" fill="white" font-size="10">Combiner</text>
+<rect x="800" y="60" width="130" height="50" rx="8" fill="#4E342E"/><text x="865" y="80" text-anchor="middle" fill="white" font-size="12">Ranked List</text><text x="865" y="95" text-anchor="middle" fill="white" font-size="10">(top ~50)</text>
+<rect x="200" y="190" width="140" height="50" rx="8" fill="#4E342E"/><text x="270" y="210" text-anchor="middle" fill="white" font-size="12">Online Feature</text><text x="270" y="225" text-anchor="middle" fill="white" font-size="10">Pipeline (Flink)</text>
+<rect x="400" y="190" width="150" height="50" rx="8" fill="#4E342E"/><text x="475" y="210" text-anchor="middle" fill="white" font-size="12">Batch Feature</text><text x="475" y="225" text-anchor="middle" fill="white" font-size="10">Pipeline (Spark)</text>
+<line x1="150" y1="85" x2="195" y2="85" stroke="#FF6F00" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="340" y1="85" x2="395" y2="85" stroke="#FF6F00" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="550" y1="85" x2="605" y2="85" stroke="#FF6F00" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="740" y1="85" x2="795" y2="85" stroke="#FF6F00" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="270" y1="190" x2="270" y2="115" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="475" y1="190" x2="350" y2="115" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
+<text x="290" y="170" fill="#aaa" font-size="10">real-time features</text>
+<text x="420" y="170" fill="#aaa" font-size="10">batch features</text>
+</svg>
+
+<div class="step"><strong>Step 1:</strong> For each of ~1000 candidates, Feature Store assembles feature vector (1000+ features per user×video pair)</div>
+<div class="step"><strong>Step 2:</strong> Deep Ranking Model (multi-task DNN) predicts multiple engagement signals simultaneously</div>
+<div class="step"><strong>Step 3:</strong> Multi-Objective Combiner produces final score: weighted combination of predicted watch time, P(like), P(share), P(subscribe)</div>
+<div class="step"><strong>Step 4:</strong> Top ~50 videos selected as ranked list for the feed page</div>
+
+<details><summary>Deep Dive: Multi-Task Ranking Model</summary>
+<div class="card">
+<pre><code>// Multi-task DNN predicts several objectives simultaneously:
+// Shared bottom layers → task-specific heads
+
+// Architecture (MMoE - Multi-gate Mixture of Experts):
+//
+// Input features (1000+):
+// ├── User: watch history, demographics, device, time
+// ├── Video: category, duration, creator, upload age, quality score
+// ├── Cross: user-video affinity, topic overlap, social signal
+// └── Context: time of day, session position, previous watch
+//
+// Shared Experts (8 expert networks):
+// Each expert: 3-layer DNN (512→256→128)
+//
+// Task-specific gates:
+// Gate_i = softmax(W_i × input) → weights over experts
+//
+// Task heads:
+// ├── P(click) — logistic regression head
+// ├── E[watch_time | click] — regression head (minutes)
+// ├── P(like | watch) — logistic regression head
+// ├── P(share | watch) — logistic regression head
+// ├── P(subscribe | watch) — logistic regression head
+// └── P(not_interested) — negative signal head
+
+// Final score = weighted combination:
+score = w1 × P(click) × E[watch_time]
+      + w2 × P(like)
+      + w3 × P(share)
+      + w4 × P(subscribe)
+      - w5 × P(not_interested)
+
+// Weights tuned via A/B testing to optimize platform-level metrics
+// Serving: TensorFlow Serving on GPU, batched inference
+// ~1000 candidates × 1000 features → ~50ms on GPU</code></pre>
+</div>
+</details>
+
+<h2>🔄 Flow 3: Re-Ranking & Serving</h2>
+<svg viewBox="0 0 1000 260" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="a3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FF0000"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#4E342E"/><text x="80" y="90" text-anchor="middle" fill="white" font-size="12">Ranked List (50)</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#1565C0"/><text x="255" y="80" text-anchor="middle" fill="white" font-size="12">Diversity</text><text x="255" y="95" text-anchor="middle" fill="white" font-size="10">Re-Ranker</text>
+<rect x="370" y="60" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="435" y="80" text-anchor="middle" fill="white" font-size="12">Business Rules</text><text x="435" y="95" text-anchor="middle" fill="white" font-size="10">(boost, suppress)</text>
+<rect x="550" y="60" width="130" height="50" rx="8" fill="#E65100"/><text x="615" y="80" text-anchor="middle" fill="white" font-size="12">Ad Insertion</text><text x="615" y="95" text-anchor="middle" fill="white" font-size="10">(blended feed)</text>
+<rect x="730" y="60" width="130" height="50" rx="8" fill="#2E7D32"/><text x="795" y="90" text-anchor="middle" fill="white" font-size="12">User Feed</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#FF0000" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="320" y1="85" x2="365" y2="85" stroke="#FF0000" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="500" y1="85" x2="545" y2="85" stroke="#FF0000" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="680" y1="85" x2="725" y2="85" stroke="#FF0000" stroke-width="2" marker-end="url(#a3)"/>
+</svg>
+
+<div class="step"><strong>Step 1:</strong> Diversity Re-Ranker ensures variety (MMR algorithm): avoid 5 cooking videos in a row; mix genres, creators, video lengths</div>
+<div class="step"><strong>Step 2:</strong> Business Rules: boost creator content for subscribers, suppress recently-dismissed, apply content policies</div>
+<div class="step"><strong>Step 3:</strong> Ad Insertion: blend sponsored content at designated positions (every 5th slot)</div>
+<div class="step"><strong>Step 4:</strong> Final feed rendered to user with thumbnails, titles, and engagement previews</div>
+
+<details><summary>Deep Dive: Feature Store Architecture</summary>
+<div class="card">
+<pre><code>// Feature Store: central system for managing ML features
+// Two data paths: batch (Spark) and streaming (Flink)
+
+// Batch features (updated daily):
+// - User: total watch hours, genre preferences, avg session length
+// - Video: total views, avg watch %, like ratio, category embeddings
+// Storage: Bigtable / HBase with row key = entity_id
+
+// Streaming features (updated in real-time):
+// - User: last 10 videos watched (session), current device, trending interest
+// - Video: view count last hour, real-time like velocity
+// Storage: Redis with TTL (24h)
+
+// Feature serving at ranking time:
+// 1. Batch lookup: Bigtable.get(user_id) → 500 user features (~2ms)
+// 2. Batch lookup: Bigtable.multiGet(video_ids) → 500 video features (~5ms)
+// 3. Real-time lookup: Redis.mget(user_id, video_ids) → session features (~1ms)
+// 4. Cross features computed on-the-fly: topic_overlap, time_since_last_watch
+// Total feature assembly: ~8ms for 1000 candidates
+
+// Feature logging: every served recommendation logs features
+// This creates training data for next model iteration
+// "Log and learn" pattern: production features → offline training</code></pre>
+</div>
+</details>
+
+<h2>🏗️ Combined Architecture</h2>
+<svg viewBox="0 0 1100 500" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="ac" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FF0000"/></marker></defs>
+<text x="550" y="25" text-anchor="middle" fill="#FF0000" font-size="16" font-weight="bold">Video Recommendation Pipeline</text>
+<rect x="20" y="50" width="120" height="40" rx="8" fill="#2E7D32"/><text x="80" y="75" text-anchor="middle" fill="white" font-size="11">User Request</text>
+<rect x="200" y="50" width="130" height="40" rx="8" fill="#E65100"/><text x="265" y="75" text-anchor="middle" fill="white" font-size="11">Retrieval Service</text>
+<rect x="400" y="50" width="130" height="40" rx="8" fill="#1565C0"/><text x="465" y="75" text-anchor="middle" fill="white" font-size="11">Ranking Service</text>
+<rect x="600" y="50" width="130" height="40" rx="8" fill="#6A1B9A"/><text x="665" y="75" text-anchor="middle" fill="white" font-size="11">Re-Ranking Service</text>
+<rect x="800" y="50" width="130" height="40" rx="8" fill="#2E7D32"/><text x="865" y="75" text-anchor="middle" fill="white" font-size="11">User Feed</text>
+<rect x="200" y="130" width="130" height="40" rx="8" fill="#4E342E"/><text x="265" y="155" text-anchor="middle" fill="white" font-size="11">ANN Index (ScaNN)</text>
+<rect x="400" y="130" width="130" height="40" rx="8" fill="#00695C"/><text x="465" y="155" text-anchor="middle" fill="white" font-size="11">Feature Store</text>
+<rect x="600" y="130" width="130" height="40" rx="8" fill="#607D8B"/><text x="665" y="155" text-anchor="middle" fill="white" font-size="11">GPU Model Serving</text>
+<rect x="200" y="210" width="130" height="40" rx="8" fill="#6A1B9A"/><text x="265" y="235" text-anchor="middle" fill="white" font-size="11">Kafka Event Stream</text>
+<rect x="400" y="210" width="130" height="40" rx="8" fill="#1565C0"/><text x="465" y="235" text-anchor="middle" fill="white" font-size="11">Flink (Real-Time)</text>
+<rect x="600" y="210" width="130" height="40" rx="8" fill="#1565C0"/><text x="665" y="235" text-anchor="middle" fill="white" font-size="11">Spark (Batch)</text>
+<rect x="800" y="210" width="130" height="40" rx="8" fill="#4E342E"/><text x="865" y="235" text-anchor="middle" fill="white" font-size="11">Training Pipeline</text>
+<rect x="400" y="310" width="130" height="40" rx="8" fill="#4E342E"/><text x="465" y="335" text-anchor="middle" fill="white" font-size="11">Bigtable (Features)</text>
+<rect x="600" y="310" width="130" height="40" rx="8" fill="#00695C"/><text x="665" y="335" text-anchor="middle" fill="white" font-size="11">Redis (Real-Time)</text>
+<rect x="200" y="310" width="130" height="40" rx="8" fill="#4E342E"/><text x="265" y="335" text-anchor="middle" fill="white" font-size="11">GCS (Model Store)</text>
+<line x1="140" y1="70" x2="195" y2="70" stroke="#FF0000" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="330" y1="70" x2="395" y2="70" stroke="#FF0000" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="530" y1="70" x2="595" y2="70" stroke="#FF0000" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="730" y1="70" x2="795" y2="70" stroke="#FF0000" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="265" y1="90" x2="265" y2="125" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="465" y1="90" x2="465" y2="125" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="665" y1="90" x2="665" y2="125" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="265" y1="170" x2="265" y2="205" stroke="#FF6F00" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="330" y1="230" x2="395" y2="230" stroke="#FF6F00" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="530" y1="230" x2="595" y2="230" stroke="#FF6F00" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="730" y1="230" x2="795" y2="230" stroke="#FF6F00" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="465" y1="250" x2="465" y2="305" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="665" y1="250" x2="665" y2="305" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
+</svg>
+
+<h2>💾 Database Schema</h2>
+<div class="grid">
+<div class="card">
+<h3>Bigtable — Feature Store</h3>
+<pre><code>// User features (batch + streaming)
+Row Key: user:{user_id}
+Column Families:
+  "profile": { age, gender, country, language, device_type }
+  "history": { last_50_watched (video_ids), genre_dist, avg_watch_pct }
+  "embeddings": { user_embedding_256d (float[]) }
+  "realtime": { session_videos, current_device, last_active }
+
+// Video features
+Row Key: video:{video_id}
+Column Families:
+  "metadata": { title, category, creator_id, duration, upload_time }
+  "stats": { total_views, avg_watch_pct, like_ratio, ctr }
+  "embeddings": { video_embedding_256d (float[]) }
+  "quality": { quality_score, thumbnail_score, content_rating }
+
+// Interaction features (for training data)
+Row Key: interaction:{user_id}#{timestamp}
+Column Families:
+  "event": { video_id, event_type, watch_duration, liked, shared }
+  "context": { device, time_of_day, session_position }
+  "features_logged": { feature_vector_snapshot (for offline training) }</code></pre>
+</div>
+<div class="card">
+<h3>Redis — Real-Time Features</h3>
+<pre><code>// Session context (per active user)
+SET session:{user_id} {
+  "videos_watched": ["v1", "v2", "v3"],
+  "genres_in_session": {"comedy": 2, "news": 1},
+  "session_start": 1707500000,
+  "device": "mobile_ios",
+  "last_interaction": 1707500300
+} EX 3600  // 1h session TTL
+
+// Real-time video stats
+HSET video_rt:{video_id} {
+  "views_1h": 15000,
+  "likes_1h": 890,
+  "shares_1h": 120,
+  "trending_score": 0.85
+}
+// Updated by Flink every 60 seconds
+
+// ANN Index (ScaNN / FAISS)
+// Not in Redis — separate service with in-memory index
+// 800M video embeddings × 256 dims × 4 bytes = ~800GB
+// Sharded across 32 machines (~25GB each)
+// Approximate search: top-200 in ~5ms per shard</code></pre>
+</div>
+</div>
+
+<h2>⚡ Cache & CDN Deep Dive</h2>
+<div class="card">
+<table>
+<tr><th>Layer</th><th>What</th><th>Strategy</th><th>TTL</th></tr>
+<tr><td>Client Cache</td><td>Pre-fetched next page of recommendations</td><td>Predictive pre-fetch (2 pages ahead)</td><td>Until scroll</td></tr>
+<tr><td>Redis</td><td>Pre-computed recs for returning users</td><td>Batch-generated, served if model latency spikes</td><td>1 hour</td></tr>
+<tr><td>Feature Cache</td><td>Hot user/video features</td><td>LRU in-memory cache on feature serving nodes</td><td>5 minutes</td></tr>
+<tr><td>Model Cache</td><td>TF SavedModel in GPU memory</td><td>Loaded on startup, hot-swapped on new version</td><td>Until model update</td></tr>
+<tr><td>CDN</td><td>Video thumbnails, metadata</td><td>Pull-through caching</td><td>24 hours</td></tr>
+</table>
+</div>
+
+<h2>📈 Scaling Considerations</h2>
+<div class="card">
+<ul>
+<li><strong>Retrieval parallelism:</strong> 5 candidate generators run in parallel (fan-out). Total retrieval latency = max of individual generator latencies (~30ms).</li>
+<li><strong>GPU inference scaling:</strong> batch requests for ranking model (batch size 256). Dynamic batching: wait up to 5ms to fill batch for better GPU utilization. 100 GPU serving instances for 1B requests/day.</li>
+<li><strong>ANN index updates:</strong> new videos need to be searchable within minutes. Incremental index update every 5 minutes. Full rebuild nightly. Dual-index strategy: serve from old index while building new.</li>
+<li><strong>Cold start:</strong> new users (no history) → use popularity + demographic-based recs. New videos (no engagement data) → boost via content-based features + exploration budget (ε-greedy or Thompson sampling).</li>
+</ul>
+</div>
+
+<h2>⚖️ Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="card pro"><h4>Multi-Stage Pipeline</h4><ul><li>Handles billions of videos efficiently</li><li>Each stage optimized independently</li><li>Complex model only scores ~1000 items</li></ul></div>
+<div class="card con"><h4>Multi-Stage Pipeline</h4><ul><li>Items lost in retrieval can't be recovered</li><li>Stage boundaries create information loss</li><li>Complex system to maintain and debug</li></ul></div>
+<div class="card pro"><h4>Multi-Objective Ranking</h4><ul><li>Balances engagement + satisfaction</li><li>Reduces clickbait (optimizes beyond just clicks)</li><li>Business objectives directly in model</li></ul></div>
+<div class="card con"><h4>Multi-Objective Ranking</h4><ul><li>Weight tuning is complex (many knobs)</li><li>Objectives can conflict (watch time vs diversity)</li><li>Harder to debug than single-objective</li></ul></div>
+</div>
+
+<h2>🔄 Alternative Approaches</h2>
+<div class="grid">
+<div class="card"><h4>End-to-End Retrieval + Ranking</h4><p>Single model that directly retrieves and ranks (eliminates staged pipeline). Research direction: retrieval-augmented generation for recommendations. Challenge: scoring all 800M items with a complex model is computationally infeasible at serving time. Approximations like MIPS (Maximum Inner Product Search) help but still gap vs staged approach.</p></div>
+<div class="card"><h4>Reinforcement Learning (RL) for Sequencing</h4><p>Treat recommendation as a sequential decision problem. State = user history, Action = next recommendation, Reward = long-term engagement. Optimizes for session-level satisfaction, not per-item clicks. Used at YouTube for "Up Next" sequencing. Challenge: delayed/sparse rewards, exploration risk.</p></div>
+</div>
+
+<h2>📚 Additional Information</h2>
+<div class="card">
+<ul>
+<li><strong>Position bias:</strong> items at top of feed get more clicks regardless of quality. De-bias by training model with position as feature, then setting position=0 at serving time (inverse propensity weighting).</li>
+<li><strong>Feedback loops:</strong> model recommends popular → popular gets more popular (rich-get-richer). Mitigation: exploration budget (5-10% of slots for new/diverse content), fairness constraints per creator.</li>
+<li><strong>Responsible AI:</strong> avoid filter bubbles, reduce harmful content amplification, ensure creator fairness. Guardrail metrics: diversity score, misinformation exposure, watch time satisfaction ratio.</li>
+<li><strong>Key papers:</strong> YouTube DNN (2016), Two-Tower (2019), MMoE (2018), YouTube RL (2019), ScaNN (2020)</li>
+</ul>
+</div>
+
+</body>
+</html>

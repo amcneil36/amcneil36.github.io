@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: Spotify</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #e0e0e0; margin: 0; padding: 20px; line-height: 1.7; }
+  h1 { color: #1db954; font-size: 2.2em; border-bottom: 3px solid #1db954; padding-bottom: 10px; }
+  h2 { color: #1ed760; margin-top: 40px; }
+  h3 { color: #57e389; }
+  h4 { color: #8ff0b3; }
+  .section { background: #1a1a1a; padding: 25px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #1db954; }
+  .subsection { background: #222; padding: 15px; border-radius: 8px; margin: 15px 0; }
+  .diagram-container { background: #1e1e1e; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; overflow-x: auto; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.85em; margin: 2px 4px; }
+  .tag-pk { background: #4a9eff33; color: #4a9eff; border: 1px solid #4a9eff66; }
+  .tag-fk { background: #ff4a4a33; color: #ff4a4a; border: 1px solid #ff4a4a66; }
+  .tag-idx { background: #4aff4a33; color: #4aff4a; border: 1px solid #4aff4a66; }
+  .tag-shard { background: #ffa54a33; color: #ffa54a; border: 1px solid #ffa54a66; }
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+  th, td { padding: 12px; text-align: left; border: 1px solid #333; }
+  th { background: #2a2a2a; color: #1ed760; }
+  tr:nth-child(even) { background: #1a1a1a; }
+  code { background: #2a2a2a; padding: 2px 8px; border-radius: 4px; color: #57e389; font-family: 'Fira Code', monospace; }
+  pre { background: #1a1a1a; padding: 20px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; }
+  .example { background: #0d2818; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #4aff4a; }
+  .tradeoff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+  .tradeoff-pro { background: #0d2818; padding: 15px; border-radius: 8px; border-left: 3px solid #4aff4a; }
+  .tradeoff-con { background: #2d1018; padding: 15px; border-radius: 8px; border-left: 3px solid #ff4a4a; }
+  ul, ol { padding-left: 25px; }
+  li { margin: 6px 0; }
+</style>
+</head>
+<body>
+
+<h1>🎵 System Design: Spotify (Music Streaming)</h1>
+
+<div class="section">
+<h2>📋 Functional Requirements</h2>
+<ul>
+  <li>Users can search for and stream songs, albums, artists, and podcasts</li>
+  <li>Users can create playlists, follow artists, and save songs to library</li>
+  <li>Personalized recommendations: Discover Weekly, Daily Mix, Release Radar</li>
+  <li>Support offline downloads, cross-device sync, and social features (collaborative playlists)</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>🔒 Non-Functional Requirements</h2>
+<ul>
+  <li><strong>Scale:</strong> 600M+ users, 100M+ tracks, 5M+ podcasts, billions of streams/day</li>
+  <li><strong>Low latency:</strong> Song playback starts in &lt;200ms, gapless playback between tracks</li>
+  <li><strong>High availability:</strong> 99.99% — music must always play</li>
+  <li><strong>Audio quality:</strong> Multiple bitrates (96/160/320 kbps for Ogg Vorbis, lossless for Premium)</li>
+  <li><strong>Global CDN:</strong> Low-latency audio delivery worldwide</li>
+</ul>
+</div>
+
+<h2>🔄 Flow 1 — Music Playback (Streaming)</h2>
+
+<div class="diagram-container">
+<svg viewBox="0 0 1100 380" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ah1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="160" width="110" height="55" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="75" y="192" text-anchor="middle" fill="white" font-size="13">Spotify App</text>
+  <line x1="130" y1="187" x2="195" y2="187" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="205" y="160" width="130" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="270" y="183" text-anchor="middle" fill="white" font-size="12">Playback Service</text>
+  <text x="270" y="200" text-anchor="middle" fill="white" font-size="10">(Track Resolve)</text>
+  <line x1="335" y1="175" x2="400" y2="120" stroke="#aaa" marker-end="url(#ah1)"/>
+  <line x1="335" y1="195" x2="400" y2="250" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="410" y="95" width="140" height="50" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="480" y="118" text-anchor="middle" fill="white" font-size="11">DRM License</text>
+  <text x="480" y="133" text-anchor="middle" fill="white" font-size="10">(Widevine)</text>
+  <rect x="410" y="230" width="140" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="480" y="253" text-anchor="middle" fill="white" font-size="11">Audio CDN Router</text>
+  <text x="480" y="268" text-anchor="middle" fill="white" font-size="10">(Nearest Edge)</text>
+  <line x1="550" y1="255" x2="620" y2="255" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="630" y="230" width="140" height="50" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
+  <text x="700" y="253" text-anchor="middle" fill="white" font-size="11">CDN Edge (GCS/S3)</text>
+  <text x="700" y="268" text-anchor="middle" fill="white" font-size="10">(Audio Files)</text>
+  <line x1="770" y1="255" x2="840" y2="255" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="850" y="230" width="130" height="50" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="915" y="253" text-anchor="middle" fill="white" font-size="11">Audio Playback</text>
+  <text x="915" y="268" text-anchor="middle" fill="white" font-size="10">(Ogg Vorbis/AAC)</text>
+</svg>
+</div>
+
+<div class="section">
+<h3>Step-by-Step</h3>
+<ol>
+  <li><strong>User taps play:</strong> Client sends <code>POST /api/v1/play { track_id, context: "playlist:abc123", position: 0 }</code></li>
+  <li><strong>Playback Service:</strong> Resolves track_id to audio file URL. Checks: user subscription (free → 160kbps max, Premium → 320kbps/lossless), geographic licensing (track available in user's country?), selects codec (Ogg Vorbis for desktop/Android, AAC for iOS)</li>
+  <li><strong>DRM License:</strong> Issues playback license — encrypted key bound to session. Prevents downloading for offline piracy. Free tier: mandatory ads between tracks</li>
+  <li><strong>CDN routing:</strong> Audio CDN Router selects nearest edge PoP. Audio files pre-segmented into chunks (~128KB each, ~10s of audio at 128kbps)</li>
+  <li><strong>Prefetching:</strong> Client fetches first chunk of NEXT track while current track is still playing → enables gapless playback (crossfade). Also prefetches 2-3 tracks ahead in playlist</li>
+  <li><strong>Stream event:</strong> After 30 seconds of playback, a "stream" event is recorded → counts toward royalty payment to artist. Kafka → analytics pipeline</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> Premium user plays "Shape of You" from Discover Weekly playlist → Playback Service: Premium → 320kbps Ogg Vorbis → DRM license issued → CDN edge in Chicago (user is in IL) → First chunk delivered in 80ms → Playback starts → Client prefetches next song "Blinding Lights" → Gapless transition → 30s stream event fires → Ed Sheeran earns ~$0.004 per stream
+</div>
+</div>
+
+<div class="section">
+<h3>🔍 Component Deep Dives — Playback</h3>
+<div class="subsection">
+<h4>Audio Encoding</h4>
+<table>
+<tr><th>Tier</th><th>Codec</th><th>Bitrate</th><th>Quality</th></tr>
+<tr><td>Free (Low)</td><td>Ogg Vorbis / AAC</td><td>96 kbps</td><td>~3.5 MB per song</td></tr>
+<tr><td>Free (Normal)</td><td>Ogg Vorbis / AAC</td><td>160 kbps</td><td>~5.5 MB per song</td></tr>
+<tr><td>Premium (High)</td><td>Ogg Vorbis / AAC</td><td>320 kbps</td><td>~10 MB per song</td></tr>
+<tr><td>Premium (Lossless)</td><td>FLAC</td><td>~1,411 kbps</td><td>~50 MB per song</td></tr>
+</table>
+<p>Each track stored in multiple quality variants. Client selects based on subscription tier + network conditions (mobile data → auto-switch to lower quality)</p>
+</div>
+<div class="subsection">
+<h4>Gapless Playback & Crossfade</h4>
+<p><strong>Gapless:</strong> Client decodes last chunk of current track and first chunk of next track simultaneously, seamlessly concatenating audio buffers. Critical for live albums and classical music where silence between tracks ruins the experience.</p>
+<p><strong>Crossfade:</strong> Optional feature — fades out current track while fading in next over 1-12 seconds. Implemented in client's audio engine by mixing two audio streams with opposing volume ramps.</p>
+</div>
+<div class="subsection">
+<h4>Offline Downloads</h4>
+<p>Premium users can download tracks for offline playback. Encrypted audio files stored on device with DRM license (expires after 30 days without connectivity). Device must connect to Spotify servers monthly to renew licenses — prevents account sharing abuse.</p>
+</div>
+</div>
+
+<h2>🔄 Flow 2 — Search</h2>
+
+<div class="section">
+<h3>Step-by-Step</h3>
+<ol>
+  <li><strong>User types query:</strong> <code>GET /api/v1/search?q=taylor+swift+shake&type=track,artist,album,playlist</code></li>
+  <li><strong>Autocomplete:</strong> As-you-type suggestions from prefix trie/n-gram index. Results appear after 2-3 characters</li>
+  <li><strong>Search Service:</strong> Elasticsearch multi-index query — searches tracks, artists, albums, playlists simultaneously. Custom scoring: exact title match > partial match > description match. Artist popularity boosts results</li>
+  <li><strong>Personalization:</strong> If user frequently listens to pop, boost pop results. If user has Taylor Swift in library, boost her results higher</li>
+  <li><strong>Return categorized results:</strong> Top Result (artist/track), Songs, Artists, Albums, Playlists, Podcasts</li>
+</ol>
+<div class="example">
+<strong>Example:</strong> User types "taylor swift shake" → Autocomplete: "Shake It Off - Taylor Swift" → Search returns: Top Result: Taylor Swift (artist), Songs: "Shake It Off", "Shake It Off (Remix)", Albums: "1989", Playlists: "Taylor Swift Radio" → All in &lt;150ms
+</div>
+</div>
+
+<h2>🔄 Flow 3 — Discover Weekly (Recommendation)</h2>
+
+<div class="diagram-container">
+<svg viewBox="0 0 1050 320" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="130" width="140" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="90" y="155" text-anchor="middle" fill="white" font-size="11">Listening History</text>
+  <text x="90" y="172" text-anchor="middle" fill="white" font-size="10">(User Taste Profile)</text>
+  <line x1="160" y1="157" x2="230" y2="157" stroke="#aaa" marker-end="url(#ah3)"/>
+  <rect x="240" y="130" width="150" height="55" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="315" y="155" text-anchor="middle" fill="white" font-size="11">Collaborative Filter</text>
+  <text x="315" y="172" text-anchor="middle" fill="white" font-size="10">(Matrix Factorization)</text>
+  <line x1="390" y1="157" x2="460" y2="157" stroke="#aaa" marker-end="url(#ah3)"/>
+  <rect x="470" y="130" width="150" height="55" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="545" y="155" text-anchor="middle" fill="white" font-size="11">Content-Based Filter</text>
+  <text x="545" y="172" text-anchor="middle" fill="white" font-size="10">(Audio Features / NLP)</text>
+  <line x1="620" y1="157" x2="690" y2="157" stroke="#aaa" marker-end="url(#ah3)"/>
+  <rect x="700" y="130" width="150" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="775" y="155" text-anchor="middle" fill="white" font-size="11">Playlist Assembler</text>
+  <text x="775" y="172" text-anchor="middle" fill="white" font-size="10">(30 tracks / Monday)</text>
+</svg>
+</div>
+
+<div class="section">
+<h3>Step-by-Step</h3>
+<ol>
+  <li><strong>User taste profile:</strong> Built from listening history — weighted by recency, skip rate, save/like actions. Represents user as vector in embedding space</li>
+  <li><strong>Collaborative Filtering:</strong> "Users who listen to similar music to you also listen to X." Matrix factorization (ALS algorithm) on user-track interaction matrix → discovers latent taste factors</li>
+  <li><strong>Content-Based Filtering:</strong> Audio analysis of tracks user likes — tempo, energy, danceability, key, valence (happiness). Raw audio features extracted by CNN. Also NLP on blog posts, reviews for cultural context</li>
+  <li><strong>Candidate generation:</strong> ~1000 candidate tracks from both approaches. Filter: remove tracks user already knows (listened >3 times), remove explicit content if user has filter on</li>
+  <li><strong>Ranking:</strong> Predict probability user will save/like each track. Select top 30. Ensure diversity: genre variety, mix of familiar-adjacent and discovery, balance popular and niche</li>
+  <li><strong>Delivery:</strong> Computed batch (Sunday night) for all 400M+ users. Playlist updated every Monday morning. Stored in Cassandra, cached in Redis</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> User listens to indie rock and synthwave → Collaborative: "Users like you also enjoy Tame Impala, MGMT" → Content-based: audio features suggest user likes mid-tempo, high-energy, atmospheric → Candidate pool: 1000 tracks → Ranked by predicted save rate → Final 30: mix of indie rock deep cuts + synthwave newcomers + one jazz-adjacent surprise → "Discover Weekly" updated Monday 5 AM
+</div>
+</div>
+
+<div class="section">
+<h3>🔍 Spotify's Three Recommendation Engines</h3>
+<div class="subsection">
+<h4>1. Collaborative Filtering (Implicit Matrix Factorization)</h4>
+<p>User-track matrix (600M users × 100M tracks). Decompose into User matrix (600M × 128) and Track matrix (100M × 128). Each user/track represented as 128-dimensional vector. Similar users → similar vectors. Trained with ALS (Alternating Least Squares) on Hadoop cluster.</p>
+</div>
+<div class="subsection">
+<h4>2. NLP (Cultural Context)</h4>
+<p>Crawl music blogs, reviews, social media for text about artists/tracks. Word2Vec-style embeddings → tracks mentioned in similar cultural contexts get similar embeddings. Captures "vibe" that audio analysis misses (e.g., "summer anthems", "study music").</p>
+</div>
+<div class="subsection">
+<h4>3. Audio Analysis (CNN)</h4>
+<p>Raw audio spectrogram → Convolutional Neural Network → audio feature vector. Enables cold-start recommendations: new track with zero listens can be recommended based on how it sounds. Features: tempo, key, mode, energy, danceability, speechiness, acousticness, instrumentalness, liveness, valence.</p>
+</div>
+</div>
+
+<h2>🏗️ Combined Architecture</h2>
+
+<div class="diagram-container">
+<svg viewBox="0 0 1050 500" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ahc" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="60" width="110" height="40" rx="8" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="75" y="85" text-anchor="middle" fill="white" font-size="11">Mobile / Desktop</text>
+  <line x1="130" y1="80" x2="200" y2="100" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="210" y="80" width="120" height="50" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="270" y="110" text-anchor="middle" fill="white" font-size="11">API Gateway</text>
+  <line x1="330" y1="95" x2="400" y2="55" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="330" y1="100" x2="400" y2="100" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="330" y1="110" x2="400" y2="145" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="330" y1="120" x2="400" y2="190" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="410" y="35" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="475" y="60" text-anchor="middle" fill="white" font-size="10">Playback Service</text>
+  <rect x="410" y="80" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="475" y="105" text-anchor="middle" fill="white" font-size="10">Search Service</text>
+  <rect x="410" y="125" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="475" y="150" text-anchor="middle" fill="white" font-size="10">Playlist Service</text>
+  <rect x="410" y="170" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="475" y="195" text-anchor="middle" fill="white" font-size="10">Recommendation</text>
+  <line x1="540" y1="55" x2="620" y2="55" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="540" y1="100" x2="620" y2="100" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="540" y1="145" x2="620" y2="145" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="540" y1="190" x2="620" y2="190" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="630" y="35" width="130" height="40" rx="8" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
+  <text x="695" y="60" text-anchor="middle" fill="white" font-size="10">Audio CDN (GCS)</text>
+  <rect x="630" y="80" width="130" height="40" rx="8" fill="#8a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="695" y="105" text-anchor="middle" fill="white" font-size="10">Elasticsearch</text>
+  <rect x="630" y="125" width="130" height="40" rx="8" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
+  <text x="695" y="150" text-anchor="middle" fill="white" font-size="10">Cassandra</text>
+  <rect x="630" y="170" width="130" height="40" rx="8" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
+  <text x="695" y="195" text-anchor="middle" fill="white" font-size="10">Redis + Kafka</text>
+  <!-- Batch ML -->
+  <rect x="410" y="260" width="350" height="45" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="585" y="287" text-anchor="middle" fill="white" font-size="11">ML Pipeline (Hadoop/Spark — Batch Recommendations)</text>
+</svg>
+</div>
+
+<div class="example">
+<strong>End-to-End:</strong> User opens Spotify → Home shows personalized playlists (from Cassandra/Redis) → User plays "Discover Weekly" → Playback Service resolves track → CDN edge delivers 320kbps Ogg Vorbis → Client prefetches next 3 tracks → User skips track 5 after 8s (not counted as stream) → Listens to track 6 for 3 min (stream event → Kafka → royalty calculation) → Sunday: ML pipeline runs on Hadoop → generates new Discover Weekly for 400M users → stored in Cassandra
+</div>
+
+<h2>🗄️ Database Schema</h2>
+
+<div class="section">
+<h3>Cassandra — Music Catalog + User Data</h3>
+<pre>
+Table: tracks
+Partition Key: track_id
+  - track_id: UUID
+  - title: text
+  - artist_ids: list&lt;UUID&gt;
+  - album_id: UUID
+  - duration_ms: int
+  - popularity: int (0-100)
+  - audio_urls: map&lt;text, text&gt;  // {quality: cdn_url}
+  - audio_features: map&lt;text, float&gt;  // {energy: 0.8, tempo: 120}
+
+Table: playlists
+Partition Key: playlist_id
+  - playlist_id: UUID
+  - owner_id: UUID
+  - name: text
+  - description: text
+  - is_collaborative: boolean
+  - follower_count: int
+  - track_count: int
+
+Table: playlist_tracks
+Partition Key: playlist_id
+Clustering: position ASC
+  - playlist_id: UUID
+  - position: int
+  - track_id: UUID
+  - added_by: UUID
+  - added_at: timestamp
+
+Table: user_library
+Partition Key: user_id
+Clustering: saved_at DESC
+  - user_id: UUID
+  - saved_at: timestamp
+  - item_type: text (track / album / artist / playlist)
+  - item_id: UUID
+</pre>
+
+<h3>PostgreSQL — Account/Billing</h3>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>user_id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>email</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">UNIQUE</span></td></tr>
+<tr><td>plan</td><td>VARCHAR(20)</td><td>free / premium / family / duo / student</td></tr>
+<tr><td>country</td><td>VARCHAR(3)</td><td>Content licensing</td></tr>
+<tr><td>payment_token</td><td>VARCHAR(64)</td><td></td></tr>
+<tr><td>billing_date</td><td>DATE</td><td></td></tr>
+</table>
+
+<h3>Sharding</h3>
+<p><strong>Cassandra:</strong> Consistent hashing on partition key. Playlist tracks partitioned by playlist_id — all tracks in a playlist on same node <span class="tag tag-shard">CONSISTENT HASH</span></p>
+<p><strong>Listening history:</strong> Partitioned by user_id. Time-series data with TTL for older entries (keep 2 years) <span class="tag tag-shard">HASH + TTL</span></p>
+</div>
+
+<h2>💾 Cache & CDN Deep Dive</h2>
+
+<div class="section">
+<table>
+<tr><th>Cache</th><th>Key</th><th>TTL</th><th>Strategy</th></tr>
+<tr><td>Track metadata</td><td><code>track:{id}</code></td><td>1 hr</td><td>Read-through</td></tr>
+<tr><td>Playlist content</td><td><code>playlist:{id}:tracks</code></td><td>5 min</td><td>Write-invalidate on edit</td></tr>
+<tr><td>User home page</td><td><code>home:{user_id}</code></td><td>10 min</td><td>Pre-computed</td></tr>
+<tr><td>Discover Weekly</td><td><code>dw:{user_id}</code></td><td>7 days</td><td>Written by batch ML</td></tr>
+<tr><td>Audio segments</td><td>CDN edge</td><td>30 days</td><td>Pull-based CDN</td></tr>
+</table>
+<p><strong>Audio CDN:</strong> Google Cloud CDN (Spotify migrated to GCP). Audio files stored in GCS, served from edge. Popular tracks (~top 1% = 1M tracks) account for ~80% of streams → very high cache hit rate. Long-tail tracks (99% of catalog) have lower hit rate → served from regional/origin.</p>
+<p><strong>Eviction:</strong> LRU at CDN edge. Audio files are small (~10MB) so edge caches hold millions of tracks.</p>
+</div>
+
+<h2>⚖️ Tradeoffs</h2>
+
+<div class="section">
+<div class="tradeoff-grid">
+  <div class="tradeoff-pro">
+    <h4>✅ Three-Engine Recommendation</h4>
+    <p>Collaborative + Content + NLP captures user taste from multiple angles. Solves cold-start (audio analysis for new tracks)</p>
+  </div>
+  <div class="tradeoff-con">
+    <h4>❌ Three-Engine Recommendation</h4>
+    <p>Massive compute cost to generate personalized playlists for 600M users weekly. Complex pipeline with multiple ML models to maintain</p>
+  </div>
+  <div class="tradeoff-pro">
+    <h4>✅ Ogg Vorbis Codec</h4>
+    <p>Open-source (no licensing fees), good quality-to-size ratio, widely supported</p>
+  </div>
+  <div class="tradeoff-con">
+    <h4>❌ Ogg Vorbis Codec</h4>
+    <p>Not natively supported on iOS (requires custom decoder). AAC used as fallback for Apple devices</p>
+  </div>
+</div>
+</div>
+
+<h2>🔄 Alternative Approaches</h2>
+
+<div class="section">
+<div class="subsection">
+<h4>P2P-Assisted Streaming (Original Spotify)</h4>
+<p>Early Spotify (2008-2014) used P2P to reduce CDN costs — desktop clients cached and shared audio chunks with nearby peers. Eliminated in 2014 as CDN costs dropped and mobile (which can't do P2P efficiently) became dominant.</p>
+</div>
+<div class="subsection">
+<h4>Real-Time ML Recommendations (vs Batch)</h4>
+<p>Instead of weekly batch, compute recommendations in real-time based on current session. "You just listened to 3 jazz tracks → here's a jazz recommendation." Spotify is moving toward session-based real-time recommendations (Daily Mix already adapts faster than Discover Weekly).</p>
+</div>
+</div>
+
+<h2>📚 Additional Information</h2>
+
+<div class="section">
+<h3>Royalty Payment System</h3>
+<p>A "stream" counts after 30 seconds of playback. Revenue from subscriptions + ads pooled into a global pot. Each stream = proportional share of monthly pot. Average payout: ~$0.003-0.005 per stream. Artists with 1M monthly listeners earn ~$3,000-5,000/month. Rights split: ~70% to rights holders (label + songwriter + publisher), ~30% to Spotify.</p>
+
+<h3>Spotify Connect (Cross-Device)</h3>
+<p>Unique feature: control playback on any device from any other device. Architecture: all devices connected to Spotify's real-time service via WebSocket. When user switches playback device, command sent via server → target device starts streaming from current position. State synchronized in real-time across all logged-in devices.</p>
+
+<h3>Audio Fingerprinting</h3>
+<p>Similar to YouTube's Content ID, Spotify uses audio fingerprinting to identify duplicate uploads, match cover versions, and detect copyright infringement. Chromaprint library generates compact fingerprint from audio spectrogram → compared against database of 100M+ tracks.</p>
+</div>
+
+</body>
+</html>

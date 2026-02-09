@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: Facebook</title>
+<style>
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: #e0e0e0; line-height: 1.7; }
+h1 { color: #1877f2; border-bottom: 3px solid #1877f2; padding-bottom: 10px; font-size: 2.2em; }
+h2 { color: #4599ff; margin-top: 40px; font-size: 1.6em; border-left: 4px solid #4599ff; padding-left: 12px; }
+h3 { color: #70b5ff; font-size: 1.3em; }
+h4 { color: #99ccff; }
+.section { background: #1a1a2e; border-radius: 10px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
+.diagram-container { background: #0d1117; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
+.example { background: #1e293b; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+.example strong { color: #f59e0b; }
+table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+th { background: #2a2a4a; color: #4599ff; padding: 12px; text-align: left; border: 1px solid #444; }
+td { padding: 10px 12px; border: 1px solid #333; }
+tr:nth-child(even) { background: #1a1a2e; }
+tr:nth-child(odd) { background: #151528; }
+code { background: #2d2d4d; padding: 2px 8px; border-radius: 4px; color: #ff79c6; font-size: 0.95em; }
+.tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
+.tag-pk { background: #4a1a6b; color: #d4a5ff; }
+.tag-fk { background: #1a4a3b; color: #a5ffd4; }
+.tag-idx { background: #4a3a1a; color: #ffd4a5; }
+.tag-shard { background: #1a2a4a; color: #a5d4ff; }
+ul { padding-left: 25px; }
+li { margin: 5px 0; }
+.tradeoff { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+.pro { background: #0a2a1a; border: 1px solid #2a5a3a; padding: 15px; border-radius: 8px; }
+.con { background: #2a0a1a; border: 1px solid #5a2a3a; padding: 15px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<h1>System Design: Facebook (Social Network)</h1>
+
+<div class="section">
+<h2>Functional Requirements</h2>
+<ul>
+<li>Users can create profiles and manage personal information</li>
+<li>Send and accept friend requests (bidirectional friendship)</li>
+<li>Create posts (text, photos, videos) visible to friends or public</li>
+<li>Like, comment, and share posts</li>
+<li>View a personalized news feed of friends' posts</li>
+<li>Real-time chat/messaging (Messenger)</li>
+<li>Search for users, posts, and groups</li>
+<li>Groups and Pages for communities and businesses</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Scalability:</strong> 3+ billion monthly active users, billions of posts/day</li>
+<li><strong>Low Latency:</strong> Feed loads in &lt;500ms, messages in &lt;100ms</li>
+<li><strong>High Availability:</strong> 99.99% uptime</li>
+<li><strong>Eventual Consistency:</strong> Acceptable for feed (seconds delay OK); strong consistency for friend relationships</li>
+<li><strong>Storage:</strong> Petabytes of photos/videos, trillions of social graph edges</li>
+</ul>
+</div>
+
+<!-- Flow 1: Creating a Post -->
+<div class="section">
+<h2>Flow 1: Creating a Post</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1100 480" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#1877f2"/></marker></defs>
+<rect x="20" y="200" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="80" y="235" text-anchor="middle" fill="white" font-size="13">User Client</text>
+<rect x="190" y="200" width="130" height="60" rx="10" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="255" y="228" text-anchor="middle" fill="white" font-size="12">API Gateway /</text><text x="255" y="245" text-anchor="middle" fill="white" font-size="12">Load Balancer</text>
+<rect x="380" y="200" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="445" y="235" text-anchor="middle" fill="white" font-size="13">Post Service</text>
+<rect x="570" y="100" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="640" y="130" text-anchor="middle" fill="white" font-size="12">Media Service</text>
+<rect x="570" y="200" width="140" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="640" y="230" text-anchor="middle" fill="white" font-size="12">Fan-out Service</text>
+<rect x="570" y="300" width="140" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="640" y="325" text-anchor="middle" fill="white" font-size="11">Notification Svc</text>
+<ellipse cx="820" cy="125" rx="60" ry="25" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="820" y="130" text-anchor="middle" fill="white" font-size="11">Post DB</text>
+<rect x="780" y="200" width="120" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="840" y="228" text-anchor="middle" fill="white" font-size="11">Feed Cache</text><text x="840" y="243" text-anchor="middle" fill="white" font-size="10">(Redis)</text>
+<rect x="780" y="300" width="120" height="50" rx="8" fill="#888" stroke="#aaa" stroke-width="2"/><text x="840" y="330" text-anchor="middle" fill="white" font-size="12">S3 / CDN</text>
+<rect x="570" y="400" width="140" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="640" y="430" text-anchor="middle" fill="white" font-size="12">Kafka Queue</text>
+<line x1="140" y1="230" x2="188" y2="230" stroke="#1877f2" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="320" y1="230" x2="378" y2="230" stroke="#1877f2" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="510" y1="215" x2="568" y2="130" stroke="#1877f2" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="510" y1="230" x2="568" y2="225" stroke="#1877f2" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="510" y1="245" x2="568" y2="320" stroke="#1877f2" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="710" y1="120" x2="758" y2="120" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="710" y1="225" x2="778" y2="225" stroke="#ff6b6b" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="710" y1="130" x2="778" y2="320" stroke="#ffaa00" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow1)"/>
+<line x1="445" y1="260" x2="445" y2="370" stroke="#ffaa00" stroke-width="1.5" stroke-dasharray="5,5"/><line x1="445" y1="370" x2="568" y2="420" stroke="#ffaa00" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow1)"/>
+<text x="550" y="30" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Facebook: Post Creation Flow</text>
+</svg>
+</div>
+
+<h3>Step-by-Step</h3>
+<ol>
+<li><strong>User creates post</strong> → <code>POST /v1/posts { text: "...", media_ids: [...], privacy: "friends" }</code></li>
+<li><strong>Post Service:</strong> Validates content, creates post record in Post DB (Cassandra)</li>
+<li><strong>Media Service:</strong> If photos/videos attached, uploaded to S3, thumbnails generated, CDN URLs returned</li>
+<li><strong>Fan-out Service:</strong> Gets user's friend list from Social Graph → writes post_id to each friend's feed cache (Redis sorted set) — <strong>fan-out on write</strong> for users with &lt;5000 friends</li>
+<li><strong>For celebrities (&gt;5000 followers):</strong> Skip fan-out on write → handled at read time (hybrid approach)</li>
+<li><strong>Notification Service:</strong> Notifies close friends (if notification preferences allow)</li>
+<li><strong>Kafka:</strong> Post event published for async consumers (search indexing, analytics, content moderation)</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> Alice (500 friends) posts a photo. Post Service stores metadata in Cassandra. Photo uploaded to S3, thumbnail generated. Fan-out Service reads Alice's 500 friends from TAO (social graph) → writes Alice's post_id to 500 Redis sorted sets (one per friend's feed cache). Each write takes ~1ms. Total fan-out: ~500ms. Bob opens Facebook → his feed cache already has Alice's post. Latency for Bob: ~50ms (read from Redis).
+</div>
+
+<h3>Deep Dive: Post Service</h3>
+<ul>
+<li><strong>Protocol:</strong> HTTPS (REST)</li>
+<li><strong>HTTP Method:</strong> <code>POST /v1/posts</code></li>
+<li><strong>Input:</strong> <code>{ user_id, text, media_ids[], privacy: "friends|public|only_me", tagged_users[] }</code></li>
+<li><strong>Output:</strong> <code>{ post_id: "post_abc123", created_at: "...", status: "published" }</code></li>
+<li><strong>Content moderation:</strong> Async — post published immediately, ML classifier checks in background. If flagged, post hidden within seconds</li>
+</ul>
+
+<h3>Deep Dive: Fan-out Service</h3>
+<ul>
+<li><strong>Fan-out on Write (push model):</strong> Pre-compute feeds. On new post, push to all friends' caches. Read is O(1) — just read from cache</li>
+<li><strong>Fan-out on Read (pull model):</strong> Don't pre-compute. On feed request, query all friends' posts and merge. Write is O(1) but read is O(friends × posts)</li>
+<li><strong>Hybrid approach:</strong> Fan-out on write for regular users (&lt;5K friends). Fan-out on read for celebrities (&gt;5K followers). At read time, merge cached posts + celebrity posts</li>
+<li><strong>Why hybrid:</strong> A celebrity with 10M followers would create 10M writes per post (too expensive). But only a small fraction of followers are online — wasteful push</li>
+</ul>
+</div>
+
+<!-- Flow 2: Friend Request -->
+<div class="section">
+<h2>Flow 2: Sending/Accepting Friend Requests</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 950 350" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffaa00"/></marker></defs>
+<rect x="20" y="140" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="80" y="175" text-anchor="middle" fill="white" font-size="13">User A</text>
+<rect x="200" y="140" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="265" y="168" text-anchor="middle" fill="white" font-size="12">Friend Request</text><text x="265" y="185" text-anchor="middle" fill="white" font-size="12">Service</text>
+<rect x="400" y="80" width="150" height="50" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="475" y="108" text-anchor="middle" fill="white" font-size="11">Social Graph (TAO)</text>
+<rect x="400" y="200" width="150" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="475" y="230" text-anchor="middle" fill="white" font-size="12">Notification Svc</text>
+<ellipse cx="700" cy="105" rx="70" ry="30" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="700" y="110" text-anchor="middle" fill="white" font-size="12">Graph DB</text>
+<rect x="620" y="200" width="130" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="685" y="228" text-anchor="middle" fill="white" font-size="11">Graph Cache (TAO)</text>
+<rect x="780" y="140" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="840" y="175" text-anchor="middle" fill="white" font-size="13">User B</text>
+<line x1="140" y1="170" x2="198" y2="170" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="330" y1="160" x2="398" y2="110" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="330" y1="185" x2="398" y2="220" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="550" y1="105" x2="628" y2="105" stroke="#ff6b6b" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="550" y1="115" x2="618" y2="220" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow2)"/>
+<line x1="550" y1="225" x2="778" y2="175" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<text x="475" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Facebook: Friend Request Flow</text>
+</svg>
+</div>
+
+<h3>Step-by-Step</h3>
+<ol>
+<li><strong>User A sends friend request:</strong> <code>POST /v1/friend_requests { target_user_id: B }</code></li>
+<li><strong>Friend Request Service:</strong> Creates pending edge in Social Graph: <code>A → FRIEND_REQUEST → B</code></li>
+<li><strong>Notification sent</strong> to User B (push notification + in-app)</li>
+<li><strong>User B accepts:</strong> <code>POST /v1/friend_requests/{id}/accept</code></li>
+<li><strong>Social Graph updated:</strong> Bidirectional friendship edges created: <code>A ↔ FRIENDS ↔ B</code>. Friend request edge deleted</li>
+<li><strong>TAO Cache invalidated</strong> for both users' friend lists</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> Alice sends friend request to Bob. Social Graph stores <code>(Alice, FRIEND_REQUEST, Bob)</code>. Bob gets notification. Bob accepts → Transaction: DELETE friend_request edge, INSERT friendship edge (Alice→Bob) and (Bob→Alice). TAO cache invalidated for both. Next time either opens their friends list, updated graph is fetched.
+</div>
+
+<h3>Deep Dive: TAO (The Associations and Objects)</h3>
+<ul>
+<li><strong>What:</strong> Facebook's custom graph store. Objects (users, posts) and Associations (edges: friendship, likes, comments)</li>
+<li><strong>Architecture:</strong> MySQL backend + massive in-memory cache layer (memcached). Reads hit cache ~99.9% of the time</li>
+<li><strong>Why custom:</strong> General-purpose graph DBs don't scale to trillions of edges. TAO is optimized for social graph patterns (friend lists, mutual friends, friend-of-friend)</li>
+<li><strong>Consistency:</strong> Write-through cache. Writes go to MySQL first, then cache updated. Cache invalidation on writes ensures consistency</li>
+</ul>
+</div>
+
+<!-- Combined Architecture -->
+<div class="section">
+<h2>Combined Overall Architecture</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1200 650" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#1877f2"/></marker></defs>
+<rect x="20" y="280" width="110" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="315" text-anchor="middle" fill="white" font-size="13">Clients</text>
+<rect x="170" y="280" width="120" height="50" rx="8" fill="#888" stroke="#aaa" stroke-width="2"/><text x="230" y="310" text-anchor="middle" fill="white" font-size="12">CDN</text>
+<rect x="170" y="370" width="120" height="50" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="230" y="400" text-anchor="middle" fill="white" font-size="12">Load Balancer</text>
+<rect x="350" y="80" width="130" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="415" y="110" text-anchor="middle" fill="white" font-size="12">Post Service</text>
+<rect x="350" y="170" width="130" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="415" y="200" text-anchor="middle" fill="white" font-size="12">Feed Service</text>
+<rect x="350" y="260" width="130" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="415" y="290" text-anchor="middle" fill="white" font-size="12">User Service</text>
+<rect x="350" y="350" width="130" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="415" y="380" text-anchor="middle" fill="white" font-size="12">Friend Service</text>
+<rect x="350" y="440" width="130" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="415" y="470" text-anchor="middle" fill="white" font-size="12">Search Service</text>
+<rect x="350" y="530" width="130" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="415" y="560" text-anchor="middle" fill="white" font-size="12">Messenger</text>
+<rect x="560" y="80" width="130" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="625" y="110" text-anchor="middle" fill="white" font-size="12">Fan-out Svc</text>
+<rect x="560" y="170" width="130" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="625" y="200" text-anchor="middle" fill="white" font-size="12">Ranking Svc</text>
+<rect x="560" y="260" width="130" height="50" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="625" y="288" text-anchor="middle" fill="white" font-size="11">Social Graph (TAO)</text>
+<rect x="560" y="350" width="130" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="625" y="380" text-anchor="middle" fill="white" font-size="12">Notification Svc</text>
+<rect x="560" y="440" width="130" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="625" y="470" text-anchor="middle" fill="white" font-size="12">Kafka Bus</text>
+<rect x="770" y="80" width="110" height="40" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="825" y="105" text-anchor="middle" fill="white" font-size="11">Feed Cache</text>
+<ellipse cx="825" cy="190" rx="60" ry="25" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="825" y="195" text-anchor="middle" fill="white" font-size="11">Post DB</text>
+<ellipse cx="825" cy="280" rx="60" ry="25" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="825" y="285" text-anchor="middle" fill="white" font-size="11">User DB</text>
+<ellipse cx="825" cy="370" rx="60" ry="25" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="825" y="375" text-anchor="middle" fill="white" font-size="11">Graph DB</text>
+<rect x="770" y="430" width="110" height="40" rx="8" fill="#888" stroke="#aaa" stroke-width="2"/><text x="825" y="455" text-anchor="middle" fill="white" font-size="11">S3 (Media)</text>
+<rect x="950" y="160" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="1010" y="185" text-anchor="middle" fill="white" font-size="11">Elasticsearch</text>
+<line x1="130" y1="300" x2="168" y2="300" stroke="#1877f2" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="130" y1="320" x2="168" y2="390" stroke="#1877f2" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="290" y1="395" x2="348" y2="105" stroke="#1877f2" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="290" y1="395" x2="348" y2="195" stroke="#1877f2" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="290" y1="395" x2="348" y2="285" stroke="#1877f2" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="290" y1="395" x2="348" y2="375" stroke="#1877f2" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="290" y1="395" x2="348" y2="465" stroke="#1877f2" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="290" y1="395" x2="348" y2="555" stroke="#1877f2" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="480" y1="105" x2="558" y2="105" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="480" y1="195" x2="558" y2="195" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="480" y1="285" x2="558" y2="285" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="690" y1="100" x2="768" y2="100" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="690" y1="195" x2="763" y2="190" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="690" y1="280" x2="763" y2="280" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="690" y1="285" x2="763" y2="370" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="885" y1="190" x2="948" y2="180" stroke="#ff6b6b" stroke-width="1" stroke-dasharray="5,5" marker-end="url(#arrow3)"/>
+<text x="600" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Facebook: Combined Overall Architecture</text>
+</svg>
+</div>
+
+<div class="example">
+<strong>Example — Full lifecycle:</strong> Alice signs up (User Service → User DB) → adds Bob as friend (Friend Service → TAO → Graph DB) → creates a post with photo (Post Service → Post DB + S3) → Fan-out Service pushes post to 500 friends' feed caches → Notification Service alerts close friends → Bob opens app → Feed Service reads from feed cache → Ranking Service scores and orders posts → Bob sees Alice's post → Bob likes it (Post Service → like counter updated, Kafka event) → Elasticsearch indexes the post for search.
+</div>
+</div>
+
+<!-- Database Schema -->
+<div class="section">
+<h2>Database Schema</h2>
+
+<h3>SQL — MySQL (Users, Core Entities — via TAO abstraction)</h3>
+<table>
+<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
+<tr><td rowspan="6"><strong>users</strong></td><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>username</td><td>VARCHAR(50)</td><td><span class="tag tag-idx">UNIQUE INDEX</span></td></tr>
+<tr><td>email</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">UNIQUE INDEX</span></td></tr>
+<tr><td>display_name</td><td>VARCHAR(100)</td><td></td></tr>
+<tr><td>profile_pic_url</td><td>TEXT</td><td>CDN URL</td></tr>
+<tr><td>friend_count</td><td>INT</td><td>Denormalized counter</td></tr>
+</table>
+
+<h3>NoSQL — Cassandra (Posts, Feed)</h3>
+<table>
+<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
+<tr><td rowspan="7"><strong>posts</strong></td><td>post_id</td><td>BIGINT (Snowflake)</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>content_text</td><td>TEXT</td><td></td></tr>
+<tr><td>media_urls</td><td>LIST&lt;TEXT&gt;</td><td>S3 URLs</td></tr>
+<tr><td>privacy</td><td>TEXT</td><td>friends, public, only_me</td></tr>
+<tr><td>like_count</td><td>COUNTER</td><td>Denormalized</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td></tr>
+<tr><td rowspan="3"><strong>user_posts</strong></td><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">Partition Key</span></td></tr>
+<tr><td>post_id</td><td>BIGINT</td><td><span class="tag tag-pk">Clustering Key</span> (DESC)</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td></tr>
+</table>
+
+<h3>Social Graph — TAO (MySQL + Memcached)</h3>
+<table>
+<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
+<tr><td rowspan="4"><strong>associations</strong></td><td>id1</td><td>BIGINT</td><td><span class="tag tag-pk">PK (composite)</span> Source node</td></tr>
+<tr><td>assoc_type</td><td>INT</td><td><span class="tag tag-pk">PK</span> (FRIENDSHIP=1, LIKE=2, COMMENT=3)</td></tr>
+<tr><td>id2</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span> Target node</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td></tr>
+</table>
+
+<h3>Feed Cache — Redis</h3>
+<table>
+<tr><th>Key</th><th>Type</th><th>Value</th></tr>
+<tr><td><code>feed:{user_id}</code></td><td>Sorted Set</td><td>post_ids scored by timestamp. Max 800 entries</td></tr>
+</table>
+
+<h4>Sharding Strategy</h4>
+<ul>
+<li><strong>users:</strong> Shard by <code>user_id</code> (consistent hashing). Billions of users across thousands of MySQL shards</li>
+<li><strong>posts (Cassandra):</strong> Partition by <code>post_id</code>. user_posts table partitioned by <code>user_id</code> for "view my posts" queries</li>
+<li><strong>TAO associations:</strong> Shard by <code>id1</code> — all associations for a user co-located. Friend list query is shard-local</li>
+<li><strong>Feed cache (Redis):</strong> Shard by <code>user_id</code> consistent hashing across Redis cluster</li>
+</ul>
+
+<h3>Denormalization</h3>
+<ul>
+<li><code>users.friend_count</code> — denormalized from association count. Updated atomically on friend add/remove</li>
+<li><code>posts.like_count</code> — Cassandra counter column. Avoids counting association edges for every post render</li>
+<li>Feed cache is itself a denormalized view — precomputed subset of posts relevant to each user</li>
+</ul>
+
+<h3>Indexes</h3>
+<ul>
+<li><code>users.username</code>, <code>users.email</code> — Unique B-tree indexes for login and search</li>
+<li><code>posts.user_id</code> — For "user's timeline" queries (all posts by user_id)</li>
+<li>TAO: <code>(id1, assoc_type)</code> composite index — "all friends of user X" = query with id1=X, assoc_type=FRIENDSHIP</li>
+</ul>
+</div>
+
+<!-- Cache -->
+<div class="section">
+<h2>Cache Deep Dive</h2>
+<table>
+<tr><th>Cache</th><th>Strategy</th><th>Eviction</th><th>TTL</th><th>Purpose</th></tr>
+<tr><td>TAO Cache (Memcached)</td><td>Write-through</td><td>LRU</td><td>None (invalidated on write)</td><td>Social graph lookups (friend lists)</td></tr>
+<tr><td>Feed Cache (Redis)</td><td>Write-through (fan-out)</td><td>Capped sorted set (800 items)</td><td>None</td><td>Pre-computed feeds</td></tr>
+<tr><td>Post Cache (Memcached)</td><td>Read-through</td><td>LRU</td><td>1 hour</td><td>Recently viewed posts</td></tr>
+<tr><td>Session Cache (Redis)</td><td>Write-through</td><td>TTL-based</td><td>30 days</td><td>User sessions/auth tokens</td></tr>
+</table>
+
+<h3>CDN Deep Dive</h3>
+<ul>
+<li><strong>What's cached:</strong> All photos, videos, profile pictures, static assets (JS/CSS). Facebook operates its own CDN (PoP network)</li>
+<li><strong>Strategy:</strong> Push-based for popular content. Pull-based for long-tail content</li>
+<li><strong>Photo serving:</strong> Multiple resolutions stored (thumbnail, medium, full). CDN serves appropriate size based on client request</li>
+<li><strong>TTL:</strong> Media: 365 days (immutable, content-addressed). Static assets: 30 days with cache-busting hashes in filenames</li>
+<li><strong>Haystack:</strong> Facebook's custom photo storage — optimizes for "write once, read often, never modify, rarely delete". Reduces metadata overhead per photo vs traditional filesystems</li>
+</ul>
+</div>
+
+<!-- Scaling -->
+<div class="section">
+<h2>Scaling Considerations</h2>
+<ul>
+<li><strong>TAO:</strong> Hierarchical caching — leader cache (per-region) + follower caches (per-DC). 99.9% hit rate. Write fanout to leader, async propagation to followers</li>
+<li><strong>Multi-region:</strong> Each geographic region has full stack (web servers, caches, DB replicas). MySQL replication across regions with eventual consistency. Strong consistency within primary region</li>
+<li><strong>Load balancing:</strong> L4 (TCP) at edge, L7 (HTTP) within DC. Edge LB distributes across DCs. ECMP routing for even distribution</li>
+<li><strong>Fan-out workers:</strong> Scaled based on post creation rate. During peak (e.g., New Year's), auto-scale fan-out workers. Use priority queues — fan-out for active users first</li>
+<li><strong>Photo storage:</strong> Haystack — stores multiple photos per physical file. One disk seek per photo vs multiple for POSIX (no inode lookup). Handles billions of photos</li>
+</ul>
+</div>
+
+<!-- Tradeoffs -->
+<div class="section">
+<h2>Tradeoffs & Deep Dives</h2>
+<div class="tradeoff">
+<div class="pro"><h4>✅ Hybrid Fan-out</h4><ul><li>Balances write amplification (celebrities) with read performance (regular users)</li><li>Feed reads are O(1) for most users</li><li>Only ~1% of users are celebrities — majority benefit from push model</li></ul></div>
+<div class="con"><h4>❌ Hybrid Complexity</h4><ul><li>Two code paths: push + pull + merge at read time</li><li>Feed staleness: cached feed may miss posts from delayed fan-out</li><li>Celebrity post merging adds ~50ms to feed read</li></ul></div>
+</div>
+
+<h3>Pub/Sub Deep Dive</h3>
+<ul>
+<li><strong>Kafka:</strong> Used for async event processing — post events, like events, comment events. Topics partitioned by user_id for ordering</li>
+<li><strong>Consumers:</strong> Search indexing (Elasticsearch), analytics pipeline, content moderation ML, notification batching</li>
+<li><strong>Real-time:</strong> Facebook uses MQTT for mobile push. Lightweight protocol optimized for mobile (low bandwidth, battery efficient)</li>
+</ul>
+</div>
+
+<!-- Alternatives -->
+<div class="section">
+<h2>Alternative Approaches</h2>
+<ul>
+<li><strong>Pure fan-out on read:</strong> No pre-computation. Every feed request queries all friends' posts. Simpler write path but O(friends) read complexity. Works for small-scale but not 3B users</li>
+<li><strong>Graph database (Neo4j):</strong> Instead of TAO. Better for complex graph queries (friend-of-friend, mutual friends). But doesn't scale to Facebook's size without custom sharding</li>
+<li><strong>Event sourcing for posts:</strong> Store all events (create, edit, delete) rather than current state. Enable undo, versioning. Higher storage cost, more complex reads</li>
+<li><strong>CRDT for counters:</strong> Instead of centralized like counters, use CRDT (Conflict-free Replicated Data Types) for eventual-consistent distributed counting without coordination. Lower latency but approximate counts during convergence</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Additional Information</h2>
+<ul>
+<li><strong>Privacy enforcement:</strong> Every post read checks viewer's relationship to author via TAO. "Friends only" post requires friendship edge check. This is the critical hot path — must be &lt;1ms (served from TAO cache)</li>
+<li><strong>Content moderation:</strong> ML pipeline processes every post/comment. Text classifiers, image classifiers (nudity, violence, hate speech). Runs async but within seconds of posting</li>
+<li><strong>Real-time features:</strong> Online status via heartbeat (MQTT ping every 30s). Typing indicators via MQTT pub/sub. Message delivery receipts (sent/delivered/read) via MQTT</li>
+<li><strong>Snowflake IDs:</strong> 64-bit IDs = timestamp (41 bits, ~69 years) + datacenter (5 bits) + machine (5 bits) + sequence (12 bits, 4096/ms). Time-ordered, globally unique, no coordination needed</li>
+</ul>
+</div>
+</body>
+</html>

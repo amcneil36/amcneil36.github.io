@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wayfair - System Design</title>
+<style>
+:root{--bg:#0f0f0f;--surface:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--accent:#7B2D8E;--accent2:#E67E22;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem;max-width:1400px;margin:0 auto}
+h1{color:var(--accent);font-size:2.2rem;border-bottom:3px solid var(--accent);padding-bottom:.5rem;margin-bottom:1.5rem}
+h2{color:var(--accent2);margin:2rem 0 1rem;font-size:1.5rem}
+h3{color:#81D4FA;margin:1.5rem 0 .75rem}
+h4{color:#CE93D8;margin:1rem 0 .5rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{border:1px solid var(--border);padding:.75rem;text-align:left;font-size:.95rem}
+th{background:#3d1a4e;color:var(--accent)}
+pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}
+code{color:#89DDFF;font-size:.9rem}
+svg text{font-family:'Segoe UI',system-ui,sans-serif}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.pro{border-left:4px solid #4CAF50;padding-left:1rem}
+.con{border-left:4px solid #f44336;padding-left:1rem}
+details{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin:.5rem 0}
+summary{cursor:pointer;font-weight:600;color:var(--accent)}
+.step{margin:.5rem 0;padding:.5rem 1rem;border-left:3px solid var(--accent2)}
+.tag-pk{background:#E91E63;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+.tag-fk{background:#2196F3;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+.tag-idx{background:#FF9800;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+.tag-shard{background:#9C27B0;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+</style>
+</head>
+<body>
+
+<h1>🛋️ Wayfair — E-Commerce for Home Goods</h1>
+<p>Design an e-commerce platform specializing in furniture and home goods with visual search, AR room visualization, complex shipping logistics for oversized items, and supplier drop-ship model.</p>
+
+<h2>📋 Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Product catalog</strong> — browse/search 30M+ SKUs across furniture, decor, appliances with rich attributes (dimensions, material, color, style)</li>
+<li><strong>Visual search & AR</strong> — upload photo to find similar products; AR placement to visualize furniture in room</li>
+<li><strong>Faceted search & filtering</strong> — filter by price, dimensions, color, material, style, rating, delivery speed</li>
+<li><strong>Shopping cart & checkout</strong> — cart with multi-supplier items, split shipping, tax calculation</li>
+<li><strong>Supplier drop-ship</strong> — 80% of orders shipped directly from 12K+ suppliers, not Wayfair warehouses</li>
+<li><strong>Delivery scheduling</strong> — white-glove delivery for large items (room of choice, assembly), LTL freight tracking</li>
+<li><strong>Reviews & ratings</strong> — verified purchase reviews with photo uploads</li>
+</ul>
+</div>
+
+<h2>📋 Non-Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Search latency</strong> — &lt;200ms for search results including facet counts</li>
+<li><strong>Catalog scale</strong> — 30M+ products, 100K+ daily catalog updates from suppliers</li>
+<li><strong>Availability</strong> — 99.99% for browse/search, 99.999% for checkout</li>
+<li><strong>Image processing</strong> — 3D model rendering, AR compatibility, 10+ images per product</li>
+<li><strong>Logistics complexity</strong> — handle LTL freight, parcel, white-glove across 12K+ suppliers</li>
+<li><strong>Peak handling</strong> — Way Day sales (10x normal traffic), Black Friday</li>
+</ul>
+</div>
+
+<h2>🔄 Flow 1: Product Search & Discovery</h2>
+<svg viewBox="0 0 1000 300" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="a1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#7B2D8E"/></marker></defs>
+<rect x="20" y="60" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="90" text-anchor="middle" fill="white" font-size="13">Customer</text>
+<rect x="175" y="60" width="130" height="50" rx="8" fill="#E65100"/><text x="240" y="90" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
+<rect x="350" y="30" width="130" height="50" rx="8" fill="#1565C0"/><text x="415" y="60" text-anchor="middle" fill="white" font-size="12">Search Service</text>
+<rect x="350" y="100" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="415" y="120" text-anchor="middle" fill="white" font-size="12">Visual Search</text><text x="415" y="135" text-anchor="middle" fill="white" font-size="10">(CNN Embedding)</text>
+<rect x="530" y="30" width="140" height="50" rx="8" fill="#4E342E"/><text x="600" y="60" text-anchor="middle" fill="white" font-size="12">Elasticsearch</text>
+<rect x="530" y="100" width="140" height="50" rx="8" fill="#1565C0"/><text x="600" y="120" text-anchor="middle" fill="white" font-size="12">Ranking Service</text><text x="600" y="135" text-anchor="middle" fill="white" font-size="10">(LambdaMART)</text>
+<rect x="720" y="60" width="130" height="50" rx="8" fill="#00695C"/><text x="785" y="90" text-anchor="middle" fill="white" font-size="12">Personalization</text>
+<line x1="130" y1="85" x2="170" y2="85" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="305" y1="75" x2="345" y2="55" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="305" y1="95" x2="345" y2="125" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="480" y1="55" x2="525" y2="55" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="670" y1="75" x2="715" y2="85" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="480" y1="125" x2="525" y2="115" stroke="#E67E22" stroke-width="2" marker-end="url(#a1)"/>
+<text x="415" y="175" fill="#aaa" font-size="10">image → embedding → ANN search</text>
+</svg>
+
+<div class="step"><strong>Step 1:</strong> Customer enters text query or uploads image for visual search</div>
+<div class="step"><strong>Step 2:</strong> Text search: Elasticsearch with custom analyzers for furniture attributes (dimensions, materials, style synonyms)</div>
+<div class="step"><strong>Step 3:</strong> Visual search: CNN extracts 512-dim embedding from image, nearest-neighbor search in vector DB (FAISS/Milvus)</div>
+<div class="step"><strong>Step 4:</strong> Ranking Service re-ranks results using LambdaMART with features: relevance, margin, conversion rate, delivery speed, supplier reliability</div>
+<div class="step"><strong>Step 5:</strong> Personalization layer boosts based on user style preferences, browsing history, room context</div>
+
+<details><summary>Deep Dive: Visual Search & Style Matching</summary>
+<div class="card">
+<pre><code>// Visual Search Pipeline:
+// 1. User uploads photo of furniture they like
+// 2. CNN (ResNet-50 fine-tuned on furniture) extracts feature embedding
+// 3. ANN (Approximate Nearest Neighbor) finds similar products
+
+// Embedding model: trained on Wayfair's product image corpus
+// Triplet loss: anchor (product) → positive (same style) → negative
+// Result: similar-looking furniture maps to nearby embeddings
+
+// ANN search: FAISS with IVF-PQ index
+// 30M products → 30M 512-dim vectors
+// IVF (Inverted File): cluster vectors into 4096 cells
+// PQ (Product Quantization): compress 512-dim to 64 bytes
+// Total index size: ~2GB (fits in memory)
+// Search: probe 32 nearest cells, return top-50 in ~5ms
+
+// Style attributes extracted by CNN:
+// - Material: wood, metal, fabric, leather, glass
+// - Style: modern, traditional, farmhouse, mid-century
+// - Color: dominant + accent colors (HSV histogram)
+// - Shape: silhouette features for matching form factor
+
+// AR Visualization:
+// ARKit (iOS) / ARCore (Android) detects floor plane
+// 3D model (USDZ/GLB) placed at user-selected position
+// Real-time occlusion and lighting estimation</code></pre>
+</div>
+</details>
+
+<details><summary>Deep Dive: Faceted Search with Elasticsearch</summary>
+<div class="card">
+<pre><code>// Furniture-specific search challenges:
+// 1. Dimensional search: "couch under 80 inches wide"
+// 2. Material synonyms: "wood" = oak, walnut, pine, bamboo
+// 3. Style matching: "modern farmhouse" (compound style)
+// 4. Color search: "blue" should match navy, teal, cerulean
+
+// Elasticsearch mapping:
+{
+  "product": {
+    "properties": {
+      "title": { "type": "text", "analyzer": "furniture_analyzer" },
+      "category_path": { "type": "keyword" }, // "Furniture/Living Room/Sofas"
+      "dimensions": {
+        "width_inches": { "type": "float" },
+        "height_inches": { "type": "float" },
+        "depth_inches": { "type": "float" },
+        "weight_lbs": { "type": "float" }
+      },
+      "price": { "type": "scaled_float", "scaling_factor": 100 },
+      "materials": { "type": "keyword" }, // multi-valued
+      "style_tags": { "type": "keyword" },
+      "color_family": { "type": "keyword" },
+      "supplier_id": { "type": "keyword" },
+      "in_stock": { "type": "boolean" },
+      "avg_rating": { "type": "float" },
+      "image_embedding": { "type": "dense_vector", "dims": 512 }
+    }
+  }
+}
+
+// Aggregations for facet counts:
+// "aggs": { "materials": { "terms": { "field": "materials" } } }
+// Returns: { "wood": 1234, "metal": 567, "fabric": 890 }
+// Fast because keyword fields use doc_values (columnar)</code></pre>
+</div>
+</details>
+
+<h2>🔄 Flow 2: Order & Drop-Ship Fulfillment</h2>
+<svg viewBox="0 0 1050 320" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="a2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#E67E22"/></marker></defs>
+<rect x="20" y="50" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="80" text-anchor="middle" fill="white" font-size="12">Customer</text>
+<rect x="175" y="50" width="120" height="50" rx="8" fill="#1565C0"/><text x="235" y="80" text-anchor="middle" fill="white" font-size="12">Order Service</text>
+<rect x="340" y="30" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="405" y="50" text-anchor="middle" fill="white" font-size="12">Order Splitter</text><text x="405" y="65" text-anchor="middle" fill="white" font-size="10">(per supplier)</text>
+<rect x="520" y="30" width="130" height="50" rx="8" fill="#E65100"/><text x="585" y="50" text-anchor="middle" fill="white" font-size="12">Supplier Portal</text><text x="585" y="65" text-anchor="middle" fill="white" font-size="10">(EDI / API)</text>
+<rect x="700" y="30" width="130" height="50" rx="8" fill="#4E342E"/><text x="765" y="60" text-anchor="middle" fill="white" font-size="12">Supplier</text>
+<rect x="340" y="120" width="130" height="50" rx="8" fill="#1565C0"/><text x="405" y="140" text-anchor="middle" fill="white" font-size="12">Shipping</text><text x="405" y="155" text-anchor="middle" fill="white" font-size="10">Orchestrator</text>
+<rect x="520" y="120" width="130" height="50" rx="8" fill="#00695C"/><text x="585" y="140" text-anchor="middle" fill="white" font-size="12">LTL Freight</text><text x="585" y="155" text-anchor="middle" fill="white" font-size="10">Broker</text>
+<rect x="700" y="120" width="130" height="50" rx="8" fill="#00695C"/><text x="765" y="140" text-anchor="middle" fill="white" font-size="12">White Glove</text><text x="765" y="155" text-anchor="middle" fill="white" font-size="10">Delivery</text>
+<rect x="340" y="230" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="405" y="260" text-anchor="middle" fill="white" font-size="12">Tracking Service</text>
+<line x1="130" y1="75" x2="170" y2="75" stroke="#E67E22" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="295" y1="65" x2="335" y2="55" stroke="#E67E22" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="470" y1="55" x2="515" y2="55" stroke="#E67E22" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="650" y1="55" x2="695" y2="55" stroke="#E67E22" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="405" y1="80" x2="405" y2="115" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="470" y1="145" x2="515" y2="140" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="650" y1="140" x2="695" y2="140" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="405" y1="170" x2="405" y2="225" stroke="#FF9800" stroke-width="2" marker-end="url(#a2)"/>
+<text x="405" y="200" fill="#aaa" font-size="10">shipment events</text>
+</svg>
+
+<div class="step"><strong>Step 1:</strong> Customer places order with items from multiple suppliers. Order Service validates inventory, processes payment</div>
+<div class="step"><strong>Step 2:</strong> Order Splitter breaks order into sub-orders per supplier. Each sub-order sent via EDI 850 (purchase order) or API</div>
+<div class="step"><strong>Step 3:</strong> Supplier ships directly to customer. Shipping Orchestrator selects carrier: parcel (FedEx/UPS) for small items, LTL freight for furniture, white-glove for premium delivery</div>
+<div class="step"><strong>Step 4:</strong> Tracking Service aggregates shipment events from multiple carriers into unified tracking for customer</div>
+
+<details><summary>Deep Dive: Drop-Ship Model & EDI Integration</summary>
+<div class="card">
+<pre><code>// Wayfair's drop-ship model:
+// - Wayfair does NOT hold inventory for 80% of products
+// - Supplier stores, picks, packs, and ships directly
+// - Wayfair handles: discovery, checkout, customer service, returns
+
+// EDI (Electronic Data Interchange) — B2B protocol:
+// EDI 850 = Purchase Order (Wayfair → Supplier)
+// EDI 855 = PO Acknowledgment (Supplier → Wayfair)
+// EDI 856 = Advance Ship Notice (Supplier → Wayfair)
+// EDI 810 = Invoice (Supplier → Wayfair)
+
+// Modern alternative: REST API for smaller suppliers
+POST /api/v1/supplier/orders
+{
+  "po_number": "WF-2025-8839201",
+  "ship_to": { "name": "John Doe", "street": "123 Main St", ... },
+  "items": [
+    { "sku": "SUP-SOFA-8822", "qty": 1, "unit_price": 450.00 }
+  ],
+  "ship_method": "LTL_FREIGHT",
+  "ship_by_date": "2025-02-14",
+  "deliver_by_date": "2025-02-21"
+}
+
+// Inventory feed: suppliers push stock levels every 15 min
+// Critical for preventing overselling on Way Day (10x traffic)</code></pre>
+</div>
+</details>
+
+<h2>🔄 Flow 3: AR Room Visualization</h2>
+<svg viewBox="0 0 950 250" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="a3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#7B2D8E"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#2E7D32"/><text x="80" y="80" text-anchor="middle" fill="white" font-size="12">Mobile Camera</text><text x="80" y="95" text-anchor="middle" fill="white" font-size="10">(ARKit/ARCore)</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#1565C0"/><text x="255" y="80" text-anchor="middle" fill="white" font-size="12">Plane Detection</text><text x="255" y="95" text-anchor="middle" fill="white" font-size="10">& Scene Understanding</text>
+<rect x="370" y="60" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="435" y="80" text-anchor="middle" fill="white" font-size="12">3D Model Loader</text><text x="435" y="95" text-anchor="middle" fill="white" font-size="10">(USDZ / GLB)</text>
+<rect x="550" y="60" width="130" height="50" rx="8" fill="#E65100"/><text x="615" y="80" text-anchor="middle" fill="white" font-size="12">Real-time Render</text><text x="615" y="95" text-anchor="middle" fill="white" font-size="10">(PBR + Lighting)</text>
+<rect x="730" y="60" width="130" height="50" rx="8" fill="#2E7D32"/><text x="795" y="90" text-anchor="middle" fill="white" font-size="12">AR Display</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="320" y1="85" x2="365" y2="85" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="500" y1="85" x2="545" y2="85" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="680" y1="85" x2="725" y2="85" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a3)"/>
+</svg>
+
+<div class="step"><strong>Step 1:</strong> ARKit/ARCore detects floor plane and room geometry from camera feed</div>
+<div class="step"><strong>Step 2:</strong> User selects product; 3D model downloaded from CDN (USDZ for iOS, GLB for Android, ~5-15MB)</div>
+<div class="step"><strong>Step 3:</strong> Model placed on detected surface with real-world scale (actual product dimensions)</div>
+<div class="step"><strong>Step 4:</strong> PBR (Physically Based Rendering) with environment lighting estimation for realistic appearance</div>
+
+<h2>🏗️ Combined Architecture</h2>
+<svg viewBox="0 0 1100 480" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="ac" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#7B2D8E"/></marker></defs>
+<text x="550" y="25" text-anchor="middle" fill="#7B2D8E" font-size="16" font-weight="bold">Wayfair E-Commerce Architecture</text>
+<rect x="20" y="50" width="120" height="40" rx="8" fill="#2E7D32"/><text x="80" y="75" text-anchor="middle" fill="white" font-size="11">Web / Mobile</text>
+<rect x="200" y="50" width="130" height="40" rx="8" fill="#E65100"/><text x="265" y="75" text-anchor="middle" fill="white" font-size="11">API Gateway / CDN</text>
+<rect x="400" y="40" width="120" height="35" rx="8" fill="#1565C0"/><text x="460" y="63" text-anchor="middle" fill="white" font-size="11">Search Service</text>
+<rect x="400" y="85" width="120" height="35" rx="8" fill="#1565C0"/><text x="460" y="108" text-anchor="middle" fill="white" font-size="11">Catalog Service</text>
+<rect x="400" y="130" width="120" height="35" rx="8" fill="#1565C0"/><text x="460" y="153" text-anchor="middle" fill="white" font-size="11">Cart / Checkout</text>
+<rect x="400" y="175" width="120" height="35" rx="8" fill="#1565C0"/><text x="460" y="198" text-anchor="middle" fill="white" font-size="11">Order Service</text>
+<rect x="400" y="220" width="120" height="35" rx="8" fill="#1565C0"/><text x="460" y="243" text-anchor="middle" fill="white" font-size="11">Inventory Service</text>
+<rect x="580" y="50" width="130" height="40" rx="8" fill="#4E342E"/><text x="645" y="75" text-anchor="middle" fill="white" font-size="11">Elasticsearch</text>
+<rect x="580" y="110" width="130" height="40" rx="8" fill="#4E342E"/><text x="645" y="135" text-anchor="middle" fill="white" font-size="11">PostgreSQL</text>
+<rect x="580" y="170" width="130" height="40" rx="8" fill="#00695C"/><text x="645" y="195" text-anchor="middle" fill="white" font-size="11">Redis Cluster</text>
+<rect x="580" y="230" width="130" height="40" rx="8" fill="#6A1B9A"/><text x="645" y="255" text-anchor="middle" fill="white" font-size="11">Kafka Event Bus</text>
+<rect x="780" y="50" width="140" height="40" rx="8" fill="#E65100"/><text x="850" y="75" text-anchor="middle" fill="white" font-size="11">Supplier Portal (EDI)</text>
+<rect x="780" y="110" width="140" height="40" rx="8" fill="#1565C0"/><text x="850" y="135" text-anchor="middle" fill="white" font-size="11">Shipping Orchestrator</text>
+<rect x="780" y="170" width="140" height="40" rx="8" fill="#6A1B9A"/><text x="850" y="195" text-anchor="middle" fill="white" font-size="11">ML Ranking & Recs</text>
+<rect x="780" y="230" width="140" height="40" rx="8" fill="#4E342E"/><text x="850" y="255" text-anchor="middle" fill="white" font-size="11">3D Model / Image CDN</text>
+<line x1="140" y1="70" x2="195" y2="70" stroke="#7B2D8E" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="330" y1="70" x2="395" y2="57" stroke="#7B2D8E" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="520" y1="57" x2="575" y2="70" stroke="#7B2D8E" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="520" y1="102" x2="575" y2="130" stroke="#7B2D8E" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="520" y1="147" x2="575" y2="190" stroke="#E67E22" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="520" y1="192" x2="575" y2="250" stroke="#E67E22" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="710" y1="70" x2="775" y2="70" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="710" y1="130" x2="775" y2="130" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="710" y1="195" x2="775" y2="195" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="710" y1="250" x2="775" y2="250" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
+</svg>
+
+<h2>💾 Database Schema</h2>
+<div class="grid">
+<div class="card">
+<h3>PostgreSQL — Products & Orders</h3>
+<pre><code>CREATE TABLE products (
+  id BIGSERIAL PRIMARY KEY, -- <span class="tag-pk">PK</span>
+  sku VARCHAR(50) UNIQUE NOT NULL, -- <span class="tag-idx">IDX</span>
+  supplier_id INT NOT NULL, -- <span class="tag-fk">FK</span> <span class="tag-shard">SHARD</span>
+  title TEXT NOT NULL,
+  category_path TEXT NOT NULL, -- <span class="tag-idx">IDX</span>
+  price_cents BIGINT NOT NULL,
+  width_inches DECIMAL(6,1),
+  height_inches DECIMAL(6,1),
+  depth_inches DECIMAL(6,1),
+  weight_lbs DECIMAL(7,1),
+  materials TEXT[], -- array: ['solid wood','metal']
+  style_tags TEXT[], -- ['modern','farmhouse']
+  color_family VARCHAR(30), -- <span class="tag-idx">IDX</span>
+  has_3d_model BOOLEAN DEFAULT false,
+  avg_rating DECIMAL(3,2),
+  review_count INT DEFAULT 0,
+  in_stock BOOLEAN DEFAULT true, -- <span class="tag-idx">IDX</span>
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+-- <span class="tag-idx">IDX</span>: (category_path, in_stock, price_cents)
+-- <span class="tag-idx">IDX</span>: GIN on materials, style_tags for array containment
+
+CREATE TABLE orders (
+  id BIGSERIAL PRIMARY KEY, -- <span class="tag-pk">PK</span>
+  customer_id BIGINT NOT NULL, -- <span class="tag-fk">FK</span> <span class="tag-idx">IDX</span>
+  status VARCHAR(20) DEFAULT 'pending',
+  total_cents BIGINT NOT NULL,
+  tax_cents BIGINT NOT NULL,
+  shipping_cents BIGINT NOT NULL,
+  payment_intent_id VARCHAR(50),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE order_items (
+  id BIGSERIAL PRIMARY KEY,
+  order_id BIGINT NOT NULL REFERENCES orders(id), -- <span class="tag-fk">FK</span>
+  product_id BIGINT NOT NULL, -- <span class="tag-fk">FK</span>
+  supplier_id INT NOT NULL,
+  quantity INT NOT NULL,
+  unit_price_cents BIGINT NOT NULL,
+  sub_order_id VARCHAR(50), -- split per supplier
+  ship_method VARCHAR(30), -- 'parcel'|'ltl_freight'|'white_glove'
+  tracking_number VARCHAR(50)
+);</code></pre>
+</div>
+<div class="card">
+<h3>Inventory (Redis + PostgreSQL)</h3>
+<pre><code>-- Real-time inventory in Redis (for checkout validation)
+-- Key: inventory:{sku}
+-- Value: { "available": 45, "reserved": 3, "supplier_id": 8821 }
+-- Atomic decrement on order placement (DECRBY)
+
+-- Inventory history in PostgreSQL
+CREATE TABLE inventory_feeds (
+  id BIGSERIAL PRIMARY KEY,
+  supplier_id INT NOT NULL, -- <span class="tag-fk">FK</span>
+  sku VARCHAR(50) NOT NULL, -- <span class="tag-idx">IDX</span>
+  available_qty INT NOT NULL,
+  warehouse_location VARCHAR(50),
+  lead_time_days INT,
+  received_at TIMESTAMPTZ DEFAULT now()
+);
+-- Suppliers push feed every 15 min via EDI 846 or API
+-- Stale inventory (>30 min) triggers "limited stock" badge
+
+-- 3D Model Assets (metadata in DB, files on CDN)
+CREATE TABLE product_3d_models (
+  product_id BIGINT PRIMARY KEY REFERENCES products(id),
+  usdz_url TEXT, -- iOS AR format
+  glb_url TEXT,  -- Android/web AR format
+  thumbnail_url TEXT,
+  poly_count INT,
+  file_size_bytes BIGINT,
+  status VARCHAR(20) DEFAULT 'processing'
+);</code></pre>
+</div>
+</div>
+
+<h2>⚡ Cache & CDN Deep Dive</h2>
+<div class="card">
+<table>
+<tr><th>Layer</th><th>What</th><th>Strategy</th><th>TTL</th></tr>
+<tr><td>CDN (CloudFront)</td><td>Product images, 3D models, static assets</td><td>Long-lived with versioned URLs</td><td>30 days</td></tr>
+<tr><td>Redis — Inventory</td><td>Real-time stock levels</td><td>Write-through from supplier feed</td><td>30 min max</td></tr>
+<tr><td>Redis — Search</td><td>Popular search results</td><td>LRU with invalidation on catalog change</td><td>5 min</td></tr>
+<tr><td>Redis — Sessions</td><td>Cart, user preferences</td><td>Write-through</td><td>24 hours</td></tr>
+<tr><td>Varnish</td><td>Category pages, PDP (product detail)</td><td>Stale-while-revalidate</td><td>60 seconds</td></tr>
+</table>
+<pre><code>// Image processing pipeline:
+// Supplier uploads high-res image (4000x4000 JPEG)
+// → Background removal (U-Net segmentation)
+// → Generate 6 renditions: thumbnail, listing, detail, zoom, social, AR-preview
+// → WebP/AVIF conversion for modern browsers
+// → Push to CDN with immutable URLs
+// → Product page references CDN URLs with responsive srcset</code></pre>
+</div>
+
+<h2>📈 Scaling Considerations</h2>
+<div class="card">
+<ul>
+<li><strong>Way Day preparation:</strong> pre-warm CDN caches with deal products, pre-scale search cluster 3x, freeze catalog changes during event, dedicated checkout capacity.</li>
+<li><strong>Supplier integration scale:</strong> 12K+ suppliers with varying tech capabilities. EDI for large suppliers, REST API for mid-size, CSV upload for small. All normalized to internal event format.</li>
+<li><strong>Search cluster:</strong> Elasticsearch with 30M products across 20+ shards. Shard by category for co-located search. Replica shards for read scaling (3 replicas during Way Day).</li>
+<li><strong>3D model generation:</strong> automated pipeline from product photos → 3D mesh using photogrammetry + AI. Scale bottleneck: GPU rendering farm. Prioritize top-selling products for 3D models.</li>
+</ul>
+</div>
+
+<h2>⚖️ Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="card pro"><h4>Drop-Ship Model</h4><ul><li>Zero inventory holding cost</li><li>Infinite catalog scalability</li><li>Low capital requirements</li></ul></div>
+<div class="card con"><h4>Drop-Ship Model</h4><ul><li>Less control over shipping quality</li><li>Complex returns across suppliers</li><li>Inventory accuracy depends on supplier feeds</li></ul></div>
+<div class="card pro"><h4>Visual Search (CNN)</h4><ul><li>Discover products without words</li><li>Cross-sell from inspiration photos</li><li>Higher engagement, +15% conversion</li></ul></div>
+<div class="card con"><h4>Visual Search (CNN)</h4><ul><li>GPU inference cost per query</li><li>Requires large training dataset</li><li>Style subjective — not always accurate</li></ul></div>
+</div>
+
+<h2>🔄 Alternative Approaches</h2>
+<div class="grid">
+<div class="card"><h4>First-Party Fulfillment (Amazon FBA model)</h4><p>Hold inventory in Wayfair warehouses for faster, more reliable delivery. Higher capital expenditure but better customer experience. CastleGate (Wayfair's forward warehouse program) is a hybrid — suppliers pre-position inventory in Wayfair facilities.</p></div>
+<div class="card"><h4>Generative AI for Room Design</h4><p>Instead of AR placement, use diffusion models to generate complete room renders with selected products. Customer uploads room photo, AI redesigns with Wayfair products. Requires style-transfer and product-faithful generation.</p></div>
+</div>
+
+<h2>📚 Additional Information</h2>
+<div class="card">
+<ul>
+<li><strong>CastleGate warehousing:</strong> Wayfair's forward-deployment network. Suppliers pre-ship popular SKUs to regional Wayfair facilities. Enables 2-day delivery while keeping drop-ship cost structure.</li>
+<li><strong>LTL freight:</strong> Less-Than-Truckload. For items 150-10,000 lbs. Requires freight class determination based on dimensions, weight, density. White-glove adds room placement + assembly (+$100-300).</li>
+<li><strong>Tax calculation:</strong> complex for furniture (varies by state, item type — some states exempt certain home goods). Use tax engine (Avalara/Vertex) with product tax codes.</li>
+<li><strong>Return logistics:</strong> furniture returns are expensive ($50-200 per return in shipping). Wayfair often issues refund without return for items under $50 (cheaper than reverse logistics).</li>
+</ul>
+</div>
+
+</body>
+</html>

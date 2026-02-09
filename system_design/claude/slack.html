@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slack - System Design</title>
+<style>
+:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--heading:#E01E5A;--accent:#36C5F0;--accent2:#2EB67D;--accent3:#ECB22E;--muted:#888}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
+h1{color:var(--heading);font-size:2.2rem;border-bottom:3px solid var(--heading);padding-bottom:.5rem;margin-bottom:1.5rem}
+h2{color:var(--accent);margin:2rem 0 1rem;font-size:1.5rem}
+h3{color:var(--accent2);margin:1.5rem 0 .75rem;font-size:1.2rem}
+h4{color:var(--accent3);margin:1rem 0 .5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
+ul,ol{margin:.75rem 0 .75rem 1.5rem}
+li{margin:.4rem 0}
+code{background:#2d2d2d;padding:.2rem .5rem;border-radius:4px;font-size:.9rem;color:#f8f8f2}
+pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:1rem 0}
+pre code{padding:0;background:none}
+.tag{display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600;margin:.2rem}
+.tag-pk{background:#E53935;color:#fff}
+.tag-fk{background:#1E88E5;color:#fff}
+.tag-idx{background:#43A047;color:#fff}
+.tag-shard{background:#FB8C00;color:#fff}
+svg text{font-family:'Segoe UI',system-ui,sans-serif}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.pro{background:#1b3a1b;border:1px solid #2d5a2d;border-radius:8px;padding:1rem}
+.con{background:#3a1b1b;border:1px solid #5a2d2d;border-radius:8px;padding:1rem}
+</style>
+</head>
+<body>
+
+<h1>💬 Slack - System Design</h1>
+
+<div class="card">
+<h2>Functional Requirements</h2>
+<ol>
+<li><strong>Real-Time Messaging:</strong> Channels (public/private), DMs, threads, reactions, file sharing, mentions (@user/@channel/@here), message editing/deletion, rich formatting (mrkdwn), link unfurling</li>
+<li><strong>Search:</strong> Full-text search across all messages, files, and channels with filters (from:, in:, before:, has:link, has:emoji) — results within seconds across years of history</li>
+<li><strong>Integration Platform:</strong> Slack Apps (Bolt SDK), slash commands, webhooks, interactive messages (buttons/modals), Workflow Builder, 2,600+ app directory integrations</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Scale:</strong> 200K+ paying customers, 65M+ daily active users, 2.6B+ messages/day, 1.5B+ API calls/day</li>
+<li><strong>Latency:</strong> Message delivery &lt;500ms, search &lt;1s, file upload &lt;3s for typical files</li>
+<li><strong>Availability:</strong> 99.99% (4 nines); real-time messaging cannot tolerate extended downtime</li>
+<li><strong>Consistency:</strong> Message ordering must be consistent within a channel — causal ordering with Lamport-like timestamps</li>
+<li><strong>Multi-Tenancy:</strong> Complete workspace isolation; Enterprise Grid: multiple workspaces under single org with shared channels</li>
+</ul>
+</div>
+
+<!-- ============ FLOW 1: MESSAGING ============ -->
+<h2>Flow 1: Real-Time Messaging</h2>
+<div class="card">
+<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#36C5F0"/></marker></defs>
+<rect x="20" y="50" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Client</text><text x="80" y="87" text-anchor="middle" fill="#fff" font-size="10">(Desktop/Web/Mobile)</text>
+<rect x="190" y="50" width="130" height="50" rx="8" fill="#FB8C00"/><text x="255" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Edge Gateway</text><text x="255" y="87" text-anchor="middle" fill="#fff" font-size="10">(Envoy / HAProxy)</text>
+<rect x="370" y="50" width="130" height="50" rx="8" fill="#4285F4"/><text x="435" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Message Server</text><text x="435" y="87" text-anchor="middle" fill="#fff" font-size="10">(Channel Router)</text>
+<rect x="550" y="20" width="130" height="50" rx="8" fill="#607D8B"/><text x="615" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">WebSocket</text><text x="615" y="57" text-anchor="middle" fill="#fff" font-size="10">Gateway (Flannel)</text>
+<rect x="550" y="90" width="130" height="50" rx="8" fill="#795548"/><text x="615" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Message Store</text><text x="615" y="127" text-anchor="middle" fill="#fff" font-size="10">(MySQL Vitess)</text>
+<rect x="740" y="20" width="130" height="50" rx="8" fill="#E53935"/><text x="805" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Push Service</text><text x="805" y="57" text-anchor="middle" fill="#fff" font-size="10">(APNs/FCM)</text>
+<rect x="740" y="90" width="130" height="50" rx="8" fill="#00897B"/><text x="805" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Index</text><text x="805" y="127" text-anchor="middle" fill="#fff" font-size="10">(Solr → ES)</text>
+<rect x="370" y="200" width="130" height="50" rx="8" fill="#9C27B0"/><text x="435" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Job Queue</text><text x="435" y="237" text-anchor="middle" fill="#fff" font-size="10">(Kafka)</text>
+<line x1="140" y1="75" x2="185" y2="75" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="320" y1="75" x2="365" y2="75" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="500" y1="65" x2="545" y2="45" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="500" y1="85" x2="545" y2="110" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="680" y1="45" x2="735" y2="45" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="680" y1="115" x2="735" y2="115" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="435" y1="100" x2="435" y2="195" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Client sends message via HTTPS POST to Edge Gateway (Envoy-based with TLS termination)</li>
+<li>Message Server validates auth (OAuth2 token), checks channel membership, enforces rate limits (1 msg/sec per user)</li>
+<li>Message assigned monotonic channel-scoped timestamp (ts) — format: <code>1707500000.000100</code> (Unix epoch + micro counter)</li>
+<li>Persisted to MySQL (Vitess sharded) — primary source of truth for all messages</li>
+<li>WebSocket Gateway (Flannel) fans out message to all online channel members via persistent WebSocket connections</li>
+<li>Offline users: push notification queued via Kafka → delivered via APNs/FCM with badge count update</li>
+<li>Message indexed asynchronously in Solr/Elasticsearch for full-text search</li>
+<li>Kafka job queue triggers: link unfurling, @mention notifications, bot/webhook deliveries, analytics events</li>
+</ol>
+
+<h3>Example</h3>
+<p>User posts in #engineering (500 members, 45 online). Message Server assigns ts=1707500000.000100, stores in MySQL shard for workspace_123. Flannel pushes to 45 WebSocket connections. 455 offline users: push notifications batched (channel notification setting: "mentions only" → only @mentioned users get push). Kafka fires: unfurl the GitHub PR link, notify @alice (mentioned), deliver to PagerDuty bot webhook.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>WebSocket Gateway (Flannel)</h4>
+<p><strong>Architecture:</strong> Slack's custom WebSocket layer — stateful, long-lived connections; each server handles ~100K connections</p>
+<p><strong>Protocol:</strong> WebSocket with JSON-framed messages; client maintains single connection for all channels</p>
+<p><strong>Subscription:</strong> Server maintains in-memory map: channel_id → [connection_ids]; broadcast = iterate subscribers</p>
+<p><strong>Reconnect:</strong> Client reconnects with last_event_id → server replays missed events from event log (Redis Streams)</p>
+</div>
+<div class="card">
+<h4>Message Timestamp (ts)</h4>
+<p><strong>Format:</strong> <code>{epoch}.{counter}</code> — e.g., <code>1707500000.000100</code></p>
+<p><strong>Uniqueness:</strong> Globally unique within a channel — serves as both timestamp AND message ID</p>
+<p><strong>Ordering:</strong> String-sortable — lexicographic sort = chronological order</p>
+<p><strong>Counter:</strong> Per-channel monotonic counter prevents collisions for messages in same second</p>
+</div>
+<div class="card">
+<h4>MySQL + Vitess (Sharding)</h4>
+<p><strong>Vitess:</strong> MySQL sharding middleware developed at YouTube; provides horizontal sharding transparent to application</p>
+<p><strong>Shard Key:</strong> workspace_id — all data for a workspace on same shard (channels, messages, members)</p>
+<p><strong>Scale:</strong> Thousands of MySQL shards; Vitess handles routing, connection pooling, schema migration</p>
+<p><strong>Migration:</strong> Slack migrated from single MySQL to Vitess to handle growth; later exploring CockroachDB for some workloads</p>
+</div>
+<div class="card">
+<h4>Link Unfurling</h4>
+<p><strong>Process:</strong> Kafka consumer extracts URLs from message → HTTP HEAD/GET to fetch Open Graph metadata (og:title, og:image, og:description)</p>
+<p><strong>Cache:</strong> Unfurl results cached in Redis by URL (TTL 24h) — same URL shared across messages</p>
+<p><strong>Special:</strong> First-party unfurls for known services (Google Docs, GitHub, Jira) fetch richer metadata via API integration</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 2: SEARCH ============ -->
+<h2>Flow 2: Message Search</h2>
+<div class="card">
+<svg viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#2EB67D"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="90" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Client</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Service</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="10">(Query Parser)</text>
+<rect x="370" y="30" width="130" height="50" rx="8" fill="#00897B"/><text x="435" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Index</text><text x="435" y="67" text-anchor="middle" fill="#fff" font-size="10">(Elasticsearch)</text>
+<rect x="370" y="100" width="130" height="50" rx="8" fill="#9C27B0"/><text x="435" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">ACL Filter</text><text x="435" y="137" text-anchor="middle" fill="#fff" font-size="10">(Channel Perms)</text>
+<rect x="560" y="60" width="130" height="50" rx="8" fill="#795548"/><text x="625" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">MySQL (Vitess)</text><text x="625" y="97" text-anchor="middle" fill="#fff" font-size="10">(Message Hydration)</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#2EB67D" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="320" y1="75" x2="365" y2="55" stroke="#2EB67D" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="320" y1="95" x2="365" y2="120" stroke="#2EB67D" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="500" y1="75" x2="555" y2="80" stroke="#2EB67D" stroke-width="2" marker-end="url(#ah2)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>User types search query with optional operators: <code>from:@alice in:#engineering has:link before:2024-02-01 deploy</code></li>
+<li>Search Service parses query into structured filters + free-text terms</li>
+<li>Elasticsearch queried within workspace scope — BM25 ranking with recency boost</li>
+<li>ACL Filter removes results from channels user doesn't have access to (post-filter on ES results)</li>
+<li>Matching message IDs hydrated from MySQL to get full message content, user profiles, channel names</li>
+<li>Results returned with highlighted snippets and pagination</li>
+</ol>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>Search Architecture</h4>
+<p><strong>Migration:</strong> Slack migrated from Solr to Elasticsearch (2017-2019) for better scaling and operational tooling</p>
+<p><strong>Index:</strong> Per-workspace Elasticsearch index; large workspaces split across multiple shards</p>
+<p><strong>Fields:</strong> message_text (analyzed), sender_id, channel_id, timestamp, has_attachment, has_link, reactions</p>
+<p><strong>Near-Real-Time:</strong> New messages searchable within ~5 seconds of posting (ES refresh interval)</p>
+</div>
+<div class="card">
+<h4>ACL Enforcement</h4>
+<p><strong>Problem:</strong> User shouldn't see messages from private channels they're not in</p>
+<p><strong>Solution:</strong> Post-filter — ES returns top-N candidates, ACL filter removes unauthorized, fetch more if needed</p>
+<p><strong>Optimization:</strong> For most users, majority of channels are accessible → filter removes few results</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 3: APPS & INTEGRATIONS ============ -->
+<h2>Flow 3: Slack Apps & Integrations</h2>
+<div class="card">
+<svg viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#ECB22E"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">User Action</text><text x="80" y="97" text-anchor="middle" fill="#fff" font-size="10">(/command, button)</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Events API</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="10">(Dispatch)</text>
+<rect x="370" y="60" width="130" height="50" rx="8" fill="#FB8C00"/><text x="435" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">App Server</text><text x="435" y="97" text-anchor="middle" fill="#fff" font-size="10">(Developer's)</text>
+<rect x="560" y="30" width="130" height="50" rx="8" fill="#E53935"/><text x="625" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Web API</text><text x="625" y="67" text-anchor="middle" fill="#fff" font-size="10">(chat.postMessage)</text>
+<rect x="560" y="100" width="130" height="50" rx="8" fill="#9C27B0"/><text x="625" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Block Kit</text><text x="625" y="137" text-anchor="middle" fill="#fff" font-size="10">(Rich UI Blocks)</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#ECB22E" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="320" y1="85" x2="365" y2="85" stroke="#ECB22E" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="500" y1="75" x2="555" y2="55" stroke="#ECB22E" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="500" y1="95" x2="555" y2="120" stroke="#ECB22E" stroke-width="2" marker-end="url(#ah3)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>User interaction (slash command, button click, message shortcut) triggers event in Slack</li>
+<li>Events API dispatches HTTP POST webhook to registered app server URL with event payload (signed with HMAC)</li>
+<li>App server processes event, calls Slack Web API methods (chat.postMessage, views.open, reactions.add)</li>
+<li>Block Kit: JSON-based UI framework for rich interactive messages — sections, buttons, selects, date pickers, modals</li>
+<li>Socket Mode (alternative): app connects via WebSocket to receive events instead of HTTP webhooks (no public URL needed)</li>
+<li>Bolt SDK (Node.js, Python, Java) simplifies app development with middleware pattern for event routing</li>
+</ol>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>Events API</h4>
+<p><strong>Delivery:</strong> HTTP POST to app's Request URL with JSON payload; 3-second response timeout (acknowledge immediately, process async)</p>
+<p><strong>Retry:</strong> If app returns non-200, Slack retries 3 times with exponential backoff (1min, 5min, 30min)</p>
+<p><strong>Verification:</strong> <code>x-slack-signature</code> header: HMAC-SHA256(signing_secret, timestamp + body) — prevents forgery</p>
+<p><strong>Event Types:</strong> message, reaction_added, member_joined_channel, app_mention, file_shared, etc.</p>
+</div>
+<div class="card">
+<h4>Block Kit</h4>
+<p><strong>Format:</strong> JSON array of block elements — section, divider, image, actions, input, context</p>
+<p><strong>Interactive:</strong> Buttons, overflow menus, date pickers, multi-select → generate interaction payloads sent to app</p>
+<p><strong>Modals:</strong> Full-screen forms via <code>views.open</code> — supports multi-step workflows with state management</p>
+<p><strong>Builder:</strong> Block Kit Builder (visual editor) at api.slack.com/tools/block-kit-builder</p>
+</div>
+</div>
+</div>
+
+<!-- ============ COMBINED ARCHITECTURE ============ -->
+<h2>Combined Architecture</h2>
+<div class="card">
+<svg viewBox="0 0 1050 450" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#36C5F0"/></marker></defs>
+<rect x="20" y="70" width="130" height="50" rx="8" fill="#34A853"/><text x="85" y="92" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Clients</text><text x="85" y="107" text-anchor="middle" fill="#fff" font-size="10">(Electron/Web/Mobile)</text>
+<rect x="200" y="70" width="130" height="50" rx="8" fill="#FB8C00"/><text x="265" y="92" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Edge (Envoy)</text><text x="265" y="107" text-anchor="middle" fill="#fff" font-size="10">(TLS + Routing)</text>
+<rect x="390" y="20" width="130" height="45" rx="8" fill="#4285F4"/><text x="455" y="47" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Message Server</text>
+<rect x="390" y="80" width="130" height="45" rx="8" fill="#4285F4"/><text x="455" y="107" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Service</text>
+<rect x="390" y="140" width="130" height="45" rx="8" fill="#4285F4"/><text x="455" y="167" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">File Service</text>
+<rect x="580" y="20" width="130" height="45" rx="8" fill="#607D8B"/><text x="645" y="47" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Flannel (WS)</text>
+<rect x="580" y="80" width="130" height="45" rx="8" fill="#9C27B0"/><text x="645" y="107" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Events API</text>
+<rect x="580" y="140" width="130" height="45" rx="8" fill="#E53935"/><text x="645" y="167" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Push Service</text>
+<rect x="780" y="70" width="130" height="50" rx="8" fill="#00897B"/><text x="845" y="92" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Kafka</text><text x="845" y="107" text-anchor="middle" fill="#fff" font-size="10">(Event Bus)</text>
+<rect x="390" y="290" width="130" height="55" rx="8" fill="#795548"/><text x="455" y="312" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">MySQL (Vitess)</text><text x="455" y="329" text-anchor="middle" fill="#fff" font-size="10">(Messages + Meta)</text>
+<rect x="580" y="290" width="130" height="55" rx="8" fill="#795548"/><text x="645" y="312" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Elasticsearch</text><text x="645" y="329" text-anchor="middle" fill="#fff" font-size="10">(Search Index)</text>
+<rect x="780" y="290" width="130" height="55" rx="8" fill="#00897B"/><text x="845" y="312" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Redis / Memcached</text><text x="845" y="329" text-anchor="middle" fill="#fff" font-size="10">(Cache)</text>
+<rect x="200" y="290" width="130" height="55" rx="8" fill="#795548"/><text x="265" y="312" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">S3</text><text x="265" y="329" text-anchor="middle" fill="#fff" font-size="10">(Files + Uploads)</text>
+<line x1="150" y1="95" x2="195" y2="95" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="330" y1="85" x2="385" y2="42" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="330" y1="95" x2="385" y2="102" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="330" y1="105" x2="385" y2="162" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="520" y1="42" x2="575" y2="42" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="520" y1="102" x2="575" y2="102" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="520" y1="42" x2="575" y2="162" stroke="#36C5F0" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="710" y1="95" x2="775" y2="95" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="455" y1="65" x2="455" y2="285" stroke="#36C5F0" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="520" y1="125" x2="580" y2="300" stroke="#36C5F0" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="710" y1="107" x2="780" y2="305" stroke="#36C5F0" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="390" y1="185" x2="265" y2="285" stroke="#36C5F0" stroke-width="1.5" marker-end="url(#ah4)"/>
+</svg>
+</div>
+
+<!-- ============ DATABASE SCHEMA ============ -->
+<h2>Database Schema</h2>
+<div class="grid">
+<div class="card">
+<h3>MySQL (Vitess) — Messages</h3>
+<pre><code>CREATE TABLE messages (
+  workspace_id  BIGINT,           <span class="tag tag-shard">SHARD KEY</span>
+  channel_id    VARCHAR(20),      <span class="tag tag-idx">INDEX</span>
+  ts            VARCHAR(20),      <span class="tag tag-pk">PK</span> -- "1707500000.000100"
+  user_id       VARCHAR(20),      <span class="tag tag-fk">FK</span>
+  text          TEXT,
+  type          VARCHAR(20) DEFAULT 'message',
+  subtype       VARCHAR(30),      -- bot_message, channel_join, etc.
+  thread_ts     VARCHAR(20),      -- parent message ts (for threads)
+  reply_count   INT DEFAULT 0,
+  reactions     JSON,             -- [{"name":"thumbsup","users":["U123"]}]
+  attachments   JSON,             -- legacy attachments
+  blocks        JSON,             -- Block Kit blocks
+  files         JSON,             -- [{id, name, url_private, mimetype}]
+  edited_ts     VARCHAR(20),
+  is_deleted    BOOLEAN DEFAULT FALSE,
+  PRIMARY KEY (channel_id, ts)
+) ENGINE=InnoDB;
+CREATE INDEX idx_msg_thread ON messages(channel_id, thread_ts);
+CREATE INDEX idx_msg_user ON messages(workspace_id, user_id, ts);</code></pre>
+<p><span class="tag tag-shard">SHARD</span> Vitess shards by workspace_id; channels + messages co-located per workspace</p>
+</div>
+
+<div class="card">
+<h3>MySQL — Channels & Members</h3>
+<pre><code>CREATE TABLE channels (
+  workspace_id  BIGINT,           <span class="tag tag-shard">SHARD KEY</span>
+  channel_id    VARCHAR(20),      <span class="tag tag-pk">PK</span>
+  name          VARCHAR(80),      <span class="tag tag-idx">INDEX</span>
+  topic         TEXT,
+  purpose       TEXT,
+  is_private    BOOLEAN DEFAULT FALSE,
+  is_archived   BOOLEAN DEFAULT FALSE,
+  creator_id    VARCHAR(20),      <span class="tag tag-fk">FK</span>
+  member_count  INT DEFAULT 0,
+  created_at    BIGINT
+);
+
+CREATE TABLE channel_members (
+  workspace_id  BIGINT,
+  channel_id    VARCHAR(20),      <span class="tag tag-fk">FK</span>
+  user_id       VARCHAR(20),      <span class="tag tag-fk">FK</span>
+  role          VARCHAR(20) DEFAULT 'member',
+  notification_pref VARCHAR(20) DEFAULT 'default',
+  last_read_ts  VARCHAR(20),      -- for unread tracking
+  joined_at     BIGINT,
+  PRIMARY KEY (channel_id, user_id)
+);
+CREATE INDEX idx_member_user ON channel_members(workspace_id, user_id);</code></pre>
+</div>
+</div>
+
+<!-- ============ CACHE & CDN ============ -->
+<h2>Cache & CDN Deep Dive</h2>
+<div class="card">
+<div class="grid">
+<div class="card">
+<h4>Memcached (Hot Data)</h4>
+<p><strong>Cached:</strong> Channel membership lists, user profiles, workspace settings, recent messages (last 50 per channel)</p>
+<p><strong>Strategy:</strong> Cache-aside with invalidation via Kafka events on write</p>
+<p><strong>Scale:</strong> ~6TB aggregate Memcached cluster; 99%+ hit rate for channel membership lookups</p>
+<p><strong>TTL:</strong> Channel membership: 10min; user profiles: 5min; settings: 1hr</p>
+</div>
+<div class="card">
+<h4>Redis (Real-Time State)</h4>
+<p><strong>Presence:</strong> Online/away/DND status per user — Redis SET with heartbeat TTL (60s)</p>
+<p><strong>Typing:</strong> Typing indicators stored in Redis with 5-second TTL — auto-expire when user stops typing</p>
+<p><strong>Unread:</strong> Per-user per-channel last_read_ts — compared against channel's latest message ts</p>
+<p><strong>Event Log:</strong> Redis Streams for WebSocket reconnection replay (last 1000 events per channel)</p>
+</div>
+<div class="card">
+<h4>CDN (Cloudfront)</h4>
+<p><strong>Files:</strong> Uploaded files stored in S3; served via CloudFront CDN with signed URLs (expiring tokens for access control)</p>
+<p><strong>Static:</strong> App bundles, emoji sprites, default avatars cached at edge</p>
+<p><strong>Unfurl Cache:</strong> Link preview images/metadata cached at CDN; 24hr TTL</p>
+</div>
+</div>
+</div>
+
+<!-- ============ SCALING ============ -->
+<h2>Scaling & Load Balancing</h2>
+<div class="card">
+<ul>
+<li><strong>Edge:</strong> Envoy-based edge proxies in multiple AWS regions; anycast routing to nearest edge; TLS 1.3 termination</li>
+<li><strong>Vitess:</strong> Thousands of MySQL shards; Vitess vtgate handles query routing; online resharding for hot workspaces (e.g., Salesforce's 100K+ user workspace)</li>
+<li><strong>WebSocket (Flannel):</strong> Horizontally scaled; consistent hashing by workspace_id → specific Flannel instances; connection migration on server restart</li>
+<li><strong>Kafka:</strong> Central event bus — 100+ topics; partitioned by workspace_id; used for async processing (search indexing, push notifications, analytics, compliance)</li>
+<li><strong>Enterprise Grid:</strong> Multi-workspace organizations; shared channels span workspaces via federation protocol (cross-shard message routing)</li>
+</ul>
+</div>
+
+<!-- ============ TRADEOFFS ============ -->
+<h2>Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="pro">
+<h4>✅ MySQL + Vitess</h4>
+<ul>
+<li>Proven reliability — MySQL is battle-tested for ACID transactions</li>
+<li>Rich query capabilities — JOINs, subqueries, complex predicates</li>
+<li>Vitess provides horizontal scaling without application changes</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ MySQL + Vitess</h4>
+<ul>
+<li>Cross-shard queries are expensive (scatter-gather through vtgate)</li>
+<li>Schema changes require careful online DDL management</li>
+<li>Write amplification from JSON columns (reactions, blocks, files)</li>
+</ul>
+</div>
+<div class="pro">
+<h4>✅ Channel-Based Model (vs. DM-First)</h4>
+<ul>
+<li>Transparent communication — reduces information silos</li>
+<li>Searchable organizational knowledge base</li>
+<li>Easier onboarding — new members can read channel history</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ Channel-Based Model</h4>
+<ul>
+<li>Channel sprawl — large orgs have thousands of channels (discovery problem)</li>
+<li>Information overload — users in many channels face notification fatigue</li>
+<li>Context switching cost — managing multiple concurrent conversations</li>
+</ul>
+</div>
+</div>
+
+<!-- ============ ALTERNATIVES ============ -->
+<h2>Alternative Approaches</h2>
+<div class="grid">
+<div class="card">
+<h4>NoSQL (Cassandra/DynamoDB)</h4>
+<p>Wide-column store for messages — partition by channel_id, sort by timestamp. Infinite horizontal scale, no cross-partition queries needed for messaging. But loses JOIN capability, complex consistency model, and Slack's existing MySQL expertise would be wasted.</p>
+</div>
+<div class="card">
+<h4>CRDT-Based (Linear Chat)</h4>
+<p>Conflict-free data types for offline-first messaging. Each client maintains local state, syncs via CRDT merge. Enables true offline mode and reduces server dependency. But adds complexity, larger message metadata, and challenges with message ordering guarantees.</p>
+</div>
+</div>
+
+<!-- ============ ADDITIONAL INFO ============ -->
+<h2>Additional Information</h2>
+<div class="card">
+<ul>
+<li><strong>Slack Connect:</strong> Cross-organization channels — two companies share a channel without guest accounts. Each org's data stays on their shard; messages routed cross-org via federation layer. Requires admin approval on both sides.</li>
+<li><strong>Huddles:</strong> Lightweight audio (and optional video) calls within channels/DMs — WebRTC-based with Janus SFU. Always-on ambient audio for remote pair programming. Lower ceremony than scheduled meetings.</li>
+<li><strong>Canvas:</strong> Rich document editor within Slack — collaborative notes with formatting, checklists, embedded messages. Backed by Quill.js editor with custom OT (operational transformation) for real-time co-editing.</li>
+<li><strong>Slack AI:</strong> Search answers (summarize search results), channel recaps (catch up on missed messages), thread summaries. Powered by Anthropic Claude and OpenAI models; data stays within Slack's infrastructure (not used for training).</li>
+<li><strong>Rate Limiting:</strong> Web API: tier-based — Tier 1: 1 req/sec, Tier 2: 20 req/min, Tier 3: 50 req/min, Tier 4: 100 req/min. Events API: 30K events/hour per app. Rate limit headers (X-RateLimit-Remaining) enable client-side throttling.</li>
+</ul>
+</div>
+
+</body>
+</html>

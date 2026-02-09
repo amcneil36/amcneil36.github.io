@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: TripAdvisor</title>
+<style>
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: #e0e0e0; line-height: 1.7; }
+h1 { color: #34e0a1; border-bottom: 3px solid #34e0a1; padding-bottom: 10px; font-size: 2.2em; }
+h2 { color: #50f0b8; margin-top: 40px; font-size: 1.6em; border-left: 4px solid #50f0b8; padding-left: 12px; }
+h3 { color: #80ffcc; font-size: 1.3em; }
+.section { background: #1a1a2e; border-radius: 10px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
+.diagram-container { background: #0d1117; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
+.example { background: #1e293b; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+.example strong { color: #f59e0b; }
+table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+th { background: #2a2a4a; color: #50f0b8; padding: 12px; text-align: left; border: 1px solid #444; }
+td { padding: 10px 12px; border: 1px solid #333; }
+tr:nth-child(even) { background: #1a1a2e; }
+tr:nth-child(odd) { background: #151528; }
+code { background: #2d2d4d; padding: 2px 8px; border-radius: 4px; color: #ff79c6; font-size: 0.95em; }
+.tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
+.tag-pk { background: #4a1a6b; color: #d4a5ff; }
+.tag-fk { background: #1a4a3b; color: #a5ffd4; }
+.tag-idx { background: #4a3a1a; color: #ffd4a5; }
+ul { padding-left: 25px; }
+li { margin: 5px 0; }
+.tradeoff { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+.pro { background: #0a2a1a; border: 1px solid #2a5a3a; padding: 15px; border-radius: 8px; }
+.con { background: #2a0a1a; border: 1px solid #5a2a3a; padding: 15px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<h1>System Design: TripAdvisor (Travel Review Platform)</h1>
+
+<div class="section">
+<h2>Functional Requirements</h2>
+<ul>
+<li>Search for hotels, restaurants, attractions by destination with rich filtering</li>
+<li>User-generated reviews and ratings (text, photos, 1-5 stars)</li>
+<li>Aggregated rating scores with breakdown (cleanliness, location, service, value)</li>
+<li>Price comparison across booking sites (meta-search: redirect to Expedia, Booking.com, etc.)</li>
+<li>Traveler forums and Q&A</li>
+<li>Personalized recommendations based on travel history and preferences</li>
+<li>"Near me" discovery using geolocation</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Read-heavy:</strong> 100:1 read-to-write ratio (reviews are read far more than written)</li>
+<li><strong>Low Latency:</strong> Search results in &lt;500ms, place pages in &lt;200ms</li>
+<li><strong>SEO:</strong> Billions of indexed pages — SEO is critical for organic traffic</li>
+<li><strong>Scalability:</strong> Hundreds of millions of reviews, millions of places</li>
+<li><strong>Availability:</strong> 99.99% uptime</li>
+</ul>
+</div>
+
+<!-- Flow 1: Search & Discovery -->
+<div class="section">
+<h2>Flow 1: Search & Discovery</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1050 380" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#34e0a1"/></marker></defs>
+<rect x="20" y="150" width="110" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="185" text-anchor="middle" fill="white" font-size="13">User</text>
+<rect x="170" y="150" width="110" height="60" rx="10" fill="#888" stroke="#aaa" stroke-width="2"/><text x="225" y="185" text-anchor="middle" fill="white" font-size="12">CDN</text>
+<rect x="330" y="150" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="395" y="185" text-anchor="middle" fill="white" font-size="12">Search Service</text>
+<rect x="520" y="80" width="140" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="590" y="110" text-anchor="middle" fill="white" font-size="12">Elasticsearch</text>
+<rect x="520" y="180" width="140" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="590" y="210" text-anchor="middle" fill="white" font-size="12">Place Cache</text>
+<rect x="520" y="280" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="590" y="308" text-anchor="middle" fill="white" font-size="11">Price Comparison</text>
+<rect x="740" y="80" width="130" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="805" y="110" text-anchor="middle" fill="white" font-size="11">Ranking / ML</text>
+<rect x="740" y="280" width="130" height="40" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="805" y="305" text-anchor="middle" fill="white" font-size="10">Booking Partners</text>
+<line x1="130" y1="180" x2="168" y2="180" stroke="#34e0a1" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="280" y1="180" x2="328" y2="180" stroke="#34e0a1" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="460" y1="168" x2="518" y2="110" stroke="#34e0a1" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="460" y1="185" x2="518" y2="205" stroke="#34e0a1" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="460" y1="198" x2="518" y2="300" stroke="#34e0a1" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="660" y1="105" x2="738" y2="105" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="660" y1="305" x2="738" y2="300" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<text x="520" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">TripAdvisor: Search & Discovery</text>
+</svg>
+</div>
+
+<h3>Step-by-Step</h3>
+<ol>
+<li><strong>User searches</strong> "restaurants in Rome" → <code>GET /v1/search?type=restaurant&dest=rome&sort=rating</code></li>
+<li><strong>CDN:</strong> Static place pages for popular destinations may be cached. Search API results are dynamic (personalized)</li>
+<li><strong>Elasticsearch:</strong> Full-text search + geo-filtering + faceted search (cuisine type, price range, rating). Returns place IDs with scores</li>
+<li><strong>Place Cache (Redis):</strong> Hydrates place IDs with full details (name, address, photos, avg rating, review count)</li>
+<li><strong>Price Comparison:</strong> For hotels, queries booking partners (Expedia, Booking.com) for current prices. Returns cheapest options</li>
+<li><strong>Ranking ML:</strong> Personalizes order based on user history, popularity score (Bayesian average of ratings), freshness of reviews, photo quality</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> User searches "restaurants in Rome, Italian cuisine, $$". Elasticsearch returns 500 restaurants matching filters. Place Cache hydrates top 50 with details. ML Ranking considers: user visited high-end restaurants before → boosts upscale Italian places. "Roscioli" (4.7★, 3200 reviews) ranked #1. "Da Enzo" (4.6★, 2100 reviews) ranked #2. Response: 200ms.
+</div>
+</div>
+
+<!-- Flow 2: Writing a Review -->
+<div class="section">
+<h2>Flow 2: Submitting a Review</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1000 320" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffaa00"/></marker></defs>
+<rect x="20" y="130" width="110" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="165" text-anchor="middle" fill="white" font-size="13">User</text>
+<rect x="180" y="130" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="245" y="165" text-anchor="middle" fill="white" font-size="12">Review Service</text>
+<rect x="370" y="70" width="130" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="435" y="100" text-anchor="middle" fill="white" font-size="11">Fraud Detector</text>
+<rect x="370" y="180" width="130" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="435" y="210" text-anchor="middle" fill="white" font-size="12">Kafka</text>
+<rect x="570" y="70" width="130" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="635" y="100" text-anchor="middle" fill="white" font-size="11">Rating Aggregator</text>
+<rect x="570" y="180" width="130" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="635" y="210" text-anchor="middle" fill="white" font-size="11">Search Indexer</text>
+<rect x="570" y="260" width="130" height="40" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="635" y="285" text-anchor="middle" fill="white" font-size="11">Notification Svc</text>
+<line x1="130" y1="160" x2="178" y2="160" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="310" y1="148" x2="368" y2="100" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="310" y1="175" x2="368" y2="205" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="500" y1="200" x2="568" y2="100" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
+<line x1="500" y1="205" x2="568" y2="205" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
+<line x1="500" y1="210" x2="568" y2="275" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
+<text x="490" y="20" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">TripAdvisor: Review Submission</text>
+</svg>
+</div>
+
+<h3>Step-by-Step</h3>
+<ol>
+<li><strong>User submits review:</strong> <code>POST /v1/reviews { place_id, rating: 5, subcategories: {food: 5, service: 4, atmosphere: 5}, text: "...", photos: [...] }</code></li>
+<li><strong>Fraud Detector (ML):</strong> Checks for fake reviews — linguistic analysis, reviewer history, IP/device patterns, timing patterns. Score < 0.3 = auto-reject, 0.3-0.7 = manual review queue</li>
+<li><strong>Review Service:</strong> Stores review in Review DB. Status: "published" or "pending_review"</li>
+<li><strong>Kafka event:</strong> "review.published" consumed by:
+    <ul>
+    <li><strong>Rating Aggregator:</strong> Recalculates place's average rating (Bayesian average), updates Place DB</li>
+    <li><strong>Search Indexer:</strong> Updates Elasticsearch document with new review count and rating</li>
+    <li><strong>Notification:</strong> Notifies place owner of new review</li>
+    </ul>
+</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> User reviews "Roscioli" — 5 stars, "Best carbonara in Rome! Authentic and incredible pasta." + 3 photos. Fraud Detector: score 0.95 (legitimate — user has verified bookings, diverse review history, unique photo EXIF data). Published immediately. Rating Aggregator: old avg 4.68 from 3199 reviews → new avg 4.68 from 3200 reviews (minimal change). Elasticsearch updated: review_count: 3200. Notification sent to restaurant owner.
+</div>
+</div>
+
+<!-- Combined Architecture, DB Schema, etc. -->
+<div class="section">
+<h2>Combined Overall Architecture</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1050 450" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#34e0a1"/></marker></defs>
+<text x="525" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">TripAdvisor: Combined Architecture</text>
+<rect x="20" y="190" width="90" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="65" y="220" text-anchor="middle" fill="white" font-size="11">Clients</text>
+<rect x="140" y="130" width="90" height="35" rx="8" fill="#888" stroke="#aaa" stroke-width="2"/><text x="185" y="152" text-anchor="middle" fill="white" font-size="10">CDN</text>
+<rect x="140" y="200" width="90" height="35" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="185" y="222" text-anchor="middle" fill="white" font-size="10">API GW</text>
+<rect x="280" y="60" width="110" height="35" rx="6" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="335" y="82" text-anchor="middle" fill="white" font-size="10">Search Svc</text>
+<rect x="280" y="120" width="110" height="35" rx="6" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="335" y="142" text-anchor="middle" fill="white" font-size="10">Review Svc</text>
+<rect x="280" y="180" width="110" height="35" rx="6" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="335" y="202" text-anchor="middle" fill="white" font-size="10">Place Svc</text>
+<rect x="280" y="240" width="110" height="35" rx="6" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="335" y="262" text-anchor="middle" fill="white" font-size="10">Price Compare</text>
+<rect x="280" y="300" width="110" height="35" rx="6" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="335" y="322" text-anchor="middle" fill="white" font-size="10">Recommendation</text>
+<rect x="280" y="360" width="110" height="35" rx="6" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="335" y="382" text-anchor="middle" fill="white" font-size="10">Fraud Detector</text>
+<rect x="460" y="60" width="100" height="35" rx="6" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="510" y="82" text-anchor="middle" fill="white" font-size="10">Elasticsearch</text>
+<rect x="460" y="120" width="100" height="35" rx="6" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="510" y="142" text-anchor="middle" fill="white" font-size="10">Place Cache</text>
+<rect x="460" y="180" width="100" height="35" rx="6" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="510" y="202" text-anchor="middle" fill="white" font-size="10">Kafka</text>
+<ellipse cx="650" cy="78" rx="55" ry="20" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="650" y="83" text-anchor="middle" fill="white" font-size="9">Place DB</text>
+<ellipse cx="650" cy="142" rx="55" ry="20" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="650" y="147" text-anchor="middle" fill="white" font-size="9">Review DB</text>
+<ellipse cx="650" cy="205" rx="55" ry="20" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="650" y="210" text-anchor="middle" fill="white" font-size="9">User DB</text>
+<rect x="620" y="250" width="80" height="30" rx="6" fill="#888" stroke="#aaa" stroke-width="2"/><text x="660" y="270" text-anchor="middle" fill="white" font-size="9">S3 (Photos)</text>
+<line x1="110" y1="210" x2="138" y2="145" stroke="#34e0a1" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="110" y1="218" x2="138" y2="218" stroke="#34e0a1" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="230" y1="217" x2="278" y2="78" stroke="#34e0a1" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="230" y1="217" x2="278" y2="137" stroke="#34e0a1" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="230" y1="217" x2="278" y2="197" stroke="#34e0a1" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="390" y1="78" x2="458" y2="78" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="390" y1="140" x2="458" y2="140" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="390" y1="200" x2="458" y2="195" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="560" y1="78" x2="593" y2="78" stroke="#ff6b6b" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="560" y1="140" x2="593" y2="142" stroke="#ff6b6b" stroke-width="1" marker-end="url(#arrow3)"/>
+</svg>
+</div>
+</div>
+
+<!-- Database Schema -->
+<div class="section">
+<h2>Database Schema</h2>
+<h3>SQL — PostgreSQL (Places, Users)</h3>
+<table>
+<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
+<tr><td rowspan="8"><strong>places</strong></td><td>place_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>name</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>type</td><td>ENUM</td><td>hotel, restaurant, attraction</td></tr>
+<tr><td>lat, lng</td><td>DOUBLE</td><td><span class="tag tag-idx">GiST spatial index</span></td></tr>
+<tr><td>city, country</td><td>VARCHAR</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>avg_rating</td><td>DECIMAL(3,2)</td><td>Denormalized Bayesian average</td></tr>
+<tr><td>review_count</td><td>INT</td><td>Denormalized</td></tr>
+<tr><td>price_level</td><td>ENUM</td><td>$, $$, $$$, $$$$</td></tr>
+</table>
+
+<h3>NoSQL — Cassandra (Reviews)</h3>
+<table>
+<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
+<tr><td rowspan="7"><strong>reviews</strong></td><td>place_id</td><td>BIGINT</td><td><span class="tag tag-pk">Partition Key</span></td></tr>
+<tr><td>review_id</td><td>TIMEUUID</td><td><span class="tag tag-pk">Clustering Key</span> DESC</td></tr>
+<tr><td>user_id</td><td>BIGINT</td><td></td></tr>
+<tr><td>overall_rating</td><td>INT</td><td>1-5</td></tr>
+<tr><td>subcategory_ratings</td><td>MAP&lt;TEXT,INT&gt;</td><td>{food: 5, service: 4, value: 4}</td></tr>
+<tr><td>review_text</td><td>TEXT</td><td></td></tr>
+<tr><td>photo_urls</td><td>LIST&lt;TEXT&gt;</td><td></td></tr>
+</table>
+
+<h4>Sharding & Indexes</h4>
+<ul>
+<li><strong>places:</strong> Shard by <code>city</code> — all places in Rome on same shard. City-level searches are shard-local</li>
+<li><strong>reviews:</strong> Partition by <code>place_id</code> — all reviews for one place co-located. Clustering DESC for newest-first display</li>
+<li><strong>Bayesian average:</strong> <code>weighted_avg = (global_avg * C + sum_ratings) / (C + review_count)</code> where C = minimum reviews for statistical significance (~25). Prevents places with 1 review at 5★ from ranking above 4.5★ with 5000 reviews</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Cache & CDN Deep Dive</h2>
+<table>
+<tr><th>Cache</th><th>Strategy</th><th>TTL</th><th>Purpose</th></tr>
+<tr><td>Place Details (Redis)</td><td>Read-through</td><td>1 hr</td><td>Place pages load fast</td></tr>
+<tr><td>Review Summary (Redis)</td><td>Write-behind (on new review)</td><td>30 min</td><td>Rating breakdown, review count</td></tr>
+<tr><td>CDN — Place Pages</td><td>Pull-based</td><td>1 hr</td><td>SEO: pre-rendered HTML pages for crawlers</td></tr>
+<tr><td>CDN — Photos</td><td>Pull-based</td><td>365 days</td><td>User-uploaded review photos</td></tr>
+</table>
+<p><strong>SEO strategy:</strong> Server-side rendered HTML for place pages. CDN caches rendered HTML for Googlebot. Dynamic content (prices, availability) loaded client-side via JavaScript.</p>
+</div>
+
+<div class="section">
+<h2>Tradeoffs & Alternatives</h2>
+<div class="tradeoff">
+<div class="pro"><h4>✅ Meta-search (Price Comparison)</h4><ul><li>Users get best price without visiting each booking site</li><li>Revenue via CPC (cost-per-click) when users click through to booking partner</li><li>TripAdvisor doesn't handle booking complexity</li></ul></div>
+<div class="con"><h4>❌ Meta-search Downsides</h4><ul><li>No control over booking experience (user leaves TripAdvisor)</li><li>Price accuracy: displayed price may differ on partner site</li><li>Revenue dependent on partner willingness to pay CPC</li></ul></div>
+</div>
+<ul>
+<li><strong>Alternative — Direct booking:</strong> TripAdvisor could handle bookings directly (like Booking.com). Higher revenue per transaction but massive operational complexity (payments, cancellations, customer support)</li>
+<li><strong>Alternative — Embedding-based search:</strong> Instead of keyword search, semantic search using BERT embeddings. "Romantic dinner spot with view" finds relevant restaurants even without those exact keywords</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Additional Information</h2>
+<ul>
+<li><strong>Review fraud detection:</strong> ML model features: reviewer's review velocity, text similarity to other reviews, device/IP clustering, rating distribution anomaly. Paid fake review farms create distinct patterns</li>
+<li><strong>Traveler types:</strong> Business, family, solo, couple. Different ranking weights per type: families → kid-friendly, business → WiFi + work desk, couples → romantic</li>
+<li><strong>Photo quality scoring:</strong> ML model ranks user photos by quality (lighting, composition, relevance). Best photos shown first on place page</li>
+</ul>
+</div>
+</body>
+</html>

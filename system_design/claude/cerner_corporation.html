@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cerner (Healthcare EHR) - System Design</title>
+<style>
+:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--heading:#00A4E4;--accent:#004B87;--accent2:#6CC24A;--accent3:#FF6B35;--muted:#888}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
+h1{color:var(--heading);font-size:2.2rem;border-bottom:3px solid var(--heading);padding-bottom:.5rem;margin-bottom:1.5rem}
+h2{color:var(--accent);margin:2rem 0 1rem;font-size:1.5rem}
+h3{color:var(--accent2);margin:1.5rem 0 .75rem;font-size:1.2rem}
+h4{color:var(--accent3);margin:1rem 0 .5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
+ul,ol{margin:.75rem 0 .75rem 1.5rem}
+li{margin:.4rem 0}
+code{background:#2d2d2d;padding:.2rem .5rem;border-radius:4px;font-size:.9rem;color:#f8f8f2}
+pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:1rem 0}
+pre code{padding:0;background:none}
+.tag{display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600;margin:.2rem}
+.tag-pk{background:#E53935;color:#fff}
+.tag-fk{background:#1E88E5;color:#fff}
+.tag-idx{background:#43A047;color:#fff}
+.tag-shard{background:#FB8C00;color:#fff}
+.tag-cache{background:#8E24AA;color:#fff}
+.tag-ttl{background:#00897B;color:#fff}
+svg text{font-family:'Segoe UI',system-ui,sans-serif}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.pro{background:#1b3a1b;border:1px solid #2d5a2d;border-radius:8px;padding:1rem}
+.con{background:#3a1b1b;border:1px solid #5a2d2d;border-radius:8px;padding:1rem}
+</style>
+</head>
+<body>
+
+<h1>🏥 Cerner Corporation (Healthcare EHR) - System Design</h1>
+
+<!-- ============ FUNCTIONAL REQUIREMENTS ============ -->
+<div class="card">
+<h2>Functional Requirements</h2>
+<ol>
+<li><strong>Electronic Health Records (EHR):</strong> Store, retrieve, and update patient medical records — demographics, diagnoses (ICD-10), medications, lab results, clinical notes, vitals, allergies, immunizations</li>
+<li><strong>Clinical Decision Support & Orders (CPOE):</strong> Computerized Provider Order Entry — physicians order labs, medications, imaging with drug-drug/drug-allergy interaction alerts, evidence-based clinical rules</li>
+<li><strong>Health Information Exchange (HIE):</strong> FHIR/HL7-based interoperability — exchange patient data across hospitals, labs, pharmacies, insurance; patient consent management</li>
+</ol>
+</div>
+
+<!-- ============ NON-FUNCTIONAL REQUIREMENTS ============ -->
+<div class="card">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Availability:</strong> 99.99% uptime — EHR downtime directly impacts patient care; disaster recovery with RTO &lt;15 min</li>
+<li><strong>Compliance:</strong> HIPAA (US), GDPR (EU), HITECH Act — full audit trail, encryption at rest and in transit, BAA with all vendors</li>
+<li><strong>Latency:</strong> Chart load &lt;2s, order entry &lt;1s, lab result display &lt;500ms; alert firing within 100ms of order submission</li>
+<li><strong>Scale:</strong> 25K+ healthcare facilities, 250M+ patient records, 1B+ clinical documents</li>
+<li><strong>Data Integrity:</strong> ACID transactions for clinical data — no partial updates to patient records; strong consistency</li>
+</ul>
+</div>
+
+<!-- ============ FLOW 1: PATIENT CHART ============ -->
+<h2>Flow 1: Patient Chart Retrieval & Clinical Documentation</h2>
+<div class="card">
+<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#00A4E4"/></marker></defs>
+<rect x="20" y="50" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Clinician</text><text x="80" y="87" text-anchor="middle" fill="#fff" font-size="10">(PowerChart)</text>
+<rect x="190" y="50" width="130" height="50" rx="8" fill="#FB8C00"/><text x="255" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">API Gateway</text><text x="255" y="87" text-anchor="middle" fill="#fff" font-size="10">(OAuth2 + RBAC)</text>
+<rect x="370" y="50" width="130" height="50" rx="8" fill="#4285F4"/><text x="435" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Chart Service</text><text x="435" y="87" text-anchor="middle" fill="#fff" font-size="10">(Aggregator)</text>
+<rect x="550" y="20" width="130" height="45" rx="8" fill="#795548"/><text x="615" y="47" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Patient DB (Oracle)</text>
+<rect x="550" y="80" width="130" height="45" rx="8" fill="#795548"/><text x="615" y="107" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Clinical Doc Store</text>
+<rect x="550" y="140" width="130" height="45" rx="8" fill="#00897B"/><text x="615" y="167" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Lab Results Cache</text>
+<rect x="740" y="50" width="130" height="50" rx="8" fill="#9C27B0"/><text x="805" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Audit Log</text><text x="805" y="87" text-anchor="middle" fill="#fff" font-size="10">(HIPAA Trail)</text>
+<rect x="370" y="200" width="130" height="50" rx="8" fill="#E53935"/><text x="435" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">CDS Engine</text><text x="435" y="237" text-anchor="middle" fill="#fff" font-size="10">(Alert Rules)</text>
+<line x1="140" y1="75" x2="185" y2="75" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="320" y1="75" x2="365" y2="75" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="500" y1="65" x2="545" y2="42" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="500" y1="75" x2="545" y2="100" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="500" y1="90" x2="545" y2="155" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="500" y1="100" x2="435" y2="195" stroke="#00A4E4" stroke-width="1.5" marker-end="url(#ah)"/>
+<line x1="435" y1="100" x2="740" y2="65" stroke="#00A4E4" stroke-width="1.5" marker-end="url(#ah)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Clinician authenticates via SSO (SAML 2.0) with role-based access — physician, nurse, pharmacist get different views</li>
+<li>Searches patient by MRN (Medical Record Number) or name; API Gateway validates OAuth2 token + RBAC permissions</li>
+<li>Chart Service aggregates data from multiple sources: demographics, problems list, medications, allergies, vitals, labs, notes</li>
+<li>Patient DB (Oracle) queried for demographics and care plan; Clinical Doc Store returns structured notes (CDA/C-CDA format)</li>
+<li>Lab Results Cache (Redis) serves recent results; older results fetched from lab system via HL7v2 interface</li>
+<li>CDS Engine evaluates rules against patient data — displays alerts (drug allergies, overdue screenings, abnormal values)</li>
+<li>Every chart access logged to HIPAA Audit Log with user_id, patient_id, timestamp, action, reason for access</li>
+</ol>
+
+<h3>Example</h3>
+<p>Dr. Smith opens patient John Doe (MRN: 12345678). Chart Service fetches: 3 active diagnoses (Diabetes T2, Hypertension, Asthma), 5 active medications, 12 recent lab results (HbA1c: 7.2%), 2 allergies (Penicillin, Sulfa). CDS fires alert: "HbA1c above target — consider medication adjustment." Audit log records Dr. Smith accessed chart at 14:32 UTC.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>HIPAA Audit Trail</h4>
+<p><strong>Requirement:</strong> Every access to PHI (Protected Health Information) must be logged — who, what, when, where, why</p>
+<p><strong>Storage:</strong> Append-only log in dedicated database; tamper-proof with cryptographic hashing (each entry references previous hash)</p>
+<p><strong>Retention:</strong> Minimum 6 years per HIPAA; typically 10 years for legal defensibility</p>
+<p><strong>Monitoring:</strong> Break-the-glass alerts — accessing patient records without treatment relationship triggers immediate review</p>
+</div>
+<div class="card">
+<h4>Role-Based Access Control</h4>
+<p><strong>Model:</strong> RBAC with attribute-based extensions (ABAC) — role + department + care team membership + patient consent</p>
+<p><strong>Roles:</strong> Physician (full chart), Nurse (care notes + vitals), Pharmacist (meds only), Billing (demographics + codes only)</p>
+<p><strong>Consent:</strong> Patient can restrict access to sensitive records (behavioral health, HIV, substance abuse — 42 CFR Part 2)</p>
+</div>
+<div class="card">
+<h4>Clinical Document Architecture (CDA)</h4>
+<p><strong>Standard:</strong> HL7 CDA R2 / C-CDA (Consolidated CDA) — XML-based clinical document format</p>
+<p><strong>Sections:</strong> Problems, Medications, Allergies, Procedures, Results, Vitals, Plan of Care</p>
+<p><strong>Coded Data:</strong> SNOMED CT (problems), RxNorm (medications), LOINC (lab tests), ICD-10 (diagnoses), CPT (procedures)</p>
+</div>
+<div class="card">
+<h4>Clinical Decision Support</h4>
+<p><strong>Engine:</strong> Rule-based system (Arden Syntax MLMs) + ML models for predictive alerts</p>
+<p><strong>Rules:</strong> Drug-drug interactions (3,000+ rules), drug-allergy checks, dosing limits, duplicate orders, care gaps</p>
+<p><strong>Alert Fatigue:</strong> Tiered severity (info → warning → hard stop); suppression logic for previously overridden alerts</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 2: CPOE ============ -->
+<h2>Flow 2: Computerized Provider Order Entry (CPOE)</h2>
+<div class="card">
+<svg viewBox="0 0 1000 320" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#6CC24A"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Physician</text><text x="80" y="97" text-anchor="middle" fill="#fff" font-size="10">(PowerOrders)</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Order Service</text>
+<rect x="370" y="30" width="130" height="50" rx="8" fill="#E53935"/><text x="435" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">CDS Engine</text><text x="435" y="67" text-anchor="middle" fill="#fff" font-size="10">(Interaction Check)</text>
+<rect x="370" y="100" width="130" height="50" rx="8" fill="#9C27B0"/><text x="435" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Pharmacy Queue</text><text x="435" y="137" text-anchor="middle" fill="#fff" font-size="10">(Verification)</text>
+<rect x="560" y="60" width="130" height="50" rx="8" fill="#795548"/><text x="625" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Orders DB</text><text x="625" y="97" text-anchor="middle" fill="#fff" font-size="10">(Oracle + Event Log)</text>
+<rect x="740" y="30" width="130" height="50" rx="8" fill="#00897B"/><text x="805" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">eMAR</text><text x="805" y="67" text-anchor="middle" fill="#fff" font-size="10">(Medication Admin)</text>
+<rect x="740" y="100" width="130" height="50" rx="8" fill="#FB8C00"/><text x="805" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Lab Interface</text><text x="805" y="137" text-anchor="middle" fill="#fff" font-size="10">(HL7 ORM→Lab)</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#6CC24A" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="320" y1="75" x2="365" y2="55" stroke="#6CC24A" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="320" y1="95" x2="365" y2="120" stroke="#6CC24A" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="320" y1="85" x2="555" y2="85" stroke="#6CC24A" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="690" y1="85" x2="735" y2="55" stroke="#6CC24A" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="690" y1="85" x2="735" y2="120" stroke="#6CC24A" stroke-width="2" marker-end="url(#ah2)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Physician selects medication order: Drug (RxNorm code), dose, route, frequency, duration</li>
+<li>Order Service sends to CDS Engine for real-time interaction checking (within 100ms)</li>
+<li>CDS checks: drug-drug interactions, drug-allergy, duplicate therapy, renal/hepatic dose adjustment, weight-based dosing</li>
+<li>If hard-stop alert → order blocked until override with documented reason; soft alert → displayed, can be acknowledged</li>
+<li>Order persisted to Orders DB with status: Ordered → Verified → Dispensed → Administered → Completed</li>
+<li>Medication order routed to Pharmacy Queue for pharmacist verification (required by law for most medications)</li>
+<li>After pharmacist verification, order appears on eMAR (electronic Medication Administration Record) for nurse administration</li>
+<li>Lab orders sent via HL7 ORM message to laboratory information system (LIS) for processing</li>
+</ol>
+
+<h3>Example</h3>
+<p>Dr. Smith orders Amoxicillin 500mg PO TID for 10 days. CDS Engine checks: Patient has Penicillin allergy → HARD STOP alert "Cross-reactivity: Amoxicillin is a penicillin-type antibiotic." Dr. Smith cancels order, selects Azithromycin instead. CDS passes. Order sent to pharmacy queue. Pharmacist verifies dose is appropriate. Order appears on nurse's eMAR with barcode for bedside scanning.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>HL7v2 Messaging</h4>
+<p><strong>Protocol:</strong> HL7v2 (pipe-delimited) over MLLP (Minimum Lower Layer Protocol) — TCP with header/trailer bytes</p>
+<p><strong>Messages:</strong> ORM (Order), ORU (Result), ADT (Admit/Discharge/Transfer), SIU (Scheduling)</p>
+<p><strong>Example:</strong> <code>MSH|^~\&|CERNER|HOSPITAL|LAB|LABSYS|202402...|ORM^O01</code></p>
+<p><strong>Ack:</strong> Every message requires ACK response; retry queue with exponential backoff on NACK</p>
+</div>
+<div class="card">
+<h4>Order State Machine</h4>
+<p><strong>States:</strong> Draft → Signed → Verified → Dispensed → Administered → Completed / Discontinued</p>
+<p><strong>Events:</strong> Each transition logged with timestamp, user_id, reason; full audit trail per order</p>
+<p><strong>Idempotency:</strong> Order IDs are globally unique (UUID); duplicate submission detection via order_id dedup</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 3: HIE / FHIR ============ -->
+<h2>Flow 3: Health Information Exchange (FHIR API)</h2>
+<div class="card">
+<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FF6B35"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#607D8B"/><text x="80" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">External EHR</text><text x="80" y="97" text-anchor="middle" fill="#fff" font-size="10">(Epic, Allscripts)</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#FB8C00"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">FHIR Gateway</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="10">(R4 / SMART)</text>
+<rect x="370" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="435" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Integration Engine</text><text x="435" y="97" text-anchor="middle" fill="#fff" font-size="10">(Transform/Route)</text>
+<rect x="550" y="30" width="130" height="50" rx="8" fill="#9C27B0"/><text x="615" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Consent Service</text><text x="615" y="67" text-anchor="middle" fill="#fff" font-size="10">(Patient Prefs)</text>
+<rect x="550" y="100" width="130" height="50" rx="8" fill="#795548"/><text x="615" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Master Patient</text><text x="615" y="137" text-anchor="middle" fill="#fff" font-size="10">Index (MPI)</text>
+<rect x="740" y="60" width="130" height="50" rx="8" fill="#00897B"/><text x="805" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Patient DB</text><text x="805" y="97" text-anchor="middle" fill="#fff" font-size="10">(Local EHR)</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#FF6B35" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="320" y1="85" x2="365" y2="85" stroke="#FF6B35" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="500" y1="75" x2="545" y2="55" stroke="#FF6B35" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="500" y1="95" x2="545" y2="120" stroke="#FF6B35" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="680" y1="85" x2="735" y2="85" stroke="#FF6B35" stroke-width="2" marker-end="url(#ah3)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>External EHR requests patient data via FHIR R4 API: <code>GET /Patient/{id}/everything</code> with SMART on FHIR OAuth2 token</li>
+<li>FHIR Gateway validates token, scopes (patient/*.read), and enforces rate limiting</li>
+<li>Integration Engine maps internal data model to FHIR Resources (Patient, Condition, MedicationRequest, Observation)</li>
+<li>Consent Service checks patient's data sharing preferences — restricts sensitive categories per consent directives</li>
+<li>Master Patient Index (MPI) resolves patient identity across systems using probabilistic matching (name, DOB, SSN, address)</li>
+<li>Data returned as FHIR Bundle (JSON) with standardized coding (SNOMED, LOINC, ICD-10, RxNorm)</li>
+</ol>
+
+<h3>Example</h3>
+<p>Patient transfers from Hospital A (Epic) to Hospital B (Cerner). Hospital A's system calls Cerner's FHIR endpoint for patient records. MPI matches patient across systems (John Doe, DOB 1985-03-15, probabilistic match score 0.98). Consent service confirms patient opted in to data sharing. Returns FHIR Bundle: 5 Conditions, 8 MedicationRequests, 20 Observations, 2 AllergyIntolerances.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>FHIR R4 API</h4>
+<p><strong>Standard:</strong> HL7 FHIR (Fast Healthcare Interoperability Resources) R4 — RESTful API</p>
+<p><strong>Resources:</strong> Patient, Condition, Observation, MedicationRequest, Procedure, DiagnosticReport, AllergyIntolerance</p>
+<p><strong>Auth:</strong> SMART on FHIR — OAuth2 with clinical scopes (patient/Observation.read, user/MedicationRequest.write)</p>
+<p><strong>Mandate:</strong> CMS Interoperability Rule (2020) requires FHIR API for patient data access</p>
+</div>
+<div class="card">
+<h4>Master Patient Index (MPI)</h4>
+<p><strong>Algorithm:</strong> Probabilistic matching using weighted scores: last name (0.3), first name (0.2), DOB (0.25), SSN (0.15), address (0.1)</p>
+<p><strong>Threshold:</strong> Score >0.95 = auto-link; 0.80-0.95 = manual review queue; <0.80 = no match</p>
+<p><strong>Dedup:</strong> Golden record concept — merge duplicate patient records into single longitudinal record</p>
+</div>
+</div>
+</div>
+
+<!-- ============ COMBINED ARCHITECTURE ============ -->
+<h2>Combined Architecture</h2>
+<div class="card">
+<svg viewBox="0 0 1050 500" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#00A4E4"/></marker></defs>
+<rect x="20" y="60" width="130" height="50" rx="8" fill="#34A853"/><text x="85" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">PowerChart</text><text x="85" y="97" text-anchor="middle" fill="#fff" font-size="10">(Clinician UI)</text>
+<rect x="20" y="140" width="130" height="50" rx="8" fill="#34A853"/><text x="85" y="162" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Patient Portal</text><text x="85" y="177" text-anchor="middle" fill="#fff" font-size="10">(HealtheLife)</text>
+<rect x="210" y="90" width="130" height="60" rx="8" fill="#FB8C00"/><text x="275" y="115" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">API Gateway</text><text x="275" y="132" text-anchor="middle" fill="#fff" font-size="10">(OAuth2 + HIPAA)</text>
+<rect x="400" y="30" width="130" height="50" rx="8" fill="#4285F4"/><text x="465" y="55" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Chart Service</text>
+<rect x="400" y="100" width="130" height="50" rx="8" fill="#4285F4"/><text x="465" y="125" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Order Service</text>
+<rect x="400" y="170" width="130" height="50" rx="8" fill="#4285F4"/><text x="465" y="195" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">FHIR Gateway</text>
+<rect x="590" y="30" width="130" height="50" rx="8" fill="#E53935"/><text x="655" y="55" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">CDS Engine</text>
+<rect x="590" y="100" width="130" height="50" rx="8" fill="#9C27B0"/><text x="655" y="125" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Integration Engine</text>
+<rect x="590" y="170" width="130" height="50" rx="8" fill="#607D8B"/><text x="655" y="195" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">MPI Service</text>
+<rect x="790" y="60" width="130" height="50" rx="8" fill="#00897B"/><text x="855" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">HL7/FHIR Bus</text><text x="855" y="97" text-anchor="middle" fill="#fff" font-size="10">(Message Broker)</text>
+<rect x="790" y="140" width="130" height="50" rx="8" fill="#607D8B"/><text x="855" y="162" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">External Systems</text><text x="855" y="177" text-anchor="middle" fill="#fff" font-size="10">(Labs, Pharmacy)</text>
+<rect x="400" y="310" width="130" height="55" rx="8" fill="#795548"/><text x="465" y="332" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Oracle RAC</text><text x="465" y="347" text-anchor="middle" fill="#fff" font-size="10">(Patient Data)</text>
+<rect x="590" y="310" width="130" height="55" rx="8" fill="#795548"/><text x="655" y="332" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Document Store</text><text x="655" y="347" text-anchor="middle" fill="#fff" font-size="10">(CDA/C-CDA)</text>
+<rect x="790" y="310" width="130" height="55" rx="8" fill="#9C27B0"/><text x="855" y="332" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Audit DB</text><text x="855" y="347" text-anchor="middle" fill="#fff" font-size="10">(HIPAA Log)</text>
+<rect x="400" y="410" width="130" height="50" rx="8" fill="#00897B"/><text x="465" y="432" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Redis Cache</text><text x="465" y="447" text-anchor="middle" fill="#fff" font-size="10">(Sessions + Labs)</text>
+<line x1="150" y1="85" x2="205" y2="110" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="150" y1="165" x2="205" y2="130" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="340" y1="105" x2="395" y2="55" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="340" y1="120" x2="395" y2="125" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="340" y1="135" x2="395" y2="195" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="530" y1="55" x2="585" y2="55" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="530" y1="125" x2="585" y2="125" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="530" y1="195" x2="585" y2="195" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="720" y1="125" x2="785" y2="85" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="920" y1="85" x2="920" y2="135" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="465" y1="150" x2="465" y2="305" stroke="#00A4E4" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="530" y1="80" x2="590" y2="310" stroke="#00A4E4" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="720" y1="55" x2="790" y2="320" stroke="#00A4E4" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="465" y1="365" x2="465" y2="405" stroke="#00A4E4" stroke-width="1.5" marker-end="url(#ah4)"/>
+</svg>
+</div>
+
+<!-- ============ DATABASE SCHEMA ============ -->
+<h2>Database Schema</h2>
+<div class="grid">
+<div class="card">
+<h3>Oracle RAC — Patient & Orders</h3>
+<pre><code>CREATE TABLE patients (
+  patient_id    NUMBER PRIMARY KEY,     <span class="tag tag-pk">PK</span>
+  mrn           VARCHAR2(20) UNIQUE,    <span class="tag tag-idx">INDEX</span>
+  first_name    VARCHAR2(100),
+  last_name     VARCHAR2(100),          <span class="tag tag-idx">INDEX</span>
+  dob           DATE,                   <span class="tag tag-idx">INDEX</span>
+  gender        CHAR(1),
+  ssn_hash      CHAR(64),              -- SHA-256 for matching
+  address       CLOB,
+  phone         VARCHAR2(20),
+  insurance_id  NUMBER REFERENCES insurance_plans, <span class="tag tag-fk">FK</span>
+  created_at    TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE encounters (
+  encounter_id  NUMBER PRIMARY KEY,     <span class="tag tag-pk">PK</span>
+  patient_id    NUMBER REFERENCES patients, <span class="tag tag-fk">FK</span>
+  facility_id   NUMBER,                 <span class="tag tag-fk">FK</span>
+  encounter_type VARCHAR2(20),  -- inpatient, outpatient, ED
+  admit_dt      TIMESTAMP,
+  discharge_dt  TIMESTAMP,
+  attending_id  NUMBER REFERENCES providers, <span class="tag tag-fk">FK</span>
+  status        VARCHAR2(20)
+);
+CREATE INDEX idx_enc_patient ON encounters(patient_id, admit_dt DESC);
+
+CREATE TABLE orders (
+  order_id      NUMBER PRIMARY KEY,     <span class="tag tag-pk">PK</span>
+  encounter_id  NUMBER REFERENCES encounters, <span class="tag tag-fk">FK</span>
+  patient_id    NUMBER,                 <span class="tag tag-fk">FK</span>
+  order_type    VARCHAR2(20),  -- medication, lab, imaging, consult
+  code          VARCHAR2(20),  -- RxNorm / LOINC / CPT
+  code_system   VARCHAR2(30),
+  display_name  VARCHAR2(255),
+  status        VARCHAR2(20),  -- ordered, verified, completed, cancelled
+  ordered_by    NUMBER REFERENCES providers, <span class="tag tag-fk">FK</span>
+  ordered_at    TIMESTAMP,
+  details       CLOB  -- JSON: dose, route, frequency, duration
+);
+CREATE INDEX idx_orders_patient ON orders(patient_id, ordered_at DESC);</code></pre>
+<p><span class="tag tag-shard">SHARD</span> Oracle RAC (Real Application Clusters) — shared-disk architecture with active-active nodes; no application-level sharding needed</p>
+</div>
+
+<div class="card">
+<h3>Clinical Results & Audit</h3>
+<pre><code>CREATE TABLE observations (
+  obs_id        NUMBER PRIMARY KEY,     <span class="tag tag-pk">PK</span>
+  patient_id    NUMBER,                 <span class="tag tag-fk">FK</span>
+  encounter_id  NUMBER,                 <span class="tag tag-fk">FK</span>
+  loinc_code    VARCHAR2(10),          <span class="tag tag-idx">INDEX</span>
+  value_numeric NUMBER(10,3),
+  value_string  VARCHAR2(500),
+  unit          VARCHAR2(20),
+  reference_low NUMBER(10,3),
+  reference_high NUMBER(10,3),
+  status        VARCHAR2(20),
+  performed_at  TIMESTAMP,
+  reported_at   TIMESTAMP
+);
+CREATE INDEX idx_obs_patient ON observations(patient_id, loinc_code, performed_at DESC);
+
+CREATE TABLE audit_log (
+  log_id        NUMBER PRIMARY KEY,     <span class="tag tag-pk">PK</span>
+  user_id       NUMBER,
+  patient_id    NUMBER,                 <span class="tag tag-idx">INDEX</span>
+  action        VARCHAR2(50),  -- view_chart, modify_order, print_record
+  resource_type VARCHAR2(50),
+  resource_id   NUMBER,
+  ip_address    VARCHAR2(45),
+  user_agent    VARCHAR2(500),
+  reason        VARCHAR2(255),  -- treatment, payment, operations, emergency
+  prev_hash     CHAR(64),      -- chain for tamper detection
+  created_at    TIMESTAMP       <span class="tag tag-idx">INDEX</span>
+);</code></pre>
+</div>
+</div>
+
+<!-- ============ CACHE & CDN ============ -->
+<h2>Cache & CDN Deep Dive</h2>
+<div class="card">
+<div class="grid">
+<div class="card">
+<h4>Clinical Data Cache (Redis)</h4>
+<p><strong>Cached:</strong> Recent lab results, active medication list, allergy list — high-frequency reads during chart review</p>
+<p><strong>Strategy:</strong> Write-through — every new result updates cache and DB simultaneously</p>
+<p><strong>TTL:</strong> 15 minutes for lab results; medication list cached until next order change event</p>
+<p><strong>Encryption:</strong> Redis TLS + application-layer AES-256 encryption for PHI in cache (HIPAA requirement)</p>
+</div>
+<div class="card">
+<h4>Session Cache</h4>
+<p><strong>Storage:</strong> Redis with TLS — stores OAuth2 tokens, user context, active patient context</p>
+<p><strong>TTL:</strong> 15-minute session timeout (HIPAA auto-logoff requirement); refreshed on activity</p>
+<p><strong>Context Switch:</strong> When clinician switches patients, previous patient context evicted immediately</p>
+</div>
+<div class="card">
+<h4>No Public CDN</h4>
+<p><strong>Reason:</strong> HIPAA prohibits caching PHI on public CDN edges — all clinical data served from datacenter</p>
+<p><strong>Static Assets:</strong> Application JS/CSS/images can use CDN with no-store for API responses</p>
+<p><strong>Private CDN:</strong> Internal content delivery within hospital network (Akamai Private Peering or similar)</p>
+</div>
+</div>
+</div>
+
+<!-- ============ SCALING ============ -->
+<h2>Scaling & Load Balancing</h2>
+<div class="card">
+<ul>
+<li><strong>Oracle RAC:</strong> Active-active cluster (2-4 nodes) with shared storage — automatic failover; transparent application routing (TAR) redistributes connections on node failure</li>
+<li><strong>Application Tier:</strong> Stateless microservices behind F5 BIG-IP load balancers; health-based routing; SSL offloading</li>
+<li><strong>Multi-Tenant:</strong> Each healthcare organization gets logical tenant isolation (separate schemas or databases) — data never co-mingled across organizations</li>
+<li><strong>Disaster Recovery:</strong> Active-passive across datacenters with Oracle Data Guard (synchronous redo log shipping); RTO <15 minutes, RPO near-zero</li>
+<li><strong>Integration Bus:</strong> HL7 interface engine (Rhapsody / Mirth Connect) scaled horizontally; message queues (RabbitMQ) buffer during downstream outages</li>
+<li><strong>Peak Handling:</strong> Morning rounding (7-9 AM) creates 5x normal load — pre-warmed caches and auto-scaled compute</li>
+</ul>
+</div>
+
+<!-- ============ TRADEOFFS ============ -->
+<h2>Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="pro">
+<h4>✅ Oracle RAC</h4>
+<ul>
+<li>Proven in healthcare for 20+ years — regulatory acceptance</li>
+<li>Strong ACID guarantees — critical for clinical data integrity</li>
+<li>Active-active HA without application-level sharding</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ Oracle RAC</h4>
+<ul>
+<li>Extremely expensive licensing ($47K/core)</li>
+<li>Vertical scaling limitations — shared-disk architecture</li>
+<li>Vendor lock-in; migration to cloud-native databases is painful</li>
+</ul>
+</div>
+<div class="pro">
+<h4>✅ HL7v2 (Legacy Protocol)</h4>
+<ul>
+<li>Universal adoption — every healthcare system supports it</li>
+<li>Battle-tested over 30+ years; well-understood failure modes</li>
+<li>Simple pipe-delimited format — easy to debug and parse</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ HL7v2 (Legacy Protocol)</h4>
+<ul>
+<li>Optionality nightmare — same message interpreted differently by vendors</li>
+<li>No standardized transport (MLLP is fragile, no built-in encryption)</li>
+<li>Point-to-point integration doesn't scale (N×M interface problem)</li>
+</ul>
+</div>
+</div>
+
+<!-- ============ ALTERNATIVES ============ -->
+<h2>Alternative Approaches</h2>
+<div class="grid">
+<div class="card">
+<h4>Cloud-Native (AWS HealthLake)</h4>
+<p>FHIR-native data store on AWS with built-in HIPAA compliance. Eliminates Oracle licensing, enables elastic scaling. But nascent technology with less proven track record in critical care settings and potential data sovereignty concerns.</p>
+</div>
+<div class="card">
+<h4>OpenEHR Architecture</h4>
+<p>Archetype-based data modeling — separates clinical knowledge from software. Extremely flexible for evolving clinical requirements. Used by NHS in UK. More complex than FHIR but richer clinical modeling capability.</p>
+</div>
+<div class="card">
+<h4>Event-Sourced EHR</h4>
+<p>Store all clinical events as immutable log (patient_admitted, medication_ordered, vitals_recorded). Current state computed from events. Perfect audit trail, temporal queries ("what was the med list at time T?"), but complex read path and regulatory acceptance uncertain.</p>
+</div>
+</div>
+
+<!-- ============ ADDITIONAL INFO ============ -->
+<h2>Additional Information</h2>
+<div class="card">
+<ul>
+<li><strong>Meaningful Use / Promoting Interoperability:</strong> CMS incentive program requiring EHRs to meet specific functionality criteria — CPOE, CDS, e-prescribing, care coordination. Cerner is ONC-certified.</li>
+<li><strong>Oracle Acquisition (2022):</strong> Oracle acquired Cerner for $28.3B — integrating with Oracle Cloud Infrastructure (OCI) and Oracle Autonomous Database; moving from on-premise to cloud-hosted model.</li>
+<li><strong>Millennium vs Oracle Health:</strong> Cerner Millennium is the legacy platform; Oracle Health (renamed 2023) is the cloud-native successor leveraging Oracle DB, Kubernetes, and FHIR-first architecture.</li>
+<li><strong>Barcode Medication Administration (BCMA):</strong> Nurses scan patient wristband barcode + medication barcode before administration — 5 Rights verification (right patient, drug, dose, route, time). Reduces medication errors by ~50%.</li>
+<li><strong>Downtime Procedures:</strong> Every hospital must have paper-based fallback procedures when EHR is unavailable — pre-printed order sheets, medication administration logs. EHR downtime directly threatens patient safety.</li>
+</ul>
+</div>
+
+</body>
+</html>

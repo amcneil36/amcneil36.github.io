@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clubhouse (Audio Social) - System Design</title>
+<style>
+:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--heading:#F0E68C;--accent:#8B6914;--accent2:#DAA520;--accent3:#FFD700;--muted:#888}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
+h1{color:var(--heading);font-size:2.2rem;border-bottom:3px solid var(--heading);padding-bottom:.5rem;margin-bottom:1.5rem}
+h2{color:var(--accent3);margin:2rem 0 1rem;font-size:1.5rem}
+h3{color:var(--accent2);margin:1.5rem 0 .75rem;font-size:1.2rem}
+h4{color:var(--accent);margin:1rem 0 .5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
+ul,ol{margin:.75rem 0 .75rem 1.5rem}
+li{margin:.4rem 0}
+code{background:#2d2d2d;padding:.2rem .5rem;border-radius:4px;font-size:.9rem;color:#f8f8f2}
+pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:1rem 0}
+pre code{padding:0;background:none}
+.tag{display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600;margin:.2rem}
+.tag-pk{background:#E53935;color:#fff}
+.tag-fk{background:#1E88E5;color:#fff}
+.tag-idx{background:#43A047;color:#fff}
+.tag-shard{background:#FB8C00;color:#fff}
+.tag-cache{background:#8E24AA;color:#fff}
+.tag-ttl{background:#00897B;color:#fff}
+svg text{font-family:'Segoe UI',system-ui,sans-serif}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.pro{background:#1b3a1b;border:1px solid #2d5a2d;border-radius:8px;padding:1rem}
+.con{background:#3a1b1b;border:1px solid #5a2d2d;border-radius:8px;padding:1rem}
+</style>
+</head>
+<body>
+
+<h1>🎙️ Clubhouse (Audio Social) - System Design</h1>
+
+<!-- ============ FUNCTIONAL REQUIREMENTS ============ -->
+<div class="card">
+<h2>Functional Requirements</h2>
+<ol>
+<li><strong>Live Audio Rooms:</strong> Create, join, and participate in real-time audio rooms with speakers, moderators, and listeners (up to 8K participants)</li>
+<li><strong>Room Discovery & Hallway:</strong> Browse active/upcoming rooms, follow clubs/topics, personalized room recommendations, event scheduling</li>
+<li><strong>Social Graph & Notifications:</strong> Follow users, get notified when followed users start/join rooms, invite-only rooms, raise-hand/speaker queue</li>
+</ol>
+</div>
+
+<!-- ============ NON-FUNCTIONAL REQUIREMENTS ============ -->
+<div class="card">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Latency:</strong> Audio end-to-end &lt;300ms (conversational quality requires &lt;400ms perceived delay)</li>
+<li><strong>Scale:</strong> 10M+ concurrent users, thousands of simultaneous rooms, rooms up to 8K listeners</li>
+<li><strong>Reliability:</strong> No audio drops during room sessions; graceful degradation under network jitter</li>
+<li><strong>Quality:</strong> Opus codec at 32-64kbps, adaptive bitrate based on network conditions, echo cancellation</li>
+<li><strong>Ephemerality:</strong> Rooms are not recorded by default — audio is transient (privacy by design)</li>
+</ul>
+</div>
+
+<!-- ============ FLOW 1: JOIN ROOM & AUDIO STREAMING ============ -->
+<h2>Flow 1: Joining a Room & Real-Time Audio</h2>
+<div class="card">
+<svg viewBox="0 0 1000 370" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FFD700"/></marker></defs>
+<rect x="20" y="50" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="80" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Mobile Client</text>
+<rect x="190" y="50" width="130" height="50" rx="8" fill="#FB8C00"/><text x="255" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">API Gateway</text><text x="255" y="87" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(REST / WS)</text>
+<rect x="370" y="50" width="130" height="50" rx="8" fill="#4285F4"/><text x="435" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Room Service</text><text x="435" y="87" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(State Machine)</text>
+<rect x="550" y="20" width="130" height="50" rx="8" fill="#9C27B0"/><text x="615" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Agora SFU</text><text x="615" y="57" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Audio Relay)</text>
+<rect x="550" y="90" width="130" height="50" rx="8" fill="#E53935"/><text x="615" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Signaling Server</text><text x="615" y="127" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(WebRTC)</text>
+<rect x="730" y="50" width="130" height="50" rx="8" fill="#00897B"/><text x="795" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">TURN/STUN</text><text x="795" y="87" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(NAT Traversal)</text>
+<rect x="370" y="180" width="130" height="50" rx="8" fill="#795548"/><text x="435" y="202" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Room State DB</text><text x="435" y="217" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Redis Cluster)</text>
+<rect x="550" y="180" width="130" height="50" rx="8" fill="#4285F4"/><text x="615" y="202" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Presence Service</text><text x="615" y="217" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Who's online)</text>
+<rect x="190" y="260" width="130" height="50" rx="8" fill="#607D8B"/><text x="255" y="282" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">WebSocket Hub</text><text x="255" y="297" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Room Events)</text>
+<line x1="140" y1="75" x2="185" y2="75" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="320" y1="75" x2="365" y2="75" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="500" y1="65" x2="545" y2="45" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="500" y1="85" x2="545" y2="110" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="680" y1="45" x2="725" y2="65" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="680" y1="115" x2="725" y2="85" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="435" y1="100" x2="435" y2="175" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="500" y1="205" x2="545" y2="205" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="370" y1="130" x2="300" y2="255" stroke="#FFD700" stroke-width="1.5" marker-end="url(#ah)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Client sends JOIN request via API Gateway with room_id and auth token</li>
+<li>Room Service validates room access (public/invite-only/club-member), checks capacity, adds user to participant list</li>
+<li>Signaling Server initiates WebRTC session — SDP offer/answer exchange via WebSocket</li>
+<li>STUN server determines client's public IP:port; TURN relay used if direct P2P fails (symmetric NAT)</li>
+<li>Agora SFU (Selective Forwarding Unit) receives audio from speakers and selectively relays to all listeners</li>
+<li>Room state (participants, roles, speaker queue) stored in Redis Cluster for fast reads</li>
+<li>WebSocket Hub pushes real-time events: user_joined, speaker_changed, hand_raised, room_ended</li>
+<li>Presence Service updates user's current room for social graph notifications</li>
+</ol>
+
+<h3>Example</h3>
+<p>User opens app, sees "Tech Talk with @elonmusk" with 3,200 listeners. Taps join → Room Service checks capacity (OK, <8K), signaling exchanges SDP, STUN resolves public endpoint, connects to nearest Agora SFU edge node in us-east. Audio streams from 4 speakers forwarded to client. WebSocket delivers participant count updates and speaker changes in real-time.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>SFU Architecture (Agora)</h4>
+<p><strong>Protocol:</strong> UDP-based RTP/RTCP with custom congestion control (GCC — Google Congestion Control variant)</p>
+<p><strong>Topology:</strong> SFU (not MCU) — each speaker's audio stream forwarded individually; client-side mixing saves server CPU</p>
+<p><strong>Edge Nodes:</strong> SFUs deployed in 200+ PoPs worldwide; users connect to nearest edge for minimum RTT</p>
+<p><strong>Scaling:</strong> Large rooms cascaded across multiple SFU instances — inter-SFU relay over dedicated backbone</p>
+</div>
+<div class="card">
+<h4>WebRTC Signaling</h4>
+<p><strong>Protocol:</strong> WebSocket (wss://) for signaling; UDP for media</p>
+<p><strong>SDP:</strong> Session Description Protocol — describes codec capabilities, ICE candidates, DTLS fingerprint</p>
+<p><strong>ICE:</strong> Interactive Connectivity Establishment — tries direct P2P first, falls back to TURN relay</p>
+<p><strong>SRTP:</strong> Secure RTP with DTLS-SRTP key exchange — end-to-hop encryption (not E2E in SFU model)</p>
+</div>
+<div class="card">
+<h4>Opus Codec</h4>
+<p><strong>Codec:</strong> Opus (RFC 6716) — hybrid codec combining SILK (speech) and CELT (music)</p>
+<p><strong>Bitrate:</strong> 32kbps (speech-optimized) to 64kbps (high quality); adaptive based on network</p>
+<p><strong>Frame:</strong> 20ms frames (50 frames/second), low algorithmic delay (~26.5ms)</p>
+<p><strong>FEC:</strong> In-band Forward Error Correction — redundant data in subsequent packets for loss recovery</p>
+</div>
+<div class="card">
+<h4>Room State (Redis)</h4>
+<p><strong>Data:</strong> Hash per room — participants list, speaker queue, moderator list, room metadata</p>
+<p><strong>Pub/Sub:</strong> Redis Pub/Sub channels per room for real-time event distribution to WebSocket hubs</p>
+<p><strong>Expiry:</strong> Rooms auto-expire after 24 hours of inactivity; TTL on all room keys</p>
+<p><strong>Scaling:</strong> Redis Cluster with hash-slot based sharding by room_id</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 2: ROOM DISCOVERY ============ -->
+<h2>Flow 2: Room Discovery & Hallway Feed</h2>
+<div class="card">
+<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#DAA520"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="90" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Client</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Discovery Service</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Feed Builder)</text>
+<rect x="370" y="30" width="130" height="50" rx="8" fill="#9C27B0"/><text x="435" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Social Graph</text><text x="435" y="67" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Neo4j / DGraph)</text>
+<rect x="370" y="100" width="130" height="50" rx="8" fill="#00897B"/><text x="435" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Active Rooms</text><text x="435" y="137" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Redis Cache)</text>
+<rect x="550" y="60" width="130" height="50" rx="8" fill="#FB8C00"/><text x="615" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Ranking ML</text><text x="615" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Personalized)</text>
+<rect x="730" y="60" width="130" height="50" rx="8" fill="#795548"/><text x="795" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Topic/Club DB</text><text x="795" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(PostgreSQL)</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#DAA520" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="320" y1="75" x2="365" y2="55" stroke="#DAA520" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="320" y1="95" x2="365" y2="120" stroke="#DAA520" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="500" y1="55" x2="545" y2="75" stroke="#DAA520" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="500" y1="125" x2="545" y2="95" stroke="#DAA520" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="680" y1="85" x2="725" y2="85" stroke="#DAA520" stroke-width="2" marker-end="url(#ah2)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Client opens "Hallway" — sends GET /discover with user's interests, followed clubs, followed users</li>
+<li>Discovery Service queries Social Graph: who does user follow → which rooms are they in?</li>
+<li>Active Rooms cache (Redis) provides real-time room metadata: topic, speaker count, listener count, duration</li>
+<li>Ranking ML model personalizes room order: social signal (friends in room) × topic relevance × room momentum (growth rate)</li>
+<li>Scheduled rooms from followed clubs/topics surfaced alongside live rooms</li>
+<li>Results returned paginated with refresh interval (pull-to-refresh + periodic background sync)</li>
+</ol>
+
+<h3>Example</h3>
+<p>User follows 200 people, 5 clubs. Discovery finds 3 followed users currently speaking in rooms. ML ranks: (1) "Startup Fundraising" (2 friends speaking, topic match), (2) "Music Production" (1 friend listening, club match), (3) "Daily News" (trending, 5K listeners). Scheduled: "AI Ethics Panel" in 2 hours from followed club.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>Social Graph</h4>
+<p><strong>Store:</strong> Graph database (Neo4j or DGraph) for follow relationships, club memberships, topic interests</p>
+<p><strong>Queries:</strong> 2-hop traversal: user → follows → currently_in_room (real-time join with Redis)</p>
+<p><strong>Caching:</strong> User's follow list cached in Redis (invalidated on follow/unfollow); TTL 5 minutes</p>
+</div>
+<div class="card">
+<h4>Ranking Algorithm</h4>
+<p><strong>Score:</strong> w1×social_signal + w2×topic_match + w3×room_momentum + w4×speaker_quality</p>
+<p><strong>Social Signal:</strong> Number of followed users in room, weighted by interaction frequency</p>
+<p><strong>Momentum:</strong> Listener growth rate (joins/minute) — indicates engaging content</p>
+<p><strong>Cold Start:</strong> New users get topic-based recommendations until social graph is built</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 3: MODERATION ============ -->
+<h2>Flow 3: Room Moderation & Speaker Management</h2>
+<div class="card">
+<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#8B6914"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Listener Client</text><text x="80" y="97" text-anchor="middle" fill="#fff" font-size="10">(Raise Hand)</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#607D8B"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">WebSocket Hub</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="10">(Event Broker)</text>
+<rect x="370" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="435" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Room Service</text><text x="435" y="97" text-anchor="middle" fill="#fff" font-size="10">(State Machine)</text>
+<rect x="550" y="30" width="130" height="50" rx="8" fill="#E53935"/><text x="615" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Moderator Client</text><text x="615" y="67" text-anchor="middle" fill="#fff" font-size="10">(Accept/Deny)</text>
+<rect x="550" y="100" width="130" height="50" rx="8" fill="#9C27B0"/><text x="615" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Abuse Detection</text><text x="615" y="137" text-anchor="middle" fill="#fff" font-size="10">(Audio Classifier)</text>
+<rect x="730" y="60" width="130" height="50" rx="8" fill="#FB8C00"/><text x="795" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Trust & Safety</text><text x="795" y="97" text-anchor="middle" fill="#fff" font-size="10">(Action Pipeline)</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#8B6914" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="320" y1="85" x2="365" y2="85" stroke="#8B6914" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="500" y1="75" x2="545" y2="55" stroke="#8B6914" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="500" y1="95" x2="545" y2="120" stroke="#8B6914" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="680" y1="55" x2="725" y2="75" stroke="#8B6914" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="680" y1="125" x2="725" y2="95" stroke="#8B6914" stroke-width="2" marker-end="url(#ah3)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Listener taps "Raise Hand" → event sent via WebSocket to Room Service</li>
+<li>Room Service adds user to speaker queue (Redis sorted set, scored by request time)</li>
+<li>Moderator receives real-time notification of hand raise; sees queue of pending speakers</li>
+<li>Moderator accepts → Room Service changes user role from LISTENER to SPEAKER</li>
+<li>Signaling server renegotiates: opens user's audio upstream channel to SFU</li>
+<li>Abuse Detection ML monitors speaker audio streams for policy violations (hate speech, harassment)</li>
+<li>Trust & Safety pipeline can auto-mute, remove speaker, or flag for human review</li>
+<li>All role changes broadcast to all room participants via WebSocket</li>
+</ol>
+
+<h3>Example</h3>
+<p>In a 500-person room, listener @alice raises hand. Moderator sees her at position #3 in queue. After 2 minutes, moderator promotes @alice to speaker. Signaling renegotiates SDP — Alice's microphone input now routed through SFU to all 500 listeners. Audio classifier monitors in real-time at 1-second windows.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>Role State Machine</h4>
+<p><strong>Roles:</strong> LISTENER → INVITED_SPEAKER → SPEAKER → MODERATOR (progressive promotion)</p>
+<p><strong>Transitions:</strong> Raise hand (L→queue), Accept (queue→S), Promote (S→M), Mute (S→L), Kick (any→removed)</p>
+<p><strong>Consistency:</strong> Redis MULTI/EXEC for atomic role transitions; distributed lock per room</p>
+</div>
+<div class="card">
+<h4>Audio Abuse Detection</h4>
+<p><strong>Model:</strong> CNN-based audio classifier (trained on labeled hate speech audio datasets)</p>
+<p><strong>Processing:</strong> 1-second sliding windows, real-time inference on GPU edge servers</p>
+<p><strong>Actions:</strong> Confidence >0.9 → auto-mute speaker; 0.7-0.9 → flag for moderator review</p>
+<p><strong>Fallback:</strong> Speech-to-text (Whisper) → text classifier for nuanced policy violations</p>
+</div>
+</div>
+</div>
+
+<!-- ============ COMBINED ARCHITECTURE ============ -->
+<h2>Combined Architecture</h2>
+<div class="card">
+<svg viewBox="0 0 1050 480" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FFD700"/></marker></defs>
+<rect x="20" y="80" width="130" height="50" rx="8" fill="#34A853"/><text x="85" y="105" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Mobile Clients</text><text x="85" y="120" text-anchor="middle" fill="#fff" font-size="10">(iOS / Android)</text>
+<rect x="200" y="50" width="130" height="50" rx="8" fill="#FB8C00"/><text x="265" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">API Gateway</text><text x="265" y="87" text-anchor="middle" fill="#fff" font-size="10">(REST + Auth)</text>
+<rect x="200" y="120" width="130" height="50" rx="8" fill="#607D8B"/><text x="265" y="142" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">WebSocket Hub</text><text x="265" y="157" text-anchor="middle" fill="#fff" font-size="10">(Real-time Events)</text>
+<rect x="390" y="20" width="130" height="50" rx="8" fill="#4285F4"/><text x="455" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Room Service</text>
+<rect x="390" y="90" width="130" height="50" rx="8" fill="#4285F4"/><text x="455" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Discovery Service</text>
+<rect x="390" y="160" width="130" height="50" rx="8" fill="#4285F4"/><text x="455" y="182" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Presence Service</text>
+<rect x="580" y="20" width="130" height="50" rx="8" fill="#9C27B0"/><text x="645" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Agora SFU</text><text x="645" y="57" text-anchor="middle" fill="#fff" font-size="10">(Audio Relay)</text>
+<rect x="580" y="90" width="130" height="50" rx="8" fill="#E53935"/><text x="645" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Signaling Server</text><text x="645" y="127" text-anchor="middle" fill="#fff" font-size="10">(WebRTC)</text>
+<rect x="770" y="50" width="130" height="50" rx="8" fill="#00897B"/><text x="835" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">TURN / STUN</text><text x="835" y="87" text-anchor="middle" fill="#fff" font-size="10">(NAT Traversal)</text>
+<rect x="390" y="300" width="130" height="55" rx="8" fill="#795548"/><text x="455" y="322" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">PostgreSQL</text><text x="455" y="337" text-anchor="middle" fill="#fff" font-size="10">(Users, Clubs)</text>
+<rect x="580" y="300" width="130" height="55" rx="8" fill="#795548"/><text x="645" y="322" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Redis Cluster</text><text x="645" y="337" text-anchor="middle" fill="#fff" font-size="10">(Room State)</text>
+<rect x="770" y="300" width="130" height="55" rx="8" fill="#795548"/><text x="835" y="322" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Neo4j / DGraph</text><text x="835" y="337" text-anchor="middle" fill="#fff" font-size="10">(Social Graph)</text>
+<rect x="580" y="400" width="130" height="50" rx="8" fill="#9C27B0"/><text x="645" y="422" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Abuse Detection</text><text x="645" y="437" text-anchor="middle" fill="#fff" font-size="10">(Audio ML)</text>
+<line x1="150" y1="90" x2="195" y2="75" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="150" y1="115" x2="195" y2="140" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="330" y1="75" x2="385" y2="45" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="330" y1="85" x2="385" y2="115" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="330" y1="155" x2="385" y2="185" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="520" y1="45" x2="575" y2="45" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="520" y1="55" x2="575" y2="110" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="710" y1="45" x2="765" y2="65" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="710" y1="115" x2="765" y2="85" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="455" y1="70" x2="455" y2="295" stroke="#FFD700" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="455" y1="210" x2="580" y2="320" stroke="#FFD700" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="520" y1="140" x2="770" y2="315" stroke="#FFD700" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="645" y1="70" x2="645" y2="395" stroke="#FFD700" stroke-width="1.5" marker-end="url(#ah4)"/>
+</svg>
+</div>
+
+<!-- ============ DATABASE SCHEMA ============ -->
+<h2>Database Schema</h2>
+<div class="grid">
+<div class="card">
+<h3>PostgreSQL — Users & Clubs</h3>
+<pre><code>CREATE TABLE users (
+  user_id      UUID PRIMARY KEY,     <span class="tag tag-pk">PK</span>
+  username     VARCHAR(30) UNIQUE,   <span class="tag tag-idx">INDEX</span>
+  display_name VARCHAR(100),
+  bio          TEXT,
+  avatar_url   TEXT,
+  phone_hash   CHAR(64) UNIQUE,     <span class="tag tag-idx">INDEX</span>
+  is_verified  BOOLEAN DEFAULT FALSE,
+  follower_ct  INT DEFAULT 0,
+  following_ct INT DEFAULT 0,
+  created_at   TIMESTAMPTZ
+);
+
+CREATE TABLE clubs (
+  club_id      UUID PRIMARY KEY,     <span class="tag tag-pk">PK</span>
+  name         VARCHAR(100),
+  description  TEXT,
+  avatar_url   TEXT,
+  topic_ids    UUID[],
+  member_count INT DEFAULT 0,
+  is_private   BOOLEAN DEFAULT FALSE,
+  created_by   UUID REFERENCES users, <span class="tag tag-fk">FK</span>
+  created_at   TIMESTAMPTZ
+);
+
+CREATE TABLE club_members (
+  club_id  UUID REFERENCES clubs,  <span class="tag tag-fk">FK</span>
+  user_id  UUID REFERENCES users,  <span class="tag tag-fk">FK</span>
+  role     VARCHAR(20),  -- admin, member, follower
+  joined_at TIMESTAMPTZ,
+  PRIMARY KEY (club_id, user_id)
+);</code></pre>
+</div>
+
+<div class="card">
+<h3>Redis — Room State</h3>
+<pre><code># Room metadata (Hash)
+HSET room:{room_id} title "Tech Talk"
+HSET room:{room_id} topic "Technology"
+HSET room:{room_id} created_by {user_id}
+HSET room:{room_id} started_at 1707500000
+HSET room:{room_id} is_private false
+
+# Participants by role (Sorted Sets)
+ZADD room:{room_id}:speakers {join_ts} {user_id}
+ZADD room:{room_id}:listeners {join_ts} {user_id}
+ZADD room:{room_id}:moderators {join_ts} {user_id}
+
+# Speaker queue (Sorted Set — score = request time)
+ZADD room:{room_id}:hand_raised {ts} {user_id}
+
+# User presence (Hash with TTL)
+HSET presence:{user_id} room_id {room_id}
+HSET presence:{user_id} role "speaker"
+EXPIRE presence:{user_id} 300  # heartbeat refresh</code></pre>
+<p><span class="tag tag-shard">SHARD</span> Sharded by room_id hash slot across Redis Cluster</p>
+<p><span class="tag tag-ttl">TTL</span> Room keys expire 24h after last activity; presence keys expire on 5-min heartbeat</p>
+</div>
+
+<div class="card">
+<h3>Graph DB — Social Graph</h3>
+<pre><code># Follow relationship
+(user_a)-[:FOLLOWS {since: timestamp}]->(user_b)
+
+# Club membership
+(user)-[:MEMBER_OF {role: "admin", since: ts}]->(club)
+
+# Topic interest
+(user)-[:INTERESTED_IN {weight: 0.8}]->(topic)
+
+# Room participation (ephemeral — cleared on room end)
+(user)-[:IN_ROOM {role: "speaker"}]->(room)
+
+Key queries:
+- "Which of my followed users are currently in rooms?"
+  MATCH (me)-[:FOLLOWS]->(friend)-[:IN_ROOM]->(room) RETURN room, friend
+- "Rooms from clubs I'm in"
+  MATCH (me)-[:MEMBER_OF]->(club)<-[:HOSTED_BY]-(room) RETURN room</code></pre>
+</div>
+</div>
+
+<!-- ============ CACHE & CDN ============ -->
+<h2>Cache & CDN Deep Dive</h2>
+<div class="card">
+<div class="grid">
+<div class="card">
+<h4>Room State Cache (Redis)</h4>
+<p><strong>Strategy:</strong> Write-through — all room mutations go through Room Service which writes to Redis atomically</p>
+<p><strong>Eviction:</strong> TTL-based — rooms auto-expire; no LRU needed since data is transient</p>
+<p><strong>Pub/Sub:</strong> Redis Pub/Sub per room channel broadcasts events to all connected WebSocket hubs</p>
+</div>
+<div class="card">
+<h4>Social Graph Cache</h4>
+<p><strong>Cached:</strong> User's follow list (up to 10K follows), club memberships cached in Redis</p>
+<p><strong>Strategy:</strong> Cache-aside with 5-minute TTL; invalidated on follow/unfollow actions</p>
+<p><strong>Precompute:</strong> "Friends in rooms" computed every 30 seconds and cached per-user for fast hallway loads</p>
+</div>
+<div class="card">
+<h4>CDN (Cloudflare)</h4>
+<p><strong>Static:</strong> Profile avatars, club images served via Cloudflare CDN with 24hr cache</p>
+<p><strong>API:</strong> No CDN caching for real-time endpoints (room state, discovery feed) — must be fresh</p>
+<p><strong>Audio:</strong> Audio not cached (real-time ephemeral) — SFU handles all media distribution</p>
+</div>
+</div>
+</div>
+
+<!-- ============ SCALING ============ -->
+<h2>Scaling & Load Balancing</h2>
+<div class="card">
+<ul>
+<li><strong>SFU Scaling:</strong> Cascaded SFU topology — large rooms span multiple SFU instances with inter-SFU relay over dedicated fiber backbone; each SFU handles ~500 audio streams</li>
+<li><strong>WebSocket Hub:</strong> Consistent hashing by room_id — all participants of a room connect to same hub shard; hub instances behind L4 load balancer (sticky sessions via connection ID)</li>
+<li><strong>Geographic Distribution:</strong> SFU edge nodes in 200+ PoPs; clients connect to nearest edge for minimum audio latency; signaling servers in 5 major regions</li>
+<li><strong>Room Service:</strong> Stateless microservice, horizontally scaled behind API gateway; Redis Cluster handles state</li>
+<li><strong>Database:</strong> PostgreSQL read replicas for user/club queries; graph DB sharded by user_id hash; Redis Cluster with 6+ nodes</li>
+</ul>
+</div>
+
+<!-- ============ TRADEOFFS ============ -->
+<h2>Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="pro">
+<h4>✅ SFU vs MCU</h4>
+<ul>
+<li>Lower server CPU — no audio mixing on server</li>
+<li>Lower latency — no encoding/decoding roundtrip</li>
+<li>Client can choose which streams to render</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ SFU vs MCU</h4>
+<ul>
+<li>Higher client bandwidth — receives N separate streams</li>
+<li>Client-side mixing complexity (especially on low-end devices)</li>
+<li>More complex congestion control with multiple streams</li>
+</ul>
+</div>
+<div class="pro">
+<h4>✅ Ephemeral Audio</h4>
+<ul>
+<li>Privacy by design — no recordings to leak or subpoena</li>
+<li>Reduced storage costs — no audio blob storage needed</li>
+<li>Encourages authentic, unfiltered conversation</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ Ephemeral Audio</h4>
+<ul>
+<li>Cannot replay missed content</li>
+<li>Harder to moderate after-the-fact (no audit trail)</li>
+<li>Cannot build content library for SEO/discovery</li>
+</ul>
+</div>
+</div>
+
+<!-- ============ ALTERNATIVES ============ -->
+<h2>Alternative Approaches</h2>
+<div class="grid">
+<div class="card">
+<h4>MCU (Multipoint Control Unit)</h4>
+<p>Server mixes all audio into a single stream per participant. Reduces client bandwidth (receives 1 stream instead of N) but massively increases server CPU. Better for very large rooms (10K+) where clients can't handle many streams, but cost-prohibitive at scale.</p>
+</div>
+<div class="card">
+<h4>P2P Mesh (Small Rooms)</h4>
+<p>For rooms with ≤5 speakers, full P2P mesh avoids server infrastructure entirely. Each participant sends audio directly to all others. Zero server cost but O(n²) connections make it impractical beyond ~5 participants.</p>
+</div>
+<div class="card">
+<h4>Recorded Rooms (Twitter Spaces Model)</h4>
+<p>Record and store room audio for replay. Requires blob storage (S3), transcoding pipeline, transcription service, and content moderation review. Enables async consumption but changes the social dynamic and adds significant infrastructure cost.</p>
+</div>
+</div>
+
+<!-- ============ ADDITIONAL INFO ============ -->
+<h2>Additional Information</h2>
+<div class="card">
+<ul>
+<li><strong>Agora.io Integration:</strong> Clubhouse outsourced real-time audio infrastructure to Agora — their SDK handles WebRTC, SFU, TURN/STUN, adaptive bitrate, and echo cancellation out of the box</li>
+<li><strong>Invite-Only Mechanics:</strong> Original invite system used phone number graph — each user gets N invites, creating scarcity and social pressure. Implemented as simple counter in users table + invite_log table.</li>
+<li><strong>Backchannel (DMs):</strong> Separate messaging system using standard WebSocket + persistent storage (PostgreSQL) — not real-time audio; similar to Twitter DM architecture</li>
+<li><strong>Spatial Audio (Experimental):</strong> 3D audio positioning using HRTF (Head-Related Transfer Functions) — each speaker positioned in virtual "room" for more natural conversation feel</li>
+<li><strong>Echo Cancellation:</strong> Acoustic Echo Cancellation (AEC) runs on-device using WebRTC's built-in audio processing pipeline — critical for speaker-phone usage without headphones</li>
+</ul>
+</div>
+
+</body>
+</html>

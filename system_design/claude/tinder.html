@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Tinder</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0f0f0f;color:#e0e0e0;line-height:1.7;padding:2rem}h1{font-size:2.5rem;text-align:center;background:linear-gradient(135deg,#FD297B,#FF5864,#FF655B);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}h2{color:#FD297B;font-size:1.8rem;margin:2rem 0 1rem;border-bottom:2px solid #FD297B;padding-bottom:.5rem}h3{color:#FF5864;font-size:1.3rem;margin:1.5rem 0 .8rem}h4{color:#FF655B;margin:1rem 0 .5rem}.container{max-width:1400px;margin:0 auto}.card{background:#1a1a2e;border-radius:12px;padding:1.5rem;margin:1rem 0;border:1px solid #333}.diagram-box{background:#0d1117;border-radius:12px;padding:1.5rem;margin:1rem 0;text-align:center;overflow-x:auto}.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}.tag-pk{background:#E53935;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-fk{background:#1E88E5;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-idx{background:#43A047;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-shard{background:#F4511E;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}.tradeoff-card{background:#1a1a2e;border-radius:8px;padding:1rem;border-left:4px solid}.tradeoff-card.pro{border-color:#FD297B}.tradeoff-card.con{border-color:#666}code{background:#2d2d2d;padding:2px 6px;border-radius:4px;font-family:'Fira Code',monospace;font-size:.85rem}pre{background:#1e1e2e;padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}ul,ol{padding-left:1.5rem;margin:.5rem 0}table{width:100%;border-collapse:collapse;margin:1rem 0}th,td{padding:.75rem;border:1px solid #333;text-align:left}th{background:#1a1a2e}svg text{font-family:'Segoe UI',system-ui,sans-serif}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🔥 Design Tinder</h1>
+<p style="text-align:center;color:#aaa;margin-bottom:2rem;">Location-based dating app with swipe-based matching, geospatial search, real-time chat — 75M+ MAU, 2B+ swipes/day</p>
+
+<h2>1. Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Profile Management:</strong> Create profile with photos (up to 9), bio, interests, preferences (age range, distance, gender)</li>
+<li><strong>Discovery (Swipe Deck):</strong> Serve a stack of nearby profiles based on location, preferences, and recommendation algorithm</li>
+<li><strong>Swipe Actions:</strong> Like (right swipe), Nope (left swipe), Super Like (up swipe), Rewind (undo last swipe)</li>
+<li><strong>Matching:</strong> When both users like each other → mutual match → unlock chat</li>
+<li><strong>Real-Time Chat:</strong> 1:1 messaging between matched users with text, GIFs, reactions, Spotify integration</li>
+<li><strong>Location Updates:</strong> Track user location for proximity-based recommendations (background GPS updates)</li>
+<li><strong>Boost &amp; Premium:</strong> Tinder Plus/Gold/Platinum features (unlimited likes, see who liked you, passport/location change)</li>
+<li><strong>Safety:</strong> Photo verification, block/report, message filtering, panic button (Noonlight integration)</li>
+</ul>
+</div>
+
+<h2>2. Non-Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Scale:</strong> 75M+ MAU, 2B+ swipes/day, 1.5M+ dates/week</li>
+<li><strong>Latency:</strong> Swipe deck loading &lt;200ms, match notification &lt;500ms, message delivery &lt;300ms</li>
+<li><strong>Geospatial:</strong> Efficient proximity queries within configurable radius (2-160km)</li>
+<li><strong>Availability:</strong> 99.9%+ uptime (peak usage: Sunday 6-9pm local time)</li>
+<li><strong>Freshness:</strong> Location updates reflected within minutes, new profiles discoverable within minutes</li>
+<li><strong>Privacy:</strong> Location precision limited (no exact coordinates exposed), GDPR compliance, right to delete</li>
+</ul>
+</div>
+
+<h2>3. Flow 1 — Discovery &amp; Swipe Deck Generation</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FD297B"/></marker></defs>
+<rect x="20" y="160" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="190" text-anchor="middle" fill="#fff" font-size="13">User</text><text x="75" y="205" text-anchor="middle" fill="#fff" font-size="11">opens app</text>
+<rect x="180" y="160" width="120" height="60" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="240" y="190" text-anchor="middle" fill="#fff" font-size="13">API Gateway</text>
+<rect x="350" y="60" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="420" y="90" text-anchor="middle" fill="#fff" font-size="13">Location Service</text>
+<rect x="350" y="160" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="420" y="185" text-anchor="middle" fill="#fff" font-size="13">Recommendation</text><text x="420" y="202" text-anchor="middle" fill="#fff" font-size="11">Engine</text>
+<rect x="350" y="270" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="420" y="295" text-anchor="middle" fill="#fff" font-size="13">Swipe Filter</text><text x="420" y="312" text-anchor="middle" fill="#fff" font-size="11">(already seen)</text>
+<rect x="560" y="60" width="140" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="630" y="90" text-anchor="middle" fill="#fff" font-size="13">Geospatial Index</text><text x="630" y="105" text-anchor="middle" fill="#fff" font-size="11">(Redis GEO / S2)</text>
+<rect x="560" y="160" width="140" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="630" y="185" text-anchor="middle" fill="#fff" font-size="13">ML Ranker</text><text x="630" y="202" text-anchor="middle" fill="#fff" font-size="11">(ELO + features)</text>
+<rect x="560" y="270" width="140" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="630" y="295" text-anchor="middle" fill="#fff" font-size="13">Swipe History</text><text x="630" y="312" text-anchor="middle" fill="#fff" font-size="11">(Cassandra)</text>
+<rect x="770" y="160" width="130" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="835" y="190" text-anchor="middle" fill="#fff" font-size="13">Profile Store</text><text x="835" y="205" text-anchor="middle" fill="#fff" font-size="11">(MongoDB)</text>
+<rect x="960" y="160" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="1015" y="190" text-anchor="middle" fill="#fff" font-size="13">Swipe Deck</text><text x="1015" y="205" text-anchor="middle" fill="#fff" font-size="11">(~100 cards)</text>
+<line x1="130" y1="190" x2="178" y2="190" stroke="#FD297B" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="300" y1="175" x2="348" y2="95" stroke="#FD297B" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="300" y1="190" x2="348" y2="190" stroke="#FD297B" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="300" y1="205" x2="348" y2="295" stroke="#FD297B" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="490" y1="90" x2="558" y2="90" stroke="#FD297B" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="490" y1="190" x2="558" y2="190" stroke="#FD297B" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="490" y1="300" x2="558" y2="300" stroke="#FD297B" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="700" y1="190" x2="768" y2="190" stroke="#FD297B" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="900" y1="190" x2="958" y2="190" stroke="#FD297B" stroke-width="2" marker-end="url(#a1)"/>
+</svg>
+</div>
+
+<h3>Flow Steps</h3>
+<div class="card">
+<ol>
+<li><strong>User opens app</strong> → client sends location update + requests new swipe deck via REST API</li>
+<li><strong>Location Service</strong> updates user's position in geospatial index (Redis GEO or S2 cell-based index)</li>
+<li><strong>Candidate Retrieval:</strong> Query geospatial index for active users within user's distance preference (e.g., 50km radius) matching gender/age preferences → returns ~10,000 candidate IDs</li>
+<li><strong>Swipe Filter:</strong> Remove already-swiped users by checking Bloom filter (compact set of user's swipe history) → ~8,000 remaining</li>
+<li><strong>ML Ranker:</strong> Score remaining candidates using features: mutual compatibility score (desirability + preference alignment), activity recency, photo quality score, profile completeness, mutual interests count</li>
+<li><strong>Deck Assembly:</strong> Select top ~100 candidates, order with strategic mixing: high-compatibility profiles early (hook), some "stretch" profiles (slightly outside preferences), recently active users prioritized</li>
+<li><strong>Profile Hydration:</strong> Batch-fetch full profile data (photos, bio, interests) from MongoDB for the ~100 selected candidates</li>
+<li><strong>Return swipe deck</strong> to client with pre-loaded images for smooth swiping experience</li>
+</ol>
+</div>
+
+<h3>Example</h3>
+<div class="card" style="background:#1e1e2e">
+<p><strong>User:</strong> Alice, 28F, in San Francisco, seeking M ages 25-35 within 30km</p>
+<p><strong>Geo query:</strong> <code>GEORADIUS users_active 37.78 -122.42 30 km COUNT 10000</code> → 12,000 male profiles within 30km</p>
+<p><strong>Age filter:</strong> 12,000 → 8,500 (ages 25-35 only)</p>
+<p><strong>Swipe filter (Bloom):</strong> Alice has swiped on 3,000 profiles → 5,500 remaining candidates</p>
+<p><strong>ML Ranking features:</strong></p>
+<pre>{
+  "candidate": "Bob, 29M, 3km away",
+  "features": {
+    "distance_km": 3,
+    "age_diff": 1,
+    "mutual_interests": 4,      // hiking, dogs, coffee, travel
+    "elo_score": 0.72,          // desirability percentile
+    "last_active_hours": 2,
+    "photo_quality_score": 0.85,
+    "profile_completeness": 0.9
+  },
+  "compatibility_score": 0.87
+}</pre>
+<p><strong>Deck:</strong> 100 profiles ordered by score with diversity injection (don't show all 3km profiles first)</p>
+</div>
+
+<h3>Deep Dives</h3>
+<div class="info-grid">
+<div class="card">
+<h4>Geospatial Indexing</h4>
+<p>Tinder needs to efficiently find users within a radius. Two approaches: <strong>Redis GEO</strong> (uses sorted set with geohash scoring, <code>GEORADIUS</code> command, O(N+log(M)) where N=results, M=total). <strong>S2 Geometry (Google)</strong> — divides Earth into hierarchical cells (S2 cells at various levels). For a 30km radius, compute covering S2 cells at level 12 (~3.3km² per cell), query cell index. S2 is better for non-circular regions and varied zoom levels. Tinder likely uses a combination: S2 for partitioning, Redis for fast per-cell lookups. Location updated on app open + periodic background updates (every 5-10 minutes when active).</p>
+</div>
+<div class="card">
+<h4>ELO / Desirability Score</h4>
+<p>Tinder historically used an ELO-like rating system (similar to chess). When a high-rated user swipes right on you → your score increases more. The system tends to show you profiles with similar desirability scores (assortative matching). <strong>Modern approach:</strong> Tinder moved from pure ELO to a multi-factor ML model. Features: swipe-right rate received, message response rate, profile completeness, photo quality (CNN-based), activity level. The score is NOT just attractiveness — it's "engagement potential." Users who get more right-swipes AND who themselves swipe selectively rank higher.</p>
+</div>
+<div class="card">
+<h4>Bloom Filter for Swipe Dedup</h4>
+<p>Each user may have swiped on 50K+ profiles over time. Storing exact sets for intersection is expensive. <strong>Bloom filter:</strong> probabilistic data structure, false positives OK (might skip a candidate they haven't seen — acceptable), no false negatives. 50K entries at 1% false positive rate ≈ 60KB per user. Total for 75M users: ~4.5TB — distributed across Redis cluster. On swipe, add to Bloom filter. On deck generation, test candidates against filter. Bloom filters are also used for the "already liked you" optimization (Tinder Gold's "Likes You" feature).</p>
+</div>
+<div class="card">
+<h4>Photo Quality &amp; Verification</h4>
+<p>Tinder uses ML to score photo quality: face detection (MTCNN), blur detection, lighting quality, group photo detection (which person?), sunglasses/hat detection. <strong>Smart Photos:</strong> automatically reorder a user's photos based on which gets the most right-swipes (A/B test across swipe sessions). <strong>Photo Verification:</strong> user takes a selfie matching a random pose → face embedding compared with uploaded photos using FaceNet/ArcFace. Verified badge granted if match confidence &gt;95%.</p>
+</div>
+</div>
+
+<h2>4. Flow 2 — Matching &amp; Match Notification</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FF5864"/></marker></defs>
+<rect x="20" y="140" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="170" text-anchor="middle" fill="#fff" font-size="13">User A</text><text x="75" y="185" text-anchor="middle" fill="#fff" font-size="11">swipes right</text>
+<rect x="180" y="140" width="120" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="240" y="170" text-anchor="middle" fill="#fff" font-size="13">Swipe Service</text>
+<rect x="350" y="40" width="140" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="420" y="70" text-anchor="middle" fill="#fff" font-size="13">Swipe Store</text><text x="420" y="85" text-anchor="middle" fill="#fff" font-size="11">(Cassandra)</text>
+<rect x="350" y="140" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="420" y="165" text-anchor="middle" fill="#fff" font-size="13">Match Checker</text><text x="420" y="182" text-anchor="middle" fill="#fff" font-size="11">(reciprocal like?)</text>
+<rect x="350" y="240" width="140" height="60" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="420" y="265" text-anchor="middle" fill="#fff" font-size="13">Kafka</text><text x="420" y="282" text-anchor="middle" fill="#fff" font-size="11">match-events</text>
+<rect x="560" y="40" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="630" y="65" text-anchor="middle" fill="#fff" font-size="13">Match Service</text><text x="630" y="82" text-anchor="middle" fill="#fff" font-size="11">(create match)</text>
+<rect x="560" y="140" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="630" y="170" text-anchor="middle" fill="#fff" font-size="13">Push Notification</text>
+<rect x="560" y="240" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="630" y="265" text-anchor="middle" fill="#fff" font-size="13">WebSocket</text><text x="630" y="282" text-anchor="middle" fill="#fff" font-size="11">(real-time push)</text>
+<rect x="770" y="140" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="825" y="170" text-anchor="middle" fill="#fff" font-size="13">User B</text><text x="825" y="185" text-anchor="middle" fill="#fff" font-size="11">(match notif)</text>
+<line x1="130" y1="170" x2="178" y2="170" stroke="#FF5864" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="300" y1="155" x2="348" y2="75" stroke="#FF5864" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="300" y1="170" x2="348" y2="170" stroke="#FF5864" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="420" y1="202" x2="420" y2="238" stroke="#FF5864" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="490" y1="265" x2="558" y2="65" stroke="#FF5864" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="490" y1="265" x2="558" y2="165" stroke="#FF5864" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="490" y1="265" x2="558" y2="265" stroke="#FF5864" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="700" y1="170" x2="768" y2="170" stroke="#FF5864" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="700" y1="270" x2="768" y2="185" stroke="#FF5864" stroke-width="2" marker-end="url(#a2)"/>
+</svg>
+</div>
+
+<h3>Flow Steps</h3>
+<div class="card">
+<ol>
+<li><strong>User A swipes right on User B</strong> → POST <code>/swipes</code> with <code>{swiper: A, target: B, action: "like"}</code></li>
+<li><strong>Swipe Store:</strong> Persist swipe in Cassandra: <code>(swiper_id, target_id) → {action, timestamp}</code></li>
+<li><strong>Match Checker:</strong> Query Cassandra for reverse swipe: <code>swiper=B, target=A</code>. If exists AND action="like" → <strong>MATCH!</strong></li>
+<li><strong>Match creation:</strong> Insert match record in Match Store with <code>match_id, user_a, user_b, matched_at</code>. Create empty conversation in Chat Service.</li>
+<li><strong>Kafka event:</strong> Publish <code>{match_id, user_a, user_b, timestamp}</code> to <code>match-events</code> topic</li>
+<li><strong>Real-time notification:</strong> If User A is online → send match animation via WebSocket. If User B is online → send match notification via WebSocket. If offline → push notification (APNs/FCM): "You have a new match!"</li>
+<li><strong>Analytics:</strong> Kafka consumer updates match metrics, updates both users' ELO/desirability scores (getting matched is a positive signal)</li>
+</ol>
+</div>
+
+<h3>Example</h3>
+<div class="card" style="background:#1e1e2e">
+<p><strong>Timeline:</strong></p>
+<p>Monday 7pm: Bob swipes right on Alice → stored: <code>(Bob, Alice) → like</code>. Match check: does <code>(Alice, Bob) → like</code> exist? No → no match yet.</p>
+<p>Wednesday 9pm: Alice swipes right on Bob → stored: <code>(Alice, Bob) → like</code>. Match check: does <code>(Bob, Alice) → like</code> exist? <strong>YES!</strong> → MATCH!</p>
+<p><strong>Match created:</strong> match_id=m_789, conversation_id=conv_789, matched_at=Wed 9pm</p>
+<p><strong>Notifications:</strong> Alice sees "It's a Match!" animation immediately (she just swiped). Bob gets push notification: "You have a new match with Alice!" + opens app to see match animation.</p>
+<p><strong>Tinder Gold optimization:</strong> "Likes You" feature shows Alice that Bob already liked her (before she swipes). This is a simple query on the swipe store: <code>WHERE target=Alice AND action=like AND NOT EXISTS match</code>.</p>
+</div>
+
+<h3>Deep Dives</h3>
+<div class="info-grid">
+<div class="card">
+<h4>Swipe Store Design (Cassandra)</h4>
+<p>Partition key: <code>swiper_id</code>. Clustering key: <code>target_id</code>. This enables: (1) Record a swipe: <code>INSERT INTO swipes (swiper, target, action, ts)</code>. (2) Check for match: <code>SELECT * FROM swipes WHERE swiper=B AND target=A</code> (reverse lookup requires a secondary table or materialized view with partition_key=target_id). Tinder likely maintains two tables: <code>swipes_by_swiper</code> and <code>swipes_by_target</code> (denormalized) for efficient bidirectional lookups. At 2B swipes/day × 365 days retention = ~730B rows. Cassandra handles this with time-windowed compaction and TTL (old swipes can expire after matches are resolved).</p>
+</div>
+<div class="card">
+<h4>Match Notification Delivery</h4>
+<p>Match notifications are time-sensitive (excitement decays quickly). Delivery pipeline: (1) <strong>WebSocket</strong> for users currently in-app — sub-second delivery. (2) <strong>APNs/FCM push</strong> for backgrounded/offline users — 1-5 second delivery. (3) <strong>Email</strong> if user hasn't opened app in 24h — batch daily digest. The "It's a Match!" animation is triggered client-side by a WebSocket event or push notification payload with match data. Both users' match lists are updated atomically. The match animation includes the other user's top photo — pre-fetched from CDN for instant display.</p>
+</div>
+</div>
+
+<h2>5. Flow 3 — Real-Time Chat (Messaging)</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 950 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FF655B"/></marker></defs>
+<rect x="20" y="120" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="150" text-anchor="middle" fill="#fff" font-size="13">Sender</text>
+<rect x="180" y="120" width="120" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="240" y="150" text-anchor="middle" fill="#fff" font-size="13">Chat Service</text>
+<rect x="350" y="30" width="130" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="415" y="60" text-anchor="middle" fill="#fff" font-size="13">Message Store</text><text x="415" y="75" text-anchor="middle" fill="#fff" font-size="11">(Cassandra)</text>
+<rect x="350" y="120" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="415" y="150" text-anchor="middle" fill="#fff" font-size="13">Safety Filter</text><text x="415" y="165" text-anchor="middle" fill="#fff" font-size="11">(spam/harassment)</text>
+<rect x="350" y="210" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="415" y="240" text-anchor="middle" fill="#fff" font-size="13">WebSocket Hub</text>
+<rect x="540" y="120" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="605" y="150" text-anchor="middle" fill="#fff" font-size="13">Push Service</text>
+<rect x="730" y="120" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="785" y="150" text-anchor="middle" fill="#fff" font-size="13">Recipient</text>
+<line x1="130" y1="150" x2="178" y2="150" stroke="#FF655B" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="300" y1="135" x2="348" y2="65" stroke="#FF655B" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="300" y1="150" x2="348" y2="150" stroke="#FF655B" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="300" y1="165" x2="348" y2="235" stroke="#FF655B" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="480" y1="240" x2="728" y2="155" stroke="#FF655B" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="480" y1="150" x2="538" y2="150" stroke="#FF655B" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="670" y1="150" x2="728" y2="150" stroke="#FF655B" stroke-width="2" marker-end="url(#a3)"/>
+</svg>
+</div>
+
+<h3>Flow Steps</h3>
+<div class="card">
+<ol>
+<li><strong>Sender sends message</strong> via WebSocket: <code>{match_id, content: "Hey! I love hiking too!", type: "text"}</code></li>
+<li><strong>Chat Service</strong> validates: match still active? Sender not blocked? Rate limit OK?</li>
+<li><strong>Safety Filter:</strong> ML model scans for harassment, solicitation, underage content, scam patterns. Flagged messages may be held for review or auto-actioned</li>
+<li><strong>Message stored</strong> in Cassandra: partition_key=match_id, clustering_key=timestamp (chronological within match)</li>
+<li><strong>WebSocket Hub:</strong> Look up recipient's WebSocket connection → push message in real-time if online</li>
+<li><strong>If offline:</strong> Push notification: "New message from [Name]: Hey! I love hiking too!"</li>
+<li><strong>Read receipts:</strong> When recipient opens conversation → client sends "read" event → updates message status</li>
+</ol>
+</div>
+
+<h3>Example</h3>
+<div class="card" style="background:#1e1e2e">
+<p><strong>Conversation between Alice and Bob (matched 2 hours ago):</strong></p>
+<pre>Alice: "Hey! I noticed you like hiking too! Have you been to Mission Peak?"
+[Safety filter: clean, score=0.02]
+[Stored: match_m789, ts=2024-01-15T20:01:00Z]
+[WebSocket: Bob online → delivered instantly]
+
+Bob: "Yes! It was amazing. Have you done the summit?"
+[Stored: match_m789, ts=2024-01-15T20:01:45Z]
+
+Alice: [sends GIF: hiking celebration]
+[Stored as media message with CDN URL]
+
+Alice: [sends Spotify song link]
+[Embed resolved: "Here Comes the Sun - The Beatles"]</pre>
+<p><strong>Safety filter example:</strong> If Alice sent a message with solicitation keywords → flagged (score=0.91) → message held, Alice warned, reported to Trust & Safety team.</p>
+</div>
+
+<h2>6. Combined Architecture</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FD297B"/></marker></defs>
+<rect x="10" y="220" width="100" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="60" y="250" text-anchor="middle" fill="#fff" font-size="12">Mobile Apps</text><text x="60" y="265" text-anchor="middle" fill="#fff" font-size="10">iOS/Android</text>
+<rect x="150" y="160" width="110" height="50" rx="8" fill="#546e7a" stroke="#90a4ae" stroke-width="2"/><text x="205" y="190" text-anchor="middle" fill="#fff" font-size="12">CDN (photos)</text>
+<rect x="150" y="225" width="110" height="50" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="205" y="255" text-anchor="middle" fill="#fff" font-size="12">API Gateway</text>
+<rect x="150" y="295" width="110" height="50" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="205" y="325" text-anchor="middle" fill="#fff" font-size="12">WebSocket GW</text>
+<rect x="310" y="60" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="86" text-anchor="middle" fill="#fff" font-size="11">Profile Service</text>
+<rect x="310" y="115" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="141" text-anchor="middle" fill="#fff" font-size="11">Discovery Engine</text>
+<rect x="310" y="170" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="196" text-anchor="middle" fill="#fff" font-size="11">Swipe Service</text>
+<rect x="310" y="225" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="251" text-anchor="middle" fill="#fff" font-size="11">Match Service</text>
+<rect x="310" y="280" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="306" text-anchor="middle" fill="#fff" font-size="11">Chat Service</text>
+<rect x="310" y="335" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="361" text-anchor="middle" fill="#fff" font-size="11">Location Service</text>
+<rect x="310" y="390" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="416" text-anchor="middle" fill="#fff" font-size="11">Safety / ML</text>
+<rect x="490" y="80" width="120" height="42" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="550" y="106" text-anchor="middle" fill="#fff" font-size="11">Kafka</text>
+<rect x="670" y="60" width="120" height="42" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="730" y="86" text-anchor="middle" fill="#fff" font-size="11">MongoDB</text>
+<rect x="670" y="115" width="120" height="42" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="730" y="141" text-anchor="middle" fill="#fff" font-size="11">Cassandra</text>
+<rect x="670" y="170" width="120" height="42" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="730" y="196" text-anchor="middle" fill="#fff" font-size="11">Redis</text>
+<rect x="670" y="225" width="120" height="42" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="730" y="251" text-anchor="middle" fill="#fff" font-size="11">S3 (photos)</text>
+<rect x="670" y="280" width="120" height="42" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="730" y="306" text-anchor="middle" fill="#fff" font-size="11">Elasticsearch</text>
+<line x1="110" y1="240" x2="148" y2="185" stroke="#FD297B" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="110" y1="250" x2="148" y2="250" stroke="#FD297B" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="110" y1="260" x2="148" y2="320" stroke="#FD297B" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="260" y1="250" x2="308" y2="196" stroke="#FD297B" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="86" x2="668" y2="80" stroke="#FD297B" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="196" x2="668" y2="135" stroke="#FD297B" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="360" x2="668" y2="195" stroke="#FD297B" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="140" x2="488" y2="105" stroke="#FD297B" stroke-width="2" marker-end="url(#a4)"/>
+</svg>
+</div>
+
+<h2>7. Database Schema</h2>
+<div class="card">
+<h3>Profiles (MongoDB)</h3>
+<pre>
+Collection: profiles  <span class="tag-shard">SHARD: hash(user_id)</span>
+{
+  _id: ObjectId,
+  user_id: string,             // <span class="tag-pk">PK</span>
+  name: string,
+  birth_date: Date,
+  gender: string,
+  bio: string (max 500 chars),
+  photos: [                    // max 9 photos
+    {url: string, order: int, is_verified: bool, quality_score: float}
+  ],
+  interests: [string],         // max 5 interests (from predefined list)
+  job_title: string,
+  company: string,
+  school: string,
+  spotify_anthem: {track_id, name, artist},
+  instagram: string,
+  location: {type: "Point", coordinates: [lng, lat]},  // <span class="tag-idx">2dsphere IDX</span>
+  preferences: {
+    gender_filter: [string],
+    age_min: int, age_max: int,
+    distance_max_km: int
+  },
+  desirability_score: float,   // ELO/ML-computed
+  last_active: Date,           // <span class="tag-idx">IDX</span>
+  verified: bool,
+  premium_tier: string,        // free/plus/gold/platinum
+  created_at: Date
+}
+</pre>
+
+<h3>Swipes (Cassandra)</h3>
+<pre>
+Table: swipes_by_swiper  <span class="tag-shard">SHARD: hash(swiper_id)</span>
+- swiper_id: uuid             <span class="tag-pk">PARTITION KEY</span>
+- target_id: uuid             <span class="tag-pk">CLUSTERING KEY</span>
+- action: text                // 'like', 'nope', 'super_like'
+- timestamp: timestamp
+TTL: 180 days (old nopes can expire)
+
+Table: swipes_by_target  <span class="tag-shard">SHARD: hash(target_id)</span>
+- target_id: uuid             <span class="tag-pk">PARTITION KEY</span>
+- swiper_id: uuid             <span class="tag-pk">CLUSTERING KEY</span>
+- action: text
+- timestamp: timestamp
+// Denormalized for "Who liked me?" (Tinder Gold feature)
+</pre>
+
+<h3>Matches (Cassandra)</h3>
+<pre>
+Table: matches_by_user  <span class="tag-shard">SHARD: hash(user_id)</span>
+- user_id: uuid               <span class="tag-pk">PARTITION KEY</span>
+- match_id: uuid              <span class="tag-pk">CLUSTERING KEY DESC</span>
+- matched_user_id: uuid
+- matched_at: timestamp
+- last_message_at: timestamp
+- unread_count: int
+// Stored for BOTH users (denormalized): A→B and B→A
+</pre>
+
+<h3>Messages (Cassandra)</h3>
+<pre>
+Table: messages  <span class="tag-shard">SHARD: hash(match_id)</span>
+- match_id: uuid              <span class="tag-pk">PARTITION KEY</span>
+- message_id: timeuuid        <span class="tag-pk">CLUSTERING KEY DESC</span>
+- sender_id: uuid
+- content: text
+- message_type: text          // 'text', 'gif', 'image', 'spotify'
+- media_url: text
+- read: boolean
+- created_at: timestamp
+</pre>
+
+<h3>Geospatial Index (Redis)</h3>
+<pre>
+Key: geo:active_users
+Type: ZSET with geohash scores
+Command: GEOADD geo:active_users -122.42 37.78 "user_alice"
+Query: GEORADIUS geo:active_users -122.42 37.78 30 km COUNT 10000
+
+// Separate sets per gender for faster filtered queries:
+Key: geo:active_users:male
+Key: geo:active_users:female
+</pre>
+</div>
+
+<h2>8. Cache &amp; CDN Deep Dive</h2>
+<div class="card">
+<table>
+<tr><th>Layer</th><th>Technology</th><th>What's Cached</th><th>TTL</th><th>Notes</th></tr>
+<tr><td>CDN</td><td>CloudFront / Cloudflare</td><td>Profile photos (all resolutions)</td><td>1yr (content-addressed)</td><td>Multiple sizes: 320px, 640px, original</td></tr>
+<tr><td>Geo Cache</td><td>Redis GEO</td><td>Active user locations</td><td>Real-time (updated on app use)</td><td>Partitioned by gender for faster queries</td></tr>
+<tr><td>Bloom Filters</td><td>Redis</td><td>Per-user swipe history</td><td>180 days</td><td>~60KB per user, 1% false positive</td></tr>
+<tr><td>Profile Cache</td><td>Redis</td><td>Hot profiles (frequently shown)</td><td>1 hour</td><td>LRU eviction, top 10% profiles by view count</td></tr>
+<tr><td>Deck Cache</td><td>Redis</td><td>Pre-computed swipe decks</td><td>30 min (or until exhausted)</td><td>Regenerated when user swipes through deck</td></tr>
+<tr><td>Session</td><td>Redis</td><td>Auth tokens, WebSocket session state</td><td>7 days</td><td>JWT token validation cache</td></tr>
+</table>
+
+<h3>Photo CDN Pipeline</h3>
+<p>Photos are the core UX element. Upload: client uploads to S3 via pre-signed URL → Lambda trigger for processing → resize to multiple variants (320w, 640w, original) → face detection to confirm human face → blur detection (reject blurry photos) → store all variants in S3 → invalidate CDN if updating existing photo. Photos served via CDN with WebP format (30% smaller than JPEG). Client pre-fetches next ~5 photos in the swipe deck for smooth swiping. Average photo load: ~100KB (640w WebP). Pre-fetching 5 cards: ~500KB — acceptable on mobile.</p>
+</div>
+
+<h2>9. Scaling Considerations</h2>
+<div class="card">
+<h3>Peak Traffic Patterns</h3>
+<ul>
+<li><strong>Peak usage:</strong> Sunday 6-9pm local time (30% above average)</li>
+<li><strong>Secondary peak:</strong> Weekday evenings 8-10pm</li>
+<li><strong>Geographic rollout:</strong> Peak moves across timezones — US East Coast peaks → Central → West Coast</li>
+<li><strong>Auto-scaling:</strong> Kubernetes HPA scales swipe/discovery services based on active user count</li>
+</ul>
+
+<h3>Geospatial Scaling</h3>
+<ul>
+<li>Redis GEO cluster sharded by geographic region (US-East, US-West, Europe, Asia)</li>
+<li>Cross-region users (Tinder Passport feature) require cross-shard queries</li>
+<li>Dense urban areas (NYC, London) have 100K+ active users within 10km — candidate set management critical</li>
+</ul>
+
+<h3>Load Balancing</h3>
+<ul>
+<li><strong>DNS:</strong> Route53 latency-based routing to nearest AWS region</li>
+<li><strong>L7:</strong> AWS ALB with path-based routing (/swipes → swipe service, /matches → match service)</li>
+<li><strong>WebSocket:</strong> Sticky sessions via connection ID → specific WebSocket server. Redis pub/sub for cross-server message delivery</li>
+</ul>
+</div>
+
+<h2>10. Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="tradeoff-card pro">
+<h4>✅ Bloom Filter for Swipe Dedup</h4>
+<p>60KB per user vs storing full swipe set (~500KB+). Fast O(k) lookup. False positives only mean occasionally skipping an unseen profile — acceptable UX impact.</p>
+</div>
+<div class="tradeoff-card con">
+<h4>❌ Bloom Filter Limitations</h4>
+<p>Cannot remove entries (user can't "un-nope" without a separate Rewind mechanism). False positive rate grows with size. Cannot enumerate contents (can't build "Likes You" feature from Bloom alone — need the denormalized swipe table).</p>
+</div>
+<div class="tradeoff-card pro">
+<h4>✅ ELO-Based Matching</h4>
+<p>Naturally pairs users of similar desirability, improving match rates. Users see profiles they're more likely to match with, reducing futile swipes. Self-regulating: new users start at median and quickly calibrate.</p>
+</div>
+<div class="tradeoff-card con">
+<h4>❌ ELO Ethics &amp; UX</h4>
+<p>Controversial "attractiveness ranking." Users unaware their score affects who they see. Can create echo chambers (attractive users only see attractive users). Tinder has publicly moved away from pure ELO to a more holistic ML model, but desirability scoring remains core.</p>
+</div>
+<div class="tradeoff-card pro">
+<h4>✅ Pre-Computed Decks</h4>
+<p>Computing a deck once and caching it (vs. scoring per swipe) reduces ML inference cost by ~100x. Smooth UX — no loading between cards.</p>
+</div>
+<div class="tradeoff-card con">
+<h4>❌ Deck Staleness</h4>
+<p>Pre-computed deck may include users who went offline, changed preferences, or matched with someone else since deck generation. Mitigated by short TTL and fallback re-generation.</p>
+</div>
+</div>
+
+<h2>11. Alternative Approaches</h2>
+<div class="info-grid">
+<div class="card">
+<h4>Graph-Based Matching (Hinge Model)</h4>
+<p>Instead of pure geospatial + ELO, use social graph signals. Hinge shows "friends of friends." Requires importing contact/social graph. Better for relationship-oriented matching. Tinder is more discovery-focused (strangers within radius).</p>
+</div>
+<div class="card">
+<h4>Queue-Based Swipe Processing</h4>
+<p>Instead of synchronous match checking on each swipe, queue all swipes and batch-process matches asynchronously. Lower write latency (fire-and-forget). But delays match notification by seconds-to-minutes, reducing the "instant match" dopamine hit that's core to Tinder's UX.</p>
+</div>
+<div class="card">
+<h4>PostGIS Instead of Redis GEO</h4>
+<p>PostgreSQL with PostGIS extension for geospatial queries. Supports complex geo shapes, not just circles. Better for "show me users near this neighborhood boundary." But higher latency than Redis (disk-based vs in-memory). Tinder's simple radius queries don't need PostGIS complexity.</p>
+</div>
+<div class="card">
+<h4>Collaborative Filtering</h4>
+<p>Recommend profiles based on "users similar to you liked these profiles." Matrix factorization or neural collaborative filtering. Would help with cold-start problem (new users with no swipe history). But privacy concerns: inferring preferences from others' behavior. Tinder uses this as one signal among many.</p>
+</div>
+</div>
+
+<h2>12. Additional Information</h2>
+<div class="card">
+<h3>Tech Stack</h3>
+<ul>
+<li><strong>Backend:</strong> Java/Kotlin microservices on Kubernetes (AWS EKS)</li>
+<li><strong>API:</strong> REST + WebSocket (match/chat real-time)</li>
+<li><strong>Mobile:</strong> Swift (iOS), Kotlin (Android)</li>
+<li><strong>Data:</strong> MongoDB (profiles), Cassandra (swipes/matches/messages), Redis (geo/cache/sessions)</li>
+<li><strong>ML:</strong> Python/TensorFlow for recommendation models, deployed via TFServing</li>
+<li><strong>Streaming:</strong> Kafka for event pipeline, Flink for real-time analytics</li>
+<li><strong>Infrastructure:</strong> AWS (EC2, S3, CloudFront, DynamoDB for some workloads)</li>
+</ul>
+
+<h3>Key Numbers</h3>
+<table>
+<tr><td>Monthly Active Users</td><td>75M+</td></tr>
+<tr><td>Swipes per day</td><td>2B+</td></tr>
+<tr><td>Matches per day</td><td>~65M</td></tr>
+<tr><td>Messages per day</td><td>~500M</td></tr>
+<tr><td>Countries available</td><td>190+</td></tr>
+<tr><td>Photos stored</td><td>Billions (multi-resolution)</td></tr>
+<tr><td>Revenue (Match Group)</td><td>~$3.2B/year</td></tr>
+</table>
+</div>
+</div>
+</body>
+</html>

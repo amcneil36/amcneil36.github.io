@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: Facebook Newsfeed</title>
+<style>
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: #e0e0e0; line-height: 1.7; }
+h1 { color: #1877f2; border-bottom: 3px solid #1877f2; padding-bottom: 10px; font-size: 2.2em; }
+h2 { color: #4599ff; margin-top: 40px; font-size: 1.6em; border-left: 4px solid #4599ff; padding-left: 12px; }
+h3 { color: #70b5ff; font-size: 1.3em; }
+h4 { color: #99ccff; }
+.section { background: #1a1a2e; border-radius: 10px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
+.diagram-container { background: #0d1117; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
+.example { background: #1e293b; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+.example strong { color: #f59e0b; }
+table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+th { background: #2a2a4a; color: #4599ff; padding: 12px; text-align: left; border: 1px solid #444; }
+td { padding: 10px 12px; border: 1px solid #333; }
+tr:nth-child(even) { background: #1a1a2e; }
+tr:nth-child(odd) { background: #151528; }
+code { background: #2d2d4d; padding: 2px 8px; border-radius: 4px; color: #ff79c6; font-size: 0.95em; }
+.tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
+.tag-pk { background: #4a1a6b; color: #d4a5ff; }
+.tag-fk { background: #1a4a3b; color: #a5ffd4; }
+.tag-idx { background: #4a3a1a; color: #ffd4a5; }
+ul { padding-left: 25px; }
+li { margin: 5px 0; }
+.tradeoff { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+.pro { background: #0a2a1a; border: 1px solid #2a5a3a; padding: 15px; border-radius: 8px; }
+.con { background: #2a0a1a; border: 1px solid #5a2a3a; padding: 15px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<h1>System Design: Facebook Newsfeed (Deep Dive)</h1>
+
+<div class="section">
+<h2>Functional Requirements</h2>
+<ul>
+<li>Display a personalized, ranked feed of posts from friends, followed pages, and groups</li>
+<li>Feed includes posts, photos, videos, shared links, life events, and ads</li>
+<li>Infinite scroll with real-time updates ("X new posts" indicator)</li>
+<li>Ranking based on relevance (engagement prediction) not just chronological</li>
+<li>Support "seen" tracking to avoid showing same posts repeatedly</li>
+<li>Allow users to hide posts, unfollow, or snooze sources</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Latency:</strong> Feed loads in &lt;500ms (first page of ~50 posts)</li>
+<li><strong>Freshness:</strong> New posts appear within 30 seconds of creation</li>
+<li><strong>Scalability:</strong> 2B+ daily active users, each generating unique personalized feed</li>
+<li><strong>Availability:</strong> 99.99% — feed is the core product surface</li>
+<li><strong>Read-heavy:</strong> 100x more feed reads than post writes</li>
+</ul>
+</div>
+
+<!-- Flow 1: Feed Generation (Write Path) -->
+<div class="section">
+<h2>Flow 1: Feed Generation — Write Path (Fan-out on Write)</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1100 450" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#1877f2"/></marker></defs>
+<rect x="20" y="180" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="80" y="215" text-anchor="middle" fill="white" font-size="13">Author</text>
+<rect x="190" y="180" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="255" y="215" text-anchor="middle" fill="white" font-size="13">Post Service</text>
+<rect x="370" y="100" width="140" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="440" y="130" text-anchor="middle" fill="white" font-size="12">Kafka (Post Events)</text>
+<rect x="370" y="220" width="140" height="60" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="440" y="248" text-anchor="middle" fill="white" font-size="12">Fan-out Workers</text><text x="440" y="265" text-anchor="middle" fill="white" font-size="10">(parallel, async)</text>
+<rect x="570" y="140" width="140" height="50" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="640" y="168" text-anchor="middle" fill="white" font-size="11">Social Graph (TAO)</text>
+<rect x="570" y="260" width="140" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="640" y="288" text-anchor="middle" fill="white" font-size="11">Feed Cache (Redis)</text>
+<text x="640" y="330" fill="#aaa" font-size="11">Sorted Set per user</text>
+<text x="640" y="348" fill="#aaa" font-size="11">ZADD feed:{user_id} {timestamp} {post_id}</text>
+<rect x="570" y="370" width="140" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="640" y="400" text-anchor="middle" fill="white" font-size="12">Eligibility Filter</text>
+<ellipse cx="830" cy="165" rx="60" ry="25" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="830" y="170" text-anchor="middle" fill="white" font-size="11">Post DB</text>
+<line x1="140" y1="210" x2="188" y2="210" stroke="#1877f2" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="320" y1="195" x2="368" y2="130" stroke="#1877f2" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="320" y1="220" x2="368" y2="245" stroke="#1877f2" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="440" y1="150" x2="440" y2="218" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="510" y1="235" x2="568" y2="170" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="510" y1="265" x2="568" y2="280" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="510" y1="270" x2="568" y2="390" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="710" y1="160" x2="768" y2="162" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<text x="550" y="30" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Facebook Newsfeed: Write Path (Fan-out)</text>
+</svg>
+</div>
+
+<h3>Step-by-Step</h3>
+<ol>
+<li><strong>Author publishes post</strong> → Post Service stores in Post DB → publishes event to Kafka</li>
+<li><strong>Fan-out Workers</strong> consume from Kafka. For each post:
+    <ul>
+    <li>Query TAO for author's friend list (e.g., 500 friends)</li>
+    <li>For each friend, check <strong>Eligibility Filter</strong>: Is friend active? Has friend muted/unfollowed author? Privacy check?</li>
+    <li>For eligible friends: <code>ZADD feed:{friend_id} {timestamp} {post_id}</code> into Redis</li>
+    </ul>
+</li>
+<li><strong>Skip fan-out</strong> for authors with >5000 followers (celebrities/pages) — handled at read time</li>
+<li><strong>Feed cache bounded:</strong> Each user's sorted set capped at 800 post_ids. Older entries evicted automatically</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> Alice (350 friends) posts a photo. Kafka event consumed by fan-out worker. TAO returns 350 friends. Eligibility filter removes 20 (10 inactive >30 days, 5 unfollowed Alice, 5 blocked). Worker does 330 ZADD operations on Redis. Each ZADD is O(log N) ~ 1μs. Total fan-out time: ~50ms (pipelined Redis commands). Bob's feed cache now contains Alice's post_id.
+</div>
+
+<h3>Deep Dive: Eligibility Filter</h3>
+<ul>
+<li><strong>Checks performed:</strong> User active in last 30 days? User unfollowed author? User blocked author? Privacy settings allow? Content policy violation?</li>
+<li><strong>Why filter at write time:</strong> Avoids wasting cache space on ineligible users. Reduces read-time processing</li>
+<li><strong>Data sources:</strong> User activity status (Redis counter), unfollow/block relationships (TAO), privacy settings (User Service cache)</li>
+</ul>
+</div>
+
+<!-- Flow 2: Feed Reading (Read Path) -->
+<div class="section">
+<h2>Flow 2: Feed Reading — Read Path (Ranking & Serving)</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1150 450" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffaa00"/></marker></defs>
+<rect x="20" y="180" width="110" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="215" text-anchor="middle" fill="white" font-size="13">User</text>
+<rect x="170" y="180" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="235" y="215" text-anchor="middle" fill="white" font-size="13">Feed Service</text>
+<rect x="340" y="80" width="140" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="410" y="108" text-anchor="middle" fill="white" font-size="12">Feed Cache</text>
+<rect x="340" y="180" width="140" height="50" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="410" y="208" text-anchor="middle" fill="white" font-size="11">Celebrity Post Svc</text>
+<rect x="340" y="280" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="410" y="308" text-anchor="middle" fill="white" font-size="12">Post Hydration</text>
+<rect x="540" y="80" width="150" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="615" y="108" text-anchor="middle" fill="white" font-size="12">Seen Filter</text>
+<rect x="540" y="180" width="150" height="60" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="615" y="205" text-anchor="middle" fill="white" font-size="12">Ranking Service</text><text x="615" y="225" text-anchor="middle" fill="white" font-size="10">(ML Model)</text>
+<rect x="540" y="300" width="150" height="50" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="615" y="330" text-anchor="middle" fill="white" font-size="12">Ad Insertion</text>
+<rect x="760" y="180" width="140" height="60" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="830" y="208" text-anchor="middle" fill="white" font-size="12">Diversity Filter</text><text x="830" y="225" text-anchor="middle" fill="white" font-size="10">(dedup authors)</text>
+<rect x="960" y="180" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="1020" y="208" text-anchor="middle" fill="white" font-size="12">Final Feed</text><text x="1020" y="225" text-anchor="middle" fill="white" font-size="11">(50 posts)</text>
+<line x1="130" y1="210" x2="168" y2="210" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="300" y1="195" x2="338" y2="110" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="300" y1="210" x2="338" y2="205" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="480" y1="105" x2="538" y2="105" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="480" y1="200" x2="538" y2="200" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="300" y1="225" x2="338" y2="300" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="480" y1="305" x2="538" y2="310" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="690" y1="105" x2="690" y2="175" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
+<line x1="690" y1="210" x2="758" y2="210" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="690" y1="325" x2="758" y2="225" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
+<line x1="900" y1="210" x2="958" y2="210" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<text x="575" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Facebook Newsfeed: Read Path (5-Stage Pipeline)</text>
+</svg>
+</div>
+
+<h3>5-Stage Pipeline</h3>
+<ol>
+<li><strong>Stage 1 — Candidate Retrieval:</strong>
+    <ul>
+    <li>Read top 500 post_ids from Feed Cache (Redis sorted set)</li>
+    <li>Fetch recent posts from followed celebrities/pages (fan-out on read for >5K follower accounts)</li>
+    <li>Merge into ~600 candidate posts</li>
+    </ul>
+</li>
+<li><strong>Stage 2 — Seen Filter:</strong> Remove posts user has already seen (tracked in Redis bitmap <code>seen:{user_id}</code>). Removes ~30%</li>
+<li><strong>Stage 3 — Post Hydration:</strong> Fetch full post objects (text, media URLs, author info, like/comment counts) from Post DB + caches. Batch fetch for efficiency</li>
+<li><strong>Stage 4 — ML Ranking:</strong>
+    <ul>
+    <li>Neural network predicts P(like), P(comment), P(share), P(hide) for each post</li>
+    <li>Score = weighted sum: <code>0.3*P(like) + 0.35*P(comment) + 0.25*P(share) - 0.5*P(hide)</code></li>
+    <li>Features: author-viewer relationship strength, post type, recency, historical engagement, time of day</li>
+    </ul>
+</li>
+<li><strong>Stage 5 — Diversity + Ad Insertion:</strong>
+    <ul>
+    <li>Diversity filter: max 2 consecutive posts from same author, mix content types (photos, text, videos, links)</li>
+    <li>Ad Service inserts sponsored posts at positions 3, 8, 15, etc. (based on ad auction results)</li>
+    </ul>
+</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> Bob opens Facebook. Feed Service retrieves 500 post_ids from Redis cache + 100 celebrity/page posts. Seen filter removes 180 already-viewed posts. 420 posts hydrated (batch Cassandra read: ~30ms). ML Ranking scores all 420 — Alice's wedding photo scores 0.92 (high engagement signals), random acquaintance's check-in scores 0.15. Top 50 posts selected. Diversity filter reorders: no 3 consecutive text posts. Ad inserted at position 4. Final 50-post feed returned in ~350ms total.
+</div>
+
+<h3>Deep Dive: ML Ranking Model</h3>
+<ul>
+<li><strong>Model:</strong> Deep neural network (DeepFM or DIN architecture) with ~1000 features</li>
+<li><strong>Key features:</strong>
+    <ul>
+    <li><strong>Edge features:</strong> How often viewer interacts with author (message, like, comment frequency → affinity score)</li>
+    <li><strong>Post features:</strong> Content type, text length, media quality score, number of reactions, age of post</li>
+    <li><strong>User features:</strong> User's historical engagement rates, preferred content types, active hours</li>
+    <li><strong>Context features:</strong> Time of day, day of week, device type, network speed</li>
+    </ul>
+</li>
+<li><strong>Inference:</strong> ~10ms per batch of 500 posts using GPU inference servers</li>
+<li><strong>Training:</strong> Continuous learning on billions of daily interactions. Model updated every few hours</li>
+</ul>
+</div>
+
+<!-- Combined Architecture -->
+<div class="section">
+<h2>Combined Overall Architecture</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1200 550" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#1877f2"/></marker></defs>
+<text x="600" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Facebook Newsfeed: Combined Architecture</text>
+<text x="200" y="55" fill="#66ff66" font-size="12">WRITE PATH (post creation → fan-out)</text>
+<text x="700" y="55" fill="#ffaa00" font-size="12">READ PATH (feed request → ranked feed)</text>
+<rect x="20" y="250" width="100" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="70" y="280" text-anchor="middle" fill="white" font-size="12">Clients</text>
+<rect x="160" y="150" width="110" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="215" y="175" text-anchor="middle" fill="white" font-size="11">Post Service</text>
+<rect x="160" y="320" width="110" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="215" y="345" text-anchor="middle" fill="white" font-size="11">Feed Service</text>
+<rect x="320" y="100" width="120" height="40" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="380" y="125" text-anchor="middle" fill="white" font-size="11">Kafka</text>
+<rect x="320" y="200" width="120" height="40" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="380" y="225" text-anchor="middle" fill="white" font-size="11">Fan-out Workers</text>
+<rect x="320" y="320" width="120" height="40" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="380" y="345" text-anchor="middle" fill="white" font-size="11">TAO (Graph)</text>
+<rect x="510" y="100" width="120" height="40" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="570" y="125" text-anchor="middle" fill="white" font-size="11">Feed Cache</text>
+<rect x="510" y="200" width="120" height="40" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="570" y="225" text-anchor="middle" fill="white" font-size="11">Seen Filter</text>
+<rect x="510" y="300" width="120" height="40" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="570" y="325" text-anchor="middle" fill="white" font-size="11">Post Hydration</text>
+<rect x="700" y="200" width="130" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="765" y="225" text-anchor="middle" fill="white" font-size="11">ML Ranking</text>
+<rect x="700" y="310" width="130" height="40" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="765" y="335" text-anchor="middle" fill="white" font-size="11">Ad Insertion</text>
+<rect x="700" y="100" width="130" height="40" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="765" y="125" text-anchor="middle" fill="white" font-size="11">Diversity Filter</text>
+<rect x="900" y="200" width="110" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="955" y="230" text-anchor="middle" fill="white" font-size="11">Final Feed</text>
+<ellipse cx="570" cy="430" rx="70" ry="25" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="570" y="435" text-anchor="middle" fill="white" font-size="11">Post DB</text>
+<line x1="120" y1="265" x2="158" y2="175" stroke="#66ff66" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="120" y1="285" x2="158" y2="340" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="270" y1="170" x2="318" y2="125" stroke="#66ff66" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="440" y1="120" x2="440" y2="198" stroke="#66ff66" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="380" y1="240" x2="380" y2="318" stroke="#66ff66" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow3)"/>
+<line x1="440" y1="220" x2="508" y2="120" stroke="#66ff66" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="270" y1="340" x2="508" y2="120" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="630" y1="120" x2="630" y2="198" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="570" y1="240" x2="570" y2="298" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="570" y1="340" x2="570" y2="403" stroke="#ff6b6b" stroke-width="1" stroke-dasharray="4,4" marker-end="url(#arrow3)"/>
+<line x1="630" y1="320" x2="698" y2="225" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="830" y1="225" x2="898" y2="225" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="765" y1="250" x2="765" y2="308" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="830" y1="120" x2="898" y2="210" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+</svg>
+</div>
+
+<div class="example">
+<strong>Example — End-to-end:</strong> Alice posts "Got engaged! 💍" with a photo. POST /posts → stored in Post DB → Kafka event → Fan-out Worker reads Alice's 350 eligible friends from TAO → ZADD to 350 Redis sorted sets (~50ms). 10 minutes later, Bob opens Facebook. Feed Service reads 500 post_ids from his Redis cache + 80 celebrity posts → Seen filter removes 200 → Hydrates remaining 380 posts → ML Ranking scores Alice's engagement post at 0.95 (top score — close friend, photo, high engagement type) → Diversity filter ensures mix → Ad at position 4 → Bob sees Alice's post at #1 in his feed.
+</div>
+</div>
+
+<!-- Database Schema -->
+<div class="section">
+<h2>Database Schema</h2>
+
+<h3>Feed Cache — Redis</h3>
+<table>
+<tr><th>Structure</th><th>Key</th><th>Type</th><th>Details</th></tr>
+<tr><td>User Feed</td><td><code>feed:{user_id}</code></td><td>Sorted Set</td><td>Members: post_ids, Scores: timestamps. Max 800 entries (ZREMRANGEBYRANK to cap)</td></tr>
+<tr><td>Seen Posts</td><td><code>seen:{user_id}:{date}</code></td><td>Bitmap / HyperLogLog</td><td>Tracks which post_ids user has viewed today. 1 bit per post. TTL: 7 days</td></tr>
+<tr><td>Celebrity Posts</td><td><code>celeb_recent:{user_id}</code></td><td>Sorted Set</td><td>Latest 50 posts from celebrities. Queried at read time</td></tr>
+</table>
+
+<h3>NoSQL — Cassandra (Post Storage)</h3>
+<table>
+<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
+<tr><td rowspan="7"><strong>posts</strong></td><td>post_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>author_id</td><td>BIGINT</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>content_text</td><td>TEXT</td><td></td></tr>
+<tr><td>media_urls</td><td>LIST&lt;TEXT&gt;</td><td></td></tr>
+<tr><td>post_type</td><td>TEXT</td><td>text, photo, video, link, life_event</td></tr>
+<tr><td>engagement</td><td>MAP&lt;TEXT,BIGINT&gt;</td><td>{likes: 42, comments: 5, shares: 2}</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td></tr>
+</table>
+
+<h3>Ranking Feature Store — Redis / Feature Service</h3>
+<table>
+<tr><th>Feature</th><th>Storage</th><th>Update Frequency</th></tr>
+<tr><td>User-Author affinity score</td><td>Redis Hash <code>affinity:{user_id}</code></td><td>Daily batch + real-time increments</td></tr>
+<tr><td>Post engagement velocity</td><td>Redis <code>velocity:{post_id}</code></td><td>Real-time (INCR on each interaction)</td></tr>
+<tr><td>User engagement history</td><td>Feature Service (ML platform)</td><td>Hourly batch</td></tr>
+</table>
+
+<h4>Sharding</h4>
+<ul>
+<li><strong>Feed Cache:</strong> Redis Cluster, sharded by <code>user_id</code> consistent hashing. Each user's feed on exactly one shard</li>
+<li><strong>posts table:</strong> Partitioned by <code>post_id</code> in Cassandra. Hydration does batch multi-get across partitions</li>
+<li><strong>Affinity scores:</strong> Sharded by <code>user_id</code> — all a user's affinity data co-located for efficient ranking feature retrieval</li>
+</ul>
+</div>
+
+<!-- Cache -->
+<div class="section">
+<h2>Cache Deep Dive</h2>
+<table>
+<tr><th>Cache</th><th>Strategy</th><th>Eviction</th><th>TTL</th><th>Hit Rate</th></tr>
+<tr><td>Feed Cache (Redis)</td><td>Write-through (fan-out writes)</td><td>Size-capped (800 items)</td><td>None</td><td>~95%</td></tr>
+<tr><td>Post Cache (Memcached)</td><td>Read-through</td><td>LRU</td><td>1 hr</td><td>~92%</td></tr>
+<tr><td>TAO Cache</td><td>Write-through</td><td>LRU</td><td>Invalidated on write</td><td>~99.9%</td></tr>
+<tr><td>Feature Cache (Redis)</td><td>Write-behind (batch update)</td><td>TTL</td><td>1 hr</td><td>~90%</td></tr>
+</table>
+
+<h3>CDN</h3>
+<ul>
+<li>CDN serves media (photos, video thumbnails) referenced in feed posts. Each media URL is a CDN URL</li>
+<li>Feed API responses are NOT cached at CDN — they're personalized per user and change on every refresh</li>
+<li>Static assets (app JS/CSS bundles) cached at CDN with 30-day TTL</li>
+</ul>
+</div>
+
+<!-- Scaling -->
+<div class="section">
+<h2>Scaling Considerations</h2>
+<ul>
+<li><strong>Fan-out Worker scaling:</strong> Kafka consumer group with thousands of workers. Auto-scale based on queue depth. During peak (e.g., election night), scale up 3-5x</li>
+<li><strong>ML Ranking inference:</strong> GPU cluster for real-time inference. Batch multiple users' ranking requests for GPU throughput. ~10ms per 500 posts per user</li>
+<li><strong>Feed Cache size:</strong> 2B users × 800 post_ids × 8 bytes = ~12TB of Redis. Distributed across thousands of Redis instances</li>
+<li><strong>Thundering herd:</strong> Celebrity post → millions of feed cache writes. Mitigated by: (1) async fan-out, (2) rate limiting per-author fan-out, (3) celebrity posts handled at read time instead</li>
+<li><strong>Cold start:</strong> New user or user returning after long absence → feed cache empty. Fall back to "pull model": query friends' recent posts directly from Post DB. Slower (~2s) but only for first load</li>
+</ul>
+</div>
+
+<!-- Tradeoffs -->
+<div class="section">
+<h2>Tradeoffs & Deep Dives</h2>
+<div class="tradeoff">
+<div class="pro"><h4>✅ ML Ranking</h4><ul><li>Dramatically higher engagement than reverse-chronological</li><li>Personalizes content to each user's interests</li><li>Can optimize for multiple objectives (engagement, time well spent, diversity)</li></ul></div>
+<div class="con"><h4>❌ ML Ranking Downsides</h4><ul><li>Filter bubble: users see increasingly homogeneous content</li><li>Engagement optimization can promote sensational/clickbait content</li><li>Lack of transparency: users don't understand why they see what they see</li><li>Computational cost: GPU inference for every feed load</li></ul></div>
+</div>
+</div>
+
+<!-- Alternatives -->
+<div class="section">
+<h2>Alternative Approaches</h2>
+<ul>
+<li><strong>Pure chronological feed:</strong> Twitter's original approach. Simple, transparent, no ranking bias. But: information overload for users following 1000+ accounts. Users miss important posts buried under noise</li>
+<li><strong>Interest-based clustering:</strong> Instead of social graph, cluster content by topic. Recommend content from strangers based on interests (TikTok model). Higher discovery but weaker social bonds</li>
+<li><strong>Federated fan-out:</strong> Instead of centralized Redis, each server maintains its shard of feeds. Reduces network hops but complicates cross-shard friend fan-out</li>
+<li><strong>Edge ranking at client:</strong> Server sends candidate pool (200 posts), client does final ranking on-device using lightweight model. Reduces server compute, enables offline feed construction</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Additional Information</h2>
+<ul>
+<li><strong>Feed invalidation:</strong> When a post is deleted, must remove from all friends' feed caches. Fan-out deletion event to all friends' Redis sets. Eventual consistency — may take seconds</li>
+<li><strong>"New posts" indicator:</strong> WebSocket/long-poll connection. When fan-out writes to user's feed cache, push notification via WebSocket: "5 new posts available". User clicks to refresh — Feed Service re-reads cache</li>
+<li><strong>A/B testing:</strong> Different ranking models tested on user segments. Metrics: session duration, interactions per session, negative actions (hide, unfollow). ~1000 concurrent experiments at any time</li>
+<li><strong>Integrity signals:</strong> Misinformation demoted in ranking. Fact-checked posts get -0.8 ranking penalty. Repeat offenders get -0.5 author-level penalty. These adjustments layered into the ranking model</li>
+</ul>
+</div>
+</body>
+</html>

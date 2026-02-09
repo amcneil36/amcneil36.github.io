@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: Real-Time Stock Ticker</title>
+<style>body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:20px;background:#f5f5f5;color:#333}.container{max-width:1200px;margin:0 auto;background:#fff;padding:40px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.1)}h1{color:#1a73e8;border-bottom:3px solid #1a73e8;padding-bottom:10px}h2{color:#2c3e50;margin-top:40px;border-left:4px solid #1a73e8;padding-left:12px}h3{color:#34495e}h4{color:#555}.diagram{background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:20px;margin:20px 0;overflow-x:auto}.example{background:#e8f5e9;border-left:4px solid #4caf50;padding:15px;margin:15px 0;border-radius:4px}.deep-dive{background:#e3f2fd;border-left:4px solid #2196f3;padding:15px;margin:15px 0;border-radius:4px}.tradeoff{background:#fff3e0;border-left:4px solid #ff9800;padding:15px;margin:15px 0;border-radius:4px}.alternative{background:#fce4ec;border-left:4px solid #e91e63;padding:15px;margin:15px 0;border-radius:4px}table{border-collapse:collapse;width:100%;margin:15px 0}th,td{border:1px solid #ddd;padding:10px 14px;text-align:left}th{background:#1a73e8;color:#fff}tr:nth-child(even){background:#f9f9f9}code{background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:.9em}.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.85em;margin:2px}.tag-pk{background:#ffeb3b;color:#333}.tag-idx{background:#80cbc4;color:#333}ul,ol{line-height:1.8}svg text{font-family:'Segoe UI',Arial,sans-serif}</style>
+</head>
+<body>
+<div class="container">
+<h1>System Design: Real-Time Stock Ticker</h1>
+
+<h2>Functional Requirements</h2>
+<ol>
+  <li><strong>Real-time price updates</strong> – Display live stock prices with sub-second updates.</li>
+  <li><strong>Watchlist</strong> – Users can add/remove stocks to their personal watchlist and see live prices.</li>
+  <li><strong>Historical data</strong> – View price charts (1D, 1W, 1M, 1Y, 5Y timeframes).</li>
+  <li><strong>Search</strong> – Search for stocks by ticker symbol or company name.</li>
+  <li><strong>Market summary</strong> – Display major indices (S&amp;P 500, NASDAQ, DOW) in real time.</li>
+  <li><strong>Price alerts</strong> – Users set alerts when a stock crosses a price threshold.</li>
+</ol>
+
+<h2>Non-Functional Requirements</h2>
+<ol>
+  <li><strong>Ultra-low latency</strong> – Price updates delivered to clients within 100ms of exchange data.</li>
+  <li><strong>High throughput</strong> – Handle 100K+ price updates/second from exchanges during market hours.</li>
+  <li><strong>High availability</strong> – 99.99%; market data must be continuously available during trading hours.</li>
+  <li><strong>Scalability</strong> – Support 10M+ concurrent users during market hours.</li>
+  <li><strong>Consistency</strong> – All users should see the same price for the same stock at any given moment.</li>
+</ol>
+
+<h2>Flow 1: Ingesting Real-Time Market Data</h2>
+<div class="diagram">
+<svg viewBox="0 0 1050 320" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
+  <rect x="10" y="120" width="100" height="55" rx="8" fill="#795548" stroke="#4e342e" stroke-width="2"/>
+  <text x="60" y="145" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Stock</text>
+  <text x="60" y="160" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Exchanges</text>
+  <line x1="110" y1="147" x2="180" y2="147" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
+  <text x="145" y="138" text-anchor="middle" fill="#555" font-size="8">TCP/FIX</text>
+  <rect x="180" y="120" width="110" height="55" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
+  <text x="235" y="145" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Market Data</text>
+  <text x="235" y="160" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Ingester</text>
+  <line x1="290" y1="147" x2="370" y2="147" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
+  <rect x="370" y="120" width="100" height="55" rx="8" fill="#9c27b0" stroke="#6a1b9a" stroke-width="2"/>
+  <text x="420" y="145" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Price</text>
+  <text x="420" y="160" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Stream</text>
+  <text x="420" y="187" text-anchor="middle" fill="#555" font-size="9">(Kafka)</text>
+  <!-- To Price Cache -->
+  <line x1="470" y1="140" x2="550" y2="90" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
+  <ellipse cx="600" cy="80" rx="45" ry="10" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
+  <rect x="555" y="80" width="90" height="22" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
+  <ellipse cx="600" cy="102" rx="45" ry="10" fill="#00796b" stroke="#00695c" stroke-width="1.5"/>
+  <line x1="555" y1="80" x2="555" y2="102" stroke="#00695c" stroke-width="1.5"/>
+  <line x1="645" y1="80" x2="645" y2="102" stroke="#00695c" stroke-width="1.5"/>
+  <text x="600" y="95" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Price Cache</text>
+  <text x="600" y="117" text-anchor="middle" fill="#555" font-size="8">(Redis)</text>
+  <!-- To Time-Series DB -->
+  <line x1="470" y1="155" x2="550" y2="200" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
+  <ellipse cx="600" cy="195" rx="50" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
+  <rect x="550" y="195" width="100" height="25" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
+  <ellipse cx="600" cy="220" rx="50" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
+  <line x1="550" y1="195" x2="550" y2="220" stroke="#d84315" stroke-width="1.5"/>
+  <line x1="650" y1="195" x2="650" y2="220" stroke="#d84315" stroke-width="1.5"/>
+  <text x="600" y="212" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Time-Series DB</text>
+  <text x="600" y="237" text-anchor="middle" fill="#555" font-size="8">(InfluxDB)</text>
+  <!-- To WebSocket Hub -->
+  <line x1="470" y1="147" x2="550" y2="147" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
+  <rect x="550" y="128" width="110" height="45" rx="8" fill="#e91e63" stroke="#ad1457" stroke-width="2"/>
+  <text x="605" y="148" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">WebSocket</text>
+  <text x="605" y="163" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Hub</text>
+  <!-- To Clients -->
+  <line x1="660" y1="140" x2="740" y2="100" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
+  <line x1="660" y1="150" x2="740" y2="150" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
+  <line x1="660" y1="160" x2="740" y2="200" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
+  <rect x="740" y="80" width="80" height="35" rx="6" fill="#4caf50" stroke="#388e3c" stroke-width="1.5"/>
+  <text x="780" y="102" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Client 1</text>
+  <rect x="740" y="133" width="80" height="35" rx="6" fill="#4caf50" stroke="#388e3c" stroke-width="1.5"/>
+  <text x="780" y="155" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Client 2</text>
+  <rect x="740" y="185" width="80" height="35" rx="6" fill="#4caf50" stroke="#388e3c" stroke-width="1.5"/>
+  <text x="780" y="207" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Client N</text>
+  <!-- Alert Service -->
+  <line x1="470" y1="165" x2="550" y2="270" stroke="#333" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a1)"/>
+  <rect x="550" y="255" width="110" height="40" rx="6" fill="#673ab7" stroke="#4527a0" stroke-width="1.5"/>
+  <text x="605" y="279" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Alert Service</text>
+</svg>
+</div>
+
+<div class="example">
+<h4>Example: Live AAPL price update</h4>
+<p>The NYSE executes a trade for AAPL at $178.52. The exchange sends a market data message via <strong>TCP/FIX protocol</strong> to the <strong>Market Data Ingester</strong>. The Ingester normalizes the data into <code>{symbol: "AAPL", price: 178.52, volume: 1500, timestamp: 1707500400123}</code> and publishes it to the <strong>Price Stream</strong> (Kafka topic: <code>prices</code>, partitioned by symbol). Three consumers process in parallel: (1) <strong>Price Cache</strong> (Redis) updates the latest price for AAPL. (2) <strong>Time-Series DB</strong> (InfluxDB) stores the tick for historical charts. (3) <strong>WebSocket Hub</strong> pushes the price to all clients subscribed to AAPL via WebSocket — users see the update in &lt;100ms.</p>
+</div>
+
+<div class="example">
+<h4>Example: Price alert triggered</h4>
+<p>Alice set an alert: "Notify me when TSLA crosses $250." The <strong>Alert Service</strong> consumes price events from Kafka. When TSLA's price moves from $249.50 to $250.25, the Alert Service detects the threshold crossing and sends a push notification to Alice: "TSLA just crossed $250.00 — currently at $250.25."</p>
+</div>
+
+<h3>Deep Dive: Components</h3>
+<div class="deep-dive">
+<h4>WebSocket Hub</h4>
+<p>Manages millions of concurrent WebSocket connections. Each client subscribes to specific ticker symbols. The Hub maintains a <strong>subscription map:</strong> <code>symbol → [list of WebSocket connections]</code>. When a price update arrives for AAPL, the Hub looks up all connections subscribed to AAPL and pushes the update.</p>
+<p><strong>Why WebSocket:</strong> Stock prices update many times per second. WebSocket provides persistent, low-latency, bidirectional communication. Alternatives:</p>
+<ul>
+  <li><strong>SSE (Server-Sent Events):</strong> Unidirectional (server→client), simpler than WebSocket. Viable for a read-only ticker but doesn't support client→server messages (subscribe/unsubscribe). Could work with a separate REST endpoint for subscriptions.</li>
+  <li><strong>Polling:</strong> Far too slow and wasteful for real-time prices. A 1-second poll interval means up to 1 second of stale data.</li>
+</ul>
+<p><strong>Connection management:</strong> The WebSocket connection is established via HTTP Upgrade. The Hub stores connection state in memory. A <strong>Redis Pub/Sub</strong> layer distributes price updates across multiple Hub instances — when a price arrives, it's published to a Redis channel; all Hub instances subscribed to that channel receive it and push to their local connections.</p>
+</div>
+
+<div class="deep-dive">
+<h4>Market Data Ingester</h4>
+<p>Connects to stock exchanges via <strong>TCP with FIX protocol</strong> (Financial Information eXchange — the industry standard for market data). Runs as a dedicated, highly available service with failover. Normalizes data from different exchanges into a common schema and publishes to Kafka.</p>
+<p><strong>Why TCP:</strong> FIX runs over TCP for reliable, ordered delivery. UDP would be faster but risks packet loss — unacceptable for financial data.</p>
+</div>
+
+<div class="deep-dive">
+<h4>Kafka (Price Stream)</h4>
+<p>Partitioned by <code>symbol</code> to maintain ordering per stock. With ~10,000 ticker symbols, we use ~1,000 partitions (10 symbols per partition). Provides durability, replay capability, and decouples ingestion from consumers.</p>
+</div>
+
+<h2>Flow 2: Viewing Historical Charts</h2>
+<div class="diagram">
+<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
+  <rect x="10" y="70" width="80" height="50" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
+  <text x="50" y="100" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Client</text>
+  <line x1="90" y1="95" x2="160" y2="95" stroke="#333" stroke-width="2" marker-end="url(#a2)"/>
+  <text x="125" y="85" text-anchor="middle" fill="#555" font-size="8">GET /chart</text>
+  <rect x="160" y="70" width="100" height="50" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
+  <text x="210" y="100" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Chart Svc</text>
+  <line x1="260" y1="85" x2="340" y2="45" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
+  <ellipse cx="390" cy="35" rx="40" ry="10" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
+  <rect x="350" y="35" width="80" height="20" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
+  <ellipse cx="390" cy="55" rx="40" ry="10" fill="#00796b" stroke="#00695c" stroke-width="1.5"/>
+  <line x1="350" y1="35" x2="350" y2="55" stroke="#00695c" stroke-width="1.5"/>
+  <line x1="430" y1="35" x2="430" y2="55" stroke="#00695c" stroke-width="1.5"/>
+  <text x="390" y="49" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Cache</text>
+  <line x1="260" y1="105" x2="340" y2="140" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
+  <ellipse cx="390" cy="135" rx="50" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
+  <rect x="340" y="135" width="100" height="22" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
+  <ellipse cx="390" cy="157" rx="50" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
+  <line x1="340" y1="135" x2="340" y2="157" stroke="#d84315" stroke-width="1.5"/>
+  <line x1="440" y1="135" x2="440" y2="157" stroke="#d84315" stroke-width="1.5"/>
+  <text x="390" y="150" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">InfluxDB</text>
+</svg>
+</div>
+
+<div class="example">
+<h4>Example: Viewing AAPL 1-month chart</h4>
+<p>Bob selects AAPL and taps "1M" chart view. Client sends <strong>GET /api/v1/chart?symbol=AAPL&range=1M&interval=1h</strong>. The Chart Service checks Redis cache (key: <code>chart:AAPL:1M:1h</code>). On miss, queries InfluxDB for hourly OHLCV data for the past 30 days. Returns aggregated data points. Populates cache with TTL = 5 minutes (intraday charts update frequently).</p>
+</div>
+
+<h2>Overall Combined Flow</h2>
+<div class="diagram">
+<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
+  <rect x="5" y="140" width="80" height="40" rx="6" fill="#795548" stroke="#4e342e" stroke-width="1.5"/>
+  <text x="45" y="164" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Exchanges</text>
+  <line x1="85" y1="160" x2="130" y2="160" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
+  <rect x="130" y="140" width="80" height="40" rx="6" fill="#2196f3" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="170" y="164" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Ingester</text>
+  <line x1="210" y1="160" x2="260" y2="160" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
+  <rect x="260" y="140" width="70" height="40" rx="6" fill="#9c27b0" stroke="#6a1b9a" stroke-width="1.5"/>
+  <text x="295" y="164" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Kafka</text>
+  <line x1="330" y1="150" x2="380" y2="85" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
+  <line x1="330" y1="160" x2="380" y2="160" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
+  <line x1="330" y1="170" x2="380" y2="230" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
+  <line x1="330" y1="175" x2="380" y2="290" stroke="#333" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a3)"/>
+  <ellipse cx="420" cy="75" rx="35" ry="8" fill="#009688" stroke="#00695c" stroke-width="1"/>
+  <rect x="385" y="75" width="70" height="16" fill="#009688" stroke="#00695c" stroke-width="1"/>
+  <ellipse cx="420" cy="91" rx="35" ry="8" fill="#00796b" stroke="#00695c" stroke-width="1"/>
+  <line x1="385" y1="75" x2="385" y2="91" stroke="#00695c" stroke-width="1"/>
+  <line x1="455" y1="75" x2="455" y2="91" stroke="#00695c" stroke-width="1"/>
+  <text x="420" y="87" text-anchor="middle" fill="#fff" font-size="7" font-weight="bold">Redis</text>
+  <rect x="380" y="140" width="90" height="40" rx="6" fill="#e91e63" stroke="#ad1457" stroke-width="1.5"/>
+  <text x="425" y="164" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">WS Hub</text>
+  <line x1="470" y1="160" x2="530" y2="160" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
+  <rect x="530" y="140" width="80" height="40" rx="6" fill="#4caf50" stroke="#388e3c" stroke-width="1.5"/>
+  <text x="570" y="164" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Clients</text>
+  <ellipse cx="420" cy="225" rx="40" ry="8" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
+  <rect x="380" y="225" width="80" height="16" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
+  <ellipse cx="420" cy="241" rx="40" ry="8" fill="#e64a19" stroke="#d84315" stroke-width="1"/>
+  <line x1="380" y1="225" x2="380" y2="241" stroke="#d84315" stroke-width="1"/>
+  <line x1="460" y1="225" x2="460" y2="241" stroke="#d84315" stroke-width="1"/>
+  <text x="420" y="237" text-anchor="middle" fill="#fff" font-size="7" font-weight="bold">InfluxDB</text>
+  <rect x="380" y="280" width="90" height="35" rx="6" fill="#673ab7" stroke="#4527a0" stroke-width="1.5"/>
+  <text x="425" y="302" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Alert Svc</text>
+</svg>
+</div>
+
+<div class="example">
+<h4>Combined Example</h4>
+<p>Exchanges → TCP/FIX → Ingester normalizes → Kafka (per-symbol partitions) → three parallel consumers: (1) Redis updates latest price, (2) InfluxDB stores tick for charts, (3) WebSocket Hub pushes to subscribed clients in real time, (4) Alert Service checks price thresholds. Client requests historical chart → Chart Svc queries cache/InfluxDB → returns OHLCV data.</p>
+</div>
+
+<h2>Database Schema</h2>
+<h3>Time-Series DB (InfluxDB)</h3>
+<h4>1. price_ticks</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td>time</td><td>TIMESTAMP (ns)</td><td>Nanosecond-precision timestamp <span class="tag tag-pk">Time Key</span></td></tr>
+  <tr><td>symbol</td><td>TAG</td><td>Ticker symbol (indexed) <span class="tag tag-pk">Tag Key</span></td></tr>
+  <tr><td>exchange</td><td>TAG</td><td>Exchange (NYSE, NASDAQ)</td></tr>
+  <tr><td>price</td><td>FLOAT</td><td>Trade price</td></tr>
+  <tr><td>volume</td><td>INT</td><td>Trade volume</td></tr>
+  <tr><td>bid</td><td>FLOAT</td><td>Best bid price</td></tr>
+  <tr><td>ask</td><td>FLOAT</td><td>Best ask price</td></tr>
+</table>
+<p><strong>Why Time-Series DB:</strong> Stock tick data is append-only, time-indexed, and requires time-range aggregations (OHLCV candles). InfluxDB is purpose-built for this: columnar storage, built-in downsampling (continuous queries), and time-based retention policies (keep tick data for 30 days, daily aggregates forever).</p>
+
+<h3>SQL (PostgreSQL)</h3>
+<h4>2. watchlists</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td><td>User</td></tr>
+  <tr><td>symbol</td><td>VARCHAR(10)</td><td><span class="tag tag-pk">PK</span></td><td>Ticker symbol</td></tr>
+  <tr><td>added_at</td><td>TIMESTAMP</td><td></td><td>When added</td></tr>
+</table>
+
+<h4>3. price_alerts</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>alert_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td><td>Alert ID</td></tr>
+  <tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-idx">B-tree</span></td><td>User</td></tr>
+  <tr><td>symbol</td><td>VARCHAR(10)</td><td><span class="tag tag-idx">B-tree</span></td><td>Ticker</td></tr>
+  <tr><td>target_price</td><td>DECIMAL</td><td></td><td>Alert threshold</td></tr>
+  <tr><td>direction</td><td>ENUM('above','below')</td><td></td><td>Trigger direction</td></tr>
+  <tr><td>is_active</td><td>BOOLEAN</td><td></td><td>Whether alert is active</td></tr>
+</table>
+
+<h2>Cache Deep Dive</h2>
+<div class="deep-dive">
+<h4>Price Cache (Redis)</h4>
+<p><strong>Purpose:</strong> Store the latest price for every active symbol. Key: <code>price:{symbol}</code>. Value: JSON <code>{price, volume, change, changePercent, timestamp}</code>.</p>
+<p><strong>Strategy:</strong> <strong>Write-through</strong> — updated on every price tick from Kafka.</p>
+<p><strong>Eviction:</strong> None needed (only ~10K symbols, ~1MB total). <strong>Expiration:</strong> No TTL during market hours. After hours, TTL = 12 hours (stale data is acceptable).</p>
+</div>
+<div class="deep-dive">
+<h4>CDN</h4>
+<p>CDN is <strong>not appropriate for real-time price data</strong> (it changes every second). CDN <strong>is appropriate</strong> for: static assets (JS, CSS, company logos), historical chart data (cacheable for 5 min), and company info pages.</p>
+</div>
+
+<h2>Scaling Considerations</h2>
+<ul>
+  <li><strong>WebSocket Hub:</strong> Each instance holds ~500K connections. With 10M concurrent users, need ~20 instances behind an L4 load balancer (TCP sticky sessions).</li>
+  <li><strong>Redis Pub/Sub:</strong> Distributes price updates across all WebSocket Hub instances. ~10K messages/sec (one per symbol per tick).</li>
+  <li><strong>Kafka:</strong> Handles 100K+ messages/sec with appropriate partitioning.</li>
+  <li><strong>InfluxDB:</strong> Clustered with sharding by symbol range for write distribution.</li>
+</ul>
+
+<h2>Tradeoffs and Deep Dives</h2>
+<div class="tradeoff">
+<h4>WebSocket vs. SSE</h4>
+<p>WebSocket is chosen for bidirectional communication (client sends subscribe/unsubscribe). SSE would work for one-way price push but requires a separate channel for subscriptions. WebSocket is more efficient for this use case.</p>
+</div>
+<div class="tradeoff">
+<h4>Kafka vs. Direct Push</h4>
+<p>Kafka adds ~5ms latency compared to direct push from ingester to WebSocket Hub. The benefit is decoupling, durability, and ability to replay data. For ultra-low-latency trading systems (not a ticker app), direct UDP multicast would be used instead.</p>
+</div>
+
+<h2>Alternative Approaches</h2>
+<div class="alternative">
+<h4>UDP Multicast (for HFT systems)</h4>
+<p>Financial exchanges use UDP multicast for the lowest latency (~microseconds). Not chosen for a consumer app because: (1) requires specialized network infrastructure, (2) no delivery guarantees, (3) our target latency (&lt;100ms) is achievable with TCP/Kafka/WebSocket.</p>
+</div>
+
+<h2>Additional Information</h2>
+<h3>Data Downsampling</h3>
+<p>Tick-by-tick data generates TB/day. InfluxDB continuous queries aggregate ticks into 1-minute, 5-minute, 1-hour, and 1-day OHLCV candles. Tick data is retained for 30 days; minute data for 1 year; daily data forever.</p>
+</div>
+</body>
+</html>

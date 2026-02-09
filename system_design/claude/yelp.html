@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: Yelp</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #e0e0e0; margin: 0; padding: 20px; line-height: 1.7; }
+  h1 { color: #d32323; font-size: 2.2em; border-bottom: 3px solid #d32323; padding-bottom: 10px; }
+  h2 { color: #ff6666; margin-top: 40px; }
+  h3 { color: #ff9999; }
+  h4 { color: #ffaaaa; }
+  .section { background: #1a1a1a; padding: 25px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #d32323; }
+  .subsection { background: #222; padding: 15px; border-radius: 8px; margin: 15px 0; }
+  .diagram-container { background: #1e1e1e; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; overflow-x: auto; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.85em; margin: 2px 4px; }
+  .tag-pk { background: #4a9eff33; color: #4a9eff; border: 1px solid #4a9eff66; }
+  .tag-fk { background: #ff4a4a33; color: #ff4a4a; border: 1px solid #ff4a4a66; }
+  .tag-idx { background: #4aff4a33; color: #4aff4a; border: 1px solid #4aff4a66; }
+  .tag-shard { background: #ffa54a33; color: #ffa54a; border: 1px solid #ffa54a66; }
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+  th, td { padding: 12px; text-align: left; border: 1px solid #333; }
+  th { background: #2a2a2a; color: #d32323; }
+  tr:nth-child(even) { background: #1a1a1a; }
+  code { background: #2a2a2a; padding: 2px 8px; border-radius: 4px; color: #ff6666; font-family: 'Fira Code', monospace; }
+  pre { background: #1a1a1a; padding: 20px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; }
+  .example { background: #0d2818; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #4aff4a; }
+  .tradeoff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+  .tradeoff-pro { background: #0d2818; padding: 15px; border-radius: 8px; border-left: 3px solid #4aff4a; }
+  .tradeoff-con { background: #2d1018; padding: 15px; border-radius: 8px; border-left: 3px solid #ff4a4a; }
+  ul, ol { padding-left: 25px; }
+  li { margin: 6px 0; }
+</style>
+</head>
+<body>
+
+<h1>🍽️ System Design: Yelp (Local Business Search & Reviews)</h1>
+
+<div class="section">
+<h2>📋 Functional Requirements</h2>
+<ul>
+  <li>Users can search for businesses by name, category, or location (with radius)</li>
+  <li>Users can view business details (hours, photos, menu, contact info)</li>
+  <li>Users can write reviews with ratings (1-5 stars), text, and photos</li>
+  <li>Users can discover nearby businesses on a map view</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>🔒 Non-Functional Requirements</h2>
+<ul>
+  <li><strong>Low latency search:</strong> &lt;200ms for proximity-based queries with ranking</li>
+  <li><strong>High read throughput:</strong> Read-heavy system — search:write ratio ~100:1</li>
+  <li><strong>Geospatial accuracy:</strong> Precise distance calculations and radius filtering</li>
+  <li><strong>Availability:</strong> 99.9% uptime, eventual consistency acceptable for reviews</li>
+  <li><strong>Scalability:</strong> ~250M businesses globally, billions of reviews</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>🔄 Flow 1 — Business Search (Nearby + Text)</h2>
+<!-- ============================================================ -->
+
+<div class="diagram-container">
+<svg viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ah1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="160" width="120" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="80" y="195" text-anchor="middle" fill="white" font-size="14">Mobile / Web</text>
+  <line x1="140" y1="190" x2="210" y2="190" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="220" y="160" width="130" height="60" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="285" y="188" text-anchor="middle" fill="white" font-size="13">API Gateway</text>
+  <text x="285" y="205" text-anchor="middle" fill="white" font-size="10">(Rate Limit)</text>
+  <line x1="350" y1="190" x2="420" y2="190" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="430" y="160" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="500" y="188" text-anchor="middle" fill="white" font-size="13">Search Service</text>
+  <text x="500" y="205" text-anchor="middle" fill="white" font-size="10">(Query Parser)</text>
+  <line x1="570" y1="190" x2="640" y2="150" stroke="#aaa" marker-end="url(#ah1)"/>
+  <line x1="570" y1="190" x2="640" y2="240" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="650" y="120" width="150" height="55" rx="10" fill="#8a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="725" y="145" text-anchor="middle" fill="white" font-size="12">Elasticsearch</text>
+  <text x="725" y="162" text-anchor="middle" fill="white" font-size="10">(Geospatial + Text)</text>
+  <rect x="650" y="215" width="150" height="55" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
+  <text x="725" y="240" text-anchor="middle" fill="white" font-size="12">Redis Cache</text>
+  <text x="725" y="257" text-anchor="middle" fill="white" font-size="10">(Popular Queries)</text>
+  <line x1="800" y1="148" x2="870" y2="190" stroke="#aaa" marker-end="url(#ah1)"/>
+  <line x1="800" y1="243" x2="870" y2="200" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="880" y="165" width="150" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="955" y="188" text-anchor="middle" fill="white" font-size="12">Ranking Service</text>
+  <text x="955" y="205" text-anchor="middle" fill="white" font-size="10">(ML Relevance)</text>
+</svg>
+</div>
+
+<div class="section">
+<h3>Step-by-Step</h3>
+<ol>
+  <li><strong>Client sends search:</strong> <code>GET /api/v1/search?q=sushi&lat=37.77&lng=-122.42&radius=5000&sort=best_match</code></li>
+  <li><strong>API Gateway</strong> validates auth, applies rate limits per user/IP, routes to Search Service</li>
+  <li><strong>Search Service</strong> parses the query — extracts text terms, geolocation, filters (price, open_now, categories)</li>
+  <li><strong>Cache check:</strong> Hash the normalized query → check Redis for cached result set (TTL 5 min for popular queries)</li>
+  <li><strong>Elasticsearch geo_distance query:</strong> Combines <code>bool</code> with <code>geo_distance</code> filter and <code>multi_match</code> for text, using <code>function_score</code> to blend relevance + distance + rating</li>
+  <li><strong>Ranking Service</strong> re-ranks top-100 candidates using ML model considering user preferences, review recency, response rate, sponsor bids</li>
+  <li><strong>Return paginated results</strong> with business summaries, ratings, distance, snippet of top review</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> User in San Francisco searches "sushi" within 5km → Elasticsearch returns 200 candidates within geo_distance circle → Ranking re-ranks with ML (considering user's past preferences for high-end sushi, price filter, open now) → Returns top 20 with paginated results: "Sushi Ran — ⭐4.6 — 2.3 mi — $$$"
+</div>
+</div>
+
+<div class="section">
+<h3>🔍 Component Deep Dives — Search Flow</h3>
+
+<div class="subsection">
+<h4>Elasticsearch Geospatial Query</h4>
+<p><strong>Protocol:</strong> HTTP/REST to Elasticsearch cluster</p>
+<p><strong>Index Mapping:</strong> <code>geo_point</code> field for lat/lng, <code>text</code> fields with custom analyzers (synonym expansion, ngrams for autocomplete)</p>
+<pre>
+POST /businesses/_search
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "bool": {
+          "must": [
+            { "multi_match": { "query": "sushi", "fields": ["name^3", "categories^2", "description"] } }
+          ],
+          "filter": [
+            { "geo_distance": { "distance": "5km", "location": { "lat": 37.77, "lon": -122.42 } } },
+            { "term": { "is_open": true } }
+          ]
+        }
+      },
+      "functions": [
+        { "field_value_factor": { "field": "avg_rating", "modifier": "log1p", "factor": 2 } },
+        { "gauss": { "location": { "origin": "37.77,-122.42", "scale": "2km", "decay": 0.5 } } },
+        { "field_value_factor": { "field": "review_count", "modifier": "log1p", "factor": 0.5 } }
+      ],
+      "score_mode": "sum",
+      "boost_mode": "multiply"
+    }
+  }
+}
+</pre>
+<p><strong>Key:</strong> <code>gauss</code> decay function — businesses closer to user get exponentially higher scores. <code>log1p</code> on review_count prevents businesses with 10,000 reviews from dominating over newer ones with 50 quality reviews.</p>
+</div>
+
+<div class="subsection">
+<h4>Geospatial Indexing Strategy</h4>
+<p><strong>Geohash:</strong> Elasticsearch uses geohash internally for geo_point fields — encodes lat/lng into base-32 string prefixes for efficient bounding-box filtering</p>
+<p><strong>Precision levels:</strong> geohash-6 (~1.2km cells) used for proximity search, geohash-4 (~39km) for broader city searches</p>
+<p><strong>Quadtree alternative:</strong> For in-memory spatial index (e.g., Redis), quadtree divides space recursively — O(log n) point lookup</p>
+<p><strong>S2 Geometry (Google):</strong> Maps sphere to unit cube faces → Hilbert curve space-filling → S2 Cell IDs with hierarchical levels — better for covering irregular regions</p>
+</div>
+
+<div class="subsection">
+<h4>Ranking Service (ML)</h4>
+<p><strong>Protocol:</strong> gRPC from Search Service to Ranking Service</p>
+<p><strong>Input:</strong> Candidate list (business IDs + features), user context (location, history, time-of-day)</p>
+<p><strong>Model:</strong> LambdaMART or neural learning-to-rank — features include: distance, avg_rating, review_count, price_match, category_match, is_sponsored, recency_of_reviews, user_personalization_score</p>
+<p><strong>Output:</strong> Re-ranked list with predicted click-through probability</p>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>🔄 Flow 2 — Review Submission</h2>
+<!-- ============================================================ -->
+
+<div class="diagram-container">
+<svg viewBox="0 0 1100 350" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="140" width="120" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="80" y="175" text-anchor="middle" fill="white" font-size="14">User Client</text>
+  <line x1="140" y1="170" x2="210" y2="170" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="220" y="140" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="290" y="168" text-anchor="middle" fill="white" font-size="13">Review Service</text>
+  <text x="290" y="185" text-anchor="middle" fill="white" font-size="10">(Validation)</text>
+  <line x1="360" y1="170" x2="420" y2="110" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="360" y1="170" x2="420" y2="170" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="360" y1="170" x2="420" y2="240" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="430" y="80" width="150" height="55" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="505" y="105" text-anchor="middle" fill="white" font-size="12">Fraud Detection</text>
+  <text x="505" y="122" text-anchor="middle" fill="white" font-size="10">(ML Pipeline)</text>
+  <rect x="430" y="145" width="150" height="55" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="505" y="168" text-anchor="middle" fill="white" font-size="12">Kafka</text>
+  <text x="505" y="185" text-anchor="middle" fill="white" font-size="10">(review-events)</text>
+  <rect x="430" y="215" width="150" height="55" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="505" y="238" text-anchor="middle" fill="white" font-size="12">Photo Service</text>
+  <text x="505" y="255" text-anchor="middle" fill="white" font-size="10">(S3 Upload)</text>
+  <line x1="580" y1="172" x2="660" y2="120" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="580" y1="172" x2="660" y2="172" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="580" y1="172" x2="660" y2="240" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="670" y="90" width="140" height="55" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
+  <text x="740" y="115" text-anchor="middle" fill="white" font-size="12">PostgreSQL</text>
+  <text x="740" y="132" text-anchor="middle" fill="white" font-size="10">(Reviews)</text>
+  <rect x="670" y="150" width="140" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="740" y="175" text-anchor="middle" fill="white" font-size="12">Rating Aggregator</text>
+  <text x="740" y="192" text-anchor="middle" fill="white" font-size="10">(Recalculate Avg)</text>
+  <rect x="670" y="215" width="140" height="55" rx="10" fill="#8a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="740" y="238" text-anchor="middle" fill="white" font-size="12">Elasticsearch</text>
+  <text x="740" y="255" text-anchor="middle" fill="white" font-size="10">(Index Update)</text>
+</svg>
+</div>
+
+<div class="section">
+<h3>Step-by-Step</h3>
+<ol>
+  <li><strong>Client submits review:</strong> <code>POST /api/v1/businesses/{id}/reviews</code> with JSON body: <code>{ "rating": 5, "text": "Best sushi in the city...", "photos": [presigned_urls] }</code></li>
+  <li><strong>Review Service</strong> validates: user is authenticated, hasn't already reviewed this business, text length within limits, profanity filter</li>
+  <li><strong>Fraud Detection (async):</strong> ML model scores review — checks for patterns: review velocity (many reviews in short time), IP/device clustering, text similarity to known fake reviews, user review history anomalies</li>
+  <li><strong>Photo Service:</strong> Presigned S3 upload URLs provided, photos uploaded directly from client, thumbnails generated via Lambda</li>
+  <li><strong>Write to PostgreSQL:</strong> Insert review row with initial status <code>pending</code> (if fraud score > threshold) or <code>published</code></li>
+  <li><strong>Kafka event:</strong> <code>review-created</code> event triggers consumers — Rating Aggregator recalculates business avg_rating, Elasticsearch updates business document with new review count/rating</li>
+  <li><strong>Business owner notified</strong> of new review via push notification</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> User writes a 5-star review for "Sushi Ran" with 2 photos → Fraud ML scores 0.15 (low risk) → Published immediately → Rating Aggregator: business had 1,247 reviews at 4.58 avg → new avg = (1247*4.58 + 5)/1248 = 4.5803 → Elasticsearch updated → Next search query reflects new rating
+</div>
+</div>
+
+<div class="section">
+<h3>🔍 Component Deep Dives — Review Flow</h3>
+
+<div class="subsection">
+<h4>Fraud Detection ML</h4>
+<p><strong>Features used:</strong></p>
+<ul>
+  <li><strong>User signals:</strong> Account age, review count, profile completeness, device fingerprint</li>
+  <li><strong>Behavioral signals:</strong> Time between reviews, geographic plausibility (reviewing in 5 cities in 1 day), copy-paste text detection</li>
+  <li><strong>Text signals:</strong> NLP sentiment analysis, similarity to known spam templates, excessive superlatives</li>
+  <li><strong>Network signals:</strong> IP clustering (many reviews from same IP), social graph isolation</li>
+</ul>
+<p><strong>Recommendation Filter:</strong> Yelp's "Recommended Reviews" system filters ~25% of reviews as "not recommended" — they're still visible but collapsed and don't count toward rating</p>
+</div>
+
+<div class="subsection">
+<h4>Rating Aggregation</h4>
+<p><strong>Bayesian Average:</strong> Rather than simple mean, use Bayesian average to handle businesses with few reviews:</p>
+<pre>bayesian_avg = (C * m + sum_of_ratings) / (C + review_count)
+where C = minimum reviews threshold (e.g., 10)
+      m = global mean rating across all businesses (~3.7)</pre>
+<p>This pulls businesses with very few reviews toward the global mean, preventing a single 5-star review from ranking #1.</p>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>🔄 Flow 3 — Nearby Business Discovery (Map View)</h2>
+<!-- ============================================================ -->
+
+<div class="diagram-container">
+<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="140" width="120" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="80" y="168" text-anchor="middle" fill="white" font-size="13">Mobile App</text>
+  <text x="80" y="185" text-anchor="middle" fill="white" font-size="10">(Map View)</text>
+  <line x1="140" y1="170" x2="210" y2="170" stroke="#aaa" marker-end="url(#ah3)"/>
+  <rect x="220" y="140" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="290" y="168" text-anchor="middle" fill="white" font-size="13">Discovery Service</text>
+  <text x="290" y="185" text-anchor="middle" fill="white" font-size="10">(Viewport Query)</text>
+  <line x1="360" y1="170" x2="430" y2="120" stroke="#aaa" marker-end="url(#ah3)"/>
+  <line x1="360" y1="170" x2="430" y2="220" stroke="#aaa" marker-end="url(#ah3)"/>
+  <rect x="440" y="90" width="160" height="55" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
+  <text x="520" y="115" text-anchor="middle" fill="white" font-size="12">Geohash Grid Cache</text>
+  <text x="520" y="132" text-anchor="middle" fill="white" font-size="10">(Redis — precomputed)</text>
+  <rect x="440" y="195" width="160" height="55" rx="10" fill="#8a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="520" y="218" text-anchor="middle" fill="white" font-size="12">Elasticsearch</text>
+  <text x="520" y="235" text-anchor="middle" fill="white" font-size="10">(geo_bounding_box)</text>
+  <line x1="600" y1="118" x2="680" y2="170" stroke="#aaa" marker-end="url(#ah3)"/>
+  <line x1="600" y1="222" x2="680" y2="175" stroke="#aaa" marker-end="url(#ah3)"/>
+  <rect x="690" y="145" width="150" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="765" y="168" text-anchor="middle" fill="white" font-size="12">Map Tile Service</text>
+  <text x="765" y="185" text-anchor="middle" fill="white" font-size="10">(Pin Clustering)</text>
+</svg>
+</div>
+
+<div class="section">
+<h3>Step-by-Step</h3>
+<ol>
+  <li><strong>Client sends viewport:</strong> <code>GET /api/v1/discover?sw_lat=37.75&sw_lng=-122.45&ne_lat=37.80&ne_lng=-122.40&zoom=14&category=restaurants</code></li>
+  <li><strong>Discovery Service</strong> calculates geohash cells covering the viewport bounding box</li>
+  <li><strong>Geohash Grid Cache:</strong> At popular zoom levels, precomputed Redis hashes store top businesses per geohash cell — O(1) lookup per cell</li>
+  <li><strong>Cache miss → Elasticsearch:</strong> <code>geo_bounding_box</code> query returns all businesses in viewport, limited to top 200</li>
+  <li><strong>Pin Clustering:</strong> At low zoom levels (zoomed out), cluster nearby pins into numbered circles (e.g., "23 restaurants") using server-side grid clustering or client-side supercluster.js</li>
+  <li><strong>Return pin data:</strong> Array of {id, lat, lng, name, rating, price_level, category_icon} for map rendering</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> User views downtown SF at zoom=14 → viewport covers 12 geohash-6 cells → Redis has cached top-20 businesses per cell → Returns 240 pins → Client renders pin icons with star ratings on map tiles → User taps a pin → Business detail sheet slides up
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>🏗️ Combined Architecture</h2>
+<!-- ============================================================ -->
+
+<div class="diagram-container">
+<svg viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ahc" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="50" width="130" height="50" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="85" y="80" text-anchor="middle" fill="white" font-size="13">Mobile App</text>
+  <rect x="20" y="120" width="130" height="50" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="85" y="150" text-anchor="middle" fill="white" font-size="13">Web Browser</text>
+  <line x1="150" y1="80" x2="230" y2="150" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="150" y1="145" x2="230" y2="150" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="240" y="120" width="140" height="60" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="310" y="148" text-anchor="middle" fill="white" font-size="13">API Gateway / LB</text>
+  <text x="310" y="165" text-anchor="middle" fill="white" font-size="10">(L7 + CDN)</text>
+  <!-- Search path -->
+  <line x1="380" y1="140" x2="460" y2="80" stroke="#4a9eff" marker-end="url(#ahc)"/>
+  <rect x="470" y="50" width="140" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="540" y="75" text-anchor="middle" fill="white" font-size="12">Search Service</text>
+  <text x="540" y="92" text-anchor="middle" fill="white" font-size="10">(Query + Rank)</text>
+  <!-- Review path -->
+  <line x1="380" y1="155" x2="460" y2="160" stroke="#ff4a4a" marker-end="url(#ahc)"/>
+  <rect x="470" y="130" width="140" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="540" y="155" text-anchor="middle" fill="white" font-size="12">Review Service</text>
+  <text x="540" y="172" text-anchor="middle" fill="white" font-size="10">(Write + Moderate)</text>
+  <!-- Business path -->
+  <line x1="380" y1="165" x2="460" y2="235" stroke="#ffa54a" marker-end="url(#ahc)"/>
+  <rect x="470" y="210" width="140" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="540" y="235" text-anchor="middle" fill="white" font-size="12">Business Service</text>
+  <text x="540" y="252" text-anchor="middle" fill="white" font-size="10">(CRUD + Hours)</text>
+  <!-- Discovery -->
+  <line x1="380" y1="170" x2="460" y2="310" stroke="#4afff0" marker-end="url(#ahc)"/>
+  <rect x="470" y="290" width="140" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="540" y="315" text-anchor="middle" fill="white" font-size="12">Discovery Service</text>
+  <text x="540" y="332" text-anchor="middle" fill="white" font-size="10">(Map + Nearby)</text>
+  <!-- Elasticsearch -->
+  <line x1="610" y1="78" x2="700" y2="78" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="610" y1="315" x2="700" y2="315" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="710" y="50" width="160" height="55" rx="10" fill="#8a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="790" y="73" text-anchor="middle" fill="white" font-size="12">Elasticsearch Cluster</text>
+  <text x="790" y="90" text-anchor="middle" fill="white" font-size="10">(Geo + Full-Text)</text>
+  <!-- PostgreSQL -->
+  <line x1="610" y1="158" x2="700" y2="200" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="610" y1="238" x2="700" y2="210" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="710" y="170" width="160" height="55" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
+  <text x="790" y="195" text-anchor="middle" fill="white" font-size="12">PostgreSQL (Primary)</text>
+  <text x="790" y="212" text-anchor="middle" fill="white" font-size="10">(Users, Reviews, Biz)</text>
+  <!-- Redis -->
+  <line x1="610" y1="310" x2="700" y2="310" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="710" y="285" width="160" height="55" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
+  <text x="790" y="308" text-anchor="middle" fill="white" font-size="12">Redis Cluster</text>
+  <text x="790" y="325" text-anchor="middle" fill="white" font-size="10">(Cache + Geo Grid)</text>
+  <!-- Kafka -->
+  <line x1="540" y1="185" x2="540" y2="410" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="470" y="420" width="140" height="55" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="540" y="445" text-anchor="middle" fill="white" font-size="12">Apache Kafka</text>
+  <text x="540" y="462" text-anchor="middle" fill="white" font-size="10">(Event Bus)</text>
+  <!-- Consumers -->
+  <line x1="610" y1="448" x2="700" y2="430" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="610" y1="448" x2="700" y2="490" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="610" y1="448" x2="700" y2="550" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="710" y="405" width="160" height="45" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="790" y="432" text-anchor="middle" fill="white" font-size="11">Rating Aggregator</text>
+  <rect x="710" y="465" width="160" height="45" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="790" y="492" text-anchor="middle" fill="white" font-size="11">Fraud Detector (ML)</text>
+  <rect x="710" y="525" width="160" height="45" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="790" y="552" text-anchor="middle" fill="white" font-size="11">Notification Service</text>
+  <!-- S3 -->
+  <rect x="950" y="170" width="140" height="55" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
+  <text x="1020" y="195" text-anchor="middle" fill="white" font-size="12">S3 + CDN</text>
+  <text x="1020" y="212" text-anchor="middle" fill="white" font-size="10">(Photos / Static)</text>
+  <line x1="870" y1="197" x2="940" y2="197" stroke="#aaa" marker-end="url(#ahc)"/>
+</svg>
+</div>
+
+<div class="example">
+<strong>End-to-End Example:</strong> User opens Yelp in SF → Map view loads pins from Redis geohash cache → Types "best tacos" → Search Service queries Elasticsearch with geo_distance + text match → ML ranker re-ranks by personalized relevance → User picks "La Taqueria" → Business detail page loaded from PostgreSQL + cached in Redis → User writes 5-star review → Review Service writes to PostgreSQL → Kafka event triggers: rating recalculation, Elasticsearch update, owner notification → Next user searching "tacos" sees updated rating
+</div>
+
+<!-- ============================================================ -->
+<h2>🗄️ Database Schema</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<h3>PostgreSQL — Relational Data (ACID)</h3>
+
+<h4>businesses</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>name</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>slug</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">UNIQUE INDEX</span></td></tr>
+<tr><td>latitude</td><td>DECIMAL(10,7)</td><td>GiST spatial index</td></tr>
+<tr><td>longitude</td><td>DECIMAL(10,7)</td><td>GiST spatial index</td></tr>
+<tr><td>address</td><td>TEXT</td><td></td></tr>
+<tr><td>city</td><td>VARCHAR(100)</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>state</td><td>VARCHAR(50)</td><td></td></tr>
+<tr><td>country</td><td>VARCHAR(3)</td><td></td></tr>
+<tr><td>zip_code</td><td>VARCHAR(20)</td><td></td></tr>
+<tr><td>phone</td><td>VARCHAR(20)</td><td></td></tr>
+<tr><td>website</td><td>TEXT</td><td></td></tr>
+<tr><td>category_ids</td><td>BIGINT[]</td><td><span class="tag tag-idx">GIN INDEX</span></td></tr>
+<tr><td>price_level</td><td>SMALLINT</td><td>1-4 ($-$$$$)</td></tr>
+<tr><td>avg_rating</td><td>DECIMAL(3,2)</td><td>Denormalized, updated async</td></tr>
+<tr><td>review_count</td><td>INTEGER</td><td>Denormalized</td></tr>
+<tr><td>is_claimed</td><td>BOOLEAN</td><td></td></tr>
+<tr><td>owner_user_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → users</span></td></tr>
+<tr><td>created_at</td><td>TIMESTAMPTZ</td><td></td></tr>
+<tr><td>updated_at</td><td>TIMESTAMPTZ</td><td></td></tr>
+</table>
+
+<h4>business_hours</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>business_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span><span class="tag tag-fk">FK → businesses</span></td></tr>
+<tr><td>day_of_week</td><td>SMALLINT</td><td><span class="tag tag-pk">PK</span> 0=Monday</td></tr>
+<tr><td>open_time</td><td>TIME</td><td></td></tr>
+<tr><td>close_time</td><td>TIME</td><td></td></tr>
+</table>
+
+<h4>reviews</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>business_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → businesses</span><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → users</span><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>rating</td><td>SMALLINT</td><td>1-5</td></tr>
+<tr><td>text</td><td>TEXT</td><td></td></tr>
+<tr><td>photo_urls</td><td>TEXT[]</td><td></td></tr>
+<tr><td>useful_count</td><td>INTEGER</td><td>Denormalized</td></tr>
+<tr><td>funny_count</td><td>INTEGER</td><td>Denormalized</td></tr>
+<tr><td>cool_count</td><td>INTEGER</td><td>Denormalized</td></tr>
+<tr><td>status</td><td>VARCHAR(20)</td><td>published / pending / not_recommended</td></tr>
+<tr><td>fraud_score</td><td>DECIMAL(5,4)</td><td>ML confidence score</td></tr>
+<tr><td>created_at</td><td>TIMESTAMPTZ</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+</table>
+<p><span class="tag tag-idx">UNIQUE INDEX</span> on (business_id, user_id) — one review per user per business</p>
+
+<h4>users</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>email</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">UNIQUE</span></td></tr>
+<tr><td>display_name</td><td>VARCHAR(100)</td><td></td></tr>
+<tr><td>avatar_url</td><td>TEXT</td><td></td></tr>
+<tr><td>review_count</td><td>INTEGER</td><td>Denormalized</td></tr>
+<tr><td>elite_year</td><td>INTEGER</td><td>NULL if not elite</td></tr>
+<tr><td>home_location</td><td>POINT</td><td>GiST index</td></tr>
+<tr><td>created_at</td><td>TIMESTAMPTZ</td><td></td></tr>
+</table>
+
+<h4>categories</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>name</td><td>VARCHAR(100)</td><td><span class="tag tag-idx">UNIQUE</span></td></tr>
+<tr><td>parent_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → categories (self)</span></td></tr>
+<tr><td>alias</td><td>VARCHAR(100)</td><td>URL-safe slug</td></tr>
+</table>
+
+<h3>Sharding Strategy</h3>
+<p><strong>businesses:</strong> Shard by <code>city</code> or geographic region — businesses are heavily locality-bound, queries are always scoped to a region <span class="tag tag-shard">GEO SHARD</span></p>
+<p><strong>reviews:</strong> Shard by <code>business_id</code> — keeps all reviews for a business on one shard for efficient aggregation <span class="tag tag-shard">HASH SHARD</span></p>
+<p><strong>users:</strong> Shard by <code>user_id</code> hash — uniform distribution <span class="tag tag-shard">HASH SHARD</span></p>
+
+<h3>Indexes Explained</h3>
+<ul>
+  <li><strong>GiST spatial index</strong> on (latitude, longitude): Enables efficient proximity queries in PostgreSQL — R-tree based structure for multi-dimensional data</li>
+  <li><strong>GIN index</strong> on category_ids[]: Generalized Inverted Index — indexes each element of the array, enabling "find businesses in category X" queries</li>
+  <li><strong>B-tree composite</strong> on reviews(business_id, created_at DESC): Efficiently fetches recent reviews for a business page</li>
+  <li><strong>Partial index</strong> on reviews WHERE status = 'published': Only indexes recommended reviews, reduces index size by ~25%</li>
+</ul>
+
+<h3>Denormalization Decisions</h3>
+<ul>
+  <li><strong>avg_rating + review_count on businesses:</strong> Avoids JOIN + AVG() on every search result — updated asynchronously by Rating Aggregator consumer</li>
+  <li><strong>useful/funny/cool counts on reviews:</strong> Avoids COUNT() on reactions table for every review display</li>
+  <li><strong>review_count on users:</strong> Profile badge display without counting reviews table</li>
+</ul>
+</div>
+
+<div class="section">
+<h3>Elasticsearch — Search Index</h3>
+<pre>
+Index: businesses
+{
+  "name": { "type": "text", "analyzer": "custom_business_analyzer" },
+  "categories": { "type": "keyword" },          // facetable
+  "location": { "type": "geo_point" },           // lat/lng
+  "city": { "type": "keyword" },
+  "avg_rating": { "type": "float" },
+  "review_count": { "type": "integer" },
+  "price_level": { "type": "integer" },
+  "is_open_now": { "type": "boolean" },          // updated by cron
+  "hours": { "type": "nested" },                 // day + open/close
+  "amenities": { "type": "keyword" },            // outdoor_seating, wifi, etc.
+  "photos_count": { "type": "integer" }
+}
+Sharding: 12 primary shards (by geohash region prefix), 1 replica each
+</pre>
+</div>
+
+<!-- ============================================================ -->
+<h2>💾 Cache & CDN Deep Dive</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<h3>Redis Caching Strategy</h3>
+<table>
+<tr><th>Cache</th><th>Key Pattern</th><th>TTL</th><th>Strategy</th></tr>
+<tr><td>Search Results</td><td><code>search:{hash(query)}</code></td><td>5 min</td><td>Read-through</td></tr>
+<tr><td>Business Detail</td><td><code>biz:{id}</code></td><td>15 min</td><td>Read-through, invalidate on write</td></tr>
+<tr><td>Geohash Grid</td><td><code>geo:{geohash6}:{category}</code></td><td>30 min</td><td>Precomputed, batch refresh</td></tr>
+<tr><td>User Session</td><td><code>session:{token}</code></td><td>24 hr</td><td>Write-through</td></tr>
+<tr><td>Popular Reviews</td><td><code>reviews:{biz_id}:top</code></td><td>10 min</td><td>Read-through</td></tr>
+</table>
+
+<h4>Eviction Policy</h4>
+<p><strong>allkeys-lfu:</strong> Least Frequently Used — popular search queries and business pages stay cached, rarely-accessed ones evicted first. LFU is better than LRU here because search traffic is highly skewed (popular businesses/queries dominate).</p>
+
+<h3>CDN Strategy</h3>
+<ul>
+  <li><strong>Photo CDN:</strong> Business photos served via CloudFront/Akamai — aggressive caching with content-hash URLs (immutable). Thumbnails generated at upload in multiple sizes (150x150, 300x300, 600x600)</li>
+  <li><strong>Static assets:</strong> JS/CSS/fonts on CDN with 1-year cache + content hashing</li>
+  <li><strong>API responses:</strong> NOT cached on CDN — personalized, geo-dependent results. Exception: popular city landing pages (e.g., "Best Restaurants in NYC") served as pre-rendered HTML from CDN</li>
+  <li><strong>Pull-based CDN:</strong> Origin pull on cache miss — CDN requests from origin server, caches response at edge</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>⚖️ Scaling Considerations</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<ul>
+  <li><strong>Elasticsearch scaling:</strong> Shard by geographic region — US-West, US-East, Europe, Asia clusters. Cross-cluster search for global queries. Hot-warm architecture: recent/popular data on SSD (hot), older data on HDD (warm)</li>
+  <li><strong>Read replicas:</strong> PostgreSQL read replicas per region for business detail page reads (read-heavy). Writes go to primary, replicated async</li>
+  <li><strong>Connection pooling:</strong> PgBouncer in front of PostgreSQL — reduces connection overhead from hundreds of service instances</li>
+  <li><strong>L7 Load Balancer:</strong> Route by request type — search queries to search pods, review writes to review pods. Separate scaling groups per service</li>
+  <li><strong>Rate limiting:</strong> Per-user and per-IP rate limits at API Gateway — prevents scraping and abuse. Stricter limits on write endpoints (reviews)</li>
+  <li><strong>Auto-scaling:</strong> Elasticsearch and service pods scale on CPU/query-latency metrics. Weekday lunch hours and weekends see 3x traffic spikes</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>⚖️ Tradeoffs</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<div class="tradeoff-grid">
+  <div class="tradeoff-pro">
+    <h4>✅ Elasticsearch for Search</h4>
+    <p>Rich query DSL, built-in geo support, facets/aggregations, fast full-text search with custom scoring</p>
+  </div>
+  <div class="tradeoff-con">
+    <h4>❌ Elasticsearch for Search</h4>
+    <p>Not a primary datastore — requires syncing from PostgreSQL (CDC or dual-write), eventual consistency, complex cluster management, expensive memory for indices</p>
+  </div>
+  <div class="tradeoff-pro">
+    <h4>✅ Denormalized avg_rating</h4>
+    <p>Avoids expensive aggregation on every search, sub-millisecond read from index</p>
+  </div>
+  <div class="tradeoff-con">
+    <h4>❌ Denormalized avg_rating</h4>
+    <p>Brief staleness after new review — acceptable (seconds of delay). Requires extra write-path complexity (Kafka consumer for aggregation)</p>
+  </div>
+  <div class="tradeoff-pro">
+    <h4>✅ Bayesian Average Rating</h4>
+    <p>Prevents rating manipulation — new businesses with 1 five-star review don't rank #1</p>
+  </div>
+  <div class="tradeoff-con">
+    <h4>❌ Bayesian Average Rating</h4>
+    <p>New businesses are penalized until they accumulate enough reviews — cold start problem for new listings</p>
+  </div>
+  <div class="tradeoff-pro">
+    <h4>✅ Geohash Grid Pre-computation</h4>
+    <p>O(1) lookup for map view pins, dramatically reduces Elasticsearch load for map browsing</p>
+  </div>
+  <div class="tradeoff-con">
+    <h4>❌ Geohash Grid Pre-computation</h4>
+    <p>Memory overhead for storing grid cells, staleness (30-min refresh), edge effects at geohash boundaries</p>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>🔄 Alternative Approaches</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<div class="subsection">
+<h4>PostGIS Instead of Elasticsearch for Geo</h4>
+<p>PostgreSQL + PostGIS extension provides robust geospatial queries (ST_DWithin, ST_Distance) with GiST/SP-GiST indexes. Simpler stack (no Elasticsearch sync needed). Works well up to ~10M businesses but doesn't scale horizontally as easily as Elasticsearch for full-text + geo combined queries.</p>
+</div>
+<div class="subsection">
+<h4>Quadtree / KD-Tree In-Memory Index</h4>
+<p>Build in-memory spatial index for nearby discovery — O(log n) range queries. Used by Uber's H3 for hexagonal spatial indexing. Better for real-time updates (driver locations) but overkill for relatively static business data.</p>
+</div>
+<div class="subsection">
+<h4>Graph-Based Recommendation</h4>
+<p>Model user-business interactions as a graph (Neo4j or Amazon Neptune). Enables collaborative filtering: "Users who liked Sushi Ran also liked..." — better personalization but adds graph DB complexity and doesn't replace text search.</p>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>📚 Additional Information</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<h3>Yelp's Recommendation Engine</h3>
+<p>Yelp's "Recommended Reviews" system is a distinguishing feature — approximately 25% of reviews are filtered as "not recommended." The ML model considers:</p>
+<ul>
+  <li>User's established review history (new accounts penalized)</li>
+  <li>Review quality signals (length, specificity, photo attachment)</li>
+  <li>Social connections (isolated accounts flagged)</li>
+  <li>Temporal patterns (burst of reviews for one business = suspicious)</li>
+</ul>
+
+<h3>SEO & Server-Side Rendering</h3>
+<p>Yelp relies heavily on organic search traffic. Business pages are server-side rendered (SSR) with structured data (JSON-LD schema.org LocalBusiness markup). This ensures Google can index business details, reviews, and ratings — showing rich snippets (star ratings) in search results.</p>
+
+<h3>Business Owner Dashboard</h3>
+<p>Claimed businesses get analytics: page views, customer leads (calls, directions, website clicks), review response rate. This data is stored in a time-series database (InfluxDB or TimescaleDB) and aggregated for dashboard display.</p>
+
+<h3>Content Moderation Pipeline</h3>
+<p>Reviews pass through: (1) automated profanity/hate speech detection, (2) ML spam classifier, (3) human moderation queue for edge cases. Business owners can flag reviews, which triggers manual review. Appeals process with SLA of 48 hours.</p>
+</div>
+
+</body>
+</html>

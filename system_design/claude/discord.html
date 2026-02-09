@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Discord</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0f0f0f;color:#e0e0e0;line-height:1.7;padding:2rem}h1{font-size:2.5rem;text-align:center;background:linear-gradient(135deg,#5865F2,#EB459E);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}h2{color:#5865F2;font-size:1.8rem;margin:2rem 0 1rem;border-bottom:2px solid #5865F2;padding-bottom:.5rem}h3{color:#EB459E;font-size:1.3rem;margin:1.5rem 0 .8rem}h4{color:#FEE75C;margin:1rem 0 .5rem}.container{max-width:1400px;margin:0 auto}.card{background:#1a1a2e;border-radius:12px;padding:1.5rem;margin:1rem 0;border:1px solid #333}.diagram-box{background:#0d1117;border-radius:12px;padding:1.5rem;margin:1rem 0;text-align:center;overflow-x:auto}.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}.tag-pk{background:#E53935;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-fk{background:#1E88E5;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-idx{background:#43A047;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-shard{background:#F4511E;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}.tradeoff-card{background:#1a1a2e;border-radius:8px;padding:1rem;border-left:4px solid}.tradeoff-card.pro{border-color:#57F287}.tradeoff-card.con{border-color:#ED4245}code{background:#2d2d2d;padding:2px 6px;border-radius:4px;font-family:'Fira Code',monospace;font-size:.85rem}pre{background:#1e1e2e;padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}ul,ol{padding-left:1.5rem;margin:.5rem 0}table{width:100%;border-collapse:collapse;margin:1rem 0}th,td{padding:.75rem;border:1px solid #333;text-align:left}th{background:#1a1a2e}svg text{font-family:'Segoe UI',system-ui,sans-serif}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🎮 Design Discord</h1>
+<p style="text-align:center;color:#aaa;margin-bottom:2rem;">Real-time communication platform with text channels, voice/video, screen sharing — 200M+ MAU, 19M+ active servers</p>
+
+<h2>1. Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Servers &amp; Channels:</strong> Create servers (guilds) with text/voice/stage channels, categories, roles &amp; permissions</li>
+<li><strong>Real-Time Messaging:</strong> Send/receive messages instantly in channels and DMs with rich embeds, reactions, threads, replies</li>
+<li><strong>Voice &amp; Video:</strong> Low-latency voice chat in voice channels (up to 5000 users), video calls, Go Live screen sharing</li>
+<li><strong>Presence:</strong> Online/idle/DND/invisible status, custom status, game activity detection</li>
+<li><strong>File Sharing:</strong> Upload images, videos, files (up to 25MB free, 500MB Nitro) with CDN delivery</li>
+<li><strong>Bots &amp; Integrations:</strong> Bot API, slash commands, webhooks, OAuth2 app integrations</li>
+<li><strong>Search:</strong> Full-text message search within servers with filters (from:, in:, has:, before:/after:)</li>
+<li><strong>Notifications:</strong> Per-channel notification settings, @mentions, @everyone, push notifications</li>
+</ul>
+</div>
+
+<h2>2. Non-Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Latency:</strong> Message delivery &lt;100ms (same region), voice latency &lt;70ms (opus codec)</li>
+<li><strong>Scale:</strong> 200M+ MAU, 4B+ messages/day, 15M+ concurrent voice users peak</li>
+<li><strong>Availability:</strong> 99.99% for messaging, 99.9% for voice (UDP-based, inherently lossy)</li>
+<li><strong>Consistency:</strong> Causal ordering within a channel (messages appear in send order); eventual for cross-channel</li>
+<li><strong>Concurrent Users per Server:</strong> Up to 1M members in a server, 5000 in a voice channel</li>
+<li><strong>Storage:</strong> Unlimited message history (no TTL for paid or free), efficient media storage</li>
+</ul>
+</div>
+
+<h2>3. Flow 1 — Real-Time Text Messaging</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#5865F2"/></marker></defs>
+<rect x="20" y="160" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="190" text-anchor="middle" fill="#fff" font-size="13">Sender</text><text x="75" y="205" text-anchor="middle" fill="#fff" font-size="11">WebSocket</text>
+<rect x="180" y="160" width="130" height="60" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="245" y="190" text-anchor="middle" fill="#fff" font-size="13">Gateway</text><text x="245" y="205" text-anchor="middle" fill="#fff" font-size="11">(WebSocket server)</text>
+<rect x="360" y="60" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="425" y="90" text-anchor="middle" fill="#fff" font-size="13">Message Service</text>
+<rect x="360" y="160" width="130" height="60" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="425" y="185" text-anchor="middle" fill="#fff" font-size="13">Pub/Sub</text><text x="425" y="200" text-anchor="middle" fill="#fff" font-size="11">(channel fanout)</text>
+<rect x="360" y="270" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="425" y="300" text-anchor="middle" fill="#fff" font-size="13">Push Service</text>
+<rect x="560" y="60" width="140" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="630" y="85" text-anchor="middle" fill="#fff" font-size="13">ScyllaDB</text><text x="630" y="102" text-anchor="middle" fill="#fff" font-size="11">(messages)</text>
+<rect x="560" y="160" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="630" y="185" text-anchor="middle" fill="#fff" font-size="13">Gateway Cluster</text><text x="630" y="202" text-anchor="middle" fill="#fff" font-size="11">(recipient sessions)</text>
+<rect x="560" y="270" width="140" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="630" y="300" text-anchor="middle" fill="#fff" font-size="13">Elasticsearch</text><text x="630" y="315" text-anchor="middle" fill="#fff" font-size="11">(message search)</text>
+<rect x="760" y="160" width="120" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="820" y="190" text-anchor="middle" fill="#fff" font-size="13">Recipients</text><text x="820" y="205" text-anchor="middle" fill="#fff" font-size="11">WebSocket</text>
+<line x1="130" y1="190" x2="178" y2="190" stroke="#5865F2" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="310" y1="175" x2="358" y2="95" stroke="#5865F2" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="310" y1="190" x2="358" y2="190" stroke="#5865F2" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="490" y1="90" x2="558" y2="90" stroke="#5865F2" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="490" y1="190" x2="558" y2="190" stroke="#5865F2" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="490" y1="90" x2="558" y2="290" stroke="#5865F2" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="490" y1="190" x2="558" y2="300" stroke="#5865F2" stroke-width="2" marker-end="url(#a1)" stroke-dasharray="5,5"/>
+<line x1="700" y1="190" x2="758" y2="190" stroke="#5865F2" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="425" y1="222" x2="425" y2="268" stroke="#5865F2" stroke-width="2" marker-end="url(#a1)"/>
+</svg>
+</div>
+
+<h3>Flow Steps</h3>
+<div class="card">
+<ol>
+<li><strong>Sender</strong> sends message over persistent WebSocket: <code>{"op": 0, "d": {"channel_id": "123", "content": "Hello!", "nonce": "abc"}}</code></li>
+<li><strong>Gateway</strong> authenticates session (JWT token validated at connect time), forwards to Message Service via gRPC</li>
+<li><strong>Message Service</strong> validates permissions (can user post in this channel?), applies rate limits (5 msgs/5 sec), generates snowflake ID, persists to ScyllaDB</li>
+<li><strong>Async:</strong> Message indexed in Elasticsearch for search. Embeds resolved (URL previews, image dimensions). Mentions parsed (@user, @role, @everyone)</li>
+<li><strong>Pub/Sub fanout:</strong> Message published to channel's topic. All Gateway servers subscribed to this channel receive the message</li>
+<li><strong>Gateway servers</strong> push message via WebSocket to all online members who have this channel "subscribed" (visible in current guild or DM)</li>
+<li><strong>Push Service:</strong> For offline/mobile users with notifications enabled → APNs/FCM push notification</li>
+<li><strong>Client ACK:</strong> Sender receives ACK with assigned message ID and timestamp, replaces optimistic local message</li>
+</ol>
+</div>
+
+<h3>Example</h3>
+<div class="card" style="background:#1e1e2e">
+<p><strong>Scenario:</strong> User sends "gg wp" in #general channel of a 50,000-member gaming server</p>
+<p><strong>Write:</strong> Message persisted in ScyllaDB partition <code>(channel_id=general_123)</code>, row key: snowflake_id <code>1234567890123456789</code></p>
+<p><strong>Fanout:</strong> But NOT to all 50,000 members! Only to users who are <strong>currently viewing this guild</strong> (~2,000 online with guild open). Others get unread badge count increment.</p>
+<p><strong>Gateway distribution:</strong> 2,000 online viewers spread across ~100 Gateway servers. Pub/sub delivers to all 100 servers. Each server pushes to its local WebSocket connections.</p>
+<p><strong>Latency:</strong> Send → persist (5ms) → pub/sub (10ms) → gateway push (5ms) = ~20ms for same-region delivery</p>
+<p><strong>@everyone mention:</strong> Would trigger push notifications for ALL 50,000 members (if enabled). Rate limited: @everyone restricted to users with permission + 10-minute cooldown.</p>
+</div>
+
+<h3>Deep Dives</h3>
+<div class="info-grid">
+<div class="card">
+<h4>WebSocket Gateway Architecture</h4>
+<p>Discord's Gateway manages millions of concurrent WebSocket connections. Each Gateway server handles ~100K-1M connections. Protocol: custom binary (ETF — Erlang Term Format) or JSON over WebSocket with zlib compression. <strong>Session management:</strong> Each connection is a "session" with a session_id. On reconnect, clients send <code>RESUME</code> with session_id + last sequence number to recover missed events. Gateway servers are stateless — session state stored in Redis. <strong>Sharding:</strong> Large bots receive events across multiple Gateway shards (shard_id = guild_id % num_shards). <strong>Heartbeat:</strong> Client sends heartbeat every 41.25 seconds; server responds with ACK. Missed heartbeats → zombie connection detected and cleaned up.</p>
+</div>
+<div class="card">
+<h4>Snowflake IDs</h4>
+<p>Discord uses Twitter's Snowflake format for all entity IDs: 64-bit integer = <code>timestamp(42 bits) + worker_id(5 bits) + process_id(5 bits) + sequence(12 bits)</code>. Epoch: Discord's custom epoch (2015-01-01). Benefits: IDs are <strong>time-sortable</strong> (newer messages have higher IDs), <strong>globally unique</strong> without coordination, <strong>compact</strong> (fits in a bigint). This enables range queries: "fetch messages before ID X" is a simple <code>WHERE id < X</code> query, which maps perfectly to ScyllaDB's clustering key ordering.</p>
+</div>
+<div class="card">
+<h4>Pub/Sub for Channel Fanout</h4>
+<p>When a message is sent to a channel, it must reach all online viewers. Discord uses a pub/sub layer where each Gateway server subscribes to channels that its connected users are viewing. Implementation: <strong>guild-level subscriptions</strong> — when a user opens a guild, their Gateway subscribes to that guild's event stream. Events are filtered client-side (only render events for the active channel). This reduces subscription granularity from per-channel to per-guild. For massive servers (100K+ online), Discord uses a dedicated "Guild Pub/Sub" tier with fan-out workers.</p>
+</div>
+<div class="card">
+<h4>Lazy Guilds &amp; Member List</h4>
+<p>For large servers (1M members), Discord doesn't send the full member list. <strong>Lazy guilds:</strong> Client only receives member data for users visible in the current channel's member sidebar. As user scrolls, more members are lazy-loaded. This reduces the READY payload from potentially 1M members to ~200. Similarly, message history is lazy-loaded: only the last 50 messages fetched initially, with infinite scroll loading older messages via REST API (not WebSocket).</p>
+</div>
+</div>
+
+<h2>4. Flow 2 — Voice Channel (Real-Time Audio)</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 1050 380" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#57F287"/></marker></defs>
+<rect x="20" y="150" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="180" text-anchor="middle" fill="#fff" font-size="13">User Client</text><text x="75" y="195" text-anchor="middle" fill="#fff" font-size="11">(Opus encoder)</text>
+<rect x="180" y="50" width="130" height="60" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="245" y="80" text-anchor="middle" fill="#fff" font-size="13">Gateway</text><text x="245" y="95" text-anchor="middle" fill="#fff" font-size="11">(signaling WS)</text>
+<rect x="180" y="150" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="245" y="180" text-anchor="middle" fill="#fff" font-size="13">Voice Gateway</text><text x="245" y="195" text-anchor="middle" fill="#fff" font-size="11">(voice signaling)</text>
+<rect x="380" y="150" width="150" height="60" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="455" y="175" text-anchor="middle" fill="#fff" font-size="13">SFU (Media Server)</text><text x="455" y="192" text-anchor="middle" fill="#fff" font-size="11">selective forwarding</text>
+<rect x="380" y="270" width="150" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="455" y="295" text-anchor="middle" fill="#fff" font-size="13">Voice Region</text><text x="455" y="312" text-anchor="middle" fill="#fff" font-size="11">us-west, eu-west, etc.</text>
+<rect x="600" y="80" width="130" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="665" y="110" text-anchor="middle" fill="#fff" font-size="13">Recipient A</text>
+<rect x="600" y="160" width="130" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="665" y="190" text-anchor="middle" fill="#fff" font-size="13">Recipient B</text>
+<rect x="600" y="240" width="130" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="665" y="270" text-anchor="middle" fill="#fff" font-size="13">Recipient C</text>
+<rect x="800" y="150" width="130" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="865" y="175" text-anchor="middle" fill="#fff" font-size="13">TURN Server</text><text x="865" y="192" text-anchor="middle" fill="#fff" font-size="11">(NAT traversal)</text>
+<line x1="130" y1="170" x2="178" y2="80" stroke="#57F287" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="130" y1="180" x2="178" y2="180" stroke="#57F287" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="310" y1="180" x2="378" y2="180" stroke="#57F287" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="530" y1="165" x2="598" y2="110" stroke="#57F287" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="530" y1="180" x2="598" y2="190" stroke="#57F287" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="530" y1="195" x2="598" y2="265" stroke="#57F287" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="455" y1="212" x2="455" y2="268" stroke="#57F287" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="730" y1="190" x2="798" y2="180" stroke="#57F287" stroke-width="2" marker-end="url(#a2)" stroke-dasharray="5,5"/>
+</svg>
+</div>
+
+<h3>Flow Steps</h3>
+<div class="card">
+<ol>
+<li><strong>User joins voice channel</strong> → Gateway sends VOICE_STATE_UPDATE to all guild members; provides voice server endpoint</li>
+<li><strong>Voice Gateway</strong> WebSocket established for signaling (session description, SSRC assignment, speaking state)</li>
+<li><strong>UDP connection</strong> established between client and SFU (Selective Forwarding Unit) media server — IP discovery via STUN</li>
+<li><strong>Client captures audio</strong> → Opus encoding (48kHz, 64kbps) → encrypted with XSalsa20-Poly1305 → sent as RTP over UDP to SFU</li>
+<li><strong>SFU (Selective Forwarding Unit)</strong> receives audio from all participants; forwards each participant's audio stream to all others WITHOUT mixing (preserves individual streams)</li>
+<li><strong>Client-side mixing:</strong> Each recipient decodes and mixes audio streams locally. Client can individually adjust volume per user</li>
+<li><strong>NAT traversal:</strong> If direct UDP fails, fall back to TURN relay servers</li>
+<li><strong>Voice Activity Detection (VAD):</strong> Client detects speech → sends SPEAKING event → gateway notifies other clients (green ring indicator)</li>
+</ol>
+</div>
+
+<h3>Example</h3>
+<div class="card" style="background:#1e1e2e">
+<p><strong>Scenario:</strong> 25-person voice channel in gaming server during raid night</p>
+<p><strong>Connection:</strong> All 25 clients establish UDP connections to SFU in us-west region (~20ms RTT)</p>
+<p><strong>Audio flow:</strong> Each speaking user sends 1 Opus stream (64kbps). SFU forwards to 24 others. With 5 people speaking simultaneously: each recipient receives 5 streams, mixes locally.</p>
+<p><strong>Bandwidth:</strong> SFU ingress: 5 × 64kbps = 320kbps. SFU egress: 5 streams × 24 recipients = 120 streams × 64kbps = 7.68 Mbps. Client download: 5 × 64kbps = 320kbps per user.</p>
+<p><strong>Latency:</strong> Capture (5ms) + Opus encode (20ms frame) + network (20ms) + decode (5ms) = ~50ms glass-to-glass audio latency</p>
+<p><strong>Screen share (Go Live):</strong> H.264 encoded at 720p30/1080p60 (Nitro), sent as separate video RTP stream to SFU. SFU forwards to viewers (up to 50 for Go Live).</p>
+</div>
+
+<h3>Deep Dives</h3>
+<div class="info-grid">
+<div class="card">
+<h4>SFU vs MCU vs Mesh</h4>
+<p><strong>SFU (Selective Forwarding Unit)</strong> — Discord's choice. Server receives all streams, selectively forwards without decoding/mixing. Pros: low server CPU (no transcoding), per-user volume control, low latency. Cons: higher client-side bandwidth (receives N streams). <strong>MCU (Multipoint Control Unit)</strong> — Server mixes all audio into single stream. Lower client bandwidth but higher server CPU and added latency. Used by traditional telephony. <strong>Mesh (P2P)</strong> — Each client sends to all others directly. Only works for &lt;5 participants (N² connections). Discord uses SFU for voice channels, but P2P for 1:1 calls when possible.</p>
+</div>
+<div class="card">
+<h4>Opus Codec &amp; RTP</h4>
+<p><strong>Opus:</strong> Open codec supporting 6kbps to 510kbps. Discord uses 64kbps for voice channels (great quality for voice). Frame size: 20ms. Supports Opus DTX (discontinuous transmission) — during silence, only send comfort noise packets, reducing bandwidth. <strong>RTP (Real-time Transport Protocol):</strong> UDP-based, with sequence numbers for reordering and timestamps for jitter buffer. Discord adds custom encryption: <code>XSalsa20-Poly1305</code> (libsodium) wrapping each RTP packet. No SRTP/DTLS (simpler custom protocol). Jitter buffer: adaptive 20-200ms based on network conditions.</p>
+</div>
+</div>
+
+<h2>5. Flow 3 — Server (Guild) Management &amp; Permissions</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 950 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FEE75C"/></marker></defs>
+<rect x="20" y="120" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="150" text-anchor="middle" fill="#fff" font-size="13">Admin</text>
+<rect x="180" y="120" width="120" height="60" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="240" y="150" text-anchor="middle" fill="#fff" font-size="13">API Server</text>
+<rect x="350" y="30" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="415" y="60" text-anchor="middle" fill="#fff" font-size="13">Guild Service</text>
+<rect x="350" y="120" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="415" y="150" text-anchor="middle" fill="#fff" font-size="13">Permission</text><text x="415" y="165" text-anchor="middle" fill="#fff" font-size="13">Engine</text>
+<rect x="350" y="210" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="415" y="240" text-anchor="middle" fill="#fff" font-size="13">Role Service</text>
+<rect x="540" y="30" width="140" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="610" y="60" text-anchor="middle" fill="#fff" font-size="13">PostgreSQL</text><text x="610" y="75" text-anchor="middle" fill="#fff" font-size="11">(guilds, channels)</text>
+<rect x="540" y="120" width="140" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="610" y="150" text-anchor="middle" fill="#fff" font-size="13">Permission Cache</text><text x="610" y="165" text-anchor="middle" fill="#fff" font-size="11">(computed perms)</text>
+<rect x="540" y="210" width="140" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="610" y="240" text-anchor="middle" fill="#fff" font-size="13">ScyllaDB</text><text x="610" y="255" text-anchor="middle" fill="#fff" font-size="11">(member roles)</text>
+<line x1="130" y1="150" x2="178" y2="150" stroke="#FEE75C" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="300" y1="135" x2="348" y2="65" stroke="#FEE75C" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="300" y1="150" x2="348" y2="150" stroke="#FEE75C" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="300" y1="165" x2="348" y2="235" stroke="#FEE75C" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="480" y1="60" x2="538" y2="60" stroke="#FEE75C" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="480" y1="150" x2="538" y2="150" stroke="#FEE75C" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="480" y1="240" x2="538" y2="240" stroke="#FEE75C" stroke-width="2" marker-end="url(#a3)"/>
+</svg>
+</div>
+
+<h3>Flow Steps</h3>
+<div class="card">
+<ol>
+<li><strong>Admin creates channel</strong> → POST <code>/guilds/{guildId}/channels</code> with name, type (text/voice/stage), category, permission overwrites</li>
+<li><strong>Guild Service</strong> persists channel in PostgreSQL, assigns position in category ordering</li>
+<li><strong>Permission Engine</strong> computes effective permissions: base @everyone role permissions → union of all user's role permissions → apply channel-specific overwrites (allow/deny per role per channel)</li>
+<li><strong>Permission calculation:</strong> Bitfield operations. Each permission is a bit in a 64-bit integer. <code>effective = (base | role_allows) &amp; ~role_denies | channel_allows) &amp; ~channel_denies</code></li>
+<li><strong>Cached computed permissions</strong> stored for fast checks on every message send, channel view, voice join</li>
+<li><strong>GUILD_UPDATE event</strong> pushed via WebSocket to all online members → clients update channel list</li>
+</ol>
+</div>
+
+<h3>Example</h3>
+<div class="card" style="background:#1e1e2e">
+<p><strong>Scenario:</strong> Admin creates #officers-only channel visible only to @Officer role</p>
+<p><strong>Config:</strong> Channel overwrites: @everyone → DENY VIEW_CHANNEL; @Officer → ALLOW VIEW_CHANNEL, SEND_MESSAGES</p>
+<p><strong>Permission bits:</strong> VIEW_CHANNEL = bit 10, SEND_MESSAGES = bit 11</p>
+<p><strong>For regular member:</strong> base = 0b...100 (VIEW_CHANNEL from @everyone) → channel deny = 0b...100 (deny bit 10) → effective bit 10 = 0 → CANNOT view channel</p>
+<p><strong>For officer:</strong> role grants bit 10,11 → channel allow bits 10,11 → effective: can view and send → channel appears in their list</p>
+</div>
+
+<h3>Deep Dives</h3>
+<div class="info-grid">
+<div class="card">
+<h4>Bitfield Permission System</h4>
+<p>Discord's permission system uses 53-bit integers (JavaScript safe integer limit). Each permission type is a bit: <code>CREATE_INVITE=0x1, KICK_MEMBERS=0x2, BAN_MEMBERS=0x4, ADMINISTRATOR=0x8, MANAGE_CHANNELS=0x10, ...</code> up to ~40 permissions. Permission computation is pure bitwise operations — extremely fast (nanoseconds). Role hierarchy: higher position roles override lower. ADMINISTRATOR bit (0x8) bypasses ALL permission checks. Channel overwrites: per-role allow/deny overrides stored per channel. Computed once and cached; invalidated on role/overwrite change.</p>
+</div>
+<div class="card">
+<h4>Guild Sharding for Large Servers</h4>
+<p>Servers with 100K+ members require special handling. Discord's <strong>"big guild"</strong> optimization: lazy member loading (only send visible members), compressed presence updates (batch presence changes every 5 seconds instead of real-time), rate-limited @everyone mentions. The largest servers (1M+ members) have dedicated infrastructure. Guild data is sharded: member list in ScyllaDB (sharded by guild_id), messages in ScyllaDB (sharded by channel_id), metadata in PostgreSQL (sharded by guild_id).</p>
+</div>
+</div>
+
+<h2>6. Combined Architecture</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 1200 550" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#5865F2"/></marker></defs>
+<rect x="10" y="240" width="100" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="60" y="270" text-anchor="middle" fill="#fff" font-size="12">Clients</text><text x="60" y="285" text-anchor="middle" fill="#fff" font-size="10">200M+ MAU</text>
+<rect x="150" y="180" width="110" height="50" rx="8" fill="#546e7a" stroke="#90a4ae" stroke-width="2"/><text x="205" y="210" text-anchor="middle" fill="#fff" font-size="12">CDN (CloudFlare)</text>
+<rect x="150" y="245" width="110" height="50" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="205" y="275" text-anchor="middle" fill="#fff" font-size="12">Gateway (WS)</text>
+<rect x="150" y="310" width="110" height="50" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="205" y="340" text-anchor="middle" fill="#fff" font-size="12">REST API</text>
+<rect x="310" y="60" width="120" height="45" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="88" text-anchor="middle" fill="#fff" font-size="11">Message Service</text>
+<rect x="310" y="120" width="120" height="45" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="148" text-anchor="middle" fill="#fff" font-size="11">Guild Service</text>
+<rect x="310" y="180" width="120" height="45" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="208" text-anchor="middle" fill="#fff" font-size="11">User Service</text>
+<rect x="310" y="240" width="120" height="45" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="370" y="260" text-anchor="middle" fill="#fff" font-size="11">Voice Gateway</text><text x="370" y="275" text-anchor="middle" fill="#fff" font-size="10">(signaling)</text>
+<rect x="310" y="300" width="120" height="45" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="370" y="320" text-anchor="middle" fill="#fff" font-size="11">SFU (Media)</text><text x="370" y="335" text-anchor="middle" fill="#fff" font-size="10">UDP voice/video</text>
+<rect x="310" y="360" width="120" height="45" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="388" text-anchor="middle" fill="#fff" font-size="11">Presence Service</text>
+<rect x="310" y="420" width="120" height="45" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="448" text-anchor="middle" fill="#fff" font-size="11">Push Service</text>
+<rect x="490" y="100" width="120" height="45" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="550" y="128" text-anchor="middle" fill="#fff" font-size="11">Pub/Sub Layer</text>
+<rect x="670" y="60" width="120" height="45" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="730" y="88" text-anchor="middle" fill="#fff" font-size="11">ScyllaDB</text>
+<rect x="670" y="120" width="120" height="45" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="730" y="148" text-anchor="middle" fill="#fff" font-size="11">PostgreSQL</text>
+<rect x="670" y="180" width="120" height="45" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="730" y="208" text-anchor="middle" fill="#fff" font-size="11">Redis</text>
+<rect x="670" y="240" width="120" height="45" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="730" y="268" text-anchor="middle" fill="#fff" font-size="11">Elasticsearch</text>
+<rect x="670" y="300" width="120" height="45" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="730" y="328" text-anchor="middle" fill="#fff" font-size="11">GCS (media)</text>
+<line x1="110" y1="260" x2="148" y2="205" stroke="#5865F2" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="110" y1="270" x2="148" y2="270" stroke="#5865F2" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="110" y1="280" x2="148" y2="335" stroke="#5865F2" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="260" y1="270" x2="308" y2="85" stroke="#5865F2" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="85" x2="488" y2="120" stroke="#5865F2" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="610" y1="120" x2="668" y2="85" stroke="#5865F2" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="145" x2="668" y2="140" stroke="#5865F2" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="200" x2="668" y2="200" stroke="#5865F2" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="85" x2="668" y2="80" stroke="#5865F2" stroke-width="2" marker-end="url(#a4)"/>
+</svg>
+</div>
+
+<h2>7. Database Schema</h2>
+<div class="card">
+<h3>Messages (ScyllaDB — partitioned by channel_id)</h3>
+<pre>
+Table: messages  <span class="tag-shard">SHARD: hash(channel_id)</span>
+- channel_id: bigint           <span class="tag-pk">PARTITION KEY</span>
+- message_id: bigint (snowflake) <span class="tag-pk">CLUSTERING KEY DESC</span>
+- author_id: bigint            <span class="tag-fk">FK → users</span>
+- content: text
+- embeds: json
+- attachments: json            // [{url, filename, size, content_type}]
+- mention_ids: set&lt;bigint&gt;
+- mention_roles: set&lt;bigint&gt;
+- mention_everyone: boolean
+- reactions: map&lt;text, set&lt;bigint&gt;&gt;  // emoji → set of user_ids
+- message_type: tinyint        // 0=default, 1=recipient_add, 7=reply, 19=thread_created
+- referenced_message_id: bigint // for replies/threads
+- flags: int                   // suppressed_embeds, crossposted, etc.
+- edited_at: timestamp
+- created_at: timestamp
+
+// Clustering by message_id DESC enables efficient "load latest 50 messages" query
+</pre>
+
+<h3>Guilds (PostgreSQL — sharded by guild_id)</h3>
+<pre>
+Table: guilds  <span class="tag-shard">SHARD: hash(guild_id) % 4096</span>
+- guild_id: bigint             <span class="tag-pk">PK</span>
+- name: varchar(100)
+- owner_id: bigint             <span class="tag-fk">FK → users</span>
+- icon_hash: varchar(40)
+- region: varchar(20)          // voice region
+- verification_level: smallint
+- max_members: int             // default 500K
+- premium_tier: smallint       // Nitro boost level (0-3)
+- features: text[]             // ['COMMUNITY', 'ANIMATED_ICON', ...]
+- created_at: timestamp
+</pre>
+
+<h3>Members (ScyllaDB — partitioned by guild_id)</h3>
+<pre>
+Table: guild_members  <span class="tag-shard">SHARD: hash(guild_id)</span>
+- guild_id: bigint             <span class="tag-pk">PARTITION KEY</span>
+- user_id: bigint              <span class="tag-pk">CLUSTERING KEY</span>
+- nickname: varchar(32)
+- role_ids: set&lt;bigint&gt;
+- joined_at: timestamp
+- premium_since: timestamp     // Nitro boosting since
+- muted: boolean
+- deafened: boolean
+</pre>
+
+<h3>Channels (PostgreSQL)</h3>
+<pre>
+Table: channels
+- channel_id: bigint           <span class="tag-pk">PK</span>
+- guild_id: bigint             <span class="tag-fk">FK → guilds</span> <span class="tag-idx">IDX</span>
+- type: smallint               // 0=text, 2=voice, 4=category, 5=news, 13=stage
+- name: varchar(100)
+- topic: varchar(1024)
+- position: smallint
+- parent_id: bigint            <span class="tag-fk">FK → channels (category)</span>
+- rate_limit_per_user: int     // slowmode seconds
+- nsfw: boolean
+- permission_overwrites: jsonb // [{role_id, allow_bits, deny_bits}]
+</pre>
+
+<h3>Presence (Redis — ephemeral)</h3>
+<pre>
+Key: presence:{user_id}
+Value: {
+  status: "online" | "idle" | "dnd" | "offline",
+  activities: [{name: "Playing Valorant", type: 0, timestamps: {...}}],
+  client_status: {desktop: "online", mobile: "idle", web: "offline"}
+}
+TTL: 90 seconds (refreshed by heartbeat)
+</pre>
+</div>
+
+<h2>8. Cache &amp; CDN Deep Dive</h2>
+<div class="card">
+<h3>Caching Layers</h3>
+<table>
+<tr><th>Layer</th><th>Technology</th><th>What's Cached</th><th>TTL</th><th>Notes</th></tr>
+<tr><td>CDN</td><td>Cloudflare</td><td>Attachments, avatars, emojis, static assets</td><td>1yr (content-addressed)</td><td>~10TB/day served from edge</td></tr>
+<tr><td>API Cache</td><td>Redis Cluster</td><td>Guild metadata, channel lists, permission overwrites</td><td>Minutes, event-driven invalidation</td><td>Reduces PostgreSQL load</td></tr>
+<tr><td>Session Store</td><td>Redis</td><td>WebSocket session state (for RESUME)</td><td>5 minutes after disconnect</td><td>Enables seamless reconnection</td></tr>
+<tr><td>Presence</td><td>Redis</td><td>User online status, activities</td><td>90s TTL, heartbeat refresh</td><td>Millions of concurrent entries</td></tr>
+<tr><td>Permission Cache</td><td>In-memory (per service)</td><td>Computed permission bitfields</td><td>Until role/overwrite change</td><td>Event-driven invalidation via pub/sub</td></tr>
+<tr><td>Message Cache</td><td>Client-side</td><td>Recent messages per channel</td><td>Session</td><td>Reduces REST API calls</td></tr>
+</table>
+
+<h3>Media CDN Pipeline</h3>
+<p>When a user uploads an attachment: file uploaded to Discord's API → stored in Google Cloud Storage (GCS) → URL generated with CDN prefix (<code>cdn.discordapp.com</code>). Images are proxy-resized on-the-fly via query params (<code>?width=400&height=300</code>). Discord uses Cloudflare as their CDN provider with aggressive caching (content-addressed: same file hash = same URL = infinite cache). Embeds (link previews) are generated server-side: fetch Open Graph tags from URL, cache the embed data. User avatars stored as <code>{user_id}/{avatar_hash}.webp</code> — hash changes on update, naturally invalidating CDN cache.</p>
+</div>
+
+<h2>9. Scaling Considerations</h2>
+<div class="card">
+<h3>ScyllaDB Migration</h3>
+<p>Discord migrated from Cassandra to ScyllaDB in 2023 for messages. Reason: Cassandra's JVM-based GC pauses caused tail latency spikes (p99 up to 200ms). ScyllaDB (C++ rewrite of Cassandra) eliminated GC pauses → p99 dropped to &lt;10ms. Same data model (wide-column, CQL compatible). Discord stores <strong>trillions of messages</strong> across the cluster. Partition key: channel_id. Clustering key: message_id DESC. This enables efficient "fetch latest N messages" queries.</p>
+
+<h3>Gateway Scaling</h3>
+<ul>
+<li><strong>Millions of concurrent WebSocket connections</strong> across hundreds of Gateway servers</li>
+<li>Each Gateway server: ~1M connections (Elixir/Erlang BEAM VM excels at lightweight processes per connection)</li>
+<li><strong>Bot sharding:</strong> Large bots (in 100K+ guilds) receive events across multiple shards. Discord enforces shard count based on guild count</li>
+<li><strong>Horizontal scaling:</strong> New Gateway servers auto-registered; clients re-balance on reconnect</li>
+</ul>
+
+<h3>Load Balancing</h3>
+<ul>
+<li><strong>DNS:</strong> GeoDNS for region routing (us-east, eu-west, singapore, etc.)</li>
+<li><strong>L4:</strong> Google Cloud L4 LB for TCP/UDP distribution</li>
+<li><strong>L7:</strong> Cloudflare for HTTP API traffic + DDoS protection</li>
+<li><strong>Voice region:</strong> Users can select voice region; SFU servers deployed per region for lowest latency</li>
+</ul>
+</div>
+
+<h2>10. Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="tradeoff-card pro">
+<h4>✅ SFU for Voice</h4>
+<p>Low server CPU (no transcoding), per-user volume control, supports simultaneous screen share + audio. Scales to 5000 users in a voice channel. Sub-50ms latency for audio.</p>
+</div>
+<div class="tradeoff-card con">
+<h4>❌ SFU Bandwidth</h4>
+<p>Each participant receives N-1 audio streams instead of 1 mixed stream. For 25-person call: 24 streams × 64kbps = 1.5Mbps download per user. For video, bandwidth cost is even higher. Mitigated by voice activity detection (only forward active speakers).</p>
+</div>
+<div class="tradeoff-card pro">
+<h4>✅ ScyllaDB for Messages</h4>
+<p>Eliminated JVM GC pauses that plagued Cassandra. p99 latency from 200ms → &lt;10ms. Same CQL API = minimal migration effort. Time-series-like access pattern (latest messages) maps perfectly to clustering key ordering.</p>
+</div>
+<div class="tradeoff-card con">
+<h4>❌ ScyllaDB Operational Complexity</h4>
+<p>Smaller community than Cassandra. Fewer managed service options. Compaction tuning critical for write-heavy workloads. Hot partitions (extremely active channels) require careful monitoring and possible splitting.</p>
+</div>
+<div class="tradeoff-card pro">
+<h4>✅ Elixir/Erlang for Gateway</h4>
+<p>BEAM VM handles millions of lightweight processes (one per WebSocket connection). Built-in fault tolerance (let-it-crash). Hot code upgrades possible. Discord's Gateway handles 1M+ connections per server thanks to BEAM's concurrency model.</p>
+</div>
+<div class="tradeoff-card con">
+<h4>❌ Elixir Ecosystem</h4>
+<p>Smaller hiring pool than Go/Java/Python. Fewer third-party libraries. Performance ceiling for CPU-intensive work (message processing offloaded to Rust services). Discord has increasingly moved hot paths to Rust while keeping Elixir for connection management.</p>
+</div>
+</div>
+
+<h2>11. Alternative Approaches</h2>
+<div class="info-grid">
+<div class="card">
+<h4>Matrix Protocol (Decentralized)</h4>
+<p>Open-standard, federated communication protocol. Any server can host and federate messages. Used by Element. Provides E2E encryption by default. Tradeoffs: higher latency due to federation, complex conflict resolution, harder to enforce content moderation across federated servers.</p>
+</div>
+<div class="card">
+<h4>WebRTC Mesh for Voice</h4>
+<p>Direct peer-to-peer connections between all participants (no server). Lower latency for small groups (&lt;5 users). Zero server media cost. Discord uses this for 1:1 calls. Doesn't scale beyond ~5 users (N² connections). No server-side recording capability.</p>
+</div>
+<div class="card">
+<h4>NATS/Redis Streams for Pub/Sub</h4>
+<p>Instead of custom pub/sub, use NATS JetStream or Redis Streams. Lower operational overhead. NATS: ~10M msg/sec per server, lightweight. Redis Streams: consumer groups, persistence. Discord's custom pub/sub is optimized for their specific guild-scoped subscription patterns.</p>
+</div>
+<div class="card">
+<h4>CockroachDB Instead of PostgreSQL</h4>
+<p>Distributed SQL with automatic sharding. Would eliminate Discord's manual PostgreSQL sharding. Supports serializable isolation. Tradeoffs: higher write latency (Raft consensus), less mature ecosystem, higher operational cost. Discord's PostgreSQL sharding (4096 shards) works well for their access patterns.</p>
+</div>
+</div>
+
+<h2>12. Additional Information</h2>
+<div class="card">
+<h3>Discord's Tech Stack</h3>
+<ul>
+<li><strong>Elixir/Erlang:</strong> Gateway (WebSocket management) — BEAM VM for massive concurrency</li>
+<li><strong>Rust:</strong> Performance-critical services (message fanout, presence, read states) — moved from Go for lower latency</li>
+<li><strong>Python:</strong> API services, ML/safety (originally Flask, now FastAPI)</li>
+<li><strong>React:</strong> Web client (desktop app via Electron)</li>
+<li><strong>React Native:</strong> Mobile clients (iOS/Android)</li>
+<li><strong>C++:</strong> Voice/video engine, native module for desktop</li>
+</ul>
+
+<h3>Key Numbers</h3>
+<table>
+<tr><td>Monthly Active Users</td><td>200M+</td></tr>
+<tr><td>Active servers (guilds)</td><td>19M+</td></tr>
+<tr><td>Messages per day</td><td>4B+</td></tr>
+<tr><td>Concurrent voice users (peak)</td><td>15M+</td></tr>
+<tr><td>WebSocket connections (peak)</td><td>Millions concurrent</td></tr>
+<tr><td>ScyllaDB messages stored</td><td>Trillions</td></tr>
+<tr><td>Average voice latency</td><td>~50ms</td></tr>
+</table>
+
+<h3>Protocols Summary</h3>
+<ul>
+<li><strong>Client → Gateway:</strong> WebSocket (wss://) with zlib compression, ETF or JSON encoding, heartbeat every 41.25s</li>
+<li><strong>Client → API:</strong> HTTPS REST (JSON) for non-real-time operations (history fetch, profile update, guild management)</li>
+<li><strong>Client → Voice:</strong> WebSocket for signaling + UDP (RTP + XSalsa20-Poly1305) for media</li>
+<li><strong>Service → Service:</strong> gRPC (Protobuf) for internal RPC</li>
+<li><strong>Pub/Sub:</strong> Custom pub/sub layer for guild-scoped event distribution</li>
+<li><strong>Voice Codec:</strong> Opus (48kHz, 64kbps) with DTX for silence suppression</li>
+<li><strong>Video Codec:</strong> H.264 (720p30 free, 1080p60 Nitro) via SFU forwarding</li>
+</ul>
+</div>
+</div>
+</body>
+</html>

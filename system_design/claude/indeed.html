@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: Indeed</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #e0e0e0; margin: 0; padding: 20px; line-height: 1.7; }
+  h1 { color: #2164f3; font-size: 2.2em; border-bottom: 3px solid #2164f3; padding-bottom: 10px; }
+  h2 { color: #4a88ff; margin-top: 40px; }
+  h3 { color: #7aabff; }
+  h4 { color: #a0c4ff; }
+  .section { background: #1a1a1a; padding: 25px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #2164f3; }
+  .subsection { background: #222; padding: 15px; border-radius: 8px; margin: 15px 0; }
+  .diagram-container { background: #1e1e1e; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; overflow-x: auto; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.85em; margin: 2px 4px; }
+  .tag-pk { background: #4a9eff33; color: #4a9eff; border: 1px solid #4a9eff66; }
+  .tag-fk { background: #ff4a4a33; color: #ff4a4a; border: 1px solid #ff4a4a66; }
+  .tag-idx { background: #4aff4a33; color: #4aff4a; border: 1px solid #4aff4a66; }
+  .tag-shard { background: #ffa54a33; color: #ffa54a; border: 1px solid #ffa54a66; }
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+  th, td { padding: 12px; text-align: left; border: 1px solid #333; }
+  th { background: #2a2a2a; color: #4a88ff; }
+  tr:nth-child(even) { background: #1a1a1a; }
+  code { background: #2a2a2a; padding: 2px 8px; border-radius: 4px; color: #7aabff; font-family: 'Fira Code', monospace; }
+  pre { background: #1a1a1a; padding: 20px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; }
+  .example { background: #0d2818; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #4aff4a; }
+  .tradeoff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+  .tradeoff-pro { background: #0d2818; padding: 15px; border-radius: 8px; border-left: 3px solid #4aff4a; }
+  .tradeoff-con { background: #2d1018; padding: 15px; border-radius: 8px; border-left: 3px solid #ff4a4a; }
+  ul, ol { padding-left: 25px; }
+  li { margin: 6px 0; }
+</style>
+</head>
+<body>
+
+<h1>💼 System Design: Indeed (Job Search Platform)</h1>
+
+<div class="section">
+<h2>📋 Functional Requirements</h2>
+<ul>
+  <li>Job seekers can search for jobs by title, company, location, salary range, and filters</li>
+  <li>Employers can post job listings and manage applicants</li>
+  <li>Job seekers can apply to jobs (upload resume, answer screening questions)</li>
+  <li>Job seekers receive personalized job recommendations and email alerts</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>🔒 Non-Functional Requirements</h2>
+<ul>
+  <li><strong>Scale:</strong> 300M+ monthly visitors, 20M+ job listings, 3B+ searches/month</li>
+  <li><strong>Freshness:</strong> New jobs indexed within minutes of posting</li>
+  <li><strong>Low latency:</strong> Search results &lt;200ms</li>
+  <li><strong>Availability:</strong> 99.9% uptime</li>
+</ul>
+</div>
+
+<h2>🔄 Flow 1 — Job Search</h2>
+
+<div class="diagram-container">
+<svg viewBox="0 0 1050 350" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ah1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="150" width="110" height="55" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="75" y="182" text-anchor="middle" fill="white" font-size="13">Job Seeker</text>
+  <line x1="130" y1="177" x2="195" y2="177" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="205" y="150" width="130" height="55" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="270" y="175" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
+  <text x="270" y="192" text-anchor="middle" fill="white" font-size="10">(CDN + Auth)</text>
+  <line x1="335" y1="177" x2="400" y2="177" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="410" y="150" width="130" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="475" y="175" text-anchor="middle" fill="white" font-size="12">Search Service</text>
+  <text x="475" y="192" text-anchor="middle" fill="white" font-size="10">(Query + Rank)</text>
+  <line x1="540" y1="165" x2="610" y2="115" stroke="#aaa" marker-end="url(#ah1)"/>
+  <line x1="540" y1="190" x2="610" y2="240" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="620" y="90" width="140" height="50" rx="10" fill="#8a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="690" y="120" text-anchor="middle" fill="white" font-size="12">Elasticsearch (Jobs)</text>
+  <rect x="620" y="220" width="140" height="50" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
+  <text x="690" y="250" text-anchor="middle" fill="white" font-size="12">Redis Cache</text>
+  <line x1="760" y1="115" x2="830" y2="170" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="840" y="150" width="140" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="910" y="175" text-anchor="middle" fill="white" font-size="12">ML Ranking</text>
+  <text x="910" y="192" text-anchor="middle" fill="white" font-size="10">(Personalization)</text>
+</svg>
+</div>
+
+<div class="section">
+<h3>Step-by-Step</h3>
+<ol>
+  <li><strong>Search request:</strong> <code>GET /api/v1/jobs?q=software+engineer&location=New+York&radius=25mi&salary_min=100000&job_type=fulltime</code></li>
+  <li><strong>Query parsing:</strong> Extract title, geocode location, parse filters. Synonym expansion: "software engineer" → also "software developer", "SDE"</li>
+  <li><strong>Cache check:</strong> Popular queries cached in Redis (TTL 5 min)</li>
+  <li><strong>Elasticsearch:</strong> <code>bool</code> query with <code>multi_match</code> on title/description, <code>geo_distance</code> filter, <code>range</code> on salary, <code>function_score</code> boost for freshness and sponsored jobs</li>
+  <li><strong>ML Ranking:</strong> Re-ranks top-200 candidates using user profile match (skills, experience), predicted apply rate, employer quality. Two-tower model: user tower + job tower</li>
+  <li><strong>Return top 15</strong> per page with title, company, location, salary, posted date</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> User searches "software engineer" in NYC → 8,500 matches → ML ranking boosts backend roles (user has Python/AWS on resume) → Top: "Senior Backend Engineer at Stripe — $180-220K — Remote — 2 hours ago" → Indeed earns CPC from sponsored listings
+</div>
+</div>
+
+<div class="section">
+<h3>🔍 Component Deep Dives — Search</h3>
+<div class="subsection">
+<h4>Elasticsearch Job Index</h4>
+<pre>
+{
+  "title": { "type": "text", "analyzer": "job_title_analyzer" },
+  "description": { "type": "text" },
+  "company_name": { "type": "text", "fields": { "keyword": { "type": "keyword" } } },
+  "location": { "type": "geo_point" },
+  "salary_min": { "type": "integer" },
+  "salary_max": { "type": "integer" },
+  "job_type": { "type": "keyword" },
+  "is_remote": { "type": "boolean" },
+  "is_sponsored": { "type": "boolean" },
+  "posted_at": { "type": "date" },
+  "skills": { "type": "keyword" },
+  "employer_quality_score": { "type": "float" }
+}
+</pre>
+</div>
+<div class="subsection">
+<h4>Job Crawling (Aggregation)</h4>
+<p>Indeed aggregates jobs from employer websites, other job boards, and ATS (Applicant Tracking Systems). Web crawlers discover job pages → NLP extracts structured data (title, salary, location) → deduplication (same job posted on multiple boards) → indexed in Elasticsearch. This is Indeed's core differentiation — the "Google of jobs."</p>
+</div>
+</div>
+
+<h2>🔄 Flow 2 — Job Application</h2>
+
+<div class="diagram-container">
+<svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="120" width="110" height="55" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="75" y="152" text-anchor="middle" fill="white" font-size="13">Applicant</text>
+  <line x1="130" y1="147" x2="200" y2="147" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="210" y="120" width="130" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="275" y="145" text-anchor="middle" fill="white" font-size="12">Apply Service</text>
+  <text x="275" y="162" text-anchor="middle" fill="white" font-size="10">(Validation)</text>
+  <line x1="340" y1="135" x2="410" y2="95" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="340" y1="155" x2="410" y2="200" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="420" y="70" width="140" height="50" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
+  <text x="490" y="100" text-anchor="middle" fill="white" font-size="12">PostgreSQL + S3</text>
+  <rect x="420" y="180" width="140" height="50" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="490" y="210" text-anchor="middle" fill="white" font-size="12">Kafka (Events)</text>
+  <line x1="560" y1="205" x2="640" y2="170" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="560" y1="205" x2="640" y2="235" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="650" y="145" width="140" height="45" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="720" y="172" text-anchor="middle" fill="white" font-size="11">Resume Parser (NLP)</text>
+  <rect x="650" y="210" width="140" height="45" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="720" y="237" text-anchor="middle" fill="white" font-size="11">Employer Notification</text>
+</svg>
+</div>
+
+<div class="section">
+<h3>Step-by-Step</h3>
+<ol>
+  <li><strong>Apply:</strong> <code>POST /api/v1/jobs/{id}/apply</code> with resume (PDF), screening answers, contact info</li>
+  <li><strong>Validate:</strong> Auth check, duplicate check (user hasn't applied before), file size/type</li>
+  <li><strong>Store:</strong> Resume in S3 (encrypted), application record in PostgreSQL</li>
+  <li><strong>Kafka event → consumers:</strong> Resume Parser extracts skills/experience via NLP → enriches user profile. Employer gets notification email with match score</li>
+</ol>
+<div class="example">
+<strong>Example:</strong> User applies to Stripe job → Resume uploaded to S3 → Parser extracts: Python(7yr), AWS(5yr), Stanford CS → Profile enriched → Recruiter gets email: "New applicant — 92% match" → User sees "Applied ✓"
+</div>
+</div>
+
+<h2>🔄 Flow 3 — Job Alerts & Recommendations</h2>
+
+<div class="section">
+<h3>Step-by-Step</h3>
+<ol>
+  <li><strong>New job posted:</strong> CDC from PostgreSQL → Kafka → Elasticsearch indexer + Alert Matcher</li>
+  <li><strong>Alert Matcher:</strong> Inverted index of saved search criteria → new job matched against user alerts → queued for email</li>
+  <li><strong>Recommendation:</strong> Collaborative filtering ("similar users applied to X") + content-based (job embeddings ↔ resume embeddings)</li>
+  <li><strong>Daily digest:</strong> 8 AM local time email with matched alerts + personalized recommendations</li>
+</ol>
+</div>
+
+<h2>🏗️ Combined Architecture</h2>
+
+<div class="diagram-container">
+<svg viewBox="0 0 1050 500" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ahc" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="50" width="110" height="40" rx="8" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="75" y="75" text-anchor="middle" fill="white" font-size="11">Job Seekers</text>
+  <rect x="20" y="100" width="110" height="40" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="75" y="125" text-anchor="middle" fill="white" font-size="11">Employers</text>
+  <line x1="130" y1="70" x2="200" y2="100" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="130" y1="120" x2="200" y2="105" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="210" y="80" width="120" height="50" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="270" y="110" text-anchor="middle" fill="white" font-size="11">API Gateway</text>
+  <line x1="330" y1="95" x2="400" y2="55" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="330" y1="105" x2="400" y2="105" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="330" y1="115" x2="400" y2="155" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="330" y1="120" x2="400" y2="205" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="410" y="30" width="130" height="45" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="475" y="57" text-anchor="middle" fill="white" font-size="10">Search Service</text>
+  <rect x="410" y="85" width="130" height="45" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="475" y="112" text-anchor="middle" fill="white" font-size="10">Job Posting Service</text>
+  <rect x="410" y="140" width="130" height="45" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="475" y="167" text-anchor="middle" fill="white" font-size="10">Apply Service</text>
+  <rect x="410" y="195" width="130" height="45" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="475" y="222" text-anchor="middle" fill="white" font-size="10">Alert + Recs</text>
+  <line x1="540" y1="53" x2="620" y2="53" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="540" y1="108" x2="620" y2="108" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="540" y1="163" x2="620" y2="163" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="540" y1="218" x2="620" y2="218" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="630" y="30" width="140" height="45" rx="8" fill="#8a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="700" y="57" text-anchor="middle" fill="white" font-size="10">Elasticsearch</text>
+  <rect x="630" y="85" width="140" height="45" rx="8" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
+  <text x="700" y="112" text-anchor="middle" fill="white" font-size="10">PostgreSQL</text>
+  <rect x="630" y="140" width="140" height="45" rx="8" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
+  <text x="700" y="167" text-anchor="middle" fill="white" font-size="10">S3 (Resumes)</text>
+  <rect x="630" y="195" width="140" height="45" rx="8" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
+  <text x="700" y="222" text-anchor="middle" fill="white" font-size="10">Redis + Kafka</text>
+</svg>
+</div>
+
+<div class="example">
+<strong>End-to-End:</strong> Employer posts job → PostgreSQL → CDC → Kafka → Elasticsearch index + Alert Matcher → Job seeker searches → ES + ML ranking → Personalized results → User applies → Resume to S3 → NLP parser enriches profile → Employer notified → Indeed earns CPC/CPA
+</div>
+
+<h2>🗄️ Database Schema</h2>
+
+<div class="section">
+<h3>PostgreSQL</h3>
+<h4>jobs</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>employer_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → employers</span><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>title</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>description</td><td>TEXT</td><td></td></tr>
+<tr><td>company_name</td><td>VARCHAR(255)</td><td></td></tr>
+<tr><td>location_city</td><td>VARCHAR(100)</td><td></td></tr>
+<tr><td>latitude</td><td>DECIMAL(10,7)</td><td></td></tr>
+<tr><td>longitude</td><td>DECIMAL(10,7)</td><td></td></tr>
+<tr><td>salary_min</td><td>INTEGER</td><td></td></tr>
+<tr><td>salary_max</td><td>INTEGER</td><td></td></tr>
+<tr><td>job_type</td><td>VARCHAR(20)</td><td>fulltime/parttime/contract/intern</td></tr>
+<tr><td>experience_level</td><td>VARCHAR(20)</td><td></td></tr>
+<tr><td>is_remote</td><td>BOOLEAN</td><td></td></tr>
+<tr><td>is_sponsored</td><td>BOOLEAN</td><td></td></tr>
+<tr><td>source_url</td><td>TEXT</td><td>Original posting URL (for crawled jobs)</td></tr>
+<tr><td>status</td><td>VARCHAR(20)</td><td>active / expired / filled</td></tr>
+<tr><td>posted_at</td><td>TIMESTAMPTZ</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>expires_at</td><td>TIMESTAMPTZ</td><td></td></tr>
+</table>
+
+<h4>applications</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>job_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → jobs</span><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → users</span><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>resume_url</td><td>TEXT</td><td>S3 presigned URL</td></tr>
+<tr><td>cover_letter</td><td>TEXT</td><td></td></tr>
+<tr><td>screening_answers</td><td>JSONB</td><td></td></tr>
+<tr><td>status</td><td>VARCHAR(20)</td><td>submitted / reviewed / interviewed / rejected / hired</td></tr>
+<tr><td>applied_at</td><td>TIMESTAMPTZ</td><td></td></tr>
+</table>
+<p><span class="tag tag-idx">UNIQUE INDEX</span> on (job_id, user_id) — one application per user per job</p>
+
+<h4>user_profiles</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span><span class="tag tag-fk">FK → users</span></td></tr>
+<tr><td>headline</td><td>VARCHAR(255)</td><td></td></tr>
+<tr><td>skills</td><td>TEXT[]</td><td><span class="tag tag-idx">GIN INDEX</span></td></tr>
+<tr><td>experience_years</td><td>INTEGER</td><td></td></tr>
+<tr><td>education</td><td>JSONB</td><td></td></tr>
+<tr><td>preferred_location</td><td>POINT</td><td></td></tr>
+<tr><td>salary_expectation</td><td>INTEGER</td><td></td></tr>
+<tr><td>resume_text</td><td>TEXT</td><td>Parsed from uploaded PDF</td></tr>
+</table>
+
+<h3>Sharding</h3>
+<p><strong>jobs:</strong> Shard by <code>job_id</code> hash. Time-based partitioning for expired jobs (archive partition) <span class="tag tag-shard">HASH + TIME</span></p>
+<p><strong>applications:</strong> Shard by <code>job_id</code> — employer views all applicants for a job on same shard <span class="tag tag-shard">HASH SHARD</span></p>
+</div>
+
+<h2>💾 Cache & CDN Deep Dive</h2>
+
+<div class="section">
+<table>
+<tr><th>Cache</th><th>Key</th><th>TTL</th><th>Strategy</th></tr>
+<tr><td>Search results</td><td><code>search:{query_hash}</code></td><td>5 min</td><td>Read-through</td></tr>
+<tr><td>Job detail</td><td><code>job:{id}</code></td><td>15 min</td><td>Read-through, invalidate on edit</td></tr>
+<tr><td>Company page</td><td><code>company:{id}</code></td><td>1 hr</td><td>Read-through</td></tr>
+<tr><td>User session</td><td><code>session:{token}</code></td><td>24 hr</td><td>Write-through</td></tr>
+</table>
+<p><strong>CDN:</strong> Job listing pages are heavily SEO-driven — server-side rendered HTML cached on CDN for search engine crawlers. Static assets (CSS, JS, company logos) on CDN with long TTL. API responses NOT cached on CDN (personalized).</p>
+</div>
+
+<h2>⚖️ Tradeoffs</h2>
+
+<div class="section">
+<div class="tradeoff-grid">
+  <div class="tradeoff-pro">
+    <h4>✅ Job Crawling (Aggregation)</h4>
+    <p>Largest job inventory — crawls employer sites, other boards, ATS systems. Users get comprehensive results in one place</p>
+  </div>
+  <div class="tradeoff-con">
+    <h4>❌ Job Crawling</h4>
+    <p>Duplicate listings across sources, stale/expired jobs from crawled sites, legal/IP issues with scraping, NLP extraction errors (wrong salary parsing)</p>
+  </div>
+  <div class="tradeoff-pro">
+    <h4>✅ CPC Monetization</h4>
+    <p>Pay-per-click model aligns incentives — employers only pay when candidates engage</p>
+  </div>
+  <div class="tradeoff-con">
+    <h4>❌ CPC Monetization</h4>
+    <p>Sponsored listings may not be most relevant — tension between relevance and revenue. Click fraud possible</p>
+  </div>
+</div>
+</div>
+
+<h2>🔄 Alternative Approaches</h2>
+
+<div class="section">
+<div class="subsection">
+<h4>AI-First Matching (LinkedIn Approach)</h4>
+<p>Instead of keyword search, use deep learning to match candidate profiles to job requirements. Enables "Jobs for You" without explicit search. Better for passive job seekers but requires rich profile data (LinkedIn has it, Indeed has less).</p>
+</div>
+<div class="subsection">
+<h4>Skills-Based Matching (vs Title-Based)</h4>
+<p>Standardize skills taxonomy across all jobs and resumes. Match on skills rather than job titles (which vary wildly across companies). Challenge: building and maintaining a comprehensive skills ontology.</p>
+</div>
+</div>
+
+<h2>📚 Additional Information</h2>
+
+<div class="section">
+<h3>SEO as Growth Engine</h3>
+<p>Indeed ranks #1 on Google for millions of "[job title] jobs in [city]" queries. Each job listing is a unique URL, server-side rendered with structured data (schema.org/JobPosting). This organic traffic is Indeed's primary acquisition channel — billions of monthly pageviews from Google.</p>
+
+<h3>Resume Parsing NLP Pipeline</h3>
+<p>Uploaded resumes (PDF/DOCX) → text extraction (Apache Tika) → NER (Named Entity Recognition) for skills, companies, dates, education → structured profile. Models trained on millions of manually labeled resumes. Accuracy: ~90% for skill extraction, ~95% for education. Used for personalized search ranking and employer matching.</p>
+
+<h3>Deduplication of Crawled Jobs</h3>
+<p>Same job appears on company website, LinkedIn, Glassdoor, and 5 other boards. Dedup algorithm: (1) exact URL match, (2) fuzzy match on (title + company + location) with SimHash, (3) description similarity (cosine similarity on TF-IDF vectors, threshold 0.9). Only unique listings shown to prevent redundant results.</p>
+</div>
+
+</body>
+</html>

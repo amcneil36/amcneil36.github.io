@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: WhatsApp</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; color: #333; }
+  .container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+  h1 { color: #1a73e8; border-bottom: 3px solid #1a73e8; padding-bottom: 10px; }
+  h2 { color: #2c3e50; margin-top: 40px; border-left: 4px solid #1a73e8; padding-left: 12px; }
+  h3 { color: #34495e; }
+  h4 { color: #555; }
+  .diagram { background: #fafafa; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0; overflow-x: auto; }
+  svg text { font-family: 'Segoe UI', Arial, sans-serif; }
+  .example { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; margin: 15px 0; border-radius: 4px; }
+  .deep-dive { background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin: 15px 0; border-radius: 4px; }
+  .tradeoff { background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin: 15px 0; border-radius: 4px; }
+  .alternative { background: #fce4ec; border-left: 4px solid #e91e63; padding: 15px; margin: 15px 0; border-radius: 4px; }
+  table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+  th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+  th { background: #1a73e8; color: white; }
+  tr:nth-child(even) { background: #f9f9f9; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.85em; margin: 2px; }
+  .tag-pk { background: #ffeb3b; color: #333; }
+  .tag-fk { background: #ce93d8; color: #333; }
+  .tag-idx { background: #80cbc4; color: #333; }
+  ul, ol { line-height: 1.8; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>System Design: WhatsApp</h1>
+
+<!-- ==================== FUNCTIONAL REQUIREMENTS ==================== -->
+<h2>Functional Requirements</h2>
+<ol>
+  <li><strong>One-on-one messaging</strong> – Users can send and receive text messages in real time with another user.</li>
+  <li><strong>Group messaging</strong> – Users can create groups (up to 1024 members) and send/receive messages within the group.</li>
+  <li><strong>Media sharing</strong> – Users can send images, videos, audio files, and documents.</li>
+  <li><strong>Online/offline &amp; last-seen status</strong> – Users can see whether contacts are online and when they were last active.</li>
+  <li><strong>Read receipts</strong> – Sent, delivered, and read indicators (single tick, double tick, blue tick).</li>
+  <li><strong>End-to-end encryption</strong> – Messages are encrypted on the sender's device and decrypted only on the receiver's device.</li>
+  <li><strong>Push notifications</strong> – Offline users receive push notifications for new messages.</li>
+  <li><strong>Message persistence</strong> – Messages are stored until delivered; chat history is available on the device.</li>
+</ol>
+
+<!-- ==================== NON-FUNCTIONAL REQUIREMENTS ==================== -->
+<h2>Non-Functional Requirements</h2>
+<ol>
+  <li><strong>Low latency</strong> – Messages should be delivered in &lt;200ms when both users are online.</li>
+  <li><strong>High availability</strong> – 99.99% uptime; the service must always be reachable.</li>
+  <li><strong>Scalability</strong> – Support 2 billion+ users and 100 billion+ messages per day.</li>
+  <li><strong>Reliability</strong> – No message loss; at-least-once delivery guarantee.</li>
+  <li><strong>Consistency</strong> – Eventual consistency is acceptable for status/presence, but message ordering must be maintained per conversation.</li>
+  <li><strong>Security</strong> – End-to-end encryption for all messages; secure key exchange.</li>
+  <li><strong>Bandwidth efficiency</strong> – Minimize data usage, especially for mobile networks.</li>
+</ol>
+
+<!-- ==================== FLOW 1: SENDING A MESSAGE (1-ON-1) ==================== -->
+<h2>Flow 1: Sending a 1-on-1 Message</h2>
+<div class="diagram">
+<svg viewBox="0 0 1100 420" xmlns="http://www.w3.org/2000/svg">
+  <!-- Sender -->
+  <rect x="10" y="170" width="100" height="60" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
+  <text x="60" y="205" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Sender</text>
+  <!-- Arrow to LB -->
+  <line x1="110" y1="200" x2="180" y2="200" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="145" y="190" text-anchor="middle" fill="#555" font-size="10">WebSocket</text>
+  <!-- Load Balancer -->
+  <rect x="180" y="170" width="100" height="60" rx="8" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
+  <text x="230" y="200" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Load</text>
+  <text x="230" y="215" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Balancer</text>
+  <!-- Arrow to Chat Service -->
+  <line x1="280" y1="200" x2="350" y2="200" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- Chat Service -->
+  <rect x="350" y="170" width="120" height="60" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
+  <text x="410" y="205" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Chat Service</text>
+  <!-- Arrow to Message Queue -->
+  <line x1="470" y1="200" x2="540" y2="200" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- Message Queue -->
+  <rect x="540" y="170" width="120" height="60" rx="8" fill="#9c27b0" stroke="#6a1b9a" stroke-width="2"/>
+  <text x="600" y="200" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Message</text>
+  <text x="600" y="215" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Queue</text>
+  <!-- Arrow to Chat Service 2 -->
+  <line x1="660" y1="200" x2="730" y2="200" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- Chat Service 2 -->
+  <rect x="730" y="170" width="120" height="60" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
+  <text x="790" y="195" text-anchor="middle" fill="white" font-size="11" font-weight="bold">Chat Service</text>
+  <text x="790" y="210" text-anchor="middle" fill="white" font-size="11" font-weight="bold">(Receiver's)</text>
+  <!-- Arrow to Receiver -->
+  <line x1="850" y1="200" x2="920" y2="200" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="885" y="190" text-anchor="middle" fill="#555" font-size="10">WebSocket</text>
+  <!-- Receiver -->
+  <rect x="920" y="170" width="100" height="60" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
+  <text x="970" y="205" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Receiver</text>
+
+  <!-- Message DB below Chat Service -->
+  <line x1="410" y1="230" x2="410" y2="300" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- DB cylinder -->
+  <ellipse cx="410" cy="310" rx="55" ry="12" fill="#ff5722" stroke="#d84315" stroke-width="2"/>
+  <rect x="355" y="310" width="110" height="40" fill="#ff5722" stroke="#d84315" stroke-width="2"/>
+  <ellipse cx="410" cy="350" rx="55" ry="12" fill="#e64a19" stroke="#d84315" stroke-width="2"/>
+  <line x1="355" y1="310" x2="355" y2="350" stroke="#d84315" stroke-width="2"/>
+  <line x1="465" y1="310" x2="465" y2="350" stroke="#d84315" stroke-width="2"/>
+  <text x="410" y="335" text-anchor="middle" fill="white" font-size="11" font-weight="bold">Message DB</text>
+
+  <!-- Session/Connection Store -->
+  <line x1="600" y1="230" x2="600" y2="290" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <ellipse cx="600" cy="300" rx="60" ry="12" fill="#009688" stroke="#00695c" stroke-width="2"/>
+  <rect x="540" y="300" width="120" height="40" fill="#009688" stroke="#00695c" stroke-width="2"/>
+  <ellipse cx="600" cy="340" rx="60" ry="12" fill="#00796b" stroke="#00695c" stroke-width="2"/>
+  <line x1="540" y1="300" x2="540" y2="340" stroke="#00695c" stroke-width="2"/>
+  <line x1="660" y1="300" x2="660" y2="340" stroke="#00695c" stroke-width="2"/>
+  <text x="600" y="323" text-anchor="middle" fill="white" font-size="10" font-weight="bold">Session Store</text>
+  <text x="600" y="336" text-anchor="middle" fill="white" font-size="9">(Redis)</text>
+
+  <!-- Push Notification path -->
+  <line x1="790" y1="230" x2="790" y2="300" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="730" y="300" width="120" height="50" rx="8" fill="#e91e63" stroke="#ad1457" stroke-width="2"/>
+  <text x="790" y="322" text-anchor="middle" fill="white" font-size="11" font-weight="bold">Push Notif</text>
+  <text x="790" y="337" text-anchor="middle" fill="white" font-size="11" font-weight="bold">Service</text>
+  <text x="790" y="290" text-anchor="middle" fill="#555" font-size="9">If offline</text>
+
+  <!-- Arrow marker -->
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#333"/>
+    </marker>
+  </defs>
+</svg>
+</div>
+
+<div class="example">
+<h4>Example 1: Both users online</h4>
+<p>Alice opens her chat with Bob and types "Hey, are you free tonight?" and hits send. The WhatsApp client encrypts the message using Bob's public key (E2E encryption) and sends it over the existing <strong>WebSocket connection</strong> to the <strong>Load Balancer</strong>, which routes it to the <strong>Chat Service</strong> instance handling Alice's connection. The Chat Service persists the encrypted message to the <strong>Message DB</strong> (Cassandra) with status=SENT. It then looks up Bob's connection in the <strong>Session Store</strong> (Redis) to find which Chat Service instance Bob is connected to, and publishes the message to the <strong>Message Queue</strong> (Kafka). The Chat Service instance handling Bob's connection consumes the message from the queue and pushes it to Bob over Bob's WebSocket. Bob's client decrypts the message and displays it. A delivery ACK is sent back, updating the message status to DELIVERED in the Message DB. Alice sees two grey ticks.</p>
+</div>
+
+<div class="example">
+<h4>Example 2: Receiver is offline</h4>
+<p>Alice sends "Happy Birthday!" to Carol. The Chat Service persists the message to the Message DB and looks up Carol's session in Redis — Carol has no active WebSocket connection. The Chat Service forwards the message to the <strong>Push Notification Service</strong>, which sends a push notification via APNs (iOS) or FCM (Android) to Carol's device. The message remains in the Message DB with status=SENT. When Carol comes back online and re-establishes her WebSocket connection, the Chat Service queries for all undelivered messages for Carol and pushes them over the WebSocket. Carol receives the message, and a DELIVERED ACK updates the DB.</p>
+</div>
+
+<h3>Deep Dive: Flow 1 Components</h3>
+
+<div class="deep-dive">
+<h4>WebSocket Connection</h4>
+<p>WhatsApp uses <strong>WebSocket (WSS)</strong> for persistent, full-duplex communication between clients and servers. The connection is established via an HTTP/1.1 Upgrade request. Once established, both the client and server can push data at any time without polling overhead. Each client maintains exactly one long-lived WebSocket connection. If the connection drops, the client reconnects with exponential backoff.</p>
+<p><strong>Why WebSocket over alternatives:</strong></p>
+<ul>
+  <li><strong>Long polling</strong> – Too much overhead for a chat system with billions of messages; each poll is a new HTTP connection.</li>
+  <li><strong>Server-Sent Events (SSE)</strong> – Unidirectional (server→client only); doesn't support client→server push.</li>
+  <li><strong>HTTP polling</strong> – Extremely wasteful; most polls return empty responses.</li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>Load Balancer</h4>
+<p>An L4 (TCP-level) load balancer sits in front of Chat Service instances. Since WebSocket is a stateful protocol, the LB uses <strong>consistent hashing</strong> or <strong>sticky sessions</strong> based on the connection ID to ensure a client's WebSocket is always routed to the same Chat Service instance. Health checks remove unhealthy instances. For scalability, multiple LB layers (DNS-level → L4 → Chat Service) are used.</p>
+</div>
+
+<div class="deep-dive">
+<h4>Chat Service</h4>
+<p>A stateful service that manages WebSocket connections. Each instance holds up to ~1 million concurrent connections. Responsibilities:</p>
+<ul>
+  <li>Receive messages from senders over WebSocket.</li>
+  <li>Persist messages to Message DB.</li>
+  <li>Route messages to the correct receiver (via Message Queue).</li>
+  <li>Handle ACKs (sent, delivered, read).</li>
+</ul>
+<p><strong>Protocol:</strong> Incoming = WebSocket (WSS); inter-service = gRPC/TCP; DB writes = Cassandra driver over TCP.</p>
+</div>
+
+<div class="deep-dive">
+<h4>Message Queue (Apache Kafka)</h4>
+<p>Used for decoupling sender-side and receiver-side Chat Service instances. Each user has a dedicated Kafka topic (or partition keyed by user_id). When a message arrives for a user, it's produced to that user's partition. The Chat Service instance holding that user's WebSocket connection is the consumer for that partition. This provides:</p>
+<ul>
+  <li><strong>Durability</strong> – Messages survive Chat Service crashes.</li>
+  <li><strong>Ordering</strong> – Per-partition ordering guarantees message order within a conversation.</li>
+  <li><strong>Decoupling</strong> – Sender's Chat Service doesn't need to know which instance the receiver is on.</li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>Session Store (Redis)</h4>
+<p>An in-memory key-value store mapping <code>user_id → {chat_service_instance_id, connection_status, last_seen}</code>. Used for:</p>
+<ul>
+  <li>Determining whether a user is online.</li>
+  <li>Finding which Chat Service instance holds a user's WebSocket.</li>
+  <li>Storing last-seen timestamps.</li>
+</ul>
+<p><strong>Why Redis:</strong> Sub-millisecond reads, supports TTL for auto-expiry of stale sessions, and cluster mode for horizontal scaling.</p>
+</div>
+
+<div class="deep-dive">
+<h4>Message DB (Apache Cassandra)</h4>
+<p>A wide-column NoSQL store optimized for high write throughput. Messages are partitioned by <code>conversation_id</code> and sorted by <code>timestamp</code> within each partition. This allows efficient retrieval of recent messages for a conversation. Cassandra's tunable consistency (typically <code>QUORUM</code> writes) ensures durability without sacrificing availability.</p>
+</div>
+
+<div class="deep-dive">
+<h4>Push Notification Service</h4>
+<p>When the receiver is offline, the Push Notification Service sends a notification via <strong>APNs</strong> (Apple Push Notification service) for iOS or <strong>FCM</strong> (Firebase Cloud Messaging) for Android. The service stores device tokens in a separate DB. The notification payload is minimal (just sender name + "new message") since the actual message content is E2E encrypted and cannot be read by the server.</p>
+</div>
+
+<!-- ==================== FLOW 2: GROUP MESSAGING ==================== -->
+<h2>Flow 2: Group Messaging</h2>
+<div class="diagram">
+<svg viewBox="0 0 1050 500" xmlns="http://www.w3.org/2000/svg">
+  <!-- Sender -->
+  <rect x="10" y="200" width="100" height="60" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
+  <text x="60" y="235" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Sender</text>
+  <!-- Arrow -->
+  <line x1="110" y1="230" x2="170" y2="230" stroke="#333" stroke-width="2" marker-end="url(#arrow2)"/>
+  <!-- Chat Service -->
+  <rect x="170" y="200" width="120" height="60" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
+  <text x="230" y="235" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Chat Service</text>
+  <!-- Arrow to Group Service -->
+  <line x1="290" y1="230" x2="370" y2="230" stroke="#333" stroke-width="2" marker-end="url(#arrow2)"/>
+  <!-- Group Service -->
+  <rect x="370" y="200" width="120" height="60" rx="8" fill="#673ab7" stroke="#4527a0" stroke-width="2"/>
+  <text x="430" y="228" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Group</text>
+  <text x="430" y="243" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Service</text>
+  <!-- Arrow to MQ -->
+  <line x1="490" y1="230" x2="570" y2="230" stroke="#333" stroke-width="2" marker-end="url(#arrow2)"/>
+  <text x="530" y="220" text-anchor="middle" fill="#555" font-size="9">Fan-out</text>
+  <!-- Message Queue -->
+  <rect x="570" y="200" width="120" height="60" rx="8" fill="#9c27b0" stroke="#6a1b9a" stroke-width="2"/>
+  <text x="630" y="228" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Message</text>
+  <text x="630" y="243" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Queue</text>
+  <!-- Fan out to multiple receivers -->
+  <line x1="690" y1="210" x2="780" y2="130" stroke="#333" stroke-width="2" marker-end="url(#arrow2)"/>
+  <line x1="690" y1="230" x2="780" y2="230" stroke="#333" stroke-width="2" marker-end="url(#arrow2)"/>
+  <line x1="690" y1="250" x2="780" y2="330" stroke="#333" stroke-width="2" marker-end="url(#arrow2)"/>
+  <!-- Receivers -->
+  <rect x="780" y="100" width="100" height="50" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
+  <text x="830" y="130" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Member 1</text>
+  <rect x="780" y="205" width="100" height="50" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
+  <text x="830" y="235" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Member 2</text>
+  <rect x="780" y="310" width="100" height="50" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
+  <text x="830" y="340" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Member N</text>
+
+  <!-- Group DB -->
+  <line x1="430" y1="260" x2="430" y2="340" stroke="#333" stroke-width="2" marker-end="url(#arrow2)"/>
+  <ellipse cx="430" cy="350" rx="55" ry="12" fill="#ff5722" stroke="#d84315" stroke-width="2"/>
+  <rect x="375" y="350" width="110" height="40" fill="#ff5722" stroke="#d84315" stroke-width="2"/>
+  <ellipse cx="430" cy="390" rx="55" ry="12" fill="#e64a19" stroke="#d84315" stroke-width="2"/>
+  <line x1="375" y1="350" x2="375" y2="390" stroke="#d84315" stroke-width="2"/>
+  <line x1="485" y1="350" x2="485" y2="390" stroke="#d84315" stroke-width="2"/>
+  <text x="430" y="375" text-anchor="middle" fill="white" font-size="11" font-weight="bold">Group DB</text>
+
+  <defs>
+    <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#333"/>
+    </marker>
+  </defs>
+</svg>
+</div>
+
+<div class="example">
+<h4>Example: Group message to "Family" group</h4>
+<p>Alice sends "Dinner at 7pm" to the "Family" group (5 members). The message goes through her WebSocket to the Chat Service, which forwards it to the <strong>Group Service</strong>. The Group Service looks up the group membership from the <strong>Group DB</strong> (returns user IDs: Bob, Carol, Dave, Eve). It then performs a <strong>fan-out</strong>: for each member, it publishes a copy of the message to the Message Queue on each member's partition. Each member's Chat Service instance consumes the message and pushes it to the member via WebSocket (or triggers a push notification if offline). The message is stored once per group conversation in the Message DB (not duplicated per member).</p>
+</div>
+
+<div class="deep-dive">
+<h4>Group Service</h4>
+<p>Manages group metadata: creation, member addition/removal, admin roles, group name/avatar. On receiving a group message, it fetches the member list and performs fan-out to the Message Queue. For large groups, fan-out is done asynchronously to avoid blocking.</p>
+<p><strong>Protocol:</strong> Internal gRPC calls from Chat Service. Group DB queries over TCP.</p>
+</div>
+
+<!-- ==================== FLOW 3: MEDIA SHARING ==================== -->
+<h2>Flow 3: Media Sharing</h2>
+<div class="diagram">
+<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
+  <!-- Sender -->
+  <rect x="10" y="140" width="100" height="60" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
+  <text x="60" y="175" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Sender</text>
+  <!-- Arrow to Media Service -->
+  <line x1="110" y1="170" x2="200" y2="170" stroke="#333" stroke-width="2" marker-end="url(#arrow3)"/>
+  <text x="155" y="160" text-anchor="middle" fill="#555" font-size="10">HTTPS PUT</text>
+  <!-- Media Service -->
+  <rect x="200" y="140" width="120" height="60" rx="8" fill="#00bcd4" stroke="#00838f" stroke-width="2"/>
+  <text x="260" y="168" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Media</text>
+  <text x="260" y="183" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Service</text>
+  <!-- Arrow to Object Storage -->
+  <line x1="320" y1="170" x2="420" y2="170" stroke="#333" stroke-width="2" marker-end="url(#arrow3)"/>
+  <!-- Object Storage -->
+  <rect x="420" y="140" width="130" height="60" rx="8" fill="#795548" stroke="#4e342e" stroke-width="2"/>
+  <text x="485" y="168" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Object Storage</text>
+  <text x="485" y="183" text-anchor="middle" fill="white" font-size="12" font-weight="bold">(S3)</text>
+  <!-- Arrow to CDN -->
+  <line x1="550" y1="170" x2="640" y2="170" stroke="#333" stroke-width="2" marker-end="url(#arrow3)"/>
+  <!-- CDN -->
+  <rect x="640" y="140" width="100" height="60" rx="8" fill="#607d8b" stroke="#37474f" stroke-width="2"/>
+  <text x="690" y="175" text-anchor="middle" fill="white" font-size="13" font-weight="bold">CDN</text>
+
+  <!-- Media Service sends URL back through Chat Service flow -->
+  <line x1="260" y1="200" x2="260" y2="280" stroke="#333" stroke-width="2" marker-end="url(#arrow3)"/>
+  <rect x="200" y="280" width="120" height="50" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
+  <text x="260" y="310" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Chat Service</text>
+  <text x="260" y="270" text-anchor="middle" fill="#555" font-size="10">media_url</text>
+
+  <!-- Receiver downloads from CDN -->
+  <line x1="690" y1="200" x2="690" y2="280" stroke="#333" stroke-width="2" marker-end="url(#arrow3)"/>
+  <rect x="640" y="280" width="100" height="50" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
+  <text x="690" y="310" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Receiver</text>
+  <text x="690" y="270" text-anchor="middle" fill="#555" font-size="10">HTTPS GET</text>
+
+  <defs>
+    <marker id="arrow3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#333"/>
+    </marker>
+  </defs>
+</svg>
+</div>
+
+<div class="example">
+<h4>Example: Sending a photo</h4>
+<p>Alice takes a photo and sends it to Bob. The WhatsApp client compresses the image, encrypts it with a random AES key (then encrypts that key with Bob's public key), and uploads the encrypted blob to the <strong>Media Service</strong> via <strong>HTTPS PUT</strong>. The Media Service stores it in <strong>S3</strong> (object storage) and returns a media_url. Alice's client then sends a text message via the Chat Service (WebSocket) that contains the media_url and the encrypted AES key. Bob's client receives the message, downloads the encrypted file from the <strong>CDN</strong> (which caches from S3) via HTTPS GET, decrypts it with the AES key (decrypted using Bob's private key), and renders the photo.</p>
+</div>
+
+<div class="deep-dive">
+<h4>Media Service</h4>
+<p><strong>Protocol:</strong> HTTPS PUT for uploads, HTTPS GET for downloads (served via CDN).</p>
+<p><strong>Input:</strong> Encrypted binary blob + metadata (file type, size).</p>
+<p><strong>Output:</strong> media_url (CDN-backed URL).</p>
+<p>Handles thumbnail generation (for images), video transcoding, and virus scanning. Files are stored in S3 with a 30-day TTL (auto-deleted after delivery confirmation).</p>
+</div>
+
+<div class="deep-dive">
+<h4>CDN (Content Delivery Network)</h4>
+<p><strong>Why CDN is appropriate:</strong> Media files (images, videos) are large, static blobs that benefit enormously from edge caching. The CDN reduces latency by serving files from edge nodes close to the receiver. It also offloads bandwidth from origin servers (S3).</p>
+<p><strong>Caching strategy:</strong> Pull-based (lazy loading). The CDN fetches from S3 on the first request for a media_url and caches it at the edge.</p>
+<p><strong>Eviction policy:</strong> LRU (Least Recently Used) – media files not accessed recently are evicted first.</p>
+<p><strong>Expiration policy:</strong> TTL of 7 days at the CDN layer. After 30 days, the origin file is deleted from S3.</p>
+<p><strong>Why pull-based:</strong> Not all media will be downloaded immediately; push-based would waste CDN storage for messages to offline users.</p>
+</div>
+
+<!-- ==================== OVERALL COMBINED FLOW ==================== -->
+<h2>Overall Combined Flow</h2>
+<div class="diagram">
+<svg viewBox="0 0 1200 650" xmlns="http://www.w3.org/2000/svg">
+  <!-- Client -->
+  <rect x="10" y="270" width="90" height="60" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
+  <text x="55" y="305" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Client</text>
+
+  <!-- LB -->
+  <line x1="100" y1="300" x2="160" y2="300" stroke="#333" stroke-width="2" marker-end="url(#arrow4)"/>
+  <rect x="160" y="270" width="80" height="60" rx="8" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
+  <text x="200" y="298" text-anchor="middle" fill="white" font-size="11" font-weight="bold">Load</text>
+  <text x="200" y="312" text-anchor="middle" fill="white" font-size="11" font-weight="bold">Balancer</text>
+
+  <!-- Chat Service -->
+  <line x1="240" y1="300" x2="300" y2="300" stroke="#333" stroke-width="2" marker-end="url(#arrow4)"/>
+  <rect x="300" y="270" width="110" height="60" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
+  <text x="355" y="305" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Chat Service</text>
+
+  <!-- Group Service -->
+  <line x1="355" y1="270" x2="355" y2="100" stroke="#333" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <line x1="355" y1="100" x2="460" y2="100" stroke="#333" stroke-width="2" marker-end="url(#arrow4)"/>
+  <rect x="460" y="75" width="110" height="50" rx="8" fill="#673ab7" stroke="#4527a0" stroke-width="2"/>
+  <text x="515" y="105" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Group Svc</text>
+
+  <!-- Group DB -->
+  <line x1="570" y1="100" x2="620" y2="100" stroke="#333" stroke-width="2" marker-end="url(#arrow4)"/>
+  <ellipse cx="670" cy="90" rx="40" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
+  <rect x="630" y="90" width="80" height="30" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
+  <ellipse cx="670" cy="120" rx="40" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
+  <line x1="630" y1="90" x2="630" y2="120" stroke="#d84315" stroke-width="1.5"/>
+  <line x1="710" y1="90" x2="710" y2="120" stroke="#d84315" stroke-width="1.5"/>
+  <text x="670" y="110" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Group DB</text>
+
+  <!-- Message Queue -->
+  <line x1="410" y1="300" x2="480" y2="300" stroke="#333" stroke-width="2" marker-end="url(#arrow4)"/>
+  <rect x="480" y="270" width="110" height="60" rx="8" fill="#9c27b0" stroke="#6a1b9a" stroke-width="2"/>
+  <text x="535" y="298" text-anchor="middle" fill="white" font-size="11" font-weight="bold">Message</text>
+  <text x="535" y="312" text-anchor="middle" fill="white" font-size="11" font-weight="bold">Queue (Kafka)</text>
+
+  <!-- Receiver Chat Service -->
+  <line x1="590" y1="300" x2="660" y2="300" stroke="#333" stroke-width="2" marker-end="url(#arrow4)"/>
+  <rect x="660" y="270" width="110" height="60" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
+  <text x="715" y="298" text-anchor="middle" fill="white" font-size="11" font-weight="bold">Chat Svc</text>
+  <text x="715" y="312" text-anchor="middle" fill="white" font-size="11" font-weight="bold">(Receiver)</text>
+
+  <!-- Receiver -->
+  <line x1="770" y1="300" x2="840" y2="300" stroke="#333" stroke-width="2" marker-end="url(#arrow4)"/>
+  <rect x="840" y="270" width="90" height="60" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
+  <text x="885" y="305" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Receiver</text>
+
+  <!-- Message DB -->
+  <line x1="355" y1="330" x2="355" y2="400" stroke="#333" stroke-width="2" marker-end="url(#arrow4)"/>
+  <ellipse cx="355" cy="410" rx="50" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
+  <rect x="305" y="410" width="100" height="30" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
+  <ellipse cx="355" cy="440" rx="50" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
+  <line x1="305" y1="410" x2="305" y2="440" stroke="#d84315" stroke-width="1.5"/>
+  <line x1="405" y1="410" x2="405" y2="440" stroke="#d84315" stroke-width="1.5"/>
+  <text x="355" y="430" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Message DB</text>
+
+  <!-- Session Store -->
+  <line x1="535" y1="330" x2="535" y2="400" stroke="#333" stroke-width="2" marker-end="url(#arrow4)"/>
+  <ellipse cx="535" cy="410" rx="50" ry="10" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
+  <rect x="485" y="410" width="100" height="30" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
+  <ellipse cx="535" cy="440" rx="50" ry="10" fill="#00796b" stroke="#00695c" stroke-width="1.5"/>
+  <line x1="485" y1="410" x2="485" y2="440" stroke="#00695c" stroke-width="1.5"/>
+  <line x1="585" y1="410" x2="585" y2="440" stroke="#00695c" stroke-width="1.5"/>
+  <text x="535" y="430" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Session (Redis)</text>
+
+  <!-- Push Notification Service -->
+  <line x1="715" y1="330" x2="715" y2="400" stroke="#333" stroke-width="2" marker-end="url(#arrow4)"/>
+  <rect x="660" y="400" width="110" height="50" rx="8" fill="#e91e63" stroke="#ad1457" stroke-width="2"/>
+  <text x="715" y="425" text-anchor="middle" fill="white" font-size="10" font-weight="bold">Push Notif Svc</text>
+  <text x="715" y="388" text-anchor="middle" fill="#555" font-size="9">If offline</text>
+
+  <!-- Media Service -->
+  <line x1="55" y1="270" x2="55" y2="100" stroke="#333" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <line x1="55" y1="100" x2="130" y2="100" stroke="#333" stroke-width="2" marker-end="url(#arrow4)"/>
+  <rect x="130" y="75" width="100" height="50" rx="8" fill="#00bcd4" stroke="#00838f" stroke-width="2"/>
+  <text x="180" y="105" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Media Svc</text>
+  <text x="55" y="90" text-anchor="middle" fill="#555" font-size="9">HTTPS PUT</text>
+
+  <!-- S3 -->
+  <line x1="180" y1="75" x2="180" y2="30" stroke="#333" stroke-width="2" marker-end="url(#arrow4)"/>
+  <rect x="140" y="0" width="80" height="30" rx="6" fill="#795548" stroke="#4e342e" stroke-width="1.5"/>
+  <text x="180" y="20" text-anchor="middle" fill="white" font-size="10" font-weight="bold">S3</text>
+
+  <!-- CDN -->
+  <line x1="220" y1="15" x2="310" y2="15" stroke="#333" stroke-width="2" marker-end="url(#arrow4)"/>
+  <rect x="310" y="0" width="80" height="30" rx="6" fill="#607d8b" stroke="#37474f" stroke-width="1.5"/>
+  <text x="350" y="20" text-anchor="middle" fill="white" font-size="10" font-weight="bold">CDN</text>
+
+  <!-- User DB -->
+  <line x1="355" y1="440" x2="355" y2="510" stroke="#333" stroke-width="2" marker-end="url(#arrow4)"/>
+  <ellipse cx="355" cy="520" rx="50" ry="10" fill="#3f51b5" stroke="#1a237e" stroke-width="1.5"/>
+  <rect x="305" y="520" width="100" height="30" fill="#3f51b5" stroke="#1a237e" stroke-width="1.5"/>
+  <ellipse cx="355" cy="550" rx="50" ry="10" fill="#283593" stroke="#1a237e" stroke-width="1.5"/>
+  <line x1="305" y1="520" x2="305" y2="550" stroke="#1a237e" stroke-width="1.5"/>
+  <line x1="405" y1="520" x2="405" y2="550" stroke="#1a237e" stroke-width="1.5"/>
+  <text x="355" y="540" text-anchor="middle" fill="white" font-size="9" font-weight="bold">User DB</text>
+
+  <defs>
+    <marker id="arrow4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#333"/>
+    </marker>
+  </defs>
+</svg>
+</div>
+
+<div class="example">
+<h4>Combined Example 1: Text message in a 1-on-1 chat</h4>
+<p>Alice types "Are you coming?" and sends it to Bob. Client → WebSocket → Load Balancer → Chat Service → persists to Message DB → checks Session Store (Redis) for Bob → Bob is online → publishes to Kafka (Bob's partition) → Bob's Chat Service instance consumes → pushes to Bob via WebSocket → Bob sees message. ACK flow: Bob's client sends DELIVERED ACK → Chat Service updates Message DB.</p>
+</div>
+
+<div class="example">
+<h4>Combined Example 2: Photo in a group chat, one member offline</h4>
+<p>Alice sends a photo to "Work Team" group (3 members: Bob online, Carol offline, Dave online). Client encrypts photo → HTTPS PUT to Media Service → stored in S3 → returns media_url. Client sends message (with media_url + encrypted key) via WebSocket → Chat Service → Group Service fetches member list from Group DB → fan-out to Kafka for Bob, Carol, Dave. Bob and Dave's Chat Service instances consume and push via WebSocket. Carol's instance finds no connection in Session Store → Push Notification Service sends push via FCM. Carol opens the app later, reconnects WebSocket, gets undelivered messages, downloads photo from CDN.</p>
+</div>
+
+<!-- ==================== SCHEMA ==================== -->
+<h2>Database Schema</h2>
+
+<h3>NoSQL Tables (Cassandra)</h3>
+
+<h4>1. messages</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>conversation_id</td><td>UUID</td><td><span class="tag tag-pk">Partition Key</span></td><td>Unique ID for the conversation (1-on-1 or group)</td></tr>
+  <tr><td>message_id</td><td>TimeUUID</td><td><span class="tag tag-pk">Clustering Key</span></td><td>Time-based UUID; sorts messages chronologically</td></tr>
+  <tr><td>sender_id</td><td>UUID</td><td></td><td>User who sent the message</td></tr>
+  <tr><td>encrypted_content</td><td>BLOB</td><td></td><td>E2E encrypted message body</td></tr>
+  <tr><td>media_url</td><td>TEXT</td><td></td><td>URL of media file (nullable)</td></tr>
+  <tr><td>message_type</td><td>TEXT</td><td></td><td>TEXT, IMAGE, VIDEO, AUDIO, DOCUMENT</td></tr>
+  <tr><td>status</td><td>TEXT</td><td></td><td>SENT, DELIVERED, READ</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Server-side timestamp</td></tr>
+</table>
+<p><strong>Why NoSQL (Cassandra):</strong> Messages are write-heavy (100B+ per day). Cassandra excels at high-throughput writes with linear horizontal scaling. Partition by <code>conversation_id</code> ensures all messages in a chat are co-located. Clustering by <code>message_id</code> (TimeUUID) provides chronological ordering within a partition, enabling efficient range queries for "load last 50 messages."</p>
+<p><strong>Sharding:</strong> Cassandra natively shards (partitions) data across nodes using consistent hashing on the partition key (<code>conversation_id</code>). This distributes load evenly and avoids hot partitions since conversations are naturally distributed.</p>
+<p><strong>Index:</strong> No secondary index needed — primary access pattern is by <code>conversation_id</code> + range on <code>message_id</code>.</p>
+
+<h4>2. conversations</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>user_id</td><td>UUID</td><td><span class="tag tag-pk">Partition Key</span></td><td>The user</td></tr>
+  <tr><td>conversation_id</td><td>UUID</td><td><span class="tag tag-pk">Clustering Key</span></td><td>Conversation ID</td></tr>
+  <tr><td>last_message_preview</td><td>TEXT</td><td></td><td>Truncated last message (encrypted)</td></tr>
+  <tr><td>last_message_time</td><td>TIMESTAMP</td><td></td><td>Timestamp of last message</td></tr>
+  <tr><td>unread_count</td><td>INT</td><td></td><td>Number of unread messages</td></tr>
+  <tr><td>is_group</td><td>BOOLEAN</td><td></td><td>Whether this is a group chat</td></tr>
+</table>
+<p><strong>Why NoSQL:</strong> This table is <strong>denormalized</strong> — it duplicates <code>last_message_preview</code> and <code>last_message_time</code> from the messages table. This avoids an expensive join to display the chat list. Each user has their own row for each conversation, enabling fast "get all conversations for user X" queries. Denormalization is justified by the read-heavy nature of the chat list (opened every time the app launches) vs. the write cost (only updated when a new message arrives).</p>
+
+<h3>SQL Tables (PostgreSQL)</h3>
+
+<h4>3. users</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>user_id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td><td>Unique user ID</td></tr>
+  <tr><td>phone_number</td><td>VARCHAR(20)</td><td><span class="tag tag-idx">UNIQUE INDEX (Hash)</span></td><td>Phone number (unique)</td></tr>
+  <tr><td>display_name</td><td>VARCHAR(100)</td><td></td><td>User's display name</td></tr>
+  <tr><td>avatar_url</td><td>TEXT</td><td></td><td>Profile picture URL</td></tr>
+  <tr><td>public_key</td><td>TEXT</td><td></td><td>E2E encryption public key</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Account creation time</td></tr>
+  <tr><td>last_seen</td><td>TIMESTAMP</td><td></td><td>Last online timestamp</td></tr>
+</table>
+<p><strong>Why SQL:</strong> User data is relational, relatively small (2B rows), and requires strong consistency (e.g., phone number uniqueness). PostgreSQL provides ACID guarantees for user registration and profile updates.</p>
+<p><strong>Index:</strong> <code>phone_number</code> has a <strong>hash index</strong> for O(1) lookups during user registration and contact matching. Hash index is chosen because phone number lookups are always equality checks (no range queries needed).</p>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code> using hash-based sharding across PostgreSQL instances. This distributes users evenly.</p>
+<p><strong>Read/Write triggers:</strong> Written to on user registration and profile update. Read on login, contact sync, and message delivery (to look up recipient's public key).</p>
+
+<h4>4. groups</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>group_id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td><td>Unique group ID</td></tr>
+  <tr><td>group_name</td><td>VARCHAR(100)</td><td></td><td>Group display name</td></tr>
+  <tr><td>avatar_url</td><td>TEXT</td><td></td><td>Group avatar</td></tr>
+  <tr><td>created_by</td><td>UUID</td><td><span class="tag tag-fk">FK → users.user_id</span></td><td>Creator of the group</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Creation time</td></tr>
+  <tr><td>max_members</td><td>INT</td><td></td><td>Maximum allowed members (default 1024)</td></tr>
+</table>
+
+<h4>5. group_members</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>group_id</td><td>UUID</td><td><span class="tag tag-pk">PK</span> <span class="tag tag-fk">FK → groups.group_id</span></td><td>Group reference</td></tr>
+  <tr><td>user_id</td><td>UUID</td><td><span class="tag tag-pk">PK</span> <span class="tag tag-fk">FK → users.user_id</span></td><td>User reference</td></tr>
+  <tr><td>role</td><td>ENUM</td><td></td><td>ADMIN or MEMBER</td></tr>
+  <tr><td>joined_at</td><td>TIMESTAMP</td><td></td><td>When user joined the group</td></tr>
+</table>
+<p><strong>Index:</strong> Composite primary key (<code>group_id</code>, <code>user_id</code>). Additional <strong>B-tree index</strong> on <code>user_id</code> for "get all groups for a user" queries.</p>
+<p><strong>Why SQL:</strong> Group membership is inherently relational (many-to-many between users and groups). Requires consistency (can't have duplicate members, role enforcement).</p>
+
+<!-- ==================== CACHE ==================== -->
+<h2>Cache Deep Dive</h2>
+
+<div class="deep-dive">
+<h4>Redis – Session/Presence Cache</h4>
+<p><strong>Purpose:</strong> Stores user session data: <code>user_id → {ws_server_id, status: ONLINE/OFFLINE, last_seen}</code>.</p>
+<p><strong>Caching strategy:</strong> <strong>Write-through</strong> – When a user connects/disconnects, the Chat Service immediately updates Redis. This ensures session data is always fresh.</p>
+<p><strong>Populated by:</strong> WebSocket connect/disconnect events in the Chat Service.</p>
+<p><strong>Eviction policy:</strong> No eviction needed — entries are explicitly deleted on disconnect and have a TTL of 5 minutes as a safety net (in case the Chat Service crashes without cleanup).</p>
+<p><strong>Expiration policy:</strong> TTL = 5 minutes. If a user's WebSocket drops and the Chat Service doesn't clean up, the entry auto-expires. The client reconnects and creates a fresh entry.</p>
+<p><strong>Why write-through:</strong> Presence data must be accurate in real time — stale cache would cause messages to be routed to a dead connection.</p>
+</div>
+
+<div class="deep-dive">
+<h4>Redis – Recent Conversations Cache</h4>
+<p><strong>Purpose:</strong> Caches a user's most recent conversations (top 20) to speed up the chat list screen.</p>
+<p><strong>Caching strategy:</strong> <strong>Write-behind (write-back)</strong> – When a new message arrives, the cache is updated asynchronously after the DB write.</p>
+<p><strong>Eviction policy:</strong> LRU (Least Recently Used) – users who haven't opened the app recently are evicted.</p>
+<p><strong>Expiration policy:</strong> TTL = 24 hours. Refreshed on each app open.</p>
+</div>
+
+<!-- ==================== SCALING ==================== -->
+<h2>Scaling Considerations</h2>
+
+<h3>Load Balancers</h3>
+<p>Multiple layers of load balancing:</p>
+<ol>
+  <li><strong>DNS-level</strong>: GeoDNS routes users to the nearest data center.</li>
+  <li><strong>L4 Load Balancer (TCP)</strong>: Distributes WebSocket connections across Chat Service instances using consistent hashing. L4 is chosen over L7 because WebSocket is a persistent TCP connection — L7 (HTTP) load balancing would terminate the connection at the LB, adding latency.</li>
+  <li><strong>L7 Load Balancer (HTTPS)</strong>: In front of Media Service and other REST APIs for HTTP-based traffic.</li>
+</ol>
+<p>Each Chat Service instance handles ~1M concurrent connections. With 2B users and ~10% concurrency, we need ~200M connections = ~200 Chat Service instances.</p>
+
+<h3>Horizontal Scaling</h3>
+<ul>
+  <li><strong>Chat Service:</strong> Stateless except for WebSocket connections. Add more instances behind the LB.</li>
+  <li><strong>Kafka:</strong> Add partitions and brokers. Partition by user_id.</li>
+  <li><strong>Cassandra:</strong> Add nodes; data rebalances automatically via consistent hashing.</li>
+  <li><strong>Redis:</strong> Redis Cluster mode with sharding across nodes.</li>
+  <li><strong>PostgreSQL:</strong> Read replicas for user lookups; sharding by user_id for writes.</li>
+</ul>
+
+<!-- ==================== TRADEOFFS ==================== -->
+<h2>Tradeoffs and Deep Dives</h2>
+
+<div class="tradeoff">
+<h4>Push vs. Pull for message delivery</h4>
+<p>We chose <strong>push</strong> (server pushes to client via WebSocket) over pull (client polls). Push provides real-time delivery with minimal latency. Pull would require frequent polling intervals, wasting bandwidth and battery. The tradeoff is that push requires maintaining millions of persistent connections, increasing server resource usage.</p>
+</div>
+
+<div class="tradeoff">
+<h4>At-least-once vs. Exactly-once delivery</h4>
+<p>We use <strong>at-least-once</strong> delivery. The client deduplicates using <code>message_id</code>. Exactly-once delivery across distributed systems is extremely expensive (requires two-phase commit or similar). Since messages have unique IDs, client-side deduplication is simple and effective.</p>
+</div>
+
+<div class="tradeoff">
+<h4>Cassandra vs. HBase for messages</h4>
+<p>Both are viable wide-column stores. We chose Cassandra for its masterless architecture (higher availability), tunable consistency, and simpler operations. HBase offers stronger consistency but depends on HDFS/ZooKeeper, adding operational complexity.</p>
+</div>
+
+<div class="tradeoff">
+<h4>Per-user Kafka topic vs. Per-user partition</h4>
+<p>Using a per-user topic (2B topics) would overwhelm Kafka's metadata management. Instead, we use a fixed number of partitions (~100K) and hash user_id to a partition. The tradeoff is that messages for different users share a partition, so we need application-level filtering. But Kafka handles this efficiently with consumer groups.</p>
+</div>
+
+<!-- ==================== ALTERNATIVES ==================== -->
+<h2>Alternative Approaches</h2>
+
+<div class="alternative">
+<h4>Alternative 1: XMPP Protocol</h4>
+<p>WhatsApp originally used XMPP (Extensible Messaging and Presence Protocol). XMPP is an open standard with built-in presence, roster management, and message routing. However, XMPP is XML-based (verbose), and at WhatsApp's scale, a custom binary protocol over WebSocket is more bandwidth-efficient. We didn't choose XMPP because of its overhead and limited control over optimization.</p>
+</div>
+
+<div class="alternative">
+<h4>Alternative 2: HTTP Long Polling</h4>
+<p>Clients would keep an HTTP connection open, and the server responds when a new message is available. This works but has higher overhead than WebSocket (new TCP connection per poll cycle), higher latency, and more server resources. Not chosen because WebSocket is superior for bidirectional real-time communication.</p>
+</div>
+
+<div class="alternative">
+<h4>Alternative 3: gRPC bidirectional streaming</h4>
+<p>gRPC supports bidirectional streaming over HTTP/2, which could replace WebSocket. It provides built-in protobuf serialization (efficient), load balancing support, and TLS. However, gRPC has less mature browser support (relevant for WhatsApp Web) and the ecosystem for persistent chat connections is more proven with WebSocket. This is a viable alternative that could work at scale.</p>
+</div>
+
+<div class="alternative">
+<h4>Alternative 4: Server-side message storage (no E2E encryption)</h4>
+<p>Storing messages in plaintext on the server simplifies search, backup, and moderation. However, privacy is a core value for WhatsApp. E2E encryption ensures even the server operator cannot read messages. The tradeoff is losing server-side search and easy backup, but this is acceptable given the privacy guarantee.</p>
+</div>
+
+<!-- ==================== ADDITIONAL INFORMATION ==================== -->
+<h2>Additional Information</h2>
+
+<h3>End-to-End Encryption (Signal Protocol)</h3>
+<p>WhatsApp uses the Signal Protocol for E2E encryption. Each user generates an identity key pair, a signed pre-key, and a set of one-time pre-keys. The server stores public keys for initial key exchange (X3DH). For group chats, the Sender Keys protocol is used: the sender encrypts the message once with a symmetric key shared with the group via pairwise encrypted channels.</p>
+
+<h3>Message Ordering</h3>
+<p>Messages within a conversation are ordered by <code>message_id</code> (TimeUUID). In the rare case of clock skew, the server assigns a server-side timestamp. Kafka's per-partition ordering guarantees FIFO delivery within a user's message queue.</p>
+
+<h3>Offline Message Queue</h3>
+<p>When a user is offline, messages accumulate in Kafka (retained for up to 30 days). When the user reconnects, the Chat Service replays all undelivered messages from Kafka in order. This is more efficient than storing offline messages in a separate database.</p>
+
+<h3>Heartbeat Mechanism</h3>
+<p>The client sends a heartbeat (ping) every 30 seconds over the WebSocket. If the server doesn't receive a heartbeat within 90 seconds, it marks the user as offline in Redis and closes the connection. This handles ungraceful disconnects (e.g., network loss, app killed).</p>
+
+</div>
+</body>
+</html>

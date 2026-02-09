@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Calendar System</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0f0f0f;color:#e0e0e0;line-height:1.7;padding:2rem}h1{font-size:2.5rem;text-align:center;background:linear-gradient(135deg,#4285F4,#0F9D58,#F4B400,#DB4437);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}h2{color:#4285F4;font-size:1.8rem;margin:2rem 0 1rem;border-bottom:2px solid #4285F4;padding-bottom:.5rem}h3{color:#0F9D58;font-size:1.3rem;margin:1.5rem 0 .8rem}h4{color:#F4B400;margin:1rem 0 .5rem}.container{max-width:1400px;margin:0 auto}.card{background:#1a1a2e;border-radius:12px;padding:1.5rem;margin:1rem 0;border:1px solid #333}.diagram-box{background:#0d1117;border-radius:12px;padding:1.5rem;margin:1rem 0;text-align:center;overflow-x:auto}.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}.tag-pk{background:#E53935;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-fk{background:#1E88E5;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-idx{background:#43A047;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-shard{background:#F4511E;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}.tradeoff-card{background:#1a1a2e;border-radius:8px;padding:1rem;border-left:4px solid}.tradeoff-card.pro{border-color:#0F9D58}.tradeoff-card.con{border-color:#DB4437}code{background:#2d2d2d;padding:2px 6px;border-radius:4px;font-family:'Fira Code',monospace;font-size:.85rem}pre{background:#1e1e2e;padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}ul,ol{padding-left:1.5rem;margin:.5rem 0}table{width:100%;border-collapse:collapse;margin:1rem 0}th,td{padding:.75rem;border:1px solid #333;text-align:left}th{background:#1a1a2e}svg text{font-family:'Segoe UI',system-ui,sans-serif}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>📅 Design Calendar System</h1>
+<p style="text-align:center;color:#aaa;margin-bottom:2rem;">Collaborative calendar with event scheduling, free/busy lookup, recurring events, reminders, multi-timezone, CalDAV — Google Calendar scale (500M+ users)</p>
+
+<h2>1. Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Event CRUD:</strong> Create, read, update, delete events with title, time, location, description, attendees, color, attachments</li>
+<li><strong>Recurring Events:</strong> Daily, weekly, monthly, yearly recurrence rules (RFC 5545 RRULE) with exceptions and modifications</li>
+<li><strong>Attendees &amp; RSVPs:</strong> Invite attendees, track RSVP (accepted/declined/tentative/pending), proposing new times</li>
+<li><strong>Free/Busy Lookup:</strong> Check availability of attendees before scheduling; find meeting times that work for all</li>
+<li><strong>Reminders &amp; Notifications:</strong> Email/push reminders at configurable intervals (10 min, 30 min, 1 hour before)</li>
+<li><strong>Multiple Calendars:</strong> Personal, work, shared team calendars, holiday calendars, subscribed calendars</li>
+<li><strong>Timezone Support:</strong> Events in any timezone; floating events (all-day) that follow local time</li>
+<li><strong>CalDAV/iCal Sync:</strong> Standard protocol support for third-party client synchronization</li>
+<li><strong>Smart Scheduling:</strong> AI-suggested meeting times based on preferences, working hours, travel time</li>
+</ul>
+</div>
+
+<h2>2. Non-Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Scale:</strong> 500M+ users, billions of events, 100K+ events/second write peak (Monday morning scheduling rush)</li>
+<li><strong>Latency:</strong> Calendar view loading p50 &lt;200ms, free/busy query &lt;100ms, event creation &lt;300ms</li>
+<li><strong>Availability:</strong> 99.99%+ (calendar downtime = missed meetings = business impact)</li>
+<li><strong>Consistency:</strong> Strong consistency for event writes (double-booking prevention); eventual consistency for read views across devices</li>
+<li><strong>Sync:</strong> Cross-device sync within 5 seconds (mobile, web, desktop)</li>
+<li><strong>Data Integrity:</strong> Never lose an event, never create phantom events from sync conflicts</li>
+</ul>
+</div>
+
+<h2>3. Flow 1 — Event Creation &amp; Invitation</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#4285F4"/></marker></defs>
+<rect x="20" y="160" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="190" text-anchor="middle" fill="#fff" font-size="13">Organizer</text>
+<rect x="180" y="160" width="120" height="60" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="240" y="190" text-anchor="middle" fill="#fff" font-size="13">API Gateway</text>
+<rect x="350" y="60" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="415" y="90" text-anchor="middle" fill="#fff" font-size="13">Event Service</text>
+<rect x="350" y="160" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="415" y="185" text-anchor="middle" fill="#fff" font-size="13">Free/Busy</text><text x="415" y="202" text-anchor="middle" fill="#fff" font-size="11">Service</text>
+<rect x="350" y="270" width="130" height="60" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="415" y="295" text-anchor="middle" fill="#fff" font-size="13">Notification</text><text x="415" y="312" text-anchor="middle" fill="#fff" font-size="11">Queue (Kafka)</text>
+<rect x="550" y="60" width="140" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="620" y="90" text-anchor="middle" fill="#fff" font-size="13">Event Store</text><text x="620" y="105" text-anchor="middle" fill="#fff" font-size="11">(Spanner/MySQL)</text>
+<rect x="550" y="160" width="140" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="620" y="190" text-anchor="middle" fill="#fff" font-size="13">Free/Busy Cache</text><text x="620" y="205" text-anchor="middle" fill="#fff" font-size="11">(Redis bitmap)</text>
+<rect x="550" y="270" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="620" y="295" text-anchor="middle" fill="#fff" font-size="13">Email / Push</text><text x="620" y="312" text-anchor="middle" fill="#fff" font-size="11">Sender</text>
+<rect x="760" y="160" width="130" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="825" y="190" text-anchor="middle" fill="#fff" font-size="13">Attendees</text><text x="825" y="205" text-anchor="middle" fill="#fff" font-size="11">(receive invite)</text>
+<line x1="130" y1="190" x2="178" y2="190" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="300" y1="175" x2="348" y2="95" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="300" y1="190" x2="348" y2="190" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="300" y1="205" x2="348" y2="295" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="480" y1="90" x2="548" y2="90" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="480" y1="190" x2="548" y2="190" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="480" y1="300" x2="548" y2="300" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="690" y1="300" x2="758" y2="200" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
+</svg>
+</div>
+
+<h3>Flow Steps</h3>
+<div class="card">
+<ol>
+<li><strong>Organizer creates event</strong> → POST <code>/calendars/{calId}/events</code> with title, start/end time (ISO 8601 with timezone), attendees, recurrence rule, reminders</li>
+<li><strong>Free/Busy check (optional):</strong> Before creating, organizer may query <code>GET /freebusy?attendees=a,b,c&timeMin=...&timeMax=...</code> to find available slots</li>
+<li><strong>Event Service:</strong> Validates event (time range, permissions, max attendees). Generates event_id (UUID). Handles timezone conversion to UTC for storage.</li>
+<li><strong>Event Store:</strong> Persist event in primary database. For recurring events, store the RRULE (not expanded instances). Write event to each attendee's calendar (cross-calendar reference).</li>
+<li><strong>Free/Busy Cache update:</strong> Update Redis bitmap for organizer's free/busy status for the event's time range</li>
+<li><strong>Notification Queue:</strong> Enqueue invitation emails to all attendees. Each attendee receives email with accept/decline/tentative buttons (one-click RSVP links)</li>
+<li><strong>Sync:</strong> Push notification to organizer's other devices (web, mobile) via WebSocket/SSE to update calendar view in real-time</li>
+<li><strong>Attendee RSVP:</strong> Attendee clicks "Accept" → updates their participation status, updates organizer's view, updates attendee's free/busy</li>
+</ol>
+</div>
+
+<h3>Example</h3>
+<div class="card" style="background:#1e1e2e">
+<p><strong>Creating a recurring team standup:</strong></p>
+<pre>{
+  "summary": "Engineering Standup",
+  "start": {"dateTime": "2024-01-15T09:00:00", "timeZone": "America/Los_Angeles"},
+  "end": {"dateTime": "2024-01-15T09:15:00", "timeZone": "America/Los_Angeles"},
+  "recurrence": ["RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;UNTIL=20241231"],
+  "attendees": [
+    {"email": "alice@company.com"},
+    {"email": "bob@company.com"},
+    {"email": "carol@company.com"}
+  ],
+  "reminders": {"overrides": [{"method": "popup", "minutes": 5}]},
+  "conferenceData": {"createRequest": {"requestId": "abc123"}},  // auto-create Meet link
+  "location": "Conference Room Maple"
+}</pre>
+<p><strong>Storage:</strong> One event record with RRULE stored. When user views February calendar, instances are expanded on-the-fly: Feb 5,6,7,8,9 (Mon-Fri) at 9:00 AM PST.</p>
+<p><strong>Exception:</strong> If organizer moves the Wednesday Feb 7 instance to 10:00 AM → exception record stored: <code>{recurringEventId: "evt123", originalStartTime: "2024-02-07T09:00", start: "2024-02-07T10:00"}</code></p>
+</div>
+
+<h3>Deep Dives</h3>
+<div class="info-grid">
+<div class="card">
+<h4>Recurring Events (RFC 5545 RRULE)</h4>
+<p>Recurring events are stored as a single record with an RRULE string: <code>RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR;COUNT=52</code>. On calendar view, instances are <strong>expanded on-the-fly</strong> for the requested time range. This avoids storing millions of individual event instances (a weekly meeting for 5 years = 260 instances). <strong>Exceptions</strong>: Individual instance modifications (moved, cancelled, different attendees) stored as separate "exception" records linked to the parent. <strong>EXDATE</strong>: specific dates excluded from recurrence. The expansion logic follows the iCalendar RFC 5545 specification. Libraries like <code>rrule.js</code> or <code>python-dateutil</code> handle expansion. Edge cases: timezone changes (DST transitions), BYSETPOS, INTERVAL, combinations of BYDAY+BYMONTHDAY.</p>
+</div>
+<div class="card">
+<h4>Free/Busy Bitmap (Redis)</h4>
+<p>For fast availability checking, maintain a <strong>bitmap</strong> in Redis per user. Each bit represents a 15-minute slot. One week = 672 bits = 84 bytes per user. <code>SETBIT freebusy:alice 168 1</code> (slot 168 = Monday 6pm, 1=busy). Free/busy query for 5 attendees: AND/OR bitmap operations across 5 keys → O(1) per slot. Total for 500M users × 1 year: ~500M × 84 bytes × 52 weeks ≈ 2.2TB in Redis cluster. Alternative: store only next 30 days in Redis, query database for older ranges. The bitmap is updated on every event create/update/delete and RSVP change.</p>
+</div>
+<div class="card">
+<h4>Conflict Detection</h4>
+<p>When creating an event, check if it conflicts with existing events. Query: all events for this user where <code>start < new_event.end AND end > new_event.start</code> (overlapping range query). For recurring events, must expand instances in the conflicting range. Google Calendar shows conflicts visually but allows double-booking (it's informational, not blocking). Outlook can be configured to block double-booking. For room resources (conference rooms), conflicts ARE blocking — uses a <strong>pessimistic lock</strong>: first reservation wins, subsequent attempts rejected.</p>
+</div>
+<div class="card">
+<h4>CalDAV/iCal Protocol</h4>
+<p><strong>CalDAV</strong> (RFC 4791): WebDAV extension for calendar access. Uses HTTP methods: PUT (create/update event as .ics file), DELETE, REPORT (query events in time range), PROPFIND (list calendars). Events stored in <strong>iCalendar (.ics)</strong> format (RFC 5545). Sync via: <code>REPORT</code> with <code>calendar-query</code> filter. Change detection via ctag (collection tag) — if ctag changed, client re-syncs. Google Calendar supports CalDAV for third-party clients (Apple Calendar, Thunderbird). The iCalendar format encodes: VEVENT (events), VTODO (tasks), VFREEBUSY, VALARM (reminders), RRULE (recurrence).</p>
+</div>
+</div>
+
+<h2>4. Flow 2 — Calendar View Rendering (Week View)</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 950 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#0F9D58"/></marker></defs>
+<rect x="20" y="120" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="150" text-anchor="middle" fill="#fff" font-size="13">User</text><text x="75" y="165" text-anchor="middle" fill="#fff" font-size="11">opens week view</text>
+<rect x="180" y="120" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="245" y="150" text-anchor="middle" fill="#fff" font-size="13">Calendar Service</text>
+<rect x="370" y="30" width="140" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="440" y="60" text-anchor="middle" fill="#fff" font-size="13">Event Store</text><text x="440" y="75" text-anchor="middle" fill="#fff" font-size="11">(single events)</text>
+<rect x="370" y="120" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="440" y="150" text-anchor="middle" fill="#fff" font-size="13">RRULE Expander</text><text x="440" y="165" text-anchor="middle" fill="#fff" font-size="11">(recurring → instances)</text>
+<rect x="370" y="210" width="140" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="440" y="240" text-anchor="middle" fill="#fff" font-size="13">View Cache</text><text x="440" y="255" text-anchor="middle" fill="#fff" font-size="11">(per-user, per-week)</text>
+<rect x="580" y="120" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="645" y="150" text-anchor="middle" fill="#fff" font-size="13">TZ Converter</text><text x="645" y="165" text-anchor="middle" fill="#fff" font-size="11">(UTC → local)</text>
+<rect x="780" y="120" width="120" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="840" y="150" text-anchor="middle" fill="#fff" font-size="13">Week View</text><text x="840" y="165" text-anchor="middle" fill="#fff" font-size="11">(rendered)</text>
+<line x1="130" y1="150" x2="178" y2="150" stroke="#0F9D58" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="310" y1="135" x2="368" y2="65" stroke="#0F9D58" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="310" y1="150" x2="368" y2="150" stroke="#0F9D58" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="310" y1="165" x2="368" y2="240" stroke="#0F9D58" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="510" y1="150" x2="578" y2="150" stroke="#0F9D58" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="710" y1="150" x2="778" y2="150" stroke="#0F9D58" stroke-width="2" marker-end="url(#a2)"/>
+</svg>
+</div>
+
+<h3>Flow Steps</h3>
+<div class="card">
+<ol>
+<li><strong>User opens week view</strong> for Jan 15-21, 2024 → GET <code>/calendars/{calId}/events?timeMin=2024-01-15T00:00Z&timeMax=2024-01-22T00:00Z</code></li>
+<li><strong>Cache check:</strong> Look up pre-computed view for this user + week in Redis. Cache HIT → return immediately.</li>
+<li><strong>Cache MISS → Event Store query:</strong> Fetch all single (non-recurring) events in the time range for all user's visible calendars</li>
+<li><strong>RRULE Expansion:</strong> For each recurring event whose RRULE potentially generates instances in this week, expand to concrete instances. Apply EXDATE exclusions and exception modifications.</li>
+<li><strong>Merge:</strong> Combine single events + expanded recurring instances + shared calendar events + subscribed calendar events</li>
+<li><strong>Timezone conversion:</strong> Convert all event times from UTC (storage) to user's display timezone</li>
+<li><strong>Cache store:</strong> Cache the assembled week view with short TTL (5 min). Invalidated on any event change.</li>
+<li><strong>Return:</strong> JSON array of events with computed fields (conflict indicators, RSVP status, conference links)</li>
+</ol>
+</div>
+
+<h3>Example</h3>
+<div class="card" style="background:#1e1e2e">
+<p><strong>User: Alice (timezone: America/Los_Angeles), viewing Jan 15-21, 2024</strong></p>
+<p><strong>Events fetched from DB:</strong> 3 single events + 2 recurring event records</p>
+<p><strong>RRULE expansion:</strong></p>
+<pre>Recurring #1: "Engineering Standup" RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR
+  → Expands to: Mon 9am, Tue 9am, Wed 9am, Thu 9am, Fri 9am (5 instances)
+  → Exception: Wed moved to 10am (exception record applied)
+
+Recurring #2: "Biweekly 1:1 with Manager" RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=TH
+  → This week IS an occurrence week → Thu 2pm (1 instance)
+  → Next week would be skipped (INTERVAL=2)</pre>
+<p><strong>Total events rendered:</strong> 3 single + 5 standup instances + 1 biweekly = 9 events in week view</p>
+<p><strong>Conflict detected:</strong> Thursday 2pm biweekly 1:1 overlaps with a single event "Dentist 2-3pm" → shown with visual conflict indicator</p>
+</div>
+
+<h3>Deep Dives</h3>
+<div class="info-grid">
+<div class="card">
+<h4>Timezone Handling</h4>
+<p>Calendar systems must handle timezones meticulously. Events stored in <strong>UTC</strong> in the database. Each event has an associated timezone (e.g., "America/Los_Angeles"). On display, converted to viewer's timezone. <strong>All-day events</strong> are special: stored as "floating" (no timezone) — they display on the same calendar date regardless of viewer's timezone. <strong>DST transitions:</strong> A 9 AM meeting in PST becomes 9 AM PDT after spring forward — the UTC time shifts. IANA timezone database (tzdata) must be kept updated. <strong>Timezone changes:</strong> If a timezone's rules change (government decision), events created before the change must be re-evaluated.</p>
+</div>
+<div class="card">
+<h4>Sync Protocol (Push + Pull)</h4>
+<p>Calendar sync across devices uses: (1) <strong>Push:</strong> When event changes, server sends push notification / WebSocket event to all of user's connected clients. Client applies delta update to local cache. (2) <strong>Pull (sync token):</strong> Client sends <code>GET /events?syncToken=xyz</code> → server returns only events changed since that token. Sync token is an opaque cursor into the event changelog. (3) <strong>Full sync:</strong> If sync token is expired or first sync → full event list for a time range. Google Calendar uses <strong>incremental sync</strong> with sync tokens (nextSyncToken/nextPageToken). The changelog is maintained as an append-only log of event mutations per user.</p>
+</div>
+</div>
+
+<h2>5. Flow 3 — Smart Scheduling (Find a Meeting Time)</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 950 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#F4B400"/></marker></defs>
+<rect x="20" y="120" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="150" text-anchor="middle" fill="#fff" font-size="13">Organizer</text><text x="75" y="165" text-anchor="middle" fill="#fff" font-size="11">find time for 5</text>
+<rect x="180" y="120" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="245" y="150" text-anchor="middle" fill="#fff" font-size="13">Scheduling</text><text x="245" y="165" text-anchor="middle" fill="#fff" font-size="13">Engine</text>
+<rect x="370" y="30" width="130" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="435" y="60" text-anchor="middle" fill="#fff" font-size="13">Free/Busy</text><text x="435" y="75" text-anchor="middle" fill="#fff" font-size="11">Aggregator</text>
+<rect x="370" y="120" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="435" y="150" text-anchor="middle" fill="#fff" font-size="13">Working Hours</text><text x="435" y="165" text-anchor="middle" fill="#fff" font-size="11">Filter</text>
+<rect x="370" y="210" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="435" y="240" text-anchor="middle" fill="#fff" font-size="13">Preference</text><text x="435" y="255" text-anchor="middle" fill="#fff" font-size="11">Ranker (ML)</text>
+<rect x="570" y="120" width="140" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="640" y="150" text-anchor="middle" fill="#fff" font-size="13">Suggested Slots</text><text x="640" y="165" text-anchor="middle" fill="#fff" font-size="11">(ranked options)</text>
+<line x1="130" y1="150" x2="178" y2="150" stroke="#F4B400" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="310" y1="135" x2="368" y2="65" stroke="#F4B400" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="310" y1="150" x2="368" y2="150" stroke="#F4B400" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="310" y1="165" x2="368" y2="235" stroke="#F4B400" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="500" y1="65" x2="568" y2="140" stroke="#F4B400" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="500" y1="150" x2="568" y2="150" stroke="#F4B400" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="500" y1="235" x2="568" y2="165" stroke="#F4B400" stroke-width="2" marker-end="url(#a3)"/>
+</svg>
+</div>
+
+<h3>Flow Steps</h3>
+<div class="card">
+<ol>
+<li><strong>Organizer requests:</strong> "Find 30-minute slot for Alice, Bob, Carol, Dave next week"</li>
+<li><strong>Free/Busy Aggregator:</strong> Fetch free/busy bitmaps for all 4 attendees + organizer for the next week (7 days × 96 slots/day = 672 slots per person)</li>
+<li><strong>Bitmap intersection:</strong> AND all 5 bitmaps (inverted — free slots) → result bitmap shows slots where ALL attendees are free</li>
+<li><strong>Working Hours Filter:</strong> Remove slots outside each attendee's configured working hours and timezone. Alice: 9-5 PST, Bob: 9-5 EST, Carol: 9-5 CET → overlap window: 9am-12pm PST (6pm-9pm CET)</li>
+<li><strong>Preference Ranker:</strong> Among available slots, rank by: morning vs afternoon preference, buffer time between meetings (avoid back-to-back), minimize fragmentation (prefer slots adjacent to existing meetings), meeting room availability</li>
+<li><strong>Return:</strong> Top 5 suggested time slots, ranked by preference score. Organizer selects one and creates the event.</li>
+</ol>
+</div>
+
+<h3>Example</h3>
+<div class="card" style="background:#1e1e2e">
+<p><strong>5 attendees across 3 timezones:</strong> Alice (PST), Bob (EST), Carol (CET), Dave (PST), Organizer (PST)</p>
+<p><strong>Working hours overlap:</strong> 9:00-12:00 PST = 12:00-15:00 EST = 18:00-21:00 CET</p>
+<p><strong>Free slots after bitmap intersection:</strong> Mon 9:00, Mon 10:30, Tue 9:00, Wed 11:00, Thu 9:30, Fri 10:00</p>
+<p><strong>Ranked suggestions:</strong></p>
+<pre>1. Tuesday 9:00-9:30 AM PST  (score: 0.95 — morning, all prefer AM, room available)
+2. Thursday 9:30-10:00 AM PST (score: 0.88 — good buffer after Alice's 9am standup)
+3. Monday 10:30-11:00 AM PST  (score: 0.82 — Monday mornings often have conflicts)
+4. Wednesday 11:00-11:30 AM PST (score: 0.75 — close to lunch for CET attendees)
+5. Friday 10:00-10:30 AM PST  (score: 0.60 — Friday meetings often cancelled)</pre>
+</div>
+
+<h2>6. Combined Architecture</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 1100 500" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#4285F4"/></marker></defs>
+<rect x="10" y="210" width="100" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="60" y="240" text-anchor="middle" fill="#fff" font-size="12">Clients</text><text x="60" y="255" text-anchor="middle" fill="#fff" font-size="10">Web/iOS/Android</text>
+<rect x="150" y="150" width="110" height="50" rx="8" fill="#546e7a" stroke="#90a4ae" stroke-width="2"/><text x="205" y="180" text-anchor="middle" fill="#fff" font-size="12">CDN</text>
+<rect x="150" y="215" width="110" height="50" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="205" y="245" text-anchor="middle" fill="#fff" font-size="12">API Gateway</text>
+<rect x="150" y="280" width="110" height="50" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="205" y="310" text-anchor="middle" fill="#fff" font-size="12">CalDAV Server</text>
+<rect x="310" y="60" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="86" text-anchor="middle" fill="#fff" font-size="11">Event Service</text>
+<rect x="310" y="115" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="141" text-anchor="middle" fill="#fff" font-size="11">Calendar Service</text>
+<rect x="310" y="170" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="196" text-anchor="middle" fill="#fff" font-size="11">Free/Busy</text>
+<rect x="310" y="225" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="251" text-anchor="middle" fill="#fff" font-size="11">Scheduling Engine</text>
+<rect x="310" y="280" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="306" text-anchor="middle" fill="#fff" font-size="11">Reminder Service</text>
+<rect x="310" y="335" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="361" text-anchor="middle" fill="#fff" font-size="11">Notification Svc</text>
+<rect x="310" y="390" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="416" text-anchor="middle" fill="#fff" font-size="11">Sync Service</text>
+<rect x="490" y="115" width="100" height="42" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="540" y="141" text-anchor="middle" fill="#fff" font-size="11">Kafka</text>
+<rect x="650" y="60" width="120" height="42" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="710" y="86" text-anchor="middle" fill="#fff" font-size="11">Spanner/MySQL</text>
+<rect x="650" y="115" width="120" height="42" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="710" y="141" text-anchor="middle" fill="#fff" font-size="11">Redis (F/B cache)</text>
+<rect x="650" y="170" width="120" height="42" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="710" y="196" text-anchor="middle" fill="#fff" font-size="11">Changelog (log)</text>
+<rect x="650" y="225" width="120" height="42" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="710" y="251" text-anchor="middle" fill="#fff" font-size="11">Memcached</text>
+<line x1="110" y1="230" x2="148" y2="175" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="110" y1="240" x2="148" y2="240" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="110" y1="250" x2="148" y2="305" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="260" y1="240" x2="308" y2="86" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="86" x2="648" y2="80" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="140" x2="488" y2="140" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="590" y1="135" x2="648" y2="135" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="196" x2="648" y2="140" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
+</svg>
+</div>
+
+<h2>7. Database Schema</h2>
+<div class="card">
+<h3>Events (Spanner / MySQL — sharded by calendar_id)</h3>
+<pre>
+Table: events  <span class="tag-shard">SHARD: hash(calendar_id)</span>
+- event_id: varchar(64)        <span class="tag-pk">PK</span> (UUID)
+- calendar_id: varchar(64)     <span class="tag-fk">FK → calendars</span> <span class="tag-idx">IDX</span>
+- organizer_id: varchar(64)    <span class="tag-fk">FK → users</span>
+- summary: varchar(500)
+- description: text
+- location: varchar(500)
+- start_time: timestamp        <span class="tag-idx">IDX (composite with calendar_id)</span>
+- end_time: timestamp          <span class="tag-idx">IDX</span>
+- start_timezone: varchar(50)  // IANA timezone (e.g., "America/Los_Angeles")
+- end_timezone: varchar(50)
+- all_day: boolean
+- status: enum('confirmed','tentative','cancelled')
+- visibility: enum('default','public','private','confidential')
+- recurrence: text             // RRULE string (NULL for single events)
+- recurring_event_id: varchar(64)  // parent ID for exception instances
+- original_start_time: timestamp   // for exception: original scheduled time
+- conference_data: jsonb       // video conf link
+- color_id: varchar(10)
+- created_at: timestamp
+- updated_at: timestamp
+- sequence: int                // version counter (iCal SEQUENCE)
+- etag: varchar(64)           // for sync conflict detection
+</pre>
+
+<h3>Attendees (many-to-many)</h3>
+<pre>
+Table: event_attendees
+- event_id: varchar(64)        <span class="tag-fk">FK → events</span> <span class="tag-idx">IDX</span>
+- attendee_email: varchar(255) <span class="tag-idx">IDX</span>
+- attendee_id: varchar(64)     <span class="tag-fk">FK → users</span>
+- response_status: enum('needsAction','declined','tentative','accepted')
+- is_organizer: boolean
+- is_optional: boolean
+- comment: varchar(500)
+- responded_at: timestamp
+Composite PK: (event_id, attendee_email)
+</pre>
+
+<h3>Calendars</h3>
+<pre>
+Table: calendars
+- calendar_id: varchar(64)     <span class="tag-pk">PK</span>
+- owner_id: varchar(64)        <span class="tag-fk">FK → users</span> <span class="tag-idx">IDX</span>
+- summary: varchar(255)        // "Work", "Personal", "Team Calendar"
+- description: text
+- timezone: varchar(50)
+- color: varchar(7)           // hex color
+- access_role: enum('owner','writer','reader','freeBusyReader')
+- selected: boolean            // visible in UI by default
+- ctag: varchar(64)           // CalDAV collection tag (changes on any event mutation)
+- created_at: timestamp
+</pre>
+
+<h3>Reminders</h3>
+<pre>
+Table: reminders
+- reminder_id: varchar(64)     <span class="tag-pk">PK</span>
+- event_id: varchar(64)        <span class="tag-fk">FK → events</span> <span class="tag-idx">IDX</span>
+- user_id: varchar(64)         <span class="tag-fk">FK → users</span>
+- method: enum('email','popup','sms')
+- minutes_before: int          // 5, 10, 30, 60, 1440 (1 day)
+- trigger_time: timestamp      <span class="tag-idx">IDX</span> // pre-computed: event.start - minutes_before
+- sent: boolean
+</pre>
+
+<h3>Event Changelog (for sync)</h3>
+<pre>
+Table: event_changelog  <span class="tag-shard">SHARD: hash(calendar_id)</span>
+- changelog_id: bigint auto_increment  <span class="tag-pk">PK</span>
+- calendar_id: varchar(64)     <span class="tag-idx">IDX</span>
+- event_id: varchar(64)
+- mutation_type: enum('created','updated','deleted')
+- mutated_at: timestamp        <span class="tag-idx">IDX</span>
+- sync_token: varchar(64)     <span class="tag-idx">IDX</span> // opaque cursor for incremental sync
+</pre>
+</div>
+
+<h2>8. Cache &amp; CDN Deep Dive</h2>
+<div class="card">
+<table>
+<tr><th>Layer</th><th>Technology</th><th>What's Cached</th><th>TTL</th><th>Invalidation</th></tr>
+<tr><td>Free/Busy Bitmap</td><td>Redis</td><td>Per-user busy slots (15-min granularity)</td><td>Real-time</td><td>Updated on every event create/update/delete/RSVP</td></tr>
+<tr><td>Calendar View</td><td>Memcached</td><td>Pre-assembled week/month view per user</td><td>5 min</td><td>Invalidated on any event change in user's calendars</td></tr>
+<tr><td>Event Cache</td><td>Memcached</td><td>Individual event details (hot events with many attendees)</td><td>10 min</td><td>Write-through on update</td></tr>
+<tr><td>RRULE Expansion</td><td>In-memory (per-request)</td><td>Expanded recurring event instances for a time range</td><td>Per-request</td><td>N/A (computed on demand)</td></tr>
+<tr><td>Static Assets</td><td>CDN</td><td>JS/CSS bundles, icons</td><td>1yr (hashed)</td><td>Deploy-time versioning</td></tr>
+</table>
+
+<h3>Reminder Scheduling</h3>
+<p>Reminders are time-sensitive and must fire precisely. Architecture: a <strong>Reminder Scheduler</strong> service periodically scans the reminders table for upcoming triggers (next 5 minutes). Uses a <strong>delay queue</strong> pattern: reminders loaded into a priority queue (min-heap by trigger_time). At trigger time, send email or push notification. For reliability: idempotent delivery (dedup by reminder_id), at-least-once semantics with dedup. Scale: 500M users × average 3 events/day × 1 reminder each = 1.5B reminders/day ≈ 17K reminders/second. Handled by a sharded reminder service with Redis sorted sets as the time-based index.</p>
+</div>
+
+<h2>9. Scaling Considerations</h2>
+<div class="card">
+<h3>Monday Morning Peak</h3>
+<ul>
+<li>Peak scheduling happens Monday 8-10 AM across timezones (as the wave moves west)</li>
+<li>Write spike: 100K+ events/second during peak (meetings being created for the week)</li>
+<li>Read spike: Calendar view loads as everyone checks their schedule</li>
+<li>Auto-scaling with pre-warming for known peak patterns</li>
+</ul>
+
+<h3>Google Spanner for Calendar</h3>
+<p>Google Calendar uses Spanner (globally distributed, strongly consistent database). Enables: strong consistency for event writes (no double-booking of rooms), global distribution (user in Tokyo sees same data as user in NYC), automatic sharding and rebalancing. TrueTime API provides globally consistent timestamps. Alternative for non-Google: CockroachDB or Vitess-sharded MySQL.</p>
+
+<h3>Load Balancing</h3>
+<ul>
+<li><strong>DNS:</strong> Anycast / GeoDNS for nearest region</li>
+<li><strong>L7:</strong> Path-based routing (CalDAV vs REST API vs WebSocket)</li>
+<li><strong>Database:</strong> Read replicas for calendar view queries; primary for writes</li>
+<li><strong>Reminder service:</strong> Sharded by user_id hash — each shard handles reminders for a subset of users</li>
+</ul>
+</div>
+
+<h2>10. Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="tradeoff-card pro">
+<h4>✅ RRULE Storage (Compact)</h4>
+<p>Store one record for an infinite recurring event. "Every Monday forever" = 1 row, not 52/year × infinite years. Compact, easy to modify the pattern. Standard format (RFC 5545).</p>
+</div>
+<div class="tradeoff-card con">
+<h4>❌ RRULE Expansion Complexity</h4>
+<p>Must expand on every read. Complex edge cases: DST transitions, timezone changes, BYSETPOS+BYDAY combinations. Exception management (individual instance edits) adds significant complexity. Performance: expanding "every day for 10 years" requires iterating 3650 dates.</p>
+</div>
+<div class="tradeoff-card pro">
+<h4>✅ Free/Busy Bitmap (Fast Scheduling)</h4>
+<p>O(1) availability check per slot. Bitmap AND/OR across multiple attendees is extremely fast. 672 bits per user per week = minimal memory. Enables sub-100ms scheduling suggestions.</p>
+</div>
+<div class="tradeoff-card con">
+<h4>❌ Bitmap Maintenance</h4>
+<p>Must be kept perfectly in sync with actual events. Any event create/update/delete/RSVP must update bitmap. Recurring event expansion must be reflected. Bitmap doesn't store event details (just busy/free) — follow-up query needed for conflict details.</p>
+</div>
+<div class="tradeoff-card pro">
+<h4>✅ CalDAV Standard Protocol</h4>
+<p>Enables interoperability with any CalDAV client (Apple Calendar, Thunderbird, DAVx5). Users aren't locked into one client. Enterprise environments require standards compliance.</p>
+</div>
+<div class="tradeoff-card con">
+<h4>❌ CalDAV Limitations</h4>
+<p>CalDAV is complex and poorly implemented by many clients. Some features (smart scheduling, video conferencing) require proprietary API extensions beyond CalDAV. Sync efficiency is lower than proprietary push-based protocols.</p>
+</div>
+</div>
+
+<h2>11. Alternative Approaches</h2>
+<div class="info-grid">
+<div class="card">
+<h4>Pre-Expanded Recurring Events</h4>
+<p>Instead of RRULE, expand and store every instance as a separate event (e.g., 52 rows for weekly meeting). Simpler read path (no expansion needed). But: "change all future instances" requires updating 100s of rows. Infinite recurrence impossible. Higher storage cost. Used by some simpler calendar implementations.</p>
+</div>
+<div class="card">
+<h4>Event Sourcing for Calendar</h4>
+<p>Store all mutations as immutable events (created, moved, attendee_added, cancelled). Current state derived by replaying events. Benefits: complete audit trail, easy undo, conflict resolution. Used by Calendly internally. Downside: read path requires projection from event stream → need materialized views for performance.</p>
+</div>
+<div class="card">
+<h4>CRDT-Based Calendar Sync</h4>
+<p>Use CRDTs for offline-first calendar editing (mobile with poor connectivity). Changes merge automatically without conflicts. Google has researched this for Docs; could apply to Calendar. Challenge: calendar events have time-based semantics that CRDTs don't naturally handle (e.g., "move meeting to 3pm" vs "move meeting to 4pm" — which wins?).</p>
+</div>
+<div class="card">
+<h4>Microsoft Exchange / Graph API</h4>
+<p>Alternative architecture: Exchange-based (Outlook Calendar). Uses MAPI/EWS protocols (proprietary). Graph API for modern access. Room booking via Exchange resource mailboxes. Tighter integration with email (meeting invites as email). Enterprise-dominant but less open than CalDAV.</p>
+</div>
+</div>
+
+<h2>12. Additional Information</h2>
+<div class="card">
+<h3>Key Standards</h3>
+<ul>
+<li><strong>RFC 5545 (iCalendar):</strong> Data format for calendar events (.ics files). Defines VEVENT, RRULE, VTIMEZONE, VALARM</li>
+<li><strong>RFC 4791 (CalDAV):</strong> Protocol for calendar access over WebDAV/HTTP</li>
+<li><strong>RFC 6638 (Scheduling):</strong> CalDAV extension for invitations and free/busy</li>
+<li><strong>RFC 7265 (jCal):</strong> JSON representation of iCalendar data</li>
+<li><strong>IANA Timezone Database (tzdata):</strong> Authoritative timezone definitions, updated ~4x/year</li>
+</ul>
+
+<h3>Key Numbers (Google Calendar scale)</h3>
+<table>
+<tr><td>Users</td><td>500M+</td></tr>
+<tr><td>Events per day (created)</td><td>~500M</td></tr>
+<tr><td>Calendar view loads per day</td><td>~2B</td></tr>
+<tr><td>Reminders fired per day</td><td>~1.5B</td></tr>
+<tr><td>Free/busy queries per day</td><td>~200M</td></tr>
+<tr><td>Average events per user per week</td><td>~15-25</td></tr>
+</table>
+</div>
+</div>
+</body>
+</html>

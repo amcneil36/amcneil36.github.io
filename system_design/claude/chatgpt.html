@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChatGPT - System Design</title>
+<style>
+:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--heading:#10A37F;--accent:#1A7F64;--accent2:#6EE7B7;--accent3:#D946EF;--muted:#888}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
+h1{color:var(--heading);font-size:2.2rem;border-bottom:3px solid var(--heading);padding-bottom:.5rem;margin-bottom:1.5rem}
+h2{color:var(--accent2);margin:2rem 0 1rem;font-size:1.5rem}
+h3{color:var(--accent);margin:1.5rem 0 .75rem;font-size:1.2rem}
+h4{color:var(--accent3);margin:1rem 0 .5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
+ul,ol{margin:.75rem 0 .75rem 1.5rem}
+li{margin:.4rem 0}
+code{background:#2d2d2d;padding:.2rem .5rem;border-radius:4px;font-size:.9rem;color:#f8f8f2}
+pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:1rem 0}
+pre code{padding:0;background:none}
+.tag{display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600;margin:.2rem}
+.tag-pk{background:#E53935;color:#fff}
+.tag-fk{background:#1E88E5;color:#fff}
+.tag-idx{background:#43A047;color:#fff}
+.tag-shard{background:#FB8C00;color:#fff}
+.tag-cache{background:#8E24AA;color:#fff}
+.tag-ttl{background:#00897B;color:#fff}
+svg text{font-family:'Segoe UI',system-ui,sans-serif}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.pro{background:#1b3a1b;border:1px solid #2d5a2d;border-radius:8px;padding:1rem}
+.con{background:#3a1b1b;border:1px solid #5a2d2d;border-radius:8px;padding:1rem}
+</style>
+</head>
+<body>
+
+<h1>🤖 ChatGPT - System Design</h1>
+
+<!-- ============ FUNCTIONAL REQUIREMENTS ============ -->
+<div class="card">
+<h2>Functional Requirements</h2>
+<ol>
+<li><strong>Conversational AI:</strong> Multi-turn chat with streaming token-by-token response, conversation history, model selection (GPT-4o, GPT-4, GPT-3.5), system prompts, temperature control</li>
+<li><strong>Tool Use & Plugins:</strong> Code execution (sandbox), web browsing (Bing search), image generation (DALL-E), file upload/analysis, function calling, custom GPTs (user-built assistants)</li>
+<li><strong>Safety & Moderation:</strong> Content filtering, RLHF alignment, refusal of harmful requests, PII detection, rate limiting, abuse prevention, usage tracking per tier (free/plus/enterprise)</li>
+</ol>
+</div>
+
+<!-- ============ NON-FUNCTIONAL REQUIREMENTS ============ -->
+<div class="card">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Scale:</strong> 200M+ weekly active users, 100B+ tokens/day inference, multi-model serving simultaneously</li>
+<li><strong>Latency:</strong> Time to first token (TTFT) &lt;500ms for GPT-4o, &lt;2s for GPT-4; streaming throughput 50-80 tokens/sec</li>
+<li><strong>Availability:</strong> 99.9% uptime; graceful degradation (fallback to smaller models during capacity constraints)</li>
+<li><strong>Cost Efficiency:</strong> GPU compute is the primary cost — $700K+/day estimated GPU spend; optimized inference via KV cache, batching, quantization</li>
+<li><strong>Safety:</strong> Alignment guarantees — harmful content generation rate &lt;0.1%; multilayer safety stack</li>
+</ul>
+</div>
+
+<!-- ============ FLOW 1: CHAT COMPLETION ============ -->
+<h2>Flow 1: Chat Completion (Streaming)</h2>
+<div class="card">
+<svg viewBox="0 0 1050 370" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#10A37F"/></marker></defs>
+<rect x="20" y="50" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Client</text><text x="80" y="87" text-anchor="middle" fill="#fff" font-size="10">(Web / Mobile)</text>
+<rect x="190" y="50" width="130" height="50" rx="8" fill="#FB8C00"/><text x="255" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">API Gateway</text><text x="255" y="87" text-anchor="middle" fill="#fff" font-size="10">(Auth + Rate Limit)</text>
+<rect x="370" y="50" width="130" height="50" rx="8" fill="#4285F4"/><text x="435" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Chat Service</text><text x="435" y="87" text-anchor="middle" fill="#fff" font-size="10">(Orchestrator)</text>
+<rect x="550" y="20" width="130" height="50" rx="8" fill="#E53935"/><text x="615" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Safety Filter</text><text x="615" y="57" text-anchor="middle" fill="#fff" font-size="10">(Input Moderation)</text>
+<rect x="550" y="90" width="130" height="50" rx="8" fill="#9C27B0"/><text x="615" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Model Router</text><text x="615" y="127" text-anchor="middle" fill="#fff" font-size="10">(Model Selection)</text>
+<rect x="730" y="50" width="150" height="55" rx="8" fill="#10A37F"/><text x="805" y="72" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">GPU Inference</text><text x="805" y="90" text-anchor="middle" fill="#fff" font-size="10">(H100 / A100 Cluster)</text>
+<rect x="370" y="180" width="130" height="50" rx="8" fill="#E53935"/><text x="435" y="202" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Output Safety</text><text x="435" y="217" text-anchor="middle" fill="#fff" font-size="10">(Response Filter)</text>
+<rect x="550" y="180" width="130" height="50" rx="8" fill="#795548"/><text x="615" y="202" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Conversation DB</text><text x="615" y="217" text-anchor="middle" fill="#fff" font-size="10">(History Store)</text>
+<rect x="190" y="260" width="130" height="50" rx="8" fill="#607D8B"/><text x="255" y="282" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">SSE Stream</text><text x="255" y="297" text-anchor="middle" fill="#fff" font-size="10">(Token-by-Token)</text>
+<line x1="140" y1="75" x2="185" y2="75" stroke="#10A37F" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="320" y1="75" x2="365" y2="75" stroke="#10A37F" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="500" y1="65" x2="545" y2="45" stroke="#10A37F" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="500" y1="85" x2="545" y2="110" stroke="#10A37F" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="680" y1="115" x2="725" y2="80" stroke="#10A37F" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="730" y1="105" x2="500" y2="195" stroke="#10A37F" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="500" y1="205" x2="545" y2="205" stroke="#10A37F" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="370" y1="205" x2="320" y2="275" stroke="#10A37F" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="190" y1="285" x2="140" y2="100" stroke="#10A37F" stroke-width="1.5" marker-end="url(#ah)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Client sends POST /v1/chat/completions with messages array (system + conversation history + user message)</li>
+<li>API Gateway authenticates (API key or session token), checks rate limits (free: 40 msg/3hr, Plus: 80 msg/3hr for GPT-4)</li>
+<li>Chat Service (orchestrator) prepares request: truncates context to model's context window, injects system prompt</li>
+<li>Input Safety Filter runs content moderation classifier — blocks harmful prompts before reaching the model</li>
+<li>Model Router selects inference endpoint: model version, routes to least-loaded GPU cluster (weighted round-robin)</li>
+<li>GPU Inference: autoregressive token generation — model produces one token at a time; each token streamed immediately</li>
+<li>Output Safety Filter evaluates generated tokens in sliding window — catches harmful completions mid-stream</li>
+<li>Tokens delivered to client via Server-Sent Events (SSE) — <code>data: {"choices":[{"delta":{"content":"Hello"}}]}</code></li>
+<li>Full conversation (messages + response) persisted to Conversation DB for history and future context</li>
+</ol>
+
+<h3>Example</h3>
+<p>User sends "Explain quantum computing in simple terms". API Gateway validates Plus subscription. Input filter passes (benign request). Model Router selects GPT-4o cluster in us-east (lowest queue depth). Inference begins: first token "Quantum" generated in 180ms (TTFT). Subsequent tokens stream at 70 tokens/sec via SSE. Output filter scans continuously. Total response: 250 tokens in ~3.5s. Conversation saved.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>GPU Inference Architecture</h4>
+<p><strong>Hardware:</strong> NVIDIA H100 (80GB HBM3) / A100 clusters — tensor parallelism across 8 GPUs per node</p>
+<p><strong>Framework:</strong> Custom inference engine (similar to vLLM / TensorRT-LLM) with PagedAttention for efficient KV cache management</p>
+<p><strong>Batching:</strong> Continuous batching (in-flight batching) — new requests join batch without waiting for others to complete</p>
+<p><strong>KV Cache:</strong> Key-Value cache stores attention states for all previous tokens — avoids recomputation; managed via paged memory allocator</p>
+<p><strong>Quantization:</strong> INT8/FP8 quantization for inference (vs. FP16/BF16 for training) — 2x throughput with minimal quality loss</p>
+</div>
+<div class="card">
+<h4>Server-Sent Events (SSE) Streaming</h4>
+<p><strong>Protocol:</strong> HTTP/2 with SSE — unidirectional server-to-client stream over single long-lived connection</p>
+<p><strong>Format:</strong> <code>data: {"id":"chatcmpl-xxx","choices":[{"delta":{"content":"token"}}]}\n\n</code></p>
+<p><strong>Termination:</strong> Final message: <code>data: [DONE]\n\n</code> signals stream completion</p>
+<p><strong>Advantage:</strong> User sees response forming in real-time — perceived latency dramatically reduced vs. waiting for full response</p>
+</div>
+<div class="card">
+<h4>Context Window Management</h4>
+<p><strong>GPT-4o:</strong> 128K token context window (~96K words)</p>
+<p><strong>Truncation:</strong> If conversation exceeds context window, oldest messages dropped (preserving system prompt and recent messages)</p>
+<p><strong>Token Counting:</strong> tiktoken library (BPE tokenizer) counts tokens before sending to model; client-side estimation for UX</p>
+<p><strong>Pricing:</strong> Input tokens ($2.50/1M for GPT-4o) cheaper than output tokens ($10/1M) — encourages long context, shorter responses</p>
+</div>
+<div class="card">
+<h4>Safety / Moderation Stack</h4>
+<p><strong>Layer 1:</strong> Input classifier — lightweight BERT-based model catches obviously harmful prompts in <10ms</p>
+<p><strong>Layer 2:</strong> System prompt injection — model's system prompt includes safety instructions and refusal guidelines</p>
+<p><strong>Layer 3:</strong> RLHF alignment — model trained with human feedback to refuse harmful requests naturally</p>
+<p><strong>Layer 4:</strong> Output classifier — scans generated tokens in real-time; can truncate response mid-stream</p>
+<p><strong>Layer 5:</strong> Post-hoc review — flagged conversations reviewed by human trust & safety team</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 2: TOOL USE ============ -->
+<h2>Flow 2: Tool Use (Code Interpreter / Web Browsing)</h2>
+<div class="card">
+<svg viewBox="0 0 1000 320" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#6EE7B7"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="90" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Client</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Chat Service</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Orchestrator)</text>
+<rect x="370" y="60" width="140" height="50" rx="8" fill="#10A37F"/><text x="440" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">LLM Inference</text><text x="440" y="97" text-anchor="middle" fill="#fff" font-size="10">(Tool Decision)</text>
+<rect x="560" y="20" width="130" height="45" rx="8" fill="#9C27B0"/><text x="625" y="47" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Code Interpreter</text>
+<rect x="560" y="80" width="130" height="45" rx="8" fill="#E53935"/><text x="625" y="107" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Web Browser</text>
+<rect x="560" y="140" width="130" height="45" rx="8" fill="#FB8C00"/><text x="625" y="167" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">DALL-E (Images)</text>
+<rect x="740" y="60" width="130" height="50" rx="8" fill="#607D8B"/><text x="805" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Sandbox (gVisor)</text><text x="805" y="97" text-anchor="middle" fill="#fff" font-size="10">(Isolated Runtime)</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#6EE7B7" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="320" y1="85" x2="365" y2="85" stroke="#6EE7B7" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="510" y1="75" x2="555" y2="42" stroke="#6EE7B7" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="510" y1="85" x2="555" y2="100" stroke="#6EE7B7" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="510" y1="95" x2="555" y2="160" stroke="#6EE7B7" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="690" y1="42" x2="735" y2="72" stroke="#6EE7B7" stroke-width="2" marker-end="url(#ah2)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>User prompt may require external tools: "Analyze this CSV file" or "Search the web for latest news"</li>
+<li>LLM generates a structured tool call: <code>{"name": "python", "arguments": {"code": "import pandas as pd..."}}</code></li>
+<li>Chat Service (orchestrator) detects tool call in model output → routes to appropriate tool executor</li>
+<li><strong>Code Interpreter:</strong> Python code executed in gVisor sandbox (isolated container, no network, 120s timeout, 512MB memory)</li>
+<li><strong>Web Browser:</strong> Bing Search API → fetches top results → scrapes page content → injects into context for model to summarize</li>
+<li><strong>DALL-E:</strong> Image generation request sent to DALL-E 3 pipeline → returns image URL</li>
+<li>Tool output (execution result, search results, image URL) appended to conversation as tool_result message</li>
+<li>Model processes tool output and generates final natural language response to user</li>
+<li>Multi-step tool use: model can chain multiple tool calls (search → code analysis → generate chart)</li>
+</ol>
+
+<h3>Example</h3>
+<p>User uploads sales.csv and asks "Create a chart of monthly revenue trends." LLM generates Python code: <code>pd.read_csv('sales.csv').groupby('month')['revenue'].sum().plot()</code>. Code Interpreter executes in sandbox, produces matplotlib chart image. Image returned to model. Model responds: "Here's your monthly revenue chart. Revenue peaked in December at $1.2M..." with chart displayed inline.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>Code Interpreter Sandbox</h4>
+<p><strong>Runtime:</strong> Python 3.11 with pre-installed packages (pandas, numpy, matplotlib, scipy, sympy, PIL)</p>
+<p><strong>Isolation:</strong> gVisor (user-space kernel) — syscall-level sandboxing; no network access, no filesystem persistence</p>
+<p><strong>Limits:</strong> 120 second execution timeout, 512MB memory, 10MB output file size</p>
+<p><strong>State:</strong> Sandbox persists within a conversation (uploaded files accessible across multiple code runs)</p>
+</div>
+<div class="card">
+<h4>Function Calling (API)</h4>
+<p><strong>Schema:</strong> Developer defines functions as JSON Schema → model decides when to call them and with what arguments</p>
+<p><strong>Parallel:</strong> Model can invoke multiple functions in single turn (parallel function calling)</p>
+<p><strong>Forced:</strong> <code>tool_choice: "required"</code> forces model to use a tool; <code>"auto"</code> lets model decide</p>
+<p><strong>Use Cases:</strong> API integration, database queries, IoT control, structured data extraction</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 3: CUSTOM GPTs ============ -->
+<h2>Flow 3: Custom GPTs & Assistants API</h2>
+<div class="card">
+<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#D946EF"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">GPT Builder</text><text x="80" y="97" text-anchor="middle" fill="#fff" font-size="10">(Creator UI)</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">GPT Config</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="10">(System Prompt)</text>
+<rect x="370" y="30" width="130" height="50" rx="8" fill="#795548"/><text x="435" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Knowledge Files</text><text x="435" y="67" text-anchor="middle" fill="#fff" font-size="10">(RAG Retrieval)</text>
+<rect x="370" y="100" width="130" height="50" rx="8" fill="#9C27B0"/><text x="435" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Custom Actions</text><text x="435" y="137" text-anchor="middle" fill="#fff" font-size="10">(OpenAPI Spec)</text>
+<rect x="560" y="60" width="130" height="50" rx="8" fill="#00897B"/><text x="625" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Vector Store</text><text x="625" y="97" text-anchor="middle" fill="#fff" font-size="10">(Embeddings)</text>
+<rect x="740" y="60" width="130" height="50" rx="8" fill="#E53935"/><text x="805" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">GPT Store</text><text x="805" y="97" text-anchor="middle" fill="#fff" font-size="10">(Marketplace)</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#D946EF" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="320" y1="75" x2="365" y2="55" stroke="#D946EF" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="320" y1="95" x2="365" y2="120" stroke="#D946EF" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="500" y1="55" x2="555" y2="75" stroke="#D946EF" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="690" y1="85" x2="735" y2="85" stroke="#D946EF" stroke-width="2" marker-end="url(#ah3)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Creator builds Custom GPT: defines system prompt (instructions), uploads knowledge files, configures tools (code interpreter, web browsing, DALL-E)</li>
+<li>Knowledge files (PDFs, docs, CSVs) chunked, embedded via text-embedding-3-small, stored in vector store</li>
+<li>Custom Actions: creator provides OpenAPI spec → GPT can call external APIs during conversation</li>
+<li>When user chats with Custom GPT: system prompt injected, RAG retrieves relevant chunks from knowledge files, tools enabled per config</li>
+<li>RAG pipeline: user query embedded → cosine similarity search against vector store → top-K chunks injected into context</li>
+<li>Published GPTs listed in GPT Store marketplace; revenue sharing with creators based on usage</li>
+</ol>
+
+<h3>Example</h3>
+<p>Creator builds "Legal Research Assistant" GPT: system prompt with legal terminology guidelines, uploads 500 pages of case law PDFs (chunked into 3,000 embeddings), enables web browsing for recent rulings. User asks: "What precedents exist for data privacy in employment?" RAG retrieves 5 relevant chunks from uploaded case law, web browser fetches 2 recent rulings, model synthesizes comprehensive legal analysis.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>RAG (Retrieval-Augmented Generation)</h4>
+<p><strong>Chunking:</strong> Files split into 800-token chunks with 200-token overlap (sliding window)</p>
+<p><strong>Embeddings:</strong> text-embedding-3-small (1536 dimensions) — encodes semantic meaning of each chunk</p>
+<p><strong>Retrieval:</strong> Cosine similarity search; top-20 chunks retrieved, re-ranked by cross-encoder, top-5 injected into context</p>
+<p><strong>Vector DB:</strong> Qdrant / Pinecone — approximate nearest neighbor (ANN) search with HNSW index</p>
+</div>
+<div class="card">
+<h4>Assistants API (Developer)</h4>
+<p><strong>Threads:</strong> Conversation state managed server-side (no need to send full history each call)</p>
+<p><strong>Runs:</strong> Each user message creates a "run" — async execution with polling or streaming for status</p>
+<p><strong>File Search:</strong> Automatic RAG — upload files to assistant, auto-chunked and indexed</p>
+<p><strong>Code Interpreter:</strong> Same sandboxed Python environment as ChatGPT web interface</p>
+</div>
+</div>
+</div>
+
+<!-- ============ COMBINED ARCHITECTURE ============ -->
+<h2>Combined Architecture</h2>
+<div class="card">
+<svg viewBox="0 0 1050 500" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#10A37F"/></marker></defs>
+<rect x="20" y="50" width="130" height="50" rx="8" fill="#34A853"/><text x="85" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Web / Mobile</text><text x="85" y="87" text-anchor="middle" fill="#fff" font-size="10">(chat.openai.com)</text>
+<rect x="20" y="120" width="130" height="50" rx="8" fill="#34A853"/><text x="85" y="142" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">API Clients</text><text x="85" y="157" text-anchor="middle" fill="#fff" font-size="10">(Developers)</text>
+<rect x="210" y="80" width="130" height="60" rx="8" fill="#FB8C00"/><text x="275" y="105" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">API Gateway</text><text x="275" y="122" text-anchor="middle" fill="#fff" font-size="10">(CloudFlare + Auth)</text>
+<rect x="400" y="30" width="130" height="50" rx="8" fill="#4285F4"/><text x="465" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Chat Service</text><text x="465" y="67" text-anchor="middle" fill="#fff" font-size="10">(Orchestrator)</text>
+<rect x="400" y="100" width="130" height="50" rx="8" fill="#E53935"/><text x="465" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Safety Service</text><text x="465" y="137" text-anchor="middle" fill="#fff" font-size="10">(Moderation)</text>
+<rect x="400" y="170" width="130" height="50" rx="8" fill="#9C27B0"/><text x="465" y="192" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Tool Router</text><text x="465" y="207" text-anchor="middle" fill="#fff" font-size="10">(Code/Browse/DALL-E)</text>
+<rect x="600" y="30" width="140" height="55" rx="8" fill="#10A37F"/><text x="670" y="52" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">GPU Cluster</text><text x="670" y="70" text-anchor="middle" fill="#fff" font-size="10">(H100 × 10,000+)</text>
+<rect x="600" y="105" width="140" height="50" rx="8" fill="#9C27B0"/><text x="670" y="125" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Model Registry</text><text x="670" y="140" text-anchor="middle" fill="#fff" font-size="10">(GPT-4o/4/3.5)</text>
+<rect x="800" y="30" width="130" height="50" rx="8" fill="#607D8B"/><text x="865" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">KV Cache Pool</text><text x="865" y="67" text-anchor="middle" fill="#fff" font-size="10">(Paged Attention)</text>
+<rect x="800" y="100" width="130" height="50" rx="8" fill="#00897B"/><text x="865" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Vector Store</text><text x="865" y="137" text-anchor="middle" fill="#fff" font-size="10">(RAG / Embeddings)</text>
+<rect x="400" y="320" width="130" height="55" rx="8" fill="#795548"/><text x="465" y="342" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">PostgreSQL</text><text x="465" y="357" text-anchor="middle" fill="#fff" font-size="10">(Users + Conversations)</text>
+<rect x="600" y="320" width="140" height="55" rx="8" fill="#795548"/><text x="670" y="342" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Redis Cluster</text><text x="670" y="357" text-anchor="middle" fill="#fff" font-size="10">(Sessions + Rate Limits)</text>
+<rect x="800" y="320" width="130" height="55" rx="8" fill="#795548"/><text x="865" y="342" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Blob Storage</text><text x="865" y="357" text-anchor="middle" fill="#fff" font-size="10">(Files + Images)</text>
+<line x1="150" y1="75" x2="205" y2="100" stroke="#10A37F" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="150" y1="145" x2="205" y2="120" stroke="#10A37F" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="340" y1="100" x2="395" y2="55" stroke="#10A37F" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="340" y1="110" x2="395" y2="125" stroke="#10A37F" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="340" y1="125" x2="395" y2="195" stroke="#10A37F" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="530" y1="55" x2="595" y2="55" stroke="#10A37F" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="530" y1="125" x2="595" y2="125" stroke="#10A37F" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="740" y1="55" x2="795" y2="55" stroke="#10A37F" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="740" y1="130" x2="795" y2="120" stroke="#10A37F" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="465" y1="220" x2="465" y2="315" stroke="#10A37F" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="530" y1="55" x2="600" y2="335" stroke="#10A37F" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="530" y1="195" x2="800" y2="340" stroke="#10A37F" stroke-width="1.5" marker-end="url(#ah4)"/>
+</svg>
+</div>
+
+<!-- ============ DATABASE SCHEMA ============ -->
+<h2>Database Schema</h2>
+<div class="grid">
+<div class="card">
+<h3>PostgreSQL — Users & Conversations</h3>
+<pre><code>CREATE TABLE users (
+  user_id        UUID PRIMARY KEY,       <span class="tag tag-pk">PK</span>
+  email          VARCHAR(255) UNIQUE,    <span class="tag tag-idx">INDEX</span>
+  name           VARCHAR(100),
+  tier           VARCHAR(20),  -- free, plus, team, enterprise
+  org_id         UUID,                   <span class="tag tag-fk">FK</span>
+  api_key_hash   CHAR(64),
+  token_usage    JSONB,  -- {input_tokens, output_tokens, by_model}
+  rate_limit     JSONB,  -- per-model, per-tier limits
+  created_at     TIMESTAMPTZ
+);
+
+CREATE TABLE conversations (
+  conversation_id UUID PRIMARY KEY,      <span class="tag tag-pk">PK</span>
+  user_id         UUID REFERENCES users, <span class="tag tag-fk">FK</span>
+  title           VARCHAR(255),
+  model           VARCHAR(30),
+  gpt_id          UUID,  -- NULL for default ChatGPT
+  message_count   INT DEFAULT 0,
+  total_tokens    INT DEFAULT 0,
+  created_at      TIMESTAMPTZ,
+  updated_at      TIMESTAMPTZ            <span class="tag tag-idx">INDEX</span>
+);
+CREATE INDEX idx_conv_user ON conversations(user_id, updated_at DESC);
+
+CREATE TABLE messages (
+  message_id      UUID PRIMARY KEY,      <span class="tag tag-pk">PK</span>
+  conversation_id UUID,                  <span class="tag tag-fk">FK</span>
+  role            VARCHAR(20),  -- system, user, assistant, tool
+  content         TEXT,
+  tool_calls      JSONB,  -- [{name, arguments}]
+  tool_call_id    VARCHAR(64),
+  tokens          INT,
+  model           VARCHAR(30),
+  finish_reason   VARCHAR(20),  -- stop, length, tool_calls
+  created_at      TIMESTAMPTZ
+);
+CREATE INDEX idx_msg_conv ON messages(conversation_id, created_at);</code></pre>
+<p><span class="tag tag-shard">SHARD</span> Sharded by user_id — conversations and messages co-located per user</p>
+</div>
+
+<div class="card">
+<h3>Custom GPTs & Vector Store</h3>
+<pre><code>CREATE TABLE custom_gpts (
+  gpt_id          UUID PRIMARY KEY,      <span class="tag tag-pk">PK</span>
+  creator_id      UUID REFERENCES users, <span class="tag tag-fk">FK</span>
+  name            VARCHAR(100),
+  description     TEXT,
+  system_prompt   TEXT,
+  tools_enabled   VARCHAR(50)[],  -- ['code_interpreter','web_browsing','dalle']
+  actions_schema  JSONB,  -- OpenAPI spec for custom actions
+  knowledge_files UUID[],
+  vector_store_id UUID,
+  is_public       BOOLEAN DEFAULT FALSE,
+  usage_count     BIGINT DEFAULT 0,
+  rating          DECIMAL(2,1),
+  created_at      TIMESTAMPTZ
+);
+
+-- Vector Store (Qdrant / Pinecone)
+Collection: gpt_{gpt_id}_vectors
+{
+  "id": "chunk_uuid",
+  "vector": [0.023, -0.041, ..., 0.017],  // 1536 dims
+  "payload": {
+    "file_id": "uuid",
+    "chunk_index": 42,
+    "text": "The court ruled that...",
+    "metadata": {"page": 15, "filename": "case_law.pdf"}
+  }
+}</code></pre>
+</div>
+</div>
+
+<!-- ============ CACHE & CDN ============ -->
+<h2>Cache & CDN Deep Dive</h2>
+<div class="card">
+<div class="grid">
+<div class="card">
+<h4>KV Cache (GPU Memory)</h4>
+<p><strong>Purpose:</strong> Stores key-value attention states for all previous tokens — eliminates recomputation during autoregressive generation</p>
+<p><strong>PagedAttention:</strong> Virtual memory-like paging system for KV cache — non-contiguous memory allocation reduces fragmentation by 60-80%</p>
+<p><strong>Size:</strong> GPT-4 KV cache: ~2GB per active conversation at full context length</p>
+<p><strong>Eviction:</strong> LRU eviction of completed conversations; prefix caching for common system prompts</p>
+</div>
+<div class="card">
+<h4>Redis (Rate Limiting + Sessions)</h4>
+<p><strong>Rate Limits:</strong> Token bucket per user per model: <code>INCR user:{id}:gpt4o:tokens</code> with TTL window</p>
+<p><strong>Sessions:</strong> Auth session cache (JWT validation cache) — TTL 15 minutes</p>
+<p><strong>Conversation Cache:</strong> Recent conversations cached for fast sidebar loading — TTL 1 hour</p>
+</div>
+<div class="card">
+<h4>CDN (Cloudflare)</h4>
+<p><strong>Static:</strong> Web app assets (JS, CSS, fonts) cached at edge with immutable hashed filenames</p>
+<p><strong>DALL-E Images:</strong> Generated images cached at CDN edge — content-addressed URLs (hash-based, immutable)</p>
+<p><strong>API:</strong> No CDN caching for API responses — all dynamic, personalized content</p>
+</div>
+<div class="card">
+<h4>Prompt Caching</h4>
+<p><strong>Prefix Cache:</strong> Common system prompts (same first N tokens) share KV cache across requests — 50% cost reduction for identical prefixes</p>
+<p><strong>API:</strong> <code>cached_tokens</code> field in response shows how many input tokens were cache hits</p>
+<p><strong>Scope:</strong> Within same model, same org — not shared across organizations for privacy</p>
+</div>
+</div>
+</div>
+
+<!-- ============ SCALING ============ -->
+<h2>Scaling & Load Balancing</h2>
+<div class="card">
+<ul>
+<li><strong>GPU Cluster:</strong> 10,000+ H100 GPUs across multiple datacenters; tensor parallelism (8 GPUs per model instance for GPT-4), pipeline parallelism across nodes</li>
+<li><strong>Model Router:</strong> Weighted round-robin with queue depth awareness — routes to least-loaded inference server; per-model pools (GPT-4o, GPT-4, GPT-3.5 on separate clusters)</li>
+<li><strong>Continuous Batching:</strong> In-flight batching allows new requests to join batch at any iteration step — maximizes GPU utilization from 30% (naive) to 80%+</li>
+<li><strong>Graceful Degradation:</strong> During peak load, free-tier users may be queued or offered GPT-3.5 fallback; Plus subscribers get priority queue</li>
+<li><strong>Cloudflare:</strong> Global edge network handles DDoS protection, TLS termination, and geographic routing to nearest API datacenter</li>
+<li><strong>Multi-Region:</strong> US, EU, Asia inference clusters — data residency options for enterprise customers (EU data stays in EU)</li>
+</ul>
+</div>
+
+<!-- ============ TRADEOFFS ============ -->
+<h2>Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="pro">
+<h4>✅ Streaming (SSE)</h4>
+<ul>
+<li>Dramatically reduces perceived latency (first token in <500ms vs. waiting 10s+)</li>
+<li>Users can start reading while generation continues</li>
+<li>Can cancel/abort mid-stream saving compute</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ Streaming (SSE)</h4>
+<ul>
+<li>Cannot evaluate full response safety before showing to user</li>
+<li>More complex client implementation (partial JSON parsing)</li>
+<li>Long-lived connections strain load balancers</li>
+</ul>
+</div>
+<div class="pro">
+<h4>✅ Large Context Windows (128K)</h4>
+<ul>
+<li>Entire documents analyzed in single prompt</li>
+<li>Multi-turn conversations without losing context</li>
+<li>Reduces need for external retrieval systems</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ Large Context Windows</h4>
+<ul>
+<li>Quadratic attention cost — 128K tokens requires massive GPU memory</li>
+<li>"Lost in the middle" — models attend poorly to middle of long context</li>
+<li>Expensive — 128K tokens input costs $0.32 per request</li>
+</ul>
+</div>
+</div>
+
+<!-- ============ ALTERNATIVES ============ -->
+<h2>Alternative Approaches</h2>
+<div class="grid">
+<div class="card">
+<h4>Open-Source Self-Hosted (Llama 3)</h4>
+<p>Deploy Llama 3 70B on own infrastructure (vLLM on H100s). Full control, no per-token cost, data stays private. But requires ML ops expertise, no built-in safety stack, significant upfront GPU investment, and quality gap vs. GPT-4.</p>
+</div>
+<div class="card">
+<h4>Mixture of Experts (MoE)</h4>
+<p>Route tokens to specialized sub-models (e.g., Mixtral architecture). Only activates subset of parameters per token — 4x efficiency. Used by GPT-4 (rumored 8×220B MoE). Tradeoff: more total parameters (memory), but less compute per token.</p>
+</div>
+<div class="card">
+<h4>Speculative Decoding</h4>
+<p>Small draft model generates N candidate tokens, large model verifies in parallel. If draft model is accurate (70-80%), get near-draft-model speed with large-model quality. Requires maintaining two models and careful calibration.</p>
+</div>
+</div>
+
+<!-- ============ ADDITIONAL INFO ============ -->
+<h2>Additional Information</h2>
+<div class="card">
+<ul>
+<li><strong>RLHF Training Pipeline:</strong> Human labelers rank model outputs → reward model trained on preferences → PPO (Proximal Policy Optimization) fine-tunes base model to maximize reward. ~10M human preference comparisons for GPT-4.</li>
+<li><strong>Training Cost:</strong> GPT-4 estimated at $100M+ in compute (25,000 A100s for ~100 days). Inference costs dominate long-term (training is one-time, inference is ongoing).</li>
+<li><strong>Tokenizer (tiktoken):</strong> Byte Pair Encoding (BPE) with 100K vocabulary. Average English word = 1.3 tokens. Code-heavy text: ~2 tokens per keyword. Efficient for 100+ languages.</li>
+<li><strong>Memory / Personalization:</strong> "Memory" feature stores user preferences across conversations (stored in user profile, injected as system prompt context). User can view/delete memories. Enterprise: disabled by default for data privacy.</li>
+<li><strong>Enterprise (ChatGPT Enterprise):</strong> SOC 2 Type II compliant, data not used for training, SSO/SCIM, admin console, unlimited GPT-4 access, 128K context, advanced analytics dashboard.</li>
+</ul>
+</div>
+
+</body>
+</html>

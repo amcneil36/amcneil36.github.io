@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: Typeahead / Autocomplete</title>
+<style>
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: #e0e0e0; line-height: 1.7; }
+h1 { color: #00aaff; border-bottom: 3px solid #00aaff; padding-bottom: 10px; font-size: 2.2em; }
+h2 { color: #00ccff; margin-top: 40px; font-size: 1.6em; border-left: 4px solid #00ccff; padding-left: 12px; }
+h3 { color: #66ddff; font-size: 1.3em; }
+h4 { color: #88eeff; }
+.section { background: #1a1a2e; border-radius: 10px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
+.diagram-container { background: #0d1117; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
+.example { background: #1e293b; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+.example strong { color: #f59e0b; }
+table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+th { background: #2a2a4a; color: #00ccff; padding: 12px; text-align: left; border: 1px solid #444; }
+td { padding: 10px 12px; border: 1px solid #333; }
+tr:nth-child(even) { background: #1a1a2e; }
+tr:nth-child(odd) { background: #151528; }
+code { background: #2d2d4d; padding: 2px 8px; border-radius: 4px; color: #ff79c6; font-size: 0.95em; }
+.tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
+.tag-pk { background: #4a1a6b; color: #d4a5ff; }
+.tag-fk { background: #1a4a3b; color: #a5ffd4; }
+.tag-idx { background: #4a3a1a; color: #ffd4a5; }
+.tag-shard { background: #1a2a4a; color: #a5d4ff; }
+ul { padding-left: 25px; }
+li { margin: 5px 0; }
+.tradeoff { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+.pro { background: #0a2a1a; border: 1px solid #2a5a3a; padding: 15px; border-radius: 8px; }
+.con { background: #2a0a1a; border: 1px solid #5a2a3a; padding: 15px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<h1>System Design: Typeahead / Autocomplete</h1>
+
+<div class="section">
+<h2>Functional Requirements</h2>
+<ul>
+<li>As a user types, suggest top-N completions (5-10 results) in real-time</li>
+<li>Suggestions ranked by popularity/relevance (frequency of past queries)</li>
+<li>Support for personalized suggestions based on user's search history</li>
+<li>Filter offensive/inappropriate suggestions</li>
+<li>Update suggestion corpus based on trending queries</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Ultra-low Latency:</strong> &lt;50ms response time (must feel instantaneous as user types)</li>
+<li><strong>High Availability:</strong> 99.99% — search box unusable without typeahead</li>
+<li><strong>Scalability:</strong> Billions of queries/day, millions of unique suggestions</li>
+<li><strong>Freshness:</strong> Trending topics appear within minutes (e.g., breaking news)</li>
+<li><strong>Read-heavy:</strong> Read:Write ratio ~1000:1 (every keystroke triggers a read)</li>
+</ul>
+</div>
+
+<!-- Flow 1: Query Suggestions -->
+<div class="section">
+<h2>Flow 1: Serving Typeahead Suggestions (Read Path)</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1050 400" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00aaff"/></marker></defs>
+<rect x="20" y="160" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="80" y="188" text-anchor="middle" fill="white" font-size="12">User Client</text><text x="80" y="205" text-anchor="middle" fill="white" font-size="11">(Browser)</text>
+<rect x="190" y="160" width="130" height="60" rx="10" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="255" y="188" text-anchor="middle" fill="white" font-size="12">API Gateway /</text><text x="255" y="205" text-anchor="middle" fill="white" font-size="12">CDN Edge</text>
+<rect x="380" y="160" width="150" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="455" y="188" text-anchor="middle" fill="white" font-size="12">Typeahead Service</text><text x="455" y="205" text-anchor="middle" fill="white" font-size="11">(Trie in Memory)</text>
+<rect x="600" y="100" width="140" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="670" y="130" text-anchor="middle" fill="white" font-size="12">Redis Cache</text>
+<rect x="600" y="220" width="140" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="670" y="248" text-anchor="middle" fill="white" font-size="11">Personalization</text><text x="670" y="262" text-anchor="middle" fill="white" font-size="10">Service</text>
+<rect x="600" y="320" width="140" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="670" y="350" text-anchor="middle" fill="white" font-size="12">Filter Service</text>
+<rect x="830" y="160" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="900" y="188" text-anchor="middle" fill="white" font-size="11">Ranking/Blending</text>
+<line x1="140" y1="190" x2="188" y2="190" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="320" y1="190" x2="378" y2="190" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="530" y1="175" x2="598" y2="130" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="530" y1="195" x2="598" y2="240" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="530" y1="210" x2="598" y2="340" stroke="#00aaff" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="740" y1="125" x2="828" y2="175" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="740" y1="245" x2="828" y2="190" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<text x="520" y="30" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Typeahead: Serving Suggestions (Read Path)</text>
+</svg>
+</div>
+
+<h3>Step-by-Step</h3>
+<ol>
+<li><strong>User types "fac"</strong> → client debounces (50ms) → sends <code>GET /v1/suggestions?q=fac&limit=10</code></li>
+<li><strong>CDN edge check:</strong> Popular prefixes (e.g., "fac") cached at CDN edge. If hit, return immediately (~5ms)</li>
+<li><strong>Typeahead Service:</strong> Traverses in-memory Trie to node "f" → "a" → "c", collects top-K suggestions stored at each node</li>
+<li><strong>Redis cache:</strong> Prefix → top-10 suggestions cached. Reduces Trie traversal for hot prefixes</li>
+<li><strong>Personalization:</strong> If user logged in, blend user's recent searches + global suggestions (e.g., user searched "facebook marketplace" recently → boost it)</li>
+<li><strong>Filter:</strong> Remove blocked/offensive terms from results</li>
+<li><strong>Ranking/Blending:</strong> Merge global + personalized results, rank by weighted score, return top 10</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> User types "fac" → debounce 50ms → request hits CDN edge (cache miss) → Typeahead Service traverses Trie → finds ["facebook", "facebook login", "face mask", "facebook marketplace", "factory reset", "facetime", "facebook messenger", "facial recognition", "facts", "face swap"] → Filter removes none → Personalization boosts "facebook marketplace" (user searched it yesterday) → Returns ordered: ["facebook", "facebook marketplace", "facebook login", "facetime", "face mask", ...]. Total latency: ~30ms.
+</div>
+
+<h3>Deep Dive: Trie Data Structure</h3>
+<ul>
+<li><strong>Structure:</strong> Each node represents a character. Path from root to node = prefix. Each node stores top-K suggestions (precomputed) for that prefix</li>
+<li><strong>Memory:</strong> ~26 children per node (English alphabet + digits + space). For 10M unique queries, Trie uses ~10-50GB RAM depending on implementation</li>
+<li><strong>Top-K at each node:</strong> Instead of traversing all leaf descendants (O(n)), store precomputed top-10 suggestions at each prefix node. Lookup is O(prefix_length) — typically O(3-5)</li>
+<li><strong>Compressed Trie (Radix Tree):</strong> Merge single-child chains. "facebook" takes 1 node instead of 8. Reduces memory by ~60%</li>
+</ul>
+
+<h3>Deep Dive: Client-Side Optimization</h3>
+<ul>
+<li><strong>Debouncing:</strong> Don't send request on every keystroke. Wait 50-100ms after last keystroke</li>
+<li><strong>Client-side caching:</strong> Cache prefix → results in browser. If user types "fac" then "face", the "fac" results can be filtered client-side for "face" without a network request</li>
+<li><strong>Prefix reuse:</strong> If "fac" results include "facebook", and user types "face", client filters locally first. Only sends network request if local results are insufficient</li>
+</ul>
+</div>
+
+<!-- Flow 2: Updating Suggestions -->
+<div class="section">
+<h2>Flow 2: Updating Suggestion Corpus (Write Path)</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1050 380" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffaa00"/></marker></defs>
+<rect x="20" y="150" width="130" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="85" y="178" text-anchor="middle" fill="white" font-size="12">Search Queries</text><text x="85" y="195" text-anchor="middle" fill="white" font-size="11">(user searches)</text>
+<rect x="200" y="150" width="140" height="60" rx="10" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="270" y="178" text-anchor="middle" fill="white" font-size="12">Kafka Stream</text><text x="270" y="195" text-anchor="middle" fill="white" font-size="11">(Query Events)</text>
+<rect x="400" y="80" width="150" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="475" y="108" text-anchor="middle" fill="white" font-size="12">Aggregation Svc</text><text x="475" y="122" text-anchor="middle" fill="white" font-size="10">(Flink/Spark)</text>
+<rect x="400" y="220" width="150" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="475" y="248" text-anchor="middle" fill="white" font-size="11">Trending Detector</text><text x="475" y="262" text-anchor="middle" fill="white" font-size="10">(Count-Min Sketch)</text>
+<ellipse cx="700" cy="105" rx="75" ry="30" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="700" y="110" text-anchor="middle" fill="white" font-size="12">Frequency DB</text>
+<rect x="620" y="220" width="160" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="700" y="248" text-anchor="middle" fill="white" font-size="11">Trie Builder (Offline)</text>
+<rect x="860" y="150" width="150" height="60" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="935" y="178" text-anchor="middle" fill="white" font-size="12">Typeahead Servers</text><text x="935" y="195" text-anchor="middle" fill="white" font-size="11">(Hot-swap Trie)</text>
+<line x1="150" y1="180" x2="198" y2="180" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="340" y1="168" x2="398" y2="108" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="340" y1="192" x2="398" y2="242" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="550" y1="105" x2="623" y2="105" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="550" y1="250" x2="618" y2="250" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="700" y1="135" x2="700" y2="218" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow2)"/>
+<line x1="780" y1="240" x2="858" y2="185" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<text x="520" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Typeahead: Updating Suggestions (Write Path)</text>
+</svg>
+</div>
+
+<h3>Step-by-Step</h3>
+<ol>
+<li><strong>Search queries</strong> published to Kafka as events: <code>{ query: "facebook marketplace", timestamp: ..., user_id: ... }</code></li>
+<li><strong>Aggregation Service (Flink):</strong> Counts query frequencies in tumbling windows (5-minute windows). Outputs: <code>{ query: "facebook marketplace", count: 15420, window: "2024-01-15T10:00-10:05" }</code></li>
+<li><strong>Trending Detector:</strong> Uses Count-Min Sketch to identify queries with sudden frequency spikes (e.g., "super bowl" → 100x normal rate)</li>
+<li><strong>Frequency DB:</strong> Stores historical query frequencies. Aggregation service merges new counts with existing. Exponential decay applied (recent queries weighted more)</li>
+<li><strong>Trie Builder (offline, every 15 min):</strong> Reads top-N queries from Frequency DB, builds new compressed Trie with precomputed top-K per node</li>
+<li><strong>Hot-swap:</strong> New Trie pushed to Typeahead Servers. Servers swap atomic pointer from old Trie to new Trie (zero-downtime update)</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> Breaking news: "earthquake california" trends suddenly. Within 5 minutes, Flink aggregation detects 50K searches for "earthquake california". Trending Detector flags it. Frequency DB updated. Next Trie build (15 min cycle) includes "earthquake california" with high score. All Typeahead Servers get updated Trie. Users typing "ear" now see "earthquake california" in suggestions.
+</div>
+
+<h3>Deep Dive: Count-Min Sketch</h3>
+<ul>
+<li><strong>Purpose:</strong> Probabilistic data structure to count frequencies of items in a stream using sub-linear memory</li>
+<li><strong>How it works:</strong> 2D array of counters with d hash functions. Each item hashed d times, increment counters. Query: take minimum of d counter values (overcounts possible, undercounts impossible)</li>
+<li><strong>Memory:</strong> ~10MB can track millions of unique queries with <1% error rate</li>
+<li><strong>Why not HashMap:</strong> Millions of unique queries = GBs of memory. Count-Min Sketch uses constant memory regardless of cardinality</li>
+</ul>
+</div>
+
+<!-- Combined -->
+<div class="section">
+<h2>Combined Overall Architecture</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1100 550" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00aaff"/></marker></defs>
+<rect x="20" y="220" width="110" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="255" text-anchor="middle" fill="white" font-size="13">Client</text>
+<rect x="170" y="100" width="120" height="50" rx="8" fill="#888" stroke="#aaa" stroke-width="2"/><text x="230" y="130" text-anchor="middle" fill="white" font-size="12">CDN Edge</text>
+<rect x="170" y="220" width="120" height="50" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="230" y="250" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
+<rect x="350" y="130" width="150" height="60" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="425" y="158" text-anchor="middle" fill="white" font-size="12">Typeahead Svc</text><text x="425" y="175" text-anchor="middle" fill="white" font-size="11">(In-Memory Trie)</text>
+<rect x="350" y="260" width="150" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="425" y="290" text-anchor="middle" fill="white" font-size="12">Personalization</text>
+<rect x="350" y="370" width="150" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="425" y="400" text-anchor="middle" fill="white" font-size="12">Filter Service</text>
+<rect x="570" y="130" width="120" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="630" y="160" text-anchor="middle" fill="white" font-size="12">Redis Cache</text>
+<rect x="570" y="260" width="120" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="630" y="290" text-anchor="middle" fill="white" font-size="12">User History</text>
+<rect x="170" y="420" width="130" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="235" y="450" text-anchor="middle" fill="white" font-size="12">Kafka Stream</text>
+<rect x="350" y="480" width="150" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="425" y="505" text-anchor="middle" fill="white" font-size="11">Aggregation (Flink)</text>
+<ellipse cx="630" cy="420" rx="75" ry="30" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="630" y="425" text-anchor="middle" fill="white" font-size="12">Frequency DB</text>
+<rect x="780" y="405" width="140" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="850" y="435" text-anchor="middle" fill="white" font-size="12">Trie Builder</text>
+<line x1="130" y1="240" x2="168" y2="130" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="130" y1="250" x2="168" y2="245" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="290" y1="240" x2="348" y2="165" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="500" y1="160" x2="568" y2="155" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="290" y1="260" x2="348" y2="280" stroke="#00aaff" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="500" y1="285" x2="568" y2="285" stroke="#00aaff" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="130" y1="270" x2="168" y2="440" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="300" y1="445" x2="348" y2="500" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="500" y1="505" x2="558" y2="430" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="705" y1="420" x2="778" y2="425" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="850" y1="405" x2="500" y2="170" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow3)"/>
+<text x="530" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Typeahead: Combined Architecture</text>
+<text x="200" y="70" fill="#66ff66" font-size="12">READ PATH (green)</text>
+<text x="500" y="70" fill="#ffaa00" font-size="12">WRITE PATH (yellow)</text>
+</svg>
+</div>
+
+<div class="example">
+<strong>Example — Combined flow:</strong> User types "wor" → CDN cache miss → API Gateway routes to Typeahead Service → Trie lookup returns ["world cup", "world news", "wordle", "workout", "world map"] → Personalization checks user history (user searched "workout routine" before) → boosts "workout" → Final: ["workout", "world cup", "wordle", "world news", "world map"]. Meanwhile, user's completed search "workout at home" flows to Kafka → Flink aggregates → Frequency DB updates → Next Trie build incorporates updated counts.
+</div>
+</div>
+
+<!-- Database Schema -->
+<div class="section">
+<h2>Database Schema</h2>
+
+<h3>NoSQL — Cassandra / DynamoDB (Query Frequencies)</h3>
+<table>
+<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
+<tr><td rowspan="4"><strong>query_frequencies</strong></td><td>query_prefix</td><td>TEXT</td><td><span class="tag tag-pk">Partition Key</span> (first 3 chars)</td></tr>
+<tr><td>query_text</td><td>TEXT</td><td><span class="tag tag-pk">Clustering Key</span></td></tr>
+<tr><td>frequency</td><td>BIGINT</td><td>Decayed count (recent weighted more)</td></tr>
+<tr><td>last_updated</td><td>TIMESTAMP</td><td></td></tr>
+<tr><td rowspan="4"><strong>trending_queries</strong></td><td>time_bucket</td><td>TEXT</td><td><span class="tag tag-pk">Partition Key</span> (hourly bucket)</td></tr>
+<tr><td>rank</td><td>INT</td><td><span class="tag tag-pk">Clustering Key</span> (ASC)</td></tr>
+<tr><td>query_text</td><td>TEXT</td><td></td></tr>
+<tr><td>spike_score</td><td>FLOAT</td><td>current_rate / baseline_rate</td></tr>
+</table>
+
+<h3>SQL — PostgreSQL (Blocked Terms, User History)</h3>
+<table>
+<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
+<tr><td rowspan="3"><strong>blocked_terms</strong></td><td>term_id</td><td>SERIAL</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>term</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>reason</td><td>VARCHAR(50)</td><td>offensive, legal, spam</td></tr>
+<tr><td rowspan="4"><strong>user_search_history</strong></td><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK (composite)</span></td></tr>
+<tr><td>query_text</td><td>VARCHAR(255)</td><td><span class="tag tag-pk">PK (composite)</span></td></tr>
+<tr><td>search_count</td><td>INT</td><td></td></tr>
+<tr><td>last_searched</td><td>TIMESTAMP</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+</table>
+
+<h4>Sharding Strategy</h4>
+<ul>
+<li><strong>query_frequencies:</strong> Partition by first 3 characters of query (prefix-based sharding). All queries starting with "fac" on same partition. Trie Builder reads partitions in parallel</li>
+<li><strong>user_search_history:</strong> Shard by <code>user_id</code> — all history for one user co-located</li>
+<li><strong>In-memory Trie:</strong> Each Typeahead Server holds complete Trie replica (fits in ~50GB RAM). No sharding needed — full replication for speed</li>
+</ul>
+
+<h3>Indexes</h3>
+<ul>
+<li><code>blocked_terms.term</code> — Hash index for O(1) lookup during filtering</li>
+<li><code>user_search_history.last_searched</code> — B-tree index for "recent searches" feature (ORDER BY last_searched DESC LIMIT 10)</li>
+<li>Trie itself acts as the primary "index" — no traditional DB indexes needed for the read path</li>
+</ul>
+</div>
+
+<!-- Cache -->
+<div class="section">
+<h2>Cache Deep Dive</h2>
+<table>
+<tr><th>Cache Layer</th><th>What</th><th>Strategy</th><th>Eviction</th><th>TTL</th></tr>
+<tr><td>CDN Edge</td><td>Popular prefix results (e.g., "fac" → top 10)</td><td>Pull-based</td><td>TTL-based</td><td>5 min</td></tr>
+<tr><td>Redis (L1)</td><td>Hot prefix → suggestions mapping</td><td>Write-through (on Trie rebuild)</td><td>LRU</td><td>15 min</td></tr>
+<tr><td>In-Memory Trie</td><td>Complete suggestion corpus</td><td>Full rebuild every 15 min</td><td>N/A (replaced)</td><td>N/A</td></tr>
+<tr><td>Browser Cache</td><td>Recently fetched prefix results</td><td>Client-side HashMap</td><td>LRU (100 entries)</td><td>Session duration</td></tr>
+</table>
+
+<h3>CDN Deep Dive</h3>
+<ul>
+<li><strong>What's cached:</strong> Top ~100K most common prefixes (covers ~95% of all typeahead requests). E.g., "fac", "goo", "ama", "you" are extremely popular</li>
+<li><strong>Cache key:</strong> <code>typeahead:v2:{prefix}:{locale}</code> (locale because suggestions differ by country)</li>
+<li><strong>TTL: 5 minutes</strong> — balance between freshness (trending queries) and cache hit ratio</li>
+<li><strong>Cache hit ratio:</strong> ~85-90% at CDN edge (Zipf's law — small number of prefixes dominate)</li>
+<li><strong>Invalidation:</strong> Trending queries trigger targeted CDN invalidation for affected prefixes</li>
+</ul>
+</div>
+
+<!-- Scaling -->
+<div class="section">
+<h2>Scaling Considerations</h2>
+<ul>
+<li><strong>Typeahead Servers:</strong> Full Trie replicated on every server (read-only). Horizontally scale by adding more replicas. L7 load balancer distributes requests</li>
+<li><strong>Memory optimization:</strong> Compressed Trie (radix tree) + store only top-K per node (not all descendants). ~50GB for 100M unique queries</li>
+<li><strong>Trie sharding (for very large corpora):</strong> Shard by prefix range. Servers A-M handle "a"-"m", Servers N-Z handle "n"-"z". API Gateway routes by first character. Doubles available memory</li>
+<li><strong>Geographic replication:</strong> Trie replicas in every region. Trie Builder in central region pushes to all edges via S3 + notification</li>
+<li><strong>Kafka partitioning:</strong> Query events partitioned by query hash. Flink aggregation parallelized across partitions</li>
+<li><strong>Debounce + client caching reduces server load by ~60%</strong> (most keystrokes resolved client-side)</li>
+</ul>
+</div>
+
+<!-- Tradeoffs -->
+<div class="section">
+<h2>Tradeoffs & Deep Dives</h2>
+<div class="tradeoff">
+<div class="pro"><h4>✅ In-Memory Trie</h4><ul><li>O(prefix_length) lookup — ~10μs per query</li><li>Pre-computed top-K eliminates sorting at query time</li><li>No disk I/O, no network call to DB</li></ul></div>
+<div class="con"><h4>❌ In-Memory Trie Downsides</h4><ul><li>High memory cost (50GB per server × N replicas)</li><li>Cold start: loading Trie from disk takes minutes</li><li>Staleness: 15-min rebuild cycle means trending queries delayed</li></ul></div>
+</div>
+<div class="tradeoff">
+<div class="pro"><h4>✅ Periodic Rebuild</h4><ul><li>Simple: batch process, atomic swap</li><li>No real-time Trie mutations (avoid concurrent modification)</li><li>Consistent state across all servers after swap</li></ul></div>
+<div class="con"><h4>❌ Alternative: Real-time Trie Update</h4><ul><li>Lower staleness (seconds vs minutes)</li><li>But: concurrent mutations require locking, complex consistency</li><li>Difficult to maintain sorted top-K during live updates</li></ul></div>
+</div>
+</div>
+
+<!-- Alternatives -->
+<div class="section">
+<h2>Alternative Approaches</h2>
+<ul>
+<li><strong>Elasticsearch prefix queries:</strong> Use <code>prefix</code> or <code>completion suggester</code> instead of custom Trie. Pros: built-in fuzzy matching, scoring, easy to operate. Cons: higher latency (~5-10ms vs ~1ms Trie), more resource-heavy, less control over ranking</li>
+<li><strong>Ternary Search Tree:</strong> More memory-efficient than standard Trie (pointers: left/equal/right). Trades slightly slower lookup for ~30% memory savings</li>
+<li><strong>Bloom filter pre-check:</strong> Before Trie lookup, check if prefix exists in Bloom filter. Quickly reject nonsensical prefixes (e.g., "xzqw") without Trie traversal</li>
+<li><strong>ML-based ranking:</strong> Instead of frequency-based ranking, use a small neural network (BERT-tiny) to rank suggestions based on context (time of day, user demographics, location). Higher relevance but adds ~10ms latency</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Additional Information</h2>
+<ul>
+<li><strong>Spelling correction:</strong> "facebok" → "facebook". Edit distance (Levenshtein) computed against known queries. Stored as aliases in the Trie: "facebok" node points to "facebook" suggestions</li>
+<li><strong>Multi-language support:</strong> Separate Tries per locale. Japanese/Chinese use word-level tokenization instead of character-level Trie. Unicode normalization (NFC) applied to all inputs</li>
+<li><strong>Privacy:</strong> Individual search queries anonymized before aggregation. Only aggregate counts stored. User search history encrypted and deletable (GDPR right to erasure)</li>
+<li><strong>A/B testing:</strong> Different ranking models tested by routing % of traffic to experimental Typeahead servers with different Tries or ranking weights</li>
+</ul>
+</div>
+</body>
+</html>

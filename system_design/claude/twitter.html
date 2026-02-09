@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: Twitter</title>
+<style>
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: #e0e0e0; line-height: 1.7; }
+h1 { color: #1da1f2; border-bottom: 3px solid #1da1f2; padding-bottom: 10px; font-size: 2.2em; }
+h2 { color: #4db8ff; margin-top: 40px; font-size: 1.6em; border-left: 4px solid #4db8ff; padding-left: 12px; }
+h3 { color: #80cfff; font-size: 1.3em; }
+.section { background: #1a1a2e; border-radius: 10px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
+.diagram-container { background: #0d1117; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
+.example { background: #1e293b; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+.example strong { color: #f59e0b; }
+table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+th { background: #2a2a4a; color: #4db8ff; padding: 12px; text-align: left; border: 1px solid #444; }
+td { padding: 10px 12px; border: 1px solid #333; }
+tr:nth-child(even) { background: #1a1a2e; }
+tr:nth-child(odd) { background: #151528; }
+code { background: #2d2d4d; padding: 2px 8px; border-radius: 4px; color: #ff79c6; font-size: 0.95em; }
+.tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
+.tag-pk { background: #4a1a6b; color: #d4a5ff; }
+.tag-fk { background: #1a4a3b; color: #a5ffd4; }
+.tag-idx { background: #4a3a1a; color: #ffd4a5; }
+ul { padding-left: 25px; }
+li { margin: 5px 0; }
+.tradeoff { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+.pro { background: #0a2a1a; border: 1px solid #2a5a3a; padding: 15px; border-radius: 8px; }
+.con { background: #2a0a1a; border: 1px solid #5a2a3a; padding: 15px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<h1>System Design: Twitter (Microblogging Platform)</h1>
+
+<div class="section">
+<h2>Functional Requirements</h2>
+<ul>
+<li>Users can post tweets (280 chars max, with optional media)</li>
+<li>Follow/unfollow other users (asymmetric relationship)</li>
+<li>View home timeline (tweets from followed users, ranked)</li>
+<li>Like, retweet, quote tweet, and reply to tweets</li>
+<li>Hashtags and trending topics</li>
+<li>User mentions and notifications</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Read-heavy:</strong> ~600K tweets/sec read vs ~6K tweets/sec write (100:1 ratio)</li>
+<li><strong>Low Latency:</strong> Timeline loads in &lt;300ms</li>
+<li><strong>High Availability:</strong> 99.99% uptime</li>
+<li><strong>Scalability:</strong> 500M+ daily active users</li>
+<li><strong>Eventual Consistency:</strong> Acceptable for timelines (seconds delay OK)</li>
+</ul>
+</div>
+
+<!-- Flow 1: Posting a Tweet -->
+<div class="section">
+<h2>Flow 1: Posting a Tweet</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1100 450" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#1da1f2"/></marker></defs>
+<rect x="20" y="180" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="80" y="215" text-anchor="middle" fill="white" font-size="13">User</text>
+<rect x="190" y="180" width="130" height="60" rx="10" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="255" y="215" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
+<rect x="380" y="180" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="445" y="215" text-anchor="middle" fill="white" font-size="13">Tweet Service</text>
+<rect x="580" y="80" width="140" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="650" y="110" text-anchor="middle" fill="white" font-size="12">Fan-out Service</text>
+<rect x="580" y="200" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="650" y="230" text-anchor="middle" fill="white" font-size="12">Media Service</text>
+<rect x="580" y="310" width="140" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="650" y="340" text-anchor="middle" fill="white" font-size="12">Kafka</text>
+<ellipse cx="850" cy="105" rx="55" ry="25" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="850" y="110" text-anchor="middle" fill="white" font-size="11">Tweet DB</text>
+<rect x="800" y="180" width="110" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="855" y="208" text-anchor="middle" fill="white" font-size="11">Timeline Cache</text><text x="855" y="222" text-anchor="middle" fill="white" font-size="10">(Redis)</text>
+<rect x="800" y="300" width="110" height="50" rx="8" fill="#888" stroke="#aaa" stroke-width="2"/><text x="855" y="330" text-anchor="middle" fill="white" font-size="12">S3 / CDN</text>
+<line x1="140" y1="210" x2="188" y2="210" stroke="#1da1f2" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="320" y1="210" x2="378" y2="210" stroke="#1da1f2" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="510" y1="195" x2="578" y2="110" stroke="#1da1f2" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="510" y1="215" x2="578" y2="225" stroke="#1da1f2" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="510" y1="230" x2="578" y2="330" stroke="#1da1f2" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="720" y1="100" x2="793" y2="100" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="720" y1="110" x2="798" y2="200" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="720" y1="225" x2="798" y2="320" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<text x="550" y="30" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Twitter: Post Tweet Flow</text>
+</svg>
+</div>
+
+<h3>Step-by-Step</h3>
+<ol>
+<li><strong>User posts tweet:</strong> <code>POST /v1/tweets { text: "Hello world! #firsttweet", media_ids: [] }</code></li>
+<li><strong>Tweet Service:</strong> Validates content (280 char limit, content policy), stores in Tweet DB (Cassandra)</li>
+<li><strong>Fan-out Service:</strong> For regular users (&lt;5K followers), pushes tweet_id to each follower's timeline cache (Redis sorted set). For celebrities (&gt;5K followers), skips fan-out (handled at read time)</li>
+<li><strong>Media Service:</strong> If media attached, uploads to S3, generates thumbnails, returns CDN URLs</li>
+<li><strong>Kafka:</strong> Publishes tweet event for async consumers (search indexing, trending detection, notification service, analytics)</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> User with 2000 followers tweets "Just shipped a new feature! 🚀 #engineering". Tweet Service stores in Cassandra. Fan-out Service reads 2000 follower IDs from Follow Graph → ZADD tweet_id to 2000 Redis sorted sets (pipelined, ~30ms). Kafka event → Search Service indexes tweet for #engineering search → Trending Detector counts #engineering mentions → Notification Service notifies users with notifications enabled.
+</div>
+
+<h3>Deep Dive: Fan-out Service</h3>
+<ul>
+<li><strong>Fan-out on write (push):</strong> For users with &lt;5K followers. Pre-computes timelines. Read is O(1) — just read from Redis</li>
+<li><strong>Fan-out on read (pull):</strong> For celebrities with &gt;5K followers. At read time, merge celebrity tweets with cached timeline</li>
+<li><strong>Hybrid:</strong> Timeline = cached fan-out tweets + on-demand celebrity tweets. Merge + rank at read time</li>
+<li><strong>Worker pool:</strong> Fan-out workers consume from internal queue. Partitioned by follower_id for locality. Batch Redis writes for efficiency</li>
+</ul>
+</div>
+
+<!-- Flow 2: Reading Timeline -->
+<div class="section">
+<h2>Flow 2: Reading Home Timeline</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1050 350" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffaa00"/></marker></defs>
+<rect x="20" y="140" width="110" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="175" text-anchor="middle" fill="white" font-size="13">User</text>
+<rect x="180" y="140" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="245" y="168" text-anchor="middle" fill="white" font-size="12">Timeline</text><text x="245" y="185" text-anchor="middle" fill="white" font-size="12">Service</text>
+<rect x="370" y="80" width="130" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="435" y="110" text-anchor="middle" fill="white" font-size="12">Timeline Cache</text>
+<rect x="370" y="180" width="130" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="435" y="208" text-anchor="middle" fill="white" font-size="11">Celebrity Merge</text>
+<rect x="370" y="280" width="130" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="435" y="310" text-anchor="middle" fill="white" font-size="12">Tweet Hydrator</text>
+<rect x="570" y="140" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="640" y="170" text-anchor="middle" fill="white" font-size="12">Ranking Service</text>
+<rect x="780" y="140" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="840" y="175" text-anchor="middle" fill="white" font-size="12">Final Feed</text>
+<line x1="130" y1="170" x2="178" y2="170" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="310" y1="155" x2="368" y2="110" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="310" y1="175" x2="368" y2="205" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="500" y1="110" x2="500" y2="178" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
+<line x1="500" y1="210" x2="500" y2="278" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
+<line x1="500" y1="305" x2="568" y2="170" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="710" y1="165" x2="778" y2="170" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<text x="520" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Twitter: Home Timeline Read Flow</text>
+</svg>
+</div>
+
+<h3>Step-by-Step</h3>
+<ol>
+<li><strong>Timeline Service</strong> reads top 200 tweet_ids from user's Timeline Cache (Redis <code>ZREVRANGE feed:{user_id} 0 199</code>)</li>
+<li><strong>Celebrity Merge:</strong> Fetches recent tweets from celebrities the user follows (stored separately in <code>celeb_recent:{celeb_id}</code>). Merges with cached tweets</li>
+<li><strong>Tweet Hydrator:</strong> Batch-fetches full tweet objects (text, author info, media URLs, engagement counts) from Tweet DB + cache</li>
+<li><strong>Ranking Service:</strong> ML model scores tweets by predicted engagement. Considers: recency, author-viewer relationship, tweet type (text vs media), engagement velocity</li>
+<li><strong>Returns top 50 ranked tweets</strong> to client</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> User follows 500 accounts (10 celebrities, 490 regular). Timeline Cache has 200 pre-pushed tweet_ids. Celebrity Merge adds 30 recent tweets from 10 celebrities. Total: 230 candidates. Hydrate from Cassandra (180 cache hits, 50 DB reads). Ranking Service scores: viral tweet from friend (high engagement velocity) scores 0.95, old tweet from acquaintance scores 0.12. Top 50 returned. Total: ~250ms.
+</div>
+</div>
+
+<!-- Combined Architecture -->
+<div class="section">
+<h2>Combined Overall Architecture</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1150 550" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#1da1f2"/></marker></defs>
+<rect x="20" y="240" width="100" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="70" y="275" text-anchor="middle" fill="white" font-size="12">Clients</text>
+<rect x="160" y="240" width="110" height="50" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="215" y="270" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
+<rect x="320" y="80" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="380" y="105" text-anchor="middle" fill="white" font-size="11">Tweet Svc</text>
+<rect x="320" y="150" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="380" y="175" text-anchor="middle" fill="white" font-size="11">Timeline Svc</text>
+<rect x="320" y="220" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="380" y="245" text-anchor="middle" fill="white" font-size="11">User Svc</text>
+<rect x="320" y="290" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="380" y="315" text-anchor="middle" fill="white" font-size="11">Search Svc</text>
+<rect x="320" y="360" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="380" y="385" text-anchor="middle" fill="white" font-size="11">Trending Svc</text>
+<rect x="320" y="430" width="120" height="40" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="380" y="455" text-anchor="middle" fill="white" font-size="11">Fan-out Svc</text>
+<rect x="510" y="80" width="110" height="40" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="565" y="105" text-anchor="middle" fill="white" font-size="11">Kafka</text>
+<rect x="510" y="150" width="110" height="40" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="565" y="175" text-anchor="middle" fill="white" font-size="11">Timeline Cache</text>
+<rect x="510" y="220" width="110" height="40" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="565" y="245" text-anchor="middle" fill="white" font-size="11">Ranking Svc</text>
+<rect x="510" y="290" width="110" height="40" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="565" y="315" text-anchor="middle" fill="white" font-size="11">Elasticsearch</text>
+<rect x="510" y="360" width="110" height="40" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="565" y="385" text-anchor="middle" fill="white" font-size="11">Notification</text>
+<rect x="510" y="430" width="110" height="40" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="565" y="455" text-anchor="middle" fill="white" font-size="11">Follow Graph</text>
+<ellipse cx="720" cy="100" rx="55" ry="22" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="720" y="105" text-anchor="middle" fill="white" font-size="10">Tweet DB</text>
+<ellipse cx="720" cy="175" rx="55" ry="22" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="720" y="180" text-anchor="middle" fill="white" font-size="10">User DB</text>
+<ellipse cx="720" cy="250" rx="55" ry="22" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="720" y="255" text-anchor="middle" fill="white" font-size="10">Graph DB</text>
+<rect x="680" y="310" width="100" height="35" rx="8" fill="#888" stroke="#aaa" stroke-width="2"/><text x="730" y="332" text-anchor="middle" fill="white" font-size="10">S3 / CDN</text>
+<line x1="120" y1="265" x2="158" y2="265" stroke="#1da1f2" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="270" y1="255" x2="318" y2="100" stroke="#1da1f2" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="270" y1="260" x2="318" y2="170" stroke="#1da1f2" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="270" y1="265" x2="318" y2="240" stroke="#1da1f2" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="270" y1="270" x2="318" y2="310" stroke="#1da1f2" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="440" y1="100" x2="508" y2="100" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="440" y1="170" x2="508" y2="170" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="440" y1="310" x2="508" y2="310" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="440" y1="450" x2="508" y2="450" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="620" y1="100" x2="663" y2="100" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="620" y1="245" x2="663" y2="175" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="620" y1="455" x2="663" y2="250" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<text x="575" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Twitter: Combined Architecture</text>
+</svg>
+</div>
+
+<div class="example">
+<strong>Example — Full lifecycle:</strong> User tweets "Breaking: major acquisition announced! $AAPL #tech" → Tweet Service stores in Cassandra → Kafka event → Fan-out to 2K followers' timeline caches → Search Service indexes for #tech and $AAPL → Trending Service counts #tech (if spiking, adds to trending list) → Notification Service alerts users with notifications for @author. Follower opens app → Timeline Service reads cache + celebrity tweets → Ranking ML sorts → feed displayed in ~200ms.
+</div>
+</div>
+
+<!-- Database Schema -->
+<div class="section">
+<h2>Database Schema</h2>
+
+<h3>NoSQL — Cassandra (Tweets)</h3>
+<table>
+<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
+<tr><td rowspan="7"><strong>tweets</strong></td><td>tweet_id</td><td>BIGINT (Snowflake)</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>text</td><td>VARCHAR(280)</td><td></td></tr>
+<tr><td>media_urls</td><td>LIST&lt;TEXT&gt;</td><td></td></tr>
+<tr><td>reply_to_id</td><td>BIGINT</td><td>Nullable</td></tr>
+<tr><td>retweet_of_id</td><td>BIGINT</td><td>Nullable</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td></tr>
+<tr><td rowspan="3"><strong>user_tweets</strong></td><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">Partition Key</span></td></tr>
+<tr><td>tweet_id</td><td>BIGINT</td><td><span class="tag tag-pk">Clustering Key</span> DESC</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td></tr>
+</table>
+
+<h3>SQL — MySQL/PostgreSQL (Users, Follow Graph)</h3>
+<table>
+<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
+<tr><td rowspan="5"><strong>users</strong></td><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>username</td><td>VARCHAR(15)</td><td><span class="tag tag-idx">UNIQUE INDEX</span></td></tr>
+<tr><td>display_name</td><td>VARCHAR(50)</td><td></td></tr>
+<tr><td>follower_count</td><td>INT</td><td>Denormalized</td></tr>
+<tr><td>following_count</td><td>INT</td><td>Denormalized</td></tr>
+<tr><td rowspan="3"><strong>follows</strong></td><td>follower_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK (composite)</span> <span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>followee_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK (composite)</span> <span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td></tr>
+</table>
+
+<h3>Timeline Cache — Redis</h3>
+<table>
+<tr><th>Key</th><th>Type</th><th>Details</th></tr>
+<tr><td><code>timeline:{user_id}</code></td><td>Sorted Set</td><td>tweet_ids scored by timestamp. Max 800 entries</td></tr>
+<tr><td><code>celeb_recent:{user_id}</code></td><td>Sorted Set</td><td>Latest 100 tweets from celebrities</td></tr>
+</table>
+
+<h4>Sharding</h4>
+<ul>
+<li><strong>tweets (Cassandra):</strong> Partition by <code>tweet_id</code>. user_tweets table partitions by <code>user_id</code> for profile timeline</li>
+<li><strong>follows:</strong> Shard by <code>follower_id</code> — "who do I follow?" is shard-local. Reverse index on <code>followee_id</code> for "who follows me?"</li>
+<li><strong>Timeline Cache:</strong> Redis Cluster, shard by <code>user_id</code></li>
+</ul>
+
+<h3>Indexes</h3>
+<ul>
+<li><code>tweets.user_id</code> — Secondary index for "all tweets by user X" (user profile)</li>
+<li><code>follows(follower_id, followee_id)</code> — Composite PK + index on followee_id for fan-out (get all followers of user X)</li>
+<li>Elasticsearch: full-text index on tweet text, hashtag index, user mention index</li>
+</ul>
+</div>
+
+<!-- Cache -->
+<div class="section">
+<h2>Cache Deep Dive</h2>
+<table>
+<tr><th>Cache</th><th>Strategy</th><th>Eviction</th><th>TTL</th></tr>
+<tr><td>Timeline Cache (Redis)</td><td>Write-through (fan-out)</td><td>Size-capped (800)</td><td>None</td></tr>
+<tr><td>Tweet Cache (Memcached)</td><td>Read-through</td><td>LRU</td><td>1 hour</td></tr>
+<tr><td>User Cache (Redis)</td><td>Read-through</td><td>LRU</td><td>30 min</td></tr>
+<tr><td>Trending Cache (Redis)</td><td>Write-through</td><td>TTL</td><td>5 min</td></tr>
+</table>
+
+<h3>CDN</h3>
+<ul>
+<li><strong>Media CDN:</strong> All tweet images, videos, GIFs served via CDN. Multiple resolution variants per image</li>
+<li><strong>Video:</strong> HLS adaptive streaming for video tweets. CDN caches HLS segments</li>
+<li><strong>TTL:</strong> Media: 365 days. Profile pics: 30 days. Trending content pre-warmed at edge</li>
+</ul>
+</div>
+
+<!-- Scaling & Tradeoffs -->
+<div class="section">
+<h2>Scaling Considerations</h2>
+<ul>
+<li><strong>Fan-out bottleneck:</strong> Celebrity tweet = millions of cache writes. Solution: hybrid approach (no fan-out for celebrities) + priority queues (fan-out to online users first)</li>
+<li><strong>Timeline Cache:</strong> 500M users × 800 IDs × 8 bytes = ~3.2TB Redis. Partitioned across thousands of Redis instances</li>
+<li><strong>Trending:</strong> Count-Min Sketch for approximate hashtag counting in streaming fashion. Top-K maintained per region + global</li>
+<li><strong>Search:</strong> Elasticsearch cluster, partitioned by time (hourly shards). Old shards merged and moved to cheaper storage</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Tradeoffs & Deep Dives</h2>
+<div class="tradeoff">
+<div class="pro"><h4>✅ Hybrid Fan-out</h4><ul><li>Best of both worlds: fast reads for majority, manageable writes</li><li>Only ~0.1% of users are celebrities — fan-out savings are massive</li></ul></div>
+<div class="con"><h4>❌ Hybrid Complexity</h4><ul><li>Two code paths increase complexity</li><li>Celebrity tweet merge at read time adds ~50ms</li><li>Need to maintain "is celebrity" threshold</li></ul></div>
+</div>
+</div>
+
+<div class="section">
+<h2>Alternative Approaches</h2>
+<ul>
+<li><strong>Pure pull model:</strong> No pre-computation. Every timeline request queries all followed users' tweets. Simple but O(following_count) per read — too slow at scale</li>
+<li><strong>GraphQL API:</strong> Single flexible query instead of multiple REST endpoints. Client specifies exactly which tweet fields needed. Reduces over-fetching</li>
+<li><strong>Event sourcing:</strong> Store all events (tweet, like, retweet) as immutable log. Derive timeline views from event stream. Better for analytics but complex to implement</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Additional Information</h2>
+<ul>
+<li><strong>Snowflake IDs:</strong> Twitter invented Snowflake for globally unique, time-sortable, decentralized ID generation. 64-bit = timestamp(41) + datacenter(5) + machine(5) + sequence(12)</li>
+<li><strong>Rate limiting:</strong> 300 tweets/3hrs per user, 900 reads/15min per API key. Sliding window counter in Redis</li>
+<li><strong>Content moderation:</strong> ML classifiers run on every tweet: hate speech, spam, misinformation. Flagged tweets hidden pending review. Appeal process for false positives</li>
+<li><strong>Real-time updates:</strong> WebSocket for real-time timeline updates ("new tweets available" indicator). Long-polling fallback for environments blocking WebSocket</li>
+</ul>
+</div>
+</body>
+</html>

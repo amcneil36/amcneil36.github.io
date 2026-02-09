@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: Uber</title>
+<style>
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: #e0e0e0; line-height: 1.7; }
+h1 { color: #00c9ff; border-bottom: 3px solid #00c9ff; padding-bottom: 10px; font-size: 2.2em; }
+h2 { color: #33d6ff; margin-top: 40px; font-size: 1.6em; border-left: 4px solid #33d6ff; padding-left: 12px; }
+h3 { color: #66e3ff; font-size: 1.3em; }
+.section { background: #1a1a2e; border-radius: 10px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
+.diagram-container { background: #0d1117; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
+.example { background: #1e293b; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+.example strong { color: #f59e0b; }
+table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+th { background: #2a2a4a; color: #33d6ff; padding: 12px; text-align: left; border: 1px solid #444; }
+td { padding: 10px 12px; border: 1px solid #333; }
+tr:nth-child(even) { background: #1a1a2e; }
+tr:nth-child(odd) { background: #151528; }
+code { background: #2d2d4d; padding: 2px 8px; border-radius: 4px; color: #ff79c6; font-size: 0.95em; }
+.tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
+.tag-pk { background: #4a1a6b; color: #d4a5ff; }
+.tag-fk { background: #1a4a3b; color: #a5ffd4; }
+.tag-idx { background: #4a3a1a; color: #ffd4a5; }
+ul { padding-left: 25px; }
+li { margin: 5px 0; }
+.tradeoff { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+.pro { background: #0a2a1a; border: 1px solid #2a5a3a; padding: 15px; border-radius: 8px; }
+.con { background: #2a0a1a; border: 1px solid #5a2a3a; padding: 15px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<h1>System Design: Uber (Ride-Sharing Platform)</h1>
+
+<div class="section">
+<h2>Functional Requirements</h2>
+<ul>
+<li>Riders request rides by specifying pickup and destination locations</li>
+<li>Match riders with nearby available drivers in real-time</li>
+<li>Real-time driver location tracking (GPS updates every 3-4 seconds)</li>
+<li>Dynamic pricing (surge pricing based on supply/demand)</li>
+<li>ETA calculation for pickup and trip duration</li>
+<li>Payment processing (ride fare calculation, driver payout)</li>
+<li>Trip history and ratings for riders and drivers</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Low Latency:</strong> Matching rider to driver in &lt;10 seconds</li>
+<li><strong>Real-time:</strong> Location updates processed within 1-2 seconds</li>
+<li><strong>High Availability:</strong> 99.99% — outage means people stranded</li>
+<li><strong>Scalability:</strong> Millions of concurrent rides, millions of driver location updates/sec</li>
+<li><strong>Consistency:</strong> Strong consistency for ride matching (a driver can't be matched to two riders)</li>
+<li><strong>Location accuracy:</strong> GPS precision within 5-10 meters</li>
+</ul>
+</div>
+
+<!-- Flow 1: Ride Request & Matching -->
+<div class="section">
+<h2>Flow 1: Ride Request & Driver Matching</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1150 500" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00c9ff"/></marker></defs>
+<rect x="20" y="200" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="80" y="235" text-anchor="middle" fill="white" font-size="13">Rider App</text>
+<rect x="190" y="200" width="130" height="60" rx="10" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="255" y="228" text-anchor="middle" fill="white" font-size="12">API Gateway /</text><text x="255" y="245" text-anchor="middle" fill="white" font-size="12">Load Balancer</text>
+<rect x="380" y="200" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="445" y="235" text-anchor="middle" fill="white" font-size="13">Trip Service</text>
+<rect x="580" y="100" width="150" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="655" y="130" text-anchor="middle" fill="white" font-size="12">Matching Engine</text>
+<rect x="580" y="200" width="150" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="655" y="225" text-anchor="middle" fill="white" font-size="11">Location Service</text><text x="655" y="240" text-anchor="middle" fill="white" font-size="10">(Geospatial Index)</text>
+<rect x="580" y="310" width="150" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="655" y="340" text-anchor="middle" fill="white" font-size="12">Pricing Service</text>
+<rect x="580" y="410" width="150" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="655" y="440" text-anchor="middle" fill="white" font-size="12">ETA Service</text>
+<rect x="810" y="100" width="130" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="875" y="128" text-anchor="middle" fill="white" font-size="11">Driver Supply</text><text x="875" y="142" text-anchor="middle" fill="white" font-size="10">Index (Redis)</text>
+<rect x="810" y="200" width="130" height="50" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="875" y="230" text-anchor="middle" fill="white" font-size="12">Map Service</text>
+<rect x="810" y="310" width="130" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="875" y="340" text-anchor="middle" fill="white" font-size="13">Driver App</text>
+<ellipse cx="1030" cy="125" rx="60" ry="25" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="1030" y="130" text-anchor="middle" fill="white" font-size="11">Trip DB</text>
+<line x1="140" y1="230" x2="188" y2="230" stroke="#00c9ff" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="320" y1="230" x2="378" y2="230" stroke="#00c9ff" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="510" y1="215" x2="578" y2="130" stroke="#00c9ff" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="510" y1="230" x2="578" y2="225" stroke="#00c9ff" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="510" y1="245" x2="578" y2="330" stroke="#00c9ff" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="510" y1="250" x2="578" y2="430" stroke="#00c9ff" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="730" y1="125" x2="808" y2="125" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="730" y1="225" x2="808" y2="225" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="730" y1="130" x2="808" y2="330" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow1)"/>
+<line x1="940" y1="125" x2="968" y2="125" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<text x="575" y="30" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Uber: Ride Request & Matching Flow</text>
+</svg>
+</div>
+
+<h3>Step-by-Step</h3>
+<ol>
+<li><strong>Rider requests ride:</strong> <code>POST /v1/trips { pickup: {lat, lng}, destination: {lat, lng}, ride_type: "UberX" }</code></li>
+<li><strong>Pricing Service:</strong> Calculates fare estimate using distance, time, surge multiplier (based on supply/demand ratio in geohash region)</li>
+<li><strong>ETA Service:</strong> Calculates pickup ETA and trip ETA using road network graph + real-time traffic data</li>
+<li><strong>Rider confirms price</strong> → Trip Service creates trip with status "matching"</li>
+<li><strong>Matching Engine:</strong> Queries Location Service for nearby available drivers within expanding radius (start 2km, expand to 5km)</li>
+<li><strong>Location Service (Geospatial Index):</strong> Uses geohash + Redis to find drivers. <code>GEORADIUS drivers:active {lat} {lng} 2km</code></li>
+<li><strong>Matching Engine ranks candidates:</strong> Score = f(distance, ETA to pickup, driver rating, acceptance rate, vehicle type match)</li>
+<li><strong>Best driver sent ride request</strong> via push notification. Driver has 15 seconds to accept</li>
+<li><strong>If accepted:</strong> Trip status → "driver_assigned". Driver location shared with rider in real-time</li>
+<li><strong>If declined/timeout:</strong> Next best driver gets the request (cascade)</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> Rider at (37.7749, -122.4194) requests UberX to SFO airport. Pricing: base $2.50 + $1.75/mile × 13 miles + $0.35/min × 25 min = ~$34 (no surge). ETA Service: 5 min pickup ETA. Matching Engine finds 8 available drivers within 2km via Redis GEORADIUS. Ranks by ETA to pickup: Driver A (3 min, 4.92★), Driver B (4 min, 4.85★). Driver A gets request → accepts in 6 seconds → trip status "driver_assigned" → rider sees Driver A's live location.
+</div>
+
+<h3>Deep Dive: Geospatial Index (Location Service)</h3>
+<ul>
+<li><strong>Geohash:</strong> Encode lat/lng into string prefix. "9q8yy" = San Francisco area. Adjacent geohashes share prefix. Enables range queries</li>
+<li><strong>Redis GEOADD/GEORADIUS:</strong> Store driver locations: <code>GEOADD drivers:active {lng} {lat} driver_123</code>. Query nearby: <code>GEORADIUS drivers:active -122.4194 37.7749 2 km WITHCOORD COUNT 20</code></li>
+<li><strong>Update frequency:</strong> Drivers send GPS location every 4 seconds. Location Service updates Redis geospatial index</li>
+<li><strong>Cell-based partitioning:</strong> World divided into S2 cells (Google S2 geometry). Each cell managed by specific server. Rider's request routed to cell containing pickup location</li>
+<li><strong>Why not PostGIS:</strong> Too slow for millions of updates/sec. Redis geospatial commands are O(N+logN) and in-memory — sub-millisecond</li>
+</ul>
+
+<h3>Deep Dive: Matching Engine</h3>
+<ul>
+<li><strong>Algorithm:</strong> Batched matching every 2 seconds. Collect all pending ride requests and available drivers → solve assignment problem (minimize total ETA) → Hungarian algorithm or greedy assignment</li>
+<li><strong>Why batched:</strong> Individual matching (first-come-first-served) can be suboptimal. Batching finds globally optimal driver-rider pairs</li>
+<li><strong>Constraints:</strong> Driver must be available, vehicle type matches, driver not in restricted zone, driver rating above threshold</li>
+</ul>
+</div>
+
+<!-- Flow 2: Driver Location Tracking -->
+<div class="section">
+<h2>Flow 2: Real-time Driver Location Tracking</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffaa00"/></marker></defs>
+<rect x="20" y="140" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="80" y="175" text-anchor="middle" fill="white" font-size="13">Driver App</text>
+<rect x="190" y="140" width="130" height="60" rx="10" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="255" y="168" text-anchor="middle" fill="white" font-size="11">Kafka / gRPC</text><text x="255" y="185" text-anchor="middle" fill="white" font-size="10">(Location Stream)</text>
+<rect x="380" y="80" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="450" y="110" text-anchor="middle" fill="white" font-size="12">Location Svc</text>
+<rect x="380" y="200" width="140" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="450" y="228" text-anchor="middle" fill="white" font-size="11">Trip Tracking Svc</text>
+<rect x="600" y="80" width="120" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="660" y="108" text-anchor="middle" fill="white" font-size="11">Geospatial Index</text><text x="660" y="122" text-anchor="middle" fill="white" font-size="10">(Redis)</text>
+<rect x="600" y="200" width="120" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="660" y="228" text-anchor="middle" fill="white" font-size="11">WebSocket Hub</text>
+<rect x="800" y="200" width="120" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="860" y="230" text-anchor="middle" fill="white" font-size="12">Rider App</text>
+<line x1="140" y1="170" x2="188" y2="170" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="320" y1="160" x2="378" y2="110" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="320" y1="180" x2="378" y2="225" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="520" y1="105" x2="598" y2="105" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="520" y1="225" x2="598" y2="225" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="720" y1="225" x2="798" y2="225" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<text x="500" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Uber: Real-time Location Tracking</text>
+</svg>
+</div>
+
+<h3>Step-by-Step</h3>
+<ol>
+<li><strong>Driver App</strong> sends GPS coordinates every 4 seconds: <code>{ driver_id, lat, lng, heading, speed, timestamp }</code></li>
+<li><strong>Location stream</strong> via gRPC (bidirectional streaming) to Location Service</li>
+<li><strong>Location Service:</strong> Updates Redis geospatial index for matching. Also writes to Kafka for analytics/logging</li>
+<li><strong>Trip Tracking Service:</strong> For active trips, forwards driver location to matched rider via WebSocket Hub</li>
+<li><strong>WebSocket Hub:</strong> Maintains persistent WebSocket connections with rider apps. Pushes real-time location updates</li>
+<li><strong>Rider sees driver moving</strong> on map in real-time (location update every 4 seconds)</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> Driver sends location (37.7850, -122.4090) → Location Service updates Redis: <code>GEOADD drivers:active -122.4090 37.7850 driver_456</code> (O(logN), ~0.1ms). Trip Tracking Service sees driver_456 is on active trip_789 → forwards location to WebSocket Hub → Hub pushes to rider's WebSocket connection → rider sees car icon move on map. 4 seconds later, next update arrives: (37.7855, -122.4085).
+</div>
+
+<h3>Deep Dive: WebSocket for Live Tracking</h3>
+<ul>
+<li><strong>Why WebSocket:</strong> Server-push every 4 seconds. HTTP polling would waste bandwidth and add latency. WebSocket = persistent connection, server sends when ready</li>
+<li><strong>Scale:</strong> Millions of concurrent WebSocket connections. Each server handles ~50K connections. Horizontally scaled behind L4 load balancer with sticky sessions</li>
+<li><strong>Fallback:</strong> If WebSocket fails (corporate firewall), fall back to HTTP long-polling with 4-second intervals</li>
+<li><strong>Connection management:</strong> Heartbeat ping/pong every 30 seconds. If no pong, consider rider disconnected. Reconnect with last-known state</li>
+</ul>
+</div>
+
+<!-- Combined Architecture -->
+<div class="section">
+<h2>Combined Overall Architecture</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00c9ff"/></marker></defs>
+<text x="600" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Uber: Combined Architecture</text>
+<rect x="20" y="200" width="100" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="70" y="230" text-anchor="middle" fill="white" font-size="11">Rider App</text>
+<rect x="20" y="320" width="100" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="70" y="350" text-anchor="middle" fill="white" font-size="11">Driver App</text>
+<rect x="170" y="250" width="110" height="50" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="225" y="280" text-anchor="middle" fill="white" font-size="11">API Gateway</text>
+<rect x="340" y="80" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="400" y="105" text-anchor="middle" fill="white" font-size="11">Trip Svc</text>
+<rect x="340" y="150" width="120" height="40" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="400" y="175" text-anchor="middle" fill="white" font-size="11">Matching Engine</text>
+<rect x="340" y="220" width="120" height="40" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="400" y="245" text-anchor="middle" fill="white" font-size="11">Location Svc</text>
+<rect x="340" y="290" width="120" height="40" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="400" y="315" text-anchor="middle" fill="white" font-size="11">Pricing Svc</text>
+<rect x="340" y="360" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="400" y="385" text-anchor="middle" fill="white" font-size="11">ETA Svc</text>
+<rect x="340" y="430" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="400" y="455" text-anchor="middle" fill="white" font-size="11">Payment Svc</text>
+<rect x="340" y="500" width="120" height="40" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="400" y="525" text-anchor="middle" fill="white" font-size="11">Notification Svc</text>
+<rect x="540" y="80" width="110" height="40" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="595" y="105" text-anchor="middle" fill="white" font-size="10">Geo Index (Redis)</text>
+<rect x="540" y="150" width="110" height="40" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="595" y="175" text-anchor="middle" fill="white" font-size="10">Kafka</text>
+<rect x="540" y="220" width="110" height="40" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="595" y="245" text-anchor="middle" fill="white" font-size="10">WebSocket Hub</text>
+<rect x="540" y="290" width="110" height="40" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="595" y="315" text-anchor="middle" fill="white" font-size="10">Map/Routing</text>
+<ellipse cx="740" cy="100" rx="55" ry="22" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="740" y="105" text-anchor="middle" fill="white" font-size="10">Trip DB</text>
+<ellipse cx="740" cy="175" rx="55" ry="22" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="740" y="180" text-anchor="middle" fill="white" font-size="10">User DB</text>
+<ellipse cx="740" cy="250" rx="55" ry="22" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="740" y="255" text-anchor="middle" fill="white" font-size="10">Payment DB</text>
+<rect x="700" y="310" width="100" height="35" rx="8" fill="#888" stroke="#aaa" stroke-width="2"/><text x="750" y="332" text-anchor="middle" fill="white" font-size="10">Location Hist</text>
+<line x1="120" y1="225" x2="168" y2="265" stroke="#00c9ff" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="120" y1="345" x2="168" y2="290" stroke="#00c9ff" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="280" y1="270" x2="338" y2="100" stroke="#00c9ff" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="280" y1="275" x2="338" y2="170" stroke="#00c9ff" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="280" y1="280" x2="338" y2="240" stroke="#00c9ff" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="280" y1="285" x2="338" y2="310" stroke="#00c9ff" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="280" y1="290" x2="338" y2="380" stroke="#00c9ff" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="460" y1="100" x2="538" y2="100" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="460" y1="240" x2="538" y2="240" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="460" y1="170" x2="538" y2="170" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="460" y1="385" x2="538" y2="315" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="650" y1="100" x2="683" y2="100" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="650" y1="175" x2="683" y2="175" stroke="#ff6b6b" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="650" y1="245" x2="683" y2="245" stroke="#ff6b6b" stroke-width="1" marker-end="url(#arrow3)"/>
+</svg>
+</div>
+
+<div class="example">
+<strong>Example — Full ride lifecycle:</strong> Rider opens app → sees ETA "3 min" (ETA Service pre-computes based on nearby supply) → requests ride → Pricing Service: $22.50 (1.2x surge) → rider confirms → Matching Engine finds 5 nearby drivers → sends request to Driver A (closest, 4.95★) → Driver A accepts (8 sec) → Rider sees driver on map (WebSocket location updates every 4 sec) → Driver arrives at pickup → "Start trip" → GPS tracking records route → arrives at destination → fare calculated: $22.50 → Payment Service charges rider's card → driver receives $18.00 (80% cut) → both rate each other → trip saved to Trip DB.
+</div>
+</div>
+
+<!-- Database Schema -->
+<div class="section">
+<h2>Database Schema</h2>
+
+<h3>SQL — PostgreSQL (Trips, Users, Payments — ACID required)</h3>
+<table>
+<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
+<tr><td rowspan="10"><strong>trips</strong></td><td>trip_id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>rider_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → users</span> <span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>driver_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → users</span> <span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>status</td><td>ENUM</td><td>matching, driver_assigned, in_progress, completed, canceled</td></tr>
+<tr><td>pickup_lat, pickup_lng</td><td>DOUBLE</td><td></td></tr>
+<tr><td>dest_lat, dest_lng</td><td>DOUBLE</td><td></td></tr>
+<tr><td>fare_amount</td><td>BIGINT</td><td>In cents</td></tr>
+<tr><td>surge_multiplier</td><td>DECIMAL(3,2)</td><td>1.00 = no surge</td></tr>
+<tr><td>distance_miles</td><td>DECIMAL(6,2)</td><td></td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td rowspan="5"><strong>users</strong></td><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>type</td><td>ENUM</td><td>rider, driver, both</td></tr>
+<tr><td>rating</td><td>DECIMAL(3,2)</td><td>Denormalized avg rating</td></tr>
+<tr><td>phone</td><td>VARCHAR(20)</td><td><span class="tag tag-idx">UNIQUE INDEX</span></td></tr>
+<tr><td>payment_method_id</td><td>VARCHAR(30)</td><td>Default payment</td></tr>
+</table>
+
+<h3>Geospatial — Redis</h3>
+<table>
+<tr><th>Key</th><th>Type</th><th>Details</th></tr>
+<tr><td><code>drivers:active</code></td><td>GEOSPATIAL</td><td>All available drivers' locations. GEOADD/GEORADIUS</td></tr>
+<tr><td><code>drivers:busy</code></td><td>GEOSPATIAL</td><td>Drivers on active trips (for supply visibility)</td></tr>
+<tr><td><code>surge:{geohash6}</code></td><td>Hash</td><td>{ demand_count, supply_count, multiplier }</td></tr>
+</table>
+
+<h3>NoSQL — Cassandra (Location History)</h3>
+<table>
+<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
+<tr><td rowspan="5"><strong>location_history</strong></td><td>trip_id</td><td>UUID</td><td><span class="tag tag-pk">Partition Key</span></td></tr>
+<tr><td>timestamp</td><td>TIMESTAMP</td><td><span class="tag tag-pk">Clustering Key</span> ASC</td></tr>
+<tr><td>lat</td><td>DOUBLE</td><td></td></tr>
+<tr><td>lng</td><td>DOUBLE</td><td></td></tr>
+<tr><td>speed</td><td>FLOAT</td><td>km/h</td></tr>
+</table>
+
+<h4>Sharding</h4>
+<ul>
+<li><strong>trips:</strong> Shard by <code>rider_id</code> — rider's trip history is shard-local. Driver's trip history uses scatter-gather (less frequent query)</li>
+<li><strong>Redis geospatial:</strong> Partitioned by S2 cell (geographic region). SF drivers on one Redis, NYC on another. Matching engine queries local cell</li>
+<li><strong>location_history:</strong> Partitioned by <code>trip_id</code>. All GPS points for one trip co-located. Excellent for trip route replay</li>
+</ul>
+
+<h3>Indexes</h3>
+<ul>
+<li><code>trips.rider_id</code> + <code>trips.driver_id</code> — B-tree indexes for "my trip history" queries</li>
+<li><code>trips.created_at</code> — For admin queries, analytics, and cleanup</li>
+<li>Redis GEOSPATIAL index — O(N+logN) for GEORADIUS queries, effectively O(logN) for nearby driver lookup</li>
+</ul>
+</div>
+
+<!-- Cache -->
+<div class="section">
+<h2>Cache Deep Dive</h2>
+<table>
+<tr><th>Cache</th><th>Strategy</th><th>Eviction</th><th>TTL</th></tr>
+<tr><td>Driver Location (Redis GEO)</td><td>Write-through (every 4s)</td><td>Stale entries removed after 60s no-update</td><td>60s implicit</td></tr>
+<tr><td>Surge Pricing (Redis)</td><td>Computed every 30s</td><td>TTL</td><td>30 seconds</td></tr>
+<tr><td>ETA Cache (Redis)</td><td>Read-through</td><td>TTL</td><td>15 seconds</td></tr>
+<tr><td>User Profile (Redis)</td><td>Read-through</td><td>LRU</td><td>1 hour</td></tr>
+</table>
+
+<h3>CDN</h3>
+<ul>
+<li><strong>Map tiles:</strong> Served via CDN (pre-rendered at various zoom levels). Raster or vector tiles</li>
+<li><strong>Static assets:</strong> App icons, UI assets cached at CDN</li>
+<li><strong>No CDN for real-time data:</strong> Driver locations, surge prices, ETAs are dynamic — served directly from services</li>
+</ul>
+</div>
+
+<!-- Scaling -->
+<div class="section">
+<h2>Scaling Considerations</h2>
+<ul>
+<li><strong>Location updates:</strong> 1M active drivers × 1 update/4s = 250K writes/sec to Redis. Redis handles this easily (single instance does 100K+ ops/sec). Shard by city for parallelism</li>
+<li><strong>Matching at scale:</strong> Batched matching runs per-city. SF matching engine independent from NYC. Each city can scale independently</li>
+<li><strong>Cell-based architecture:</strong> World divided into hexagonal cells (H3 from Uber). Services partitioned by cell. Queries only hit relevant cells</li>
+<li><strong>Surge computation:</strong> Supply/demand ratio computed per geohash6 cell every 30 seconds. Kafka stream of ride requests and driver availability → Flink aggregation</li>
+<li><strong>Multi-region:</strong> Each country/region has its own deployment. Data locality reduces latency. Regulations (GDPR) require data residency</li>
+</ul>
+</div>
+
+<!-- Tradeoffs -->
+<div class="section">
+<h2>Tradeoffs & Deep Dives</h2>
+<div class="tradeoff">
+<div class="pro"><h4>✅ Batched Matching</h4><ul><li>Globally optimal matching (minimize total pickup ETAs)</li><li>Reduces driver competition for same rider</li><li>More efficient fleet utilization</li></ul></div>
+<div class="con"><h4>❌ Batched Matching Downsides</h4><ul><li>2-second delay before matching starts</li><li>Complex optimization algorithm (Hungarian/assignment problem)</li><li>Must handle riders who cancel during batch window</li></ul></div>
+</div>
+
+<h3>WebSocket vs Polling for Location</h3>
+<ul>
+<li><strong>WebSocket chosen:</strong> Persistent connection, server-push model. 4-second updates feel instantaneous on map. Low overhead after connection established</li>
+<li><strong>Alternative — HTTP polling:</strong> Client polls every 4 seconds. Pros: simpler, works through all proxies. Cons: overhead of HTTP headers per request, slight latency increase</li>
+<li><strong>Alternative — Server-Sent Events (SSE):</strong> Server-push over HTTP. Simpler than WebSocket (one-way only). Good enough for location tracking since rider doesn't send data back on this channel</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Alternative Approaches</h2>
+<ul>
+<li><strong>Quadtree for spatial indexing:</strong> Instead of Redis geohash. Quadtree recursively divides 2D space into quadrants. Better for non-uniform distribution (dense cities + sparse rural). But harder to distribute across servers</li>
+<li><strong>gRPC streaming for location:</strong> Instead of REST + WebSocket. gRPC bidirectional streaming for both driver uploads and rider tracking. Type-safe, efficient binary protocol (Protocol Buffers). Uber actually uses this</li>
+<li><strong>Machine learning for ETA:</strong> Instead of graph-based routing, use ML model trained on historical trip data. Captures traffic patterns, weather effects, event impacts. Uber's ETA model uses gradient boosted trees with 100+ features</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Additional Information</h2>
+<ul>
+<li><strong>H3 (Hexagonal Hierarchical Spatial Index):</strong> Uber's open-source geospatial system. Divides world into hexagonal cells at multiple resolutions. Better than square grids for distance calculations (hexagons have more uniform neighbor distances)</li>
+<li><strong>Surge pricing formula:</strong> <code>multiplier = max(1.0, demand_requests / available_drivers * sensitivity_factor)</code>. Capped at 8x. Shown to rider before confirming. Incentivizes more drivers to come online in high-demand areas</li>
+<li><strong>Safety features:</strong> Share trip with contacts (real-time location sharing), emergency button (one-tap 911 with location), driver background checks, ride verification PIN</li>
+<li><strong>Driver state machine:</strong> offline → online(available) → matching → en_route_to_pickup → waiting_at_pickup → in_trip → trip_complete → online(available). Each transition triggers different system actions</li>
+</ul>
+</div>
+</body>
+</html>

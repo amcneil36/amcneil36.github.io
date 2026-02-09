@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Instacart</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0f0f0f;color:#e0e0e0;line-height:1.7;padding:2rem}h1{font-size:2.5rem;text-align:center;background:linear-gradient(135deg,#43B02A,#0AAD0A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}h2{color:#43B02A;font-size:1.8rem;margin:2rem 0 1rem;border-bottom:2px solid #43B02A;padding-bottom:.5rem}h3{color:#0AAD0A;font-size:1.3rem;margin:1.5rem 0 .8rem}h4{color:#8BC34A;margin:1rem 0 .5rem}.container{max-width:1400px;margin:0 auto}.card{background:#1a1a2e;border-radius:12px;padding:1.5rem;margin:1rem 0;border:1px solid #333}.diagram-box{background:#0d1117;border-radius:12px;padding:1.5rem;margin:1rem 0;text-align:center;overflow-x:auto}.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}.tag-pk{background:#E53935;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-fk{background:#1E88E5;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-idx{background:#43A047;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-shard{background:#F4511E;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}.tradeoff-card{background:#1a1a2e;border-radius:8px;padding:1rem;border-left:4px solid}.tradeoff-card.pro{border-color:#43B02A}.tradeoff-card.con{border-color:#FF5722}code{background:#2d2d2d;padding:2px 6px;border-radius:4px;font-family:'Fira Code',monospace;font-size:.85rem}pre{background:#1e1e2e;padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}ul,ol{padding-left:1.5rem;margin:.5rem 0}table{width:100%;border-collapse:collapse;margin:1rem 0}th,td{padding:.75rem;border:1px solid #333;text-align:left}th{background:#1a1a2e}svg text{font-family:'Segoe UI',system-ui,sans-serif}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🛒 Design Instacart</h1>
+<p style="text-align:center;color:#aaa;margin-bottom:2rem;">On-demand grocery delivery platform connecting customers with personal shoppers across 80K+ stores, real-time inventory, route optimization</p>
+
+<h2>1. Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Store & Product Catalog:</strong> Browse 80K+ stores, search/filter products with real-time availability and pricing per store</li>
+<li><strong>Cart & Checkout:</strong> Multi-store cart, coupon/promo application, delivery window selection, payment processing</li>
+<li><strong>Shopper Assignment:</strong> Match orders to personal shoppers based on proximity, store familiarity, rating, capacity</li>
+<li><strong>Real-Time Shopping:</strong> Shopper scans items, communicates substitutions, customer approves/rejects replacements in real-time</li>
+<li><strong>Delivery Tracking:</strong> Live map tracking of shopper (shopping → checkout → driving to customer)</li>
+<li><strong>Delivery Windows:</strong> Scheduled delivery (pick a time slot) or priority delivery (within 30-60 minutes)</li>
+<li><strong>Inventory Sync:</strong> Real-time-ish inventory from retail partners (varies by integration level)</li>
+<li><strong>Tipping & Ratings:</strong> Rate shopper, adjust tip post-delivery, report issues for refunds</li>
+</ul>
+</div>
+
+<h2>2. Non-Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Scale:</strong> 10M+ monthly active customers, 600K+ shoppers, 80K+ stores across 14K+ cities</li>
+<li><strong>Latency:</strong> Product search &lt;200ms, substitution notification &lt;2 seconds, location tracking updates every 5-10 seconds</li>
+<li><strong>Availability:</strong> 99.9%+ (downtime = lost perishable grocery orders, angry customers)</li>
+<li><strong>Inventory Accuracy:</strong> Goal: 90%+ accuracy (grocery inventory is notoriously inaccurate)</li>
+<li><strong>Peak Load:</strong> 5-10x spikes during holidays (Thanksgiving, Super Bowl Sunday), severe weather events</li>
+<li><strong>Delivery SLA:</strong> Priority orders within 60 min, scheduled within 2-hour window</li>
+</ul>
+</div>
+
+<h2>3. Flow 1 — Product Search &amp; Order Placement</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#43B02A"/></marker></defs>
+<rect x="20" y="160" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="190" text-anchor="middle" fill="#fff" font-size="13">Customer</text>
+<rect x="180" y="160" width="120" height="60" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="240" y="190" text-anchor="middle" fill="#fff" font-size="13">API Gateway</text>
+<rect x="350" y="60" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="420" y="90" text-anchor="middle" fill="#fff" font-size="13">Catalog Service</text><text x="420" y="105" text-anchor="middle" fill="#fff" font-size="11">(store-specific)</text>
+<rect x="350" y="160" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="420" y="185" text-anchor="middle" fill="#fff" font-size="13">Cart Service</text>
+<rect x="350" y="270" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="420" y="295" text-anchor="middle" fill="#fff" font-size="13">Order Service</text>
+<rect x="560" y="60" width="140" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="630" y="90" text-anchor="middle" fill="#fff" font-size="13">Elasticsearch</text><text x="630" y="105" text-anchor="middle" fill="#fff" font-size="11">(product search)</text>
+<rect x="560" y="160" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="630" y="185" text-anchor="middle" fill="#fff" font-size="13">Inventory Service</text><text x="630" y="200" text-anchor="middle" fill="#fff" font-size="11">(availability)</text>
+<rect x="560" y="270" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="630" y="295" text-anchor="middle" fill="#fff" font-size="13">Pricing Service</text><text x="630" y="310" text-anchor="middle" fill="#fff" font-size="11">(dynamic markups)</text>
+<rect x="770" y="160" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="840" y="185" text-anchor="middle" fill="#fff" font-size="13">Payment Service</text><text x="840" y="200" text-anchor="middle" fill="#fff" font-size="11">(Stripe)</text>
+<rect x="770" y="270" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="840" y="295" text-anchor="middle" fill="#fff" font-size="13">Delivery Window</text><text x="840" y="310" text-anchor="middle" fill="#fff" font-size="11">Calculator</text>
+<line x1="130" y1="190" x2="178" y2="190" stroke="#43B02A" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="300" y1="175" x2="348" y2="95" stroke="#43B02A" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="300" y1="190" x2="348" y2="190" stroke="#43B02A" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="300" y1="205" x2="348" y2="295" stroke="#43B02A" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="490" y1="90" x2="558" y2="90" stroke="#43B02A" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="490" y1="190" x2="558" y2="190" stroke="#43B02A" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="490" y1="295" x2="558" y2="295" stroke="#43B02A" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="700" y1="190" x2="768" y2="190" stroke="#43B02A" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="700" y1="295" x2="768" y2="295" stroke="#43B02A" stroke-width="2" marker-end="url(#a1)"/>
+</svg>
+</div>
+
+<h3>Flow Steps</h3>
+<div class="card">
+<ol>
+<li><strong>Customer searches "organic milk"</strong> → Catalog Service queries Elasticsearch with store_id filter (selected store) and customer's location-based pricing zone</li>
+<li><strong>Results enriched:</strong> Each product enriched with: store-specific price (may differ from in-store), estimated availability (inventory signal), promotions/coupons, product images, nutrition info</li>
+<li><strong>Customer adds items to cart</strong> → Cart Service maintains per-store cart with item quantities, substitution preferences</li>
+<li><strong>Checkout initiated:</strong> Cart Service validates item availability (real-time inventory check), calculates totals: items + service fee + delivery fee + tip + tax</li>
+<li><strong>Delivery Window Calculator:</strong> Based on store location, customer location, current shopper capacity, and estimated shopping/driving time → offers available 2-hour windows or priority (30-60 min)</li>
+<li><strong>Payment:</strong> Auth hold placed via Stripe (not charged yet — final charge after shopping completes with actual items/weights)</li>
+<li><strong>Order created</strong> with status: <code>pending_assignment</code> → enters shopper matching queue</li>
+</ol>
+</div>
+
+<h3>Example</h3>
+<div class="card" style="background:#1e1e2e">
+<p><strong>Customer order from Costco in San Francisco:</strong></p>
+<pre>Items:
+  - Organic Whole Milk 1gal      $6.49  (avail: high)
+  - Bananas (bunch ~2lb)          $1.89  (avail: high, by weight)
+  - Rotisserie Chicken            $4.99  (avail: medium)
+  - Kirkland Water 40-pack        $4.29  (avail: high, heavy item)
+
+Subtotal: $17.66
+Service fee (5%): $0.88
+Delivery fee: $3.99 (free with Instacart+)
+Heavy item fee: $2.00 (for water)
+Estimated tax: $1.45
+Tip: $5.00
+Auth hold: $31.00 (buffer for substitutions/weight variations)
+
+Selected: Priority delivery (est. 45 min)
+Payment: Auth hold on Visa ending 4242</pre>
+</div>
+
+<h3>Deep Dives</h3>
+<div class="info-grid">
+<div class="card">
+<h4>Store-Specific Product Catalog</h4>
+<p>Each store has a different assortment, pricing, and inventory. Instacart maintains a <strong>unified product graph</strong>: global product entities (UPC-based) linked to store-specific listings (price, availability, aisle location). The same "Organic Whole Milk" product maps to different prices at Costco ($6.49) vs Whole Foods ($7.99). Catalog updated via: (1) <strong>Retailer data feeds</strong> (batch, daily/weekly), (2) <strong>POS integration</strong> (near-real-time for some partners), (3) <strong>Shopper feedback</strong> (item not found → decrement availability), (4) <strong>ML predictions</strong> (predict availability from historical patterns). Elasticsearch index: per-store sharding for fast store-specific search.</p>
+</div>
+<div class="card">
+<h4>Inventory Accuracy Challenge</h4>
+<p>Grocery inventory is notoriously inaccurate: items sold in-store aren't reflected until end-of-day POS reconciliation. Instacart combats this with: <strong>Probabilistic availability</strong> — not binary in/out-of-stock, but a probability score. ML model trained on: time of day (milk more available in AM), day of week (bread sells out by Sunday), historical store replenishment patterns, shopper feedback (real-time "not found" signals). Instacart reports ~92% item-found rate across all orders. The gap is handled by the substitution flow.</p>
+</div>
+<div class="card">
+<h4>Delivery Window Calculation</h4>
+<p>Windows calculated from: (1) Estimated shopping time: <code>base_time + per_item_time × num_items + checkout_wait</code>. Costco: 45 min base (large store), 30 sec/item. (2) Driving time: Google Maps API for store→customer ETA. (3) Shopper supply: available shoppers near this store vs pending orders. Priority delivery requires a shopper available NOW. Scheduled slots: capacity-planned (max N orders per slot per store). Dynamic pricing: delivery fee increases during peak (Thanksgiving morning: $9.99 delivery fee). Instacart+ members get free delivery over $35.</p>
+</div>
+<div class="card">
+<h4>Pricing Model</h4>
+<p>Instacart typically marks up prices 5-15% above in-store prices (varies by retailer agreement). Some retailers (Costco, Target, Kroger) have negotiated <strong>in-store pricing</strong> on Instacart. Revenue sources: (1) Service fees (5-10% of order), (2) Delivery fees ($3.99-$9.99), (3) Instacart+ subscriptions ($99/year), (4) <strong>Instacart Ads</strong> (CPM/CPC from CPG brands — the largest revenue source), (5) Retailer technology licensing fees. The Ads platform is critical: brands pay for product placement in search results and banner positions.</p>
+</div>
+</div>
+
+<h2>4. Flow 2 — Shopper Assignment &amp; Real-Time Shopping</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#0AAD0A"/></marker></defs>
+<rect x="20" y="160" width="120" height="60" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="80" y="185" text-anchor="middle" fill="#fff" font-size="13">Order Queue</text><text x="80" y="200" text-anchor="middle" fill="#fff" font-size="11">(priority heap)</text>
+<rect x="190" y="160" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="255" y="185" text-anchor="middle" fill="#fff" font-size="13">Shopper Matcher</text><text x="255" y="200" text-anchor="middle" fill="#fff" font-size="11">(assignment algo)</text>
+<rect x="190" y="60" width="130" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="255" y="90" text-anchor="middle" fill="#fff" font-size="13">Shopper Pool</text><text x="255" y="105" text-anchor="middle" fill="#fff" font-size="11">(available shoppers)</text>
+<rect x="370" y="160" width="120" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="430" y="190" text-anchor="middle" fill="#fff" font-size="13">Shopper</text><text x="430" y="205" text-anchor="middle" fill="#fff" font-size="11">(accepts batch)</text>
+<rect x="540" y="60" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="605" y="90" text-anchor="middle" fill="#fff" font-size="13">Shopping List</text><text x="605" y="105" text-anchor="middle" fill="#fff" font-size="11">(aisle-optimized)</text>
+<rect x="540" y="160" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="605" y="185" text-anchor="middle" fill="#fff" font-size="13">Item Scan</text><text x="605" y="200" text-anchor="middle" fill="#fff" font-size="11">(barcode verify)</text>
+<rect x="540" y="270" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="605" y="295" text-anchor="middle" fill="#fff" font-size="13">Substitution</text><text x="605" y="310" text-anchor="middle" fill="#fff" font-size="11">Engine</text>
+<rect x="730" y="160" width="130" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="795" y="185" text-anchor="middle" fill="#fff" font-size="13">Customer</text><text x="795" y="200" text-anchor="middle" fill="#fff" font-size="11">(approves sub)</text>
+<rect x="730" y="270" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="795" y="295" text-anchor="middle" fill="#fff" font-size="13">ML Substitution</text><text x="795" y="310" text-anchor="middle" fill="#fff" font-size="11">Recommender</text>
+<line x1="140" y1="190" x2="188" y2="190" stroke="#0AAD0A" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="255" y1="120" x2="255" y2="158" stroke="#0AAD0A" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="320" y1="190" x2="368" y2="190" stroke="#0AAD0A" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="490" y1="175" x2="538" y2="95" stroke="#0AAD0A" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="490" y1="190" x2="538" y2="190" stroke="#0AAD0A" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="605" y1="222" x2="605" y2="268" stroke="#0AAD0A" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="670" y1="185" x2="728" y2="185" stroke="#0AAD0A" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="670" y1="295" x2="728" y2="295" stroke="#0AAD0A" stroke-width="2" marker-end="url(#a2)"/>
+</svg>
+</div>
+
+<h3>Flow Steps</h3>
+<div class="card">
+<ol>
+<li><strong>Order enters assignment queue</strong> → priority based on delivery window urgency, customer tier (Instacart+ prioritized), tip amount</li>
+<li><strong>Batch optimization:</strong> Multiple orders at the same store may be batched (up to 3 orders per shopper trip) to improve efficiency</li>
+<li><strong>Shopper Matcher:</strong> Scores available shoppers: <code>score = proximity_to_store × store_familiarity × rating × capacity × speed_rating</code></li>
+<li><strong>Shopper receives batch offer</strong> on app: shows store, item count, estimated earnings, estimated time → accepts or declines (timeout: 60 seconds)</li>
+<li><strong>Shopping phase:</strong> Shopper sees aisle-optimized shopping list (items ordered by store aisle layout). Scans each item barcode to verify correct product.</li>
+<li><strong>Item not found → Substitution Engine:</strong> ML recommender suggests alternatives (same brand different size, or same category similar product). Customer preference checked first (pre-set: "get my best match" or "don't replace").</li>
+<li><strong>Real-time chat:</strong> Shopper can message customer about substitutions; customer approves/rejects via push notification</li>
+<li><strong>Checkout:</strong> Shopper pays with Instacart payment card at register → receipt scanned for reconciliation</li>
+</ol>
+</div>
+
+<h3>Example</h3>
+<div class="card" style="background:#1e1e2e">
+<p><strong>Batch assignment:</strong> 3 orders at Costco SF bundled: Order A (12 items), Order B (8 items), Order C (5 items) = 25 total items</p>
+<p><strong>Shopper: Maria</strong> — 4.95 rating, 2km from Costco, "Costco Expert" badge (50+ shops at this location), available now</p>
+<p><strong>Earnings offer:</strong> Base pay $7 + $2 heavy item bonus + $4.50 batch bonus = $13.50 base + $15 combined tips = $28.50 estimated for ~75 min work</p>
+<p><strong>Substitution scenario:</strong></p>
+<pre>Item: Kirkland Organic Whole Milk 1gal — NOT FOUND
+ML suggestions (ranked):
+  1. Kirkland Organic 2% Milk 1gal (same brand, different fat%) — 0.87 confidence
+  2. Horizon Organic Whole Milk 1gal (diff brand, same type) — 0.82 confidence
+  3. Kirkland Organic Whole Milk 0.5gal x2 (same product, different size) — 0.76 confidence
+Customer preference: "Get my best match" → auto-select #1
+Push notification: "Maria replaced Organic Whole Milk → Organic 2% Milk. OK?"
+Customer: [Approve ✓]</pre>
+</div>
+
+<h3>Deep Dives</h3>
+<div class="info-grid">
+<div class="card">
+<h4>Order Batching Algorithm</h4>
+<p>Batching multiple orders per shopper trip improves economics but risks quality. Algorithm: for each store, group pending orders by delivery window compatibility (can they all be delivered on time?). Batch score: <code>Σ(order_value) × item_overlap_bonus / max_delivery_time_penalty</code>. Item overlap: if multiple orders want bananas, shopper grabs all at once. Max batch size: 3 orders (Instacart cap). Priority delivery orders are NEVER batched (dedicated shopper). The batching problem is a variant of the <strong>bin packing / vehicle routing problem</strong> — NP-hard, solved with greedy heuristics + simulated annealing.</p>
+</div>
+<div class="card">
+<h4>ML Substitution Recommender</h4>
+<p>When an item is unavailable, the ML model suggests substitutions. Features: product category similarity (hierarchical taxonomy), brand affinity (customer's brand preference history), size/quantity similarity, price similarity (don't substitute up significantly), dietary compatibility (vegan customer → don't suggest non-vegan), historical acceptance rate (what substitutions do customers generally approve). Model: gradient-boosted trees (LightGBM) trained on millions of historical substitution accept/reject decisions. Instacart reports 90%+ substitution acceptance when ML suggestions are used.</p>
+</div>
+<div class="card">
+<h4>Shopper Payment Card</h4>
+<p>Instacart shoppers use a <strong>virtual payment card</strong> (Instacart-issued debit card) to pay at checkout. The card is pre-loaded with the exact order amount + buffer for weight variations and substitutions. At checkout, the POS transaction is captured and reconciled against the order. If a substitution changed the total, the charge is adjusted. This eliminates the need for shoppers to use personal funds. Card is issued via <strong>Stripe Issuing</strong> — programmatically created virtual cards with spending controls.</p>
+</div>
+<div class="card">
+<h4>Aisle-Optimized Shopping List</h4>
+<p>Instacart knows store layouts (aisle maps) for many retailers. The shopping list is sorted by aisle order to minimize backtracking (a variant of the <strong>Traveling Salesman Problem</strong> within a store). Data source: retailer-provided planograms, shopper crowdsourced aisle data (shoppers confirm aisle numbers), and historical scan location data. For stores without aisle maps, items are grouped by department (produce, dairy, frozen, etc.). This optimization saves 10-20% shopping time per order.</p>
+</div>
+</div>
+
+<h2>5. Flow 3 — Delivery &amp; Real-Time Tracking</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 950 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#8BC34A"/></marker></defs>
+<rect x="20" y="120" width="120" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="80" y="150" text-anchor="middle" fill="#fff" font-size="13">Shopper</text><text x="80" y="165" text-anchor="middle" fill="#fff" font-size="11">(leaves store)</text>
+<rect x="190" y="120" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="255" y="150" text-anchor="middle" fill="#fff" font-size="13">Location Service</text><text x="255" y="165" text-anchor="middle" fill="#fff" font-size="11">(GPS every 5s)</text>
+<rect x="370" y="30" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="435" y="60" text-anchor="middle" fill="#fff" font-size="13">Route Optimizer</text><text x="435" y="75" text-anchor="middle" fill="#fff" font-size="11">(multi-drop)</text>
+<rect x="370" y="120" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="435" y="150" text-anchor="middle" fill="#fff" font-size="13">ETA Service</text>
+<rect x="370" y="210" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="435" y="240" text-anchor="middle" fill="#fff" font-size="13">Notification</text><text x="435" y="255" text-anchor="middle" fill="#fff" font-size="11">Service</text>
+<rect x="560" y="120" width="130" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="625" y="150" text-anchor="middle" fill="#fff" font-size="13">Customer</text><text x="625" y="165" text-anchor="middle" fill="#fff" font-size="11">(live tracking)</text>
+<rect x="760" y="120" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="825" y="150" text-anchor="middle" fill="#fff" font-size="13">Delivery Proof</text><text x="825" y="165" text-anchor="middle" fill="#fff" font-size="11">(photo + GPS)</text>
+<line x1="140" y1="150" x2="188" y2="150" stroke="#8BC34A" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="320" y1="135" x2="368" y2="65" stroke="#8BC34A" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="320" y1="150" x2="368" y2="150" stroke="#8BC34A" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="320" y1="165" x2="368" y2="235" stroke="#8BC34A" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="500" y1="150" x2="558" y2="150" stroke="#8BC34A" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="690" y1="150" x2="758" y2="150" stroke="#8BC34A" stroke-width="2" marker-end="url(#a3)"/>
+</svg>
+</div>
+
+<h3>Flow Steps</h3>
+<div class="card">
+<ol>
+<li><strong>Shopper completes shopping</strong> → status changes to <code>delivering</code>. If batch has multiple orders, Route Optimizer calculates optimal delivery sequence.</li>
+<li><strong>Route Optimizer:</strong> Multi-drop routing (store → customer A → customer B → customer C). Considers: delivery window deadlines, traffic conditions, distance. For 3-order batches: solves TSP variant with time windows.</li>
+<li><strong>Location tracking:</strong> Shopper app sends GPS every 5 seconds → Location Service ingests via UDP/WebSocket → stored in Redis for real-time access</li>
+<li><strong>ETA Service:</strong> Computes dynamic ETA using: current location, traffic (Google Maps API), remaining stops. Updates customer's tracking screen in real-time.</li>
+<li><strong>Customer notifications:</strong> "Your shopper is on the way!" → "5 minutes away" → "Your order has arrived!"</li>
+<li><strong>Delivery proof:</strong> Shopper takes photo of delivered bags at door + GPS coordinates logged → stored for dispute resolution</li>
+<li><strong>Final charge:</strong> Payment adjusted for actual items (substitutions, weight-based items). Customer can adjust tip for 24 hours post-delivery.</li>
+</ol>
+</div>
+
+<h3>Example</h3>
+<div class="card" style="background:#1e1e2e">
+<p><strong>Multi-drop delivery for 3-order batch:</strong></p>
+<pre>Costco SF → Customer A (2.1 miles, ETA 8 min) → Customer B (1.3 miles, ETA 14 min) → Customer C (0.8 miles, ETA 18 min)
+Route optimized: A first (closest + tightest delivery window), then B, then C
+Total driving: 4.2 miles, 18 min
+Customer A sees: "Maria is shopping" → "Maria is checking out" → "Maria is on the way — ETA 8 min" → "Delivered! [photo]"
+Final charge for Customer A: $18.52 (original auth: $31.00 — difference refunded)
+  - Milk substituted (2% instead of whole): -$0.50
+  - Bananas actual weight 1.8lb vs estimated 2lb: -$0.19
+Tip adjustment window: Customer A increases tip from $5 to $8 (great service)</pre>
+</div>
+
+<h2>6. Combined Architecture</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 1100 500" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#43B02A"/></marker></defs>
+<rect x="10" y="180" width="90" height="50" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="55" y="210" text-anchor="middle" fill="#fff" font-size="11">Customer</text>
+<rect x="10" y="250" width="90" height="50" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="55" y="280" text-anchor="middle" fill="#fff" font-size="11">Shopper</text>
+<rect x="140" y="215" width="100" height="45" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="190" y="243" text-anchor="middle" fill="#fff" font-size="11">API Gateway</text>
+<rect x="290" y="50" width="110" height="40" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="345" y="75" text-anchor="middle" fill="#fff" font-size="10">Catalog</text>
+<rect x="290" y="100" width="110" height="40" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="345" y="125" text-anchor="middle" fill="#fff" font-size="10">Cart</text>
+<rect x="290" y="150" width="110" height="40" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="345" y="175" text-anchor="middle" fill="#fff" font-size="10">Order</text>
+<rect x="290" y="200" width="110" height="40" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="345" y="225" text-anchor="middle" fill="#fff" font-size="10">Shopper Matcher</text>
+<rect x="290" y="250" width="110" height="40" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="345" y="275" text-anchor="middle" fill="#fff" font-size="10">Inventory</text>
+<rect x="290" y="300" width="110" height="40" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="345" y="325" text-anchor="middle" fill="#fff" font-size="10">Delivery/Route</text>
+<rect x="290" y="350" width="110" height="40" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="345" y="375" text-anchor="middle" fill="#fff" font-size="10">Ads Platform</text>
+<rect x="290" y="400" width="110" height="40" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="345" y="425" text-anchor="middle" fill="#fff" font-size="10">Payment</text>
+<rect x="460" y="100" width="100" height="40" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="510" y="125" text-anchor="middle" fill="#fff" font-size="10">Kafka</text>
+<rect x="620" y="50" width="110" height="40" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="675" y="75" text-anchor="middle" fill="#fff" font-size="10">PostgreSQL</text>
+<rect x="620" y="100" width="110" height="40" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="675" y="125" text-anchor="middle" fill="#fff" font-size="10">Redis</text>
+<rect x="620" y="150" width="110" height="40" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="675" y="175" text-anchor="middle" fill="#fff" font-size="10">Elasticsearch</text>
+<rect x="620" y="200" width="110" height="40" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="675" y="225" text-anchor="middle" fill="#fff" font-size="10">DynamoDB</text>
+<rect x="620" y="250" width="110" height="40" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="675" y="275" text-anchor="middle" fill="#fff" font-size="10">S3 (images)</text>
+<rect x="620" y="300" width="110" height="40" rx="8" fill="#546e7a" stroke="#90a4ae" stroke-width="2"/><text x="675" y="325" text-anchor="middle" fill="#fff" font-size="10">CDN (CF)</text>
+<line x1="100" y1="205" x2="138" y2="235" stroke="#43B02A" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="100" y1="275" x2="138" y2="245" stroke="#43B02A" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="240" y1="235" x2="288" y2="175" stroke="#43B02A" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="400" y1="120" x2="458" y2="120" stroke="#43B02A" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="560" y1="120" x2="618" y2="75" stroke="#43B02A" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="560" y1="120" x2="618" y2="120" stroke="#43B02A" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="400" y1="70" x2="618" y2="170" stroke="#43B02A" stroke-width="2" marker-end="url(#a4)"/>
+</svg>
+</div>
+
+<h2>7. Database Schema</h2>
+<div class="card">
+<h3>Orders (PostgreSQL — sharded by order_id)</h3>
+<pre>
+Table: orders  <span class="tag-shard">SHARD: hash(order_id)</span>
+- order_id: uuid               <span class="tag-pk">PK</span>
+- customer_id: uuid            <span class="tag-fk">FK → customers</span> <span class="tag-idx">IDX</span>
+- store_id: uuid               <span class="tag-fk">FK → stores</span> <span class="tag-idx">IDX</span>
+- shopper_id: uuid             <span class="tag-fk">FK → shoppers</span>
+- batch_id: uuid               <span class="tag-idx">IDX</span>
+- status: enum('pending','assigned','shopping','checkout','delivering','delivered','cancelled')
+- delivery_window_start: timestamp
+- delivery_window_end: timestamp
+- delivery_type: enum('priority','scheduled')
+- subtotal: decimal(10,2)
+- service_fee: decimal(10,2)
+- delivery_fee: decimal(10,2)
+- tax: decimal(10,2)
+- tip: decimal(10,2)
+- final_total: decimal(10,2)
+- payment_intent_id: varchar   // Stripe
+- delivery_address: jsonb
+- delivery_proof_photo_url: varchar
+- created_at: timestamp        <span class="tag-idx">IDX</span>
+- delivered_at: timestamp
+</pre>
+
+<h3>Order Items (PostgreSQL)</h3>
+<pre>
+Table: order_items
+- order_item_id: uuid          <span class="tag-pk">PK</span>
+- order_id: uuid               <span class="tag-fk">FK → orders</span> <span class="tag-idx">IDX</span>
+- product_id: uuid             <span class="tag-fk">FK → products</span>
+- store_product_id: uuid       // store-specific listing
+- quantity: decimal(10,3)      // supports weight-based (2.5 lbs)
+- unit_price: decimal(10,2)
+- status: enum('pending','found','substituted','refunded','not_found')
+- substitution_product_id: uuid
+- substitution_preference: enum('best_match','specific','dont_replace')
+- scanned_barcode: varchar
+- actual_quantity: decimal(10,3)
+- actual_price: decimal(10,2)
+</pre>
+
+<h3>Products (Elasticsearch + PostgreSQL)</h3>
+<pre>
+// Elasticsearch index: products_by_store
+{
+  "product_id": "uuid",
+  "store_id": "uuid",
+  "name": "Organic Whole Milk",           // <span class="tag-idx">full-text</span>
+  "brand": "Kirkland",
+  "category": ["Dairy", "Milk", "Organic"],
+  "upc": "012345678901",
+  "price": 6.49,
+  "unit": "gallon",
+  "availability_score": 0.92,
+  "aisle": "A12",
+  "image_url": "cdn.instacart.com/...",
+  "nutrition": {"calories": 150, ...},
+  "tags": ["organic", "whole", "non-gmo"],
+  "popularity_score": 0.87
+}
+</pre>
+
+<h3>Shoppers (PostgreSQL)</h3>
+<pre>
+Table: shoppers
+- shopper_id: uuid             <span class="tag-pk">PK</span>
+- name: varchar
+- phone: varchar
+- email: varchar
+- rating: decimal(3,2)        <span class="tag-idx">IDX</span>
+- total_orders: int
+- status: enum('available','shopping','delivering','offline')
+- current_location: point      <span class="tag-idx">IDX: GIST</span>
+- preferred_stores: uuid[]
+- speed_rating: decimal(3,2)   // items per minute
+- payment_card_id: varchar     // Stripe Issuing virtual card
+- created_at: timestamp
+</pre>
+</div>
+
+<h2>8. Cache &amp; CDN Deep Dive</h2>
+<div class="card">
+<table>
+<tr><th>Layer</th><th>Technology</th><th>What's Cached</th><th>TTL</th><th>Notes</th></tr>
+<tr><td>CDN</td><td>CloudFront</td><td>Product images, store logos</td><td>1yr (versioned)</td><td>Multiple resolutions per product image</td></tr>
+<tr><td>Search Cache</td><td>Elasticsearch</td><td>Popular searches, category pages</td><td>5-15 min</td><td>Per-store results</td></tr>
+<tr><td>Inventory Cache</td><td>Redis</td><td>Product availability scores</td><td>5-30 min (varies by signal freshness)</td><td>Updated by shopper feedback in real-time</td></tr>
+<tr><td>Cart Cache</td><td>Redis</td><td>Active shopping carts</td><td>7 days</td><td>Persisted to DB on checkout</td></tr>
+<tr><td>Shopper Location</td><td>Redis GEO</td><td>Real-time shopper positions</td><td>30 seconds</td><td>Updated every 5 seconds from app</td></tr>
+<tr><td>Delivery Window</td><td>Redis</td><td>Pre-computed available slots per store</td><td>1-5 min</td><td>Recalculated on order placement/cancellation</td></tr>
+</table>
+
+<h3>Inventory Cache Strategy</h3>
+<p>Inventory data comes from multiple sources with different freshness: retailer POS feed (1-24h delay), shopper real-time feedback (instant), ML predictions (hourly). The cache implements a <strong>layered freshness model</strong>: start with retailer feed as base → overlay shopper feedback (item not found signals) → overlay ML prediction. The combined score is the availability probability shown to customers. Redis key: <code>inv:{store_id}:{product_id}</code> → <code>{score: 0.92, last_shopper_signal: "found", ml_prediction: 0.88}</code>.</p>
+</div>
+
+<h2>9. Scaling Considerations</h2>
+<div class="card">
+<h3>Peak Traffic (Holidays)</h3>
+<ul>
+<li><strong>Thanksgiving:</strong> 5-10x normal volume. Pre-scaling starts 2 weeks before. Extra shoppers recruited via bonuses.</li>
+<li><strong>COVID peaks:</strong> 2020 saw 500% traffic increase in weeks. Instacart added 300K shoppers in 3 months.</li>
+<li><strong>Weather events:</strong> Snowstorms cause local 3-5x spikes with 2 hours notice.</li>
+<li><strong>Auto-scaling:</strong> Kubernetes HPA on all services. Pre-warm capacity for known events (holidays).</li>
+</ul>
+
+<h3>Multi-Region Deployment</h3>
+<ul>
+<li>Primary: US regions (us-east-1, us-west-2). Also: Canada, expanding internationally.</li>
+<li>Store data localized: each metro area's stores indexed and served from nearest region</li>
+<li>Shopper matching: must be geographically local (shopper must be near the store)</li>
+</ul>
+
+<h3>Load Balancing</h3>
+<ul>
+<li><strong>DNS:</strong> Route53 latency-based routing</li>
+<li><strong>L7:</strong> AWS ALB with path routing to service mesh (Envoy/Istio)</li>
+<li><strong>WebSocket:</strong> Sticky sessions for real-time shopper-customer communication</li>
+</ul>
+</div>
+
+<h2>10. Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="tradeoff-card pro">
+<h4>✅ Order Batching</h4>
+<p>2-3 orders per trip significantly improves shopper earnings and Instacart economics. Reduces delivery cost per order by 30-50%. Higher shopper utilization.</p>
+</div>
+<div class="tradeoff-card con">
+<h4>❌ Batching Quality Tradeoff</h4>
+<p>Later deliveries in a batch may receive slightly warmer frozen items. Longer wait for batched customers. Complex multi-drop routing adds delivery time. Customer perception: "I'm paying for delivery but sharing a shopper."</p>
+</div>
+<div class="tradeoff-card pro">
+<h4>✅ ML Substitution Suggestions</h4>
+<p>90%+ acceptance rate when ML suggests substitutions. Reduces order cancellations. Faster than manual shopper decisions. Learns from customer preferences over time.</p>
+</div>
+<div class="tradeoff-card con">
+<h4>❌ Substitution Friction</h4>
+<p>Customers may not respond to substitution requests in time (shopper waiting). Auto-substitutions can occasionally miss dietary restrictions. Some customers prefer no substitutions at all.</p>
+</div>
+<div class="tradeoff-card pro">
+<h4>✅ Gig Worker Model</h4>
+<p>Flexible supply — scales up/down with demand. No fixed labor cost during low-demand hours. Shoppers choose their own schedules.</p>
+</div>
+<div class="tradeoff-card con">
+<h4>❌ Quality Control</h4>
+<p>Inconsistent shopping quality across gig workers. Training and retention challenges. Regulatory risk (worker classification lawsuits). Tips create incentive misalignment (shoppers may prioritize high-tip orders).</p>
+</div>
+</div>
+
+<h2>11. Alternative Approaches</h2>
+<div class="info-grid">
+<div class="card">
+<h4>Dark Store Model (Gopuff, Gorillas)</h4>
+<p>Operate dedicated micro-fulfillment centers (not retail stores). 100% inventory control, faster picking (purpose-built layout), guaranteed availability. But: high fixed cost, limited SKU count (~3000 vs 30,000+ at a supermarket), requires dense urban areas to be economical.</p>
+</div>
+<div class="card">
+<h4>Retailer-Owned Pickup (Walmart, Kroger)</h4>
+<p>Retailer employees pick orders in-store and prepare for customer pickup or last-mile delivery. Better inventory accuracy (employee knows store), lower cost (existing workforce). But: no gig economy flexibility, limited delivery radius, retailer must invest in tech.</p>
+</div>
+<div class="card">
+<h4>Autonomous Delivery</h4>
+<p>Nuro, Starship, Waymo delivery bots for last-mile. Eliminates delivery labor cost. But: limited to certain geographies, weather dependent, can't navigate apartments/stairs, regulatory hurdles, customer must come to curb.</p>
+</div>
+<div class="card">
+<h4>Voice Commerce (Alexa/Google)</h4>
+<p>"Alexa, reorder my groceries." Simplifies repeat orders. Instacart integrates with voice assistants. Limitation: browsing/discovery is poor via voice. Works best for routine reorders of known items.</p>
+</div>
+</div>
+
+<h2>12. Additional Information</h2>
+<div class="card">
+<h3>Instacart Ads Platform</h3>
+<p>Instacart's largest revenue driver. CPG brands (P&G, Coca-Cola, General Mills) bid for product placement in search results and banner ads. Similar to Amazon Sponsored Products. Auction-based (second-price CPC). Targeting: by category, keyword, competitor conquesting. Measurement: closed-loop attribution (ad view → purchase within session). The Ads platform processes millions of bid requests per second, using a real-time auction engine similar to Google Ads.</p>
+
+<h3>Key Numbers</h3>
+<table>
+<tr><td>Monthly Active Customers</td><td>10M+</td></tr>
+<tr><td>Shoppers (gig workers)</td><td>600K+</td></tr>
+<tr><td>Retail partner stores</td><td>80K+</td></tr>
+<tr><td>Cities served</td><td>14K+</td></tr>
+<tr><td>Average order value</td><td>~$110</td></tr>
+<tr><td>Item-found rate</td><td>~92%</td></tr>
+<tr><td>Annual GTV</td><td>~$30B</td></tr>
+<tr><td>Revenue</td><td>~$3B/year</td></tr>
+</table>
+</div>
+</div>
+</body>
+</html>

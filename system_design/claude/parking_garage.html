@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: Parking Garage</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #e0e0e0; margin: 0; padding: 20px; line-height: 1.7; }
+  h1 { color: #607d8b; font-size: 2.2em; border-bottom: 3px solid #607d8b; padding-bottom: 10px; }
+  h2 { color: #90a4ae; margin-top: 40px; }
+  h3 { color: #b0bec5; }
+  h4 { color: #cfd8dc; }
+  .section { background: #1a1a1a; padding: 25px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #607d8b; }
+  .subsection { background: #222; padding: 15px; border-radius: 8px; margin: 15px 0; }
+  .diagram-container { background: #1e1e1e; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; overflow-x: auto; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.85em; margin: 2px 4px; }
+  .tag-pk { background: #4a9eff33; color: #4a9eff; border: 1px solid #4a9eff66; }
+  .tag-fk { background: #ff4a4a33; color: #ff4a4a; border: 1px solid #ff4a4a66; }
+  .tag-idx { background: #4aff4a33; color: #4aff4a; border: 1px solid #4aff4a66; }
+  .tag-shard { background: #ffa54a33; color: #ffa54a; border: 1px solid #ffa54a66; }
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+  th, td { padding: 12px; text-align: left; border: 1px solid #333; }
+  th { background: #2a2a2a; color: #90a4ae; }
+  tr:nth-child(even) { background: #1a1a1a; }
+  code { background: #2a2a2a; padding: 2px 8px; border-radius: 4px; color: #b0bec5; font-family: 'Fira Code', monospace; }
+  pre { background: #1a1a1a; padding: 20px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; }
+  .example { background: #0d2818; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #4aff4a; }
+  .tradeoff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+  .tradeoff-pro { background: #0d2818; padding: 15px; border-radius: 8px; border-left: 3px solid #4aff4a; }
+  .tradeoff-con { background: #2d1018; padding: 15px; border-radius: 8px; border-left: 3px solid #ff4a4a; }
+  ul, ol { padding-left: 25px; }
+  li { margin: 6px 0; }
+</style>
+</head>
+<body>
+
+<h1>🅿️ System Design: Parking Garage System</h1>
+
+<div class="section">
+<h2>📋 Functional Requirements</h2>
+<ul>
+  <li>Vehicles can enter the garage — system assigns a spot based on vehicle size (compact, regular, large)</li>
+  <li>Vehicles can exit — system calculates parking fee based on duration and vehicle type</li>
+  <li>Real-time capacity tracking — display available spots per level/type on entrance displays</li>
+  <li>Support multiple payment methods (credit card, mobile app, cash, validated parking)</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>🔒 Non-Functional Requirements</h2>
+<ul>
+  <li><strong>High availability:</strong> Gate system must work 24/7 — cars cannot be stuck at entry/exit</li>
+  <li><strong>Consistency:</strong> No double-assignment of parking spots — strong consistency required</li>
+  <li><strong>Low latency:</strong> &lt;2s for gate open decision (entry/exit)</li>
+  <li><strong>Offline resilience:</strong> System must function during network/cloud outages (local fallback)</li>
+  <li><strong>Scale:</strong> Multi-garage chain — thousands of garages, millions of spots globally</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>🔄 Flow 1 — Vehicle Entry</h2>
+<!-- ============================================================ -->
+
+<div class="diagram-container">
+<svg viewBox="0 0 1100 380" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ah1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="150" width="110" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="75" y="178" text-anchor="middle" fill="white" font-size="13">Vehicle at</text>
+  <text x="75" y="195" text-anchor="middle" fill="white" font-size="13">Entry Gate</text>
+  <line x1="130" y1="180" x2="190" y2="180" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="200" y="150" width="130" height="60" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="265" y="175" text-anchor="middle" fill="white" font-size="12">LPR Camera</text>
+  <text x="265" y="192" text-anchor="middle" fill="white" font-size="10">(License Plate Read)</text>
+  <line x1="330" y1="180" x2="400" y2="180" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="410" y="150" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="480" y="175" text-anchor="middle" fill="white" font-size="12">Entry Controller</text>
+  <text x="480" y="192" text-anchor="middle" fill="white" font-size="10">(Local + Cloud)</text>
+  <line x1="550" y1="165" x2="620" y2="105" stroke="#aaa" marker-end="url(#ah1)"/>
+  <line x1="550" y1="180" x2="620" y2="180" stroke="#aaa" marker-end="url(#ah1)"/>
+  <line x1="550" y1="195" x2="620" y2="260" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="630" y="75" width="150" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="705" y="100" text-anchor="middle" fill="white" font-size="12">Spot Allocator</text>
+  <text x="705" y="117" text-anchor="middle" fill="white" font-size="10">(Best-Fit Assignment)</text>
+  <rect x="630" y="155" width="150" height="55" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
+  <text x="705" y="178" text-anchor="middle" fill="white" font-size="12">PostgreSQL</text>
+  <text x="705" y="195" text-anchor="middle" fill="white" font-size="10">(Ticket + Spot DB)</text>
+  <rect x="630" y="235" width="150" height="55" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="705" y="258" text-anchor="middle" fill="white" font-size="12">Display Board</text>
+  <text x="705" y="275" text-anchor="middle" fill="white" font-size="10">(Capacity Update)</text>
+  <line x1="780" y1="103" x2="850" y2="180" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="860" y="155" width="140" height="55" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="930" y="178" text-anchor="middle" fill="white" font-size="12">Gate Opens</text>
+  <text x="930" y="195" text-anchor="middle" fill="white" font-size="10">(Ticket Printed)</text>
+</svg>
+</div>
+
+<div class="section">
+<h3>Step-by-Step</h3>
+<ol>
+  <li><strong>Vehicle detected:</strong> Loop sensor or infrared beam detects vehicle at entry gate</li>
+  <li><strong>LPR Camera:</strong> License Plate Recognition camera captures plate → OCR extracts plate number → checked against reserved/banned list</li>
+  <li><strong>Entry Controller:</strong> Local edge controller (Raspberry Pi or industrial PC) handles logic. Communicates with cloud backend for cross-garage data, falls back to local DB if network is down</li>
+  <li><strong>Capacity check:</strong> Query available spots by vehicle type. If garage full → display "FULL" on entrance sign, don't open gate</li>
+  <li><strong>Spot Allocator:</strong> Selects optimal spot — nearest to entrance, matching vehicle size (compact car → compact spot preferred, can use regular if compact full). Uses <code>SELECT ... FOR UPDATE SKIP LOCKED</code> for concurrent allocation</li>
+  <li><strong>Create ticket:</strong> Insert parking_ticket record with <code>entry_time = NOW()</code>, assigned spot, plate number. Status = <code>active</code></li>
+  <li><strong>Gate opens:</strong> Physical barrier lifts. Ticket printed (if paper-based) or QR code sent to mobile app. Display board updates: "Level 2: 45 spots available"</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> Honda Civic (compact) arrives at Gate A → LPR reads "ABC-1234" → System: 342 spots available (120 compact, 180 regular, 42 large) → Allocator assigns Spot C2-15 (Level 2, compact section) → Ticket T-20240209-001 created → Gate opens → Display: "Compact: 119 | Regular: 180 | Large: 42"
+</div>
+</div>
+
+<div class="section">
+<h3>🔍 Component Deep Dives — Entry Flow</h3>
+
+<div class="subsection">
+<h4>Spot Allocation Algorithm</h4>
+<pre>
+-- Atomic spot allocation with pessimistic locking
+BEGIN;
+SELECT id, level, section, spot_number
+FROM parking_spots
+WHERE garage_id = 'G001'
+  AND status = 'available'
+  AND spot_type = 'compact'       -- match vehicle type
+ORDER BY
+  distance_to_entrance ASC,       -- nearest first
+  level ASC                       -- lower levels preferred
+LIMIT 1
+FOR UPDATE SKIP LOCKED;           -- skip spots being allocated by other transactions
+
+UPDATE parking_spots SET status = 'occupied', current_ticket_id = 'T-001' WHERE id = selected_spot_id;
+INSERT INTO parking_tickets (id, plate, spot_id, entry_time, status) VALUES (...);
+COMMIT;
+</pre>
+<p><strong><code>FOR UPDATE SKIP LOCKED</code>:</strong> Critical for concurrency. Multiple entry gates may try to allocate simultaneously. Without SKIP LOCKED, transactions would block each other. With it, each transaction locks one row and skips already-locked rows — no contention.</p>
+</div>
+
+<div class="subsection">
+<h4>License Plate Recognition (LPR)</h4>
+<p><strong>Hardware:</strong> IR camera (works at night) + OCR ML model (typically YOLO for detection + CRNN for character recognition)</p>
+<p><strong>Accuracy:</strong> ~97-99% in good conditions. Fallback: if OCR fails, issue ticket with manual plate entry option or ticket barcode only</p>
+<p><strong>Uses:</strong> (1) Match against reservations for pre-booked spots, (2) Ticketless exit (plate-based billing), (3) Ban list enforcement</p>
+</div>
+
+<div class="subsection">
+<h4>Offline Resilience</h4>
+<p><strong>Edge controller</strong> has local SQLite DB mirroring garage state. If cloud connection is lost:</p>
+<ul>
+  <li>Entry/exit continues using local DB</li>
+  <li>Spot allocation done locally (each gate has partition of spots to avoid conflicts)</li>
+  <li>When connection restores, sync queue replays events to cloud DB</li>
+  <li>Conflict resolution: cloud state wins for cross-garage data, local state wins for garage-specific operations during outage</li>
+</ul>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>🔄 Flow 2 — Vehicle Exit & Payment</h2>
+<!-- ============================================================ -->
+
+<div class="diagram-container">
+<svg viewBox="0 0 1100 380" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="150" width="110" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="75" y="178" text-anchor="middle" fill="white" font-size="13">Vehicle at</text>
+  <text x="75" y="195" text-anchor="middle" fill="white" font-size="13">Pay Station</text>
+  <line x1="130" y1="180" x2="200" y2="180" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="210" y="150" width="130" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="275" y="175" text-anchor="middle" fill="white" font-size="12">Fee Calculator</text>
+  <text x="275" y="192" text-anchor="middle" fill="white" font-size="10">(Rate Engine)</text>
+  <line x1="340" y1="180" x2="410" y2="180" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="420" y="150" width="140" height="60" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="490" y="175" text-anchor="middle" fill="white" font-size="12">Payment Gateway</text>
+  <text x="490" y="192" text-anchor="middle" fill="white" font-size="10">(Card/Mobile/Cash)</text>
+  <line x1="560" y1="180" x2="630" y2="180" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="640" y="150" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="710" y="175" text-anchor="middle" fill="white" font-size="12">Exit Controller</text>
+  <text x="710" y="192" text-anchor="middle" fill="white" font-size="10">(Release Spot)</text>
+  <line x1="780" y1="180" x2="850" y2="180" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="860" y="150" width="130" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="925" y="178" text-anchor="middle" fill="white" font-size="12">Gate Opens</text>
+  <text x="925" y="195" text-anchor="middle" fill="white" font-size="10">(Spot Released)</text>
+</svg>
+</div>
+
+<div class="section">
+<h3>Step-by-Step</h3>
+<ol>
+  <li><strong>Ticket scan:</strong> Driver scans ticket barcode at pay station (or LPR matches plate to ticket)</li>
+  <li><strong>Fee calculation:</strong> Rate Engine computes fee based on: duration (entry_time → now), vehicle type, time-of-day rates, special events, validated parking discounts</li>
+  <li><strong>Payment:</strong> Driver pays via credit card (contactless tap), mobile app (Apple Pay / Google Pay), or cash machine. Payment processed through gateway (Stripe/Square)</li>
+  <li><strong>Ticket marked paid:</strong> Update ticket status to <code>paid</code>, record payment_amount, payment_method, exit_time</li>
+  <li><strong>Exit gate:</strong> Driver proceeds to exit gate. Scans paid ticket or LPR confirms paid status → Gate opens. Grace period: 15 minutes to exit after payment</li>
+  <li><strong>Spot released:</strong> Parking spot status → <code>available</code>. Display board updated. Analytics event emitted</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> Driver scans ticket at 5:45 PM, entered at 9:15 AM → Duration: 8h 30m → Rate: $3/hr first 2h, $5/hr after → Fee: $3×2 + $5×6.5 = $38.50 → Driver taps credit card → Payment approved → Ticket T-001 status = paid → Drives to exit gate → LPR confirms "ABC-1234" is paid → Gate opens → Spot C2-15 released
+</div>
+</div>
+
+<div class="section">
+<h3>🔍 Component Deep Dives — Exit Flow</h3>
+
+<div class="subsection">
+<h4>Rate Engine (Fee Calculation)</h4>
+<p><strong>Rate structures supported:</strong></p>
+<ul>
+  <li><strong>Flat rate:</strong> $20/day regardless of duration</li>
+  <li><strong>Tiered hourly:</strong> $3/hr first 2h, $5/hr for 2-8h, $2/hr after 8h</li>
+  <li><strong>Time-of-day:</strong> Peak rates (8AM-6PM) vs off-peak (6PM-8AM)</li>
+  <li><strong>Event pricing:</strong> Special rate during nearby stadium events (+50% surcharge)</li>
+  <li><strong>Daily maximum:</strong> Cap at $35/day regardless of hourly calculation</li>
+  <li><strong>Validation:</strong> Merchant stamps reduce fee (e.g., "2 hours free with restaurant purchase")</li>
+</ul>
+<p><strong>Implementation:</strong> Rate rules stored as JSON configuration per garage. Engine applies rules in priority order, selects minimum of (calculated rate, daily max).</p>
+</div>
+
+<div class="subsection">
+<h4>Payment Integration</h4>
+<p><strong>Protocol:</strong> HTTPS REST to payment gateway (Stripe Terminal for card, in-app SDK for mobile)</p>
+<p><strong>Offline payment:</strong> If gateway is down, kiosk stores payment intent locally. Card data encrypted with public key (not stored raw). When online, process stored payments. Cash machine is always offline-capable.</p>
+<p><strong>Recurring/subscription:</strong> Monthly parkers pre-pay — LPR recognizes plate, gate opens without payment stop</p>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>🏗️ Combined Architecture</h2>
+<!-- ============================================================ -->
+
+<div class="diagram-container">
+<svg viewBox="0 0 1100 600" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ahc" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <!-- Physical Layer -->
+  <text x="80" y="30" fill="#90a4ae" font-size="14" font-weight="bold">Physical Layer (Per Garage)</text>
+  <rect x="20" y="45" width="120" height="45" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="80" y="72" text-anchor="middle" fill="white" font-size="11">Entry Gates (LPR)</text>
+  <rect x="160" y="45" width="120" height="45" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="220" y="72" text-anchor="middle" fill="white" font-size="11">Exit Gates (LPR)</text>
+  <rect x="300" y="45" width="120" height="45" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="360" y="72" text-anchor="middle" fill="white" font-size="11">Pay Stations</text>
+  <rect x="440" y="45" width="120" height="45" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="500" y="72" text-anchor="middle" fill="white" font-size="11">Spot Sensors</text>
+  <rect x="580" y="45" width="120" height="45" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="640" y="72" text-anchor="middle" fill="white" font-size="11">Display Boards</text>
+  <!-- Edge Controller -->
+  <line x1="350" y1="90" x2="350" y2="130" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="250" y="135" width="200" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="350" y="158" text-anchor="middle" fill="white" font-size="12">Edge Controller (Local)</text>
+  <text x="350" y="175" text-anchor="middle" fill="white" font-size="10">(SQLite + Business Logic)</text>
+  <!-- Cloud sync -->
+  <line x1="350" y1="190" x2="350" y2="240" stroke="#aaa" stroke-dasharray="5,5" marker-end="url(#ahc)"/>
+  <text x="420" y="220" fill="#aaa" font-size="10">Sync (MQTT/HTTPS)</text>
+  <!-- Cloud Layer -->
+  <text x="80" y="260" fill="#90a4ae" font-size="14" font-weight="bold">Cloud Layer (Multi-Garage)</text>
+  <rect x="250" y="275" width="200" height="55" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="350" y="298" text-anchor="middle" fill="white" font-size="12">API Gateway / LB</text>
+  <text x="350" y="315" text-anchor="middle" fill="white" font-size="10">(Auth + Routing)</text>
+  <!-- Cloud Services -->
+  <line x1="350" y1="330" x2="150" y2="380" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="350" y1="330" x2="350" y2="380" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="350" y1="330" x2="550" y2="380" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="350" y1="330" x2="750" y2="380" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="60" y="385" width="150" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="135" y="415" text-anchor="middle" fill="white" font-size="11">Garage Mgmt Service</text>
+  <rect x="260" y="385" width="150" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="335" y="415" text-anchor="middle" fill="white" font-size="11">Billing Service</text>
+  <rect x="460" y="385" width="150" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="535" y="415" text-anchor="middle" fill="white" font-size="11">Reservation Service</text>
+  <rect x="660" y="385" width="150" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="735" y="415" text-anchor="middle" fill="white" font-size="11">Analytics Service</text>
+  <!-- Databases -->
+  <line x1="335" y1="435" x2="335" y2="490" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="60" y="495" width="150" height="50" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
+  <text x="135" y="525" text-anchor="middle" fill="white" font-size="11">PostgreSQL (Primary)</text>
+  <rect x="260" y="495" width="150" height="50" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
+  <text x="335" y="525" text-anchor="middle" fill="white" font-size="11">Redis (Real-time)</text>
+  <rect x="460" y="495" width="150" height="50" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="535" y="525" text-anchor="middle" fill="white" font-size="11">Kafka (Events)</text>
+  <rect x="660" y="495" width="150" height="50" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
+  <text x="735" y="525" text-anchor="middle" fill="white" font-size="11">TimescaleDB (Metrics)</text>
+  <line x1="135" y1="435" x2="135" y2="490" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="535" y1="435" x2="535" y2="490" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="735" y1="435" x2="735" y2="490" stroke="#aaa" marker-end="url(#ahc)"/>
+</svg>
+</div>
+
+<div class="example">
+<strong>End-to-End Example:</strong> Multi-garage operator runs 50 garages across 10 cities → Each garage has edge controller with local SQLite → Events sync to cloud via MQTT → User reserves spot via mobile app (Reservation Service) → Arrives at garage → LPR reads plate, matches reservation → Gate opens, spot C2-15 assigned → Parks for 4 hours → Pay station calculates $18 → Pays with Apple Pay → Exit gate opens → Cloud analytics shows: 85% occupancy peak at 2 PM, $12K daily revenue, avg stay 3.2 hours
+</div>
+
+<!-- ============================================================ -->
+<h2>🗄️ Database Schema</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<h3>PostgreSQL — Core Data</h3>
+
+<h4>garages</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>name</td><td>VARCHAR(255)</td><td></td></tr>
+<tr><td>address</td><td>TEXT</td><td></td></tr>
+<tr><td>latitude</td><td>DECIMAL(10,7)</td><td></td></tr>
+<tr><td>longitude</td><td>DECIMAL(10,7)</td><td></td></tr>
+<tr><td>total_spots</td><td>INTEGER</td><td></td></tr>
+<tr><td>levels</td><td>INTEGER</td><td></td></tr>
+<tr><td>operating_hours</td><td>JSONB</td><td>Per-day open/close times</td></tr>
+<tr><td>rate_config</td><td>JSONB</td><td>Pricing rules</td></tr>
+<tr><td>status</td><td>VARCHAR(20)</td><td>open / closed / maintenance</td></tr>
+</table>
+
+<h4>parking_spots</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>garage_id</td><td>UUID</td><td><span class="tag tag-fk">FK → garages</span><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>level</td><td>SMALLINT</td><td></td></tr>
+<tr><td>section</td><td>VARCHAR(10)</td><td>A, B, C, etc.</td></tr>
+<tr><td>spot_number</td><td>VARCHAR(10)</td><td></td></tr>
+<tr><td>spot_type</td><td>VARCHAR(20)</td><td>compact / regular / large / handicap / ev_charging</td></tr>
+<tr><td>status</td><td>VARCHAR(20)</td><td>available / occupied / reserved / maintenance</td></tr>
+<tr><td>current_ticket_id</td><td>UUID</td><td><span class="tag tag-fk">FK → parking_tickets</span></td></tr>
+<tr><td>distance_to_entrance</td><td>INTEGER</td><td>Meters (for allocation priority)</td></tr>
+<tr><td>has_sensor</td><td>BOOLEAN</td><td></td></tr>
+</table>
+<p><span class="tag tag-idx">INDEX</span> on (garage_id, status, spot_type) — efficient spot allocation query</p>
+
+<h4>parking_tickets</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>garage_id</td><td>UUID</td><td><span class="tag tag-fk">FK → garages</span><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>spot_id</td><td>UUID</td><td><span class="tag tag-fk">FK → parking_spots</span></td></tr>
+<tr><td>plate_number</td><td>VARCHAR(20)</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>vehicle_type</td><td>VARCHAR(20)</td><td></td></tr>
+<tr><td>entry_time</td><td>TIMESTAMPTZ</td><td></td></tr>
+<tr><td>exit_time</td><td>TIMESTAMPTZ</td><td>NULL until exit</td></tr>
+<tr><td>fee_amount</td><td>DECIMAL(10,2)</td><td></td></tr>
+<tr><td>payment_method</td><td>VARCHAR(20)</td><td>card / mobile / cash / validated</td></tr>
+<tr><td>payment_status</td><td>VARCHAR(20)</td><td>pending / paid / failed</td></tr>
+<tr><td>barcode</td><td>VARCHAR(64)</td><td><span class="tag tag-idx">UNIQUE</span></td></tr>
+<tr><td>status</td><td>VARCHAR(20)</td><td>active / paid / exited / lost_ticket</td></tr>
+</table>
+
+<h4>reservations</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>user_id</td><td>UUID</td><td><span class="tag tag-fk">FK → users</span></td></tr>
+<tr><td>garage_id</td><td>UUID</td><td><span class="tag tag-fk">FK → garages</span></td></tr>
+<tr><td>spot_id</td><td>UUID</td><td><span class="tag tag-fk">FK → parking_spots</span></td></tr>
+<tr><td>plate_number</td><td>VARCHAR(20)</td><td></td></tr>
+<tr><td>start_time</td><td>TIMESTAMPTZ</td><td></td></tr>
+<tr><td>end_time</td><td>TIMESTAMPTZ</td><td></td></tr>
+<tr><td>status</td><td>VARCHAR(20)</td><td>confirmed / cancelled / completed / no_show</td></tr>
+<tr><td>prepaid_amount</td><td>DECIMAL(10,2)</td><td></td></tr>
+</table>
+
+<h3>Sharding Strategy</h3>
+<p><strong>All tables:</strong> Shard by <code>garage_id</code> — all data for a garage is co-located. Queries are always scoped to a single garage (entry/exit/payment operations). Cross-garage queries (analytics dashboard) use scatter-gather. <span class="tag tag-shard">HASH SHARD (by garage)</span></p>
+
+<h3>Redis — Real-Time State</h3>
+<pre>
+# Capacity counters (atomic, real-time)
+HSET garage:{id}:capacity compact 119 regular 180 large 42
+HINCRBY garage:{id}:capacity compact -1   # on entry
+
+# Active ticket lookup by plate
+SET plate:{plate_number} {ticket_json} EX 86400
+
+# Monthly parker whitelist
+SISMEMBER monthly:{garage_id} {plate_number}
+</pre>
+</div>
+
+<!-- ============================================================ -->
+<h2>💾 Cache Deep Dive</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<p><strong>Redis capacity counters</strong> are the critical cache — updated atomically on every entry/exit. PostgreSQL is source of truth, but display boards and mobile app read from Redis for real-time counts. Periodic reconciliation (every 5 min) ensures Redis matches PostgreSQL.</p>
+<p><strong>Eviction:</strong> Not applicable — all keys are essential operational data with explicit TTLs. No LRU needed.</p>
+<p><strong>CDN:</strong> Not applicable for core operations. Static assets (mobile app) served via CDN. Garage information pages (address, rates) cached on CDN with 1-hour TTL.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2>⚖️ Tradeoffs</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<div class="tradeoff-grid">
+  <div class="tradeoff-pro">
+    <h4>✅ Edge + Cloud Hybrid</h4>
+    <p>Offline resilience — gates work during cloud outage. Local latency for physical operations. Cloud for cross-garage analytics and reservations</p>
+  </div>
+  <div class="tradeoff-con">
+    <h4>❌ Edge + Cloud Hybrid</h4>
+    <p>Data sync complexity. Conflict resolution during partition. Dual codebase maintenance (edge + cloud). Edge hardware management at scale</p>
+  </div>
+  <div class="tradeoff-pro">
+    <h4>✅ Spot Sensors (IoT)</h4>
+    <p>Real-time per-spot occupancy — accurate capacity. Enables "guide to your spot" navigation. Detects vehicles that parked in wrong spot</p>
+  </div>
+  <div class="tradeoff-con">
+    <h4>❌ Spot Sensors (IoT)</h4>
+    <p>Expensive ($50-200 per spot × thousands of spots). Maintenance overhead (batteries, calibration). Most garages use gate-counting (entry - exit = occupancy) instead — less accurate but much cheaper</p>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>🔄 Alternative Approaches</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<div class="subsection">
+<h4>Gate Counting vs Sensor-Based</h4>
+<p>Most garages use simple gate counting: capacity = total_spots - (entries - exits). No per-spot sensors needed. Cheaper but can't direct drivers to specific spots. Drift over time if gate miscounts (e.g., tailgating). Reset daily with manual audit.</p>
+</div>
+<div class="subsection">
+<h4>Ticketless (LPR-Only) System</h4>
+<p>Modern garages eliminate paper tickets entirely. LPR at entry creates digital ticket. LPR at exit matches plate → calculates fee → pay at exit kiosk or mobile app. Advantages: faster throughput, no lost tickets, lower hardware cost. Disadvantage: LPR errors (~2% misread rate) require manual override.</p>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>📚 Additional Information</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<h3>OOP Design Patterns</h3>
+<p>Parking garage is a classic OOP interview question. Key patterns: <strong>Strategy Pattern</strong> for fee calculation (different rate strategies). <strong>Observer Pattern</strong> for display board updates (spots notify display on status change). <strong>Singleton</strong> for garage manager. <strong>Factory Pattern</strong> for creating different ticket types (hourly, daily, monthly).</p>
+
+<h3>Concurrency Control</h3>
+<p>Critical challenge: two vehicles arriving simultaneously should not be assigned the same spot. Solutions: (1) Database-level: <code>SELECT FOR UPDATE SKIP LOCKED</code>, (2) Application-level: distributed lock per garage section using Redis <code>SETNX</code>, (3) Optimistic: attempt insert with unique constraint on (spot_id, status='occupied'), retry on conflict.</p>
+
+<h3>IoT Communication — MQTT Protocol</h3>
+<p>Spot sensors and edge controllers communicate using MQTT (Message Queuing Telemetry Transport) — lightweight pub/sub protocol designed for IoT. QoS levels: 0 (at most once), 1 (at least once), 2 (exactly once). Topics: <code>garage/{id}/spot/{spot_id}/status</code>. Edge controller subscribes to all spots in its garage.</p>
+</div>
+
+</body>
+</html>

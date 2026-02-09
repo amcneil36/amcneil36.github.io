@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: Data Monitoring Pipeline</title>
+<style>
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: #e0e0e0; line-height: 1.7; }
+h1 { color: #00e676; border-bottom: 3px solid #00e676; padding-bottom: 10px; font-size: 2.2em; }
+h2 { color: #33ff99; margin-top: 40px; font-size: 1.6em; border-left: 4px solid #33ff99; padding-left: 12px; }
+h3 { color: #66ffbb; font-size: 1.3em; }
+.section { background: #1a1a2e; border-radius: 10px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
+.diagram-container { background: #0d1117; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
+.example { background: #1e293b; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+.example strong { color: #f59e0b; }
+table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+th { background: #2a2a4a; color: #33ff99; padding: 12px; text-align: left; border: 1px solid #444; }
+td { padding: 10px 12px; border: 1px solid #333; }
+tr:nth-child(even) { background: #1a1a2e; }
+tr:nth-child(odd) { background: #151528; }
+code { background: #2d2d4d; padding: 2px 8px; border-radius: 4px; color: #ff79c6; font-size: 0.95em; }
+.tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
+.tag-pk { background: #4a1a6b; color: #d4a5ff; }
+.tag-idx { background: #4a3a1a; color: #ffd4a5; }
+ul { padding-left: 25px; }
+li { margin: 5px 0; }
+.tradeoff { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+.pro { background: #0a2a1a; border: 1px solid #2a5a3a; padding: 15px; border-radius: 8px; }
+.con { background: #2a0a1a; border: 1px solid #5a2a3a; padding: 15px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<h1>System Design: Data Monitoring Pipeline</h1>
+
+<div class="section">
+<h2>Functional Requirements</h2>
+<ul>
+<li>Collect metrics from thousands of services/hosts (CPU, memory, request latency, error rates, custom business metrics)</li>
+<li>Real-time anomaly detection and alerting (within 1-2 minutes of anomaly)</li>
+<li>Dashboard visualization with customizable charts and graphs</li>
+<li>Historical data querying for trend analysis (days, weeks, months)</li>
+<li>Alert configuration with thresholds, rate-of-change, and anomaly-based rules</li>
+<li>Alert routing and escalation (PagerDuty, Slack, email)</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>High Throughput:</strong> Ingest millions of data points per second across all sources</li>
+<li><strong>Low Latency:</strong> Anomaly detection within 60 seconds of metric emission</li>
+<li><strong>Scalability:</strong> Horizontally scalable to handle 10x growth</li>
+<li><strong>Durability:</strong> No metric data loss (critical for SLA calculations)</li>
+<li><strong>Query Performance:</strong> Dashboard queries return in &lt;2 seconds even for 30-day time ranges</li>
+<li><strong>Availability:</strong> 99.99% — monitoring must be more reliable than what it monitors</li>
+</ul>
+</div>
+
+<!-- Flow 1: Metric Ingestion -->
+<div class="section">
+<h2>Flow 1: Metric Ingestion & Storage</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1100 420" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00e676"/></marker></defs>
+<rect x="20" y="80" width="110" height="40" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="105" text-anchor="middle" fill="white" font-size="11">App Servers</text>
+<rect x="20" y="140" width="110" height="40" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="165" text-anchor="middle" fill="white" font-size="11">Databases</text>
+<rect x="20" y="200" width="110" height="40" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="225" text-anchor="middle" fill="white" font-size="11">Load Balancers</text>
+<rect x="20" y="260" width="110" height="40" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="285" text-anchor="middle" fill="white" font-size="11">Custom Metrics</text>
+<rect x="180" y="160" width="130" height="60" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="245" y="188" text-anchor="middle" fill="white" font-size="12">Metric Agents</text><text x="245" y="205" text-anchor="middle" fill="white" font-size="10">(StatsD/Telegraf)</text>
+<rect x="370" y="160" width="130" height="60" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="435" y="188" text-anchor="middle" fill="white" font-size="12">Kafka</text><text x="435" y="205" text-anchor="middle" fill="white" font-size="10">(Metric Stream)</text>
+<rect x="560" y="80" width="140" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="630" y="108" text-anchor="middle" fill="white" font-size="11">Ingestion Service</text><text x="630" y="122" text-anchor="middle" fill="white" font-size="10">(Pre-aggregation)</text>
+<rect x="560" y="200" width="140" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="630" y="228" text-anchor="middle" fill="white" font-size="11">Anomaly Detector</text><text x="630" y="242" text-anchor="middle" fill="white" font-size="10">(Flink Streaming)</text>
+<rect x="560" y="310" width="140" height="50" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="630" y="340" text-anchor="middle" fill="white" font-size="12">Downsampler</text>
+<ellipse cx="830" cy="105" rx="80" ry="30" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="830" y="100" text-anchor="middle" fill="white" font-size="11">Time-Series DB</text><text x="830" y="115" text-anchor="middle" fill="white" font-size="10">(InfluxDB/VictoriaMetrics)</text>
+<rect x="790" y="200" width="130" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="855" y="230" text-anchor="middle" fill="white" font-size="12">Alert Engine</text>
+<ellipse cx="830" cy="340" rx="70" ry="25" fill="#888" stroke="#aaa" stroke-width="2"/><text x="830" y="345" text-anchor="middle" fill="white" font-size="11">Cold Storage (S3)</text>
+<line x1="130" y1="100" x2="178" y2="180" stroke="#00e676" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="130" y1="160" x2="178" y2="185" stroke="#00e676" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="130" y1="220" x2="178" y2="200" stroke="#00e676" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="130" y1="280" x2="178" y2="210" stroke="#00e676" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="310" y1="190" x2="368" y2="190" stroke="#00e676" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="500" y1="178" x2="558" y2="108" stroke="#00e676" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="500" y1="195" x2="558" y2="225" stroke="#00e676" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="700" y1="105" x2="748" y2="105" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="700" y1="225" x2="788" y2="225" stroke="#ff6b6b" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="700" y1="120" x2="700" y2="308" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow1)"/>
+<line x1="830" y1="135" x2="830" y2="313" stroke="#ff6b6b" stroke-width="1" stroke-dasharray="5,5" marker-end="url(#arrow1)"/>
+<text x="550" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Data Monitoring: Metric Ingestion Flow</text>
+</svg>
+</div>
+
+<h3>Step-by-Step</h3>
+<ol>
+<li><strong>Metric Agents</strong> (StatsD/Telegraf) running on each host collect system metrics (CPU, memory, disk, network) and custom application metrics every 10 seconds</li>
+<li><strong>Agents → Kafka:</strong> Metrics pushed to Kafka topics partitioned by metric_name (ensures same metric goes to same partition for ordering)</li>
+<li><strong>Ingestion Service:</strong> Consumes from Kafka, pre-aggregates (e.g., 100 raw data points in 10s window → 1 aggregated point with min/max/avg/p99), writes to Time-Series DB</li>
+<li><strong>Anomaly Detector (Flink):</strong> Processes raw metric stream in real-time. Applies statistical models (Z-score, EWMA, STL decomposition) to detect anomalies</li>
+<li><strong>Downsampler:</strong> Background job that compresses old data: raw (10s) → 1min → 5min → 1hr → 1day. Reduces storage 100x for data >30 days old</li>
+<li><strong>Cold Storage:</strong> Data older than 90 days archived to S3 (Parquet format) for long-term retention and compliance</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> 10,000 app servers each emit 50 metrics every 10 seconds = 50K data points/second. Agents batch and send to Kafka. Ingestion Service pre-aggregates: for "api.latency.p99" across 10K servers, computes regional aggregates (us-east: 45ms, eu-west: 120ms). Writes 2 aggregated data points instead of 10K raw ones. Anomaly Detector sees eu-west p99 jump from 120ms baseline to 850ms → triggers anomaly alert within 30 seconds.
+</div>
+
+<h3>Deep Dive: Ingestion Service</h3>
+<ul>
+<li><strong>Protocol:</strong> Kafka consumer (pull-based). Alternative: Prometheus pull model (HTTP scrape)</li>
+<li><strong>Pre-aggregation:</strong> Groups metrics by (metric_name, tags) in 10-second tumbling windows. Computes: count, sum, min, max, avg, p50, p95, p99</li>
+<li><strong>Write path:</strong> Batch writes to Time-Series DB (1000 data points per write for efficiency)</li>
+<li><strong>Backpressure:</strong> If TSDB is slow, Kafka acts as buffer (hours of data). Ingestion rate can temporarily exceed write rate</li>
+</ul>
+
+<h3>Deep Dive: Time-Series Database</h3>
+<ul>
+<li><strong>Choice:</strong> InfluxDB, VictoriaMetrics, or Prometheus TSDB — optimized for time-series writes and range queries</li>
+<li><strong>Data model:</strong> <code>metric_name{tag1=v1, tag2=v2} value timestamp</code></li>
+<li><strong>Compression:</strong> Gorilla encoding (XOR delta for timestamps, delta-of-delta for values). 12:1 compression ratio typical</li>
+<li><strong>Retention policies:</strong> Raw (10s): 7 days, 1min: 30 days, 5min: 90 days, 1hr: 1 year, 1day: forever</li>
+</ul>
+</div>
+
+<!-- Flow 2: Alerting -->
+<div class="section">
+<h2>Flow 2: Alerting & Anomaly Detection</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff6b6b"/></marker></defs>
+<rect x="20" y="140" width="130" height="60" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="85" y="168" text-anchor="middle" fill="white" font-size="12">Kafka Stream</text><text x="85" y="185" text-anchor="middle" fill="white" font-size="10">(Raw Metrics)</text>
+<rect x="200" y="140" width="140" height="60" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="270" y="165" text-anchor="middle" fill="white" font-size="11">Anomaly Detector</text><text x="270" y="182" text-anchor="middle" fill="white" font-size="10">(Flink + ML)</text>
+<rect x="400" y="80" width="130" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="465" y="110" text-anchor="middle" fill="white" font-size="12">Alert Engine</text>
+<rect x="400" y="200" width="130" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="465" y="228" text-anchor="middle" fill="white" font-size="11">Deduplication</text><text x="465" y="242" text-anchor="middle" fill="white" font-size="10">& Grouping</text>
+<rect x="600" y="60" width="130" height="40" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="665" y="85" text-anchor="middle" fill="white" font-size="11">PagerDuty</text>
+<rect x="600" y="120" width="130" height="40" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="665" y="145" text-anchor="middle" fill="white" font-size="11">Slack</text>
+<rect x="600" y="180" width="130" height="40" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="665" y="205" text-anchor="middle" fill="white" font-size="11">Email</text>
+<rect x="600" y="240" width="130" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="665" y="265" text-anchor="middle" fill="white" font-size="11">Webhook</text>
+<ellipse cx="465" cy="320" rx="70" ry="25" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="465" y="325" text-anchor="middle" fill="white" font-size="11">Alert State DB</text>
+<line x1="150" y1="170" x2="198" y2="170" stroke="#ff6b6b" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="340" y1="160" x2="398" y2="110" stroke="#ff6b6b" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="530" y1="105" x2="530" y2="200" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow2)"/>
+<line x1="530" y1="220" x2="598" y2="80" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow2)"/>
+<line x1="530" y1="225" x2="598" y2="140" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow2)"/>
+<line x1="530" y1="230" x2="598" y2="200" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow2)"/>
+<line x1="530" y1="235" x2="598" y2="260" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow2)"/>
+<line x1="465" y1="130" x2="465" y2="293" stroke="#ff6b6b" stroke-width="1" stroke-dasharray="5,5" marker-end="url(#arrow2)"/>
+<text x="480" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Data Monitoring: Alerting Flow</text>
+</svg>
+</div>
+
+<h3>Alert Rule Types</h3>
+<ul>
+<li><strong>Threshold:</strong> <code>IF api.error_rate > 5% FOR 5 minutes THEN alert</code></li>
+<li><strong>Rate of change:</strong> <code>IF cpu_usage increases > 30% in 10 minutes THEN alert</code></li>
+<li><strong>Anomaly-based:</strong> ML model detects deviation from historical pattern (seasonal decomposition)</li>
+<li><strong>Composite:</strong> <code>IF error_rate > 3% AND latency_p99 > 500ms THEN alert</code></li>
+</ul>
+
+<h3>Deep Dive: Deduplication & Grouping</h3>
+<ul>
+<li><strong>Problem:</strong> Same issue may trigger 1000 alerts from 1000 hosts simultaneously</li>
+<li><strong>Solution:</strong> Group by (alert_rule, service_name, region). If 50 hosts trigger same alert → 1 grouped notification: "api-service: error_rate > 5% on 50/100 hosts in us-east-1"</li>
+<li><strong>Dedup window:</strong> Same alert not re-sent within 15 minutes (configurable silence window)</li>
+<li><strong>Escalation:</strong> If not acknowledged in 10 min → escalate to team lead. 30 min → escalate to VP. Configurable per alert severity</li>
+</ul>
+
+<div class="example">
+<strong>Example:</strong> Database connection pool exhausted on 20 app servers. Each server emits <code>db.connections.available = 0</code>. Anomaly Detector flags all 20. Alert Engine groups them: "Critical: db.connections.available = 0 on 20/50 hosts in api-service (us-east-1)". Dedup suppresses for 15min. Alert routed: P1 → PagerDuty (on-call engineer) + Slack #incidents. Not acknowledged in 10min → escalated to team lead via PagerDuty.
+</div>
+</div>
+
+<!-- Combined Architecture -->
+<div class="section">
+<h2>Combined Overall Architecture</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1200 550" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00e676"/></marker></defs>
+<text x="600" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Data Monitoring Pipeline: Combined Architecture</text>
+<rect x="20" y="200" width="100" height="130" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="70" y="240" text-anchor="middle" fill="white" font-size="10">Metric</text><text x="70" y="255" text-anchor="middle" fill="white" font-size="10">Sources</text><text x="70" y="280" text-anchor="middle" fill="white" font-size="9">(Hosts, DBs,</text><text x="70" y="295" text-anchor="middle" fill="white" font-size="9">LBs, Apps)</text>
+<rect x="160" y="230" width="110" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="215" y="258" text-anchor="middle" fill="white" font-size="11">Agents</text>
+<rect x="320" y="230" width="120" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="380" y="258" text-anchor="middle" fill="white" font-size="11">Kafka</text>
+<rect x="500" y="100" width="130" height="45" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="565" y="127" text-anchor="middle" fill="white" font-size="11">Ingestion Svc</text>
+<rect x="500" y="180" width="130" height="45" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="565" y="207" text-anchor="middle" fill="white" font-size="11">Anomaly (Flink)</text>
+<rect x="500" y="260" width="130" height="45" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="565" y="287" text-anchor="middle" fill="white" font-size="11">Alert Engine</text>
+<rect x="500" y="340" width="130" height="45" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="565" y="367" text-anchor="middle" fill="white" font-size="11">Downsampler</text>
+<rect x="500" y="430" width="130" height="45" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="565" y="457" text-anchor="middle" fill="white" font-size="11">Query Engine</text>
+<ellipse cx="760" cy="120" rx="75" ry="28" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="760" y="118" text-anchor="middle" fill="white" font-size="10">Time-Series DB</text><text x="760" y="132" text-anchor="middle" fill="white" font-size="9">(Hot: 7 days)</text>
+<ellipse cx="760" cy="210" rx="65" ry="25" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="760" y="215" text-anchor="middle" fill="white" font-size="10">Warm (30 days)</text>
+<ellipse cx="760" cy="300" rx="60" ry="25" fill="#888" stroke="#aaa" stroke-width="2"/><text x="760" y="305" text-anchor="middle" fill="white" font-size="10">Cold (S3)</text>
+<rect x="760" cy="350" y="380" width="120" height="40" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="820" y="405" text-anchor="middle" fill="white" font-size="11">Alert State DB</text>
+<rect x="920" y="100" width="120" height="45" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="980" y="127" text-anchor="middle" fill="white" font-size="11">PagerDuty</text>
+<rect x="920" y="180" width="120" height="45" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="980" y="207" text-anchor="middle" fill="white" font-size="11">Slack</text>
+<rect x="920" y="260" width="120" height="45" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="980" y="287" text-anchor="middle" fill="white" font-size="11">Dashboard UI</text>
+<line x1="120" y1="255" x2="158" y2="255" stroke="#00e676" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="270" y1="255" x2="318" y2="255" stroke="#00e676" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="440" y1="242" x2="498" y2="122" stroke="#00e676" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="440" y1="255" x2="498" y2="202" stroke="#00e676" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="630" y1="122" x2="683" y2="118" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="630" y1="202" x2="498" y2="282" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="630" y1="362" x2="683" y2="210" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="760" y1="235" x2="760" y2="273" stroke="#ffaa00" stroke-width="1" stroke-dasharray="4,4" marker-end="url(#arrow3)"/>
+<line x1="630" y1="282" x2="758" y2="380" stroke="#ff6b6b" stroke-width="1" stroke-dasharray="4,4" marker-end="url(#arrow3)"/>
+<line x1="630" y1="270" x2="918" y2="122" stroke="#ff6b6b" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="630" y1="282" x2="918" y2="200" stroke="#ff6b6b" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="630" y1="452" x2="918" y2="282" stroke="#00e676" stroke-width="1.5" marker-end="url(#arrow3)"/>
+</svg>
+</div>
+
+<div class="example">
+<strong>Example — Full flow:</strong> 10K hosts emit CPU, memory, latency metrics → Agents batch → Kafka → Ingestion Service pre-aggregates into 1-min windows → writes to TSDB (hot tier). Flink detects api.latency.p99 anomaly in eu-west → Alert Engine evaluates rules → groups 50 host alerts → dedup check (not recently alerted) → routes to PagerDuty (P1) + Slack. On-call engineer opens Dashboard UI → Query Engine reads from TSDB → shows latency spike graph → engineer identifies root cause (database connection pool exhaustion) → deploys fix → metrics return to normal → alert auto-resolves.
+</div>
+</div>
+
+<!-- Database Schema -->
+<div class="section">
+<h2>Database Schema</h2>
+
+<h3>Time-Series DB — InfluxDB / VictoriaMetrics</h3>
+<table>
+<tr><th>Measurement</th><th>Tags</th><th>Fields</th><th>Timestamp</th></tr>
+<tr><td>api_latency</td><td>service=api, host=web-01, region=us-east, endpoint=/users</td><td>p50=12, p95=45, p99=120, count=1500</td><td>2024-01-15T10:00:00Z</td></tr>
+<tr><td>cpu_usage</td><td>host=web-01, core=all</td><td>percent=78.5</td><td>2024-01-15T10:00:00Z</td></tr>
+<tr><td>error_rate</td><td>service=api, error_code=500</td><td>count=23, rate=0.015</td><td>2024-01-15T10:00:00Z</td></tr>
+</table>
+
+<h3>SQL — PostgreSQL (Alert Configuration, State)</h3>
+<table>
+<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
+<tr><td rowspan="6"><strong>alert_rules</strong></td><td>rule_id</td><td>SERIAL</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>name</td><td>VARCHAR(255)</td><td></td></tr>
+<tr><td>metric_query</td><td>TEXT</td><td>PromQL-like expression</td></tr>
+<tr><td>condition</td><td>JSONB</td><td>{operator: ">", threshold: 5, duration: "5m"}</td></tr>
+<tr><td>severity</td><td>ENUM</td><td>P1, P2, P3, P4</td></tr>
+<tr><td>notification_channels</td><td>JSONB</td><td>["pagerduty:team-a", "slack:#alerts"]</td></tr>
+<tr><td rowspan="5"><strong>alert_incidents</strong></td><td>incident_id</td><td>BIGSERIAL</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>rule_id</td><td>INT</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>status</td><td>ENUM</td><td>firing, acknowledged, resolved</td></tr>
+<tr><td>started_at</td><td>TIMESTAMP</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>resolved_at</td><td>TIMESTAMP</td><td></td></tr>
+</table>
+
+<h4>Sharding Strategy</h4>
+<ul>
+<li><strong>TSDB:</strong> Sharded by metric_name hash. All data points for "api_latency" on same shard. Enables efficient time-range queries per metric</li>
+<li><strong>Alternative: shard by time range.</strong> Each shard holds 1 day of data. Enables efficient data lifecycle management (drop entire shard when expired). Used by VictoriaMetrics</li>
+<li><strong>Alert State DB:</strong> Single PostgreSQL instance (low write volume — only state changes). Read replica for dashboard</li>
+</ul>
+
+<h3>Indexes</h3>
+<ul>
+<li>TSDB inverted index: tag → time series mapping. E.g., <code>service=api</code> → [series_1, series_2, ...]. Enables fast filtering by any tag combination</li>
+<li><code>alert_incidents.started_at</code> — B-tree for "recent incidents" dashboard queries</li>
+<li><code>alert_incidents.rule_id</code> — For "history of this alert" queries</li>
+</ul>
+</div>
+
+<!-- Cache -->
+<div class="section">
+<h2>Cache Deep Dive</h2>
+<table>
+<tr><th>Cache</th><th>Strategy</th><th>Eviction</th><th>TTL</th><th>Purpose</th></tr>
+<tr><td>Dashboard Query Cache (Redis)</td><td>Read-through</td><td>LRU</td><td>30 seconds</td><td>Cache frequently-viewed dashboard queries. Short TTL for freshness</td></tr>
+<tr><td>TSDB Block Cache</td><td>Built-in (LRU page cache)</td><td>LRU</td><td>N/A</td><td>Recently queried time-series blocks kept in memory</td></tr>
+<tr><td>Alert Rule Cache (Redis)</td><td>Write-through</td><td>Invalidated on update</td><td>None</td><td>Alert rules loaded into memory for Flink evaluation</td></tr>
+<tr><td>Tag Index Cache (Redis)</td><td>Read-through</td><td>LRU</td><td>5 min</td><td>Metric tag → series mapping for dashboard autocomplete</td></tr>
+</table>
+
+<h3>No CDN</h3>
+<ul>
+<li>Monitoring data is internal — no public CDN needed. Dashboard served from internal load balancer</li>
+<li>Static dashboard assets (JS/CSS) can be cached on internal CDN or served directly</li>
+</ul>
+</div>
+
+<!-- Scaling -->
+<div class="section">
+<h2>Scaling Considerations</h2>
+<ul>
+<li><strong>Kafka:</strong> Partition by metric_name for parallelism. Add partitions + consumers to scale ingestion throughput</li>
+<li><strong>TSDB horizontal scaling:</strong> Add shards for more metrics. Each shard handles a subset of metric names. Query Engine does scatter-gather for cross-metric queries</li>
+<li><strong>Flink auto-scaling:</strong> Scale anomaly detection parallelism based on Kafka lag. If lag > threshold, add Flink task slots</li>
+<li><strong>Query Engine:</strong> Stateless — scale horizontally behind load balancer. Caches recently queried data in Redis to reduce TSDB load</li>
+<li><strong>Cardinality explosion:</strong> High-cardinality tags (e.g., user_id) explode the number of time series. Prevent by limiting allowed tag values and using sampling for high-cardinality dimensions</li>
+</ul>
+</div>
+
+<!-- Tradeoffs -->
+<div class="section">
+<h2>Tradeoffs & Deep Dives</h2>
+<div class="tradeoff">
+<div class="pro"><h4>✅ Push-based (StatsD/Kafka)</h4><ul><li>Applications push when ready — no coordination</li><li>Works across firewalls (outbound only)</li><li>Kafka buffers during ingestion spikes</li></ul></div>
+<div class="con"><h4>❌ Alternative: Pull-based (Prometheus)</h4><ul><li>Simpler — Prometheus scrapes targets via HTTP</li><li>Easier to detect dead targets (scrape fails)</li><li>But: doesn't scale as well for 100K+ targets, pull interval limits freshness</li></ul></div>
+</div>
+
+<h3>Message Queue (Kafka) Deep Dive</h3>
+<ul>
+<li><strong>Why Kafka:</strong> Decouples metric producers (agents) from consumers (ingestion, anomaly detection, alerting). Handles burst traffic. Provides replay capability for reprocessing</li>
+<li><strong>Partitioning:</strong> By metric_name ensures all data points for a metric arrive at the same consumer in order (important for anomaly detection)</li>
+<li><strong>Retention:</strong> 24 hours (enough for reprocessing after ingestion failures)</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Alternative Approaches</h2>
+<ul>
+<li><strong>Prometheus + Thanos:</strong> Prometheus for short-term (2 weeks) with Thanos for long-term S3-backed storage. Pull-based model. Good for Kubernetes-native environments but pull model limits scale</li>
+<li><strong>OpenTelemetry + ClickHouse:</strong> OTLP for collection, ClickHouse (columnar DB) for storage. Excellent query performance for wide time ranges. ClickHouse handles metrics + logs + traces in one system</li>
+<li><strong>Lambda architecture:</strong> Batch layer (Spark on S3) + speed layer (Flink on Kafka). Batch provides accuracy, speed provides freshness. More complex but handles late-arriving data better</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Additional Information</h2>
+<ul>
+<li><strong>Monitoring the monitor:</strong> The monitoring system itself needs monitoring. Use a separate lightweight system (e.g., simple healthcheck pings + external service like Pingdom) to monitor the monitoring pipeline</li>
+<li><strong>SLI/SLO calculation:</strong> Query Engine can compute SLIs (e.g., availability = 1 - error_rate) over time windows and compare against SLO targets (e.g., 99.9%). Automated SLO burn rate alerts</li>
+<li><strong>Log correlation:</strong> Metric anomaly → link to relevant log entries by timestamp + service + host. Enables root cause analysis without manual log searching</li>
+<li><strong>Cost optimization:</strong> Metric data is expensive at scale. Strategies: drop unused metrics after 30 days of no queries, aggregate early, sample high-frequency metrics</li>
+</ul>
+</div>
+</body>
+</html>

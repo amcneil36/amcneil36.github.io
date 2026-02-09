@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: Rate Limiter</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #e0e0e0; margin: 0; padding: 20px; line-height: 1.7; }
+  h1 { color: #ff5722; font-size: 2.2em; border-bottom: 3px solid #ff5722; padding-bottom: 10px; }
+  h2 { color: #ff7043; margin-top: 40px; }
+  h3 { color: #ff8a65; }
+  h4 { color: #ffab91; }
+  .section { background: #1a1a1a; padding: 25px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #ff5722; }
+  .subsection { background: #222; padding: 15px; border-radius: 8px; margin: 15px 0; }
+  .diagram-container { background: #1e1e1e; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; overflow-x: auto; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.85em; margin: 2px 4px; }
+  .tag-pk { background: #4a9eff33; color: #4a9eff; border: 1px solid #4a9eff66; }
+  .tag-fk { background: #ff4a4a33; color: #ff4a4a; border: 1px solid #ff4a4a66; }
+  .tag-idx { background: #4aff4a33; color: #4aff4a; border: 1px solid #4aff4a66; }
+  .tag-shard { background: #ffa54a33; color: #ffa54a; border: 1px solid #ffa54a66; }
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+  th, td { padding: 12px; text-align: left; border: 1px solid #333; }
+  th { background: #2a2a2a; color: #ff7043; }
+  tr:nth-child(even) { background: #1a1a1a; }
+  code { background: #2a2a2a; padding: 2px 8px; border-radius: 4px; color: #ff8a65; font-family: 'Fira Code', monospace; }
+  pre { background: #1a1a1a; padding: 20px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; }
+  .example { background: #0d2818; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #4aff4a; }
+  .tradeoff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+  .tradeoff-pro { background: #0d2818; padding: 15px; border-radius: 8px; border-left: 3px solid #4aff4a; }
+  .tradeoff-con { background: #2d1018; padding: 15px; border-radius: 8px; border-left: 3px solid #ff4a4a; }
+  ul, ol { padding-left: 25px; }
+  li { margin: 6px 0; }
+</style>
+</head>
+<body>
+
+<h1>🚦 System Design: Rate Limiter</h1>
+
+<div class="section">
+<h2>📋 Functional Requirements</h2>
+<ul>
+  <li>Limit the number of requests a client can make within a time window</li>
+  <li>Support multiple rate limiting strategies (per-user, per-IP, per-endpoint, global)</li>
+  <li>Return informative headers: remaining quota, retry-after time</li>
+  <li>Support configurable rules per API endpoint and client tier (free vs paid)</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>🔒 Non-Functional Requirements</h2>
+<ul>
+  <li><strong>Ultra-low latency:</strong> &lt;1ms overhead per request — rate limiter sits on the critical path</li>
+  <li><strong>High throughput:</strong> Handle millions of requests/second across all services</li>
+  <li><strong>Distributed:</strong> Consistent rate limiting across multiple API server instances</li>
+  <li><strong>Fault tolerant:</strong> If rate limiter fails, traffic should pass through (fail-open) — never block legitimate traffic</li>
+  <li><strong>Accurate:</strong> Minimal over/under-counting in distributed environment</li>
+</ul>
+</div>
+
+<h2>🔄 Flow 1 — Request Rate Checking (Token Bucket)</h2>
+
+<div class="diagram-container">
+<svg viewBox="0 0 1050 350" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ah1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="140" width="110" height="55" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="75" y="172" text-anchor="middle" fill="white" font-size="13">Client</text>
+  <line x1="130" y1="167" x2="195" y2="167" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="205" y="140" width="130" height="55" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="270" y="163" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
+  <text x="270" y="180" text-anchor="middle" fill="white" font-size="10">(Rate Limit Check)</text>
+  <line x1="335" y1="155" x2="400" y2="105" stroke="#aaa" marker-end="url(#ah1)"/>
+  <line x1="335" y1="180" x2="400" y2="230" stroke="#aaa" marker-end="url(#ah1)"/>
+  <rect x="410" y="80" width="150" height="50" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
+  <text x="485" y="103" text-anchor="middle" fill="white" font-size="11">Redis Cluster</text>
+  <text x="485" y="118" text-anchor="middle" fill="white" font-size="10">(Token Counters)</text>
+  <rect x="410" y="210" width="150" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="485" y="233" text-anchor="middle" fill="white" font-size="11">Rule Config Store</text>
+  <text x="485" y="248" text-anchor="middle" fill="white" font-size="10">(Rate Limit Rules)</text>
+  <!-- Allowed path -->
+  <line x1="560" y1="105" x2="640" y2="105" stroke="#4aff4a" marker-end="url(#ah1)"/>
+  <text x="600" y="95" fill="#4aff4a" font-size="10">ALLOWED</text>
+  <rect x="650" y="80" width="140" height="50" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="720" y="103" text-anchor="middle" fill="white" font-size="11">Backend Service</text>
+  <text x="720" y="118" text-anchor="middle" fill="white" font-size="10">(Process Request)</text>
+  <!-- Blocked path -->
+  <line x1="560" y1="105" x2="640" y2="180" stroke="#ff4a4a" marker-end="url(#ah1)"/>
+  <text x="620" y="155" fill="#ff4a4a" font-size="10">BLOCKED</text>
+  <rect x="650" y="160" width="140" height="50" rx="10" fill="#8a1a1a" stroke="#ff4a4a" stroke-width="2"/>
+  <text x="720" y="183" text-anchor="middle" fill="white" font-size="11">HTTP 429</text>
+  <text x="720" y="198" text-anchor="middle" fill="white" font-size="10">(Too Many Requests)</text>
+</svg>
+</div>
+
+<div class="section">
+<h3>Step-by-Step</h3>
+<ol>
+  <li><strong>Request arrives:</strong> Client sends <code>GET /api/v1/search?q=...</code> with auth token</li>
+  <li><strong>Identify client:</strong> Extract rate limit key: user_id (from JWT token), IP address, API key, or combination</li>
+  <li><strong>Load rules:</strong> Look up rate limit rules for this endpoint + client tier from config: "GET /api/search: 100 req/min for free tier, 1000 req/min for paid"</li>
+  <li><strong>Check Redis:</strong> Execute Lua script atomically — check current token count for key <code>rl:{user_id}:{endpoint}</code>. If tokens available → decrement and pass. If no tokens → reject</li>
+  <li><strong>Allowed:</strong> Request proceeds to backend service. Response headers: <code>X-RateLimit-Remaining: 87</code>, <code>X-RateLimit-Limit: 100</code>, <code>X-RateLimit-Reset: 1707500100</code></li>
+  <li><strong>Blocked:</strong> Return HTTP 429 with headers: <code>Retry-After: 23</code> (seconds until window resets), <code>X-RateLimit-Remaining: 0</code></li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> Free-tier user makes 100th request to /api/search in current minute → Redis: token count = 1 → allowed, count → 0 → Next request: count = 0 → HTTP 429 Too Many Requests, Retry-After: 23 seconds → User waits 23s → Window resets → Token bucket refilled to 100
+</div>
+</div>
+
+<div class="section">
+<h3>🔍 Rate Limiting Algorithms Deep Dive</h3>
+
+<div class="subsection">
+<h4>1. Token Bucket</h4>
+<p>Bucket holds <code>max_tokens</code>. Tokens added at rate <code>r</code> per second (refill rate). Each request consumes 1 token. If bucket empty → reject. Allows short bursts up to max_tokens.</p>
+<pre>
+-- Redis Lua script (atomic)
+local key = KEYS[1]
+local max_tokens = tonumber(ARGV[1])
+local refill_rate = tonumber(ARGV[2])  -- tokens per second
+local now = tonumber(ARGV[3])
+
+local data = redis.call('HMGET', key, 'tokens', 'last_refill')
+local tokens = tonumber(data[1]) or max_tokens
+local last_refill = tonumber(data[2]) or now
+
+-- Refill tokens based on elapsed time
+local elapsed = now - last_refill
+local new_tokens = math.min(max_tokens, tokens + elapsed * refill_rate)
+
+if new_tokens >= 1 then
+    redis.call('HMSET', key, 'tokens', new_tokens - 1, 'last_refill', now)
+    redis.call('EXPIRE', key, math.ceil(max_tokens / refill_rate) * 2)
+    return 1  -- ALLOWED
+else
+    redis.call('HMSET', key, 'tokens', new_tokens, 'last_refill', now)
+    return 0  -- REJECTED
+end
+</pre>
+<p><strong>Pros:</strong> Allows bursts, smooth rate limiting. <strong>Cons:</strong> Two parameters to tune (bucket size + refill rate).</p>
+</div>
+
+<div class="subsection">
+<h4>2. Sliding Window Log</h4>
+<p>Store timestamp of every request in a sorted set. Count requests in last N seconds. Most accurate but memory-intensive.</p>
+<pre>
+-- Redis implementation
+ZADD rl:{user_id} {timestamp} {request_id}  -- add request
+ZREMRANGEBYSCORE rl:{user_id} 0 {timestamp - window_size}  -- remove old
+ZCARD rl:{user_id}  -- count requests in window
+-- If count >= limit → reject
+</pre>
+<p><strong>Pros:</strong> Exact counting, no boundary issues. <strong>Cons:</strong> O(n) memory per user (stores all timestamps), expensive for high-rate endpoints.</p>
+</div>
+
+<div class="subsection">
+<h4>3. Sliding Window Counter</h4>
+<p>Hybrid of fixed window and sliding log. Use counters for current and previous window, weight by overlap percentage.</p>
+<pre>
+count = prev_window_count * (1 - elapsed_pct) + curr_window_count
+-- Example: 60s window, 45s into current window
+-- prev_window had 80 requests, current has 30
+-- estimated count = 80 * 0.25 + 30 = 50
+</pre>
+<p><strong>Pros:</strong> Memory-efficient (two counters per key), good approximation. <strong>Cons:</strong> Approximate — can allow slight over-limit during transition.</p>
+</div>
+
+<div class="subsection">
+<h4>4. Fixed Window Counter</h4>
+<p>Simple: increment counter for current minute/second. Reset at window boundary.</p>
+<pre>
+key = "rl:{user_id}:{minute_timestamp}"
+count = INCR key
+if count == 1: EXPIRE key 60  -- auto-cleanup
+if count > limit: reject
+</pre>
+<p><strong>Pros:</strong> Simplest, lowest overhead. <strong>Cons:</strong> Boundary problem — user can send 2x limit by timing requests at window boundary (100 at 0:59, 100 at 1:00).</p>
+</div>
+
+<div class="subsection">
+<h4>5. Leaky Bucket</h4>
+<p>Requests enter a FIFO queue (bucket). Queue processed at fixed rate. If queue full → reject. Produces perfectly smooth output rate.</p>
+<p><strong>Pros:</strong> Perfectly smooth traffic (no bursts). <strong>Cons:</strong> Cannot handle legitimate traffic bursts, adds latency (queuing), more complex to implement.</p>
+</div>
+</div>
+
+<h2>🔄 Flow 2 — Distributed Rate Limiting</h2>
+
+<div class="diagram-container">
+<svg viewBox="0 0 1050 400" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="60" width="100" height="45" rx="8" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="70" y="87" text-anchor="middle" fill="white" font-size="11">Client A</text>
+  <rect x="20" y="120" width="100" height="45" rx="8" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="70" y="147" text-anchor="middle" fill="white" font-size="11">Client B</text>
+  <rect x="20" y="180" width="100" height="45" rx="8" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="70" y="207" text-anchor="middle" fill="white" font-size="11">Client C</text>
+  <!-- LB -->
+  <line x1="120" y1="83" x2="190" y2="130" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="120" y1="142" x2="190" y2="135" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="120" y1="202" x2="190" y2="140" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="200" y="110" width="110" height="50" rx="8" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="255" y="140" text-anchor="middle" fill="white" font-size="11">Load Balancer</text>
+  <!-- API Servers -->
+  <line x1="310" y1="125" x2="380" y2="75" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="310" y1="135" x2="380" y2="135" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="310" y1="145" x2="380" y2="195" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="390" y="55" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="455" y="80" text-anchor="middle" fill="white" font-size="10">API Server 1</text>
+  <rect x="390" y="115" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="455" y="140" text-anchor="middle" fill="white" font-size="10">API Server 2</text>
+  <rect x="390" y="175" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="455" y="200" text-anchor="middle" fill="white" font-size="10">API Server 3</text>
+  <!-- Redis cluster -->
+  <line x1="520" y1="75" x2="600" y2="130" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="520" y1="135" x2="600" y2="135" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="520" y1="195" x2="600" y2="140" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="610" y="80" width="130" height="40" rx="8" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
+  <text x="675" y="105" text-anchor="middle" fill="white" font-size="10">Redis Primary</text>
+  <rect x="610" y="130" width="130" height="40" rx="8" fill="#1a8a7a" stroke="#4afff0" stroke-width="1.5"/>
+  <text x="675" y="155" text-anchor="middle" fill="white" font-size="10">Redis Replica 1</text>
+  <rect x="610" y="180" width="130" height="40" rx="8" fill="#1a8a7a" stroke="#4afff0" stroke-width="1.5"/>
+  <text x="675" y="205" text-anchor="middle" fill="white" font-size="10">Redis Replica 2</text>
+  <!-- Sync arrows -->
+  <line x1="675" y1="120" x2="675" y2="128" stroke="#4afff0" marker-end="url(#ah2)"/>
+  <line x1="675" y1="170" x2="675" y2="178" stroke="#4afff0" marker-end="url(#ah2)"/>
+</svg>
+</div>
+
+<div class="section">
+<h3>Challenge: Consistency Across Multiple Servers</h3>
+<p>Without centralized state, each API server would track its own counters — user could send N requests to each of K servers, effectively getting K×N requests through.</p>
+<h4>Solution: Centralized Redis</h4>
+<p>All API servers check/update the same Redis key atomically (Lua scripts). Single source of truth. Adds network hop (~0.5ms) but ensures global consistency.</p>
+
+<h4>Alternative: Local Rate Limiter + Sync</h4>
+<p>Each server maintains local counter. Periodically syncs to central store. Allows slight over-limit (N × K instead of N). Good enough for most use cases. Used when Redis latency is unacceptable.</p>
+
+<h4>Sticky Sessions Alternative</h4>
+<p>Route same client to same server (consistent hashing on client ID). Local counter is sufficient. Drawback: uneven load distribution, failure of one server drops all its clients' state.</p>
+</div>
+
+<h2>🏗️ Combined Architecture</h2>
+
+<div class="diagram-container">
+<svg viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ahc" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="80" width="100" height="40" rx="8" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="70" y="105" text-anchor="middle" fill="white" font-size="11">Clients</text>
+  <line x1="120" y1="100" x2="185" y2="100" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="195" y="75" width="120" height="50" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="255" y="98" text-anchor="middle" fill="white" font-size="11">API Gateway</text>
+  <text x="255" y="113" text-anchor="middle" fill="white" font-size="9">(Rate Limit Middleware)</text>
+  <line x1="315" y1="100" x2="385" y2="60" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="315" y1="100" x2="385" y2="100" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="315" y1="100" x2="385" y2="140" stroke="#aaa" marker-end="url(#ahc)"/>
+  <rect x="395" y="40" width="130" height="40" rx="8" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
+  <text x="460" y="65" text-anchor="middle" fill="white" font-size="10">Redis (Counters)</text>
+  <rect x="395" y="85" width="130" height="40" rx="8" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
+  <text x="460" y="110" text-anchor="middle" fill="white" font-size="10">Config Store (Rules)</text>
+  <rect x="395" y="130" width="130" height="40" rx="8" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="460" y="155" text-anchor="middle" fill="white" font-size="10">Kafka (Analytics)</text>
+  <line x1="525" y1="60" x2="600" y2="100" stroke="#4aff4a" marker-end="url(#ahc)"/>
+  <text x="575" y="72" fill="#4aff4a" font-size="9">PASS</text>
+  <rect x="610" y="80" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="675" y="105" text-anchor="middle" fill="white" font-size="10">Backend Services</text>
+</svg>
+</div>
+
+<div class="example">
+<strong>End-to-End:</strong> Request hits API Gateway → Middleware extracts user_id from JWT → Loads rules from config cache: "100 req/min for /search, free tier" → Redis Lua script: atomic token bucket check (0.3ms) → Tokens available → Decrement → Set response headers (X-RateLimit-*) → Forward to backend → Kafka event for analytics ("user X consumed 1 token for /search"). If rate exceeded → 429 with Retry-After header → Client implements exponential backoff
+</div>
+
+<h2>🗄️ Database Schema</h2>
+
+<div class="section">
+<h3>Redis — Rate Limit State</h3>
+<pre>
+# Token Bucket state (per user per endpoint)
+HSET rl:token:{user_id}:{endpoint_hash}
+  tokens   {remaining_float}
+  last_ts  {last_refill_timestamp}
+EXPIRE rl:token:{user_id}:{endpoint_hash} 120  # auto-cleanup
+
+# Fixed Window counter
+SET rl:fixed:{user_id}:{endpoint}:{minute} {count}
+EXPIRE rl:fixed:{user_id}:{endpoint}:{minute} 60
+
+# Sliding Window Log (sorted set)
+ZADD rl:log:{user_id}:{endpoint} {timestamp} {request_uuid}
+</pre>
+
+<h3>Config Store — Rate Limit Rules</h3>
+<pre>
+{
+  "rules": [
+    {
+      "endpoint": "/api/v1/search",
+      "method": "GET",
+      "limits": {
+        "free": { "requests": 100, "window_seconds": 60, "algorithm": "token_bucket", "burst": 20 },
+        "paid": { "requests": 1000, "window_seconds": 60, "algorithm": "token_bucket", "burst": 100 },
+        "enterprise": { "requests": 10000, "window_seconds": 60, "algorithm": "sliding_window" }
+      }
+    },
+    {
+      "endpoint": "/api/v1/data",
+      "method": "POST",
+      "limits": {
+        "free": { "requests": 10, "window_seconds": 60 },
+        "global": { "requests": 100000, "window_seconds": 1, "note": "global rate limit across all users" }
+      }
+    }
+  ]
+}
+</pre>
+<p>Rules stored in a config service (e.g., etcd, Consul, or simple DB). Cached in-memory at API Gateway with 1-min refresh. Changes propagated via push notification or polling.</p>
+</div>
+
+<h2>💾 Cache Deep Dive</h2>
+
+<div class="section">
+<p><strong>Redis IS the cache</strong> — rate limit state lives entirely in Redis. No separate caching layer needed. If Redis goes down, rate limiter fails open (allows all traffic) to prevent blocking legitimate users.</p>
+<p><strong>Redis Cluster:</strong> Shard by rate limit key (user_id hash) across cluster nodes. Each key always lands on same node → no cross-node coordination needed for single-user rate limits.</p>
+<p><strong>Global rate limits:</strong> Single key (e.g., <code>rl:global:/api/data</code>) — hot key problem. Solution: shard into N sub-counters (<code>rl:global:/api/data:{0..9}</code>), each server increments random sub-counter, sum for total.</p>
+</div>
+
+<h2>⚖️ Tradeoffs</h2>
+
+<div class="section">
+<div class="tradeoff-grid">
+  <div class="tradeoff-pro">
+    <h4>✅ Token Bucket</h4>
+    <p>Allows controlled bursts, smooth limiting, widely understood, efficient (2 values per key in Redis)</p>
+  </div>
+  <div class="tradeoff-con">
+    <h4>❌ Token Bucket</h4>
+    <p>Two parameters to tune (rate + burst). Burst can surprise — user may send 100 requests instantly then wait. Hard to explain to API consumers vs simple "100 per minute"</p>
+  </div>
+  <div class="tradeoff-pro">
+    <h4>✅ Centralized Redis</h4>
+    <p>Globally consistent counters, atomic operations, sub-millisecond latency, battle-tested</p>
+  </div>
+  <div class="tradeoff-con">
+    <h4>❌ Centralized Redis</h4>
+    <p>SPOF (mitigated by fail-open), added network hop, Redis cluster management complexity, costs scale with traffic volume</p>
+  </div>
+  <div class="tradeoff-pro">
+    <h4>✅ Fail-Open</h4>
+    <p>Never blocks legitimate traffic due to rate limiter infrastructure failure</p>
+  </div>
+  <div class="tradeoff-con">
+    <h4>❌ Fail-Open</h4>
+    <p>During Redis outage, NO rate limiting — vulnerable to DDoS. Must have secondary defense (WAF, IP blocking at network level)</p>
+  </div>
+</div>
+</div>
+
+<h2>🔄 Alternative Approaches</h2>
+
+<div class="section">
+<div class="subsection">
+<h4>Local In-Memory Rate Limiter</h4>
+<p>No Redis — each server maintains its own counters in memory (e.g., Go's <code>rate.Limiter</code>, Java Guava RateLimiter). Pro: zero network overhead, ultra-fast. Con: not globally consistent — user routed to different servers effectively gets N×limit. Works with sticky sessions.</p>
+</div>
+<div class="subsection">
+<h4>Service Mesh Rate Limiting (Envoy/Istio)</h4>
+<p>Rate limiting at the sidecar proxy level. Envoy has built-in rate limit service integration. Advantages: language-agnostic, consistent across microservices, centralized policy. Disadvantage: added sidecar overhead, Envoy rate limit service is another dependency.</p>
+</div>
+<div class="subsection">
+<h4>API Gateway Rate Limiting (Kong/AWS API Gateway)</h4>
+<p>Managed rate limiting at the gateway layer. AWS API Gateway: configurable per-method, per-API key. Kong: plugin-based with Redis backend. Pro: no custom code. Con: less flexibility, vendor lock-in, may not support custom algorithms.</p>
+</div>
+</div>
+
+<h2>📚 Additional Information</h2>
+
+<div class="section">
+<h3>HTTP Response Headers (RFC 6585 / RFC 7231)</h3>
+<pre>
+HTTP/1.1 429 Too Many Requests
+Content-Type: application/json
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1707500100    # Unix timestamp when window resets
+Retry-After: 23                   # Seconds until client should retry
+
+{ "error": "rate_limit_exceeded", "message": "Rate limit of 100 requests per minute exceeded" }
+</pre>
+
+<h3>Client-Side Best Practices</h3>
+<ul>
+  <li><strong>Exponential backoff:</strong> On 429, wait 1s → 2s → 4s → 8s before retrying (with jitter)</li>
+  <li><strong>Respect Retry-After:</strong> Don't retry before the indicated time</li>
+  <li><strong>Track remaining quota:</strong> Use X-RateLimit-Remaining to proactively slow down before hitting limit</li>
+  <li><strong>Circuit breaker:</strong> After N consecutive 429s, stop requesting for longer period</li>
+</ul>
+
+<h3>Multi-Tier Rate Limiting</h3>
+<p>Production systems apply rate limits at multiple levels: (1) Per-IP at network edge (DDoS protection — millions/sec), (2) Per-API-key at API Gateway (business limits — thousands/min), (3) Per-endpoint per-user (fine-grained — tens/sec), (4) Global per-service (backend protection — total capacity). Each tier uses appropriate algorithm and storage.</p>
+
+<h3>Race Condition: Check-Then-Act</h3>
+<p>Naive implementation: <code>GET count</code> → <code>if count < limit</code> → <code>INCR count</code>. Race condition: two concurrent requests both read count=99 (limit 100), both proceed. Solution: Redis Lua scripts execute atomically — read + check + increment in single operation. Or use <code>INCR</code> first, then check: <code>INCR key</code> returns new value — if > limit, the request that pushed it over gets rejected.</p>
+</div>
+
+</body>
+</html>

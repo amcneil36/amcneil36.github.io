@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Crawler - System Design</title>
+<style>
+:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--heading:#FF6B6B;--accent:#4ECDC4;--accent2:#45B7D1;--accent3:#96CEB4;--muted:#888}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
+h1{color:var(--heading);font-size:2.2rem;border-bottom:3px solid var(--heading);padding-bottom:.5rem;margin-bottom:1.5rem}
+h2{color:var(--accent);margin:2rem 0 1rem;font-size:1.5rem}
+h3{color:var(--accent2);margin:1.5rem 0 .75rem;font-size:1.2rem}
+h4{color:var(--accent3);margin:1rem 0 .5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
+ul,ol{margin:.75rem 0 .75rem 1.5rem}
+li{margin:.4rem 0}
+code{background:#2d2d2d;padding:.2rem .5rem;border-radius:4px;font-size:.9rem;color:#f8f8f2}
+pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:1rem 0}
+pre code{padding:0;background:none}
+.tag{display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600;margin:.2rem}
+.tag-pk{background:#E53935;color:#fff}
+.tag-fk{background:#1E88E5;color:#fff}
+.tag-idx{background:#43A047;color:#fff}
+.tag-shard{background:#FB8C00;color:#fff}
+svg text{font-family:'Segoe UI',system-ui,sans-serif}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.pro{background:#1b3a1b;border:1px solid #2d5a2d;border-radius:8px;padding:1rem}
+.con{background:#3a1b1b;border:1px solid #5a2d2d;border-radius:8px;padding:1rem}
+</style>
+</head>
+<body>
+
+<h1>🕷️ Web Crawler - System Design</h1>
+
+<div class="card">
+<h2>Functional Requirements</h2>
+<ol>
+<li><strong>URL Discovery & Crawling:</strong> Start from seed URLs, discover new URLs via link extraction, recursively crawl web pages respecting robots.txt, download HTML/JS-rendered content</li>
+<li><strong>Content Storage & Processing:</strong> Store raw HTML, extract text/metadata, detect duplicates (near-duplicate and exact), maintain freshness by re-crawling based on change frequency</li>
+<li><strong>Politeness & Scheduling:</strong> Rate limit per domain (respect Crawl-delay), URL prioritization (PageRank, freshness, domain authority), frontier queue management, DNS caching</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Scale:</strong> Crawl 5B+ pages, discover 100M+ new URLs/day, re-crawl changed pages within hours</li>
+<li><strong>Throughput:</strong> 10,000+ pages/second across distributed crawler fleet</li>
+<li><strong>Politeness:</strong> Max 1 request/second per domain (configurable); respect robots.txt and nofollow/noindex directives</li>
+<li><strong>Robustness:</strong> Handle spider traps, infinite URL spaces, malformed HTML, timeouts, DNS failures gracefully</li>
+<li><strong>Freshness:</strong> High-priority pages (news sites) re-crawled every 15 minutes; average pages daily-weekly</li>
+</ul>
+</div>
+
+<!-- ============ FLOW 1: URL FRONTIER & FETCHING ============ -->
+<h2>Flow 1: URL Frontier & Page Fetching</h2>
+<div class="card">
+<svg viewBox="0 0 1050 350" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#4ECDC4"/></marker></defs>
+<rect x="20" y="50" width="120" height="50" rx="8" fill="#FF6B6B"/><text x="80" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Seed URLs</text><text x="80" y="87" text-anchor="middle" fill="#fff" font-size="10">(Initial Set)</text>
+<rect x="190" y="50" width="140" height="55" rx="8" fill="#9C27B0"/><text x="260" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">URL Frontier</text><text x="260" y="87" text-anchor="middle" fill="#fff" font-size="10">(Priority Queues)</text>
+<rect x="380" y="20" width="130" height="45" rx="8" fill="#4285F4"/><text x="445" y="47" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">URL Deduplicator</text>
+<rect x="380" y="80" width="130" height="45" rx="8" fill="#00897B"/><text x="445" y="100" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Politeness Queue</text><text x="445" y="115" text-anchor="middle" fill="#fff" font-size="10">(Per-Domain)</text>
+<rect x="560" y="50" width="130" height="50" rx="8" fill="#FB8C00"/><text x="625" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">robots.txt</text><text x="625" y="87" text-anchor="middle" fill="#fff" font-size="10">Cache & Parser</text>
+<rect x="740" y="50" width="130" height="50" rx="8" fill="#4ECDC4"/><text x="805" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">HTTP Fetcher</text><text x="805" y="87" text-anchor="middle" fill="#fff" font-size="10">(Async Workers)</text>
+<rect x="560" y="160" width="130" height="50" rx="8" fill="#607D8B"/><text x="625" y="182" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">DNS Resolver</text><text x="625" y="197" text-anchor="middle" fill="#fff" font-size="10">(Cache + Prefetch)</text>
+<rect x="740" y="160" width="130" height="50" rx="8" fill="#795548"/><text x="805" y="182" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Raw Store</text><text x="805" y="197" text-anchor="middle" fill="#fff" font-size="10">(S3 / HDFS)</text>
+<line x1="140" y1="75" x2="185" y2="75" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="330" y1="65" x2="375" y2="42" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="330" y1="85" x2="375" y2="100" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="510" y1="100" x2="555" y2="75" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="690" y1="75" x2="735" y2="75" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="625" y1="100" x2="625" y2="155" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="805" y1="100" x2="805" y2="155" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Seed URLs loaded into URL Frontier — initial set of high-authority domains (news, Wikipedia, popular sites)</li>
+<li>URL Deduplicator checks Bloom filter (billions of URLs, ~1% false positive) — skips already-crawled URLs</li>
+<li>Politeness Queue ensures per-domain rate limiting: separate FIFO queue per domain with configurable delay</li>
+<li>robots.txt fetched and cached per domain (TTL: 24h); rules parsed to check if URL path is allowed</li>
+<li>DNS Resolver resolves hostname → IP; results cached locally (TTL from DNS) with async prefetch for queued domains</li>
+<li>HTTP Fetcher (async I/O workers) downloads page: HTTP/1.1 or HTTP/2, follows redirects (max 5), timeout 30s</li>
+<li>Raw HTML stored in blob storage (S3/HDFS) keyed by URL hash; metadata (status code, headers, fetch time) stored separately</li>
+<li>Discovered URLs from page extracted and fed back into URL Frontier (recursive loop)</li>
+</ol>
+
+<h3>Example</h3>
+<p>Frontier dequeues <code>https://www.nytimes.com/2024/news/article</code>. Bloom filter check: not seen. Politeness queue for nytimes.com: last request was 1.2s ago, Crawl-delay: 1 → allowed. robots.txt cached: path /2024/news/* is allowed. DNS cached: nytimes.com → 151.101.1.164. Fetcher downloads 45KB HTML in 180ms. Stored to S3. Link extractor finds 23 outgoing URLs → fed back to frontier.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>URL Frontier Architecture</h4>
+<p><strong>Front Queues:</strong> Priority-based — URLs scored by PageRank, domain authority, freshness signal; higher priority dequeued first</p>
+<p><strong>Back Queues:</strong> Politeness-based — one FIFO queue per domain; ensures no domain hit faster than allowed rate</p>
+<p><strong>Routing:</strong> URL enters front queue by priority → assigned to back queue by domain hash → dequeued when politeness timer allows</p>
+<p><strong>Implementation:</strong> RocksDB for disk-backed queues (can't fit billions of URLs in memory); Redis for active/hot domains</p>
+</div>
+<div class="card">
+<h4>URL Deduplication (Bloom Filter)</h4>
+<p><strong>Type:</strong> Counting Bloom filter or Cuckoo filter — ~10 bytes per URL, supports billions of URLs in ~10GB memory</p>
+<p><strong>False Positive:</strong> ~1% — some URLs skipped unnecessarily (acceptable tradeoff vs. memory)</p>
+<p><strong>Canonical:</strong> URLs canonicalized before hashing: lowercase host, remove fragments, sort query params, resolve relative paths</p>
+<p><strong>Persistent:</strong> Bloom filter checkpointed to disk periodically; rebuilt from URL database on cold start</p>
+</div>
+<div class="card">
+<h4>DNS Caching</h4>
+<p><strong>Local Cache:</strong> In-memory DNS cache with TTL from DNS response (min 5min, max 24hr)</p>
+<p><strong>Prefetch:</strong> When domain enters frontier queue, DNS prefetched asynchronously before fetch time</p>
+<p><strong>Scale:</strong> ~100M unique domains → cache hit rate ~95% after warm-up</p>
+<p><strong>Fallback:</strong> Multiple DNS resolvers (Google 8.8.8.8, Cloudflare 1.1.1.1) for redundancy</p>
+</div>
+<div class="card">
+<h4>robots.txt Compliance</h4>
+<p><strong>Standard:</strong> Robots Exclusion Protocol (REP) — parsed per User-agent, Disallow, Allow, Crawl-delay, Sitemap directives</p>
+<p><strong>Cache:</strong> robots.txt cached per domain (24h TTL); re-fetched on 4xx/5xx expiry</p>
+<p><strong>Sitemap:</strong> Sitemap URLs extracted from robots.txt → priority boost for listed URLs</p>
+<p><strong>Edge Cases:</strong> No robots.txt (allow all), 5xx (assume allow, retry later), very large robots.txt (truncate at 500KB)</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 2: CONTENT PROCESSING ============ -->
+<h2>Flow 2: Content Processing & Deduplication</h2>
+<div class="card">
+<svg viewBox="0 0 1000 280" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#45B7D1"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#795548"/><text x="80" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Raw HTML</text><text x="80" y="97" text-anchor="middle" fill="#fff" font-size="10">(From Store)</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">HTML Parser</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="10">(Extract + Clean)</text>
+<rect x="370" y="30" width="130" height="50" rx="8" fill="#E53935"/><text x="435" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">SimHash / MinHash</text><text x="435" y="67" text-anchor="middle" fill="#fff" font-size="10">(Near-Duplicate)</text>
+<rect x="370" y="100" width="130" height="50" rx="8" fill="#4ECDC4"/><text x="435" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Link Extractor</text><text x="435" y="137" text-anchor="middle" fill="#fff" font-size="10">(URL Discovery)</text>
+<rect x="560" y="30" width="130" height="50" rx="8" fill="#9C27B0"/><text x="625" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Content Index</text><text x="625" y="67" text-anchor="middle" fill="#fff" font-size="10">(Inverted Index)</text>
+<rect x="560" y="100" width="130" height="50" rx="8" fill="#9C27B0"/><text x="625" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">URL Frontier</text><text x="625" y="137" text-anchor="middle" fill="#fff" font-size="10">(Feedback Loop)</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#45B7D1" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="320" y1="75" x2="365" y2="55" stroke="#45B7D1" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="320" y1="95" x2="365" y2="120" stroke="#45B7D1" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="500" y1="55" x2="555" y2="55" stroke="#45B7D1" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="500" y1="125" x2="555" y2="125" stroke="#45B7D1" stroke-width="2" marker-end="url(#ah2)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Raw HTML consumed from blob store by processing pipeline (MapReduce / Spark / Flink)</li>
+<li>HTML Parser extracts: title, meta description, body text (boilerplate removed), headings, images alt text, structured data (schema.org)</li>
+<li>Near-duplicate detection: SimHash (64-bit fingerprint, Hamming distance ≤3 = duplicate) or MinHash + LSH for Jaccard similarity</li>
+<li>Exact duplicate: MD5/SHA-256 of normalized text content — identical pages from different URLs</li>
+<li>Link Extractor: parses all <code>&lt;a href&gt;</code> tags, resolves relative URLs, filters nofollow, discovered URLs fed back to Frontier</li>
+<li>Clean text + metadata written to Content Index (inverted index) for search engine consumption</li>
+</ol>
+
+<h3>Example</h3>
+<p>Page <code>example.com/article</code> processed: 2,500 words extracted (nav/footer/ads removed via boilerplate detection). SimHash: 0xA3F1...B7 — compared against fingerprint store, Hamming distance 0 with previously crawled version → duplicate flagged (page hasn't changed, skip re-indexing). Link extractor finds 15 new outgoing URLs → 12 pass dedup filter → added to frontier.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>SimHash (Near-Duplicate Detection)</h4>
+<p><strong>Algorithm:</strong> Hash each word/shingle → weighted sum of bit positions → sign determines final 64-bit fingerprint</p>
+<p><strong>Similarity:</strong> Hamming distance ≤3 between two SimHashes → pages are near-duplicates (~95% similar)</p>
+<p><strong>Advantage:</strong> Single 64-bit comparison instead of full text diff — O(1) per comparison</p>
+<p><strong>Scale:</strong> 5 billion pages × 8 bytes = 40GB — fits in memory on single machine</p>
+</div>
+<div class="card">
+<h4>Boilerplate Removal</h4>
+<p><strong>Algorithm:</strong> DOM-based text density analysis — paragraphs with high text-to-HTML ratio = content; low ratio = navigation/ads</p>
+<p><strong>Tools:</strong> Readability algorithm (Mozilla), Dragnet, or ML-based content extraction</p>
+<p><strong>Signal:</strong> Text block length, link density, DOM depth, semantic tags (article, main, aside)</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 3: SCHEDULING & FRESHNESS ============ -->
+<h2>Flow 3: Re-Crawl Scheduling & Freshness</h2>
+<div class="card">
+<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#96CEB4"/></marker></defs>
+<rect x="20" y="60" width="130" height="50" rx="8" fill="#795548"/><text x="85" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Crawl History DB</text><text x="85" y="97" text-anchor="middle" fill="#fff" font-size="10">(Change Freq)</text>
+<rect x="200" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="265" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Scheduler</text><text x="265" y="97" text-anchor="middle" fill="#fff" font-size="10">(Freshness Model)</text>
+<rect x="380" y="30" width="130" height="50" rx="8" fill="#E53935"/><text x="445" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Priority Scorer</text><text x="445" y="67" text-anchor="middle" fill="#fff" font-size="10">(Importance × Age)</text>
+<rect x="380" y="100" width="130" height="50" rx="8" fill="#00897B"/><text x="445" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Sitemap Parser</text><text x="445" y="137" text-anchor="middle" fill="#fff" font-size="10">(changefreq Hints)</text>
+<rect x="570" y="60" width="130" height="50" rx="8" fill="#9C27B0"/><text x="635" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">URL Frontier</text><text x="635" y="97" text-anchor="middle" fill="#fff" font-size="10">(Re-Crawl Queue)</text>
+<line x1="150" y1="85" x2="195" y2="85" stroke="#96CEB4" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="330" y1="75" x2="375" y2="55" stroke="#96CEB4" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="330" y1="95" x2="375" y2="120" stroke="#96CEB4" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="510" y1="55" x2="565" y2="75" stroke="#96CEB4" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="510" y1="125" x2="565" y2="95" stroke="#96CEB4" stroke-width="2" marker-end="url(#ah3)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Crawl History DB stores per-URL: last_crawled, change_frequency (estimated from past crawls), importance score</li>
+<li>Scheduler runs periodically — scans URLs whose re-crawl time has passed based on estimated change frequency</li>
+<li>Priority Scorer computes: <code>priority = importance × staleness</code> where staleness = (now - last_crawled) / expected_change_interval</li>
+<li>Sitemap changefreq hints (always, hourly, daily, weekly, monthly, yearly) used as initial estimate; refined by observed changes</li>
+<li>Exponential backoff for unchanged pages: if page hasn't changed in 3 consecutive crawls, double the re-crawl interval (max: 30 days)</li>
+<li>Prioritized URLs enqueued into URL Frontier for re-crawling; high-priority (news homepages) bypass normal queue</li>
+</ol>
+
+<h3>Example</h3>
+<p><code>nytimes.com</code> homepage: estimated change frequency = 15 minutes (changes constantly). Last crawled 20min ago → staleness = 1.33 × importance 0.99 = priority 1.32 → HIGH. <code>example.com/about</code>: hasn't changed in 3 crawls, change_freq doubled from 7d to 14d. Last crawled 10d ago → staleness 0.71 × importance 0.2 = priority 0.14 → LOW.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>Change Detection</h4>
+<p><strong>Method:</strong> Compare SimHash of new page vs. stored SimHash from previous crawl</p>
+<p><strong>Conditional:</strong> HTTP If-Modified-Since / If-None-Match (ETag) headers — server returns 304 Not Modified if unchanged (saves bandwidth)</p>
+<p><strong>Estimation:</strong> Poisson process model for change frequency: λ estimated from observed change history using MLE</p>
+</div>
+<div class="card">
+<h4>Adaptive Crawl Rate</h4>
+<p><strong>Budget:</strong> Total crawl capacity (10K pages/sec) allocated across domains by importance</p>
+<p><strong>Allocation:</strong> High-authority domains (news, Wikipedia) get 60% of budget; long-tail gets 40%</p>
+<p><strong>Feedback:</strong> If server returns 429 (Too Many Requests) or slow response, back off crawl rate for that domain</p>
+</div>
+</div>
+</div>
+
+<!-- ============ COMBINED ARCHITECTURE ============ -->
+<h2>Combined Architecture</h2>
+<div class="card">
+<svg viewBox="0 0 1050 450" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#4ECDC4"/></marker></defs>
+<rect x="20" y="60" width="130" height="50" rx="8" fill="#FF6B6B"/><text x="85" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Seed URLs +</text><text x="85" y="97" text-anchor="middle" fill="#fff" font-size="10">Sitemaps</text>
+<rect x="200" y="60" width="140" height="55" rx="8" fill="#9C27B0"/><text x="270" y="82" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">URL Frontier</text><text x="270" y="100" text-anchor="middle" fill="#fff" font-size="10">(Priority + Politeness)</text>
+<rect x="400" y="30" width="130" height="45" rx="8" fill="#4285F4"/><text x="465" y="57" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">URL Dedup (Bloom)</text>
+<rect x="400" y="90" width="130" height="45" rx="8" fill="#FB8C00"/><text x="465" y="117" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">robots.txt Cache</text>
+<rect x="590" y="60" width="130" height="50" rx="8" fill="#4ECDC4"/><text x="655" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">HTTP Fetchers</text><text x="655" y="97" text-anchor="middle" fill="#fff" font-size="10">(Async Pool)</text>
+<rect x="780" y="60" width="130" height="50" rx="8" fill="#607D8B"/><text x="845" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">DNS Cache</text>
+<rect x="400" y="200" width="130" height="50" rx="8" fill="#4285F4"/><text x="465" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">HTML Parser</text><text x="465" y="237" text-anchor="middle" fill="#fff" font-size="10">(Content Extract)</text>
+<rect x="590" y="200" width="130" height="50" rx="8" fill="#E53935"/><text x="655" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Dedup Engine</text><text x="655" y="237" text-anchor="middle" fill="#fff" font-size="10">(SimHash/MinHash)</text>
+<rect x="780" y="200" width="130" height="50" rx="8" fill="#4285F4"/><text x="845" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Link Extractor</text>
+<rect x="200" y="330" width="140" height="55" rx="8" fill="#795548"/><text x="270" y="352" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Raw Store</text><text x="270" y="370" text-anchor="middle" fill="#fff" font-size="10">(S3 / HDFS)</text>
+<rect x="400" y="330" width="130" height="55" rx="8" fill="#795548"/><text x="465" y="352" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Crawl DB</text><text x="465" y="370" text-anchor="middle" fill="#fff" font-size="10">(HBase / Cassandra)</text>
+<rect x="590" y="330" width="130" height="55" rx="8" fill="#795548"/><text x="655" y="352" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Content Index</text><text x="655" y="370" text-anchor="middle" fill="#fff" font-size="10">(Search Engine)</text>
+<rect x="780" y="330" width="130" height="55" rx="8" fill="#00897B"/><text x="845" y="352" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Kafka</text><text x="845" y="370" text-anchor="middle" fill="#fff" font-size="10">(URL Pipeline)</text>
+<line x1="150" y1="85" x2="195" y2="85" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="340" y1="75" x2="395" y2="52" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="340" y1="95" x2="395" y2="110" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="530" y1="75" x2="585" y2="80" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="720" y1="85" x2="775" y2="85" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="655" y1="110" x2="465" y2="195" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="530" y1="225" x2="585" y2="225" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="720" y1="225" x2="775" y2="225" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="845" y1="250" x2="845" y2="325" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
+<line x1="655" y1="110" x2="270" y2="325" stroke="#4ECDC4" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="465" y1="250" x2="465" y2="325" stroke="#4ECDC4" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="655" y1="250" x2="655" y2="325" stroke="#4ECDC4" stroke-width="1.5" marker-end="url(#ah4)"/>
+<line x1="910" y1="355" x2="340" y2="95" stroke="#4ECDC4" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah4)"/>
+</svg>
+</div>
+
+<!-- ============ DATABASE SCHEMA ============ -->
+<h2>Database Schema</h2>
+<div class="grid">
+<div class="card">
+<h3>HBase / Cassandra — Crawl Database</h3>
+<pre><code>Row Key: reverse_domain + url_hash
+  e.g., "com.nytimes.www/article/123" → SHA-256 prefix
+
+Column Families:
+  fetch:
+    - status_code     (int)
+    - content_type    (string)
+    - content_length  (int)
+    - response_time_ms (int)
+    - redirect_url    (string)
+    - last_fetched_at (timestamp)  <span class="tag tag-idx">INDEX</span>
+    - fetch_count     (int)
+  content:
+    - raw_html_ref    (string → S3/HDFS key)
+    - text_hash       (char64, SHA-256 of extracted text)
+    - simhash         (bigint, 64-bit fingerprint)
+    - title           (string)
+    - language        (string, ISO 639-1)
+    - word_count      (int)
+  schedule:
+    - priority        (float)
+    - change_freq_hrs (float, estimated)
+    - next_crawl_at   (timestamp)  <span class="tag tag-idx">INDEX</span>
+    - consecutive_unchanged (int)
+  links:
+    - outgoing_urls   (list of strings)
+    - incoming_count  (int, backlink count)</code></pre>
+<p><span class="tag tag-shard">SHARD</span> Sharded by reverse domain prefix — all URLs from same domain co-located for efficient per-domain queries</p>
+</div>
+
+<div class="card">
+<h3>Frontier Queue (RocksDB + Redis)</h3>
+<pre><code># Priority Front Queue (Redis Sorted Set)
+ZADD frontier:priority {score} {url_hash}
+# Score = importance × staleness
+
+# Politeness Back Queue (per-domain FIFO)
+LPUSH domain:{domain_hash}:queue {url_hash}
+# One list per domain
+
+# Domain Rate Limiter (Redis)
+SET domain:{domain_hash}:last_fetch {timestamp}
+SET domain:{domain_hash}:crawl_delay {seconds}
+
+# Bloom Filter (Redis / RocksDB)
+BF.EXISTS seen_urls {url_hash}
+BF.ADD seen_urls {url_hash}
+
+# robots.txt Cache (Redis Hash)
+HSET robots:{domain_hash} rules {parsed_rules_json}
+HSET robots:{domain_hash} fetched_at {timestamp}
+EXPIRE robots:{domain_hash} 86400  # 24hr TTL
+
+# DNS Cache (Redis)
+SET dns:{hostname} {ip_address}
+EXPIRE dns:{hostname} {ttl_from_dns}</code></pre>
+</div>
+</div>
+
+<!-- ============ CACHE ============ -->
+<h2>Cache Deep Dive</h2>
+<div class="card">
+<div class="grid">
+<div class="card">
+<h4>DNS Cache</h4>
+<p><strong>Strategy:</strong> Local in-memory cache (100M+ entries) + Redis shared cache across crawler fleet</p>
+<p><strong>Hit Rate:</strong> ~95% after warm-up — most URLs resolve to previously seen domains</p>
+<p><strong>Prefetch:</strong> When URL enters frontier, DNS prefetched asynchronously in background</p>
+</div>
+<div class="card">
+<h4>robots.txt Cache</h4>
+<p><strong>Strategy:</strong> Cache-aside — fetch on first access per domain, cache in Redis with 24hr TTL</p>
+<p><strong>Refresh:</strong> Re-fetched when TTL expires or on 4xx/5xx response</p>
+<p><strong>Size:</strong> ~100M domains × ~2KB avg = ~200GB (mostly in Redis cluster)</p>
+</div>
+<div class="card">
+<h4>Content Hash Store</h4>
+<p><strong>Purpose:</strong> Store SimHash fingerprints for dedup — 5B pages × 8 bytes = 40GB</p>
+<p><strong>Strategy:</strong> In-memory hashtable (SimHash → URL list) for exact-match dedup</p>
+<p><strong>Near-Dup:</strong> Bit-sampling technique: split 64-bit SimHash into 4×16-bit blocks, index by each block for fast Hamming neighbor lookup</p>
+</div>
+</div>
+</div>
+
+<!-- ============ SCALING ============ -->
+<h2>Scaling & Load Balancing</h2>
+<div class="card">
+<ul>
+<li><strong>Crawler Fleet:</strong> Hundreds of machines, each running 1000+ async HTTP connections; geographically distributed for lower latency to target servers</li>
+<li><strong>URL Partitioning:</strong> URL Frontier partitioned by domain hash — each crawler instance responsible for set of domains (avoids duplicate fetches and ensures politeness)</li>
+<li><strong>Processing Pipeline:</strong> Spark/Flink cluster for HTML parsing, content extraction, dedup — horizontally scaled with data parallelism</li>
+<li><strong>Storage:</strong> HDFS/S3 for raw HTML (5B pages × ~50KB = ~250TB); HBase for crawl metadata (sharded by reverse domain)</li>
+<li><strong>Kafka:</strong> URL discovery pipeline — newly discovered URLs published to Kafka topic, consumed by URL dedup + frontier workers</li>
+<li><strong>Monitoring:</strong> Crawl rate per domain, error rates, queue depth, duplicate rate, content quality metrics tracked in real-time dashboard</li>
+</ul>
+</div>
+
+<!-- ============ TRADEOFFS ============ -->
+<h2>Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="pro">
+<h4>✅ BFS (Breadth-First) Crawl</h4>
+<ul>
+<li>Discovers high-quality pages first (closer to seed URLs)</li>
+<li>Natural politeness — spreads requests across many domains</li>
+<li>Better coverage of the web graph at each depth level</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ BFS (Breadth-First) Crawl</h4>
+<ul>
+<li>Frontier queue grows rapidly (billions of URLs in queue)</li>
+<li>May crawl many low-value pages at same depth level</li>
+<li>Priority inversion — important deep pages discovered late</li>
+</ul>
+</div>
+<div class="pro">
+<h4>✅ Bloom Filter (vs. Hash Set)</h4>
+<ul>
+<li>10x less memory than exact hash set (10 bytes vs. 100 bytes per URL)</li>
+<li>O(1) lookup and insertion — constant time regardless of size</li>
+<li>No false negatives — if URL is seen, Bloom filter guarantees detection</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ Bloom Filter</h4>
+<ul>
+<li>False positives (~1%) — some new URLs skipped (lost coverage)</li>
+<li>Cannot delete entries (standard Bloom) — counting Bloom filter is 4x larger</li>
+<li>Fixed capacity — must be sized for maximum expected URLs</li>
+</ul>
+</div>
+</div>
+
+<!-- ============ ALTERNATIVES ============ -->
+<h2>Alternative Approaches</h2>
+<div class="grid">
+<div class="card">
+<h4>Headless Browser Rendering (Googlebot WRS)</h4>
+<p>Use headless Chrome to render JavaScript-heavy pages (SPAs, React apps). Captures dynamically-loaded content invisible to simple HTTP fetch. But 10-100x more resource-intensive per page, requires managing browser instances at scale, and introduces rendering latency (2-5s per page).</p>
+</div>
+<div class="card">
+<h4>Focused Crawling</h4>
+<p>Crawl only pages relevant to a specific topic (e.g., medical papers, legal documents). Use classifier to score page relevance, only follow links from relevant pages. Much more efficient but requires topic-specific training data and risks missing relevant pages in unexpected locations.</p>
+</div>
+<div class="card">
+<h4>Distributed Hash Table (DHT) Frontier</h4>
+<p>Use DHT (like Chord/Kademlia) for URL frontier distribution across crawler nodes. Each node responsible for domain hash range. Self-organizing, fault-tolerant, but added complexity and potential hotspots for popular domains.</p>
+</div>
+</div>
+
+<!-- ============ ADDITIONAL INFO ============ -->
+<h2>Additional Information</h2>
+<div class="card">
+<ul>
+<li><strong>Spider Traps:</strong> Infinite URL generators (calendars, session IDs in URLs, query parameter permutations). Mitigation: max URL length (2048), max depth per domain (15), max pages per domain (100K), URL pattern detection (regex dedup).</li>
+<li><strong>Ethical Crawling:</strong> Beyond robots.txt — respect meta noindex/nofollow, X-Robots-Tag headers, avoid crawling during business hours for small sites, identify crawler via User-Agent string with contact info.</li>
+<li><strong>Legal Considerations:</strong> hiQ Labs v. LinkedIn (2022) — scraping publicly available data generally legal under CFAA, but Terms of Service violations may create civil liability. GDPR considerations for personal data in crawled content.</li>
+<li><strong>Mercator Crawler:</strong> Foundational academic crawler architecture (Heydon & Najork, 1999) — introduced the front/back queue politeness model used by most modern crawlers including Googlebot.</li>
+<li><strong>Common Crawl:</strong> Non-profit providing free monthly crawl dataset — 3.6B pages, 380TB compressed. Alternative to running your own crawler for many use cases (ML training data, research).</li>
+</ul>
+</div>
+
+</body>
+</html>

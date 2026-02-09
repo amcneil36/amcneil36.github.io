@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: Vending Machine</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #e0e0e0; margin: 0; padding: 20px; line-height: 1.7; }
+  h1 { color: #e91e63; font-size: 2.2em; border-bottom: 3px solid #e91e63; padding-bottom: 10px; }
+  h2 { color: #f06292; margin-top: 40px; }
+  h3 { color: #f48fb1; }
+  h4 { color: #f8bbd0; }
+  .section { background: #1a1a1a; padding: 25px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #e91e63; }
+  .subsection { background: #222; padding: 15px; border-radius: 8px; margin: 15px 0; }
+  .diagram-container { background: #1e1e1e; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; overflow-x: auto; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.85em; margin: 2px 4px; }
+  .tag-pk { background: #4a9eff33; color: #4a9eff; border: 1px solid #4a9eff66; }
+  .tag-fk { background: #ff4a4a33; color: #ff4a4a; border: 1px solid #ff4a4a66; }
+  .tag-idx { background: #4aff4a33; color: #4aff4a; border: 1px solid #4aff4a66; }
+  .tag-shard { background: #ffa54a33; color: #ffa54a; border: 1px solid #ffa54a66; }
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+  th, td { padding: 12px; text-align: left; border: 1px solid #333; }
+  th { background: #2a2a2a; color: #f06292; }
+  tr:nth-child(even) { background: #1a1a1a; }
+  code { background: #2a2a2a; padding: 2px 8px; border-radius: 4px; color: #f48fb1; font-family: 'Fira Code', monospace; }
+  pre { background: #1a1a1a; padding: 20px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; }
+  .example { background: #0d2818; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #4aff4a; }
+  .tradeoff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+  .tradeoff-pro { background: #0d2818; padding: 15px; border-radius: 8px; border-left: 3px solid #4aff4a; }
+  .tradeoff-con { background: #2d1018; padding: 15px; border-radius: 8px; border-left: 3px solid #ff4a4a; }
+  ul, ol { padding-left: 25px; }
+  li { margin: 6px 0; }
+</style>
+</head>
+<body>
+
+<h1>🥤 System Design: Vending Machine</h1>
+
+<div class="section">
+<h2>📋 Functional Requirements</h2>
+<ul>
+  <li>User can select a product and make payment (coins, bills, card, mobile)</li>
+  <li>Machine dispenses the selected product and returns correct change</li>
+  <li>Real-time inventory tracking — shows available products and quantities</li>
+  <li>Remote fleet management — operators can monitor stock levels, revenue, and machine health across all machines</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>🔒 Non-Functional Requirements</h2>
+<ul>
+  <li><strong>Reliability:</strong> Machine must correctly handle payments and dispensing — no double-charge, no free products</li>
+  <li><strong>Offline capability:</strong> Cash transactions must work without internet; card transactions require connectivity</li>
+  <li><strong>Durability:</strong> Transaction records persisted locally before cloud sync</li>
+  <li><strong>Scale:</strong> Fleet of 100,000+ machines globally with centralized management</li>
+  <li><strong>Low latency:</strong> &lt;3s from payment confirmation to product dispensing</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>🔄 Flow 1 — Product Purchase (State Machine)</h2>
+<!-- ============================================================ -->
+
+<div class="diagram-container">
+<svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ah1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <!-- State Machine -->
+  <rect x="50" y="50" width="140" height="50" rx="25" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="120" y="80" text-anchor="middle" fill="white" font-size="13">IDLE</text>
+  <line x1="190" y1="75" x2="280" y2="75" stroke="#4aff4a" marker-end="url(#ah1)"/>
+  <text x="235" y="65" text-anchor="middle" fill="#4aff4a" font-size="10">select product</text>
+  <rect x="290" y="50" width="160" height="50" rx="25" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="370" y="80" text-anchor="middle" fill="white" font-size="13">PRODUCT_SELECTED</text>
+  <line x1="450" y1="75" x2="540" y2="75" stroke="#4aff4a" marker-end="url(#ah1)"/>
+  <text x="495" y="65" text-anchor="middle" fill="#4aff4a" font-size="10">insert money</text>
+  <rect x="550" y="50" width="160" height="50" rx="25" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="630" y="80" text-anchor="middle" fill="white" font-size="13">ACCEPTING_PAYMENT</text>
+  <line x1="630" y1="100" x2="630" y2="170" stroke="#4aff4a" marker-end="url(#ah1)"/>
+  <text x="680" y="140" fill="#4aff4a" font-size="10">sufficient funds</text>
+  <rect x="550" y="180" width="160" height="50" rx="25" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="630" y="210" text-anchor="middle" fill="white" font-size="13">DISPENSING</text>
+  <line x1="630" y1="230" x2="630" y2="300" stroke="#4aff4a" marker-end="url(#ah1)"/>
+  <text x="680" y="270" fill="#4aff4a" font-size="10">product delivered</text>
+  <rect x="550" y="310" width="160" height="50" rx="25" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="630" y="340" text-anchor="middle" fill="white" font-size="13">RETURNING_CHANGE</text>
+  <line x1="550" y1="335" x2="190" y2="100" stroke="#4aff4a" stroke-dasharray="5,5" marker-end="url(#ah1)"/>
+  <text x="300" y="230" fill="#4aff4a" font-size="10">change returned → IDLE</text>
+  <!-- Cancel paths -->
+  <line x1="370" y1="100" x2="190" y2="100" stroke="#ff4a4a" stroke-dasharray="3,3" marker-end="url(#ah1)"/>
+  <text x="280" y="115" text-anchor="middle" fill="#ff4a4a" font-size="10">cancel / timeout</text>
+  <line x1="550" y1="80" x2="455" y2="120" stroke="#ff4a4a" stroke-dasharray="3,3"/>
+  <text x="480" y="108" fill="#ff4a4a" font-size="10">cancel</text>
+  <!-- Error state -->
+  <rect x="50" y="250" width="140" height="50" rx="25" fill="#8a1a1a" stroke="#ff4a4a" stroke-width="2"/>
+  <text x="120" y="280" text-anchor="middle" fill="white" font-size="13">ERROR / JAM</text>
+  <line x1="550" y1="210" x2="190" y2="270" stroke="#ff4a4a" stroke-dasharray="3,3" marker-end="url(#ah1)"/>
+  <text x="350" y="250" fill="#ff4a4a" font-size="10">dispense failure</text>
+</svg>
+</div>
+
+<div class="section">
+<h3>Step-by-Step</h3>
+<ol>
+  <li><strong>IDLE:</strong> Machine displays available products with prices. Touch screen or physical buttons for selection</li>
+  <li><strong>PRODUCT_SELECTED:</strong> User selects product (e.g., B4 → Coke $1.75). Display shows "Insert $1.75". 30-second timeout to cancel</li>
+  <li><strong>ACCEPTING_PAYMENT:</strong> Machine accepts coins/bills incrementally. Display shows remaining amount. Card/mobile payment via NFC terminal. Running total: accepted $1.00 / needed $1.75</li>
+  <li><strong>DISPENSING:</strong> When amount ≥ price, motor activates to push product from slot. Infrared sensor at dispensing chute confirms product fell. If sensor doesn't trigger within 5s → ERROR state (product jammed)</li>
+  <li><strong>RETURNING_CHANGE:</strong> Calculate change = amount_inserted - price. Coin dispenser returns exact change using greedy algorithm (largest denominations first). If cannot make exact change → dispense maximum possible, credit remainder to loyalty account</li>
+  <li><strong>IDLE:</strong> Transaction complete. Log transaction locally → sync to cloud when online</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> User presses B4 (Coke, $1.75) → Inserts $1.00 bill → Display: "$0.75 remaining" → Inserts $1.00 bill → Total $2.00 ≥ $1.75 → Motor dispenses Coke → IR sensor confirms delivery → Change: $0.25 → Dispenses 1 quarter → Transaction logged: {product: "B4", price: 1.75, paid: 2.00, change: 0.25, method: "cash"}
+</div>
+</div>
+
+<div class="section">
+<h3>🔍 Component Deep Dives — Purchase Flow</h3>
+
+<div class="subsection">
+<h4>State Machine Pattern</h4>
+<p>The vending machine is a textbook <strong>Finite State Machine (FSM)</strong>:</p>
+<pre>
+class VendingMachine:
+    state = IDLE
+    selected_product = None
+    amount_inserted = 0.00
+
+    def on_event(self, event):
+        if self.state == IDLE:
+            if event.type == PRODUCT_SELECTED:
+                if self.inventory[event.product_id] > 0:
+                    self.state = PRODUCT_SELECTED
+                    self.selected_product = event.product_id
+                else:
+                    display("OUT OF STOCK")
+        elif self.state == PRODUCT_SELECTED:
+            if event.type == MONEY_INSERTED:
+                self.amount_inserted += event.amount
+                self.state = ACCEPTING_PAYMENT
+                self._check_sufficient_funds()
+            elif event.type == CANCEL or event.type == TIMEOUT:
+                self._refund_and_reset()
+        elif self.state == ACCEPTING_PAYMENT:
+            if event.type == MONEY_INSERTED:
+                self.amount_inserted += event.amount
+                self._check_sufficient_funds()
+            elif event.type == SUFFICIENT_FUNDS:
+                self.state = DISPENSING
+                self._dispense_product()
+        elif self.state == DISPENSING:
+            if event.type == PRODUCT_DELIVERED:
+                self.state = RETURNING_CHANGE
+                self._return_change()
+            elif event.type == DISPENSE_FAILURE:
+                self.state = ERROR
+                self._refund_and_alert()
+</pre>
+</div>
+
+<div class="subsection">
+<h4>Change-Making Algorithm (Greedy)</h4>
+<pre>
+def make_change(amount_cents, coin_inventory):
+    """Greedy algorithm - works for US coin denominations"""
+    denominations = [100, 25, 10, 5, 1]  # dollar, quarter, dime, nickel, penny
+    change = []
+    remaining = amount_cents
+    for denom in denominations:
+        while remaining >= denom and coin_inventory[denom] > 0:
+            change.append(denom)
+            remaining -= denom
+            coin_inventory[denom] -= 1
+    if remaining > 0:
+        raise CannotMakeChangeError(remaining)
+    return change
+</pre>
+<p><strong>Note:</strong> Greedy works for US denominations (1, 5, 10, 25) because they form a canonical coin system. For arbitrary denominations, dynamic programming is needed (minimum coins problem).</p>
+</div>
+
+<div class="subsection">
+<h4>Hardware Interface</h4>
+<p><strong>Coin acceptor:</strong> Uses optical sensors and electromagnetic coils to identify coin type by size, weight, and metal composition. Communicates via MDB (Multi-Drop Bus) protocol — industry standard for vending peripherals</p>
+<p><strong>Bill validator:</strong> UV, magnetic, and optical sensors to detect counterfeit bills. Accepts/rejects within 1-2 seconds</p>
+<p><strong>Card reader:</strong> NFC (contactless) + EMV chip reader. Communicates with payment processor via cellular (4G) connection</p>
+<p><strong>Motor controller:</strong> Each product slot has a spiral motor. Microcontroller sends PWM signal to rotate motor exactly one turn to push product forward</p>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>🔄 Flow 2 — Remote Fleet Management & Monitoring</h2>
+<!-- ============================================================ -->
+
+<div class="diagram-container">
+<svg viewBox="0 0 1100 380" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <rect x="20" y="80" width="120" height="50" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="80" y="110" text-anchor="middle" fill="white" font-size="12">Machine 1</text>
+  <rect x="20" y="150" width="120" height="50" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="80" y="180" text-anchor="middle" fill="white" font-size="12">Machine 2</text>
+  <rect x="20" y="220" width="120" height="50" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="80" y="250" text-anchor="middle" fill="white" font-size="12">Machine N</text>
+  <text x="80" y="210" text-anchor="middle" fill="#aaa" font-size="20">⋮</text>
+  <line x1="140" y1="105" x2="230" y2="165" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="140" y1="175" x2="230" y2="170" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="140" y1="245" x2="230" y2="175" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="240" y="140" width="140" height="60" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="310" y="165" text-anchor="middle" fill="white" font-size="12">MQTT Broker</text>
+  <text x="310" y="182" text-anchor="middle" fill="white" font-size="10">(IoT Gateway)</text>
+  <line x1="380" y1="170" x2="450" y2="170" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="460" y="140" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="530" y="165" text-anchor="middle" fill="white" font-size="12">Fleet Mgmt Service</text>
+  <text x="530" y="182" text-anchor="middle" fill="white" font-size="10">(Cloud Backend)</text>
+  <line x1="600" y1="155" x2="680" y2="105" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="600" y1="170" x2="680" y2="170" stroke="#aaa" marker-end="url(#ah2)"/>
+  <line x1="600" y1="185" x2="680" y2="240" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="690" y="80" width="150" height="50" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
+  <text x="765" y="110" text-anchor="middle" fill="white" font-size="12">PostgreSQL (Fleet DB)</text>
+  <rect x="690" y="145" width="150" height="50" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
+  <text x="765" y="175" text-anchor="middle" fill="white" font-size="12">TimescaleDB (Telemetry)</text>
+  <rect x="690" y="220" width="150" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="765" y="250" text-anchor="middle" fill="white" font-size="12">Alert Engine</text>
+  <line x1="840" y1="245" x2="910" y2="245" stroke="#aaa" marker-end="url(#ah2)"/>
+  <rect x="920" y="220" width="130" height="50" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="985" y="250" text-anchor="middle" fill="white" font-size="12">Operator Dashboard</text>
+</svg>
+</div>
+
+<div class="section">
+<h3>Step-by-Step</h3>
+<ol>
+  <li><strong>Machine telemetry:</strong> Each machine sends periodic heartbeats via MQTT: inventory levels, temperature, coin/bill counts, error codes, revenue since last report</li>
+  <li><strong>MQTT Broker:</strong> AWS IoT Core or HiveMQ handles 100K+ concurrent machine connections. Topics: <code>fleet/{machine_id}/telemetry</code>, <code>fleet/{machine_id}/events</code></li>
+  <li><strong>Fleet Management Service:</strong> Processes telemetry events, updates machine state in PostgreSQL, stores time-series metrics in TimescaleDB</li>
+  <li><strong>Alert Engine:</strong> Rules trigger alerts: "Machine M-1234 slot B4 is empty", "Machine M-5678 coin hopper low", "Machine M-9012 temperature above 45°F (cooling unit failure)"</li>
+  <li><strong>Operator Dashboard:</strong> Web UI showing fleet map, machine health, inventory heatmap, revenue charts. Route optimization for restocking trucks</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> Machine M-1234 in office lobby sends telemetry every 5 min → MQTT topic: <code>fleet/M-1234/telemetry</code> → Payload: {inventory: [{slot: "B4", product: "Coke", qty: 2}, ...], temp: 38°F, coins: {25: 45, 10: 30, 5: 20}, revenue_today: $127.50} → Alert: "B4 stock low (2 remaining)" → Operator dashboard adds M-1234 to restock route → Truck driver arrives, restocks, scans confirmation → Inventory updated
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>🏗️ Combined Architecture</h2>
+<!-- ============================================================ -->
+
+<div class="diagram-container">
+<svg viewBox="0 0 1100 550" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ahc" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
+  <!-- Machine internals -->
+  <text x="180" y="30" fill="#f06292" font-size="14" font-weight="bold">Vending Machine (Edge)</text>
+  <rect x="30" y="45" width="100" height="40" rx="6" fill="#8a4a1a" stroke="#ffa54a" stroke-width="1.5"/>
+  <text x="80" y="70" text-anchor="middle" fill="white" font-size="10">Coin Acceptor</text>
+  <rect x="140" y="45" width="100" height="40" rx="6" fill="#8a4a1a" stroke="#ffa54a" stroke-width="1.5"/>
+  <text x="190" y="70" text-anchor="middle" fill="white" font-size="10">Bill Validator</text>
+  <rect x="250" y="45" width="100" height="40" rx="6" fill="#8a4a1a" stroke="#ffa54a" stroke-width="1.5"/>
+  <text x="300" y="70" text-anchor="middle" fill="white" font-size="10">NFC Reader</text>
+  <rect x="30" y="95" width="100" height="40" rx="6" fill="#8a4a1a" stroke="#ffa54a" stroke-width="1.5"/>
+  <text x="80" y="120" text-anchor="middle" fill="white" font-size="10">Motor Array</text>
+  <rect x="140" y="95" width="100" height="40" rx="6" fill="#8a4a1a" stroke="#ffa54a" stroke-width="1.5"/>
+  <text x="190" y="120" text-anchor="middle" fill="white" font-size="10">Display/Touch</text>
+  <rect x="250" y="95" width="100" height="40" rx="6" fill="#8a4a1a" stroke="#ffa54a" stroke-width="1.5"/>
+  <text x="300" y="120" text-anchor="middle" fill="white" font-size="10">Temp Sensor</text>
+  <!-- Main Controller -->
+  <rect x="100" y="155" width="200" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="200" y="178" text-anchor="middle" fill="white" font-size="12">Main Controller (SBC)</text>
+  <text x="200" y="195" text-anchor="middle" fill="white" font-size="10">(State Machine + Local DB)</text>
+  <line x1="200" y1="85" x2="200" y2="150" stroke="#aaa" marker-end="url(#ahc)"/>
+  <!-- Cloud connection -->
+  <line x1="300" y1="183" x2="420" y2="183" stroke="#aaa" stroke-dasharray="5,5" marker-end="url(#ahc)"/>
+  <text x="360" y="175" fill="#aaa" font-size="10">4G/WiFi</text>
+  <!-- Cloud -->
+  <text x="620" y="30" fill="#f06292" font-size="14" font-weight="bold">Cloud Platform</text>
+  <rect x="430" y="45" width="140" height="50" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
+  <text x="500" y="75" text-anchor="middle" fill="white" font-size="11">API Gateway</text>
+  <rect x="430" y="120" width="140" height="50" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
+  <text x="500" y="150" text-anchor="middle" fill="white" font-size="11">MQTT Broker (IoT)</text>
+  <rect x="430" y="195" width="140" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="500" y="225" text-anchor="middle" fill="white" font-size="11">Fleet Mgmt Service</text>
+  <rect x="430" y="270" width="140" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="500" y="300" text-anchor="middle" fill="white" font-size="11">Payment Service</text>
+  <rect x="430" y="345" width="140" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
+  <text x="500" y="375" text-anchor="middle" fill="white" font-size="11">Route Optimizer</text>
+  <!-- Databases -->
+  <rect x="650" y="120" width="140" height="50" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
+  <text x="720" y="150" text-anchor="middle" fill="white" font-size="11">PostgreSQL</text>
+  <rect x="650" y="195" width="140" height="50" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
+  <text x="720" y="225" text-anchor="middle" fill="white" font-size="11">TimescaleDB</text>
+  <rect x="650" y="270" width="140" height="50" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
+  <text x="720" y="300" text-anchor="middle" fill="white" font-size="11">Redis (Sessions)</text>
+  <line x1="570" y1="145" x2="640" y2="145" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="570" y1="220" x2="640" y2="220" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="570" y1="295" x2="640" y2="295" stroke="#aaa" marker-end="url(#ahc)"/>
+  <!-- External -->
+  <rect x="650" y="345" width="140" height="50" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
+  <text x="720" y="375" text-anchor="middle" fill="white" font-size="11">Stripe/Square</text>
+  <line x1="570" y1="295" x2="640" y2="370" stroke="#aaa" marker-end="url(#ahc)"/>
+  <!-- Dashboard -->
+  <rect x="850" y="120" width="140" height="50" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="920" y="150" text-anchor="middle" fill="white" font-size="11">Operator Dashboard</text>
+  <rect x="850" y="195" width="140" height="50" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
+  <text x="920" y="225" text-anchor="middle" fill="white" font-size="11">Mobile App (User)</text>
+  <line x1="790" y1="145" x2="840" y2="145" stroke="#aaa" marker-end="url(#ahc)"/>
+  <line x1="570" y1="70" x2="840" y2="220" stroke="#aaa" stroke-dasharray="5,5" marker-end="url(#ahc)"/>
+</svg>
+</div>
+
+<div class="example">
+<strong>End-to-End Example:</strong> 50,000 machines across US → Each connects via 4G to AWS IoT MQTT broker → Telemetry streamed to TimescaleDB every 5 min → Fleet dashboard shows: 847 machines need restocking, 23 have errors, $2.3M revenue today → Route optimizer generates optimal restock routes for 200 trucks → User in office approaches machine → Taps phone (Apple Pay) for $2.50 coffee → NFC reader → 4G → Stripe payment → approved → Motor dispenses → Transaction synced to cloud → Machine inventory decremented
+</div>
+
+<!-- ============================================================ -->
+<h2>🗄️ Database Schema</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<h3>PostgreSQL — Fleet Management</h3>
+
+<h4>machines</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>serial_number</td><td>VARCHAR(50)</td><td><span class="tag tag-idx">UNIQUE</span></td></tr>
+<tr><td>location_name</td><td>VARCHAR(255)</td><td></td></tr>
+<tr><td>latitude</td><td>DECIMAL(10,7)</td><td></td></tr>
+<tr><td>longitude</td><td>DECIMAL(10,7)</td><td></td></tr>
+<tr><td>model</td><td>VARCHAR(50)</td><td></td></tr>
+<tr><td>firmware_version</td><td>VARCHAR(20)</td><td></td></tr>
+<tr><td>status</td><td>VARCHAR(20)</td><td>operational / error / offline / maintenance</td></tr>
+<tr><td>last_heartbeat</td><td>TIMESTAMPTZ</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>operator_id</td><td>UUID</td><td><span class="tag tag-fk">FK → operators</span></td></tr>
+<tr><td>installed_at</td><td>TIMESTAMPTZ</td><td></td></tr>
+</table>
+
+<h4>machine_slots</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>machine_id</td><td>UUID</td><td><span class="tag tag-pk">PK</span><span class="tag tag-fk">FK → machines</span></td></tr>
+<tr><td>slot_code</td><td>VARCHAR(5)</td><td><span class="tag tag-pk">PK</span> e.g., "B4"</td></tr>
+<tr><td>product_id</td><td>UUID</td><td><span class="tag tag-fk">FK → products</span></td></tr>
+<tr><td>quantity</td><td>SMALLINT</td><td></td></tr>
+<tr><td>max_capacity</td><td>SMALLINT</td><td></td></tr>
+<tr><td>price</td><td>DECIMAL(6,2)</td><td>Per-machine pricing</td></tr>
+</table>
+
+<h4>transactions</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>machine_id</td><td>UUID</td><td><span class="tag tag-fk">FK → machines</span><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>slot_code</td><td>VARCHAR(5)</td><td></td></tr>
+<tr><td>product_id</td><td>UUID</td><td></td></tr>
+<tr><td>amount</td><td>DECIMAL(6,2)</td><td></td></tr>
+<tr><td>payment_method</td><td>VARCHAR(20)</td><td>cash / card / mobile</td></tr>
+<tr><td>payment_ref</td><td>VARCHAR(100)</td><td>External payment ID</td></tr>
+<tr><td>status</td><td>VARCHAR(20)</td><td>completed / refunded / failed</td></tr>
+<tr><td>dispensed_at</td><td>TIMESTAMPTZ</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+</table>
+
+<h4>products</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>name</td><td>VARCHAR(100)</td><td></td></tr>
+<tr><td>category</td><td>VARCHAR(50)</td><td>beverage / snack / candy</td></tr>
+<tr><td>sku</td><td>VARCHAR(50)</td><td><span class="tag tag-idx">UNIQUE</span></td></tr>
+<tr><td>default_price</td><td>DECIMAL(6,2)</td><td></td></tr>
+<tr><td>image_url</td><td>TEXT</td><td></td></tr>
+</table>
+
+<h3>Sharding Strategy</h3>
+<p><strong>machines + machine_slots:</strong> Shard by <code>operator_id</code> — each operator manages their fleet on same shard <span class="tag tag-shard">HASH SHARD</span></p>
+<p><strong>transactions:</strong> Shard by <code>machine_id</code> + time-based partitioning — recent transactions on hot partition, older data archived <span class="tag tag-shard">COMPOSITE SHARD</span></p>
+
+<h3>Local Database (On-Machine — SQLite)</h3>
+<pre>
+-- Simplified local schema on machine controller
+CREATE TABLE local_inventory (
+    slot_code TEXT PRIMARY KEY,
+    product_name TEXT,
+    quantity INTEGER,
+    price REAL
+);
+
+CREATE TABLE local_transactions (
+    id TEXT PRIMARY KEY,
+    slot_code TEXT,
+    amount REAL,
+    payment_method TEXT,
+    timestamp TEXT,
+    synced INTEGER DEFAULT 0  -- 0 = pending sync to cloud
+);
+</pre>
+<p>Local DB is source of truth for immediate operations. Unsynced transactions queued and uploaded when connectivity restored. Cloud DB is source of truth for reporting and fleet management.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2>💾 Cache & CDN Deep Dive</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<p><strong>Redis (Cloud):</strong> Caches machine state for dashboard queries. Key: <code>machine:{id}:state</code> → {inventory, temp, revenue, errors}. Updated on each telemetry event. TTL: none (always fresh from MQTT stream). Eviction: noeviction — all data is essential.</p>
+<p><strong>Local cache (on-machine):</strong> SQLite acts as persistent cache. Product catalog, pricing, and firmware config stored locally. Updated via OTA (over-the-air) push from cloud. Machine operates fully offline using local data.</p>
+<p><strong>CDN:</strong> Product images for display screen served via CDN. Firmware update binaries stored on S3 + CDN for fast global download to machines.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2>⚖️ Tradeoffs</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<div class="tradeoff-grid">
+  <div class="tradeoff-pro">
+    <h4>✅ State Machine Design</h4>
+    <p>Deterministic behavior — every state transition is explicit. Easy to test, audit, and debug. Prevents invalid states (e.g., dispensing without payment)</p>
+  </div>
+  <div class="tradeoff-con">
+    <h4>❌ State Machine Design</h4>
+    <p>Adding new flows (e.g., combo deals, loyalty points) requires modifying state machine — can become complex. State explosion with many edge cases</p>
+  </div>
+  <div class="tradeoff-pro">
+    <h4>✅ MQTT for IoT Communication</h4>
+    <p>Lightweight protocol (minimal bandwidth — critical for cellular data). Built-in QoS levels. Bi-directional (cloud can push firmware updates, price changes to machines)</p>
+  </div>
+  <div class="tradeoff-con">
+    <h4>❌ MQTT for IoT Communication</h4>
+    <p>Requires MQTT broker infrastructure. Less tooling/debugging support than HTTP. Security requires careful TLS configuration per device</p>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>🔄 Alternative Approaches</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<div class="subsection">
+<h4>HTTP Polling Instead of MQTT</h4>
+<p>Machines periodically call REST API to report telemetry and check for commands. Simpler implementation but higher bandwidth, higher latency for commands, and more server load from 100K machines polling simultaneously. MQTT's push model is better for IoT scale.</p>
+</div>
+<div class="subsection">
+<h4>Cashless-Only Machine</h4>
+<p>Eliminate coin/bill hardware entirely — NFC card/mobile only. Dramatically reduces mechanical complexity (no coin jam, no change-making). Lower hardware cost (~40% reduction). Tradeoff: excludes unbanked users, some locations require cash acceptance by law.</p>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>📚 Additional Information</h2>
+<!-- ============================================================ -->
+
+<div class="section">
+<h3>OOP Design Patterns Used</h3>
+<ul>
+  <li><strong>State Pattern:</strong> Each state (Idle, ProductSelected, etc.) is a class implementing a common interface. The machine delegates behavior to current state object</li>
+  <li><strong>Strategy Pattern:</strong> Payment methods (CashPayment, CardPayment, MobilePayment) implement a PaymentStrategy interface</li>
+  <li><strong>Observer Pattern:</strong> Display, inventory tracker, and telemetry reporter observe state changes</li>
+  <li><strong>Command Pattern:</strong> Remote commands (updatePrices, reboot, lockMachine) encapsulated as command objects sent via MQTT</li>
+</ul>
+
+<h3>Predictive Restocking (ML)</h3>
+<p>Using historical sales data (from TimescaleDB), predict when each slot will run out. Features: day of week, time of day, location type (office vs gym vs airport), weather, nearby events. Model predicts daily sales per product per machine → generates optimal restocking schedule → route optimizer plans truck routes minimizing distance while ensuring no machine runs out during business hours.</p>
+
+<h3>MDB Protocol</h3>
+<p>Multi-Drop Bus is the industry standard serial communication protocol for vending peripherals. 9600 baud, 9-bit bytes (8 data + mode bit). Master (main controller) polls peripherals (coin acceptor, bill validator, card reader) on shared bus. Each peripheral has unique address. Defined by NAMA (National Automatic Merchandising Association).</p>
+</div>
+
+</body>
+</html>

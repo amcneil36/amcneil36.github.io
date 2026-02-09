@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airbnb - System Design</title>
+<style>
+:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--heading:#FF5A5F;--accent:#00A699;--accent2:#FC642D;--accent3:#484848;--muted:#888}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
+h1{color:var(--heading);font-size:2.2rem;border-bottom:3px solid var(--heading);padding-bottom:.5rem;margin-bottom:1.5rem}
+h2{color:var(--accent);margin:2rem 0 1rem;font-size:1.5rem}
+h3{color:var(--accent2);margin:1.5rem 0 .75rem;font-size:1.2rem}
+h4{color:var(--heading);margin:1rem 0 .5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
+ul,ol{margin:.75rem 0 .75rem 1.5rem}
+li{margin:.4rem 0}
+code{background:#2d2d2d;padding:.2rem .5rem;border-radius:4px;font-size:.9rem;color:#f8f8f2}
+pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:1rem 0}
+pre code{padding:0;background:none}
+.tag{display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600;margin:.2rem}
+.tag-pk{background:#E53935;color:#fff}
+.tag-fk{background:#1E88E5;color:#fff}
+.tag-idx{background:#43A047;color:#fff}
+.tag-shard{background:#FB8C00;color:#fff}
+svg text{font-family:'Segoe UI',system-ui,sans-serif}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.pro{background:#1b3a1b;border:1px solid #2d5a2d;border-radius:8px;padding:1rem}
+.con{background:#3a1b1b;border:1px solid #5a2d2d;border-radius:8px;padding:1rem}
+</style>
+</head>
+<body>
+
+<h1>🏠 Airbnb - System Design</h1>
+
+<div class="card">
+<h2>Functional Requirements</h2>
+<ol>
+<li><strong>Search & Discovery:</strong> Search listings by location, dates, guests, filters (price, amenities, property type); map-based browsing; personalized ranking; instant results</li>
+<li><strong>Booking & Payments:</strong> Real-time availability calendar, instant book or request-to-book, secure payment processing (multi-currency), host payout, cancellation policies, pricing rules (smart pricing)</li>
+<li><strong>Listing Management:</strong> Hosts create/manage listings with photos, descriptions, amenities, house rules, availability calendar, pricing (nightly/weekly/monthly), reviews/ratings</li>
+</ol>
+</div>
+
+<div class="card">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Scale:</strong> 7M+ active listings in 220+ countries, 150M+ users, ~1M bookings/night peak season</li>
+<li><strong>Latency:</strong> Search results &lt;500ms, booking confirmation &lt;2s, calendar load &lt;300ms</li>
+<li><strong>Availability:</strong> 99.99% — downtime during peak booking periods directly impacts revenue</li>
+<li><strong>Consistency:</strong> Double-booking prevention — calendar availability must be strongly consistent</li>
+<li><strong>Trust:</strong> Identity verification, review integrity, payment security (PCI DSS Level 1)</li>
+</ul>
+</div>
+
+<!-- ============ FLOW 1: SEARCH ============ -->
+<h2>Flow 1: Search & Discovery</h2>
+<div class="card">
+<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#00A699"/></marker></defs>
+<rect x="20" y="50" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Client</text><text x="80" y="87" text-anchor="middle" fill="#fff" font-size="10">(Web / Mobile)</text>
+<rect x="190" y="50" width="130" height="50" rx="8" fill="#FB8C00"/><text x="255" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">API Gateway</text><text x="255" y="87" text-anchor="middle" fill="#fff" font-size="10">(Envoy + Auth)</text>
+<rect x="370" y="50" width="130" height="50" rx="8" fill="#4285F4"/><text x="435" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Service</text><text x="435" y="87" text-anchor="middle" fill="#fff" font-size="10">(Elasticsearch)</text>
+<rect x="550" y="20" width="130" height="50" rx="8" fill="#9C27B0"/><text x="615" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Ranking ML</text><text x="615" y="57" text-anchor="middle" fill="#fff" font-size="10">(Personalization)</text>
+<rect x="550" y="90" width="130" height="50" rx="8" fill="#E53935"/><text x="615" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Availability Svc</text><text x="615" y="127" text-anchor="middle" fill="#fff" font-size="10">(Calendar Check)</text>
+<rect x="740" y="50" width="130" height="50" rx="8" fill="#795548"/><text x="805" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Listing DB</text><text x="805" y="87" text-anchor="middle" fill="#fff" font-size="10">(MySQL + Redis)</text>
+<rect x="370" y="200" width="130" height="50" rx="8" fill="#00897B"/><text x="435" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Geo Index</text><text x="435" y="237" text-anchor="middle" fill="#fff" font-size="10">(S2 Geometry)</text>
+<line x1="140" y1="75" x2="185" y2="75" stroke="#00A699" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="320" y1="75" x2="365" y2="75" stroke="#00A699" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="500" y1="65" x2="545" y2="45" stroke="#00A699" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="500" y1="85" x2="545" y2="110" stroke="#00A699" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="680" y1="45" x2="735" y2="65" stroke="#00A699" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="680" y1="115" x2="735" y2="85" stroke="#00A699" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="435" y1="100" x2="435" y2="195" stroke="#00A699" stroke-width="2" marker-end="url(#ah)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>User searches: location "Paris", check-in Feb 15, check-out Feb 20, 2 guests</li>
+<li>Geo Index (S2 Geometry cells) identifies listings within bounding box of "Paris" map viewport</li>
+<li>Search Service (Elasticsearch) filters: property type, price range, amenities, instant book, superhost</li>
+<li>Availability Service checks calendar for date range — filters out listings already booked for those dates</li>
+<li>Ranking ML model scores remaining listings: relevance × quality × price competitiveness × booking probability × personalization</li>
+<li>Personalization: user's past bookings, saved listings, search history, device/locale → fine-tune ranking</li>
+<li>Results returned paginated (20 per page) with listing cards: photos, price, rating, superhost badge</li>
+</ol>
+
+<h3>Example</h3>
+<p>Search "Paris, Feb 15-20, 2 guests, $100-200/night". Geo filter: 45,000 listings in Paris metro area. Price filter: 18,000. Availability filter: 12,000 available those dates. Amenity filters (WiFi, kitchen): 8,500. ML ranking: top 20 returned. User previously booked apartments → apartments ranked higher. Listing #1: "Charming Marais Studio" — $145/night, 4.92 rating, Superhost, 200+ reviews.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>Search Ranking (ML)</h4>
+<p><strong>Model:</strong> Gradient boosted decision trees (XGBoost/LightGBM) → neural ranking model (DNN)</p>
+<p><strong>Features:</strong> Listing quality score, price vs. market median, review sentiment, response rate, photo quality score (CV model), distance from search center, guest-host match (language, preferences)</p>
+<p><strong>Training:</strong> Trained on billions of search-click-book sessions; label = booked (positive) vs. viewed-not-booked (negative)</p>
+<p><strong>Airbnb-specific:</strong> "Smart Pricing" factor — hosts using dynamic pricing rank higher (better conversion rate)</p>
+</div>
+<div class="card">
+<h4>Geospatial Index (S2 Geometry)</h4>
+<p><strong>Library:</strong> Google S2 Geometry — maps Earth's surface to hierarchical cells (levels 0-30)</p>
+<p><strong>Index:</strong> Each listing stored with S2 cell ID at level 13 (~1km²); search uses S2 region covering to find relevant cells</p>
+<p><strong>Map View:</strong> As user pans/zooms map, new S2 cell query issued → listings in visible viewport returned</p>
+<p><strong>Elasticsearch:</strong> geo_shape field with S2 cell prefix for efficient geo-range queries</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 2: BOOKING ============ -->
+<h2>Flow 2: Booking & Payment</h2>
+<div class="card">
+<svg viewBox="0 0 1000 320" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FC642D"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Guest</text><text x="80" y="97" text-anchor="middle" fill="#fff" font-size="10">(Book Now)</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Booking Service</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="10">(Orchestrator)</text>
+<rect x="370" y="30" width="130" height="50" rx="8" fill="#E53935"/><text x="435" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Availability Svc</text><text x="435" y="67" text-anchor="middle" fill="#fff" font-size="10">(Lock + Verify)</text>
+<rect x="370" y="100" width="130" height="50" rx="8" fill="#9C27B0"/><text x="435" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Payment Service</text><text x="435" y="137" text-anchor="middle" fill="#fff" font-size="10">(Stripe/Braintree)</text>
+<rect x="560" y="30" width="130" height="50" rx="8" fill="#795548"/><text x="625" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Reservation DB</text><text x="625" y="67" text-anchor="middle" fill="#fff" font-size="10">(MySQL + Locks)</text>
+<rect x="560" y="100" width="130" height="50" rx="8" fill="#00897B"/><text x="625" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Notification Svc</text><text x="625" y="137" text-anchor="middle" fill="#fff" font-size="10">(Email/Push/SMS)</text>
+<rect x="740" y="60" width="130" height="50" rx="8" fill="#FB8C00"/><text x="805" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Pricing Engine</text><text x="805" y="97" text-anchor="middle" fill="#fff" font-size="10">(Dynamic Pricing)</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#FC642D" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="320" y1="75" x2="365" y2="55" stroke="#FC642D" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="320" y1="95" x2="365" y2="120" stroke="#FC642D" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="500" y1="55" x2="555" y2="55" stroke="#FC642D" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="500" y1="125" x2="555" y2="125" stroke="#FC642D" stroke-width="2" marker-end="url(#ah2)"/>
+<line x1="690" y1="55" x2="735" y2="75" stroke="#FC642D" stroke-width="2" marker-end="url(#ah2)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Guest clicks "Reserve" → Booking Service receives listing_id, dates, guest count, payment method</li>
+<li>Availability Service acquires pessimistic lock on calendar dates (SELECT ... FOR UPDATE on reservation rows)</li>
+<li>Double-booking check: verify no overlapping confirmed reservation exists for those dates</li>
+<li>Pricing Engine calculates total: nightly_rate × nights + cleaning_fee + service_fee + occupancy_taxes (multi-currency)</li>
+<li>Payment Service authorizes payment (Stripe/Braintree) — hold funds, don't capture yet</li>
+<li>If Instant Book: reservation confirmed immediately; if Request: host has 24h to accept/decline</li>
+<li>On confirmation: payment captured, calendar blocked, confirmation emails/push sent to guest and host</li>
+<li>Reservation written to MySQL with ACID transaction; calendar availability updated atomically</li>
+</ol>
+
+<h3>Example</h3>
+<p>Guest books "Charming Marais Studio" for Feb 15-20 (5 nights). Pricing: $145/night × 5 = $725 + $50 cleaning + $102 service fee + $58 occupancy tax = $935 total. Availability lock acquired. No conflicts found. Stripe authorization succeeds. Instant Book enabled → reservation confirmed. Guest charged $935, host payout scheduled for $725 (after 3% host fee) 24h after check-in.</p>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>Double-Booking Prevention</h4>
+<p><strong>Strategy:</strong> Pessimistic locking — <code>SELECT ... FOR UPDATE</code> on calendar rows for the date range</p>
+<p><strong>Lock Scope:</strong> Per-listing date range; lock held for duration of booking transaction (~2-5 seconds)</p>
+<p><strong>Alternative:</strong> Optimistic locking with version column — retry on conflict; lower contention for low-demand listings</p>
+<p><strong>Edge Case:</strong> iCal sync from external platforms (VRBO, Booking.com) — synced every 15 min; race window handled by lock</p>
+</div>
+<div class="card">
+<h4>Smart Pricing (Dynamic)</h4>
+<p><strong>Model:</strong> ML-based dynamic pricing — factors: local demand, seasonality, day-of-week, events nearby, competitor pricing, listing quality</p>
+<p><strong>Range:</strong> Host sets min/max price; Smart Pricing adjusts within range to maximize bookings</p>
+<p><strong>Market Data:</strong> Airbnb aggregates booking data across all listings in an area to estimate demand curves</p>
+</div>
+</div>
+</div>
+
+<!-- ============ FLOW 3: LISTING MANAGEMENT ============ -->
+<h2>Flow 3: Host Listing Management & Reviews</h2>
+<div class="card">
+<svg viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FF5A5F"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Host</text><text x="80" y="97" text-anchor="middle" fill="#fff" font-size="10">(Listing Editor)</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Listing Service</text>
+<rect x="370" y="30" width="130" height="50" rx="8" fill="#9C27B0"/><text x="435" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Photo Service</text><text x="435" y="67" text-anchor="middle" fill="#fff" font-size="10">(ML Quality + CDN)</text>
+<rect x="370" y="100" width="130" height="50" rx="8" fill="#FB8C00"/><text x="435" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Review Service</text><text x="435" y="137" text-anchor="middle" fill="#fff" font-size="10">(Dual-Blind)</text>
+<rect x="560" y="60" width="130" height="50" rx="8" fill="#795548"/><text x="625" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Index</text><text x="625" y="97" text-anchor="middle" fill="#fff" font-size="10">(Sync on Change)</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#FF5A5F" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="320" y1="75" x2="365" y2="55" stroke="#FF5A5F" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="320" y1="95" x2="365" y2="120" stroke="#FF5A5F" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="500" y1="55" x2="555" y2="75" stroke="#FF5A5F" stroke-width="2" marker-end="url(#ah3)"/>
+<line x1="500" y1="125" x2="555" y2="95" stroke="#FF5A5F" stroke-width="2" marker-end="url(#ah3)"/>
+</svg>
+</div>
+
+<div class="card">
+<h3>Steps</h3>
+<ol>
+<li>Host creates listing: title, description, property type, rooms/beds/baths, amenities checklist, house rules, location</li>
+<li>Photos uploaded to Photo Service → resized to multiple dimensions, ML quality scoring (composition, lighting, resolution), stored in S3</li>
+<li>Calendar setup: mark available dates, set nightly/weekly/monthly pricing, minimum stay requirements</li>
+<li>Listing indexed in Elasticsearch for search discovery; updates propagated via change data capture (CDC) from MySQL</li>
+<li>Reviews: dual-blind system — both guest and host submit reviews within 14 days; revealed simultaneously to prevent retaliation</li>
+<li>Rating dimensions: cleanliness, accuracy, communication, location, check-in, value (1-5 stars each)</li>
+</ol>
+
+<h3>Deep Dives</h3>
+<div class="grid">
+<div class="card">
+<h4>Photo Quality ML</h4>
+<p><strong>Model:</strong> CNN-based photo quality scorer — trained on professional vs. amateur listing photos</p>
+<p><strong>Features:</strong> Lighting quality, composition, resolution, room coverage, object detection (bed, kitchen, bathroom presence)</p>
+<p><strong>Impact:</strong> Higher-quality photos → better search ranking → more bookings; AI photo tips for hosts</p>
+<p><strong>Processing:</strong> Photos resized to 5 dimensions (thumbnail, card, gallery, hero, original); WebP + JPEG; progressive loading</p>
+</div>
+<div class="card">
+<h4>Review System</h4>
+<p><strong>Dual-Blind:</strong> Both parties write reviews independently; revealed simultaneously after 14-day window (or both submit)</p>
+<p><strong>Fraud Detection:</strong> ML detects fake reviews — unusual patterns, timing, reviewer history, text similarity</p>
+<p><strong>Rating Bias:</strong> Airbnb reviews average ~4.7/5 (J-curve distribution); considering redesigning to reduce positivity bias</p>
+</div>
+</div>
+</div>
+
+<!-- ============ DATABASE SCHEMA ============ -->
+<h2>Database Schema</h2>
+<div class="grid">
+<div class="card">
+<h3>MySQL — Listings & Reservations</h3>
+<pre><code>CREATE TABLE listings (
+  listing_id      BIGINT PRIMARY KEY,    <span class="tag tag-pk">PK</span>
+  host_id         BIGINT,                <span class="tag tag-fk">FK</span> <span class="tag tag-idx">INDEX</span>
+  title           VARCHAR(255),
+  description     TEXT,
+  property_type   VARCHAR(30),
+  room_type       VARCHAR(20),  -- entire_place, private_room, shared_room
+  lat             DECIMAL(9,6),          <span class="tag tag-idx">INDEX</span>
+  lng             DECIMAL(9,6),
+  s2_cell_id      BIGINT,                <span class="tag tag-idx">INDEX</span>
+  city            VARCHAR(100),          <span class="tag tag-idx">INDEX</span>
+  country         CHAR(2),
+  bedrooms        TINYINT,
+  beds            TINYINT,
+  bathrooms       DECIMAL(3,1),
+  max_guests      TINYINT,
+  amenities       JSON,  -- ["wifi","kitchen","parking",...]
+  price_nightly   DECIMAL(10,2),
+  price_weekly    DECIMAL(10,2),
+  cleaning_fee    DECIMAL(10,2),
+  currency        CHAR(3),
+  min_nights      SMALLINT DEFAULT 1,
+  instant_book    BOOLEAN DEFAULT FALSE,
+  superhost       BOOLEAN DEFAULT FALSE,
+  avg_rating      DECIMAL(3,2),
+  review_count    INT DEFAULT 0,
+  status          VARCHAR(20),  -- active, unlisted, suspended
+  created_at      TIMESTAMP,
+  updated_at      TIMESTAMP
+);
+
+CREATE TABLE reservations (
+  reservation_id  BIGINT PRIMARY KEY,    <span class="tag tag-pk">PK</span>
+  listing_id      BIGINT,                <span class="tag tag-fk">FK</span> <span class="tag tag-idx">INDEX</span>
+  guest_id        BIGINT,                <span class="tag tag-fk">FK</span>
+  host_id         BIGINT,                <span class="tag tag-fk">FK</span>
+  check_in        DATE,                  <span class="tag tag-idx">INDEX</span>
+  check_out       DATE,
+  guests          TINYINT,
+  nightly_rate    DECIMAL(10,2),
+  total_price     DECIMAL(10,2),
+  currency        CHAR(3),
+  service_fee     DECIMAL(10,2),
+  cleaning_fee    DECIMAL(10,2),
+  taxes           DECIMAL(10,2),
+  status          VARCHAR(20),  -- pending, confirmed, cancelled, completed
+  payment_intent  VARCHAR(64),  -- Stripe payment intent ID
+  cancellation_policy VARCHAR(30),
+  created_at      TIMESTAMP
+);</code></pre>
+<p><span class="tag tag-shard">SHARD</span> Sharded by listing_id for reservation queries; user-centric queries via secondary index on guest_id/host_id</p>
+</div>
+
+<div class="card">
+<h3>Calendar & Reviews</h3>
+<pre><code>CREATE TABLE calendar (
+  listing_id      BIGINT,                <span class="tag tag-fk">FK</span>
+  date            DATE,
+  available       BOOLEAN DEFAULT TRUE,
+  price           DECIMAL(10,2),  -- per-night price for this date
+  min_nights      SMALLINT,
+  reservation_id  BIGINT,                <span class="tag tag-fk">FK</span>
+  PRIMARY KEY (listing_id, date)
+);
+-- Calendar row per listing per date
+-- Availability check: WHERE listing_id=X AND date BETWEEN Y AND Z AND available=TRUE
+
+CREATE TABLE reviews (
+  review_id       BIGINT PRIMARY KEY,    <span class="tag tag-pk">PK</span>
+  reservation_id  BIGINT UNIQUE,         <span class="tag tag-fk">FK</span>
+  listing_id      BIGINT,                <span class="tag tag-fk">FK</span> <span class="tag tag-idx">INDEX</span>
+  reviewer_id     BIGINT,                <span class="tag tag-fk">FK</span>
+  reviewee_id     BIGINT,                <span class="tag tag-fk">FK</span>
+  role            VARCHAR(10),  -- guest_to_host, host_to_guest
+  overall_rating  TINYINT,  -- 1-5
+  cleanliness     TINYINT,
+  accuracy        TINYINT,
+  communication   TINYINT,
+  location_rating TINYINT,
+  checkin_rating  TINYINT,
+  value_rating    TINYINT,
+  comment         TEXT,
+  is_public       BOOLEAN DEFAULT FALSE, -- dual-blind until both submit
+  created_at      TIMESTAMP
+);</code></pre>
+</div>
+</div>
+
+<!-- ============ CACHE & CDN ============ -->
+<h2>Cache & CDN Deep Dive</h2>
+<div class="card">
+<div class="grid">
+<div class="card">
+<h4>CDN (Cloudflare / Fastly)</h4>
+<p><strong>Photos:</strong> Listing photos served via CDN with aggressive caching (max-age: 30d, immutable hash-based URLs)</p>
+<p><strong>Responsive:</strong> <code>?w=400&h=300&fit=crop</code> — CDN image resizing at edge; WebP auto-conversion</p>
+<p><strong>Static:</strong> Web app bundles, map tiles, locale strings cached at 250+ edge PoPs</p>
+</div>
+<div class="card">
+<h4>Redis Cache</h4>
+<p><strong>Search Results:</strong> Recent search results cached by query hash (TTL: 5 min) — same search repeated returns instantly</p>
+<p><strong>Listing Details:</strong> Hot listing data cached in Redis (TTL: 10 min, invalidated on update)</p>
+<p><strong>Availability:</strong> Calendar availability bitmap cached per listing (365 days × 1 bit = 46 bytes); updated on booking</p>
+<p><strong>Pricing:</strong> Smart pricing results cached per listing per date range (TTL: 1hr)</p>
+</div>
+<div class="card">
+<h4>Session & User Cache</h4>
+<p><strong>Session:</strong> User sessions in Redis (JWT validation cache, wishlists, recent searches)</p>
+<p><strong>Personalization:</strong> User features vector cached for ML ranking — past bookings, preferences, price sensitivity</p>
+</div>
+</div>
+</div>
+
+<!-- ============ SCALING ============ -->
+<h2>Scaling & Load Balancing</h2>
+<div class="card">
+<ul>
+<li><strong>Service Mesh:</strong> Envoy-based service mesh (Airbnb's SmartStack → Envoy migration); automatic service discovery, load balancing, circuit breaking</li>
+<li><strong>Database:</strong> MySQL (primary + read replicas) per service domain; Vitess for sharding; separate clusters for search (ES), analytics (Druid), ML features (Hive/Spark)</li>
+<li><strong>Search:</strong> Elasticsearch cluster with 100+ nodes; sharded by geo-region for data locality; reindexed from MySQL via CDC pipeline</li>
+<li><strong>Seasonal Scaling:</strong> Summer/holiday peak: 3-5x normal traffic; auto-scaling groups with pre-warming before known peaks (New Year's Eve, etc.)</li>
+<li><strong>Multi-Region:</strong> US-West (primary), US-East, EU-West, APAC — reads from nearest region; writes routed to primary for strong consistency on bookings</li>
+</ul>
+</div>
+
+<!-- ============ TRADEOFFS ============ -->
+<h2>Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="pro">
+<h4>✅ Calendar-Row-Per-Date Model</h4>
+<ul>
+<li>Simple availability queries — just filter by date range + available=true</li>
+<li>Per-date pricing flexibility (weekend premium, holiday rates)</li>
+<li>Easy to implement minimum night requirements per date</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ Calendar-Row-Per-Date Model</h4>
+<ul>
+<li>365 rows per listing × 7M listings = 2.5B+ rows (significant storage)</li>
+<li>Year-rollover: must pre-generate next year's calendar rows</li>
+<li>Bulk updates (e.g., "block all Mondays") require updating many rows</li>
+</ul>
+</div>
+<div class="pro">
+<h4>✅ Instant Book</h4>
+<ul>
+<li>Faster conversion — guest books immediately, no waiting for host approval</li>
+<li>Better guest experience — reduces booking friction by 50%</li>
+<li>Higher search ranking for instant book listings</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ Instant Book</h4>
+<ul>
+<li>Hosts lose control over who books (mitigated by guest requirements)</li>
+<li>Higher cancellation rates from hosts who regret auto-approvals</li>
+<li>Guest verification less thorough before booking</li>
+</ul>
+</div>
+</div>
+
+<!-- ============ ALTERNATIVES ============ -->
+<h2>Alternative Approaches</h2>
+<div class="grid">
+<div class="card">
+<h4>Event-Sourced Availability</h4>
+<p>Instead of mutable calendar rows, store immutable events (DateBlocked, DateUnblocked, ReservationCreated). Current availability computed from event log. Perfect audit trail, supports undo, but read path requires event replay (mitigated by materialized views).</p>
+</div>
+<div class="card">
+<h4>Graph-Based Discovery (Neo4j)</h4>
+<p>Model listings, users, reviews, bookings as graph. Recommendation queries become graph traversals: "listings similar to ones Alice liked, booked by people with similar preferences." Richer recommendations but operational complexity of graph databases at scale.</p>
+</div>
+</div>
+
+<!-- ============ ADDITIONAL INFO ============ -->
+<h2>Additional Information</h2>
+<div class="card">
+<ul>
+<li><strong>Trust & Safety:</strong> Identity verification (government ID + selfie match via ML), payment fraud detection (Stripe Radar), listing quality monitoring, neighborhood complaint handling, 24/7 safety hotline.</li>
+<li><strong>Airbnb Categories:</strong> ML-powered listing categorization into 60+ categories (Treehouses, Castles, Beach, Ski-in/out, Tiny homes). Uses listing photos (CV model) + description (NLP) + amenities for classification.</li>
+<li><strong>Experience Platform:</strong> Hosted experiences (tours, cooking classes, workshops) alongside accommodations — separate booking pipeline with per-person pricing, date/time slots, and host qualification verification.</li>
+<li><strong>Internationalization:</strong> 220+ countries, 60+ languages, 70+ currencies. Dynamic currency conversion, localized content, region-specific legal compliance (tax collection, registration numbers, guest limits).</li>
+<li><strong>Service Architecture:</strong> Airbnb migrated from Rails monolith to ~1,000 microservices (2017-2020). Key infrastructure: Chronos (job scheduler), Reair (data replication), Superset (data visualization), Aerosolve (ML pricing).</li>
+</ul>
+</div>
+
+</body>
+</html>

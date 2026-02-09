@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Reddit</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0f0f0f;color:#e0e0e0;line-height:1.7;padding:2rem}h1{font-size:2.5rem;text-align:center;background:linear-gradient(135deg,#FF4500,#FF8717);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}h2{color:#FF4500;font-size:1.8rem;margin:2rem 0 1rem;border-bottom:2px solid #FF4500;padding-bottom:.5rem}h3{color:#FF8717;font-size:1.3rem;margin:1.5rem 0 .8rem}h4{color:#FFD635;margin:1rem 0 .5rem}.container{max-width:1400px;margin:0 auto}.card{background:#1a1a2e;border-radius:12px;padding:1.5rem;margin:1rem 0;border:1px solid #333}.diagram-box{background:#0d1117;border-radius:12px;padding:1.5rem;margin:1rem 0;text-align:center;overflow-x:auto}.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}.tag-pk{background:#E53935;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-fk{background:#1E88E5;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-idx{background:#43A047;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-shard{background:#F4511E;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}.tradeoff-card{background:#1a1a2e;border-radius:8px;padding:1rem;border-left:4px solid}.tradeoff-card.pro{border-color:#FF4500}.tradeoff-card.con{border-color:#7193FF}code{background:#2d2d2d;padding:2px 6px;border-radius:4px;font-family:'Fira Code',monospace;font-size:.85rem}pre{background:#1e1e2e;padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}ul,ol{padding-left:1.5rem;margin:.5rem 0}table{width:100%;border-collapse:collapse;margin:1rem 0}th,td{padding:.75rem;border:1px solid #333;text-align:left}th{background:#1a1a2e}svg text{font-family:'Segoe UI',system-ui,sans-serif}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🤖 Design Reddit</h1>
+<p style="text-align:center;color:#aaa;margin-bottom:2rem;">Social news aggregation with nested comment trees, subreddit communities, voting system — 1.7B+ MAU, 100K+ active subreddits</p>
+
+<h2>1. Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Post Submission:</strong> Submit text, link, image, video, poll posts to subreddits</li>
+<li><strong>Voting:</strong> Upvote/downvote posts and comments; karma aggregation per user</li>
+<li><strong>Nested Comments:</strong> Threaded comment trees with collapsible branches, sorted by best/top/new/controversial</li>
+<li><strong>Subreddits:</strong> Create/join communities with custom rules, flairs, automod, moderator tools</li>
+<li><strong>Feed Generation:</strong> Home feed (subscribed subs), Popular, All, per-subreddit feeds with sorting (hot/new/top/rising)</li>
+<li><strong>Search:</strong> Full-text search across posts, comments, subreddits, users</li>
+<li><strong>Awards &amp; Premium:</strong> Give awards (Gold, Silver, etc.), Reddit Premium features</li>
+<li><strong>Moderation:</strong> Subreddit moderator tools (remove, ban, AutoModerator rules, mod queue)</li>
+<li><strong>Real-Time:</strong> Live comment updates, typing indicators (new Reddit), chat</li>
+</ul>
+</div>
+
+<h2>2. Non-Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Scale:</strong> 1.7B+ MAU, 13B+ posts+comments total, 50M+ daily active users</li>
+<li><strong>Latency:</strong> Feed generation p50 &lt;200ms, vote processing &lt;50ms, comment tree rendering &lt;300ms</li>
+<li><strong>Availability:</strong> 99.9% uptime (Reddit has historically had uptime challenges)</li>
+<li><strong>Consistency:</strong> Eventual consistency for vote counts and karma; strong for moderation actions</li>
+<li><strong>Viral Content:</strong> Handle massive spikes (trending post can get 100K+ votes in hours)</li>
+<li><strong>Storage:</strong> Petabytes of content including images/videos hosted on Reddit's media platform</li>
+</ul>
+</div>
+
+<h2>3. Flow 1 — Post Submission &amp; Feed Generation</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FF4500"/></marker></defs>
+<rect x="20" y="160" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="190" text-anchor="middle" fill="#fff" font-size="13">Author</text><text x="75" y="205" text-anchor="middle" fill="#fff" font-size="11">submits post</text>
+<rect x="180" y="160" width="120" height="60" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="240" y="190" text-anchor="middle" fill="#fff" font-size="13">API Gateway</text>
+<rect x="350" y="60" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="415" y="90" text-anchor="middle" fill="#fff" font-size="13">Post Service</text>
+<rect x="350" y="160" width="130" height="60" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="415" y="185" text-anchor="middle" fill="#fff" font-size="13">Kafka</text><text x="415" y="200" text-anchor="middle" fill="#fff" font-size="11">post-events</text>
+<rect x="350" y="270" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="415" y="295" text-anchor="middle" fill="#fff" font-size="13">AutoModerator</text><text x="415" y="312" text-anchor="middle" fill="#fff" font-size="11">spam/rules check</text>
+<rect x="540" y="60" width="140" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="610" y="90" text-anchor="middle" fill="#fff" font-size="13">PostgreSQL</text><text x="610" y="105" text-anchor="middle" fill="#fff" font-size="11">(posts table)</text>
+<rect x="540" y="160" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="610" y="185" text-anchor="middle" fill="#fff" font-size="13">Feed Generator</text><text x="610" y="202" text-anchor="middle" fill="#fff" font-size="11">(hot/new/top rank)</text>
+<rect x="540" y="270" width="140" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="610" y="295" text-anchor="middle" fill="#fff" font-size="13">Feed Cache</text><text x="610" y="312" text-anchor="middle" fill="#fff" font-size="11">(Memcached)</text>
+<rect x="740" y="160" width="130" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="805" y="185" text-anchor="middle" fill="#fff" font-size="13">Redis</text><text x="805" y="202" text-anchor="middle" fill="#fff" font-size="11">(sorted sets)</text>
+<rect x="930" y="160" width="120" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="990" y="190" text-anchor="middle" fill="#fff" font-size="13">Reader</text><text x="990" y="205" text-anchor="middle" fill="#fff" font-size="11">views feed</text>
+<line x1="130" y1="190" x2="178" y2="190" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="300" y1="175" x2="348" y2="95" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="300" y1="190" x2="348" y2="190" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="300" y1="205" x2="348" y2="295" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="480" y1="90" x2="538" y2="90" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="480" y1="190" x2="538" y2="190" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="680" y1="190" x2="738" y2="190" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="680" y1="295" x2="738" y2="200" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="870" y1="190" x2="928" y2="190" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="610" y1="222" x2="610" y2="268" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
+</svg>
+</div>
+
+<h3>Flow Steps</h3>
+<div class="card">
+<ol>
+<li><strong>Author submits post</strong> → POST <code>/api/v1/subreddits/{sub}/submit</code> with title, body/URL, flair, NSFW flag</li>
+<li><strong>AutoModerator</strong> checks subreddit rules (regex patterns, account age requirements, karma threshold, banned domains)</li>
+<li><strong>Spam detection:</strong> ML model scores post for spam probability; high-confidence spam auto-removed, borderline sent to mod queue</li>
+<li><strong>Post Service</strong> persists to PostgreSQL, generates post ID (base36 encoded, e.g., <code>t3_abc123</code>)</li>
+<li><strong>Kafka event</strong> triggers async processing: media transcoding, link preview extraction, search indexing, notification to subscribers</li>
+<li><strong>Feed Generator</strong> computes scores and inserts post into relevant sorted sets in Redis (per-subreddit: hot, new, top; global: r/all, r/popular)</li>
+<li><strong>Hot ranking formula:</strong> <code>score = log10(max(|ups - downs|, 1)) + sign(ups - downs) × (post_age / 45000)</code> — Wilson score interval variant. Newer posts with same votes rank higher.</li>
+<li><strong>Feed Cache</strong> (Memcached) stores pre-rendered feed pages; invalidated on score changes or new posts</li>
+</ol>
+</div>
+
+<h3>Example</h3>
+<div class="card" style="background:#1e1e2e">
+<p><strong>Scenario:</strong> User posts "TIL the Sun is actually white, not yellow" to r/todayilearned (30M subscribers)</p>
+<p><strong>AutoMod:</strong> Checks: account age &gt;30 days ✅, karma &gt;100 ✅, title starts with "TIL" ✅, not a repost (URL not seen in last 6 months) ✅ → approved</p>
+<p><strong>Stored:</strong> post_id=t3_xyz789, score=1 (author's auto-upvote), created_utc=now</p>
+<p><strong>Hot rank:</strong> <code>log10(1) + 1 × (now/45000) = 0 + 37.5 = 37.5</code> → inserted into r/todayilearned sorted set in Redis</p>
+<p><strong>After 1 hour (5000 upvotes):</strong> <code>log10(5000) + 1 × ((now+3600)/45000) = 3.7 + 37.58 = 41.28</code> → climbs to page 1 of r/todayilearned, appears on r/all</p>
+<p><strong>After 24 hours (50K upvotes):</strong> <code>log10(50000) + 1 × ((now+86400)/45000) = 4.7 + 39.42 = 44.12</code> → still high but newer posts gaining</p>
+</div>
+
+<h3>Deep Dives</h3>
+<div class="info-grid">
+<div class="card">
+<h4>Hot Ranking Algorithm</h4>
+<p>Reddit's hot ranking is time-decay based: <code>hot(ups, downs, date) = log10(max(|ups-downs|, 1)) × sign + seconds_since_epoch/45000</code>. The <code>log10</code> means the first 10 votes matter as much as the next 100, which matter as much as the next 1000 — diminishing returns. The <code>/45000</code> time component means every ~12.5 hours, a post needs 10x more votes to maintain the same rank. <strong>Controversial</strong> sort: <code>min(ups, downs) / max(ups, downs) × max(ups, downs)</code> — posts with nearly equal up/down votes rank highest. <strong>Best (Wilson)</strong> sort for comments: lower bound of Wilson score interval (95% confidence) — better than simple ups/downs ratio for low-vote items.</p>
+</div>
+<div class="card">
+<h4>Feed Architecture (Pull Model)</h4>
+<p>Reddit uses a <strong>pull model</strong> (fan-out-on-read) for feeds. No pre-materialized per-user feeds. On feed request: fetch user's subscribed subreddits → for each sub, pull top-N posts from Redis sorted set → merge-sort across all subs → return paginated results. This works because: (1) users subscribe to ~20-50 subs on average, (2) per-sub sorted sets are small and cached, (3) merge is cheap. <strong>r/all</strong> and <strong>r/popular</strong> are special: single global sorted set, no per-user merging needed. Pagination via <code>after=t3_xyz</code> cursor (score-based, not offset-based).</p>
+</div>
+<div class="card">
+<h4>AutoModerator</h4>
+<p>Rule engine that runs before post/comment is visible. Written in YAML by subreddit moderators. Checks: regex on title/body, account age, karma thresholds, domain blacklists, flair requirements, rate limits. Actions: remove, report to mod queue, flair, lock, sticky comment. Reddit's <strong>Safety team</strong> adds platform-wide rules (sitewide ban evasion detection, CSAM detection, spam ML models). AutoMod processes ~50M+ actions/day across all subreddits.</p>
+</div>
+<div class="card">
+<h4>Media Processing Pipeline</h4>
+<p>Reddit hosts images/videos on <code>i.redd.it</code> and <code>v.redd.it</code>. Upload flow: client → API → S3 → async transcoding via media pipeline. Images: stored in original + multiple resolutions (thumbnail, preview, full). Videos: transcoded to HLS (multiple bitrates: 240p, 360p, 480p, 720p, 1080p) using FFmpeg workers. GIFs: transcoded to MP4 (10-20x smaller). All media served via CDN (Fastly). NSFW content blurred by default, requires opt-in to view.</p>
+</div>
+</div>
+
+<h2>4. Flow 2 — Voting System</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 950 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FF8717"/></marker></defs>
+<rect x="20" y="120" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="150" text-anchor="middle" fill="#fff" font-size="13">Voter</text>
+<rect x="180" y="120" width="120" height="60" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="240" y="150" text-anchor="middle" fill="#fff" font-size="13">Vote Service</text>
+<rect x="350" y="30" width="130" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="415" y="60" text-anchor="middle" fill="#fff" font-size="13">Redis</text><text x="415" y="75" text-anchor="middle" fill="#fff" font-size="11">(vote dedup)</text>
+<rect x="350" y="120" width="130" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="415" y="150" text-anchor="middle" fill="#fff" font-size="13">PostgreSQL</text><text x="415" y="165" text-anchor="middle" fill="#fff" font-size="11">(votes table)</text>
+<rect x="350" y="210" width="130" height="60" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="415" y="240" text-anchor="middle" fill="#fff" font-size="13">Kafka</text><text x="415" y="255" text-anchor="middle" fill="#fff" font-size="11">vote-events</text>
+<rect x="540" y="30" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="610" y="60" text-anchor="middle" fill="#fff" font-size="13">Score Updater</text><text x="610" y="75" text-anchor="middle" fill="#fff" font-size="11">(async batch)</text>
+<rect x="540" y="120" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="610" y="150" text-anchor="middle" fill="#fff" font-size="13">Karma Service</text>
+<rect x="540" y="210" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="610" y="240" text-anchor="middle" fill="#fff" font-size="13">Rank Recalc</text><text x="610" y="255" text-anchor="middle" fill="#fff" font-size="11">(hot/top update)</text>
+<line x1="130" y1="150" x2="178" y2="150" stroke="#FF8717" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="300" y1="135" x2="348" y2="65" stroke="#FF8717" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="300" y1="150" x2="348" y2="150" stroke="#FF8717" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="300" y1="165" x2="348" y2="235" stroke="#FF8717" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="480" y1="55" x2="538" y2="55" stroke="#FF8717" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="480" y1="240" x2="538" y2="150" stroke="#FF8717" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="480" y1="240" x2="538" y2="240" stroke="#FF8717" stroke-width="2" marker-end="url(#a2)"/>
+</svg>
+</div>
+
+<h3>Flow Steps</h3>
+<div class="card">
+<ol>
+<li><strong>User votes</strong> → POST <code>/api/vote</code> with <code>{thing_id: "t3_abc123", dir: 1}</code> (1=up, -1=down, 0=unvote)</li>
+<li><strong>Vote dedup check:</strong> Redis lookup <code>vote:{user_id}:{thing_id}</code> → if same direction already exists, no-op. If changing vote (up→down), net change = -2</li>
+<li><strong>Persist vote:</strong> UPSERT into PostgreSQL votes table with (user_id, thing_id, direction)</li>
+<li><strong>Kafka event:</strong> <code>{thing_id, voter_id, direction, net_change, timestamp}</code></li>
+<li><strong>Score Updater</strong> (async consumer): batches vote events per post, atomically increments <code>posts.score</code> in PostgreSQL and Redis sorted set score</li>
+<li><strong>Karma Service:</strong> Updates author's karma (async, non-critical). Karma ≠ exact vote count (Reddit applies fuzzing + diminishing returns from single post)</li>
+<li><strong>Rank Recalc:</strong> Recomputes hot rank score in Redis sorted set for the post's subreddit and r/all</li>
+</ol>
+</div>
+
+<h3>Example</h3>
+<div class="card" style="background:#1e1e2e">
+<p><strong>Scenario:</strong> Viral post receiving 1000 votes/minute during peak</p>
+<p><strong>Vote dedup:</strong> Redis SET <code>vote:u123:t3_abc</code> = 1 with TTL 30 days (prevents re-voting from the same account)</p>
+<p><strong>Batching:</strong> Score Updater consumes Kafka in microbatches (every 100ms). 1000 votes → single batch UPDATE <code>SET score = score + 980</code> (after netting ups and downs)</p>
+<p><strong>Vote fuzzing:</strong> Reddit displays "approximately" vote counts. For posts with 10K+ votes, displayed count varies by ±5%. Prevents vote manipulation detection. Actual score stored precisely for ranking; displayed score is fuzzed.</p>
+<p><strong>Redis sorted set update:</strong> <code>ZADD r/todayilearned:hot 44.12 t3_abc123</code> → post rank updated in sorted set</p>
+</div>
+
+<h3>Deep Dives</h3>
+<div class="info-grid">
+<div class="card">
+<h4>Vote Fuzzing &amp; Anti-Manipulation</h4>
+<p>Reddit intentionally fuzzes displayed vote counts to prevent manipulation. True score stored for ranking. Fuzzing: add random noise proportional to total votes. Also: <strong>vote weight</strong> — votes from new/suspicious accounts count less. <strong>Brigading detection</strong>: if a post suddenly receives abnormal vote patterns (many votes from accounts that share subreddit overlap, or from same IP ranges), those votes are discounted. <strong>Shadow banning</strong>: banned users' votes appear to work from their perspective but don't actually count.</p>
+</div>
+<div class="card">
+<h4>Karma Calculation</h4>
+<p>Karma ≠ total upvotes. Reddit applies diminishing returns: first ~10 upvotes give ~1 karma each; after that, the ratio decreases. A post with 50K upvotes might give ~5K karma. Comment karma and post karma are tracked separately. Karma serves as: spam prevention (minimum karma to post in many subs), social proof, and vanity metric. Karma is NOT recalculated if a post's votes change weeks later — it's mostly computed at the time of peak activity.</p>
+</div>
+</div>
+
+<h2>5. Flow 3 — Nested Comment Trees</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 950 350" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FFD635"/></marker></defs>
+<rect x="20" y="140" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="170" text-anchor="middle" fill="#fff" font-size="13">User</text><text x="75" y="185" text-anchor="middle" fill="#fff" font-size="11">views post</text>
+<rect x="180" y="140" width="120" height="60" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="240" y="170" text-anchor="middle" fill="#fff" font-size="13">Comment Service</text>
+<rect x="350" y="40" width="140" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="420" y="70" text-anchor="middle" fill="#fff" font-size="13">PostgreSQL</text><text x="420" y="85" text-anchor="middle" fill="#fff" font-size="11">(comments table)</text>
+<rect x="350" y="140" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="420" y="165" text-anchor="middle" fill="#fff" font-size="13">Tree Builder</text><text x="420" y="182" text-anchor="middle" fill="#fff" font-size="11">(adjacency → tree)</text>
+<rect x="350" y="240" width="140" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="420" y="265" text-anchor="middle" fill="#fff" font-size="13">Comment Cache</text><text x="420" y="282" text-anchor="middle" fill="#fff" font-size="11">(Memcached)</text>
+<rect x="560" y="140" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="630" y="165" text-anchor="middle" fill="#fff" font-size="13">Sorter</text><text x="630" y="182" text-anchor="middle" fill="#fff" font-size="11">(best/top/new)</text>
+<rect x="760" y="140" width="120" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="820" y="170" text-anchor="middle" fill="#fff" font-size="13">Rendered</text><text x="820" y="185" text-anchor="middle" fill="#fff" font-size="11">Comment Tree</text>
+<line x1="130" y1="170" x2="178" y2="170" stroke="#FFD635" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="300" y1="155" x2="348" y2="75" stroke="#FFD635" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="300" y1="170" x2="348" y2="170" stroke="#FFD635" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="300" y1="185" x2="348" y2="265" stroke="#FFD635" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="490" y1="170" x2="558" y2="170" stroke="#FFD635" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="700" y1="170" x2="758" y2="170" stroke="#FFD635" stroke-width="2" marker-end="url(#a3)"/>
+</svg>
+</div>
+
+<h3>Flow Steps</h3>
+<div class="card">
+<ol>
+<li><strong>User opens post</strong> → GET <code>/comments/t3_abc123?sort=best&limit=200&depth=10</code></li>
+<li><strong>Cache check:</strong> Memcached lookup for this post's comment tree (keyed by post_id + sort + depth)</li>
+<li><strong>Cache miss → DB query:</strong> Fetch all comments for post from PostgreSQL using <code>parent_id</code> adjacency list model</li>
+<li><strong>Tree Builder:</strong> Reconstructs tree from flat list using parent_id references. Uses hash map: <code>{comment_id → comment_node}</code>, then link children to parents. O(n) construction.</li>
+<li><strong>Sorter:</strong> At each level of the tree, sort sibling comments by selected algorithm (best=Wilson, top=score, new=timestamp, controversial=min/max ratio)</li>
+<li><strong>Truncation:</strong> If comment tree exceeds limits (e.g., 200 comments, depth 10), insert "load more comments" placeholders with continuation tokens</li>
+<li><strong>Cache store:</strong> Cache the rendered tree in Memcached with short TTL (1-5 minutes) for hot posts</li>
+</ol>
+</div>
+
+<h3>Example</h3>
+<div class="card" style="background:#1e1e2e">
+<p><strong>Post with 5000 comments, sorted by "best":</strong></p>
+<pre>
+Root (post t3_abc123)
+├── Comment A (score: 3500, Wilson: 0.95) ← top-level, best score
+│   ├── Comment A1 (score: 800)
+│   │   ├── Comment A1a (score: 200)
+│   │   └── Comment A1b (score: 50)
+│   └── Comment A2 (score: 1200) ← higher than A1 at this level
+│       └── [load more: 15 children]
+├── Comment B (score: 2100, Wilson: 0.92)
+│   └── Comment B1 (score: 500)
+├── Comment C (score: 1800, Wilson: 0.90)
+│   └── [load more: 45 children]
+└── [load more: 180 top-level comments]
+</pre>
+<p><strong>Wilson score for Comment A:</strong> 3500 upvotes, 200 downvotes → Wilson lower bound at 95% CI = 0.945 → ranks higher than B (2100 up, 100 down, Wilson=0.942)</p>
+</div>
+
+<h3>Deep Dives</h3>
+<div class="info-grid">
+<div class="card">
+<h4>Comment Storage: Adjacency List</h4>
+<p>Reddit stores comments as a flat table with <code>parent_id</code> references (adjacency list model). Query: <code>SELECT * FROM comments WHERE post_id = ? ORDER BY created_at</code> → fetch all comments for a post in one query. Tree reconstruction done in application layer. Alternative models considered: <strong>Nested Sets</strong> (fast reads, slow writes — bad for Reddit's write-heavy pattern), <strong>Materialized Path</strong> (path string like "A/A1/A1a" — good for subtree queries but path length limits). Adjacency list wins for Reddit because: writes are simple INSERTs, reads fetch all at once and build tree in memory.</p>
+</div>
+<div class="card">
+<h4>Wilson Score Confidence (Best Sort)</h4>
+<p>Reddit's "Best" sort uses the <strong>lower bound of the Wilson score confidence interval</strong>. For a comment with <code>p = upvotes / total_votes</code> and <code>n = total_votes</code>, the Wilson lower bound is: <code>(p + z²/2n - z√(p(1-p)/n + z²/4n²)) / (1 + z²/n)</code> where z=1.96 for 95% confidence. This naturally handles the "1 upvote / 1 total" vs "100 upvotes / 200 total" problem — the former ranks lower because low confidence. This was famously proposed by Randall Munroe (xkcd) and adopted by Reddit.</p>
+</div>
+</div>
+
+<h2>6. Combined Architecture</h2>
+<div class="diagram-box">
+<svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FF4500"/></marker></defs>
+<rect x="10" y="220" width="100" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="60" y="250" text-anchor="middle" fill="#fff" font-size="12">Users</text><text x="60" y="265" text-anchor="middle" fill="#fff" font-size="10">1.7B+ MAU</text>
+<rect x="150" y="160" width="110" height="50" rx="8" fill="#546e7a" stroke="#90a4ae" stroke-width="2"/><text x="205" y="190" text-anchor="middle" fill="#fff" font-size="12">CDN (Fastly)</text>
+<rect x="150" y="225" width="110" height="50" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="205" y="255" text-anchor="middle" fill="#fff" font-size="12">API / GraphQL</text>
+<rect x="310" y="50" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="76" text-anchor="middle" fill="#fff" font-size="11">Post Service</text>
+<rect x="310" y="105" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="131" text-anchor="middle" fill="#fff" font-size="11">Comment Service</text>
+<rect x="310" y="160" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="186" text-anchor="middle" fill="#fff" font-size="11">Vote Service</text>
+<rect x="310" y="215" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="241" text-anchor="middle" fill="#fff" font-size="11">Feed Service</text>
+<rect x="310" y="270" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="296" text-anchor="middle" fill="#fff" font-size="11">User Service</text>
+<rect x="310" y="325" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="351" text-anchor="middle" fill="#fff" font-size="11">Search Service</text>
+<rect x="310" y="380" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="406" text-anchor="middle" fill="#fff" font-size="11">Moderation</text>
+<rect x="310" y="435" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="461" text-anchor="middle" fill="#fff" font-size="11">Notifications</text>
+<rect x="490" y="120" width="120" height="42" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="550" y="146" text-anchor="middle" fill="#fff" font-size="11">Kafka</text>
+<rect x="670" y="60" width="120" height="42" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="730" y="86" text-anchor="middle" fill="#fff" font-size="11">PostgreSQL</text>
+<rect x="670" y="115" width="120" height="42" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="730" y="141" text-anchor="middle" fill="#fff" font-size="11">Redis</text>
+<rect x="670" y="170" width="120" height="42" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="730" y="196" text-anchor="middle" fill="#fff" font-size="11">Memcached</text>
+<rect x="670" y="225" width="120" height="42" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="730" y="251" text-anchor="middle" fill="#fff" font-size="11">Elasticsearch</text>
+<rect x="670" y="280" width="120" height="42" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="730" y="306" text-anchor="middle" fill="#fff" font-size="11">S3 (media)</text>
+<rect x="670" y="335" width="120" height="42" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="730" y="361" text-anchor="middle" fill="#fff" font-size="11">Cassandra (legacy)</text>
+<line x1="110" y1="245" x2="148" y2="185" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="110" y1="250" x2="148" y2="250" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="260" y1="245" x2="308" y2="75" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="75" x2="668" y2="80" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="185" x2="668" y2="135" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="240" x2="668" y2="190" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="350" x2="668" y2="240" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
+<line x1="430" y1="130" x2="488" y2="140" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
+</svg>
+</div>
+
+<h2>7. Database Schema</h2>
+<div class="card">
+<h3>Posts (PostgreSQL — sharded by subreddit_id)</h3>
+<pre>
+Table: posts  <span class="tag-shard">SHARD: hash(subreddit_id)</span>
+- post_id: varchar(10)         <span class="tag-pk">PK</span> (base36, e.g., "abc123")
+- fullname: varchar(15)        <span class="tag-idx">IDX</span> ("t3_abc123")
+- subreddit_id: int            <span class="tag-fk">FK → subreddits</span> <span class="tag-idx">IDX</span>
+- author_id: int               <span class="tag-fk">FK → users</span> <span class="tag-idx">IDX</span>
+- title: varchar(300)          <span class="tag-idx">IDX: full-text</span>
+- body: text                   // self-text (markdown)
+- url: varchar(2048)           // for link posts
+- post_type: enum('self','link','image','video','poll','crosspost')
+- score: int                   <span class="tag-idx">IDX</span> (denormalized ups - downs)
+- ups: int
+- downs: int
+- num_comments: int
+- flair_id: int
+- nsfw: boolean
+- spoiler: boolean
+- locked: boolean
+- stickied: boolean
+- removed: boolean
+- created_utc: timestamp       <span class="tag-idx">IDX</span>
+- edited_utc: timestamp
+</pre>
+
+<h3>Comments (PostgreSQL — sharded by post_id)</h3>
+<pre>
+Table: comments  <span class="tag-shard">SHARD: hash(post_id)</span>
+- comment_id: varchar(10)      <span class="tag-pk">PK</span>
+- fullname: varchar(15)        ("t1_xyz789")
+- post_id: varchar(10)         <span class="tag-fk">FK → posts</span> <span class="tag-idx">IDX</span>
+- parent_id: varchar(15)       <span class="tag-fk">FK → comments or posts (fullname)</span> <span class="tag-idx">IDX</span>
+- author_id: int               <span class="tag-fk">FK → users</span>
+- body: text (markdown)
+- score: int                   <span class="tag-idx">IDX</span>
+- ups: int
+- downs: int
+- depth: smallint              // 0 = top-level reply to post
+- removed: boolean
+- created_utc: timestamp
+- edited_utc: timestamp
+</pre>
+
+<h3>Votes (PostgreSQL — sharded by thing_id)</h3>
+<pre>
+Table: votes  <span class="tag-shard">SHARD: hash(thing_id)</span>
+- user_id: int                 <span class="tag-pk">PK (composite)</span>
+- thing_id: varchar(15)        <span class="tag-pk">PK (composite)</span> (post or comment fullname)
+- direction: smallint          // 1=up, -1=down, 0=unvote
+- created_utc: timestamp
+Unique constraint: (user_id, thing_id)
+</pre>
+
+<h3>Subreddits (PostgreSQL)</h3>
+<pre>
+Table: subreddits
+- subreddit_id: int            <span class="tag-pk">PK</span>
+- name: varchar(21)            <span class="tag-idx">IDX: unique</span>
+- title: varchar(100)
+- description: text
+- sidebar: text (markdown)
+- subscribers: int             (denormalized count)
+- type: enum('public','private','restricted','premium_only')
+- nsfw: boolean
+- created_utc: timestamp
+</pre>
+
+<h3>Redis Sorted Sets (Feed Rankings)</h3>
+<pre>
+Key: feed:{subreddit_name}:{sort}  // e.g., feed:todayilearned:hot
+Type: ZSET
+Members: post fullnames (t3_abc123)
+Scores: ranking score (hot formula output)
+
+Key: feed:all:{sort}  // r/all
+Key: feed:popular:{sort}  // r/popular
+
+// Personal home feed computed on-the-fly by merging per-sub sorted sets
+</pre>
+</div>
+
+<h2>8. Cache &amp; CDN Deep Dive</h2>
+<div class="card">
+<h3>Caching Layers</h3>
+<table>
+<tr><th>Layer</th><th>Technology</th><th>What</th><th>TTL</th><th>Notes</th></tr>
+<tr><td>CDN</td><td>Fastly (Varnish)</td><td>Media (images, videos, thumbnails), static assets</td><td>1yr (content-addressed)</td><td>~200 edge PoPs, custom VCL rules</td></tr>
+<tr><td>Page Cache</td><td>Memcached</td><td>Pre-rendered subreddit listings (hot/new/top pages)</td><td>60-300 seconds</td><td>Keyed by sub + sort + page</td></tr>
+<tr><td>Comment Tree Cache</td><td>Memcached</td><td>Rendered comment trees per post</td><td>60 seconds (hot), 5min (cold)</td><td>Invalidated on new comment/vote</td></tr>
+<tr><td>Vote Dedup</td><td>Redis</td><td>User vote state per thing</td><td>30 days</td><td>Prevents duplicate votes</td></tr>
+<tr><td>Feed Rankings</td><td>Redis (ZSET)</td><td>Sorted post IDs per subreddit per sort type</td><td>Continuously updated</td><td>Core data structure for feeds</td></tr>
+<tr><td>Session</td><td>Redis</td><td>Auth sessions, rate limit counters</td><td>Hours</td><td>Per-user rate limits tracked here</td></tr>
+</table>
+
+<h3>CDN (Fastly) Details</h3>
+<p>Reddit uses <strong>Fastly</strong> (Varnish-based CDN) for all static and media content. Custom VCL (Varnish Configuration Language) rules handle: cache keying (vary by logged-in state for personalized vs anonymous views), stale-while-revalidate (serve stale content while fetching fresh in background), geographic routing, NSFW content filtering at edge (for certain regions), and bot detection. Reddit's "Reddit is fun" moments (site goes down) have historically been caused by cache stampedes — many users requesting the same hot post simultaneously, all hitting origin when cache expires. Mitigated by: request coalescing, stale-while-revalidate, and origin shielding.</p>
+</div>
+
+<h2>9. Scaling Considerations</h2>
+<div class="card">
+<h3>Reddit's Infrastructure Evolution</h3>
+<ul>
+<li><strong>Original stack (2005):</strong> Single Python/Pylons server, single PostgreSQL instance, memcached</li>
+<li><strong>2010s:</strong> Moved to Cassandra for some data, rabbitmq for queues, still primarily Python</li>
+<li><strong>2020s:</strong> Kubernetes on AWS, migrated to Go microservices, GraphQL federation, Kafka for event streaming</li>
+<li><strong>Current:</strong> 500+ microservices, multi-region AWS deployment, ~1500 engineers</li>
+</ul>
+
+<h3>Handling Viral Content</h3>
+<ul>
+<li><strong>"Reddit hug of death":</strong> When a linked site goes down from Reddit traffic. Reddit itself handles internal viral posts via Redis sorted sets (O(log n) score updates) + aggressive Memcached caching</li>
+<li><strong>Hot partition problem:</strong> A viral post's comment thread can become a hot partition. Mitigation: comment cache with short TTL, write-behind for vote counts, async comment count updates</li>
+<li><strong>r/all:</strong> Single global sorted set serving all users. Cached aggressively. Score updates batched to avoid Redis write contention</li>
+</ul>
+
+<h3>Load Balancing</h3>
+<ul>
+<li><strong>DNS:</strong> Route53 with latency-based routing to nearest AWS region</li>
+<li><strong>L7:</strong> AWS ALB → Kubernetes ingress (envoy) → service pods</li>
+<li><strong>Rate limiting:</strong> Per-user (60 req/min API), per-IP (100 req/min), per-subreddit (posting limits)</li>
+</ul>
+</div>
+
+<h2>10. Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="tradeoff-card pro">
+<h4>✅ Pull-Based Feed (Fan-Out-On-Read)</h4>
+<p>No write amplification when posting. Works great for Reddit's model where users subscribe to subreddits, not individuals. Subreddit sorted sets are shared across all users — very cache-friendly.</p>
+</div>
+<div class="tradeoff-card con">
+<h4>❌ Pull-Based Read Latency</h4>
+<p>Home feed requires merging sorted sets from ~20-50 subscribed subreddits at read time. Can be slow for users with many subscriptions. Mitigated by caching merged feed for short TTL.</p>
+</div>
+<div class="tradeoff-card pro">
+<h4>✅ Adjacency List for Comments</h4>
+<p>Simple INSERT for new comments (no tree rebalancing). All comments fetched in single query. Tree built in-memory cheaply (O(n)). Flexible: any sort algorithm can be applied at read time.</p>
+</div>
+<div class="tradeoff-card con">
+<h4>❌ Full Comment Fetch</h4>
+<p>Must fetch ALL comments for a post to build the tree (even if only showing top 200). For posts with 50K+ comments, this is expensive. Partial tree loading requires "load more" with separate API calls.</p>
+</div>
+<div class="tradeoff-card pro">
+<h4>✅ Vote Fuzzing</h4>
+<p>Prevents manipulation detection (can't A/B test vote bots). Discourages obsessive vote tracking. Adds uncertainty that makes gaming harder.</p>
+</div>
+<div class="tradeoff-card con">
+<h4>❌ User Trust</h4>
+<p>Users frustrated by inaccurate vote counts. "Why does my post show different numbers on refresh?" Undermines perceived transparency. Some power users distrust the platform due to opaque fuzzing.</p>
+</div>
+</div>
+
+<h2>11. Alternative Approaches</h2>
+<div class="info-grid">
+<div class="card">
+<h4>Materialized Path for Comments</h4>
+<p>Store path string (e.g., "001/003/007") instead of parent_id. Enables subtree queries with LIKE prefix. Used by some forum software. Tradeoff: path length limits depth, harder to reorder, but enables partial tree loading without fetching all comments.</p>
+</div>
+<div class="card">
+<h4>Push-Based Home Feed</h4>
+<p>Pre-compute home feed per user (like Twitter/LinkedIn). Eliminates read-time merging. But Reddit has 100K+ active subreddits with frequent posts — write amplification would be enormous (post to r/funny with 50M subscribers → 50M feed writes).</p>
+</div>
+<div class="card">
+<h4>CRDT-Based Voting</h4>
+<p>Use CRDTs (Conflict-free Replicated Data Types) for vote counters — enables multi-region writes without coordination. Eventually consistent but always converges. Would simplify multi-DC voting at the cost of temporary count inaccuracies (which Reddit already tolerates via fuzzing).</p>
+</div>
+<div class="card">
+<h4>GraphQL Federation</h4>
+<p>Reddit has moved toward GraphQL for their API. Federation: each microservice exposes a GraphQL subgraph, gateway stitches them together. Reduces over-fetching (mobile client can request exactly needed fields). Tradeoff: complex query planning, potential N+1 problems, harder to cache than REST.</p>
+</div>
+</div>
+
+<h2>12. Additional Information</h2>
+<div class="card">
+<h3>Reddit's Thing System</h3>
+<p>Every entity in Reddit has a "fullname" with type prefix: <code>t1_</code> = comment, <code>t2_</code> = account, <code>t3_</code> = post (link), <code>t4_</code> = message, <code>t5_</code> = subreddit, <code>t6_</code> = award. This polymorphic ID system allows the voting API to work on both posts and comments with a single endpoint.</p>
+
+<h3>Tech Stack</h3>
+<ul>
+<li><strong>Backend:</strong> Go (new services), Python (legacy, still significant), Thrift/gRPC for service communication</li>
+<li><strong>Frontend:</strong> React (new Reddit), jQuery (old Reddit still maintained)</li>
+<li><strong>Infrastructure:</strong> AWS (EC2, S3, ElastiCache), Kubernetes, Terraform</li>
+<li><strong>Data stores:</strong> PostgreSQL (primary), Redis (caching/ranking), Memcached (page cache), Elasticsearch (search), Cassandra (some legacy data)</li>
+<li><strong>Streaming:</strong> Kafka for event pipeline, Flink for stream processing</li>
+<li><strong>CDN:</strong> Fastly (custom VCL, edge computing)</li>
+</ul>
+
+<h3>Key Numbers</h3>
+<table>
+<tr><td>Monthly Active Users</td><td>1.7B+</td></tr>
+<tr><td>Daily Active Users</td><td>50M+</td></tr>
+<tr><td>Total posts + comments</td><td>13B+</td></tr>
+<tr><td>Active subreddits</td><td>100K+</td></tr>
+<tr><td>Page views per day</td><td>1.5B+</td></tr>
+<tr><td>Votes per day</td><td>~500M</td></tr>
+<tr><td>Comments per day</td><td>~50M</td></tr>
+</table>
+</div>
+</div>
+</body>
+</html>

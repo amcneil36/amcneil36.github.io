@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: Expedia</title>
+<style>
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: #e0e0e0; line-height: 1.7; }
+h1 { color: #ffc72c; border-bottom: 3px solid #ffc72c; padding-bottom: 10px; font-size: 2.2em; }
+h2 { color: #ffd04f; margin-top: 40px; font-size: 1.6em; border-left: 4px solid #ffd04f; padding-left: 12px; }
+h3 { color: #ffe080; font-size: 1.3em; }
+.section { background: #1a1a2e; border-radius: 10px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
+.diagram-container { background: #0d1117; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
+.example { background: #1e293b; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+.example strong { color: #f59e0b; }
+table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+th { background: #2a2a4a; color: #ffd04f; padding: 12px; text-align: left; border: 1px solid #444; }
+td { padding: 10px 12px; border: 1px solid #333; }
+tr:nth-child(even) { background: #1a1a2e; }
+tr:nth-child(odd) { background: #151528; }
+code { background: #2d2d4d; padding: 2px 8px; border-radius: 4px; color: #ff79c6; font-size: 0.95em; }
+.tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
+.tag-pk { background: #4a1a6b; color: #d4a5ff; }
+.tag-fk { background: #1a4a3b; color: #a5ffd4; }
+.tag-idx { background: #4a3a1a; color: #ffd4a5; }
+ul { padding-left: 25px; }
+li { margin: 5px 0; }
+.tradeoff { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+.pro { background: #0a2a1a; border: 1px solid #2a5a3a; padding: 15px; border-radius: 8px; }
+.con { background: #2a0a1a; border: 1px solid #5a2a3a; padding: 15px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<h1>System Design: Expedia (Online Travel Agency)</h1>
+
+<div class="section">
+<h2>Functional Requirements</h2>
+<ul>
+<li>Search for hotels, flights, car rentals, and vacation packages by destination, dates, guests</li>
+<li>Real-time availability and pricing from multiple suppliers (airlines, hotel chains, GDS systems)</li>
+<li>Filter/sort results by price, rating, amenities, location, airline</li>
+<li>Booking management (create, modify, cancel reservations)</li>
+<li>User reviews and ratings for hotels</li>
+<li>Price alerts and fare tracking</li>
+<li>Bundle deals (flight + hotel discount)</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Non-Functional Requirements</h2>
+<ul>
+<li><strong>Low Latency:</strong> Search results in &lt;3 seconds (aggregating from multiple suppliers)</li>
+<li><strong>High Availability:</strong> 99.99% — travel bookings are time-sensitive</li>
+<li><strong>Consistency:</strong> Strong consistency for bookings (prevent double-booking). Eventual consistency OK for search/pricing</li>
+<li><strong>Scalability:</strong> Handle peak traffic during holidays (2-3x normal). Millions of searches/day</li>
+<li><strong>Data freshness:</strong> Prices may be stale by minutes — verified at booking time</li>
+</ul>
+</div>
+
+<!-- Flow 1: Hotel Search -->
+<div class="section">
+<h2>Flow 1: Hotel Search & Availability</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1150 450" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffc72c"/></marker></defs>
+<rect x="20" y="180" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="80" y="215" text-anchor="middle" fill="white" font-size="13">User</text>
+<rect x="190" y="180" width="120" height="60" rx="10" fill="#888" stroke="#aaa" stroke-width="2"/><text x="250" y="215" text-anchor="middle" fill="white" font-size="12">CDN / LB</text>
+<rect x="360" y="180" width="140" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="430" y="215" text-anchor="middle" fill="white" font-size="12">Search Service</text>
+<rect x="560" y="80" width="150" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="635" y="108" text-anchor="middle" fill="white" font-size="11">Supplier Aggregator</text>
+<rect x="560" y="180" width="150" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="635" y="208" text-anchor="middle" fill="white" font-size="11">Price Cache (Redis)</text>
+<rect x="560" y="280" width="150" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="635" y="310" text-anchor="middle" fill="white" font-size="11">Ranking / Filter</text>
+<rect x="790" y="50" width="130" height="40" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="855" y="75" text-anchor="middle" fill="white" font-size="10">GDS (Amadeus)</text>
+<rect x="790" y="110" width="130" height="40" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="855" y="135" text-anchor="middle" fill="white" font-size="10">Hotel APIs (Marriott)</text>
+<rect x="790" y="170" width="130" height="40" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="855" y="195" text-anchor="middle" fill="white" font-size="10">OTA Partners</text>
+<rect x="560" y="380" width="150" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="635" y="410" text-anchor="middle" fill="white" font-size="12">Elasticsearch</text>
+<line x1="140" y1="210" x2="188" y2="210" stroke="#ffc72c" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="310" y1="210" x2="358" y2="210" stroke="#ffc72c" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="500" y1="198" x2="558" y2="108" stroke="#ffc72c" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="500" y1="210" x2="558" y2="205" stroke="#ffc72c" stroke-width="2" marker-end="url(#arrow1)"/>
+<line x1="500" y1="225" x2="558" y2="300" stroke="#ffc72c" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="710" y1="105" x2="788" y2="75" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="710" y1="105" x2="788" y2="130" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="710" y1="105" x2="788" y2="190" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow1)"/>
+<line x1="500" y1="230" x2="558" y2="400" stroke="#ffc72c" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow1)"/>
+<text x="575" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Expedia: Hotel Search Flow</text>
+</svg>
+</div>
+
+<h3>Step-by-Step</h3>
+<ol>
+<li><strong>User searches:</strong> <code>GET /v1/hotels/search?dest=new+york&checkin=2024-03-15&checkout=2024-03-18&guests=2&rooms=1</code></li>
+<li><strong>Search Service:</strong> Checks Price Cache for pre-fetched rates. Cache hit for popular destinations (~60%)</li>
+<li><strong>Supplier Aggregator (on cache miss):</strong> Fans out requests to multiple suppliers in parallel (GDS, direct hotel APIs, OTA partners). Uses circuit breakers — if supplier doesn't respond in 2.5s, use cached/stale data</li>
+<li><strong>Response aggregation:</strong> Normalizes different supplier formats into unified hotel objects. Deduplicates same hotel from multiple suppliers (choose best price)</li>
+<li><strong>Elasticsearch:</strong> Used for property-level search (filter by amenities, star rating, neighborhood). Prices come from supplier APIs, property metadata from Elasticsearch</li>
+<li><strong>Ranking/Filter:</strong> Ranks by: sponsored (revenue), price, user rating, conversion history. Applies user filters (price range, stars, amenities)</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> User searches "Hotels in New York, March 15-18, 2 guests". Search Service checks Redis cache for (NYC, 2024-03-15, 2024-03-18) — cache miss. Supplier Aggregator fans out to 5 suppliers: Amadeus returns 200 hotels in 1.2s, Marriott direct API returns 45 in 0.8s, Booking.com returns 180 in 2.0s, Hilton returns 30 in 0.6s, Sabre times out at 2.5s (circuit breaker trips, use cached Sabre data). Total: 400 unique hotels (after dedup). Ranking sorts: Times Square Marriott ($289/night, 4.5★) ranked #3 (sponsored). Results returned in 2.8s.
+</div>
+
+<h3>Deep Dive: Supplier Aggregator</h3>
+<ul>
+<li><strong>Protocol:</strong> HTTPS REST or SOAP (legacy GDS systems use XML/SOAP). Amadeus uses XML-based NDC protocol for flights</li>
+<li><strong>Fan-out pattern:</strong> Parallel async calls to all suppliers. Use timeout + circuit breaker per supplier. Return best-effort results even if some suppliers fail</li>
+<li><strong>Rate limiting:</strong> Each supplier has API rate limits. Maintain per-supplier token bucket. Queue excess requests</li>
+<li><strong>Normalization:</strong> Different suppliers return different formats. Mapper converts each to canonical format: <code>{ hotel_id, name, address, price, room_types[], amenities[], images[] }</code></li>
+</ul>
+</div>
+
+<!-- Flow 2: Booking -->
+<div class="section">
+<h2>Flow 2: Hotel Booking</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffaa00"/></marker></defs>
+<rect x="20" y="140" width="110" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="175" text-anchor="middle" fill="white" font-size="13">User</text>
+<rect x="180" y="140" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="245" y="175" text-anchor="middle" fill="white" font-size="12">Booking Service</text>
+<rect x="370" y="80" width="130" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="435" y="108" text-anchor="middle" fill="white" font-size="11">Price Verification</text>
+<rect x="370" y="180" width="130" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="435" y="208" text-anchor="middle" fill="white" font-size="11">Supplier Booking</text>
+<rect x="370" y="280" width="130" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="435" y="310" text-anchor="middle" fill="white" font-size="12">Payment Svc</text>
+<rect x="560" y="140" width="130" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="625" y="170" text-anchor="middle" fill="white" font-size="12">Confirmation</text>
+<rect x="750" y="140" width="130" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="815" y="170" text-anchor="middle" fill="white" font-size="12">Notification Svc</text>
+<line x1="130" y1="170" x2="178" y2="170" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="310" y1="157" x2="368" y2="110" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="310" y1="175" x2="368" y2="205" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="310" y1="190" x2="368" y2="300" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
+<line x1="500" y1="200" x2="558" y2="170" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<line x1="690" y1="165" x2="748" y2="165" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
+<text x="490" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Expedia: Booking Flow</text>
+</svg>
+</div>
+
+<h3>Step-by-Step</h3>
+<ol>
+<li><strong>User selects hotel and clicks "Book Now"</strong> → <code>POST /v1/bookings { hotel_id, room_type, checkin, checkout, guest_info, payment }</code></li>
+<li><strong>Price Verification:</strong> Re-query supplier for current price (search prices may be stale). If price changed, notify user before proceeding</li>
+<li><strong>Supplier Booking:</strong> Send reservation request to the specific supplier (e.g., Marriott API). Receives confirmation number from supplier</li>
+<li><strong>Payment Service:</strong> Pre-authorize card (hold amount). Only capture after supplier confirms. If supplier rejects → release hold</li>
+<li><strong>Confirmation:</strong> Create booking record with status "confirmed", store supplier confirmation number</li>
+<li><strong>Notification:</strong> Email confirmation with booking details, PDF itinerary, calendar invite</li>
+</ol>
+
+<div class="example">
+<strong>Example:</strong> User books Times Square Marriott, March 15-18, King room. Price Verification queries Marriott API — price increased from $289 to $299/night. User shown updated price, confirms. Supplier Booking sends to Marriott → confirmation #MR-78923. Payment Service captures $897 + $89.70 tax = $986.70 on Visa. Booking #EXP-456789 created. Email sent with confirmation details + "Manage booking" link.
+</div>
+</div>
+
+<!-- Combined Architecture -->
+<div class="section">
+<h2>Combined Overall Architecture</h2>
+<div class="diagram-container">
+<svg viewBox="0 0 1150 550" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffc72c"/></marker></defs>
+<text x="575" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Expedia: Combined Architecture</text>
+<rect x="20" y="240" width="100" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="70" y="270" text-anchor="middle" fill="white" font-size="12">Clients</text>
+<rect x="160" y="240" width="100" height="50" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="210" y="270" text-anchor="middle" fill="white" font-size="11">API Gateway</text>
+<rect x="310" y="80" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="370" y="105" text-anchor="middle" fill="white" font-size="11">Search Svc</text>
+<rect x="310" y="150" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="370" y="175" text-anchor="middle" fill="white" font-size="11">Booking Svc</text>
+<rect x="310" y="220" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="370" y="245" text-anchor="middle" fill="white" font-size="11">User Svc</text>
+<rect x="310" y="290" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="370" y="315" text-anchor="middle" fill="white" font-size="11">Review Svc</text>
+<rect x="310" y="360" width="120" height="40" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="370" y="385" text-anchor="middle" fill="white" font-size="11">Price Alert Svc</text>
+<rect x="310" y="430" width="120" height="40" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="370" y="455" text-anchor="middle" fill="white" font-size="11">Recommendation</text>
+<rect x="500" y="60" width="130" height="40" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="565" y="85" text-anchor="middle" fill="white" font-size="10">Supplier Aggregator</text>
+<rect x="500" y="120" width="130" height="40" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="565" y="145" text-anchor="middle" fill="white" font-size="10">Price Cache</text>
+<rect x="500" y="180" width="130" height="40" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="565" y="205" text-anchor="middle" fill="white" font-size="10">Elasticsearch</text>
+<rect x="500" y="240" width="130" height="40" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="565" y="265" text-anchor="middle" fill="white" font-size="10">Kafka</text>
+<rect x="500" y="300" width="130" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="565" y="325" text-anchor="middle" fill="white" font-size="10">Payment Svc</text>
+<rect x="700" y="50" width="110" height="35" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="755" y="72" text-anchor="middle" fill="white" font-size="9">GDS (Amadeus)</text>
+<rect x="700" y="100" width="110" height="35" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="755" y="122" text-anchor="middle" fill="white" font-size="9">Hotel APIs</text>
+<rect x="700" y="150" width="110" height="35" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="755" y="172" text-anchor="middle" fill="white" font-size="9">Airline APIs</text>
+<ellipse cx="755" cy="255" rx="55" ry="22" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="755" y="260" text-anchor="middle" fill="white" font-size="10">Booking DB</text>
+<ellipse cx="755" cy="325" rx="55" ry="22" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="755" y="330" text-anchor="middle" fill="white" font-size="10">User DB</text>
+<line x1="120" y1="265" x2="158" y2="265" stroke="#ffc72c" stroke-width="2" marker-end="url(#arrow3)"/>
+<line x1="260" y1="258" x2="308" y2="100" stroke="#ffc72c" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="260" y1="262" x2="308" y2="170" stroke="#ffc72c" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="260" y1="266" x2="308" y2="240" stroke="#ffc72c" stroke-width="1" marker-end="url(#arrow3)"/>
+<line x1="430" y1="100" x2="498" y2="80" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="430" y1="100" x2="498" y2="140" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="430" y1="100" x2="498" y2="200" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="630" y1="80" x2="698" y2="67" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="630" y1="80" x2="698" y2="117" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="630" y1="80" x2="698" y2="167" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
+<line x1="630" y1="260" x2="698" y2="255" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow3)"/>
+</svg>
+</div>
+</div>
+
+<!-- Database Schema -->
+<div class="section">
+<h2>Database Schema</h2>
+
+<h3>SQL — PostgreSQL (Bookings, Users — ACID required)</h3>
+<table>
+<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
+<tr><td rowspan="9"><strong>bookings</strong></td><td>booking_id</td><td>VARCHAR(20)</td><td><span class="tag tag-pk">PK</span></td></tr>
+<tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → users</span> <span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>booking_type</td><td>ENUM</td><td>hotel, flight, car, package</td></tr>
+<tr><td>supplier_id</td><td>VARCHAR(50)</td><td></td></tr>
+<tr><td>supplier_confirmation</td><td>VARCHAR(50)</td><td>Supplier's reference number</td></tr>
+<tr><td>status</td><td>ENUM</td><td>pending, confirmed, canceled, completed</td></tr>
+<tr><td>total_amount</td><td>BIGINT</td><td>In cents</td></tr>
+<tr><td>checkin_date / departure_date</td><td>DATE</td><td><span class="tag tag-idx">INDEX</span></td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td></tr>
+</table>
+
+<h3>NoSQL — Elasticsearch (Hotel/Flight Catalog)</h3>
+<table>
+<tr><th>Index</th><th>Fields</th><th>Purpose</th></tr>
+<tr><td>hotels</td><td>hotel_id, name, city, lat/lng, star_rating, amenities[], avg_review_score, images[], description</td><td>Full-text search + geo + faceted filtering</td></tr>
+<tr><td>flights</td><td>flight_id, airline, origin, destination, departure_time, arrival_time, aircraft_type</td><td>Route search + time filtering</td></tr>
+</table>
+
+<h3>Redis (Price Cache, Session)</h3>
+<table>
+<tr><th>Key</th><th>Type</th><th>TTL</th><th>Details</th></tr>
+<tr><td><code>price:{dest}:{checkin}:{checkout}:{rooms}</code></td><td>Hash</td><td>15 min</td><td>Cached search results from suppliers</td></tr>
+<tr><td><code>session:{token}</code></td><td>Hash</td><td>24 hr</td><td>User session, recent searches</td></tr>
+<tr><td><code>alert:{user_id}:{route_or_hotel}</code></td><td>String</td><td>30 days</td><td>Price alert thresholds</td></tr>
+</table>
+
+<h4>Sharding Strategy</h4>
+<ul>
+<li><strong>bookings:</strong> Shard by <code>user_id</code> — "my trips" query is shard-local</li>
+<li><strong>Price cache:</strong> Redis Cluster, shard by cache key hash (destination-based)</li>
+<li><strong>Elasticsearch:</strong> Sharded by destination region. Hotels in Europe on different shards from North America. Query routes to relevant shard</li>
+</ul>
+</div>
+
+<!-- Cache -->
+<div class="section">
+<h2>Cache Deep Dive</h2>
+<table>
+<tr><th>Cache</th><th>Strategy</th><th>Eviction</th><th>TTL</th></tr>
+<tr><td>Search Results (Redis)</td><td>Write-through (on supplier response)</td><td>TTL</td><td>15 min (prices volatile)</td></tr>
+<tr><td>Hotel Metadata (Redis)</td><td>Read-through</td><td>LRU</td><td>24 hr (static info)</td></tr>
+<tr><td>User Sessions</td><td>Write-through</td><td>TTL</td><td>24 hr</td></tr>
+</table>
+
+<h3>CDN</h3>
+<ul>
+<li><strong>Hotel images:</strong> Served via CDN. Multiple resolutions (thumbnail, gallery, fullscreen). TTL: 30 days</li>
+<li><strong>Static pages:</strong> Destination landing pages, travel guides cached at CDN edge. TTL: 1 hour</li>
+<li><strong>Search results:</strong> NOT cached at CDN — personalized and price-sensitive</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Scaling Considerations</h2>
+<ul>
+<li><strong>Supplier fan-out:</strong> Each search hits 3-8 suppliers in parallel. Circuit breaker per supplier. Timeout: 2.5s. If supplier slow, return partial results + note "some results unavailable"</li>
+<li><strong>Holiday spikes:</strong> Pre-warm caches for popular destinations before holiday season. Auto-scale search services based on request rate</li>
+<li><strong>Price cache warming:</strong> Background job pre-fetches prices for top 1000 destination-date combos every 10 minutes. Reduces cold-start latency</li>
+<li><strong>Read replicas:</strong> Booking DB uses read replicas for "my trips" queries. Write to primary only for new bookings</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Tradeoffs & Deep Dives</h2>
+<div class="tradeoff">
+<div class="pro"><h4>✅ Aggregator Pattern</h4><ul><li>Best price across multiple suppliers — value proposition for users</li><li>Supplier independence — can add/remove suppliers without changing core</li><li>Graceful degradation — partial results if some suppliers fail</li></ul></div>
+<div class="con"><h4>❌ Aggregator Challenges</h4><ul><li>Latency = slowest supplier (mitigated by timeouts)</li><li>Price staleness — search prices may differ from booking prices</li><li>Each supplier has different API, data formats, error handling</li></ul></div>
+</div>
+
+<h3>Polling for Price Alerts</h3>
+<ul>
+<li><strong>Mechanism:</strong> Background workers poll suppliers every 30 minutes for tracked routes/hotels. Compare with user's price threshold</li>
+<li><strong>If price drops below threshold:</strong> Push notification + email to user</li>
+<li><strong>Scale:</strong> Millions of active price alerts. Batch queries to suppliers to reduce API calls. Group alerts by route/hotel</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Alternative Approaches</h2>
+<ul>
+<li><strong>Direct supplier integration only:</strong> Skip GDS, connect directly to each airline/hotel. Better margins but more integration work. Modern trend: airlines moving to NDC (New Distribution Capability) for direct booking</li>
+<li><strong>Pre-fetch all inventory:</strong> Instead of real-time supplier queries, cache all availability. Pros: instant results. Cons: massive data volume, staleness issues, not feasible for flights (too many combinations)</li>
+<li><strong>GraphQL BFF:</strong> Backend-for-Frontend pattern with GraphQL. Mobile app fetches exactly what it needs (less data than REST). Web fetches more details. Both from same backend</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Additional Information</h2>
+<ul>
+<li><strong>Package bundling:</strong> Flight + hotel bundle discounted ~10-20%. System tries all supplier combinations, finds cheapest bundle. Combinatorial optimization problem — use heuristics, not brute force</li>
+<li><strong>Cancellation policy:</strong> Stored per booking from supplier. Free cancellation deadline tracked — reminder email 48 hours before deadline</li>
+<li><strong>GDS (Global Distribution Systems):</strong> Legacy systems (Amadeus, Sabre, Travelport) that aggregate airline/hotel inventory. SOAP/XML APIs. High latency (1-3 seconds). Still handle majority of airline bookings</li>
+<li><strong>Loyalty integration:</strong> Users can earn/redeem points from various loyalty programs. Points-to-cash conversion at booking time</li>
+</ul>
+</div>
+</body>
+</html>

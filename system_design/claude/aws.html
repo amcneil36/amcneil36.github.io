@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS (Cloud Infrastructure) - System Design</title>
+<style>
+:root{--bg:#0f0f0f;--surface:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--dim:#888;--accent:#FF9900;--accent2:#232F3E;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem;max-width:1400px;margin:0 auto}
+h1{color:var(--accent);font-size:2.2rem;border-bottom:3px solid var(--accent);padding-bottom:.5rem;margin-bottom:1.5rem}
+h2{color:#FF9800;margin:2rem 0 1rem;font-size:1.5rem}
+h3{color:#81D4FA;margin:1.5rem 0 .75rem}
+h4{color:#CE93D8;margin:1rem 0 .5rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{border:1px solid var(--border);padding:.75rem;text-align:left;font-size:.95rem}
+th{background:#3d2e00;color:var(--accent)}
+.tag-pk{background:#E91E63;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+.tag-fk{background:#2196F3;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+.tag-idx{background:#FF9800;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+.tag-shard{background:#9C27B0;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}
+code{color:#89DDFF;font-size:.9rem}
+svg text{font-family:'Segoe UI',system-ui,sans-serif}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.pro{border-left:4px solid #4CAF50;padding-left:1rem}
+.con{border-left:4px solid #f44336;padding-left:1rem}
+details{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin:.5rem 0}
+summary{cursor:pointer;font-weight:600;color:var(--accent)}
+.step{margin:.5rem 0;padding:.5rem 1rem;border-left:3px solid var(--accent)}
+</style>
+</head>
+<body>
+
+<h1>☁️ AWS — Cloud Infrastructure Platform</h1>
+<p>Design the core infrastructure of a cloud computing platform like AWS, focusing on EC2 (compute), S3 (storage), and the control plane that orchestrates resource provisioning, multi-tenancy isolation, and global availability.</p>
+
+<h2>📋 Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Compute provisioning (EC2)</strong> — launch/terminate VMs with specified CPU, memory, storage, and network configs in seconds</li>
+<li><strong>Object storage (S3)</strong> — store/retrieve objects up to 5TB with 11 nines durability, versioning, lifecycle policies</li>
+<li><strong>Networking (VPC)</strong> — isolated virtual networks with subnets, security groups, NACLs, route tables, internet/NAT gateways</li>
+<li><strong>Identity & access (IAM)</strong> — fine-grained permissions with policies, roles, and temporary credentials</li>
+<li><strong>Auto-scaling</strong> — scale compute capacity based on demand metrics (CPU, network, custom)</li>
+<li><strong>Load balancing (ELB)</strong> — distribute traffic across instances with health checks</li>
+</ul>
+</div>
+
+<h2>📋 Non-Functional Requirements</h2>
+<div class="card">
+<ul>
+<li><strong>Availability</strong> — 99.99% for compute, 99.999999999% (11 nines) durability for S3</li>
+<li><strong>Multi-tenancy isolation</strong> — strict resource, network, and data isolation between customers</li>
+<li><strong>Global scale</strong> — 30+ regions, 100+ availability zones, millions of servers</li>
+<li><strong>Security</strong> — encryption at rest/transit, hardware root of trust (Nitro), compliance (SOC, HIPAA, PCI)</li>
+<li><strong>Elasticity</strong> — scale from 0 to thousands of instances in minutes</li>
+<li><strong>Cost efficiency</strong> — high server utilization through bin-packing and spot instances</li>
+</ul>
+</div>
+
+<h2>🔄 Flow 1: EC2 Instance Launch (Compute Provisioning)</h2>
+<svg viewBox="0 0 1050 340" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="a1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FF9900"/></marker></defs>
+<rect x="20" y="50" width="120" height="50" rx="8" fill="#2E7D32"/><text x="80" y="80" text-anchor="middle" fill="white" font-size="13">Customer</text>
+<rect x="190" y="50" width="130" height="50" rx="8" fill="#E65100"/><text x="255" y="80" text-anchor="middle" fill="white" font-size="13">API Gateway</text>
+<rect x="370" y="50" width="140" height="50" rx="8" fill="#1565C0"/><text x="440" y="80" text-anchor="middle" fill="white" font-size="13">EC2 Control Plane</text>
+<rect x="570" y="30" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="635" y="60" text-anchor="middle" fill="white" font-size="12">Placement Service</text>
+<rect x="570" y="100" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="635" y="130" text-anchor="middle" fill="white" font-size="12">Network Controller</text>
+<rect x="760" y="30" width="130" height="50" rx="8" fill="#4E342E"/><text x="825" y="60" text-anchor="middle" fill="white" font-size="12">Capacity DB</text>
+<rect x="370" y="180" width="140" height="50" rx="8" fill="#00695C"/><text x="440" y="210" text-anchor="middle" fill="white" font-size="12">Nitro Hypervisor</text>
+<rect x="570" y="180" width="130" height="50" rx="8" fill="#4E342E"/><text x="635" y="210" text-anchor="middle" fill="white" font-size="12">EBS Volume</text>
+<rect x="370" y="270" width="140" height="50" rx="8" fill="#2E7D32"/><text x="440" y="300" text-anchor="middle" fill="white" font-size="12">Running VM</text>
+<line x1="140" y1="75" x2="185" y2="75" stroke="#FF9900" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="320" y1="75" x2="365" y2="75" stroke="#FF9900" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="510" y1="60" x2="565" y2="55" stroke="#FF9900" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="510" y1="90" x2="565" y2="125" stroke="#FF9900" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="700" y1="55" x2="755" y2="55" stroke="#FF9900" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="440" y1="100" x2="440" y2="175" stroke="#81D4FA" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="510" y1="205" x2="565" y2="205" stroke="#81D4FA" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="440" y1="230" x2="440" y2="265" stroke="#4CAF50" stroke-width="2" marker-end="url(#a1)"/>
+<text x="440" y="155" fill="#aaa" font-size="11" text-anchor="middle">boot on host</text>
+</svg>
+
+<div class="step"><strong>Step 1:</strong> Customer calls RunInstances API with AMI, instance type, VPC/subnet, security groups, key pair, user data</div>
+<div class="step"><strong>Step 2:</strong> EC2 Control Plane authenticates via IAM, validates quotas, reserves capacity</div>
+<div class="step"><strong>Step 3:</strong> Placement Service selects physical host using bin-packing algorithm (best-fit decreasing), considering AZ spread, tenancy, and capacity</div>
+<div class="step"><strong>Step 4:</strong> Network Controller programs the virtual network (VPC ENI, security groups as iptables/eBPF rules, VXLAN overlay)</div>
+<div class="step"><strong>Step 5:</strong> Nitro hypervisor on selected host creates VM, attaches EBS volume over network, boots AMI</div>
+<div class="step"><strong>Step 6:</strong> Instance reaches "running" state; customer receives instance_id and private IP</div>
+
+<details><summary>Deep Dive: AWS Nitro System</summary>
+<div class="card">
+<h4>Nitro — Custom Hardware for Cloud</h4>
+<p>Nitro offloads virtualization functions to dedicated hardware cards, giving ~100% of host resources to customer VMs:</p>
+<pre><code>// Traditional hypervisor:
+// Host OS + hypervisor consumes ~15% of resources
+// Noisy neighbor: one VM's I/O can starve another
+
+// Nitro architecture:
+┌─────────────────────────────┐
+│  Customer VM (gets ALL CPU) │
+├─────────────────────────────┤
+│  Nitro Hypervisor (minimal) │
+├──────────┬──────────┬───────┤
+│ Nitro    │ Nitro    │ Nitro │  ← Custom ASICs
+│ Network  │ Storage  │ Security│
+│ Card     │ Card     │ Card   │
+└──────────┴──────────┴───────┘
+
+// Nitro Network Card: handles VPC, ENA (Elastic Network Adapter)
+// - SR-IOV for direct NIC access (bypasses hypervisor)
+// - Hardware security group enforcement
+// - 100 Gbps throughput
+
+// Nitro Storage Card: handles EBS I/O
+// - NVMe interface to VM
+// - Encryption in hardware (AES-256-XTS)
+// - Remote EBS volumes appear as local NVMe
+
+// Nitro Security Chip: hardware root of trust
+// - Prevents host OS from accessing customer memory
+// - Cryptographic attestation of boot process</code></pre>
+</div>
+</details>
+
+<details><summary>Deep Dive: Placement & Bin-Packing</summary>
+<div class="card">
+<pre><code>// Placement Service must optimize multiple objectives:
+// 1. Maximize server utilization (reduce costs)
+// 2. Spread across failure domains (AZs, racks, hosts)
+// 3. Respect placement groups (cluster, spread, partition)
+// 4. Handle "stranding" (e.g., 128GB RAM left but only 2 CPUs)
+
+// Algorithm: Multi-dimensional bin-packing (NP-hard)
+// Heuristic: Best-Fit Decreasing with scoring
+function placeInstance(instanceType, constraints) {
+  const candidates = getHostsInAZ(constraints.az)
+    .filter(h => h.hasCapacity(instanceType))
+    .filter(h => meetsPlacementGroup(h, constraints))
+    .filter(h => meetsSpreadConstraint(h, constraints));
+
+  // Score each host (higher = better fit)
+  return candidates.sort((a, b) => {
+    const scoreA = fitScore(a, instanceType); // tighter fit = higher
+    const scoreB = fitScore(b, instanceType);
+    return scoreB - scoreA; // best-fit first
+  })[0];
+}
+
+// Capacity reservation: pre-allocate to avoid InsufficientCapacity
+// Spot instances: bid on spare capacity at 60-90% discount</code></pre>
+</div>
+</details>
+
+<h2>🔄 Flow 2: S3 Object Storage (Put/Get)</h2>
+<svg viewBox="0 0 1050 300" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="a2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#81D4FA"/></marker></defs>
+<rect x="20" y="60" width="120" height="50" rx="8" fill="#2E7D32"/><text x="80" y="90" text-anchor="middle" fill="white" font-size="13">Client</text>
+<rect x="190" y="60" width="130" height="50" rx="8" fill="#E65100"/><text x="255" y="90" text-anchor="middle" fill="white" font-size="12">S3 Front End</text>
+<rect x="370" y="30" width="140" height="50" rx="8" fill="#1565C0"/><text x="440" y="60" text-anchor="middle" fill="white" font-size="12">Index Service</text>
+<rect x="370" y="110" width="140" height="50" rx="8" fill="#6A1B9A"/><text x="440" y="140" text-anchor="middle" fill="white" font-size="12">Placement Service</text>
+<rect x="570" y="30" width="140" height="50" rx="8" fill="#4E342E"/><text x="640" y="50" text-anchor="middle" fill="white" font-size="12">Metadata Store</text><text x="640" y="65" text-anchor="middle" fill="white" font-size="10">(key→shard map)</text>
+<rect x="570" y="110" width="140" height="50" rx="8" fill="#00695C"/><text x="640" y="130" text-anchor="middle" fill="white" font-size="12">Storage Nodes</text><text x="640" y="145" text-anchor="middle" fill="white" font-size="10">(replicated shards)</text>
+<rect x="770" y="110" width="140" height="50" rx="8" fill="#4E342E"/><text x="840" y="130" text-anchor="middle" fill="white" font-size="12">Erasure-Coded</text><text x="840" y="145" text-anchor="middle" fill="white" font-size="10">Storage (cold)</text>
+<line x1="140" y1="85" x2="185" y2="85" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="320" y1="75" x2="365" y2="55" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="320" y1="95" x2="365" y2="135" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="510" y1="55" x2="565" y2="55" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="510" y1="135" x2="565" y2="135" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="710" y1="135" x2="765" y2="135" stroke="#FF9900" stroke-width="2" marker-end="url(#a2)"/>
+<text x="740" y="120" fill="#aaa" font-size="10">lifecycle tiering</text>
+</svg>
+
+<div class="step"><strong>Step 1:</strong> Client sends PUT /bucket/key with object data. S3 Front End authenticates (SigV4), validates request</div>
+<div class="step"><strong>Step 2:</strong> Index Service maps key to storage partition using consistent hashing on (bucket + key)</div>
+<div class="step"><strong>Step 3:</strong> Placement Service determines which storage nodes hold the partition replicas (3 AZs minimum)</div>
+<div class="step"><strong>Step 4:</strong> Object data written to all replicas; return 200 OK only after quorum writes succeed (strong consistency since Dec 2020)</div>
+<div class="step"><strong>Step 5:</strong> For GET, Index Service locates replicas; return data from nearest/fastest replica</div>
+
+<details><summary>Deep Dive: S3 Durability — 11 Nines</summary>
+<div class="card">
+<pre><code>// S3 achieves 99.999999999% durability through:
+
+// 1. Replication across 3+ AZs (within a region)
+//    Each AZ is an independent data center (separate power, cooling, network)
+//    P(all 3 AZs fail simultaneously) ≈ 10^-11
+
+// 2. Integrity verification
+//    - MD5 checksums on upload (end-to-end verification)
+//    - Background scrubbing: read all data periodically, verify checksums
+//    - If corruption detected → auto-repair from replica
+
+// 3. Erasure coding (for infrequent access tiers)
+//    Split object into k data chunks + m parity chunks
+//    Can reconstruct from any k of (k+m) chunks
+//    Example: RS(10,4) → 14 chunks across 14 nodes
+//    Tolerates 4 simultaneous node failures
+//    40% storage overhead vs 200% for 3x replication
+
+// 4. Versioning & MFA Delete
+//    Accidental deletion protection
+//    Object Lock for WORM compliance (SEC Rule 17a-4)
+
+// Math: P(data loss) per object per year
+// With 3 replicas, each on drives with 1% annual failure rate:
+// P(all 3 fail) = (0.01)^3 = 10^-6 per year
+// Plus repair time: replace failed replica in ~hours
+// P(2nd fails during repair) = 0.01 × (repair_hours / 8760)
+// Result: ~10^-11 annual durability per object</code></pre>
+</div>
+</details>
+
+<details><summary>Deep Dive: S3 Strong Consistency</summary>
+<div class="card">
+<p>Since December 2020, S3 provides strong read-after-write consistency at no extra cost:</p>
+<pre><code>// Before 2020: eventual consistency for overwrite PUTs and DELETEs
+// PUT new key → immediate consistency
+// PUT overwrite → might read stale (seconds)
+// DELETE → might still read deleted object
+
+// After 2020: strong consistency for all operations
+// Achieved via "witness" protocol:
+// 1. Write goes to all replicas
+// 2. Metadata index updated atomically
+// 3. Subsequent reads always see latest write
+
+// Implementation: "replication under consensus"
+// - Index layer uses consensus protocol (similar to Paxos)
+// - Read checks index version before returning data
+// - No cache staleness: index is source of truth
+
+// Performance: same latency as before!
+// AWS achieved this by optimizing the consensus path
+// to be as fast as the previous replication path</code></pre>
+</div>
+</details>
+
+<h2>🔄 Flow 3: VPC Networking & Security Groups</h2>
+<svg viewBox="0 0 1050 320" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="a3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#4CAF50"/></marker></defs>
+<rect x="20" y="50" width="120" height="50" rx="8" fill="#2E7D32"/><text x="80" y="80" text-anchor="middle" fill="white" font-size="12">Customer VPC</text>
+<rect x="190" y="30" width="130" height="45" rx="8" fill="#1565C0"/><text x="255" y="57" text-anchor="middle" fill="white" font-size="12">Public Subnet</text>
+<rect x="190" y="90" width="130" height="45" rx="8" fill="#6A1B9A"/><text x="255" y="117" text-anchor="middle" fill="white" font-size="12">Private Subnet</text>
+<rect x="380" y="30" width="130" height="45" rx="8" fill="#E65100"/><text x="445" y="57" text-anchor="middle" fill="white" font-size="12">Internet GW</text>
+<rect x="380" y="90" width="130" height="45" rx="8" fill="#E65100"/><text x="445" y="117" text-anchor="middle" fill="white" font-size="12">NAT Gateway</text>
+<rect x="570" y="50" width="140" height="50" rx="8" fill="#00695C"/><text x="640" y="70" text-anchor="middle" fill="white" font-size="12">VXLAN Overlay</text><text x="640" y="85" text-anchor="middle" fill="white" font-size="10">Network</text>
+<rect x="770" y="50" width="140" height="50" rx="8" fill="#4E342E"/><text x="840" y="70" text-anchor="middle" fill="white" font-size="12">Blackfoot</text><text x="840" y="85" text-anchor="middle" fill="white" font-size="10">(Network Controller)</text>
+<rect x="380" y="200" width="130" height="50" rx="8" fill="#00695C"/><text x="445" y="220" text-anchor="middle" fill="white" font-size="12">Security Groups</text><text x="445" y="235" text-anchor="middle" fill="white" font-size="10">(eBPF/Nitro NIC)</text>
+<rect x="570" y="200" width="140" height="50" rx="8" fill="#6A1B9A"/><text x="640" y="225" text-anchor="middle" fill="white" font-size="12">Flow Logs → S3</text>
+<line x1="140" y1="65" x2="185" y2="52" stroke="#4CAF50" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="140" y1="85" x2="185" y2="112" stroke="#4CAF50" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="320" y1="52" x2="375" y2="52" stroke="#4CAF50" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="320" y1="112" x2="375" y2="112" stroke="#4CAF50" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="510" y1="75" x2="565" y2="75" stroke="#4CAF50" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="710" y1="75" x2="765" y2="75" stroke="#81D4FA" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="445" y1="135" x2="445" y2="195" stroke="#FF9900" stroke-width="2" marker-end="url(#a3)"/>
+<line x1="510" y1="225" x2="565" y2="225" stroke="#FF9900" stroke-width="2" marker-end="url(#a3)"/>
+</svg>
+
+<div class="step"><strong>Step 1:</strong> Customer creates VPC with CIDR block (e.g., 10.0.0.0/16), subnets in each AZ</div>
+<div class="step"><strong>Step 2:</strong> VXLAN overlay encapsulates tenant traffic with VNI (Virtual Network Identifier) for isolation</div>
+<div class="step"><strong>Step 3:</strong> Blackfoot network controller programs SDN rules on physical switches/Nitro cards for routing</div>
+<div class="step"><strong>Step 4:</strong> Security groups enforced at Nitro NIC level (hardware firewall); NACLs at subnet level</div>
+<div class="step"><strong>Step 5:</strong> VPC Flow Logs capture network metadata to S3/CloudWatch for audit</div>
+
+<details><summary>Deep Dive: Multi-Tenancy Network Isolation</summary>
+<div class="card">
+<pre><code>// Challenge: millions of customers sharing same physical network
+// Must ensure Customer A can NEVER access Customer B's traffic
+
+// Solution: VXLAN overlay network
+// Each VPC gets a unique VNI (24-bit → 16M possible VPCs)
+// All tenant packets encapsulated:
+// [Outer IP][Outer UDP:4789][VXLAN Header (VNI)][Inner Ethernet][Inner IP][Payload]
+
+// Physical network sees only outer headers (customer IPs invisible)
+// Nitro NIC does encap/decap in hardware (line rate)
+
+// Security Group enforcement:
+// - Stateful firewall at Nitro NIC level
+// - Rules compiled to eBPF programs loaded onto NIC
+// - Connection tracking in hardware
+// - No performance penalty vs no security groups
+
+// Zero Trust within VPC:
+// - Instance metadata service (IMDS v2) uses session tokens
+// - IAM roles via instance profile (no embedded credentials)
+// - KMS for envelope encryption of EBS volumes</code></pre>
+</div>
+</details>
+
+<h2>🏗️ Combined Architecture</h2>
+<svg viewBox="0 0 1100 550" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
+<defs><marker id="ac" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FF9900"/></marker></defs>
+<text x="550" y="25" text-anchor="middle" fill="#FF9900" font-size="16" font-weight="bold">AWS Core Infrastructure Architecture</text>
+<rect x="20" y="50" width="120" height="40" rx="8" fill="#2E7D32"/><text x="80" y="75" text-anchor="middle" fill="white" font-size="11">Customers</text>
+<rect x="200" y="50" width="140" height="40" rx="8" fill="#E65100"/><text x="270" y="75" text-anchor="middle" fill="white" font-size="11">API Gateway / SDKs</text>
+<rect x="200" y="110" width="140" height="40" rx="8" fill="#1565C0"/><text x="270" y="135" text-anchor="middle" fill="white" font-size="11">IAM (AuthN/AuthZ)</text>
+<rect x="400" y="50" width="130" height="40" rx="8" fill="#1565C0"/><text x="465" y="75" text-anchor="middle" fill="white" font-size="11">EC2 Control Plane</text>
+<rect x="400" y="110" width="130" height="40" rx="8" fill="#1565C0"/><text x="465" y="135" text-anchor="middle" fill="white" font-size="11">S3 Control Plane</text>
+<rect x="400" y="170" width="130" height="40" rx="8" fill="#1565C0"/><text x="465" y="195" text-anchor="middle" fill="white" font-size="11">VPC Control Plane</text>
+<rect x="400" y="230" width="130" height="40" rx="8" fill="#1565C0"/><text x="465" y="255" text-anchor="middle" fill="white" font-size="11">EBS Control Plane</text>
+<rect x="600" y="50" width="130" height="40" rx="8" fill="#6A1B9A"/><text x="665" y="75" text-anchor="middle" fill="white" font-size="11">Placement / Scheduler</text>
+<rect x="600" y="110" width="130" height="40" rx="8" fill="#00695C"/><text x="665" y="135" text-anchor="middle" fill="white" font-size="11">Nitro Hypervisors</text>
+<rect x="600" y="170" width="130" height="40" rx="8" fill="#4E342E"/><text x="665" y="195" text-anchor="middle" fill="white" font-size="11">S3 Storage Nodes</text>
+<rect x="600" y="230" width="130" height="40" rx="8" fill="#00695C"/><text x="665" y="255" text-anchor="middle" fill="white" font-size="11">EBS Storage Nodes</text>
+<rect x="800" y="50" width="140" height="40" rx="8" fill="#607D8B"/><text x="870" y="75" text-anchor="middle" fill="white" font-size="11">Physical Servers</text>
+<rect x="800" y="110" width="140" height="40" rx="8" fill="#607D8B"/><text x="870" y="135" text-anchor="middle" fill="white" font-size="11">Physical Network</text>
+<rect x="800" y="170" width="140" height="40" rx="8" fill="#607D8B"/><text x="870" y="195" text-anchor="middle" fill="white" font-size="11">Physical Storage</text>
+<rect x="200" y="350" width="140" height="40" rx="8" fill="#6A1B9A"/><text x="270" y="375" text-anchor="middle" fill="white" font-size="11">CloudWatch</text>
+<rect x="400" y="350" width="130" height="40" rx="8" fill="#6A1B9A"/><text x="465" y="375" text-anchor="middle" fill="white" font-size="11">Auto Scaling</text>
+<rect x="600" y="350" width="130" height="40" rx="8" fill="#E65100"/><text x="665" y="375" text-anchor="middle" fill="white" font-size="11">ELB</text>
+<rect x="800" y="350" width="140" height="40" rx="8" fill="#1565C0"/><text x="870" y="375" text-anchor="middle" fill="white" font-size="11">Route 53 (DNS)</text>
+<line x1="140" y1="70" x2="195" y2="70" stroke="#FF9900" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="340" y1="70" x2="395" y2="70" stroke="#FF9900" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="340" y1="130" x2="395" y2="130" stroke="#FF9900" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="530" y1="70" x2="595" y2="70" stroke="#FF9900" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="530" y1="130" x2="595" y2="130" stroke="#FF9900" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="530" y1="190" x2="595" y2="190" stroke="#FF9900" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="530" y1="250" x2="595" y2="250" stroke="#FF9900" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="730" y1="70" x2="795" y2="70" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="730" y1="130" x2="795" y2="130" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="730" y1="190" x2="795" y2="190" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="340" y1="370" x2="395" y2="370" stroke="#4CAF50" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="530" y1="370" x2="595" y2="370" stroke="#4CAF50" stroke-width="2" marker-end="url(#ac)"/>
+<line x1="730" y1="370" x2="795" y2="370" stroke="#4CAF50" stroke-width="2" marker-end="url(#ac)"/>
+</svg>
+
+<h2>💾 Database Schema</h2>
+<div class="grid">
+<div class="card">
+<h3>Control Plane — PostgreSQL / DynamoDB</h3>
+<pre><code>-- EC2 Instances (Control Plane State)
+CREATE TABLE instances (
+  instance_id VARCHAR(20) PRIMARY KEY, -- <span class="tag-pk">PK</span> i-0abc123
+  account_id VARCHAR(12) NOT NULL, -- <span class="tag-idx">IDX</span> <span class="tag-shard">SHARD KEY</span>
+  region VARCHAR(20) NOT NULL,
+  az VARCHAR(25) NOT NULL,
+  instance_type VARCHAR(30) NOT NULL,
+  state VARCHAR(20) NOT NULL, -- pending|running|stopping|terminated
+  ami_id VARCHAR(25) NOT NULL,
+  vpc_id VARCHAR(25), -- <span class="tag-fk">FK</span>
+  subnet_id VARCHAR(30), -- <span class="tag-fk">FK</span>
+  private_ip INET,
+  public_ip INET,
+  host_id VARCHAR(30) NOT NULL, -- physical server
+  launch_time TIMESTAMPTZ NOT NULL,
+  tags JSONB DEFAULT '{}'
+);
+-- <span class="tag-idx">IDX</span>: (account_id, state) for listing
+-- <span class="tag-idx">IDX</span>: (host_id) for placement tracking
+-- Sharded by account_id across regions
+
+-- S3 Metadata (DynamoDB-style)
+-- Key: (bucket_name, object_key)
+-- Attributes: version_id, etag, size, storage_class,
+--   content_type, encryption_key_id, acl, last_modified
+-- GSI: (bucket_name, last_modified) for listing
+-- Partition: hash(bucket_name) for even distribution</code></pre>
+</div>
+<div class="card">
+<h3>Capacity & Placement</h3>
+<pre><code>-- Host Capacity Tracking
+CREATE TABLE hosts (
+  host_id VARCHAR(30) PRIMARY KEY, -- <span class="tag-pk">PK</span>
+  region VARCHAR(20) NOT NULL,
+  az VARCHAR(25) NOT NULL, -- <span class="tag-idx">IDX</span>
+  rack_id VARCHAR(20) NOT NULL,
+  total_vcpus INT NOT NULL,
+  total_memory_gb INT NOT NULL,
+  available_vcpus INT NOT NULL, -- <span class="tag-idx">IDX</span>
+  available_memory_gb INT NOT NULL,
+  instance_types_supported TEXT[], -- array of types
+  nitro_version VARCHAR(10),
+  status VARCHAR(15) DEFAULT 'active'
+);
+-- <span class="tag-idx">IDX</span>: (az, available_vcpus, available_memory_gb)
+-- for placement queries
+
+-- Network State
+-- VPC configs, ENIs, route tables, security group rules
+-- stored in distributed KV store (similar to etcd)
+-- replicated within region for consistency
+-- Blackfoot controller pushes state to physical switches</code></pre>
+</div>
+</div>
+
+<h2>⚡ Cache & CDN Deep Dive</h2>
+<div class="card">
+<h3>Multi-Layer Caching in AWS</h3>
+<table>
+<tr><th>Layer</th><th>What</th><th>Strategy</th><th>TTL</th></tr>
+<tr><td>CloudFront (CDN)</td><td>Static content, API responses</td><td>Pull-based, 400+ edge locations</td><td>Per-object Cache-Control</td></tr>
+<tr><td>ElastiCache</td><td>Application data (Redis/Memcached)</td><td>Customer-managed</td><td>Customer-defined</td></tr>
+<tr><td>DAX (DynamoDB)</td><td>DynamoDB read cache</td><td>Write-through</td><td>5 min default</td></tr>
+<tr><td>S3 Transfer Acceleration</td><td>Upload optimization</td><td>Edge → backbone → S3</td><td>N/A</td></tr>
+<tr><td>EC2 Instance Store</td><td>Ephemeral local NVMe</td><td>Local to host</td><td>Until termination</td></tr>
+</table>
+<h4>EBS I/O Path (Caching)</h4>
+<pre><code>// EBS volumes are network-attached storage
+// Latency: ~0.5ms for io2 Block Express (vs ~0.1ms local SSD)
+
+// Caching layers for EBS:
+// 1. Guest OS page cache (customer's responsibility)
+// 2. Nitro card NVMe cache (transparent, SSD buffer)
+// 3. EBS node SSD cache (hot blocks)
+// 4. EBS node HDD (cold data, for gp3/st1)
+
+// Multi-attach: up to 16 instances can share one io2 volume
+// Throughput: up to 4,000 MB/s (io2 Block Express)</code></pre>
+</div>
+
+<h2>📈 Scaling Considerations</h2>
+<div class="card">
+<h3>Global Infrastructure Scaling</h3>
+<ul>
+<li><strong>Regions:</strong> each region is fully independent (control planes, data planes, IAM). Region failure doesn't affect others. Cross-region via explicit replication (S3 CRR, DynamoDB Global Tables).</li>
+<li><strong>Availability Zones:</strong> each AZ is 1+ data centers with independent power/cooling/network, connected via low-latency links (&lt;2ms). Default: spread resources across 3 AZs.</li>
+<li><strong>Cell-based architecture:</strong> AWS services use cellular architecture. Each "cell" handles a subset of customers. Blast radius limited to one cell on failure. Example: each S3 partition is a cell.</li>
+<li><strong>Shuffle sharding:</strong> each customer assigned to random subset of cells. With 8 cells and 2-cell assignment, P(two customers sharing both cells) = 1/28. Minimizes correlated failures.</li>
+</ul>
+<h3>Auto Scaling</h3>
+<pre><code>// Auto Scaling Group (ASG) config:
+{
+  "min": 2, "max": 100, "desired": 4,
+  "scaling_policies": [{
+    "type": "TargetTrackingScaling",
+    "target_metric": "CPUUtilization",
+    "target_value": 70.0,
+    "scale_in_cooldown": 300,
+    "scale_out_cooldown": 60
+  }],
+  "predictive_scaling": true // ML-based, pre-provisions before demand spikes
+}</code></pre>
+</div>
+
+<h2>⚖️ Tradeoffs</h2>
+<div class="tradeoff-grid">
+<div class="card pro"><h4>Multi-AZ Replication</h4><ul><li>High availability (survive AZ failure)</li><li>Low-latency cross-AZ (&lt;2ms)</li><li>11 nines durability</li></ul></div>
+<div class="card con"><h4>Multi-AZ Replication</h4><ul><li>3x storage cost (3 replicas)</li><li>Cross-AZ data transfer charges</li><li>Write latency increased by replication</li></ul></div>
+<div class="card pro"><h4>Nitro Hardware Offload</h4><ul><li>100% host resources to customer</li><li>Hardware security isolation</li><li>Line-rate network processing</li></ul></div>
+<div class="card con"><h4>Nitro Hardware Offload</h4><ul><li>Custom silicon development cost</li><li>Hardware iteration slower than software</li><li>Debugging complexity</li></ul></div>
+</div>
+
+<h2>🔄 Alternative Approaches</h2>
+<div class="grid">
+<div class="card"><h4>Containers (ECS/EKS/Fargate)</h4><p>Instead of VMs, use containers for faster start (seconds vs minutes), higher density, and microservice orchestration. Fargate provides serverless containers (no server management). Trade isolation guarantee for efficiency.</p></div>
+<div class="card"><h4>Serverless (Lambda)</h4><p>Event-driven compute with no provisioning. Pay per invocation (100ms granularity). Cold start challenge (~100-500ms). Best for intermittent workloads. Uses Firecracker microVMs for isolation.</p></div>
+<div class="card"><h4>Bare Metal (Outposts)</h4><p>AWS infrastructure on-premises. For latency-sensitive, data-sovereignty, or hybrid workloads. Same APIs as cloud. Higher cost but full control over physical hardware.</p></div>
+</div>
+
+<h2>📚 Additional Information</h2>
+<div class="card">
+<ul>
+<li><strong>Firecracker:</strong> open-source microVM manager (powers Lambda & Fargate). Boots in &lt;125ms, ~5MB memory overhead per VM. Written in Rust for safety.</li>
+<li><strong>Graviton:</strong> custom ARM processors. 40% better price-performance vs x86. Nitro + Graviton = fully custom stack.</li>
+<li><strong>Availability math:</strong> 99.99% = 52 min downtime/year. Multi-AZ: if each AZ is 99.9%, two AZs give 1 - (0.001)² = 99.9999%.</li>
+<li><strong>Shared responsibility model:</strong> AWS secures infrastructure (OF the cloud), customer secures their configs/data (IN the cloud).</li>
+<li><strong>Cost optimization:</strong> Reserved Instances (1-3yr commit, ~60% savings), Spot (up to 90% savings, can be interrupted), Savings Plans (flexible commitment).</li>
+</ul>
+</div>
+
+</body>
+</html>
