@@ -1,1 +1,1 @@
-System design content created by claude
+System design content created by claude AI
