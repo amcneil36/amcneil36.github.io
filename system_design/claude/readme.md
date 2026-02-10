@@ -48,6 +48,7 @@ System design content created by claude AI
 1. https://amcneil36.github.io/system_design/claude/splunk
 1. https://amcneil36.github.io/system_design/claude/spotify
 1. https://amcneil36.github.io/system_design/claude/stripe
+1. https://amcneil36.github.io/system_design/claude/ticketmaster
 1. https://amcneil36.github.io/system_design/claude/tinder
 1. https://amcneil36.github.io/system_design/claude/tinyurl
 1. https://amcneil36.github.io/system_design/claude/trip_advisor
