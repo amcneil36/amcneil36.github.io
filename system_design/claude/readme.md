@@ -1,69 +1,69 @@
 System design content created by claude AI
 
-https://amcneil36.github.io/system_design/claude/ad_click_aggregator
-https://amcneil36.github.io/system_design/claude/airbnb
-https://amcneil36.github.io/system_design/claude/amazon
-https://amcneil36.github.io/system_design/claude/aws
-https://amcneil36.github.io/system_design/claude/calendar_system
-https://amcneil36.github.io/system_design/claude/cerner_corporation
-https://amcneil36.github.io/system_design/claude/chatgpt
-https://amcneil36.github.io/system_design/claude/clubhouse
-https://amcneil36.github.io/system_design/claude/credit_karma
-https://amcneil36.github.io/system_design/claude/data_monitoring_pipeline
-https://amcneil36.github.io/system_design/claude/directv_app
-https://amcneil36.github.io/system_design/claude/discord
-https://amcneil36.github.io/system_design/claude/distributed_task_scheduler
-https://amcneil36.github.io/system_design/claude/dropbox
-https://amcneil36.github.io/system_design/claude/expedia
-https://amcneil36.github.io/system_design/claude/experimentation_platform
-https://amcneil36.github.io/system_design/claude/facebook
-https://amcneil36.github.io/system_design/claude/facebook_newsfeed
-https://amcneil36.github.io/system_design/claude/figma
-https://amcneil36.github.io/system_design/claude/glassdoor
-https://amcneil36.github.io/system_design/claude/gmail
-https://amcneil36.github.io/system_design/claude/google_docs
-https://amcneil36.github.io/system_design/claude/google_maps
-https://amcneil36.github.io/system_design/claude/google_search
-https://amcneil36.github.io/system_design/claude/google_translate
-https://amcneil36.github.io/system_design/claude/indeed
-https://amcneil36.github.io/system_design/claude/instacart
-https://amcneil36.github.io/system_design/claude/instagram
-https://amcneil36.github.io/system_design/claude/instagram_feed
-https://amcneil36.github.io/system_design/claude/instagram_notification_feed
-https://amcneil36.github.io/system_design/claude/instagram_push_notifications
-https://amcneil36.github.io/system_design/claude/linkedin
-https://amcneil36.github.io/system_design/claude/microsoft_teams
-https://amcneil36.github.io/system_design/claude/netflix
-https://amcneil36.github.io/system_design/claude/noom
-https://amcneil36.github.io/system_design/claude/parking_garage
-https://amcneil36.github.io/system_design/claude/pastebin
-https://amcneil36.github.io/system_design/claude/paypal
-https://amcneil36.github.io/system_design/claude/rate_limiter
-https://amcneil36.github.io/system_design/claude/real_time_stock_ticker
-https://amcneil36.github.io/system_design/claude/realtor_com
-https://amcneil36.github.io/system_design/claude/reddit
-https://amcneil36.github.io/system_design/claude/robinhood
-https://amcneil36.github.io/system_design/claude/salesforce
-https://amcneil36.github.io/system_design/claude/slack
-https://amcneil36.github.io/system_design/claude/splunk
-https://amcneil36.github.io/system_design/claude/spotify
-https://amcneil36.github.io/system_design/claude/stripe
-https://amcneil36.github.io/system_design/claude/tinder
-https://amcneil36.github.io/system_design/claude/tinyurl
-https://amcneil36.github.io/system_design/claude/trip_advisor
-https://amcneil36.github.io/system_design/claude/turbotax
-https://amcneil36.github.io/system_design/claude/twitch
-https://amcneil36.github.io/system_design/claude/twitter
-https://amcneil36.github.io/system_design/claude/twitter_search
-https://amcneil36.github.io/system_design/claude/typeahead
-https://amcneil36.github.io/system_design/claude/uber
-https://amcneil36.github.io/system_design/claude/vending_machine
-https://amcneil36.github.io/system_design/claude/video_recommendation_platform
-https://amcneil36.github.io/system_design/claude/wayfair
-https://amcneil36.github.io/system_design/claude/weather_com
-https://amcneil36.github.io/system_design/claude/web_crawler
-https://amcneil36.github.io/system_design/claude/whatsapp
-https://amcneil36.github.io/system_design/claude/wikipedia
-https://amcneil36.github.io/system_design/claude/yelp
-https://amcneil36.github.io/system_design/claude/youtube
-https://amcneil36.github.io/system_design/claude/zoom
+1. https://amcneil36.github.io/system_design/claude/ad_click_aggregator
+1. https://amcneil36.github.io/system_design/claude/airbnb
+1. https://amcneil36.github.io/system_design/claude/amazon  
+1. https://amcneil36.github.io/system_design/claude/aws
+1. https://amcneil36.github.io/system_design/claude/calendar_system
+1. https://amcneil36.github.io/system_design/claude/cerner_corporation
+1. https://amcneil36.github.io/system_design/claude/chatgpt
+1. https://amcneil36.github.io/system_design/claude/clubhouse
+1. https://amcneil36.github.io/system_design/claude/credit_karma
+1. https://amcneil36.github.io/system_design/claude/data_monitoring_pipeline
+1. https://amcneil36.github.io/system_design/claude/directv_app
+1. https://amcneil36.github.io/system_design/claude/discord
+1. https://amcneil36.github.io/system_design/claude/distributed_task_scheduler
+1. https://amcneil36.github.io/system_design/claude/dropbox
+1. https://amcneil36.github.io/system_design/claude/expedia
+1. https://amcneil36.github.io/system_design/claude/experimentation_platform
+1. https://amcneil36.github.io/system_design/claude/facebook
+1. https://amcneil36.github.io/system_design/claude/facebook_newsfeed
+1. https://amcneil36.github.io/system_design/claude/figma
+1. https://amcneil36.github.io/system_design/claude/glassdoor
+1. https://amcneil36.github.io/system_design/claude/gmail
+1. https://amcneil36.github.io/system_design/claude/google_docs
+1. https://amcneil36.github.io/system_design/claude/google_maps
+1. https://amcneil36.github.io/system_design/claude/google_search
+1. https://amcneil36.github.io/system_design/claude/google_translate
+1. https://amcneil36.github.io/system_design/claude/indeed
+1. https://amcneil36.github.io/system_design/claude/instacart
+1. https://amcneil36.github.io/system_design/claude/instagram
+1. https://amcneil36.github.io/system_design/claude/instagram_feed
+1. https://amcneil36.github.io/system_design/claude/instagram_notification_feed
+1. https://amcneil36.github.io/system_design/claude/instagram_push_notifications
+1. https://amcneil36.github.io/system_design/claude/linkedin
+1. https://amcneil36.github.io/system_design/claude/microsoft_teams
+1. https://amcneil36.github.io/system_design/claude/netflix
+1. https://amcneil36.github.io/system_design/claude/noom
+1. https://amcneil36.github.io/system_design/claude/parking_garage
+1. https://amcneil36.github.io/system_design/claude/pastebin
+1. https://amcneil36.github.io/system_design/claude/paypal
+1. https://amcneil36.github.io/system_design/claude/rate_limiter
+1. https://amcneil36.github.io/system_design/claude/real_time_stock_ticker
+1. https://amcneil36.github.io/system_design/claude/realtor_com
+1. https://amcneil36.github.io/system_design/claude/reddit
+1. https://amcneil36.github.io/system_design/claude/robinhood
+1. https://amcneil36.github.io/system_design/claude/salesforce
+1. https://amcneil36.github.io/system_design/claude/slack
+1. https://amcneil36.github.io/system_design/claude/splunk
+1. https://amcneil36.github.io/system_design/claude/spotify
+1. https://amcneil36.github.io/system_design/claude/stripe
+1. https://amcneil36.github.io/system_design/claude/tinder
+1. https://amcneil36.github.io/system_design/claude/tinyurl
+1. https://amcneil36.github.io/system_design/claude/trip_advisor
+1. https://amcneil36.github.io/system_design/claude/turbotax
+1. https://amcneil36.github.io/system_design/claude/twitch
+1. https://amcneil36.github.io/system_design/claude/twitter
+1. https://amcneil36.github.io/system_design/claude/twitter_search
+1. https://amcneil36.github.io/system_design/claude/typeahead
+1. https://amcneil36.github.io/system_design/claude/uber
+1. https://amcneil36.github.io/system_design/claude/vending_machine
+1. https://amcneil36.github.io/system_design/claude/video_recommendation_platform
+1. https://amcneil36.github.io/system_design/claude/wayfair
+1. https://amcneil36.github.io/system_design/claude/weather_com
+1. https://amcneil36.github.io/system_design/claude/web_crawler
+1. https://amcneil36.github.io/system_design/claude/whatsapp
+1. https://amcneil36.github.io/system_design/claude/wikipedia
+1. https://amcneil36.github.io/system_design/claude/yelp
+1. https://amcneil36.github.io/system_design/claude/youtube
+1. https://amcneil36.github.io/system_design/claude/zoom
