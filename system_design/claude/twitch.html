@@ -99,10 +99,30 @@
 
 <div class="deep-dive">
 <h4>CDN (Critical for Live Streaming)</h4>
-<p><strong>Why CDN is essential:</strong> A single popular stream may have 500K concurrent viewers. Serving all of them from the origin would require ~3 Tbps of bandwidth. The CDN distributes this across 200+ edge locations, each serving a fraction of viewers.</p>
-<p><strong>Caching strategy:</strong> Each 2-second HLS chunk is cached at the edge for 10 seconds (just enough to serve it to all viewers requesting it). Pull-based: the edge fetches from origin on the first viewer request.</p>
-<p><strong>Eviction:</strong> LRU, but chunks are naturally evicted because live stream chunks have very short TTLs.</p>
+<p><strong>Why CDN instead of serving directly from origin:</strong> The CDN exists to solve three problems that make direct origin-to-client delivery impractical at scale: <strong>bandwidth cost</strong>, <strong>origin server load</strong>, and <strong>geographic latency</strong>.</p>
+
+<p><strong>1. Bandwidth cost:</strong> Egress bandwidth from origin infrastructure (cloud or datacenter) is expensive — typically $0.05–0.09/GB from a cloud provider like AWS. CDN egress is significantly cheaper at scale (often $0.01–0.02/GB at Twitch's volume through committed-use contracts). Consider a popular stream at 1080p60 (6 Mbps) with 500K concurrent viewers: that's 3 Tbps of sustained egress. Serving that directly from origin would cost roughly <strong>$120K/hour</strong> at cloud egress rates, versus ~$25K/hour through CDN pricing — a ~5× cost reduction. Across thousands of concurrent streams 24/7, this difference is the single largest operational cost driver.</p>
+
+<p><strong>2. Origin server protection:</strong> Without a CDN, the origin must handle 500K concurrent HTTP connections for a single popular stream, each requesting a new 2-second chunk every 2 seconds — that's 250K requests/second to origin for one stream alone. The origin would need massive horizontal scaling just to handle the connection load, and any spike (e.g., a raid moving 100K viewers to a new stream) would hit origin directly. The CDN absorbs this: the edge fetches each chunk from origin exactly once, then serves it to all local viewers. Origin sees ~200 requests per chunk (one per edge PoP), not 250K.</p>
+
+<p><strong>3. Geographic latency — and why the interval-based fetch model makes CDN latency acceptable:</strong> A viewer in Tokyo fetching HLS chunks directly from a US-based origin would add ~150ms of round-trip latency per request. With a CDN edge in Tokyo, that drops to ~5-10ms. However, even the 150ms origin latency wouldn't be catastrophic — HLS is a <em>pull-based, interval-driven protocol</em>. The viewer's player fetches a new 2-second chunk every ~2 seconds. This isn't a continuous real-time stream like WebRTC where every millisecond matters; it's a series of HTTP GETs on a predictable schedule. The player maintains a buffer of 2-3 chunks, so an extra 150ms per fetch doesn't cause visible stutter or buffering — it simply means the viewer is ~150ms further behind the live edge, which is negligible when total end-to-end latency is already 3-5 seconds. <strong>So latency reduction is not the primary reason for the CDN.</strong> The CDN is justified overwhelmingly by cost savings and origin protection. The latency improvement is a nice bonus, but even without it, viewers on a 2-second fetch interval would barely notice the difference.</p>
+
+<p><strong>Caching strategy:</strong> Each 2-second HLS chunk is cached at the edge for ~10 seconds (just enough to serve it to all viewers requesting it). Pull-based: the edge fetches from origin on the first viewer request. Cache hit ratio for live streams: ~99.9%, because all viewers of a given stream at a given moment request the same chunk.</p>
+<p><strong>Eviction:</strong> LRU, but chunks are naturally evicted because live stream chunks have very short TTLs — a chunk from 30 seconds ago is irrelevant since no viewer will request it.</p>
 <p><strong>Protocol to viewers:</strong> HTTPS GET for HLS chunks and manifests. HTTP/2 for multiplexing multiple chunk requests.</p>
+</div>
+
+<div class="tradeoff">
+<h4>CDN vs. Direct Origin: Cost-Latency Tradeoff Summary</h4>
+<table>
+  <tr><th>Factor</th><th>Direct from Origin</th><th>Via CDN</th></tr>
+  <tr><td>Egress cost per GB</td><td>$0.05–0.09 (cloud)</td><td>$0.01–0.02 (at scale)</td></tr>
+  <tr><td>Origin load (500K stream)</td><td>250K req/s per stream</td><td>~200 req/s per stream (1 per PoP)</td></tr>
+  <tr><td>Viewer-to-server latency</td><td>50–200ms (varies by region)</td><td>5–20ms (nearby edge)</td></tr>
+  <tr><td>Visible impact on playback</td><td>Minimal — buffered by HLS player</td><td>Minimal — same buffering model</td></tr>
+  <tr><td>Resilience to traffic spikes</td><td>Origin must absorb full spike</td><td>Edge absorbs; origin shielded</td></tr>
+</table>
+<p><strong>Key insight:</strong> The CDN's value is primarily economic and architectural (cost + origin shielding), not latency. Because HLS is a chunked, interval-based pull protocol with client-side buffering, the latency difference between fetching from a nearby CDN edge versus a distant origin is absorbed into the player's buffer and is imperceptible to the viewer. Even if the CDN added latency (it doesn't — it reduces it), the interval-based fetch pattern would make this tolerable. The CDN pays for itself many times over through bandwidth cost savings alone.</p>
 </div>
 
 <h2>Flow 2: Live Chat</h2>
