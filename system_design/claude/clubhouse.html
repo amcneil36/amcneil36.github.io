@@ -1,466 +1,1285 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clubhouse (Audio Social) - System Design</title>
-<style>
-:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--heading:#F0E68C;--accent:#8B6914;--accent2:#DAA520;--accent3:#FFD700;--muted:#888}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
-h1{color:var(--heading);font-size:2.2rem;border-bottom:3px solid var(--heading);padding-bottom:.5rem;margin-bottom:1.5rem}
-h2{color:var(--accent3);margin:2rem 0 1rem;font-size:1.5rem}
-h3{color:var(--accent2);margin:1.5rem 0 .75rem;font-size:1.2rem}
-h4{color:var(--accent);margin:1rem 0 .5rem}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
-ul,ol{margin:.75rem 0 .75rem 1.5rem}
-li{margin:.4rem 0}
-code{background:#2d2d2d;padding:.2rem .5rem;border-radius:4px;font-size:.9rem;color:#f8f8f2}
-pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:1rem 0}
-pre code{padding:0;background:none}
-.tag{display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600;margin:.2rem}
-.tag-pk{background:#E53935;color:#fff}
-.tag-fk{background:#1E88E5;color:#fff}
-.tag-idx{background:#43A047;color:#fff}
-.tag-shard{background:#FB8C00;color:#fff}
-.tag-cache{background:#8E24AA;color:#fff}
-.tag-ttl{background:#00897B;color:#fff}
-svg text{font-family:'Segoe UI',system-ui,sans-serif}
-.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
-.pro{background:#1b3a1b;border:1px solid #2d5a2d;border-radius:8px;padding:1rem}
-.con{background:#3a1b1b;border:1px solid #5a2d2d;border-radius:8px;padding:1rem}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design: Clubhouse</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card-bg: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --heading: #e6edf3;
+            --accent: #58a6ff;
+            --accent2: #3fb950;
+            --accent3: #d2a8ff;
+            --accent4: #f0883e;
+            --code-bg: #1c2128;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: var(--heading);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 0.8rem;
+            margin-bottom: 2rem;
+        }
+        h2 {
+            font-size: 1.8rem;
+            color: var(--accent);
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--accent);
+            padding-left: 0.8rem;
+        }
+        h3 {
+            font-size: 1.3rem;
+            color: var(--accent3);
+            margin-top: 2rem;
+            margin-bottom: 0.6rem;
+        }
+        h4 {
+            font-size: 1.1rem;
+            color: var(--accent4);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        p { margin-bottom: 1rem; }
+        ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.4rem; }
+        code {
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--accent2);
+        }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .example-card {
+            background: #1a2332;
+            border-left: 4px solid var(--accent2);
+            border-radius: 0 8px 8px 0;
+            padding: 1.2rem;
+            margin: 1rem 0;
+        }
+        .example-card strong { color: var(--accent2); }
+        .warn-card {
+            background: #2a1f0e;
+            border-left: 4px solid var(--accent4);
+            border-radius: 0 8px 8px 0;
+            padding: 1.2rem;
+            margin: 1rem 0;
+        }
+        .warn-card strong { color: var(--accent4); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+        }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+        }
+        th {
+            background: #1c2333;
+            color: var(--accent);
+            font-weight: 600;
+        }
+        tr:nth-child(even) { background: #131921; }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 1.5rem 0;
+            background: #111820;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .toc {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem 2rem;
+            margin: 1.5rem 0;
+        }
+        .toc a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .toc a:hover { text-decoration: underline; }
+        .toc ul { list-style: none; margin-left: 0; }
+        .toc li { margin-bottom: 0.3rem; }
+        .toc li ul { margin-left: 1.2rem; margin-top: 0.3rem; }
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-pk { background: #1f3d2b; color: #3fb950; }
+        .badge-fk { background: #2a1f3d; color: #d2a8ff; }
+        .badge-idx { background: #3d2a1f; color: #f0883e; }
+        .badge-sk { background: #1f2d3d; color: #58a6ff; }
+        hr { border: 0; border-top: 1px solid var(--border); margin: 2rem 0; }
+    </style>
 </head>
 <body>
 
-<h1>🎙️ Clubhouse (Audio Social) - System Design</h1>
+<h1>🎙️ System Design: Clubhouse</h1>
+<p>A live, drop-in audio conversation platform where users can join rooms, listen to speakers, raise their hand to speak, follow users, discover rooms, and receive notifications — all in real time.</p>
 
-<!-- ============ FUNCTIONAL REQUIREMENTS ============ -->
+<!-- ============================================================ -->
+<!-- TABLE OF CONTENTS -->
+<!-- ============================================================ -->
+<div class="toc">
+    <h3 style="color:var(--heading); margin-top:0;">Table of Contents</h3>
+    <ul>
+        <li><a href="#fr">1. Functional Requirements</a></li>
+        <li><a href="#nfr">2. Non-Functional Requirements</a></li>
+        <li><a href="#flow1">3. Flow 1 — Room Creation &amp; Notification</a></li>
+        <li><a href="#flow2">4. Flow 2 — Room Discovery (Feed / Hallway)</a></li>
+        <li><a href="#flow3">5. Flow 3 — Joining a Room &amp; Listening to Audio</a></li>
+        <li><a href="#flow4">6. Flow 4 — Raise Hand &amp; Speaking</a></li>
+        <li><a href="#flow5">7. Flow 5 — Follow a User</a></li>
+        <li><a href="#combined">8. Combined Overall Diagram</a></li>
+        <li><a href="#schema">9. Database Schema</a></li>
+        <li><a href="#cache">10. CDN &amp; Cache Deep Dive</a></li>
+        <li><a href="#scaling">11. Scaling Considerations</a></li>
+        <li><a href="#tradeoffs">12. Tradeoffs &amp; Deep Dives</a></li>
+        <li><a href="#alternatives">13. Alternative Approaches</a></li>
+        <li><a href="#additional">14. Additional Considerations</a></li>
+        <li><a href="#vendors">15. Vendor Section</a></li>
+    </ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- FUNCTIONAL REQUIREMENTS -->
+<!-- ============================================================ -->
+<h2 id="fr">1. Functional Requirements</h2>
 <div class="card">
-<h2>Functional Requirements</h2>
-<ol>
-<li><strong>Live Audio Rooms:</strong> Create, join, and participate in real-time audio rooms with speakers, moderators, and listeners (up to 8K participants)</li>
-<li><strong>Room Discovery & Hallway:</strong> Browse active/upcoming rooms, follow clubs/topics, personalized room recommendations, event scheduling</li>
-<li><strong>Social Graph & Notifications:</strong> Follow users, get notified when followed users start/join rooms, invite-only rooms, raise-hand/speaker queue</li>
-</ol>
+    <ol>
+        <li><strong>Room Creation</strong> — A user can create a live audio room (immediately) or schedule one for the future. Rooms have a title, optional topic, and a type (open, social, closed).</li>
+        <li><strong>Room Discovery / Hallway Feed</strong> — Users can browse a real-time feed of active rooms featuring people they follow or rooms from clubs they are members of.</li>
+        <li><strong>Joining &amp; Leaving a Room</strong> — Users can tap into a room to listen and leave at any time.</li>
+        <li><strong>Live Audio Streaming</strong> — Speakers' audio is streamed in real time to all listeners in the room with low latency.</li>
+        <li><strong>Raise Hand / Speak</strong> — A listener can raise their hand; a moderator can promote the listener to a speaker, at which point the listener's microphone becomes active and their audio is streamed to the room.</li>
+        <li><strong>Moderator Controls</strong> — Moderators can mute speakers, demote speakers to listeners, remove participants, and invite users to speak.</li>
+        <li><strong>Follow Users</strong> — A user can follow another user to be notified when they start or join rooms.</li>
+        <li><strong>Notifications</strong> — Users receive push notifications when someone they follow starts a room, is speaking in a room, or when they are invited to a room.</li>
+        <li><strong>Clubs</strong> — Users can create and join clubs (interest-based groups). Clubs can host rooms visible to club members.</li>
+        <li><strong>User Profiles</strong> — Users have a profile with a name, username, bio, and avatar.</li>
+    </ol>
 </div>
 
-<!-- ============ NON-FUNCTIONAL REQUIREMENTS ============ -->
+<!-- ============================================================ -->
+<!-- NON-FUNCTIONAL REQUIREMENTS -->
+<!-- ============================================================ -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
 <div class="card">
-<h2>Non-Functional Requirements</h2>
-<ul>
-<li><strong>Latency:</strong> Audio end-to-end &lt;300ms (conversational quality requires &lt;400ms perceived delay)</li>
-<li><strong>Scale:</strong> 10M+ concurrent users, thousands of simultaneous rooms, rooms up to 8K listeners</li>
-<li><strong>Reliability:</strong> No audio drops during room sessions; graceful degradation under network jitter</li>
-<li><strong>Quality:</strong> Opus codec at 32-64kbps, adaptive bitrate based on network conditions, echo cancellation</li>
-<li><strong>Ephemerality:</strong> Rooms are not recorded by default — audio is transient (privacy by design)</li>
-</ul>
+    <ol>
+        <li><strong>Low Latency</strong> — Audio latency must be under 200 ms end-to-end (speaker → listener) to maintain conversational flow.</li>
+        <li><strong>High Concurrency</strong> — Support rooms with up to 5,000+ simultaneous listeners and dozens of speakers.</li>
+        <li><strong>Scalability</strong> — The system must scale horizontally to support millions of concurrent users across thousands of simultaneous rooms.</li>
+        <li><strong>High Availability</strong> — 99.99% uptime; audio rooms should not go down mid-conversation.</li>
+        <li><strong>Real-Time State Sync</strong> — Room state (who's speaking, who raised a hand, who joined/left) must propagate to all participants within 1 second.</li>
+        <li><strong>Global Reach</strong> — Users are distributed worldwide; media servers must be deployed across multiple geographic regions to minimize latency.</li>
+        <li><strong>Security</strong> — Audio streams must be encrypted in transit. User data must follow privacy best practices.</li>
+        <li><strong>Graceful Degradation</strong> — Under load, degrade audio quality rather than dropping participants.</li>
+    </ol>
 </div>
 
-<!-- ============ FLOW 1: JOIN ROOM & AUDIO STREAMING ============ -->
-<h2>Flow 1: Joining a Room & Real-Time Audio</h2>
+<!-- ============================================================ -->
+<!-- FLOW 1 — ROOM CREATION & NOTIFICATION -->
+<!-- ============================================================ -->
+<h2 id="flow1">3. Flow 1 — Room Creation &amp; Notification</h2>
+<p>This flow covers a user creating a new live audio room and the system notifying the creator's followers.</p>
+
+<div class="mermaid">
+graph LR
+    A["📱 Client App"] -->|"HTTP POST /api/rooms"| B["⚖️ Load Balancer"]
+    B --> C["🏠 Room Service"]
+    C -->|"Write room record"| D[("🗄️ Room DB<br/>(NoSQL)")]
+    C -->|"Publish room_created event"| E["📨 Message Queue"]
+    E --> F["🔔 Notification Service"]
+    F -->|"Lookup followers of creator"| G[("🗄️ Follow DB<br/>(SQL)")]
+    F -->|"Write notification records"| H[("🗄️ Notification DB<br/>(NoSQL)")]
+    F -->|"Send push notification"| I["📲 Push Service<br/>(APNs / FCM)"]
+    I --> J["📱 Followers' Devices"]
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-card">
+    <strong>Example 1 — Standard Room Creation:</strong><br/>
+    User <em>alice</em> taps "Start a Room" and enters title "AI &amp; the Future." The client sends an <code>HTTP POST /api/rooms</code> with <code>{ title: "AI & the Future", type: "open", creator_id: "alice_123" }</code> to the Load Balancer, which routes it to the Room Service. The Room Service writes a new room record (status = <code>live</code>) to the Room DB (NoSQL) and publishes a <code>room_created</code> event containing <code>{ room_id, creator_id, title }</code> onto the Message Queue. The Notification Service consumes this event, queries the Follow DB (SQL) to find all of Alice's followers (say 500 users), writes 500 notification records to the Notification DB (NoSQL), and sends a push notification to each follower's device via APNs/FCM: <em>"alice just started a room: AI &amp; the Future."</em>
+</div>
+
+<div class="example-card">
+    <strong>Example 2 — Scheduled Room:</strong><br/>
+    User <em>bob</em> schedules a room titled "Startup Pitches" for tomorrow at 3 PM. The client sends <code>HTTP POST /api/rooms</code> with <code>{ title: "Startup Pitches", type: "social", scheduled_at: "2025-03-15T15:00:00Z" }</code>. The Room Service writes the record with status = <code>scheduled</code>. No notification is sent immediately. Instead, a scheduled job in the Notification Service checks for rooms approaching their start time and sends a reminder notification to followers 10 minutes before.
+</div>
+
+<div class="example-card">
+    <strong>Example 3 — Celebrity with Millions of Followers (Fan-out Edge Case):</strong><br/>
+    User <em>celebrity</em> starts a room. She has 3 million followers. The Room Service publishes the <code>room_created</code> event to the Message Queue. The Notification Service does <strong>not</strong> fan out 3 million notifications synchronously. Instead, the fan-out is <strong>partitioned</strong>: the Message Queue has multiple partitions, and consumer workers each handle a subset of followers in parallel. The Notification Service batches the push notifications (e.g., 1,000 per batch) and writes notification records in bulk to the Notification DB. This ensures the fan-out completes within seconds rather than minutes.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Client App</h4>
+<p>The mobile application (iOS / Android). Initiates the room creation request. Displays UI feedback on success/failure.</p>
+
+<h4>Load Balancer</h4>
+<p>Sits in front of all API servers (Room Service, User Service, Feed Service, etc.). Uses round-robin or least-connections to distribute incoming HTTP requests across healthy service instances. Performs health checks and removes unhealthy instances from the rotation. Terminates TLS here for HTTPS.</p>
+
+<h4>Room Service</h4>
 <div class="card">
-<svg viewBox="0 0 1000 370" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FFD700"/></marker></defs>
-<rect x="20" y="50" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="80" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Mobile Client</text>
-<rect x="190" y="50" width="130" height="50" rx="8" fill="#FB8C00"/><text x="255" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">API Gateway</text><text x="255" y="87" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(REST / WS)</text>
-<rect x="370" y="50" width="130" height="50" rx="8" fill="#4285F4"/><text x="435" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Room Service</text><text x="435" y="87" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(State Machine)</text>
-<rect x="550" y="20" width="130" height="50" rx="8" fill="#9C27B0"/><text x="615" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Agora SFU</text><text x="615" y="57" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Audio Relay)</text>
-<rect x="550" y="90" width="130" height="50" rx="8" fill="#E53935"/><text x="615" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Signaling Server</text><text x="615" y="127" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(WebRTC)</text>
-<rect x="730" y="50" width="130" height="50" rx="8" fill="#00897B"/><text x="795" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">TURN/STUN</text><text x="795" y="87" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(NAT Traversal)</text>
-<rect x="370" y="180" width="130" height="50" rx="8" fill="#795548"/><text x="435" y="202" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Room State DB</text><text x="435" y="217" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Redis Cluster)</text>
-<rect x="550" y="180" width="130" height="50" rx="8" fill="#4285F4"/><text x="615" y="202" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Presence Service</text><text x="615" y="217" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Who's online)</text>
-<rect x="190" y="260" width="130" height="50" rx="8" fill="#607D8B"/><text x="255" y="282" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">WebSocket Hub</text><text x="255" y="297" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Room Events)</text>
-<line x1="140" y1="75" x2="185" y2="75" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="320" y1="75" x2="365" y2="75" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="500" y1="65" x2="545" y2="45" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="500" y1="85" x2="545" y2="110" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="680" y1="45" x2="725" y2="65" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="680" y1="115" x2="725" y2="85" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="435" y1="100" x2="435" y2="175" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="500" y1="205" x2="545" y2="205" stroke="#FFD700" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="370" y1="130" x2="300" y2="255" stroke="#FFD700" stroke-width="1.5" marker-end="url(#ah)"/>
-</svg>
+    <p><strong>Protocol:</strong> HTTP REST</p>
+    <table>
+        <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th></tr>
+        <tr>
+            <td><code>/api/rooms</code></td>
+            <td><code>POST</code></td>
+            <td>JSON body: <code>{ title, type, creator_id, club_id?, scheduled_at? }</code></td>
+            <td><code>201 Created</code> — <code>{ room_id, title, status, created_at }</code></td>
+        </tr>
+        <tr>
+            <td><code>/api/rooms/{room_id}</code></td>
+            <td><code>GET</code></td>
+            <td>Path param: <code>room_id</code></td>
+            <td><code>200 OK</code> — <code>{ room_id, title, status, participants: [...], speakers: [...] }</code></td>
+        </tr>
+        <tr>
+            <td><code>/api/rooms/{room_id}</code></td>
+            <td><code>DELETE</code></td>
+            <td>Path param: <code>room_id</code>; Auth: must be moderator</td>
+            <td><code>200 OK</code> — <code>{ room_id, status: "ended" }</code></td>
+        </tr>
+    </table>
+</div>
+
+<h4>Room DB (NoSQL)</h4>
+<p>Stores room metadata. NoSQL chosen for flexible schema (rooms may have different optional fields), high write throughput (rooms are created and updated frequently), and horizontal scalability via hash-based sharding on <code>room_id</code>.</p>
+
+<h4>Message Queue</h4>
+<p>An asynchronous, durable message queue. The Room Service acts as a <strong>producer</strong>, publishing events like <code>room_created</code>, <code>room_ended</code>. The Notification Service acts as a <strong>consumer</strong>, processing events in order. Messages are partitioned (e.g., by <code>creator_id</code>) for parallel consumption. Failed messages are routed to a Dead Letter Queue (DLQ). At-least-once delivery semantics; consumers handle deduplication via idempotency keys (<code>room_id + event_type</code>).</p>
+
+<h4>Notification Service</h4>
+<div class="card">
+    <p><strong>Protocol:</strong> Consumes from Message Queue (internal). No public API for this flow.</p>
+    <p><strong>Steps:</strong></p>
+    <ol>
+        <li>Consumes <code>room_created</code> event from queue.</li>
+        <li>Queries Follow DB (SQL) for all followers of the creator.</li>
+        <li>Batch-writes notification records to Notification DB (NoSQL).</li>
+        <li>Sends push notifications via APNs (iOS) / FCM (Android).</li>
+    </ol>
+</div>
+
+<h4>Follow DB (SQL)</h4>
+<p>Stores follow relationships. SQL chosen because follows are inherently relational (user A follows user B). ACID guarantees ensure no duplicate follows. Queried with: <code>SELECT followee_id FROM follows WHERE follower_id = ?</code>.</p>
+
+<h4>Notification DB (NoSQL)</h4>
+<p>Stores notification records per user. NoSQL chosen because: write-heavy (fan-out creates many notifications at once), access pattern is simple (partition by <code>user_id</code>, sort by <code>created_at</code>), and horizontal scaling is essential.</p>
+
+<h4>Push Notification Service (APNs / FCM)</h4>
+<p>Apple Push Notification Service and Firebase Cloud Messaging. External vendor services. The Notification Service sends structured payloads (title, body, data) to these services, which deliver to the user's device.</p>
+
+<hr/>
+
+<!-- ============================================================ -->
+<!-- FLOW 2 — ROOM DISCOVERY -->
+<!-- ============================================================ -->
+<h2 id="flow2">4. Flow 2 — Room Discovery (Feed / Hallway)</h2>
+<p>This flow covers a user opening the app and seeing a list of active rooms from people they follow and clubs they are members of.</p>
+
+<div class="mermaid">
+graph LR
+    A["📱 Client App"] -->|"HTTP GET /api/feed"| B["⚖️ Load Balancer"]
+    B --> C["📰 Feed Service"]
+    C -->|"Check feed cache"| D["🧠 Cache"]
+    D -->|"Cache miss"| C
+    C -->|"Get user's follows"| E[("🗄️ Follow DB<br/>(SQL)")]
+    C -->|"Get user's clubs"| F[("🗄️ Club Members DB<br/>(SQL)")]
+    C -->|"Get active rooms<br/>for followed users & clubs"| G[("🗄️ Room DB<br/>(NoSQL)")]
+    C -->|"Populate cache"| D
+    C -->|"Return ranked rooms"| A
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-card">
+    <strong>Example 1 — Cache Miss (First Load):</strong><br/>
+    User <em>charlie</em> opens the Clubhouse app. The client sends <code>HTTP GET /api/feed?user_id=charlie_456</code> to the Load Balancer, which routes to the Feed Service. The Feed Service checks the Cache for Charlie's pre-computed feed — <strong>cache miss</strong>. It queries the Follow DB to get Charlie's 200 followees, queries the Club Members DB to get Charlie's 5 clubs, then queries the Room DB for all active rooms (status = <code>live</code>) where the creator or any participant is among Charlie's followees OR the room belongs to one of Charlie's clubs. The Feed Service ranks these rooms (by relevance: number of friends in room, room size, recency) and returns the top 20. The result is stored in the Cache with a 30-second TTL.
+</div>
+
+<div class="example-card">
+    <strong>Example 2 — Cache Hit:</strong><br/>
+    User <em>charlie</em> scrolls away and pulls-to-refresh 10 seconds later. The same <code>GET /api/feed</code> request hits the Cache — <strong>cache hit</strong>. The Feed Service returns the cached result immediately, avoiding three database queries. The response returns in under 50 ms.
+</div>
+
+<div class="example-card">
+    <strong>Example 3 — User Follows Nobody (Empty Feed):</strong><br/>
+    New user <em>newbie</em> just signed up and follows zero users and has no clubs. The Feed Service finds zero followees and zero clubs. It falls back to a <strong>trending rooms</strong> algorithm: queries the Room DB for rooms sorted by current listener count descending. Returns the top 20 trending rooms so the new user has something to explore.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Feed Service</h4>
+<div class="card">
+    <p><strong>Protocol:</strong> HTTP REST</p>
+    <table>
+        <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th></tr>
+        <tr>
+            <td><code>/api/feed</code></td>
+            <td><code>GET</code></td>
+            <td>Query params: <code>user_id</code>, <code>cursor?</code> (pagination), <code>limit?</code></td>
+            <td><code>200 OK</code> — <code>{ rooms: [{ room_id, title, speakers: [...], listener_count, ... }], next_cursor }</code></td>
+        </tr>
+    </table>
+    <p>The Feed Service implements a <strong>fan-out-on-read</strong> strategy: it computes the feed at query time by fetching the user's social graph and cross-referencing with active rooms. This is chosen over fan-out-on-write because rooms are ephemeral (they last minutes to hours) and the set of active rooms changes constantly, making pre-computed feeds stale almost immediately.</p>
+</div>
+
+<h4>Cache (Feed Cache)</h4>
+<p>In-memory key-value store. Key: <code>feed:{user_id}</code>, Value: serialized list of rooms. TTL: <strong>30 seconds</strong> (short because room state changes quickly — rooms start and end often). Eviction: LRU. Strategy: <strong>Cache-aside (lazy loading)</strong> — only populated on cache miss. This is appropriate because not all users are online at the same time; pre-populating feeds for all users would waste memory.</p>
+
+<h4>Club Members DB (SQL)</h4>
+<p>Stores club membership. SQL because it's relational (users ↔ clubs many-to-many). Queried with: <code>SELECT club_id FROM club_members WHERE user_id = ?</code>.</p>
+
+<hr/>
+
+<!-- ============================================================ -->
+<!-- FLOW 3 — JOINING & LISTENING -->
+<!-- ============================================================ -->
+<h2 id="flow3">5. Flow 3 — Joining a Room &amp; Listening to Audio</h2>
+<p>This flow covers a user tapping on a room, joining it, and receiving real-time audio from speakers via a Selective Forwarding Unit (SFU).</p>
+
+<div class="mermaid">
+graph LR
+    A["📱 Client App"] -->|"1. HTTP POST<br/>/api/rooms/{id}/join"| B["⚖️ Load Balancer"]
+    B --> C["🏠 Room Service"]
+    C -->|"2. Add participant record"| D[("🗄️ Room Participants<br/>(NoSQL)")]
+    C -->|"3. Return room info +<br/>signaling server address"| A
+    A -->|"4. WebSocket connect"| E["📡 Signaling Server"]
+    E -->|"5. Exchange SDP offer/answer<br/>& ICE candidates"| A
+    A -->|"6. WebRTC audio stream<br/>(receive only)"| F["🔊 SFU<br/>(Selective Forwarding Unit)"]
+    F -->|"7. Forwards speaker audio<br/>streams to listener"| A
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-card">
+    <strong>Example 1 — Standard Join:</strong><br/>
+    User <em>diana</em> sees "AI &amp; the Future" room in her feed and taps it. The client sends <code>HTTP POST /api/rooms/room_789/join</code> with <code>{ user_id: "diana_101", role: "listener" }</code>. The Room Service adds Diana as a participant in the Room Participants DB (NoSQL) and returns <code>{ room_id, signaling_server_url: "wss://sig-us-west.example.com", speakers: [...], sfu_endpoint: "..." }</code>. The client opens a <strong>WebSocket connection</strong> to <code>wss://sig-us-west.example.com</code>. The Signaling Server facilitates WebRTC setup: the client sends an SDP offer, the SFU sends an SDP answer, and ICE candidates are exchanged. Once the WebRTC peer connection is established, the SFU begins forwarding audio streams from active speakers to Diana's client over UDP (SRTP). Diana hears the speakers in real time with ~150 ms latency.
+</div>
+
+<div class="example-card">
+    <strong>Example 2 — User Behind a Strict NAT/Firewall (TURN Relay):</strong><br/>
+    User <em>eve</em> is on a corporate network behind a symmetric NAT. During the ICE candidate exchange, direct peer-to-peer connection to the SFU fails. The Signaling Server provides TURN server credentials. Eve's client connects to the TURN server, which relays the audio traffic between Eve and the SFU. Latency is slightly higher (~200 ms) due to the relay, but the connection succeeds.
+</div>
+
+<div class="example-card">
+    <strong>Example 3 — Room with 3,000 Listeners (Cascading SFU):</strong><br/>
+    A popular room has 3,000 listeners. A single SFU cannot forward audio to all 3,000 clients. The system uses a <strong>cascading SFU topology</strong>: a primary SFU receives audio from speakers and forwards to 5 secondary SFUs. Each secondary SFU handles ~600 listeners. When Diana joins, she is assigned to a secondary SFU with available capacity. The audio path is: Speaker → Primary SFU → Secondary SFU → Diana's client. Additional latency from the cascade is ~20 ms.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Room Service — Join Endpoint</h4>
+<div class="card">
+    <table>
+        <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th></tr>
+        <tr>
+            <td><code>/api/rooms/{room_id}/join</code></td>
+            <td><code>POST</code></td>
+            <td>JSON: <code>{ user_id }</code></td>
+            <td><code>200 OK</code> — <code>{ room_id, signaling_server_url, sfu_endpoint, speakers, ice_servers }</code></td>
+        </tr>
+        <tr>
+            <td><code>/api/rooms/{room_id}/leave</code></td>
+            <td><code>POST</code></td>
+            <td>JSON: <code>{ user_id }</code></td>
+            <td><code>200 OK</code> — <code>{ room_id, status: "left" }</code></td>
+        </tr>
+    </table>
+    <p>The join endpoint determines which SFU and Signaling Server the user should connect to (based on geographic proximity and server load). It writes the participant record and returns connection details.</p>
+</div>
+
+<h4>Room Participants DB (NoSQL)</h4>
+<p>Stores current participants in each room. Partition key: <code>room_id</code>, sort key: <code>user_id</code>. NoSQL chosen because: extremely high read/write frequency (users join/leave every second in popular rooms), simple access patterns (get all participants for a room, add/remove a participant), and the data is ephemeral (deleted when room ends). Sharded by <code>room_id</code> so all participants of a room are co-located.</p>
+
+<h4>Signaling Server (WebSocket)</h4>
+<div class="card">
+    <p><strong>Protocol:</strong> WebSocket (<code>wss://</code>)</p>
+    <p><strong>Connection Establishment:</strong></p>
+    <ol>
+        <li>Client initiates WebSocket handshake to the assigned signaling server URL (returned by Room Service).</li>
+        <li>Server authenticates the client via a JWT token included in the handshake headers.</li>
+        <li>Upon connection, the server registers the client in an in-memory map: <code>{ user_id → WebSocket connection, room_id }</code>.</li>
+        <li>The server subscribes to a <strong>pub/sub channel</strong> for the room (e.g., channel <code>room:{room_id}</code>) so it receives events from other signaling servers.</li>
+    </ol>
+    <p><strong>Connection Storage:</strong> Each signaling server maintains an in-memory hash map of <code>{ user_id: { ws_connection, room_id } }</code>. This data is volatile — if the server restarts, clients reconnect.</p>
+    <p><strong>Finding Other WebSockets (Cross-Server Communication):</strong> When a room event occurs (e.g., hand raised, speaker change), the event is published to the room's pub/sub channel. All signaling servers that have at least one participant in that room are subscribed to the channel and receive the event. Each server then forwards the event to its local WebSocket connections for that room.</p>
+    <p><strong>Heartbeat:</strong> The server sends WebSocket <code>ping</code> frames every 15 seconds. If no <code>pong</code> is received within 5 seconds, the connection is considered dead and cleaned up.</p>
+    <p><strong>Messages exchanged over WebSocket:</strong></p>
+    <ul>
+        <li><code>sdp_offer</code> / <code>sdp_answer</code> — WebRTC session description exchange</li>
+        <li><code>ice_candidate</code> — ICE candidate exchange for NAT traversal</li>
+        <li><code>participant_joined</code> / <code>participant_left</code> — room roster updates</li>
+        <li><code>hand_raised</code> / <code>hand_lowered</code> — listener hand actions</li>
+        <li><code>role_changed</code> — promotions/demotions</li>
+        <li><code>speaker_muted</code> — moderator mute action</li>
+    </ul>
+</div>
+
+<h4>SFU (Selective Forwarding Unit)</h4>
+<div class="card">
+    <p><strong>Protocol:</strong> WebRTC (SRTP over UDP for media; DTLS for key exchange)</p>
+    <p><strong>How it works:</strong></p>
+    <ol>
+        <li>Each <strong>speaker</strong> sends a single audio stream (Opus-encoded, ~32-64 kbps) to the SFU via a WebRTC peer connection.</li>
+        <li>The SFU receives these streams and <strong>selectively forwards</strong> them to each listener — it does NOT mix/transcode the audio (that would be an MCU).</li>
+        <li>Each listener receives N separate audio streams (one per active speaker). The client-side mixes them locally.</li>
+        <li>The SFU can apply <strong>active speaker detection</strong>: only forward the top 3 most recently active speakers to reduce bandwidth.</li>
+    </ol>
+    <p><strong>Why UDP:</strong> Real-time audio requires lowest possible latency. UDP does not retransmit lost packets (unlike TCP), avoiding head-of-line blocking. Audio codecs like Opus have built-in packet loss concealment (PLC), so a few lost packets are inaudible. TCP's retransmission would add unacceptable latency (50-200 ms per retransmission).</p>
+    <p><strong>DTLS:</strong> Used to establish encryption keys for SRTP. This ensures audio data is encrypted in transit without the overhead of TLS over TCP.</p>
+    <p><strong>Room-to-SFU Assignment:</strong> When a room is created, a <strong>Room Router</strong> (part of the Room Service) assigns the room to an SFU instance based on: (a) geographic proximity to the room creator, (b) current load on SFU instances. This mapping is stored in the Cache.</p>
+</div>
+
+<h4>TURN/STUN Servers</h4>
+<p>STUN servers help clients discover their public IP and port (needed for WebRTC NAT traversal). TURN servers act as relays for clients that cannot establish a direct connection to the SFU (e.g., behind symmetric NATs or strict firewalls). The Room Service returns TURN/STUN credentials as part of the join response.</p>
+
+<hr/>
+
+<!-- ============================================================ -->
+<!-- FLOW 4 — RAISE HAND & SPEAK -->
+<!-- ============================================================ -->
+<h2 id="flow4">6. Flow 4 — Raise Hand &amp; Speaking</h2>
+<p>This flow covers a listener requesting to speak by raising their hand, being promoted by a moderator, and then streaming their audio to the room.</p>
+
+<div class="mermaid">
+graph LR
+    A["📱 Listener Client"] -->|"1. WS: raise_hand"| B["📡 Signaling Server"]
+    B -->|"2. Publish hand_raised<br/>to room channel"| C["📢 Pub/Sub"]
+    C -->|"3. Forward to signaling servers<br/>with room participants"| D["📡 Other Signaling Servers"]
+    D -->|"4. WS: hand_raised event"| E["📱 Moderator Client"]
+    E -->|"5. WS: promote_to_speaker<br/>{user_id: listener}"| B
+    B -->|"6. Update participant role"| F[("🗄️ Room Participants<br/>(NoSQL)")]
+    B -->|"7. Publish role_changed event"| C
+    C --> D
+    D -->|"8. WS: role_changed event"| A
+    A -->|"9. Begin sending audio<br/>via WebRTC"| G["🔊 SFU"]
+    G -->|"10. Forward new speaker's<br/>audio to all listeners"| H["📱 All Listeners"]
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-card">
+    <strong>Example 1 — Standard Hand Raise &amp; Promotion:</strong><br/>
+    Listener <em>frank</em> taps the ✋ button. His client sends a WebSocket message <code>{ type: "raise_hand", room_id: "room_789", user_id: "frank_202" }</code> to the Signaling Server. The Signaling Server publishes a <code>hand_raised</code> event to the pub/sub channel <code>room:room_789</code>. All Signaling Servers subscribed to this channel forward the event to their connected clients. Moderator <em>alice</em> sees Frank's hand raised in her UI. She taps "Invite to Speak," which sends <code>{ type: "promote_to_speaker", room_id: "room_789", user_id: "frank_202" }</code> via WebSocket. The Signaling Server updates Frank's role in the Room Participants DB from <code>listener</code> to <code>speaker</code> and publishes a <code>role_changed</code> event. Frank's client receives the <code>role_changed</code> event, enables the microphone, and begins sending Opus-encoded audio to the SFU via WebRTC. The SFU immediately starts forwarding Frank's audio stream to all listeners. The entire flow from hand-raise to speaking takes ~2-3 seconds.
+</div>
+
+<div class="example-card">
+    <strong>Example 2 — Moderator Mutes a Speaker:</strong><br/>
+    Speaker <em>frank</em> is generating background noise. Moderator <em>alice</em> taps "Mute" on Frank. Her client sends <code>{ type: "mute_speaker", room_id: "room_789", user_id: "frank_202" }</code>. The Signaling Server publishes a <code>speaker_muted</code> event. Frank's client receives this event and disables the local microphone, stopping audio transmission to the SFU. All listeners hear Frank go silent.
+</div>
+
+<div class="example-card">
+    <strong>Example 3 — Demoting a Speaker Back to Listener:</strong><br/>
+    Moderator <em>alice</em> taps "Move to Audience" on speaker <em>frank</em>. The Signaling Server updates Frank's role to <code>listener</code> in the Room Participants DB and publishes a <code>role_changed</code> event. Frank's client disables the microphone and tears down the send-side WebRTC track. The SFU stops forwarding Frank's stream.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Pub/Sub System</h4>
+<div class="card">
+    <p><strong>Purpose:</strong> Enables cross-server real-time communication. When multiple Signaling Servers host participants of the same room, events from one server must reach participants on other servers.</p>
+    <p><strong>How it works:</strong></p>
+    <ol>
+        <li>When a Signaling Server has at least one client in room <code>X</code>, it <strong>subscribes</strong> to the pub/sub channel <code>room:X</code>.</li>
+        <li>When an event occurs (hand raise, promotion, join, leave), the Signaling Server <strong>publishes</strong> the event to channel <code>room:X</code>.</li>
+        <li>All subscribed Signaling Servers receive the event and forward it to their local WebSocket connections for that room.</li>
+    </ol>
+    <p><strong>Why Pub/Sub (not Message Queue):</strong> Pub/sub is used here because the events are <strong>broadcast</strong> to all subscribers (every server with room participants). A message queue would deliver each message to only one consumer. Additionally, pub/sub has lower latency (no disk persistence needed for ephemeral room events).</p>
+    <p><strong>Why not direct WebSocket broadcast:</strong> With multiple Signaling Servers, a single server doesn't know about connections on other servers. Pub/sub provides the inter-server communication layer.</p>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<!-- FLOW 5 — FOLLOW USER -->
+<!-- ============================================================ -->
+<h2 id="flow5">7. Flow 5 — Follow a User</h2>
+<p>This flow covers one user following another user.</p>
+
+<div class="mermaid">
+graph LR
+    A["📱 Client App"] -->|"HTTP POST<br/>/api/users/{id}/follow"| B["⚖️ Load Balancer"]
+    B --> C["👤 User Service"]
+    C -->|"Write follow relationship"| D[("🗄️ Follow DB<br/>(SQL)")]
+    C -->|"Increment follower/following count"| E[("🗄️ User DB<br/>(SQL)")]
+    C -->|"Invalidate cache"| F["🧠 Cache"]
+    C -->|"Return success"| A
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-card">
+    <strong>Example 1 — Standard Follow:</strong><br/>
+    User <em>grace</em> visits <em>alice</em>'s profile and taps "Follow." The client sends <code>HTTP POST /api/users/alice_123/follow</code> with <code>{ follower_id: "grace_303" }</code>. The User Service inserts a row into the Follow DB: <code>(follower_id: grace_303, followee_id: alice_123, created_at: now)</code>. It also increments Alice's <code>follower_count</code> and Grace's <code>following_count</code> in the User DB. The Cache entry for Grace's follow list (<code>follows:grace_303</code>) is invalidated. The API returns <code>200 OK</code>.
+</div>
+
+<div class="example-card">
+    <strong>Example 2 — Unfollow:</strong><br/>
+    User <em>grace</em> taps "Unfollow" on <em>alice</em>'s profile. The client sends <code>HTTP DELETE /api/users/alice_123/follow</code> with <code>{ follower_id: "grace_303" }</code>. The User Service deletes the row from the Follow DB and decrements the counts. Cache is invalidated.
+</div>
+
+<div class="example-card">
+    <strong>Example 3 — Duplicate Follow (Idempotency):</strong><br/>
+    Due to network issues, the follow request is sent twice. The Follow DB has a composite primary key <code>(follower_id, followee_id)</code>, so the second insert is a no-op (or handled with <code>INSERT ... ON CONFLICT DO NOTHING</code>). The API returns <code>200 OK</code> for both requests without creating a duplicate.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>User Service</h4>
+<div class="card">
+    <p><strong>Protocol:</strong> HTTP REST</p>
+    <table>
+        <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th></tr>
+        <tr>
+            <td><code>/api/users/{user_id}/follow</code></td>
+            <td><code>POST</code></td>
+            <td>JSON: <code>{ follower_id }</code></td>
+            <td><code>200 OK</code> — <code>{ status: "following" }</code></td>
+        </tr>
+        <tr>
+            <td><code>/api/users/{user_id}/follow</code></td>
+            <td><code>DELETE</code></td>
+            <td>JSON: <code>{ follower_id }</code></td>
+            <td><code>200 OK</code> — <code>{ status: "unfollowed" }</code></td>
+        </tr>
+        <tr>
+            <td><code>/api/users/{user_id}</code></td>
+            <td><code>GET</code></td>
+            <td>Path param: <code>user_id</code></td>
+            <td><code>200 OK</code> — <code>{ user_id, username, display_name, bio, avatar_url, follower_count, following_count }</code></td>
+        </tr>
+        <tr>
+            <td><code>/api/users/{user_id}</code></td>
+            <td><code>PATCH</code></td>
+            <td>JSON: <code>{ display_name?, bio?, avatar_url? }</code></td>
+            <td><code>200 OK</code> — updated user object</td>
+        </tr>
+    </table>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<!-- COMBINED DIAGRAM -->
+<!-- ============================================================ -->
+<h2 id="combined">8. Combined Overall Diagram</h2>
+<p>This diagram unifies all five flows into a single architecture view, showing every major component and how they interact.</p>
+
+<div class="mermaid">
+graph TB
+    Client["📱 Client App<br/>(iOS / Android)"]
+
+    subgraph API_Layer["API Layer"]
+        LB["⚖️ Load Balancer"]
+        RoomSvc["🏠 Room Service"]
+        FeedSvc["📰 Feed Service"]
+        UserSvc["👤 User Service"]
+    end
+
+    subgraph Realtime_Layer["Real-Time Layer"]
+        SigLB["⚖️ WebSocket LB<br/>(Sticky Sessions)"]
+        Sig1["📡 Signaling Server 1"]
+        Sig2["📡 Signaling Server 2"]
+        PubSub["📢 Pub/Sub"]
+        SFU1["🔊 SFU (Primary)"]
+        SFU2["🔊 SFU (Secondary)"]
+        TURN["🔄 TURN/STUN Servers"]
+    end
+
+    subgraph Async_Layer["Async Processing"]
+        MQ["📨 Message Queue"]
+        NotifSvc["🔔 Notification Service"]
+        Push["📲 APNs / FCM"]
+    end
+
+    subgraph Data_Layer["Data Layer"]
+        Cache["🧠 Cache"]
+        UserDB[("👤 User DB<br/>(SQL)")]
+        FollowDB[("🔗 Follow DB<br/>(SQL)")]
+        ClubDB[("🏛️ Club DB<br/>(SQL)")]
+        RoomDB[("🏠 Room DB<br/>(NoSQL)")]
+        ParticipantDB[("👥 Participants DB<br/>(NoSQL)")]
+        NotifDB[("🔔 Notification DB<br/>(NoSQL)")]
+        CDN["🌐 CDN<br/>(Avatars, Static Assets)"]
+    end
+
+    Client -->|"HTTP REST"| LB
+    LB --> RoomSvc
+    LB --> FeedSvc
+    LB --> UserSvc
+
+    RoomSvc --> RoomDB
+    RoomSvc --> ParticipantDB
+    RoomSvc --> Cache
+    RoomSvc -->|"Publish events"| MQ
+
+    FeedSvc --> FollowDB
+    FeedSvc --> ClubDB
+    FeedSvc --> RoomDB
+    FeedSvc --> Cache
+
+    UserSvc --> UserDB
+    UserSvc --> FollowDB
+    UserSvc --> Cache
+
+    Client -->|"WebSocket"| SigLB
+    SigLB --> Sig1
+    SigLB --> Sig2
+    Sig1 <-->|"Room events"| PubSub
+    Sig2 <-->|"Room events"| PubSub
+    Sig1 --> ParticipantDB
+    Sig2 --> ParticipantDB
+
+    Client <-->|"WebRTC (SRTP/UDP)"| SFU1
+    SFU1 --> SFU2
+    SFU2 <-->|"Audio relay"| Client
+    Client <-->|"TURN relay"| TURN
+
+    MQ --> NotifSvc
+    NotifSvc --> FollowDB
+    NotifSvc --> NotifDB
+    NotifSvc --> Push
+    Push --> Client
+
+    Client -->|"Fetch avatars/assets"| CDN
+</div>
+
+<h3>Combined Flow Examples</h3>
+
+<div class="example-card">
+    <strong>Example — End-to-End: Room Created → Notification → Discovery → Join → Listen → Raise Hand → Speak:</strong><br/><br/>
+    <strong>Step 1 (Room Creation):</strong> Alice opens the app and taps "Start a Room." Her client sends <code>HTTP POST /api/rooms</code> to the Load Balancer → Room Service. The Room Service writes the room to the Room DB (NoSQL) and publishes a <code>room_created</code> event to the Message Queue.<br/><br/>
+    <strong>Step 2 (Notification):</strong> The Notification Service consumes the event from the Message Queue, looks up Alice's followers in the Follow DB (SQL), writes notification records to the Notification DB (NoSQL), and sends push notifications via APNs/FCM. Bob, who follows Alice, receives a push notification: "alice just started: AI &amp; the Future."<br/><br/>
+    <strong>Step 3 (Discovery):</strong> Charlie, who also follows Alice, opens the app. His client sends <code>HTTP GET /api/feed</code> to the Load Balancer → Feed Service. The Feed Service checks the Cache (miss), queries the Follow DB for Charlie's follows, queries the Room DB for active rooms by followed users, and returns Alice's room at the top of the feed. The result is cached for 30 seconds.<br/><br/>
+    <strong>Step 4 (Join &amp; Listen):</strong> Charlie taps on the room. His client sends <code>HTTP POST /api/rooms/room_789/join</code> to the Room Service, which adds Charlie to the Room Participants DB and returns the Signaling Server URL and SFU endpoint. Charlie's client opens a WebSocket to the Signaling Server, exchanges SDP/ICE, and establishes a WebRTC connection to the SFU. Charlie now hears Alice speaking in real time.<br/><br/>
+    <strong>Step 5 (Raise Hand &amp; Speak):</strong> Charlie raises his hand by sending <code>{ type: "raise_hand" }</code> over WebSocket. Alice (moderator) sees the hand raised and promotes Charlie. The Signaling Server updates Charlie's role to <code>speaker</code> and publishes a <code>role_changed</code> event via Pub/Sub. Charlie's client begins sending audio to the SFU. The SFU forwards Charlie's audio to all listeners, including Bob who joined via the push notification. Now both Alice and Charlie are speaking, and Bob and 200 other listeners hear them.
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<!-- DATABASE SCHEMA -->
+<!-- ============================================================ -->
+<h2 id="schema">9. Database Schema</h2>
+
+<!-- -------- SQL Tables -------- -->
+<h3>SQL Tables</h3>
+
+<h4>users</h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+    <tr><td>user_id</td><td>UUID</td><td><span class="badge badge-pk">PK</span></td><td>Globally unique identifier</td></tr>
+    <tr><td>username</td><td>VARCHAR(50)</td><td><span class="badge badge-idx">UNIQUE INDEX</span></td><td>Unique, immutable handle</td></tr>
+    <tr><td>display_name</td><td>VARCHAR(100)</td><td></td><td></td></tr>
+    <tr><td>bio</td><td>TEXT</td><td></td><td></td></tr>
+    <tr><td>avatar_url</td><td>VARCHAR(500)</td><td></td><td>Points to CDN URL</td></tr>
+    <tr><td>follower_count</td><td>INTEGER</td><td></td><td>Denormalized count</td></tr>
+    <tr><td>following_count</td><td>INTEGER</td><td></td><td>Denormalized count</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+    <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<div class="card">
+    <p><strong>Why SQL:</strong> User data is highly structured with a fixed schema. Relational integrity is needed (foreign keys reference users from other tables). ACID guarantees prevent inconsistencies during concurrent profile updates. Read-heavy with infrequent writes — well-suited for SQL.</p>
+    <p><strong>Denormalization Note:</strong> <code>follower_count</code> and <code>following_count</code> are denormalized (duplicated from what could be computed via <code>COUNT(*) FROM follows</code>). This is done because these counts are displayed on every profile view, and computing them via JOIN/COUNT on the follows table would be expensive at scale (a user with 1M followers would require counting 1M rows). The tradeoff is that on every follow/unfollow, we must atomically increment/decrement these counters.</p>
+    <p><strong>Index:</strong> <span class="badge badge-idx">B-tree index</span> on <code>username</code> (unique). This supports fast lookups by username for profile pages and search. B-tree chosen because usernames are strings that benefit from ordered comparison (prefix searches for autocomplete).</p>
+    <p><strong>Read/Write Triggers:</strong></p>
+    <ul>
+        <li><strong>Read:</strong> User opens a profile page, user appears in search results, user appears in room participant list.</li>
+        <li><strong>Write:</strong> User signs up (INSERT), user edits profile (UPDATE), user follows/unfollows someone (UPDATE follower/following counts).</li>
+    </ul>
+    <p><strong>Sharding:</strong> Hash-based sharding on <code>user_id</code>. Ensures even distribution of users across shards. All user profile reads are single-shard lookups by <code>user_id</code>.</p>
+</div>
+
+<h4>follows</h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+    <tr><td>follower_id</td><td>UUID</td><td><span class="badge badge-pk">PK</span> <span class="badge badge-fk">FK → users</span></td><td>Composite PK part 1</td></tr>
+    <tr><td>followee_id</td><td>UUID</td><td><span class="badge badge-pk">PK</span> <span class="badge badge-fk">FK → users</span></td><td>Composite PK part 2</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<div class="card">
+    <p><strong>Why SQL:</strong> Follows are an inherently relational concept (a many-to-many relationship between users). SQL's composite primary key <code>(follower_id, followee_id)</code> naturally prevents duplicates. Foreign key constraints ensure referential integrity.</p>
+    <p><strong>Indexes:</strong></p>
+    <ul>
+        <li><span class="badge badge-idx">B-tree index</span> on <code>(follower_id)</code> — supports "who does user X follow?" query (used by Feed Service to find followed users' rooms). B-tree allows range scans ordered by <code>created_at</code> if needed.</li>
+        <li><span class="badge badge-idx">B-tree index</span> on <code>(followee_id)</code> — supports "who follows user X?" query (used by Notification Service to fan out notifications). B-tree chosen for the same reason.</li>
+    </ul>
+    <p><strong>Read/Write Triggers:</strong></p>
+    <ul>
+        <li><strong>Read:</strong> User opens feed (read followees), notification service fans out (read followers), user views followers/following list.</li>
+        <li><strong>Write:</strong> User taps Follow (INSERT), user taps Unfollow (DELETE).</li>
+    </ul>
+    <p><strong>Sharding:</strong> Hash-based sharding on <code>follower_id</code>. This co-locates all of a user's "following" relationships on the same shard, which optimizes the most common query ("who does user X follow?" for feed generation). The tradeoff is that "who follows user X?" (for notification fan-out) may need to query multiple shards — mitigated by caching follower lists for high-follower users.</p>
+</div>
+
+<h4>clubs</h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+    <tr><td>club_id</td><td>UUID</td><td><span class="badge badge-pk">PK</span></td><td></td></tr>
+    <tr><td>name</td><td>VARCHAR(100)</td><td></td><td></td></tr>
+    <tr><td>description</td><td>TEXT</td><td></td><td></td></tr>
+    <tr><td>creator_id</td><td>UUID</td><td><span class="badge badge-fk">FK → users</span></td><td></td></tr>
+    <tr><td>avatar_url</td><td>VARCHAR(500)</td><td></td><td></td></tr>
+    <tr><td>member_count</td><td>INTEGER</td><td></td><td>Denormalized</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<div class="card">
+    <p><strong>Why SQL:</strong> Structured data with fixed schema. Relational to users (creator) and club_members. Infrequent writes (clubs are created rarely).</p>
+    <p><strong>Denormalization Note:</strong> <code>member_count</code> is denormalized to avoid counting rows in <code>club_members</code> on every club page view.</p>
+    <p><strong>Read/Write Triggers:</strong></p>
+    <ul>
+        <li><strong>Read:</strong> User views club page, feed service checks user's clubs.</li>
+        <li><strong>Write:</strong> User creates a club (INSERT), club details are edited (UPDATE).</li>
+    </ul>
+</div>
+
+<h4>club_members</h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+    <tr><td>club_id</td><td>UUID</td><td><span class="badge badge-pk">PK</span> <span class="badge badge-fk">FK → clubs</span></td><td>Composite PK part 1</td></tr>
+    <tr><td>user_id</td><td>UUID</td><td><span class="badge badge-pk">PK</span> <span class="badge badge-fk">FK → users</span></td><td>Composite PK part 2</td></tr>
+    <tr><td>role</td><td>ENUM('admin','member')</td><td></td><td></td></tr>
+    <tr><td>joined_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<div class="card">
+    <p><strong>Why SQL:</strong> Many-to-many join table between users and clubs. Relational integrity via foreign keys.</p>
+    <p><strong>Indexes:</strong></p>
+    <ul>
+        <li><span class="badge badge-idx">B-tree index</span> on <code>(user_id)</code> — supports "which clubs is user X in?" (used by Feed Service).</li>
+        <li><span class="badge badge-idx">B-tree index</span> on <code>(club_id)</code> — supports "who are the members of club Y?" (used for club pages).</li>
+    </ul>
+    <p><strong>Read/Write Triggers:</strong></p>
+    <ul>
+        <li><strong>Read:</strong> Feed service queries user's clubs; club page shows members.</li>
+        <li><strong>Write:</strong> User joins a club (INSERT), user leaves a club (DELETE).</li>
+    </ul>
+</div>
+
+<!-- -------- NoSQL Tables -------- -->
+<h3>NoSQL Tables</h3>
+
+<h4>rooms</h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+    <tr><td>room_id</td><td>UUID</td><td><span class="badge badge-pk">Partition Key</span></td><td></td></tr>
+    <tr><td>title</td><td>String</td><td></td><td></td></tr>
+    <tr><td>creator_id</td><td>UUID</td><td></td><td>References users</td></tr>
+    <tr><td>club_id</td><td>UUID (nullable)</td><td></td><td>References clubs</td></tr>
+    <tr><td>type</td><td>String</td><td></td><td>'open' | 'social' | 'closed'</td></tr>
+    <tr><td>status</td><td>String</td><td></td><td>'live' | 'scheduled' | 'ended'</td></tr>
+    <tr><td>topic</td><td>String</td><td></td><td></td></tr>
+    <tr><td>listener_count</td><td>Integer</td><td></td><td>Denormalized, updated on join/leave</td></tr>
+    <tr><td>created_at</td><td>Timestamp</td><td></td><td></td></tr>
+    <tr><td>scheduled_at</td><td>Timestamp (nullable)</td><td></td><td></td></tr>
+    <tr><td>ended_at</td><td>Timestamp (nullable)</td><td></td><td></td></tr>
+</table>
+<div class="card">
+    <p><strong>Why NoSQL:</strong> Rooms are created and updated frequently (status changes, listener count updates). The schema may evolve (new fields for features). Access patterns are simple (get room by room_id, query active rooms). Horizontal scaling via hash-based sharding on <code>room_id</code> is straightforward.</p>
+    <p><strong>Denormalization Note:</strong> <code>listener_count</code> is denormalized (instead of counting rows in room_participants). This is because listener count is displayed in the feed and room UI, and counting participants for every feed request would be expensive for popular rooms.</p>
+    <p><strong>Secondary Index:</strong> A <span class="badge badge-idx">Global Secondary Index (GSI)</span> on <code>(status, creator_id)</code> supports the Feed Service query: "find all rooms where status = 'live' and creator_id is in [list of followed users]." This is a composite index to avoid scanning the entire table.</p>
+    <p><strong>Read/Write Triggers:</strong></p>
+    <ul>
+        <li><strong>Read:</strong> Feed service queries active rooms; user views room details.</li>
+        <li><strong>Write:</strong> User creates a room (INSERT), participant joins/leaves (UPDATE listener_count), room ends (UPDATE status).</li>
+    </ul>
+    <p><strong>Sharding:</strong> Hash-based on <code>room_id</code>. Even distribution. All operations on a room go to the same shard.</p>
+</div>
+
+<h4>room_participants</h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+    <tr><td>room_id</td><td>UUID</td><td><span class="badge badge-pk">Partition Key</span></td><td></td></tr>
+    <tr><td>user_id</td><td>UUID</td><td><span class="badge badge-sk">Sort Key</span></td><td></td></tr>
+    <tr><td>role</td><td>String</td><td></td><td>'moderator' | 'speaker' | 'listener'</td></tr>
+    <tr><td>is_hand_raised</td><td>Boolean</td><td></td><td></td></tr>
+    <tr><td>joined_at</td><td>Timestamp</td><td></td><td></td></tr>
+</table>
+<div class="card">
+    <p><strong>Why NoSQL:</strong> Extremely high read/write frequency (every join, leave, hand raise, role change writes to this table). Access pattern is always by <code>room_id</code> (get all participants of a room). Data is ephemeral — deleted/archived when room ends. NoSQL provides the throughput and horizontal scaling needed.</p>
+    <p><strong>Read/Write Triggers:</strong></p>
+    <ul>
+        <li><strong>Read:</strong> Signaling server reads participants to broadcast state; client requests room roster; feed service may read speaker info.</li>
+        <li><strong>Write:</strong> User joins a room (INSERT), user leaves (DELETE), moderator promotes/demotes (UPDATE role), user raises hand (UPDATE is_hand_raised).</li>
+    </ul>
+    <p><strong>Sharding:</strong> Hash-based on <code>room_id</code>. Co-locates all participants of a room on the same shard for efficient queries. This is critical: the most common query is "give me all participants of room X" — a single-partition query.</p>
+</div>
+
+<h4>notifications</h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+    <tr><td>user_id</td><td>UUID</td><td><span class="badge badge-pk">Partition Key</span></td><td>The notification recipient</td></tr>
+    <tr><td>notification_id</td><td>UUID (ULID)</td><td><span class="badge badge-sk">Sort Key</span></td><td>Time-sortable unique ID</td></tr>
+    <tr><td>type</td><td>String</td><td></td><td>'room_started' | 'invited_to_speak' | 'new_follower'</td></tr>
+    <tr><td>actor_id</td><td>UUID</td><td></td><td>Who triggered the notification</td></tr>
+    <tr><td>room_id</td><td>UUID (nullable)</td><td></td><td>Relevant room, if applicable</td></tr>
+    <tr><td>message</td><td>String</td><td></td><td>Pre-rendered notification text</td></tr>
+    <tr><td>is_read</td><td>Boolean</td><td></td><td></td></tr>
+    <tr><td>created_at</td><td>Timestamp</td><td></td><td></td></tr>
+</table>
+<div class="card">
+    <p><strong>Why NoSQL:</strong> Write-heavy (fan-out creates thousands of notifications per room creation). Access pattern is simple (partition by <code>user_id</code>, sort by <code>notification_id</code> which is time-ordered). No complex JOINs needed. Horizontal scaling via hash sharding on <code>user_id</code>.</p>
+    <p><strong>Read/Write Triggers:</strong></p>
+    <ul>
+        <li><strong>Read:</strong> User opens notification tab (<code>GET /api/notifications?user_id=X&cursor=...&limit=20</code>).</li>
+        <li><strong>Write:</strong> Notification Service writes on room creation fan-out, on follow events, on invite-to-speak events. User marks notification as read (UPDATE is_read).</li>
+    </ul>
+    <p><strong>Sharding:</strong> Hash-based on <code>user_id</code>. Each user's notifications live on the same shard, enabling efficient paginated reads.</p>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<!-- CACHE & CDN DEEP DIVE -->
+<!-- ============================================================ -->
+<h2 id="cache">10. CDN &amp; Cache Deep Dive</h2>
+
+<h3>CDN</h3>
+<div class="card">
+    <p><strong>Is a CDN appropriate?</strong> <strong>Yes</strong>, for the following:</p>
+    <ul>
+        <li><strong>User avatars:</strong> Profile pictures are fetched frequently (in room participant lists, feeds, profiles). Serving them from a CDN edge node reduces latency and offloads the origin storage.</li>
+        <li><strong>Club images:</strong> Similar reasoning to avatars.</li>
+        <li><strong>Static app assets:</strong> JavaScript bundles, CSS, icons, fonts (for web clients).</li>
+    </ul>
+    <p><strong>NOT appropriate for live audio:</strong> Audio in Clubhouse is real-time and ephemeral — it is not pre-recorded content. CDNs are optimized for cacheable, static, or pre-encoded content. Real-time audio goes through the SFU + WebRTC stack, not a CDN.</p>
+    <p><strong>If room replays are ever added:</strong> Recorded audio files would be stored in Object Storage and served via CDN, as they become static, cacheable content.</p>
+</div>
+
+<h3>In-Memory Cache</h3>
+
+<h4>1. Active Room State Cache</h4>
+<div class="card">
+    <table>
+        <tr><th>Property</th><th>Value</th><th>Why</th></tr>
+        <tr><td><strong>What is cached</strong></td><td>Room metadata + current speaker list + listener count</td><td>This data is read every time someone views the feed or room details.</td></tr>
+        <tr><td><strong>Key pattern</strong></td><td><code>room:{room_id}</code></td><td>Simple, direct lookup.</td></tr>
+        <tr><td><strong>Caching strategy</strong></td><td><strong>Write-through</strong></td><td>Room state must be consistent. When a participant joins/leaves or a role changes, the cache is updated synchronously alongside the database write. This ensures cache and DB are always in sync for active room data.</td></tr>
+        <tr><td><strong>Populated by</strong></td><td>Room Service on every write (join, leave, role change, room creation)</td><td>—</td></tr>
+        <tr><td><strong>Eviction policy</strong></td><td><strong>LRU (Least Recently Used)</strong></td><td>Rooms that haven't been accessed recently are evicted first. Since most active rooms are accessed constantly, only inactive/ended rooms get evicted.</td></tr>
+        <tr><td><strong>Expiration (TTL)</strong></td><td><strong>5 minutes</strong></td><td>Short TTL ensures that if a room ends and the cache isn't explicitly invalidated (edge case), the stale entry expires quickly. Active rooms are refreshed well before the TTL via write-through updates.</td></tr>
+    </table>
+</div>
+
+<h4>2. Feed Cache</h4>
+<div class="card">
+    <table>
+        <tr><th>Property</th><th>Value</th><th>Why</th></tr>
+        <tr><td><strong>What is cached</strong></td><td>Pre-computed list of rooms for a user's feed</td><td>Computing a feed requires querying follows, clubs, and active rooms — expensive if done on every request.</td></tr>
+        <tr><td><strong>Key pattern</strong></td><td><code>feed:{user_id}</code></td><td>Per-user feed personalization.</td></tr>
+        <tr><td><strong>Caching strategy</strong></td><td><strong>Cache-aside (lazy loading)</strong></td><td>Not all users are online simultaneously. Pre-computing feeds for all users (write-through) would waste memory. Instead, the feed is computed on first request and cached.</td></tr>
+        <tr><td><strong>Populated by</strong></td><td>Feed Service on cache miss (first request or after TTL expiry)</td><td>—</td></tr>
+        <tr><td><strong>Eviction policy</strong></td><td><strong>LRU</strong></td><td>Inactive users' cached feeds are evicted first to make room for active users.</td></tr>
+        <tr><td><strong>Expiration (TTL)</strong></td><td><strong>30 seconds</strong></td><td>Very short TTL because the feed changes frequently (rooms start and end constantly). A 30-second TTL balances freshness with reducing database load. Users pulling-to-refresh within 30 seconds get the cached version.</td></tr>
+    </table>
+</div>
+
+<h4>3. User Profile Cache</h4>
+<div class="card">
+    <table>
+        <tr><th>Property</th><th>Value</th><th>Why</th></tr>
+        <tr><td><strong>What is cached</strong></td><td>User profile data (display name, username, bio, avatar URL, counts)</td><td>User profiles are read far more than they are written. Profiles are embedded in room participant lists and feeds.</td></tr>
+        <tr><td><strong>Key pattern</strong></td><td><code>user:{user_id}</code></td><td>—</td></tr>
+        <tr><td><strong>Caching strategy</strong></td><td><strong>Cache-aside</strong></td><td>Profiles are read-heavy, write-rare. Cache-aside is simple and efficient for this pattern.</td></tr>
+        <tr><td><strong>Populated by</strong></td><td>User Service on cache miss</td><td>—</td></tr>
+        <tr><td><strong>Eviction policy</strong></td><td><strong>LRU</strong></td><td>Inactive users' profiles evicted first.</td></tr>
+        <tr><td><strong>Expiration (TTL)</strong></td><td><strong>1 hour</strong></td><td>Profiles change infrequently (name/bio updates are rare). 1-hour TTL is acceptable staleness. On profile update, the cache is explicitly invalidated for immediate consistency.</td></tr>
+    </table>
+</div>
+
+<h4>4. Follow List Cache</h4>
+<div class="card">
+    <table>
+        <tr><th>Property</th><th>Value</th><th>Why</th></tr>
+        <tr><td><strong>What is cached</strong></td><td>List of user IDs that a given user follows</td><td>Used by both Feed Service and Notification Service. Querying the Follow DB on every feed request is expensive.</td></tr>
+        <tr><td><strong>Key pattern</strong></td><td><code>follows:{user_id}</code></td><td>—</td></tr>
+        <tr><td><strong>Caching strategy</strong></td><td><strong>Cache-aside</strong></td><td>Follow lists change infrequently relative to reads.</td></tr>
+        <tr><td><strong>Populated by</strong></td><td>Feed Service / Notification Service on cache miss</td><td>—</td></tr>
+        <tr><td><strong>Eviction policy</strong></td><td><strong>LRU</strong></td><td>—</td></tr>
+        <tr><td><strong>Expiration (TTL)</strong></td><td><strong>10 minutes</strong></td><td>Follow/unfollow actions also explicitly invalidate the cache entry for the user, so the TTL is a safety net.</td></tr>
+    </table>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<!-- SCALING CONSIDERATIONS -->
+<!-- ============================================================ -->
+<h2 id="scaling">11. Scaling Considerations</h2>
+
+<h3>Load Balancers</h3>
+<div class="card">
+    <p>Load balancers are placed at the following points:</p>
+    <ol>
+        <li><strong>Before API Servers (Room Service, Feed Service, User Service):</strong> Layer 7 (HTTP) load balancer. Distributes incoming REST requests using <strong>round-robin</strong> or <strong>least-connections</strong>. Performs health checks and removes unhealthy instances. Terminates TLS for HTTPS. All API services are <strong>stateless</strong>, so any instance can handle any request — no sticky sessions needed.</li>
+        <li><strong>Before Signaling Servers (WebSocket):</strong> Layer 4 (TCP) load balancer with <strong>consistent hashing</strong> based on <code>room_id</code> or <strong>sticky sessions</strong> (IP hash). WebSocket connections are long-lived and stateful (the server maintains the connection in memory). Using sticky sessions ensures that when a client reconnects (e.g., after a network blip), it reconnects to the same server that holds its state. Alternatively, consistent hashing on <code>room_id</code> ensures all participants of a room connect to the same signaling server, reducing pub/sub overhead (fewer cross-server events).</li>
+        <li><strong>Before SFU Cluster:</strong> A <strong>room-aware router</strong> (application-level load balancing) that assigns rooms to SFU instances based on geographic proximity and current load. Not a traditional load balancer — more of a routing service. Decisions are cached (room → SFU mapping stored in cache).</li>
+    </ol>
+</div>
+
+<h3>Horizontal Scaling</h3>
+<div class="card">
+    <ul>
+        <li><strong>API Services (Room, Feed, User):</strong> Stateless — scale horizontally by adding more instances behind the load balancer. Autoscaling based on CPU/request-count metrics.</li>
+        <li><strong>Signaling Servers:</strong> Scale horizontally with pub/sub for inter-server communication. Each new server can handle additional WebSocket connections. Use pub/sub channels per room so that only relevant servers receive room events.</li>
+        <li><strong>SFU Instances:</strong> Scale horizontally — each SFU handles a set of rooms. For individual large rooms, use <strong>cascading SFUs</strong> (tree topology).</li>
+        <li><strong>Notification Service:</strong> Scale horizontally by adding more consumer workers that read from the Message Queue partitions.</li>
+        <li><strong>Databases:</strong> Horizontal sharding as described in the Schema section. Read replicas for read-heavy SQL tables (users, follows).</li>
+        <li><strong>Cache:</strong> Distributed cache cluster with consistent hashing for key distribution. Add nodes to increase capacity.</li>
+    </ul>
+</div>
+
+<h3>SFU Cascading for Large Rooms</h3>
+<div class="card">
+    <p>A single SFU can realistically handle forwarding audio to ~500-1,000 listeners. For rooms exceeding this:</p>
+    <ol>
+        <li>A <strong>primary SFU</strong> receives audio from all speakers.</li>
+        <li>The primary SFU forwards to N <strong>secondary SFUs</strong>.</li>
+        <li>Each secondary SFU forwards to its set of listeners.</li>
+        <li>New listeners are assigned to the secondary SFU with the most available capacity.</li>
+    </ol>
+    <p>This tree topology adds ~10-20 ms of latency per hop but allows scaling to 5,000+ listeners per room.</p>
+</div>
+
+<h3>Notification Fan-out Scaling</h3>
+<div class="card">
+    <p>When a celebrity with millions of followers creates a room:</p>
+    <ul>
+        <li>The Message Queue partitions the follower list across multiple consumer workers.</li>
+        <li>Each worker handles a batch of followers (e.g., 10,000 at a time).</li>
+        <li>Notification records are bulk-written to the Notification DB.</li>
+        <li>Push notifications are batched and sent via APNs/FCM batch APIs.</li>
+        <li>The entire fan-out completes in seconds via parallelism, not sequentially.</li>
+    </ul>
+</div>
+
+<h3>Geographic Distribution</h3>
+<div class="card">
+    <ul>
+        <li><strong>SFU servers</strong> deployed in multiple regions (e.g., US-West, US-East, EU, Asia). Users connect to the nearest SFU for lowest audio latency.</li>
+        <li><strong>Signaling servers</strong> deployed in multiple regions, with pub/sub spanning regions.</li>
+        <li><strong>API servers</strong> can be deployed in multiple regions with database read replicas in each region for low-latency reads.</li>
+        <li><strong>CDN edge nodes</strong> distribute static assets globally.</li>
+    </ul>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<!-- TRADEOFFS & DEEP DIVES -->
+<!-- ============================================================ -->
+<h2 id="tradeoffs">12. Tradeoffs &amp; Deep Dives</h2>
+
+<h3>SFU vs MCU (Multipoint Control Unit)</h3>
+<div class="card">
+    <table>
+        <tr><th></th><th>SFU</th><th>MCU</th></tr>
+        <tr><td><strong>How it works</strong></td><td>Forwards each speaker's stream individually to all listeners. No processing.</td><td>Mixes all speaker streams into one composite stream. Sends single stream to each listener.</td></tr>
+        <tr><td><strong>Server CPU</strong></td><td>Low (just forwarding packets)</td><td>Very high (real-time audio mixing/transcoding)</td></tr>
+        <tr><td><strong>Bandwidth (server→client)</strong></td><td>Higher (N streams per listener, where N = active speakers)</td><td>Lower (1 mixed stream per listener)</td></tr>
+        <tr><td><strong>Client CPU</strong></td><td>Moderate (client mixes N streams locally)</td><td>Low (single stream to decode)</td></tr>
+        <tr><td><strong>Scalability</strong></td><td>Excellent (no per-stream processing)</td><td>Poor (CPU scales with speakers × listeners)</td></tr>
+        <tr><td><strong>Latency</strong></td><td>Lower (no processing delay)</td><td>Higher (mixing adds 30-50 ms)</td></tr>
+    </table>
+    <p><strong>Decision: SFU.</strong> Clubhouse rooms can have many speakers but the SFU only forwards active speakers (typically 1-3 at a time). The bandwidth overhead is minimal (3 streams × 32 kbps = 96 kbps). The scalability advantage is decisive — MCU CPU costs would be enormous for thousands of rooms with hundreds of listeners each.</p>
+</div>
+
+<h3>WebRTC vs RTMP</h3>
+<div class="card">
+    <table>
+        <tr><th></th><th>WebRTC</th><th>RTMP</th></tr>
+        <tr><td><strong>Latency</strong></td><td>Sub-second (~100-300 ms)</td><td>1-5 seconds</td></tr>
+        <tr><td><strong>Direction</strong></td><td>Bidirectional (speak + listen)</td><td>Primarily unidirectional (send to server)</td></tr>
+        <tr><td><strong>NAT traversal</strong></td><td>Built-in (ICE, STUN, TURN)</td><td>Requires separate configuration</td></tr>
+        <tr><td><strong>Encryption</strong></td><td>Mandatory (DTLS-SRTP)</td><td>Optional</td></tr>
+        <tr><td><strong>Browser/mobile support</strong></td><td>Native in browsers and mobile SDKs</td><td>Requires Flash or special libraries</td></tr>
+    </table>
+    <p><strong>Decision: WebRTC.</strong> Sub-second latency is essential for conversational audio. RTMP's 1-5 second delay would make back-and-forth conversation impossible (imagine a 3-second delay between saying something and hearing the response). WebRTC's built-in NAT traversal and encryption are also significant advantages.</p>
+</div>
+
+<h3>WebSocket vs Long Polling vs SSE for Signaling</h3>
+<div class="card">
+    <table>
+        <tr><th></th><th>WebSocket</th><th>Long Polling</th><th>SSE</th></tr>
+        <tr><td><strong>Direction</strong></td><td>Full-duplex (bidirectional)</td><td>Simulated bidirectional</td><td>Server → Client only</td></tr>
+        <tr><td><strong>Latency</strong></td><td>Lowest (persistent connection)</td><td>Higher (reconnection overhead)</td><td>Low for server events</td></tr>
+        <tr><td><strong>Overhead</strong></td><td>Low after handshake</td><td>High (repeated HTTP headers)</td><td>Low</td></tr>
+        <tr><td><strong>Use case fit</strong></td><td>Real-time bidirectional events</td><td>Infrequent updates</td><td>Server-push only</td></tr>
+    </table>
+    <p><strong>Decision: WebSocket.</strong> Signaling requires <strong>bidirectional</strong> communication: the client sends SDP offers, ICE candidates, hand-raise actions; the server sends SDP answers, ICE candidates, room state events. SSE is unidirectional (server → client only) and would require a separate HTTP channel for client → server messages. Long polling adds reconnection latency that's unacceptable for real-time signaling. WebSocket provides the lowest latency, full-duplex, persistent connection needed.</p>
+</div>
+
+<h3>Pub/Sub vs Message Queue for Room Event Broadcast</h3>
+<div class="card">
+    <table>
+        <tr><th></th><th>Pub/Sub</th><th>Message Queue</th></tr>
+        <tr><td><strong>Delivery</strong></td><td>All subscribers receive every message</td><td>Each message consumed by one consumer</td></tr>
+        <tr><td><strong>Persistence</strong></td><td>Optional (typically in-memory)</td><td>Durable (persisted to disk)</td></tr>
+        <tr><td><strong>Latency</strong></td><td>Very low (in-memory)</td><td>Low but higher (disk I/O)</td></tr>
+    </table>
+    <p><strong>Decision: Both are used for different purposes.</strong></p>
+    <ul>
+        <li><strong>Pub/Sub</strong> for real-time room event broadcast (hand raise, role change, join/leave): these events must reach ALL signaling servers with room participants. Pub/sub's broadcast semantics are the right fit. Events are ephemeral — no need for persistence.</li>
+        <li><strong>Message Queue</strong> for asynchronous notification fan-out (room created → notify followers): this is a task that should be processed exactly once per follower. Message queue's point-to-point semantics with durable storage ensure reliability.</li>
+    </ul>
+</div>
+
+<h3>Fan-out on Write vs Fan-out on Read (Feed)</h3>
+<div class="card">
+    <table>
+        <tr><th></th><th>Fan-out on Write</th><th>Fan-out on Read</th></tr>
+        <tr><td><strong>How</strong></td><td>When a room goes live, pre-compute and write to every follower's feed.</td><td>When a user requests their feed, compute it on the fly.</td></tr>
+        <tr><td><strong>Write cost</strong></td><td>Very high (celebrity creates room → write to millions of feeds)</td><td>Low (just write the room to rooms table)</td></tr>
+        <tr><td><strong>Read cost</strong></td><td>Very low (just read the pre-computed feed)</td><td>Higher (query follows + active rooms)</td></tr>
+        <tr><td><strong>Staleness</strong></td><td>Can be stale (room may have ended by time user reads)</td><td>Always fresh</td></tr>
+    </table>
+    <p><strong>Decision: Fan-out on Read.</strong> Clubhouse rooms are <strong>ephemeral</strong> — they last minutes to hours. Pre-computing feeds on room creation would result in feeds full of stale entries (rooms that already ended). Additionally, the write amplification for celebrity users (millions of feed writes) would be extreme. Fan-out on read with a 30-second cache TTL provides fresh results with acceptable performance.</p>
+</div>
+
+<h3>UDP vs TCP for Audio</h3>
+<div class="card">
+    <p><strong>Decision: UDP (via WebRTC's SRTP).</strong></p>
+    <ul>
+        <li><strong>Why not TCP:</strong> TCP guarantees in-order, reliable delivery. If a packet is lost, TCP retransmits it and holds subsequent packets (head-of-line blocking). This adds 50-200 ms of latency per loss event. For real-time audio, this delay is unacceptable — it causes audible stutter and breaks conversational flow.</li>
+        <li><strong>Why UDP:</strong> If a packet is lost, the application simply moves on. Audio codecs like Opus have packet loss concealment (PLC) that fills in gaps imperceptibly. Losing a 20 ms audio frame is inaudible; waiting 200 ms for a retransmission is very noticeable.</li>
+        <li><strong>Security:</strong> Despite using UDP, audio is encrypted via DTLS-SRTP (Datagram Transport Layer Security + Secure Real-time Transport Protocol). DTLS provides TLS-equivalent encryption over UDP.</li>
+    </ul>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<!-- ALTERNATIVE APPROACHES -->
+<!-- ============================================================ -->
+<h2 id="alternatives">13. Alternative Approaches</h2>
+
+<div class="card">
+    <h4>1. Peer-to-Peer WebRTC Mesh (No SFU)</h4>
+    <p><strong>Approach:</strong> Each participant sends audio directly to every other participant (full mesh topology).</p>
+    <p><strong>Why not chosen:</strong> In a mesh, each participant has N-1 upload and N-1 download streams. For a room with 50 participants, each client would need 49 upload + 49 download streams. This is impractical for mobile devices (limited bandwidth and CPU). The mesh topology doesn't scale beyond ~6 participants. Clubhouse rooms routinely have hundreds or thousands of participants.</p>
 </div>
 
 <div class="card">
-<h3>Steps</h3>
-<ol>
-<li>Client sends JOIN request via API Gateway with room_id and auth token</li>
-<li>Room Service validates room access (public/invite-only/club-member), checks capacity, adds user to participant list</li>
-<li>Signaling Server initiates WebRTC session — SDP offer/answer exchange via WebSocket</li>
-<li>STUN server determines client's public IP:port; TURN relay used if direct P2P fails (symmetric NAT)</li>
-<li>Agora SFU (Selective Forwarding Unit) receives audio from speakers and selectively relays to all listeners</li>
-<li>Room state (participants, roles, speaker queue) stored in Redis Cluster for fast reads</li>
-<li>WebSocket Hub pushes real-time events: user_joined, speaker_changed, hand_raised, room_ended</li>
-<li>Presence Service updates user's current room for social graph notifications</li>
-</ol>
-
-<h3>Example</h3>
-<p>User opens app, sees "Tech Talk with @elonmusk" with 3,200 listeners. Taps join → Room Service checks capacity (OK, <8K), signaling exchanges SDP, STUN resolves public endpoint, connects to nearest Agora SFU edge node in us-east. Audio streams from 4 speakers forwarded to client. WebSocket delivers participant count updates and speaker changes in real-time.</p>
-
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>SFU Architecture (Agora)</h4>
-<p><strong>Protocol:</strong> UDP-based RTP/RTCP with custom congestion control (GCC — Google Congestion Control variant)</p>
-<p><strong>Topology:</strong> SFU (not MCU) — each speaker's audio stream forwarded individually; client-side mixing saves server CPU</p>
-<p><strong>Edge Nodes:</strong> SFUs deployed in 200+ PoPs worldwide; users connect to nearest edge for minimum RTT</p>
-<p><strong>Scaling:</strong> Large rooms cascaded across multiple SFU instances — inter-SFU relay over dedicated backbone</p>
-</div>
-<div class="card">
-<h4>WebRTC Signaling</h4>
-<p><strong>Protocol:</strong> WebSocket (wss://) for signaling; UDP for media</p>
-<p><strong>SDP:</strong> Session Description Protocol — describes codec capabilities, ICE candidates, DTLS fingerprint</p>
-<p><strong>ICE:</strong> Interactive Connectivity Establishment — tries direct P2P first, falls back to TURN relay</p>
-<p><strong>SRTP:</strong> Secure RTP with DTLS-SRTP key exchange — end-to-hop encryption (not E2E in SFU model)</p>
-</div>
-<div class="card">
-<h4>Opus Codec</h4>
-<p><strong>Codec:</strong> Opus (RFC 6716) — hybrid codec combining SILK (speech) and CELT (music)</p>
-<p><strong>Bitrate:</strong> 32kbps (speech-optimized) to 64kbps (high quality); adaptive based on network</p>
-<p><strong>Frame:</strong> 20ms frames (50 frames/second), low algorithmic delay (~26.5ms)</p>
-<p><strong>FEC:</strong> In-band Forward Error Correction — redundant data in subsequent packets for loss recovery</p>
-</div>
-<div class="card">
-<h4>Room State (Redis)</h4>
-<p><strong>Data:</strong> Hash per room — participants list, speaker queue, moderator list, room metadata</p>
-<p><strong>Pub/Sub:</strong> Redis Pub/Sub channels per room for real-time event distribution to WebSocket hubs</p>
-<p><strong>Expiry:</strong> Rooms auto-expire after 24 hours of inactivity; TTL on all room keys</p>
-<p><strong>Scaling:</strong> Redis Cluster with hash-slot based sharding by room_id</p>
-</div>
-</div>
-</div>
-
-<!-- ============ FLOW 2: ROOM DISCOVERY ============ -->
-<h2>Flow 2: Room Discovery & Hallway Feed</h2>
-<div class="card">
-<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#DAA520"/></marker></defs>
-<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="90" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Client</text>
-<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Discovery Service</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Feed Builder)</text>
-<rect x="370" y="30" width="130" height="50" rx="8" fill="#9C27B0"/><text x="435" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Social Graph</text><text x="435" y="67" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Neo4j / DGraph)</text>
-<rect x="370" y="100" width="130" height="50" rx="8" fill="#00897B"/><text x="435" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Active Rooms</text><text x="435" y="137" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Redis Cache)</text>
-<rect x="550" y="60" width="130" height="50" rx="8" fill="#FB8C00"/><text x="615" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Ranking ML</text><text x="615" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Personalized)</text>
-<rect x="730" y="60" width="130" height="50" rx="8" fill="#795548"/><text x="795" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Topic/Club DB</text><text x="795" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(PostgreSQL)</text>
-<line x1="140" y1="85" x2="185" y2="85" stroke="#DAA520" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="320" y1="75" x2="365" y2="55" stroke="#DAA520" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="320" y1="95" x2="365" y2="120" stroke="#DAA520" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="500" y1="55" x2="545" y2="75" stroke="#DAA520" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="500" y1="125" x2="545" y2="95" stroke="#DAA520" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="680" y1="85" x2="725" y2="85" stroke="#DAA520" stroke-width="2" marker-end="url(#ah2)"/>
-</svg>
+    <h4>2. MCU-Based Architecture</h4>
+    <p><strong>Approach:</strong> Server mixes all speaker audio into a single composite stream and sends one stream per listener.</p>
+    <p><strong>Why not chosen:</strong> MCU must decode, mix, and re-encode audio in real time. For a room with 5 speakers and 1,000 listeners, the MCU must produce 1,000 output streams. This is extraordinarily CPU-intensive. At Clubhouse's scale (thousands of simultaneous rooms), the server-side compute cost would be prohibitive. SFU avoids all this processing.</p>
 </div>
 
 <div class="card">
-<h3>Steps</h3>
-<ol>
-<li>Client opens "Hallway" — sends GET /discover with user's interests, followed clubs, followed users</li>
-<li>Discovery Service queries Social Graph: who does user follow → which rooms are they in?</li>
-<li>Active Rooms cache (Redis) provides real-time room metadata: topic, speaker count, listener count, duration</li>
-<li>Ranking ML model personalizes room order: social signal (friends in room) × topic relevance × room momentum (growth rate)</li>
-<li>Scheduled rooms from followed clubs/topics surfaced alongside live rooms</li>
-<li>Results returned paginated with refresh interval (pull-to-refresh + periodic background sync)</li>
-</ol>
-
-<h3>Example</h3>
-<p>User follows 200 people, 5 clubs. Discovery finds 3 followed users currently speaking in rooms. ML ranks: (1) "Startup Fundraising" (2 friends speaking, topic match), (2) "Music Production" (1 friend listening, club match), (3) "Daily News" (trending, 5K listeners). Scheduled: "AI Ethics Panel" in 2 hours from followed club.</p>
-
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>Social Graph</h4>
-<p><strong>Store:</strong> Graph database (Neo4j or DGraph) for follow relationships, club memberships, topic interests</p>
-<p><strong>Queries:</strong> 2-hop traversal: user → follows → currently_in_room (real-time join with Redis)</p>
-<p><strong>Caching:</strong> User's follow list cached in Redis (invalidated on follow/unfollow); TTL 5 minutes</p>
-</div>
-<div class="card">
-<h4>Ranking Algorithm</h4>
-<p><strong>Score:</strong> w1×social_signal + w2×topic_match + w3×room_momentum + w4×speaker_quality</p>
-<p><strong>Social Signal:</strong> Number of followed users in room, weighted by interaction frequency</p>
-<p><strong>Momentum:</strong> Listener growth rate (joins/minute) — indicates engaging content</p>
-<p><strong>Cold Start:</strong> New users get topic-based recommendations until social graph is built</p>
-</div>
-</div>
-</div>
-
-<!-- ============ FLOW 3: MODERATION ============ -->
-<h2>Flow 3: Room Moderation & Speaker Management</h2>
-<div class="card">
-<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#8B6914"/></marker></defs>
-<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Listener Client</text><text x="80" y="97" text-anchor="middle" fill="#fff" font-size="10">(Raise Hand)</text>
-<rect x="190" y="60" width="130" height="50" rx="8" fill="#607D8B"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">WebSocket Hub</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="10">(Event Broker)</text>
-<rect x="370" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="435" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Room Service</text><text x="435" y="97" text-anchor="middle" fill="#fff" font-size="10">(State Machine)</text>
-<rect x="550" y="30" width="130" height="50" rx="8" fill="#E53935"/><text x="615" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Moderator Client</text><text x="615" y="67" text-anchor="middle" fill="#fff" font-size="10">(Accept/Deny)</text>
-<rect x="550" y="100" width="130" height="50" rx="8" fill="#9C27B0"/><text x="615" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Abuse Detection</text><text x="615" y="137" text-anchor="middle" fill="#fff" font-size="10">(Audio Classifier)</text>
-<rect x="730" y="60" width="130" height="50" rx="8" fill="#FB8C00"/><text x="795" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Trust & Safety</text><text x="795" y="97" text-anchor="middle" fill="#fff" font-size="10">(Action Pipeline)</text>
-<line x1="140" y1="85" x2="185" y2="85" stroke="#8B6914" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="320" y1="85" x2="365" y2="85" stroke="#8B6914" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="500" y1="75" x2="545" y2="55" stroke="#8B6914" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="500" y1="95" x2="545" y2="120" stroke="#8B6914" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="680" y1="55" x2="725" y2="75" stroke="#8B6914" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="680" y1="125" x2="725" y2="95" stroke="#8B6914" stroke-width="2" marker-end="url(#ah3)"/>
-</svg>
+    <h4>3. RTMP Ingest + HLS/DASH Delivery (Traditional Live Streaming)</h4>
+    <p><strong>Approach:</strong> Speakers stream via RTMP to a media server. The server transcodes and segments the audio into HLS/DASH chunks. Listeners consume via HLS/DASH over HTTP.</p>
+    <p><strong>Why not chosen:</strong> HLS/DASH introduces 5-30 seconds of latency (segmenting, CDN propagation). This makes conversation impossible. Clubhouse is an interactive audio platform, not a broadcast platform. The conversational model requires sub-second latency.</p>
 </div>
 
 <div class="card">
-<h3>Steps</h3>
-<ol>
-<li>Listener taps "Raise Hand" → event sent via WebSocket to Room Service</li>
-<li>Room Service adds user to speaker queue (Redis sorted set, scored by request time)</li>
-<li>Moderator receives real-time notification of hand raise; sees queue of pending speakers</li>
-<li>Moderator accepts → Room Service changes user role from LISTENER to SPEAKER</li>
-<li>Signaling server renegotiates: opens user's audio upstream channel to SFU</li>
-<li>Abuse Detection ML monitors speaker audio streams for policy violations (hate speech, harassment)</li>
-<li>Trust & Safety pipeline can auto-mute, remove speaker, or flag for human review</li>
-<li>All role changes broadcast to all room participants via WebSocket</li>
-</ol>
-
-<h3>Example</h3>
-<p>In a 500-person room, listener @alice raises hand. Moderator sees her at position #3 in queue. After 2 minutes, moderator promotes @alice to speaker. Signaling renegotiates SDP — Alice's microphone input now routed through SFU to all 500 listeners. Audio classifier monitors in real-time at 1-second windows.</p>
-
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>Role State Machine</h4>
-<p><strong>Roles:</strong> LISTENER → INVITED_SPEAKER → SPEAKER → MODERATOR (progressive promotion)</p>
-<p><strong>Transitions:</strong> Raise hand (L→queue), Accept (queue→S), Promote (S→M), Mute (S→L), Kick (any→removed)</p>
-<p><strong>Consistency:</strong> Redis MULTI/EXEC for atomic role transitions; distributed lock per room</p>
-</div>
-<div class="card">
-<h4>Audio Abuse Detection</h4>
-<p><strong>Model:</strong> CNN-based audio classifier (trained on labeled hate speech audio datasets)</p>
-<p><strong>Processing:</strong> 1-second sliding windows, real-time inference on GPU edge servers</p>
-<p><strong>Actions:</strong> Confidence >0.9 → auto-mute speaker; 0.7-0.9 → flag for moderator review</p>
-<p><strong>Fallback:</strong> Speech-to-text (Whisper) → text classifier for nuanced policy violations</p>
-</div>
-</div>
-</div>
-
-<!-- ============ COMBINED ARCHITECTURE ============ -->
-<h2>Combined Architecture</h2>
-<div class="card">
-<svg viewBox="0 0 1050 480" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FFD700"/></marker></defs>
-<rect x="20" y="80" width="130" height="50" rx="8" fill="#34A853"/><text x="85" y="105" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Mobile Clients</text><text x="85" y="120" text-anchor="middle" fill="#fff" font-size="10">(iOS / Android)</text>
-<rect x="200" y="50" width="130" height="50" rx="8" fill="#FB8C00"/><text x="265" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">API Gateway</text><text x="265" y="87" text-anchor="middle" fill="#fff" font-size="10">(REST + Auth)</text>
-<rect x="200" y="120" width="130" height="50" rx="8" fill="#607D8B"/><text x="265" y="142" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">WebSocket Hub</text><text x="265" y="157" text-anchor="middle" fill="#fff" font-size="10">(Real-time Events)</text>
-<rect x="390" y="20" width="130" height="50" rx="8" fill="#4285F4"/><text x="455" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Room Service</text>
-<rect x="390" y="90" width="130" height="50" rx="8" fill="#4285F4"/><text x="455" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Discovery Service</text>
-<rect x="390" y="160" width="130" height="50" rx="8" fill="#4285F4"/><text x="455" y="182" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Presence Service</text>
-<rect x="580" y="20" width="130" height="50" rx="8" fill="#9C27B0"/><text x="645" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Agora SFU</text><text x="645" y="57" text-anchor="middle" fill="#fff" font-size="10">(Audio Relay)</text>
-<rect x="580" y="90" width="130" height="50" rx="8" fill="#E53935"/><text x="645" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Signaling Server</text><text x="645" y="127" text-anchor="middle" fill="#fff" font-size="10">(WebRTC)</text>
-<rect x="770" y="50" width="130" height="50" rx="8" fill="#00897B"/><text x="835" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">TURN / STUN</text><text x="835" y="87" text-anchor="middle" fill="#fff" font-size="10">(NAT Traversal)</text>
-<rect x="390" y="300" width="130" height="55" rx="8" fill="#795548"/><text x="455" y="322" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">PostgreSQL</text><text x="455" y="337" text-anchor="middle" fill="#fff" font-size="10">(Users, Clubs)</text>
-<rect x="580" y="300" width="130" height="55" rx="8" fill="#795548"/><text x="645" y="322" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Redis Cluster</text><text x="645" y="337" text-anchor="middle" fill="#fff" font-size="10">(Room State)</text>
-<rect x="770" y="300" width="130" height="55" rx="8" fill="#795548"/><text x="835" y="322" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Neo4j / DGraph</text><text x="835" y="337" text-anchor="middle" fill="#fff" font-size="10">(Social Graph)</text>
-<rect x="580" y="400" width="130" height="50" rx="8" fill="#9C27B0"/><text x="645" y="422" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Abuse Detection</text><text x="645" y="437" text-anchor="middle" fill="#fff" font-size="10">(Audio ML)</text>
-<line x1="150" y1="90" x2="195" y2="75" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="150" y1="115" x2="195" y2="140" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="330" y1="75" x2="385" y2="45" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="330" y1="85" x2="385" y2="115" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="330" y1="155" x2="385" y2="185" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="520" y1="45" x2="575" y2="45" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="520" y1="55" x2="575" y2="110" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="710" y1="45" x2="765" y2="65" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="710" y1="115" x2="765" y2="85" stroke="#FFD700" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="455" y1="70" x2="455" y2="295" stroke="#FFD700" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="455" y1="210" x2="580" y2="320" stroke="#FFD700" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="520" y1="140" x2="770" y2="315" stroke="#FFD700" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="645" y1="70" x2="645" y2="395" stroke="#FFD700" stroke-width="1.5" marker-end="url(#ah4)"/>
-</svg>
-</div>
-
-<!-- ============ DATABASE SCHEMA ============ -->
-<h2>Database Schema</h2>
-<div class="grid">
-<div class="card">
-<h3>PostgreSQL — Users & Clubs</h3>
-<pre><code>CREATE TABLE users (
-  user_id      UUID PRIMARY KEY,     <span class="tag tag-pk">PK</span>
-  username     VARCHAR(30) UNIQUE,   <span class="tag tag-idx">INDEX</span>
-  display_name VARCHAR(100),
-  bio          TEXT,
-  avatar_url   TEXT,
-  phone_hash   CHAR(64) UNIQUE,     <span class="tag tag-idx">INDEX</span>
-  is_verified  BOOLEAN DEFAULT FALSE,
-  follower_ct  INT DEFAULT 0,
-  following_ct INT DEFAULT 0,
-  created_at   TIMESTAMPTZ
-);
-
-CREATE TABLE clubs (
-  club_id      UUID PRIMARY KEY,     <span class="tag tag-pk">PK</span>
-  name         VARCHAR(100),
-  description  TEXT,
-  avatar_url   TEXT,
-  topic_ids    UUID[],
-  member_count INT DEFAULT 0,
-  is_private   BOOLEAN DEFAULT FALSE,
-  created_by   UUID REFERENCES users, <span class="tag tag-fk">FK</span>
-  created_at   TIMESTAMPTZ
-);
-
-CREATE TABLE club_members (
-  club_id  UUID REFERENCES clubs,  <span class="tag tag-fk">FK</span>
-  user_id  UUID REFERENCES users,  <span class="tag tag-fk">FK</span>
-  role     VARCHAR(20),  -- admin, member, follower
-  joined_at TIMESTAMPTZ,
-  PRIMARY KEY (club_id, user_id)
-);</code></pre>
+    <h4>4. Graph Database for Social Graph (Follows)</h4>
+    <p><strong>Approach:</strong> Use a graph database to store follow relationships, enabling complex traversals like "friends of friends in a room."</p>
+    <p><strong>Why not chosen:</strong> Clubhouse's social graph queries are simple: "who does user X follow?" and "who follows user X?" These are efficiently handled by SQL with indexes. Graph databases add operational complexity (different query language, different scaling model) without a clear benefit for these simple access patterns. If Clubhouse needed "2nd-degree connections" for advanced recommendations, a graph DB might be warranted.</p>
 </div>
 
 <div class="card">
-<h3>Redis — Room State</h3>
-<pre><code># Room metadata (Hash)
-HSET room:{room_id} title "Tech Talk"
-HSET room:{room_id} topic "Technology"
-HSET room:{room_id} created_by {user_id}
-HSET room:{room_id} started_at 1707500000
-HSET room:{room_id} is_private false
-
-# Participants by role (Sorted Sets)
-ZADD room:{room_id}:speakers {join_ts} {user_id}
-ZADD room:{room_id}:listeners {join_ts} {user_id}
-ZADD room:{room_id}:moderators {join_ts} {user_id}
-
-# Speaker queue (Sorted Set — score = request time)
-ZADD room:{room_id}:hand_raised {ts} {user_id}
-
-# User presence (Hash with TTL)
-HSET presence:{user_id} room_id {room_id}
-HSET presence:{user_id} role "speaker"
-EXPIRE presence:{user_id} 300  # heartbeat refresh</code></pre>
-<p><span class="tag tag-shard">SHARD</span> Sharded by room_id hash slot across Redis Cluster</p>
-<p><span class="tag tag-ttl">TTL</span> Room keys expire 24h after last activity; presence keys expire on 5-min heartbeat</p>
+    <h4>5. Event Sourcing for Room State</h4>
+    <p><strong>Approach:</strong> Store all room events (join, leave, hand raise, promote) as an immutable log and reconstruct room state by replaying events.</p>
+    <p><strong>Why not chosen:</strong> Room state is ephemeral — once a room ends, historical state reconstruction is rarely needed. Event sourcing adds complexity (event store, projections, eventual consistency) without clear benefit. The current approach (directly updating room state in the Participants DB) is simpler and faster.</p>
 </div>
 
 <div class="card">
-<h3>Graph DB — Social Graph</h3>
-<pre><code># Follow relationship
-(user_a)-[:FOLLOWS {since: timestamp}]->(user_b)
-
-# Club membership
-(user)-[:MEMBER_OF {role: "admin", since: ts}]->(club)
-
-# Topic interest
-(user)-[:INTERESTED_IN {weight: 0.8}]->(topic)
-
-# Room participation (ephemeral — cleared on room end)
-(user)-[:IN_ROOM {role: "speaker"}]->(room)
-
-Key queries:
-- "Which of my followed users are currently in rooms?"
-  MATCH (me)-[:FOLLOWS]->(friend)-[:IN_ROOM]->(room) RETURN room, friend
-- "Rooms from clubs I'm in"
-  MATCH (me)-[:MEMBER_OF]->(club)<-[:HOSTED_BY]-(room) RETURN room</code></pre>
-</div>
+    <h4>6. Server-Side Audio Recording by Default</h4>
+    <p><strong>Approach:</strong> Record all room audio server-side for playback later.</p>
+    <p><strong>Why not chosen:</strong> Privacy concerns (users may say things they don't want permanently recorded). Storage costs at scale (thousands of rooms × hours of audio). Clubhouse's core value proposition is ephemeral, live conversations. Recording should be opt-in, not default.</p>
 </div>
 
-<!-- ============ CACHE & CDN ============ -->
-<h2>Cache & CDN Deep Dive</h2>
+<hr/>
+
+<!-- ============================================================ -->
+<!-- ADDITIONAL CONSIDERATIONS -->
+<!-- ============================================================ -->
+<h2 id="additional">14. Additional Considerations</h2>
+
 <div class="card">
-<div class="grid">
-<div class="card">
-<h4>Room State Cache (Redis)</h4>
-<p><strong>Strategy:</strong> Write-through — all room mutations go through Room Service which writes to Redis atomically</p>
-<p><strong>Eviction:</strong> TTL-based — rooms auto-expire; no LRU needed since data is transient</p>
-<p><strong>Pub/Sub:</strong> Redis Pub/Sub per room channel broadcasts events to all connected WebSocket hubs</p>
-</div>
-<div class="card">
-<h4>Social Graph Cache</h4>
-<p><strong>Cached:</strong> User's follow list (up to 10K follows), club memberships cached in Redis</p>
-<p><strong>Strategy:</strong> Cache-aside with 5-minute TTL; invalidated on follow/unfollow actions</p>
-<p><strong>Precompute:</strong> "Friends in rooms" computed every 30 seconds and cached per-user for fast hallway loads</p>
-</div>
-<div class="card">
-<h4>CDN (Cloudflare)</h4>
-<p><strong>Static:</strong> Profile avatars, club images served via Cloudflare CDN with 24hr cache</p>
-<p><strong>API:</strong> No CDN caching for real-time endpoints (room state, discovery feed) — must be fresh</p>
-<p><strong>Audio:</strong> Audio not cached (real-time ephemeral) — SFU handles all media distribution</p>
-</div>
-</div>
+    <h4>Audio Codec: Opus</h4>
+    <p>The Opus codec is ideal for real-time conversational audio. It supports bitrates from 6 kbps to 510 kbps, handles packet loss gracefully with built-in Forward Error Correction (FEC) and Packet Loss Concealment (PLC), and has very low algorithmic latency (~5 ms). It's the standard codec for WebRTC audio.</p>
 </div>
 
-<!-- ============ SCALING ============ -->
-<h2>Scaling & Load Balancing</h2>
 <div class="card">
-<ul>
-<li><strong>SFU Scaling:</strong> Cascaded SFU topology — large rooms span multiple SFU instances with inter-SFU relay over dedicated fiber backbone; each SFU handles ~500 audio streams</li>
-<li><strong>WebSocket Hub:</strong> Consistent hashing by room_id — all participants of a room connect to same hub shard; hub instances behind L4 load balancer (sticky sessions via connection ID)</li>
-<li><strong>Geographic Distribution:</strong> SFU edge nodes in 200+ PoPs; clients connect to nearest edge for minimum audio latency; signaling servers in 5 major regions</li>
-<li><strong>Room Service:</strong> Stateless microservice, horizontally scaled behind API gateway; Redis Cluster handles state</li>
-<li><strong>Database:</strong> PostgreSQL read replicas for user/club queries; graph DB sharded by user_id hash; Redis Cluster with 6+ nodes</li>
-</ul>
+    <h4>TURN/STUN Server Infrastructure</h4>
+    <p>~15-20% of users may be behind symmetric NATs or strict corporate firewalls that block direct WebRTC connections. STUN servers help with NAT discovery but can't solve symmetric NATs. TURN servers act as relays for these edge cases. TURN servers should be deployed in multiple regions (co-located with SFUs) to minimize relay latency. TURN bandwidth costs can be significant — monitor usage and set per-user bandwidth limits.</p>
 </div>
 
-<!-- ============ TRADEOFFS ============ -->
-<h2>Tradeoffs</h2>
-<div class="tradeoff-grid">
-<div class="pro">
-<h4>✅ SFU vs MCU</h4>
-<ul>
-<li>Lower server CPU — no audio mixing on server</li>
-<li>Lower latency — no encoding/decoding roundtrip</li>
-<li>Client can choose which streams to render</li>
-</ul>
-</div>
-<div class="con">
-<h4>❌ SFU vs MCU</h4>
-<ul>
-<li>Higher client bandwidth — receives N separate streams</li>
-<li>Client-side mixing complexity (especially on low-end devices)</li>
-<li>More complex congestion control with multiple streams</li>
-</ul>
-</div>
-<div class="pro">
-<h4>✅ Ephemeral Audio</h4>
-<ul>
-<li>Privacy by design — no recordings to leak or subpoena</li>
-<li>Reduced storage costs — no audio blob storage needed</li>
-<li>Encourages authentic, unfiltered conversation</li>
-</ul>
-</div>
-<div class="con">
-<h4>❌ Ephemeral Audio</h4>
-<ul>
-<li>Cannot replay missed content</li>
-<li>Harder to moderate after-the-fact (no audit trail)</li>
-<li>Cannot build content library for SEO/discovery</li>
-</ul>
-</div>
+<div class="card">
+    <h4>Moderation</h4>
+    <p>Real-time audio moderation is challenging (unlike text, you can't pre-filter audio before it's heard). Mitigations include:</p>
+    <ul>
+        <li>Moderator controls (mute, demote, remove) must be low-latency (~1 second to take effect).</li>
+        <li>User reporting system for violations.</li>
+        <li>Automated speech-to-text transcription (async) for post-hoc moderation and terms-of-service enforcement.</li>
+        <li>Rate-limiting room creation to prevent spam rooms.</li>
+    </ul>
 </div>
 
-<!-- ============ ALTERNATIVES ============ -->
-<h2>Alternative Approaches</h2>
-<div class="grid">
 <div class="card">
-<h4>MCU (Multipoint Control Unit)</h4>
-<p>Server mixes all audio into a single stream per participant. Reduces client bandwidth (receives 1 stream instead of N) but massively increases server CPU. Better for very large rooms (10K+) where clients can't handle many streams, but cost-prohibitive at scale.</p>
-</div>
-<div class="card">
-<h4>P2P Mesh (Small Rooms)</h4>
-<p>For rooms with ≤5 speakers, full P2P mesh avoids server infrastructure entirely. Each participant sends audio directly to all others. Zero server cost but O(n²) connections make it impractical beyond ~5 participants.</p>
-</div>
-<div class="card">
-<h4>Recorded Rooms (Twitter Spaces Model)</h4>
-<p>Record and store room audio for replay. Requires blob storage (S3), transcoding pipeline, transcription service, and content moderation review. Enables async consumption but changes the social dynamic and adds significant infrastructure cost.</p>
-</div>
+    <h4>Room Types &amp; Access Control</h4>
+    <ul>
+        <li><strong>Open:</strong> Anyone can join.</li>
+        <li><strong>Social:</strong> Only people followed by the speakers can join.</li>
+        <li><strong>Closed:</strong> Invite-only. Room Service checks an invite list before allowing join.</li>
+    </ul>
+    <p>Access control is enforced in the Room Service <code>join</code> endpoint. For "social" rooms, the service queries the Follow DB to verify the requester follows at least one speaker.</p>
 </div>
 
-<!-- ============ ADDITIONAL INFO ============ -->
-<h2>Additional Information</h2>
 <div class="card">
-<ul>
-<li><strong>Agora.io Integration:</strong> Clubhouse outsourced real-time audio infrastructure to Agora — their SDK handles WebRTC, SFU, TURN/STUN, adaptive bitrate, and echo cancellation out of the box</li>
-<li><strong>Invite-Only Mechanics:</strong> Original invite system used phone number graph — each user gets N invites, creating scarcity and social pressure. Implemented as simple counter in users table + invite_log table.</li>
-<li><strong>Backchannel (DMs):</strong> Separate messaging system using standard WebSocket + persistent storage (PostgreSQL) — not real-time audio; similar to Twitter DM architecture</li>
-<li><strong>Spatial Audio (Experimental):</strong> 3D audio positioning using HRTF (Head-Related Transfer Functions) — each speaker positioned in virtual "room" for more natural conversation feel</li>
-<li><strong>Echo Cancellation:</strong> Acoustic Echo Cancellation (AEC) runs on-device using WebRTC's built-in audio processing pipeline — critical for speaker-phone usage without headphones</li>
-</ul>
+    <h4>Graceful Degradation Under Load</h4>
+    <ul>
+        <li>If SFU is overloaded: reduce audio bitrate (Opus supports adaptive bitrate) rather than dropping listeners.</li>
+        <li>If Signaling Server is overloaded: batch room state events (e.g., aggregate multiple join/leave events into one update per second) instead of one event per action.</li>
+        <li>If database is overloaded: serve feed from slightly stale cache (increase TTL temporarily).</li>
+    </ul>
 </div>
+
+<div class="card">
+    <h4>Rate Limiting</h4>
+    <ul>
+        <li>Room creation: Max 5 rooms per user per hour.</li>
+        <li>Follow/unfollow: Max 100 per hour to prevent spam.</li>
+        <li>Hand raise: Max 1 per room per 10 seconds to prevent UI spam.</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h4>Analytics &amp; Metrics</h4>
+    <p>Track room-level metrics (peak listeners, average duration, speaker count over time) in a <strong>time-series database</strong>. These metrics power room recommendations (trending rooms) and business insights. The time-series DB is written to asynchronously via the Message Queue to avoid impacting the live audio path.</p>
+</div>
+
+<div class="card">
+    <h4>Offline &amp; Background Behavior</h4>
+    <ul>
+        <li>When the app is backgrounded on iOS, the WebRTC audio continues playing (via background audio mode).</li>
+        <li>If the network drops, the client detects via WebSocket heartbeat failure and shows a "Reconnecting…" UI. It re-establishes the WebSocket and WebRTC connections with exponential backoff.</li>
+        <li>If the user was a speaker, they are automatically muted upon reconnection until they explicitly unmute.</li>
+    </ul>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<!-- VENDOR SECTION -->
+<!-- ============================================================ -->
+<h2 id="vendors">15. Vendor Section</h2>
+<p>The above design is vendor-agnostic. Below are specific vendor options for each major component, with rationale.</p>
+
+<table>
+    <tr><th>Component</th><th>Vendor Options</th><th>Why</th></tr>
+    <tr>
+        <td><strong>SQL Database</strong></td>
+        <td>PostgreSQL, CockroachDB, MySQL</td>
+        <td><strong>PostgreSQL:</strong> Mature, feature-rich (CTEs, JSON support, full-text search), large community, excellent tooling. <strong>CockroachDB:</strong> Distributed SQL with horizontal scaling — useful if sharding PostgreSQL becomes complex. <strong>MySQL:</strong> Widely deployed, battle-tested, lighter than PostgreSQL for simple queries.</td>
+    </tr>
+    <tr>
+        <td><strong>NoSQL Database</strong></td>
+        <td>DynamoDB, Cassandra, ScyllaDB</td>
+        <td><strong>DynamoDB:</strong> Fully managed, auto-scaling, consistent performance at any scale, built-in GSI support. <strong>Cassandra:</strong> Open-source, tunable consistency, excellent write throughput. <strong>ScyllaDB:</strong> Cassandra-compatible but with better performance (written in C++ vs Java).</td>
+    </tr>
+    <tr>
+        <td><strong>In-Memory Cache</strong></td>
+        <td>Redis, Memcached, Dragonfly</td>
+        <td><strong>Redis:</strong> Versatile (supports pub/sub, Lua scripting, data structures), can double as the pub/sub system for signaling servers. <strong>Memcached:</strong> Simpler, multi-threaded, slightly faster for pure key-value caching. <strong>Dragonfly:</strong> Redis-compatible with better multi-core performance.</td>
+    </tr>
+    <tr>
+        <td><strong>Pub/Sub</strong></td>
+        <td>Redis Pub/Sub, NATS, Apache Kafka</td>
+        <td><strong>Redis Pub/Sub:</strong> Simple, low-latency, well-suited for ephemeral room events. <strong>NATS:</strong> Extremely lightweight, designed for real-time systems, supports subject-based routing. <strong>Kafka:</strong> Overkill for ephemeral pub/sub but useful if event persistence is needed.</td>
+    </tr>
+    <tr>
+        <td><strong>Message Queue</strong></td>
+        <td>Apache Kafka, RabbitMQ, Amazon SQS</td>
+        <td><strong>Kafka:</strong> High throughput, durable, excellent for notification fan-out. Partitioned topics align well with consumer group scaling. <strong>RabbitMQ:</strong> Flexible routing, lower throughput but simpler. <strong>SQS:</strong> Fully managed, no operational overhead.</td>
+    </tr>
+    <tr>
+        <td><strong>Object Storage</strong></td>
+        <td>Amazon S3, Google Cloud Storage, MinIO</td>
+        <td><strong>S3:</strong> Industry standard, 99.999999999% durability, integrates with CDNs. Used for avatar images, club images, and (if added) room recording files. <strong>GCS:</strong> Similar capabilities to S3. <strong>MinIO:</strong> S3-compatible, self-hosted option.</td>
+    </tr>
+    <tr>
+        <td><strong>CDN</strong></td>
+        <td>CloudFront, Cloudflare, Akamai, Fastly</td>
+        <td><strong>CloudFront:</strong> Integrates natively with S3. <strong>Cloudflare:</strong> Excellent DDoS protection, generous free tier. <strong>Akamai/Fastly:</strong> Enterprise-grade with extensive edge presence.</td>
+    </tr>
+    <tr>
+        <td><strong>SFU</strong></td>
+        <td>LiveKit, mediasoup, Janus, ion-sfu</td>
+        <td><strong>LiveKit:</strong> Modern, open-source, built for scale with built-in room management. <strong>mediasoup:</strong> Node.js-based, very flexible, excellent documentation. <strong>Janus:</strong> Mature C-based SFU, highly performant. <strong>ion-sfu:</strong> Go-based, lightweight.</td>
+    </tr>
+    <tr>
+        <td><strong>TURN/STUN</strong></td>
+        <td>coturn, Twilio Network Traversal, Xirsys</td>
+        <td><strong>coturn:</strong> Open-source, widely deployed, full STUN/TURN support. <strong>Twilio/Xirsys:</strong> Managed services — reduced operational burden but higher per-minute costs.</td>
+    </tr>
+    <tr>
+        <td><strong>Time-Series DB</strong></td>
+        <td>InfluxDB, TimescaleDB, Prometheus</td>
+        <td><strong>InfluxDB:</strong> Purpose-built for time-series, efficient compression. <strong>TimescaleDB:</strong> PostgreSQL extension — familiar SQL interface. <strong>Prometheus:</strong> Excellent for operational metrics with alerting.</td>
+    </tr>
+</table>
+
+<hr/>
+<p style="text-align: center; color: #484f58; margin-top: 3rem;">— End of Clubhouse System Design —</p>
+
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'dark',
+        themeVariables: {
+            primaryColor: '#1f6feb',
+            primaryTextColor: '#c9d1d9',
+            primaryBorderColor: '#30363d',
+            lineColor: '#58a6ff',
+            secondaryColor: '#161b22',
+            tertiaryColor: '#1c2128',
+            fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
+            fontSize: '14px'
+        },
+        flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+            curve: 'basis'
+        }
+    });
+</script>
 
 </body>
 </html>
