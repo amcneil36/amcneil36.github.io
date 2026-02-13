@@ -4,299 +4,1589 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>System Design: Twitter</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <style>
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: #e0e0e0; line-height: 1.7; }
-h1 { color: #1da1f2; border-bottom: 3px solid #1da1f2; padding-bottom: 10px; font-size: 2.2em; }
-h2 { color: #4db8ff; margin-top: 40px; font-size: 1.6em; border-left: 4px solid #4db8ff; padding-left: 12px; }
-h3 { color: #80cfff; font-size: 1.3em; }
-.section { background: #1a1a2e; border-radius: 10px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
-.diagram-container { background: #0d1117; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
-.example { background: #1e293b; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
-.example strong { color: #f59e0b; }
-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-th { background: #2a2a4a; color: #4db8ff; padding: 12px; text-align: left; border: 1px solid #444; }
-td { padding: 10px 12px; border: 1px solid #333; }
-tr:nth-child(even) { background: #1a1a2e; }
-tr:nth-child(odd) { background: #151528; }
-code { background: #2d2d4d; padding: 2px 8px; border-radius: 4px; color: #ff79c6; font-size: 0.95em; }
-.tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
-.tag-pk { background: #4a1a6b; color: #d4a5ff; }
-.tag-fk { background: #1a4a3b; color: #a5ffd4; }
-.tag-idx { background: #4a3a1a; color: #ffd4a5; }
-ul { padding-left: 25px; }
-li { margin: 5px 0; }
-.tradeoff { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-.pro { background: #0a2a1a; border: 1px solid #2a5a3a; padding: 15px; border-radius: 8px; }
-.con { background: #2a0a1a; border: 1px solid #5a2a3a; padding: 15px; border-radius: 8px; }
+  :root {
+    --primary: #1DA1F2;
+    --dark: #14171A;
+    --gray: #657786;
+    --light-gray: #AAB8C2;
+    --extra-light: #E1E8ED;
+    --bg: #F5F8FA;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--dark);
+    line-height: 1.7;
+    padding: 0;
+  }
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 280px;
+    height: 100vh;
+    background: var(--dark);
+    color: #fff;
+    overflow-y: auto;
+    padding: 24px 0;
+    z-index: 100;
+  }
+  .sidebar h2 {
+    color: var(--primary);
+    font-size: 18px;
+    padding: 0 20px 16px;
+    border-bottom: 1px solid #333;
+    margin-bottom: 12px;
+  }
+  .sidebar a {
+    display: block;
+    color: #ccc;
+    text-decoration: none;
+    padding: 6px 20px;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .sidebar a:hover { color: var(--primary); background: rgba(29,161,242,0.1); }
+  .sidebar .section-label {
+    color: var(--primary);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 12px 20px 4px;
+    font-weight: 700;
+  }
+  .main {
+    margin-left: 280px;
+    max-width: 1000px;
+    padding: 40px 48px;
+  }
+  h1 {
+    font-size: 36px;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+  h1 span { color: var(--dark); }
+  .subtitle { color: var(--gray); font-size: 16px; margin-bottom: 40px; }
+  h2 {
+    font-size: 26px;
+    color: var(--dark);
+    margin-top: 56px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 3px solid var(--primary);
+  }
+  h3 {
+    font-size: 20px;
+    color: var(--dark);
+    margin-top: 32px;
+    margin-bottom: 12px;
+  }
+  h4 {
+    font-size: 16px;
+    color: var(--gray);
+    margin-top: 24px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  p { margin-bottom: 14px; }
+  ul, ol { margin: 12px 0 18px 24px; }
+  li { margin-bottom: 6px; }
+  .diagram-container {
+    background: #fff;
+    border: 1px solid var(--extra-light);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 20px 0 28px;
+    overflow-x: auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .example-box {
+    background: #EDF7FF;
+    border-left: 4px solid var(--primary);
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin: 16px 0 24px;
+    font-size: 14px;
+  }
+  .example-box strong { color: var(--primary); }
+  .warn-box {
+    background: #FFF8E1;
+    border-left: 4px solid #FFC107;
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin: 16px 0 24px;
+    font-size: 14px;
+  }
+  .info-box {
+    background: #E8F5E9;
+    border-left: 4px solid #4CAF50;
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin: 16px 0 24px;
+    font-size: 14px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 14px;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  th {
+    background: var(--dark);
+    color: #fff;
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--extra-light);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) { background: #FAFCFD; }
+  code {
+    background: #EDF0F3;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: "SF Mono", "Fira Code", monospace;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .badge-pk { background: #E3F2FD; color: #1565C0; }
+  .badge-fk { background: #FCE4EC; color: #C62828; }
+  .badge-idx { background: #F3E5F5; color: #6A1B9A; }
+  .badge-denorm { background: #FFF3E0; color: #E65100; }
+  .component-card {
+    background: #fff;
+    border: 1px solid var(--extra-light);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin: 14px 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .component-card h4 {
+    color: var(--primary);
+    margin-top: 0;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 17px;
+  }
+  .protocol-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--primary);
+    color: #fff;
+    margin-right: 6px;
+  }
+  .mermaid { text-align: center; }
+  @media(max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 20px; }
+  }
 </style>
 </head>
 <body>
-<h1>System Design: Twitter (Microblogging Platform)</h1>
 
-<div class="section">
-<h2>Functional Requirements</h2>
-<ul>
-<li>Users can post tweets (280 chars max, with optional media)</li>
-<li>Follow/unfollow other users (asymmetric relationship)</li>
-<li>View home timeline (tweets from followed users, ranked)</li>
-<li>Like, retweet, quote tweet, and reply to tweets</li>
-<li>Hashtags and trending topics</li>
-<li>User mentions and notifications</li>
-</ul>
-</div>
+<!-- SIDEBAR / TABLE OF CONTENTS -->
+<nav class="sidebar">
+  <h2>🐦 Twitter Design</h2>
+  <div class="section-label">Requirements</div>
+  <a href="#fr">Functional Requirements</a>
+  <a href="#nfr">Non-Functional Requirements</a>
+  <a href="#capacity">Capacity Estimation</a>
+  <div class="section-label">Flows &amp; Diagrams</div>
+  <a href="#flow1">Flow 1: Tweet Creation &amp; Fan-Out</a>
+  <a href="#flow2">Flow 2: Timeline Read</a>
+  <a href="#flow3">Flow 3: Like / Retweet</a>
+  <a href="#flow4">Flow 4: Follow / Unfollow</a>
+  <a href="#flow5">Flow 5: Search</a>
+  <a href="#flow6">Flow 6: Notifications</a>
+  <a href="#overall">Overall Combined Diagram</a>
+  <div class="section-label">Data Layer</div>
+  <a href="#schema">Database Schema</a>
+  <a href="#indexes">Indexes</a>
+  <a href="#sharding">Sharding Strategy</a>
+  <a href="#denormalization">Denormalization</a>
+  <div class="section-label">Infrastructure</div>
+  <a href="#cdn">CDN</a>
+  <a href="#cache">Caching</a>
+  <a href="#mq">Message Queue Deep Dive</a>
+  <a href="#lb">Load Balancers</a>
+  <a href="#scaling">Scaling Considerations</a>
+  <div class="section-label">Analysis</div>
+  <a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a>
+  <a href="#alternatives">Alternative Approaches</a>
+  <a href="#additional">Additional Information</a>
+  <a href="#vendors">Vendor Recommendations</a>
+</nav>
 
-<div class="section">
-<h2>Non-Functional Requirements</h2>
-<ul>
-<li><strong>Read-heavy:</strong> ~600K tweets/sec read vs ~6K tweets/sec write (100:1 ratio)</li>
-<li><strong>Low Latency:</strong> Timeline loads in &lt;300ms</li>
-<li><strong>High Availability:</strong> 99.99% uptime</li>
-<li><strong>Scalability:</strong> 500M+ daily active users</li>
-<li><strong>Eventual Consistency:</strong> Acceptable for timelines (seconds delay OK)</li>
-</ul>
-</div>
+<!-- MAIN CONTENT -->
+<div class="main">
 
-<!-- Flow 1: Posting a Tweet -->
-<div class="section">
-<h2>Flow 1: Posting a Tweet</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1100 450" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#1da1f2"/></marker></defs>
-<rect x="20" y="180" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="80" y="215" text-anchor="middle" fill="white" font-size="13">User</text>
-<rect x="190" y="180" width="130" height="60" rx="10" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="255" y="215" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
-<rect x="380" y="180" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="445" y="215" text-anchor="middle" fill="white" font-size="13">Tweet Service</text>
-<rect x="580" y="80" width="140" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="650" y="110" text-anchor="middle" fill="white" font-size="12">Fan-out Service</text>
-<rect x="580" y="200" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="650" y="230" text-anchor="middle" fill="white" font-size="12">Media Service</text>
-<rect x="580" y="310" width="140" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="650" y="340" text-anchor="middle" fill="white" font-size="12">Kafka</text>
-<ellipse cx="850" cy="105" rx="55" ry="25" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="850" y="110" text-anchor="middle" fill="white" font-size="11">Tweet DB</text>
-<rect x="800" y="180" width="110" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="855" y="208" text-anchor="middle" fill="white" font-size="11">Timeline Cache</text><text x="855" y="222" text-anchor="middle" fill="white" font-size="10">(Redis)</text>
-<rect x="800" y="300" width="110" height="50" rx="8" fill="#888" stroke="#aaa" stroke-width="2"/><text x="855" y="330" text-anchor="middle" fill="white" font-size="12">S3 / CDN</text>
-<line x1="140" y1="210" x2="188" y2="210" stroke="#1da1f2" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="320" y1="210" x2="378" y2="210" stroke="#1da1f2" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="510" y1="195" x2="578" y2="110" stroke="#1da1f2" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="510" y1="215" x2="578" y2="225" stroke="#1da1f2" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="510" y1="230" x2="578" y2="330" stroke="#1da1f2" stroke-width="1.5" marker-end="url(#arrow1)"/>
-<line x1="720" y1="100" x2="793" y2="100" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="720" y1="110" x2="798" y2="200" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="720" y1="225" x2="798" y2="320" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow1)"/>
-<text x="550" y="30" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Twitter: Post Tweet Flow</text>
-</svg>
-</div>
+<h1><span>System Design:</span> Twitter</h1>
+<p class="subtitle">A comprehensive design for a large-scale social microblogging platform supporting real-time tweet creation, timeline generation, social graph management, search, and notifications.</p>
 
-<h3>Step-by-Step</h3>
+<!-- ============================= -->
+<!-- FUNCTIONAL REQUIREMENTS       -->
+<!-- ============================= -->
+<h2 id="fr">1. Functional Requirements</h2>
 <ol>
-<li><strong>User posts tweet:</strong> <code>POST /v1/tweets { text: "Hello world! #firsttweet", media_ids: [] }</code></li>
-<li><strong>Tweet Service:</strong> Validates content (280 char limit, content policy), stores in Tweet DB (Cassandra)</li>
-<li><strong>Fan-out Service:</strong> For regular users (&lt;5K followers), pushes tweet_id to each follower's timeline cache (Redis sorted set). For celebrities (&gt;5K followers), skips fan-out (handled at read time)</li>
-<li><strong>Media Service:</strong> If media attached, uploads to S3, generates thumbnails, returns CDN URLs</li>
-<li><strong>Kafka:</strong> Publishes tweet event for async consumers (search indexing, trending detection, notification service, analytics)</li>
+  <li><strong>Tweet Creation</strong> — Users can post short text messages (up to 280 characters), optionally with attached images or videos.</li>
+  <li><strong>Home Timeline (Feed)</strong> — Users see a chronological or ranked feed of tweets from users they follow.</li>
+  <li><strong>Follow / Unfollow</strong> — Users can follow or unfollow other users to curate their feed.</li>
+  <li><strong>Like &amp; Retweet</strong> — Users can like and retweet tweets; these counts are visible on each tweet.</li>
+  <li><strong>Reply</strong> — Users can reply to tweets, forming threaded conversations.</li>
+  <li><strong>Search</strong> — Users can search for tweets by keyword, hashtag, or user.</li>
+  <li><strong>Notifications</strong> — Users receive notifications when someone likes their tweet, retweets, follows them, or mentions them.</li>
+  <li><strong>User Profile</strong> — Users have profiles with bio, profile picture, header image, follower/following counts, and a list of their tweets.</li>
+  <li><strong>Trending Topics</strong> — The system surfaces currently trending hashtags and topics.</li>
+  <li><strong>Media Upload</strong> — Images and videos are uploaded, stored, processed, and served efficiently.</li>
 </ol>
 
-<div class="example">
-<strong>Example:</strong> User with 2000 followers tweets "Just shipped a new feature! 🚀 #engineering". Tweet Service stores in Cassandra. Fan-out Service reads 2000 follower IDs from Follow Graph → ZADD tweet_id to 2000 Redis sorted sets (pipelined, ~30ms). Kafka event → Search Service indexes tweet for #engineering search → Trending Detector counts #engineering mentions → Notification Service notifies users with notifications enabled.
-</div>
-
-<h3>Deep Dive: Fan-out Service</h3>
-<ul>
-<li><strong>Fan-out on write (push):</strong> For users with &lt;5K followers. Pre-computes timelines. Read is O(1) — just read from Redis</li>
-<li><strong>Fan-out on read (pull):</strong> For celebrities with &gt;5K followers. At read time, merge celebrity tweets with cached timeline</li>
-<li><strong>Hybrid:</strong> Timeline = cached fan-out tweets + on-demand celebrity tweets. Merge + rank at read time</li>
-<li><strong>Worker pool:</strong> Fan-out workers consume from internal queue. Partitioned by follower_id for locality. Batch Redis writes for efficiency</li>
-</ul>
-</div>
-
-<!-- Flow 2: Reading Timeline -->
-<div class="section">
-<h2>Flow 2: Reading Home Timeline</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1050 350" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffaa00"/></marker></defs>
-<rect x="20" y="140" width="110" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="175" text-anchor="middle" fill="white" font-size="13">User</text>
-<rect x="180" y="140" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="245" y="168" text-anchor="middle" fill="white" font-size="12">Timeline</text><text x="245" y="185" text-anchor="middle" fill="white" font-size="12">Service</text>
-<rect x="370" y="80" width="130" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="435" y="110" text-anchor="middle" fill="white" font-size="12">Timeline Cache</text>
-<rect x="370" y="180" width="130" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="435" y="208" text-anchor="middle" fill="white" font-size="11">Celebrity Merge</text>
-<rect x="370" y="280" width="130" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="435" y="310" text-anchor="middle" fill="white" font-size="12">Tweet Hydrator</text>
-<rect x="570" y="140" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="640" y="170" text-anchor="middle" fill="white" font-size="12">Ranking Service</text>
-<rect x="780" y="140" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="840" y="175" text-anchor="middle" fill="white" font-size="12">Final Feed</text>
-<line x1="130" y1="170" x2="178" y2="170" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="310" y1="155" x2="368" y2="110" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="310" y1="175" x2="368" y2="205" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="500" y1="110" x2="500" y2="178" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
-<line x1="500" y1="210" x2="500" y2="278" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
-<line x1="500" y1="305" x2="568" y2="170" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="710" y1="165" x2="778" y2="170" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<text x="520" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Twitter: Home Timeline Read Flow</text>
-</svg>
-</div>
-
-<h3>Step-by-Step</h3>
+<!-- ============================= -->
+<!-- NON-FUNCTIONAL REQUIREMENTS   -->
+<!-- ============================= -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
 <ol>
-<li><strong>Timeline Service</strong> reads top 200 tweet_ids from user's Timeline Cache (Redis <code>ZREVRANGE feed:{user_id} 0 199</code>)</li>
-<li><strong>Celebrity Merge:</strong> Fetches recent tweets from celebrities the user follows (stored separately in <code>celeb_recent:{celeb_id}</code>). Merges with cached tweets</li>
-<li><strong>Tweet Hydrator:</strong> Batch-fetches full tweet objects (text, author info, media URLs, engagement counts) from Tweet DB + cache</li>
-<li><strong>Ranking Service:</strong> ML model scores tweets by predicted engagement. Considers: recency, author-viewer relationship, tweet type (text vs media), engagement velocity</li>
-<li><strong>Returns top 50 ranked tweets</strong> to client</li>
+  <li><strong>High Availability</strong> — 99.99% uptime; the platform should always be accessible.</li>
+  <li><strong>Low Latency</strong> — Timeline reads should return in &lt;200ms. Tweet posting should feel instantaneous (&lt;500ms).</li>
+  <li><strong>Scalability</strong> — Support 500M total users, 200M DAU, 500M tweets/day.</li>
+  <li><strong>Eventual Consistency</strong> — A tweet appearing on all followers' timelines can tolerate a few seconds of delay. Strong consistency is not required for social features.</li>
+  <li><strong>Read-Heavy</strong> — The system is extremely read-heavy (reads outnumber writes by ~1000:1 for timelines).</li>
+  <li><strong>Durability</strong> — Tweets and user data must never be lost once persisted.</li>
+  <li><strong>Partition Tolerance</strong> — The system must continue operating even if network partitions occur between data centers.</li>
+  <li><strong>Geo-distribution</strong> — Users are worldwide; the system must serve content with low latency globally.</li>
 </ol>
 
-<div class="example">
-<strong>Example:</strong> User follows 500 accounts (10 celebrities, 490 regular). Timeline Cache has 200 pre-pushed tweet_ids. Celebrity Merge adds 30 recent tweets from 10 celebrities. Total: 230 candidates. Hydrate from Cassandra (180 cache hits, 50 DB reads). Ranking Service scores: viral tweet from friend (high engagement velocity) scores 0.95, old tweet from acquaintance scores 0.12. Top 50 returned. Total: ~250ms.
-</div>
-</div>
+<!-- ============================= -->
+<!-- CAPACITY ESTIMATION           -->
+<!-- ============================= -->
+<h2 id="capacity">3. Capacity Estimation</h2>
+<table>
+  <tr><th>Metric</th><th>Value</th><th>Derivation</th></tr>
+  <tr><td>Total Users</td><td>500M</td><td>Given</td></tr>
+  <tr><td>Daily Active Users (DAU)</td><td>200M</td><td>Given</td></tr>
+  <tr><td>Tweets/day</td><td>500M</td><td>~2.5 tweets per DAU</td></tr>
+  <tr><td>Tweets/second</td><td>~5,800</td><td>500M / 86,400</td></tr>
+  <tr><td>Timeline reads/day</td><td>~2B</td><td>~10 timeline loads per DAU</td></tr>
+  <tr><td>Timeline reads/second</td><td>~23,000</td><td>2B / 86,400</td></tr>
+  <tr><td>Read:Write ratio</td><td>~1000:1</td><td>Heavy read</td></tr>
+  <tr><td>Tweet storage/day</td><td>~250 GB</td><td>500 bytes/tweet × 500M</td></tr>
+  <tr><td>Media uploads/day</td><td>~100M</td><td>~20% of tweets have media</td></tr>
+  <tr><td>Media storage/day</td><td>~100 TB</td><td>~1 MB avg per media × 100M</td></tr>
+  <tr><td>Average followers per user</td><td>~200</td><td>Industry estimate</td></tr>
+  <tr><td>Celebrity threshold</td><td>10,000+ followers</td><td>Design decision for hybrid fan-out</td></tr>
+</table>
 
-<!-- Combined Architecture -->
-<div class="section">
-<h2>Combined Overall Architecture</h2>
+<!-- ============================= -->
+<!-- FLOW 1: TWEET CREATION        -->
+<!-- ============================= -->
+<h2 id="flow1">4. Flow 1: Tweet Creation &amp; Fan-Out</h2>
+<p>This flow covers what happens when a user composes and publishes a tweet. It includes media upload, tweet persistence, and fan-out to followers' timelines.</p>
+
 <div class="diagram-container">
-<svg viewBox="0 0 1150 550" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#1da1f2"/></marker></defs>
-<rect x="20" y="240" width="100" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="70" y="275" text-anchor="middle" fill="white" font-size="12">Clients</text>
-<rect x="160" y="240" width="110" height="50" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="215" y="270" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
-<rect x="320" y="80" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="380" y="105" text-anchor="middle" fill="white" font-size="11">Tweet Svc</text>
-<rect x="320" y="150" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="380" y="175" text-anchor="middle" fill="white" font-size="11">Timeline Svc</text>
-<rect x="320" y="220" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="380" y="245" text-anchor="middle" fill="white" font-size="11">User Svc</text>
-<rect x="320" y="290" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="380" y="315" text-anchor="middle" fill="white" font-size="11">Search Svc</text>
-<rect x="320" y="360" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="380" y="385" text-anchor="middle" fill="white" font-size="11">Trending Svc</text>
-<rect x="320" y="430" width="120" height="40" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="380" y="455" text-anchor="middle" fill="white" font-size="11">Fan-out Svc</text>
-<rect x="510" y="80" width="110" height="40" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="565" y="105" text-anchor="middle" fill="white" font-size="11">Kafka</text>
-<rect x="510" y="150" width="110" height="40" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="565" y="175" text-anchor="middle" fill="white" font-size="11">Timeline Cache</text>
-<rect x="510" y="220" width="110" height="40" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="565" y="245" text-anchor="middle" fill="white" font-size="11">Ranking Svc</text>
-<rect x="510" y="290" width="110" height="40" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="565" y="315" text-anchor="middle" fill="white" font-size="11">Elasticsearch</text>
-<rect x="510" y="360" width="110" height="40" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="565" y="385" text-anchor="middle" fill="white" font-size="11">Notification</text>
-<rect x="510" y="430" width="110" height="40" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="565" y="455" text-anchor="middle" fill="white" font-size="11">Follow Graph</text>
-<ellipse cx="720" cy="100" rx="55" ry="22" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="720" y="105" text-anchor="middle" fill="white" font-size="10">Tweet DB</text>
-<ellipse cx="720" cy="175" rx="55" ry="22" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="720" y="180" text-anchor="middle" fill="white" font-size="10">User DB</text>
-<ellipse cx="720" cy="250" rx="55" ry="22" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="720" y="255" text-anchor="middle" fill="white" font-size="10">Graph DB</text>
-<rect x="680" y="310" width="100" height="35" rx="8" fill="#888" stroke="#aaa" stroke-width="2"/><text x="730" y="332" text-anchor="middle" fill="white" font-size="10">S3 / CDN</text>
-<line x1="120" y1="265" x2="158" y2="265" stroke="#1da1f2" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="270" y1="255" x2="318" y2="100" stroke="#1da1f2" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="270" y1="260" x2="318" y2="170" stroke="#1da1f2" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="270" y1="265" x2="318" y2="240" stroke="#1da1f2" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="270" y1="270" x2="318" y2="310" stroke="#1da1f2" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="440" y1="100" x2="508" y2="100" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="440" y1="170" x2="508" y2="170" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="440" y1="310" x2="508" y2="310" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="440" y1="450" x2="508" y2="450" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="620" y1="100" x2="663" y2="100" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="620" y1="245" x2="663" y2="175" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="620" y1="455" x2="663" y2="250" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<text x="575" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Twitter: Combined Architecture</text>
-</svg>
+<pre class="mermaid">
+graph LR
+    subgraph Client
+        A["📱 Client App<br/>(iOS / Android / Web)"]
+    end
+
+    subgraph Gateway Layer
+        LB["⚖️ Load Balancer"]
+        AG["🔐 API Gateway"]
+    end
+
+    subgraph Services
+        TS["📝 Tweet Service"]
+        MS["🖼️ Media Service"]
+        FOS["📤 Fan-Out Service"]
+    end
+
+    subgraph Async
+        MQ["📬 Message Queue"]
+    end
+
+    subgraph Storage
+        TDB[("🗄️ Tweet Store<br/>(NoSQL)")]
+        OS[("📦 Object Storage")]
+        FS[("👥 Follow Store<br/>(NoSQL)")]
+        TC[("⚡ Timeline Cache")]
+    end
+
+    CDN["🌐 CDN"]
+
+    A -->|"1. HTTP POST /tweets"| LB
+    A -->|"1a. Upload media"| MS
+    MS -->|"Store media"| OS
+    OS --> CDN
+    LB --> AG
+    AG -->|"2. Route"| TS
+    TS -->|"3. Write tweet"| TDB
+    TS -->|"4. Publish event"| MQ
+    MQ -->|"5. Consume"| FOS
+    FOS -->|"6. Lookup followers"| FS
+    FOS -->|"7. Write to timelines<br/>(fan-out on write)"| TC
+</pre>
 </div>
 
-<div class="example">
-<strong>Example — Full lifecycle:</strong> User tweets "Breaking: major acquisition announced! $AAPL #tech" → Tweet Service stores in Cassandra → Kafka event → Fan-out to 2K followers' timeline caches → Search Service indexes for #tech and $AAPL → Trending Service counts #tech (if spiking, adds to trending list) → Notification Service alerts users with notifications for @author. Follower opens app → Timeline Service reads cache + celebrity tweets → Ranking ML sorts → feed displayed in ~200ms.
-</div>
+<h4>Examples</h4>
+
+<div class="example-box">
+  <strong>Example 1 — Regular User Posts a Text Tweet:</strong><br/>
+  User "alice" (500 followers) types "Good morning everyone! ☀️" and taps the Tweet button. This triggers an <code>HTTP POST /api/v1/tweets</code> with body <code>{"content": "Good morning everyone! ☀️"}</code> to the Load Balancer, which routes through the API Gateway to the Tweet Service. The Tweet Service generates a Snowflake ID, writes the tweet to the Tweet Store (NoSQL), and publishes a <code>tweet_created</code> event onto the Message Queue. The Fan-Out Service consumes this event, queries the Follow Store to retrieve all 500 of alice's followers, and writes a tweet reference to each follower's pre-computed timeline in the Timeline Cache. All 500 followers will see alice's tweet the next time they load their timeline.
 </div>
 
-<!-- Database Schema -->
-<div class="section">
-<h2>Database Schema</h2>
+<div class="example-box">
+  <strong>Example 2 — Regular User Posts a Tweet with an Image:</strong><br/>
+  User "bob" (300 followers) attaches a photo to his tweet "Check out this sunset 🌅". The client first uploads the image via <code>HTTP POST /api/v1/media/upload</code> to the Media Service, which stores the image in Object Storage and returns a CDN URL (e.g., <code>https://cdn.example.com/media/img_93847.jpg</code>). The client then sends <code>HTTP POST /api/v1/tweets</code> with the tweet content and the media URL. The Tweet Service persists the tweet with the media reference, and the fan-out process delivers it to bob's 300 followers' timelines as before.
+</div>
 
-<h3>NoSQL — Cassandra (Tweets)</h3>
+<div class="example-box">
+  <strong>Example 3 — Celebrity Posts a Tweet (No Write Fan-Out):</strong><br/>
+  User "celebrity_kim" (15M followers) tweets "Exciting news coming soon! 🎉". The Tweet Service writes the tweet to the Tweet Store and publishes the event on the Message Queue. However, the Fan-Out Service detects that celebrity_kim has 15M followers (above the 10K celebrity threshold) and does <strong>NOT</strong> fan out to all 15M timelines (this would be too expensive and slow). Instead, the tweet is only written to the Tweet Store. When any of celebrity_kim's followers load their timeline, the Timeline Service will fetch celebrity tweets at read time (fan-out on read) and merge them with the pre-computed timeline from cache. This hybrid approach prevents write amplification for celebrity users.
+</div>
+
+<h4>Component Deep Dive</h4>
+
+<div class="component-card">
+  <h4>Tweet Service</h4>
+  <p><span class="protocol-badge">HTTP POST</span> <code>POST /api/v1/tweets</code></p>
+  <p><strong>Input:</strong> <code>{"content": string, "media_urls": string[], "reply_to_tweet_id": string|null}</code> + Auth token in header.</p>
+  <p><strong>Output:</strong> <code>{"tweet_id": string, "content": string, "media_urls": string[], "created_at": timestamp, "user": {...}}</code></p>
+  <p><strong>Responsibilities:</strong></p>
+  <ul>
+    <li>Validates tweet content (≤280 chars, not empty).</li>
+    <li>Generates a globally unique, time-sortable Snowflake ID for the tweet.</li>
+    <li>Writes the tweet record to the Tweet Store (NoSQL).</li>
+    <li>Publishes a <code>tweet_created</code> event to the Message Queue with the tweet ID, author ID, and follower count.</li>
+    <li>Returns the created tweet to the client.</li>
+  </ul>
+</div>
+
+<div class="component-card">
+  <h4>Media Service</h4>
+  <p><span class="protocol-badge">HTTP POST</span> <code>POST /api/v1/media/upload</code></p>
+  <p><strong>Input:</strong> Multipart form data with the media file (image: JPEG/PNG/GIF/WebP; video: MP4/MOV) + Auth token.</p>
+  <p><strong>Output:</strong> <code>{"media_id": string, "media_url": string, "media_type": "image"|"video", "thumbnail_url": string}</code></p>
+  <p><strong>Responsibilities:</strong></p>
+  <ul>
+    <li>Validates file type and size (images ≤ 5MB; videos ≤ 512MB).</li>
+    <li>Stores the raw media in Object Storage.</li>
+    <li>Triggers asynchronous processing: image resizing (thumbnail, small, medium, large), video transcoding (multiple bitrates for adaptive streaming via HLS/DASH).</li>
+    <li>Returns a CDN-backed URL so all subsequent reads are served from the CDN edge.</li>
+  </ul>
+</div>
+
+<div class="component-card">
+  <h4>Fan-Out Service</h4>
+  <p><strong>Protocol:</strong> Consumes from Message Queue (internal, no external API).</p>
+  <p><strong>Input (from queue):</strong> <code>{"tweet_id": string, "author_id": string, "follower_count": int, "tweet_data": {...}}</code></p>
+  <p><strong>Responsibilities:</strong></p>
+  <ul>
+    <li>Consumes <code>tweet_created</code> events from the Message Queue.</li>
+    <li>Checks the author's follower count against the <strong>celebrity threshold</strong> (10,000).</li>
+    <li><strong>Below threshold (fan-out on write):</strong> Queries the Follow Store for all followers of the author, then writes a denormalized tweet reference (tweet_id + tweet preview data) to each follower's entry in the Timeline Cache.</li>
+    <li><strong>Above threshold (celebrity):</strong> Skips the fan-out. These tweets are fetched at read time by the Timeline Service.</li>
+    <li>This service is horizontally scaled with many consumer instances to handle the throughput of fan-out (a single popular tweet could require writing to thousands of timelines).</li>
+  </ul>
+</div>
+
+<div class="component-card">
+  <h4>Object Storage</h4>
+  <p><strong>Type:</strong> Distributed object/blob storage.</p>
+  <p>Stores all media files (images, videos, profile pictures). Immutable once written. The CDN pulls from Object Storage on cache miss. Provides 11 nines of durability via replication across availability zones.</p>
+</div>
+
+<div class="component-card">
+  <h4>CDN (Content Delivery Network)</h4>
+  <p>Caches and serves media files from edge locations geographically close to users. Dramatically reduces latency for media-heavy tweets. See the <a href="#cdn">CDN section</a> for a full deep dive.</p>
+</div>
+
+<!-- ============================= -->
+<!-- FLOW 2: TIMELINE READ         -->
+<!-- ============================= -->
+<h2 id="flow2">5. Flow 2: Timeline / Feed Read</h2>
+<p>This flow covers what happens when a user opens the app and loads their home timeline (feed). The system uses a <strong>hybrid fan-out</strong> approach: pre-computed timelines from the cache (fan-out on write) are merged with celebrity tweets fetched at read time (fan-out on read).</p>
+
+<div class="diagram-container">
+<pre class="mermaid">
+graph LR
+    subgraph Client
+        A["📱 Client App"]
+    end
+
+    subgraph Gateway Layer
+        LB["⚖️ Load Balancer"]
+        AG["🔐 API Gateway"]
+    end
+
+    subgraph Services
+        TLS["📰 Timeline Service"]
+    end
+
+    subgraph Cache
+        TC[("⚡ Timeline Cache")]
+        UC[("👤 User Cache")]
+        TWC[("📝 Tweet Cache")]
+    end
+
+    subgraph Storage
+        TDB[("🗄️ Tweet Store<br/>(NoSQL)")]
+        UDB[("👥 User Store<br/>(SQL)")]
+        FWDB[("🔗 Follow Store<br/>(NoSQL)")]
+    end
+
+    A -->|"1. HTTP GET /timeline?cursor=X"| LB
+    LB --> AG
+    AG -->|"2. Route"| TLS
+    TLS -->|"3. Read pre-computed feed"| TC
+    TLS -->|"4. Get followed celebrities"| FWDB
+    TLS -->|"5. Fetch celebrity tweets"| TDB
+    TLS -->|"6. Hydrate user data"| UC
+    UC -.->|"Cache miss"| UDB
+    TLS -->|"7. Hydrate tweet metadata"| TWC
+    TWC -.->|"Cache miss"| TDB
+    TLS -->|"8. Merged, ranked,<br/>paginated response"| A
+</pre>
+</div>
+
+<h4>Examples</h4>
+
+<div class="example-box">
+  <strong>Example 1 — Normal User Opens Timeline (All Followed Users are Non-Celebrity):</strong><br/>
+  User "dave" follows 150 users, none of whom are celebrities. Dave opens the app, which sends <code>HTTP GET /api/v1/timeline?cursor=null&limit=20</code> to the Load Balancer → API Gateway → Timeline Service. The Timeline Service reads dave's pre-computed timeline from the Timeline Cache, which already contains tweet references written there by the Fan-Out Service. It hydrates each tweet with author info from the User Cache and tweet engagement counts from the Tweet Cache, then returns the top 20 tweets sorted by time. Response time: ~50ms.
+</div>
+
+<div class="example-box">
+  <strong>Example 2 — User Follows a Celebrity (Hybrid Merge):</strong><br/>
+  User "eve" follows 200 normal users and 3 celebrities. Eve opens her timeline. The Timeline Service reads eve's pre-computed timeline from the Timeline Cache (containing tweets from 200 normal users). It also queries the Follow Store to identify the 3 celebrities eve follows, then fetches their latest tweets directly from the Tweet Store (fan-out on read). The Timeline Service merges both sets, sorts by timestamp (or a ranking algorithm), and returns the top 20 results. The slight overhead of fetching 3 celebrity tweet sets is negligible (3 lookups), making the hybrid approach very efficient.
+</div>
+
+<div class="example-box">
+  <strong>Example 3 — Paginated Scrolling:</strong><br/>
+  User "frank" already loaded the first page of 20 tweets. He scrolls down, triggering <code>HTTP GET /api/v1/timeline?cursor=tweet_id_1234&limit=20</code>. The cursor is the last tweet_id from the previous page. The Timeline Service uses this cursor to fetch the next 20 tweets from the Timeline Cache (and merges celebrity tweets with timestamps older than the cursor). This cursor-based pagination avoids duplicate or skipped tweets even when new tweets are being inserted.
+</div>
+
+<h4>Component Deep Dive</h4>
+
+<div class="component-card">
+  <h4>Timeline Service</h4>
+  <p><span class="protocol-badge">HTTP GET</span> <code>GET /api/v1/timeline?cursor={cursor}&limit={limit}</code></p>
+  <p><strong>Input:</strong> Query params <code>cursor</code> (last tweet_id for pagination, nullable) and <code>limit</code> (default 20). Auth token in header.</p>
+  <p><strong>Output:</strong> <code>{"tweets": [{tweet_id, content, media_urls, author: {user_id, username, profile_image_url}, like_count, retweet_count, reply_count, created_at, liked_by_me, retweeted_by_me}, ...], "next_cursor": string|null}</code></p>
+  <p><strong>Responsibilities:</strong></p>
+  <ul>
+    <li>Reads the pre-computed timeline from the Timeline Cache (fan-out on write results).</li>
+    <li>Identifies celebrities the requesting user follows from the Follow Store.</li>
+    <li>Fetches recent tweets from those celebrities from the Tweet Store (fan-out on read).</li>
+    <li>Merges both sets, applies ranking (chronological or ML-based), and paginates using cursor.</li>
+    <li>Hydrates each tweet with author info (from User Cache, falling back to User Store on cache miss) and engagement counts (from Tweet Cache, falling back to Tweet Store).</li>
+    <li>Returns the final paginated response.</li>
+  </ul>
+</div>
+
+<div class="component-card">
+  <h4>Timeline Cache</h4>
+  <p><strong>Type:</strong> In-memory key-value store with sorted sets.</p>
+  <p><strong>Structure:</strong> Key = <code>user_id</code>, Value = sorted set of <code>{tweet_id, author_id, tweet_preview, timestamp}</code> sorted by timestamp descending.</p>
+  <p><strong>Size limit:</strong> Each user's timeline cache holds the most recent ~800 tweet references. Older entries are evicted.</p>
+  <p>See <a href="#cache">Caching section</a> for full details on strategy, eviction, and expiration.</p>
+</div>
+
+<!-- ============================= -->
+<!-- FLOW 3: LIKE / RETWEET        -->
+<!-- ============================= -->
+<h2 id="flow3">6. Flow 3: Like / Retweet</h2>
+<p>This flow covers user interactions with tweets — specifically liking and retweeting. Both follow a similar pattern: persist the interaction, update counters asynchronously, and send a notification.</p>
+
+<div class="diagram-container">
+<pre class="mermaid">
+graph LR
+    subgraph Client
+        A["📱 Client App"]
+    end
+
+    subgraph Gateway Layer
+        LB["⚖️ Load Balancer"]
+        AG["🔐 API Gateway"]
+    end
+
+    subgraph Services
+        IS["❤️ Interaction Service"]
+        CS["🔢 Counter Service"]
+        NS["🔔 Notification Service"]
+    end
+
+    subgraph Async
+        MQ["📬 Message Queue"]
+    end
+
+    subgraph Storage
+        LDB[("👍 Like Store<br/>(NoSQL)")]
+        TDB[("🗄️ Tweet Store<br/>(NoSQL)")]
+        NDB[("🔔 Notification Store<br/>(NoSQL)")]
+    end
+
+    PNS["📲 Push Notification<br/>Gateway"]
+
+    A -->|"1. HTTP POST /tweets/:id/like"| LB
+    LB --> AG
+    AG -->|"2. Route"| IS
+    IS -->|"3. Write like record"| LDB
+    IS -->|"4. Publish events"| MQ
+    MQ -->|"5a. Update count"| CS
+    CS -->|"6a. Increment like_count"| TDB
+    MQ -->|"5b. Send notification"| NS
+    NS -->|"6b. Write notification"| NDB
+    NS -->|"7. Push"| PNS
+</pre>
+</div>
+
+<h4>Examples</h4>
+
+<div class="example-box">
+  <strong>Example 1 — User Likes a Tweet:</strong><br/>
+  User "grace" taps the heart icon on a tweet by "heidi" (tweet_id: <code>t_29384</code>). This sends <code>HTTP POST /api/v1/tweets/t_29384/like</code> to the Interaction Service. The service writes a record <code>{tweet_id: t_29384, user_id: grace_id, created_at: now}</code> to the Like Store and returns success to the client immediately. It then publishes two events on the Message Queue: (1) a <code>like_count_increment</code> event consumed by the Counter Service, which increments <code>like_count</code> on tweet <code>t_29384</code> in the Tweet Store; and (2) a <code>notification_like</code> event consumed by the Notification Service, which creates a notification <code>"grace liked your tweet"</code> in the Notification Store and sends a push notification to heidi's device.
+</div>
+
+<div class="example-box">
+  <strong>Example 2 — User Unlikes a Tweet:</strong><br/>
+  Grace decides to unlike the same tweet. She taps the heart icon again, sending <code>HTTP DELETE /api/v1/tweets/t_29384/like</code>. The Interaction Service deletes the like record from the Like Store and publishes a <code>like_count_decrement</code> event. The Counter Service decrements the like_count. No notification is sent for unlikes.
+</div>
+
+<div class="example-box">
+  <strong>Example 3 — User Retweets a Tweet:</strong><br/>
+  User "ivan" taps the retweet icon on a tweet by "judy" (tweet_id: <code>t_55012</code>). This sends <code>HTTP POST /api/v1/tweets/t_55012/retweet</code>. The Interaction Service creates a new tweet record (type = retweet) in the Tweet Store referencing the original tweet, writes a retweet record to the Like Store (retweet subset), publishes a <code>retweet_count_increment</code> event and a <code>notification_retweet</code> event. The retweet also triggers the Fan-Out Service (since it's a new tweet object), so it appears on ivan's followers' timelines.
+</div>
+
+<h4>Component Deep Dive</h4>
+
+<div class="component-card">
+  <h4>Interaction Service</h4>
+  <p><span class="protocol-badge">HTTP POST</span> <code>POST /api/v1/tweets/:tweet_id/like</code></p>
+  <p><span class="protocol-badge">HTTP DELETE</span> <code>DELETE /api/v1/tweets/:tweet_id/like</code></p>
+  <p><span class="protocol-badge">HTTP POST</span> <code>POST /api/v1/tweets/:tweet_id/retweet</code></p>
+  <p><strong>Input:</strong> Path param <code>tweet_id</code>. Auth token in header.</p>
+  <p><strong>Output (like):</strong> <code>{"success": true, "liked": true|false}</code></p>
+  <p><strong>Responsibilities:</strong></p>
+  <ul>
+    <li>Validates that the tweet exists.</li>
+    <li>Uses an idempotency check (composite key: tweet_id + user_id) to prevent duplicate likes.</li>
+    <li>Writes/deletes the like/retweet record in the Like Store.</li>
+    <li>Publishes count update and notification events to the Message Queue asynchronously.</li>
+    <li>Returns immediately to the client without waiting for async processing (optimistic UI update on client).</li>
+  </ul>
+</div>
+
+<div class="component-card">
+  <h4>Counter Service</h4>
+  <p><strong>Protocol:</strong> Consumes from Message Queue (internal service).</p>
+  <p><strong>Input (from queue):</strong> <code>{"event": "like_count_increment"|"like_count_decrement"|"retweet_count_increment", "tweet_id": string}</code></p>
+  <p><strong>Responsibilities:</strong></p>
+  <ul>
+    <li>Atomically increments or decrements engagement counters (like_count, retweet_count, reply_count) in the Tweet Store.</li>
+    <li>Batches updates to reduce write pressure — multiple increments for the same tweet within a window are batched into a single atomic update.</li>
+    <li>Updates the Tweet Cache with the new count.</li>
+  </ul>
+</div>
+
+<!-- ============================= -->
+<!-- FLOW 4: FOLLOW / UNFOLLOW     -->
+<!-- ============================= -->
+<h2 id="flow4">7. Flow 4: Follow / Unfollow</h2>
+<p>This flow covers when a user follows or unfollows another user, updating the social graph and optionally backfilling tweets to the new follower's timeline.</p>
+
+<div class="diagram-container">
+<pre class="mermaid">
+graph LR
+    subgraph Client
+        A["📱 Client App"]
+    end
+
+    subgraph Gateway Layer
+        LB["⚖️ Load Balancer"]
+        AG["🔐 API Gateway"]
+    end
+
+    subgraph Services
+        US["👤 User Service"]
+        TLS["📰 Timeline Service"]
+        NS["🔔 Notification Service"]
+    end
+
+    subgraph Async
+        MQ["📬 Message Queue"]
+    end
+
+    subgraph Storage
+        FWDB[("🔗 Follow Store<br/>(NoSQL)")]
+        UDB[("👥 User Store<br/>(SQL)")]
+        TDB[("🗄️ Tweet Store<br/>(NoSQL)")]
+        TC[("⚡ Timeline Cache")]
+        NDB[("🔔 Notification Store<br/>(NoSQL)")]
+    end
+
+    A -->|"1. HTTP POST /users/:id/follow"| LB
+    LB --> AG
+    AG -->|"2. Route"| US
+    US -->|"3. Write follow edge"| FWDB
+    US -->|"4. Update counts"| UDB
+    US -->|"5. Publish events"| MQ
+    MQ -->|"6a. Backfill timeline"| TLS
+    TLS -->|"7a. Fetch recent tweets"| TDB
+    TLS -->|"7b. Inject into cache"| TC
+    MQ -->|"6b. Send notification"| NS
+    NS -->|"8. Write notification"| NDB
+</pre>
+</div>
+
+<h4>Examples</h4>
+
+<div class="example-box">
+  <strong>Example 1 — User Follows a Normal User:</strong><br/>
+  User "kate" taps "Follow" on "leo's" profile (leo has 800 followers). This sends <code>HTTP POST /api/v1/users/leo_id/follow</code>. The User Service writes a new edge <code>{follower_id: kate_id, followee_id: leo_id}</code> to the Follow Store. It then increments kate's <code>following_count</code> and leo's <code>follower_count</code> in the User Store. A <code>follow_event</code> is published on the Message Queue. The Timeline Service consumes this event and backfills kate's Timeline Cache with leo's most recent ~20 tweets from the Tweet Store. The Notification Service sends a "kate followed you" notification to leo.
+</div>
+
+<div class="example-box">
+  <strong>Example 2 — User Follows a Celebrity:</strong><br/>
+  User "kate" follows "celebrity_pop" (10M followers). The follow edge is written, counts are updated, and a notification is sent as before. However, <strong>no timeline backfill is performed</strong> — since celebrity_pop's tweets are fetched at read time (fan-out on read), they will automatically appear when kate next loads her timeline via the Timeline Service's merge logic.
+</div>
+
+<div class="example-box">
+  <strong>Example 3 — User Unfollows:</strong><br/>
+  User "kate" taps "Unfollow" on leo. This sends <code>HTTP DELETE /api/v1/users/leo_id/follow</code>. The User Service deletes the follow edge, decrements the counts, and publishes an <code>unfollow_event</code>. The Timeline Service optionally removes leo's tweets from kate's Timeline Cache (or they naturally age out). No notification is sent for unfollows.
+</div>
+
+<h4>Component Deep Dive</h4>
+
+<div class="component-card">
+  <h4>User Service</h4>
+  <p><span class="protocol-badge">HTTP POST</span> <code>POST /api/v1/users/:user_id/follow</code></p>
+  <p><span class="protocol-badge">HTTP DELETE</span> <code>DELETE /api/v1/users/:user_id/follow</code></p>
+  <p><span class="protocol-badge">HTTP GET</span> <code>GET /api/v1/users/:user_id</code> (profile)</p>
+  <p><strong>Input (follow):</strong> Path param <code>user_id</code> (the user to follow). Auth token in header.</p>
+  <p><strong>Output:</strong> <code>{"success": true, "following": true|false}</code></p>
+  <p><strong>Responsibilities:</strong></p>
+  <ul>
+    <li>Writes/deletes follow edges in the Follow Store.</li>
+    <li>Updates denormalized follower/following counts in the User Store.</li>
+    <li>Publishes follow/unfollow events to the Message Queue for timeline backfill and notifications.</li>
+    <li>Also serves user profile data via GET (reading from User Store with User Cache).</li>
+  </ul>
+</div>
+
+<!-- ============================= -->
+<!-- FLOW 5: SEARCH                -->
+<!-- ============================= -->
+<h2 id="flow5">8. Flow 5: Search</h2>
+<p>This flow covers searching for tweets, users, and hashtags. The system uses an inverted index built from tweet content for full-text search.</p>
+
+<div class="diagram-container">
+<pre class="mermaid">
+graph LR
+    subgraph Client
+        A["📱 Client App"]
+    end
+
+    subgraph Gateway Layer
+        LB["⚖️ Load Balancer"]
+        AG["🔐 API Gateway"]
+    end
+
+    subgraph Services
+        SS["🔍 Search Service"]
+        SIS["📇 Search Indexer"]
+    end
+
+    subgraph Async
+        MQ["📬 Message Queue"]
+    end
+
+    subgraph Storage
+        SI[("📇 Search Index<br/>(Inverted Index)")]
+        UDB[("👥 User Store<br/>(SQL)")]
+        TDB[("🗄️ Tweet Store<br/>(NoSQL)")]
+    end
+
+    A -->|"1. HTTP GET /search?q=..."| LB
+    LB --> AG
+    AG -->|"2. Route"| SS
+    SS -->|"3. Query index"| SI
+    SS -->|"4. Hydrate results"| TDB
+    SS -->|"4. Hydrate users"| UDB
+    SS -->|"5. Ranked results"| A
+
+    MQ -->|"Async: Index new tweets"| SIS
+    SIS -->|"Update index"| SI
+</pre>
+</div>
+
+<h4>Examples</h4>
+
+<div class="example-box">
+  <strong>Example 1 — Search by Keyword:</strong><br/>
+  User "mike" types "machine learning" in the search bar and taps search. This sends <code>HTTP GET /api/v1/search?q=machine+learning&type=tweets&cursor=null&limit=20</code>. The Search Service tokenizes the query into ["machine", "learning"], queries the inverted Search Index for tweets containing both tokens, ranks the results by relevance (recency, engagement, author authority), hydrates them with author info and engagement counts, and returns the top 20 results.
+</div>
+
+<div class="example-box">
+  <strong>Example 2 — Search by Hashtag:</strong><br/>
+  User "nina" searches for "#openai". The Search Service looks up the hashtag token "openai" in the inverted index (hashtags are extracted and indexed separately). Results are ranked by a combination of recency and engagement, returning the most popular and recent tweets using that hashtag.
+</div>
+
+<div class="example-box">
+  <strong>Example 3 — Search for Users:</strong><br/>
+  User "mike" searches for "elonmusk" with type=users. The Search Service queries the User Store (which has a full-text index on username and display_name) and returns matching user profiles ranked by follower count and relevance.
+</div>
+
+<div class="example-box">
+  <strong>Example 4 — Trending Topics:</strong><br/>
+  User "nina" taps the "Trending" tab. This sends <code>HTTP GET /api/v1/trends?region=US</code>. The Search Service maintains a real-time count of hashtags and keywords over a sliding window (e.g., last 1 hour). A separate <strong>Trending Service</strong> (or a module within Search) periodically computes the top-K trending topics using a count-min sketch or similar probabilistic data structure, caches the result, and returns it. This is precomputed and cached, so the response is very fast.
+</div>
+
+<h4>Component Deep Dive</h4>
+
+<div class="component-card">
+  <h4>Search Service</h4>
+  <p><span class="protocol-badge">HTTP GET</span> <code>GET /api/v1/search?q={query}&type={tweets|users|hashtags}&cursor={cursor}&limit={limit}</code></p>
+  <p><strong>Input:</strong> Query string, type filter, pagination cursor, limit. Auth token in header.</p>
+  <p><strong>Output:</strong> <code>{"results": [...], "next_cursor": string|null}</code></p>
+  <p><strong>Responsibilities:</strong></p>
+  <ul>
+    <li>Tokenizes and normalizes the search query.</li>
+    <li>Queries the inverted Search Index (full-text search on tweet content, hashtags, usernames).</li>
+    <li>Ranks results using a scoring function (BM25 for text relevance + recency boost + engagement score + author authority).</li>
+    <li>Hydrates results with full tweet/user data.</li>
+    <li>Supports cursor-based pagination for result sets.</li>
+  </ul>
+</div>
+
+<div class="component-card">
+  <h4>Search Indexer</h4>
+  <p><strong>Protocol:</strong> Consumes <code>tweet_created</code> events from the Message Queue (internal service).</p>
+  <p><strong>Responsibilities:</strong></p>
+  <ul>
+    <li>Consumes new tweet events from the Message Queue.</li>
+    <li>Tokenizes tweet content, extracts hashtags, mentions, and keywords.</li>
+    <li>Updates the inverted Search Index with new entries.</li>
+    <li>Also indexes user profiles when users are created or updated.</li>
+    <li>Near-real-time indexing — new tweets are searchable within seconds.</li>
+  </ul>
+</div>
+
+<div class="component-card">
+  <h4>Search Index</h4>
+  <p><strong>Type:</strong> Inverted index (full-text search engine).</p>
+  <p>Stores a mapping of tokens → list of document IDs (tweet_ids). Supports boolean queries, phrase matching, and relevance scoring. Sharded across multiple nodes for horizontal scalability. Each shard holds a subset of the index partitioned by tweet_id range or hash. Queries are scattered to all shards and results are gathered and merged.</p>
+</div>
+
+<!-- ============================= -->
+<!-- FLOW 6: NOTIFICATIONS         -->
+<!-- ============================= -->
+<h2 id="flow6">9. Flow 6: Notifications</h2>
+<p>This flow covers how notifications are generated, stored, and delivered. Notifications are triggered by events (likes, retweets, follows, mentions) and delivered both as in-app notifications and push notifications.</p>
+
+<div class="diagram-container">
+<pre class="mermaid">
+graph LR
+    subgraph Event Sources
+        IS["❤️ Interaction Service"]
+        US["👤 User Service"]
+        TS["📝 Tweet Service"]
+    end
+
+    subgraph Async
+        MQ["📬 Message Queue"]
+    end
+
+    subgraph Services
+        NS["🔔 Notification Service"]
+    end
+
+    subgraph Storage
+        NDB[("🔔 Notification Store<br/>(NoSQL)")]
+    end
+
+    subgraph Delivery
+        PNS["📲 Push Gateway<br/>(APNs / FCM)"]
+    end
+
+    subgraph Client
+        A["📱 Client App"]
+    end
+
+    IS -->|"like / retweet events"| MQ
+    US -->|"follow events"| MQ
+    TS -->|"mention events"| MQ
+    MQ -->|"1. Consume"| NS
+    NS -->|"2. Write notification"| NDB
+    NS -->|"3. Push"| PNS
+    PNS -->|"4. Deliver"| A
+    A -->|"5. HTTP GET /notifications"| NS
+    NS -->|"6. Read"| NDB
+</pre>
+</div>
+
+<h4>Examples</h4>
+
+<div class="example-box">
+  <strong>Example 1 — Like Notification:</strong><br/>
+  "grace" likes "heidi's" tweet. The Interaction Service publishes a <code>notification_like</code> event to the Message Queue. The Notification Service consumes it, creates a notification record <code>{user_id: heidi_id, type: "like", actor_id: grace_id, tweet_id: t_29384, created_at: now, is_read: false}</code> in the Notification Store, and sends a push notification via the Push Gateway (APNs for iOS, FCM for Android) that appears on heidi's phone as <em>"grace liked your tweet"</em>.
+</div>
+
+<div class="example-box">
+  <strong>Example 2 — Mention Notification:</strong><br/>
+  "alice" tweets "Hey @bob, check this out!". The Tweet Service detects the @bob mention during tweet creation and publishes a <code>notification_mention</code> event. The Notification Service creates a notification for bob and sends a push: <em>"alice mentioned you in a tweet"</em>.
+</div>
+
+<div class="example-box">
+  <strong>Example 3 — User Reads Notifications:</strong><br/>
+  "heidi" opens the notification tab in the app. This sends <code>HTTP GET /api/v1/notifications?cursor=null&limit=20</code>. The Notification Service reads heidi's notifications from the Notification Store (sorted by created_at descending), hydrates them with actor info (names, profile pictures) from the User Cache, and returns the list. When heidi views them, the client sends <code>HTTP PATCH /api/v1/notifications/mark-read</code> with the list of notification_ids, which updates <code>is_read = true</code>.
+</div>
+
+<div class="example-box">
+  <strong>Example 4 — Aggregated Notifications (Edge Case):</strong><br/>
+  "celebrity_kim" posts a tweet and receives 50,000 likes in 10 minutes. Instead of creating 50,000 individual notification records, the Notification Service aggregates them. It creates a single notification like <em>"celebrity_pop, grace, and 49,998 others liked your tweet"</em> that is updated periodically. This prevents notification store bloat and push notification spam.
+</div>
+
+<h4>Component Deep Dive</h4>
+
+<div class="component-card">
+  <h4>Notification Service</h4>
+  <p><span class="protocol-badge">HTTP GET</span> <code>GET /api/v1/notifications?cursor={cursor}&limit={limit}</code></p>
+  <p><span class="protocol-badge">HTTP PATCH</span> <code>PATCH /api/v1/notifications/mark-read</code></p>
+  <p><strong>Input (GET):</strong> Pagination cursor and limit. Auth token in header.</p>
+  <p><strong>Output (GET):</strong> <code>{"notifications": [{notification_id, type, actor: {user_id, username, profile_image_url}, tweet_id, created_at, is_read}, ...], "next_cursor": string|null, "unread_count": int}</code></p>
+  <p><strong>Responsibilities:</strong></p>
+  <ul>
+    <li>Consumes notification events from the Message Queue.</li>
+    <li>Deduplicates and aggregates notifications (e.g., "X and 50 others liked your tweet").</li>
+    <li>Writes notification records to the Notification Store.</li>
+    <li>Sends push notifications via the Push Gateway (APNs for iOS, FCM for Android).</li>
+    <li>Serves notification feeds via GET endpoint.</li>
+    <li>Handles mark-as-read via PATCH endpoint.</li>
+    <li>Respects user notification preferences (some users disable certain notification types).</li>
+  </ul>
+</div>
+
+<div class="component-card">
+  <h4>Push Gateway</h4>
+  <p><strong>Protocol:</strong> Outbound connections to platform push notification services (APNs for iOS via HTTP/2, FCM for Android via HTTP).</p>
+  <p><strong>Responsibilities:</strong></p>
+  <ul>
+    <li>Maintains device token registry (maps user_id → device tokens).</li>
+    <li>Formats and sends push payloads to APNs (Apple Push Notification service) and FCM (Firebase Cloud Messaging).</li>
+    <li>Handles delivery failures, token invalidation, and retries.</li>
+    <li>Supports notification preferences and quiet hours.</li>
+  </ul>
+</div>
+
+<!-- ============================= -->
+<!-- OVERALL COMBINED DIAGRAM      -->
+<!-- ============================= -->
+<h2 id="overall">10. Overall Combined System Diagram</h2>
+<p>This diagram combines all flows into a single unified architecture view, showing how the Tweet Creation, Timeline Read, Like/Retweet, Follow, Search, and Notification flows interconnect.</p>
+
+<div class="diagram-container">
+<pre class="mermaid">
+graph TB
+    subgraph Clients
+        WEB["🌐 Web Client"]
+        IOS["📱 iOS App"]
+        AND["📱 Android App"]
+    end
+
+    subgraph Edge
+        CDN["🌐 CDN"]
+        LB["⚖️ Load Balancer"]
+        AG["🔐 API Gateway<br/>(Auth, Rate Limit, Routing)"]
+    end
+
+    subgraph Core Services
+        TS["📝 Tweet Service"]
+        TLS["📰 Timeline Service"]
+        US["👤 User Service"]
+        IS["❤️ Interaction Service"]
+        SS["🔍 Search Service"]
+        NS["🔔 Notification Service"]
+        MS["🖼️ Media Service"]
+    end
+
+    subgraph Async Processing
+        MQ["📬 Message Queue"]
+        FOS["📤 Fan-Out Service"]
+        CS["🔢 Counter Service"]
+        SIS["📇 Search Indexer"]
+    end
+
+    subgraph Caching Layer
+        TC[("⚡ Timeline Cache")]
+        UC[("👤 User Cache")]
+        TWC[("📝 Tweet Cache")]
+    end
+
+    subgraph Persistent Storage
+        TDB[("🗄️ Tweet Store<br/>(NoSQL)")]
+        UDB[("👥 User Store<br/>(SQL)")]
+        FWDB[("🔗 Follow Store<br/>(NoSQL)")]
+        LDB[("👍 Like Store<br/>(NoSQL)")]
+        NDB[("🔔 Notification Store<br/>(NoSQL)")]
+        SI[("📇 Search Index")]
+        OS[("📦 Object Storage")]
+    end
+
+    subgraph External
+        PNS["📲 Push Gateway<br/>(APNs / FCM)"]
+    end
+
+    WEB & IOS & AND --> CDN
+    WEB & IOS & AND --> LB
+    LB --> AG
+
+    AG --> TS
+    AG --> TLS
+    AG --> US
+    AG --> IS
+    AG --> SS
+    AG --> NS
+    AG --> MS
+
+    MS --> OS
+    OS --> CDN
+
+    TS --> TDB
+    TS --> MQ
+
+    TLS --> TC
+    TLS --> TDB
+    TLS --> UC
+    TLS --> TWC
+    TLS --> FWDB
+    UC -.-> UDB
+    TWC -.-> TDB
+
+    US --> FWDB
+    US --> UDB
+    US --> MQ
+
+    IS --> LDB
+    IS --> MQ
+
+    SS --> SI
+    SS --> TDB
+    SS --> UDB
+
+    NS --> NDB
+    NS --> PNS
+
+    MQ --> FOS
+    MQ --> CS
+    MQ --> SIS
+    MQ --> NS
+
+    FOS --> FWDB
+    FOS --> TC
+
+    CS --> TDB
+    CS --> TWC
+
+    SIS --> SI
+</pre>
+</div>
+
+<h4>Examples — End-to-End Walkthrough</h4>
+
+<div class="example-box">
+  <strong>Example 1 — Full Tweet-to-Timeline Journey:</strong><br/>
+  (1) "alice" composes a tweet with a photo on her iPhone. (2) The iOS app uploads the photo via <code>POST /media/upload</code> → Media Service → Object Storage; a CDN URL is returned. (3) The app sends <code>POST /tweets</code> with the content and media URL → Load Balancer → API Gateway → Tweet Service. (4) Tweet Service writes to Tweet Store, publishes <code>tweet_created</code> to Message Queue. (5) Fan-Out Service consumes the event, queries Follow Store for alice's 500 followers, writes tweet references to each follower's Timeline Cache. (6) Search Indexer consumes the same event and indexes the tweet in the Search Index. (7) "bob" (one of alice's followers) opens his app and sends <code>GET /timeline</code> → Timeline Service reads from Timeline Cache, finds alice's tweet, hydrates it with alice's profile from User Cache and the engagement counts from Tweet Cache, returns it in bob's feed. (8) Bob sees alice's tweet with the photo loaded from the CDN edge nearest to him.
+</div>
+
+<div class="example-box">
+  <strong>Example 2 — Like Triggering Notification:</strong><br/>
+  (1) "bob" sees alice's tweet in his timeline and taps the heart icon. (2) <code>POST /tweets/t_123/like</code> → Interaction Service writes to Like Store, publishes events to Message Queue. (3) Counter Service increments like_count on the tweet in Tweet Store and updates Tweet Cache. (4) Notification Service creates a notification for alice and sends a push notification via APNs. (5) Alice's iPhone shows a push banner: <em>"bob liked your tweet"</em>. (6) Alice taps the notification, opening the app and sending <code>GET /notifications</code> → Notification Service reads from Notification Store and returns the notification list.
+</div>
+
+<div class="example-box">
+  <strong>Example 3 — Celebrity Tweet + Search:</strong><br/>
+  (1) "celebrity_kim" (15M followers) tweets "Breaking: big announcement #news". (2) Tweet Service writes to Tweet Store, publishes event to Message Queue. (3) Fan-Out Service sees 15M followers (above threshold) and skips write fan-out. (4) Search Indexer indexes the tweet and the #news hashtag. (5) User "dave" who follows celebrity_kim opens his timeline. Timeline Service reads pre-computed feed from Timeline Cache, also queries Follow Store to find dave follows celebrity_kim (a celebrity), fetches celebrity_kim's latest tweets from Tweet Store, merges and ranks them into the feed. (6) Meanwhile, user "eve" searches for "#news" via <code>GET /search?q=%23news</code>. Search Service queries the inverted Search Index, finds celebrity_kim's tweet among results, returns it ranked high due to high engagement.
+</div>
+
+<!-- ============================= -->
+<!-- DATABASE SCHEMA               -->
+<!-- ============================= -->
+<h2 id="schema">11. Database Schema</h2>
+
+<h3>11.1 SQL Tables</h3>
+
+<h4>Users Table — SQL (Relational Database)</h4>
 <table>
-<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
-<tr><td rowspan="7"><strong>tweets</strong></td><td>tweet_id</td><td>BIGINT (Snowflake)</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>text</td><td>VARCHAR(280)</td><td></td></tr>
-<tr><td>media_urls</td><td>LIST&lt;TEXT&gt;</td><td></td></tr>
-<tr><td>reply_to_id</td><td>BIGINT</td><td>Nullable</td></tr>
-<tr><td>retweet_of_id</td><td>BIGINT</td><td>Nullable</td></tr>
-<tr><td>created_at</td><td>TIMESTAMP</td><td></td></tr>
-<tr><td rowspan="3"><strong>user_tweets</strong></td><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">Partition Key</span></td></tr>
-<tr><td>tweet_id</td><td>BIGINT</td><td><span class="tag tag-pk">Clustering Key</span> DESC</td></tr>
-<tr><td>created_at</td><td>TIMESTAMP</td><td></td></tr>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+  <tr><td><code>user_id</code></td><td>BIGINT</td><td><span class="badge badge-pk">PK</span></td><td>Snowflake ID, globally unique</td></tr>
+  <tr><td><code>username</code></td><td>VARCHAR(30)</td><td>UNIQUE, NOT NULL <span class="badge badge-idx">INDEX</span></td><td>Handle (e.g., @alice)</td></tr>
+  <tr><td><code>email</code></td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td><td>For authentication</td></tr>
+  <tr><td><code>password_hash</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Bcrypt/scrypt hash</td></tr>
+  <tr><td><code>display_name</code></td><td>VARCHAR(50)</td><td></td><td></td></tr>
+  <tr><td><code>bio</code></td><td>VARCHAR(160)</td><td></td><td></td></tr>
+  <tr><td><code>profile_image_url</code></td><td>VARCHAR(512)</td><td></td><td>CDN URL</td></tr>
+  <tr><td><code>header_image_url</code></td><td>VARCHAR(512)</td><td></td><td>CDN URL</td></tr>
+  <tr><td><code>follower_count</code></td><td>INT</td><td>DEFAULT 0</td><td><span class="badge badge-denorm">DENORM</span></td></tr>
+  <tr><td><code>following_count</code></td><td>INT</td><td>DEFAULT 0</td><td><span class="badge badge-denorm">DENORM</span></td></tr>
+  <tr><td><code>tweet_count</code></td><td>INT</td><td>DEFAULT 0</td><td><span class="badge badge-denorm">DENORM</span></td></tr>
+  <tr><td><code>is_verified</code></td><td>BOOLEAN</td><td>DEFAULT false</td><td></td></tr>
+  <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+  <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
 </table>
 
-<h3>SQL — MySQL/PostgreSQL (Users, Follow Graph)</h3>
+<p><strong>Why SQL?</strong> User data is highly relational (profiles reference other entities), requires strong consistency for authentication and account management (e.g., email uniqueness), and benefits from ACID transactions when updating critical fields like email or password. The schema is well-defined and stable — it doesn't change often.</p>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>Hash index on <code>username</code></strong> — Used for exact-match lookups when resolving @mentions and profile page loads. Hash is ideal because username lookups are always exact equality checks, never range queries.</li>
+  <li><strong>Hash index on <code>email</code></strong> — Used for login authentication. Exact match only.</li>
+  <li><strong>B-tree index on <code>user_id</code></strong> — Primary key index, auto-created. Supports range scans for admin queries.</li>
+  <li><strong>Full-text index on <code>username</code>, <code>display_name</code></strong> — For user search functionality (prefix matching, fuzzy search).</li>
+</ul>
+
+<p><strong>Read events:</strong> User login, profile page view, tweet hydration (fetching author info), search for users, follower/following list views.</p>
+<p><strong>Write events:</strong> User registration, profile update, follow/unfollow (counter updates).</p>
+
+<p><strong>Sharding:</strong> Shard by <code>user_id</code> (hash-based). User data is accessed primarily by user_id, making this a natural partition key. This distributes load evenly since Snowflake IDs are well-distributed. Cross-shard queries (e.g., username lookup) are handled by maintaining a global secondary index or a username→user_id mapping table.</p>
+
+<h4>Why SQL over NoSQL for Users?</h4>
+<div class="info-box">
+User accounts require <strong>strong consistency</strong> — when a user changes their email, the old email must immediately become available and the new one must immediately be unique. ACID transactions prevent race conditions during concurrent account updates. The schema is rigid and well-defined (usernames, emails, passwords don't change structure). Read patterns are simple key-value lookups by user_id or username, which SQL handles efficiently with proper indexing.
+</div>
+
+<hr style="margin: 40px 0;">
+
+<h3>11.2 NoSQL Tables</h3>
+
+<h4>Tweets Table — NoSQL (Wide-Column Store)</h4>
 <table>
-<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
-<tr><td rowspan="5"><strong>users</strong></td><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>username</td><td>VARCHAR(15)</td><td><span class="tag tag-idx">UNIQUE INDEX</span></td></tr>
-<tr><td>display_name</td><td>VARCHAR(50)</td><td></td></tr>
-<tr><td>follower_count</td><td>INT</td><td>Denormalized</td></tr>
-<tr><td>following_count</td><td>INT</td><td>Denormalized</td></tr>
-<tr><td rowspan="3"><strong>follows</strong></td><td>follower_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK (composite)</span> <span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>followee_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK (composite)</span> <span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>created_at</td><td>TIMESTAMP</td><td></td></tr>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+  <tr><td><code>tweet_id</code></td><td>BIGINT</td><td><span class="badge badge-pk">Partition Key</span></td><td>Snowflake ID (time-sortable)</td></tr>
+  <tr><td><code>user_id</code></td><td>BIGINT</td><td><span class="badge badge-fk">FK → Users</span> <span class="badge badge-idx">GSI</span></td><td>Author of the tweet</td></tr>
+  <tr><td><code>content</code></td><td>TEXT</td><td></td><td>≤280 characters</td></tr>
+  <tr><td><code>media_urls</code></td><td>LIST&lt;STRING&gt;</td><td></td><td>CDN URLs for attached media</td></tr>
+  <tr><td><code>reply_to_tweet_id</code></td><td>BIGINT</td><td>NULLABLE</td><td>If this is a reply</td></tr>
+  <tr><td><code>retweet_of_tweet_id</code></td><td>BIGINT</td><td>NULLABLE</td><td>If this is a retweet</td></tr>
+  <tr><td><code>like_count</code></td><td>INT</td><td>DEFAULT 0</td><td><span class="badge badge-denorm">DENORM</span></td></tr>
+  <tr><td><code>retweet_count</code></td><td>INT</td><td>DEFAULT 0</td><td><span class="badge badge-denorm">DENORM</span></td></tr>
+  <tr><td><code>reply_count</code></td><td>INT</td><td>DEFAULT 0</td><td><span class="badge badge-denorm">DENORM</span></td></tr>
+  <tr><td><code>hashtags</code></td><td>LIST&lt;STRING&gt;</td><td></td><td>Extracted hashtags</td></tr>
+  <tr><td><code>mentions</code></td><td>LIST&lt;STRING&gt;</td><td></td><td>Extracted @mentions</td></tr>
+  <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
 </table>
 
-<h3>Timeline Cache — Redis</h3>
+<p><strong>Why NoSQL (Wide-Column)?</strong> Tweets require extremely high write throughput (5,800/sec baseline, with spikes much higher during events). The data model is simple (no complex joins needed) — a tweet is a self-contained document. NoSQL provides easy horizontal scaling through sharding. The flexible schema accommodates different tweet types (text-only, with media, replies, retweets) without schema migrations. Eventual consistency is acceptable for tweets.</p>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>Global Secondary Index (GSI) on <code>user_id</code> + <code>created_at</code> (descending)</strong> — Used for fetching a user's tweets on their profile page ("show me alice's recent tweets") and for fan-out on read (fetching celebrity tweets). This is a composite index that allows efficient range queries sorted by time for a given user.</li>
+</ul>
+
+<p><strong>Read events:</strong> Timeline generation (fan-out on read for celebrities), profile page view (user's tweets), tweet detail page, search result hydration.</p>
+<p><strong>Write events:</strong> Tweet creation, counter updates (like_count, retweet_count, reply_count incremented by Counter Service).</p>
+
+<p><strong>Sharding:</strong> Shard by <code>tweet_id</code> (hash-based). Since Snowflake IDs incorporate a timestamp component but are still well-distributed across the hash space, this avoids hot partitions. Profile-page queries (by user_id) use the GSI, which is separately sharded by user_id.</p>
+
+<hr style="margin: 30px 0;">
+
+<h4>Follows Table — NoSQL (Wide-Column Store)</h4>
 <table>
-<tr><th>Key</th><th>Type</th><th>Details</th></tr>
-<tr><td><code>timeline:{user_id}</code></td><td>Sorted Set</td><td>tweet_ids scored by timestamp. Max 800 entries</td></tr>
-<tr><td><code>celeb_recent:{user_id}</code></td><td>Sorted Set</td><td>Latest 100 tweets from celebrities</td></tr>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+  <tr><td><code>follower_id</code></td><td>BIGINT</td><td><span class="badge badge-pk">Partition Key</span></td><td>The user who follows</td></tr>
+  <tr><td><code>followee_id</code></td><td>BIGINT</td><td><span class="badge badge-pk">Sort Key</span></td><td>The user being followed</td></tr>
+  <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
 </table>
 
-<h4>Sharding</h4>
+<p><strong>Why NoSQL?</strong> The follow graph is massive (billions of edges). Access patterns are simple: "get all users I follow" (partition by follower_id) and "get all my followers" (requires reverse index). No complex joins or transactions needed. High write throughput for follow/unfollow operations.</p>
+
+<p><strong>Indexes:</strong></p>
 <ul>
-<li><strong>tweets (Cassandra):</strong> Partition by <code>tweet_id</code>. user_tweets table partitions by <code>user_id</code> for profile timeline</li>
-<li><strong>follows:</strong> Shard by <code>follower_id</code> — "who do I follow?" is shard-local. Reverse index on <code>followee_id</code> for "who follows me?"</li>
-<li><strong>Timeline Cache:</strong> Redis Cluster, shard by <code>user_id</code></li>
+  <li><strong>Primary index: Composite key <code>(follower_id, followee_id)</code></strong> — Supports "get all users I follow" (query by follower_id) and "do I follow this user?" (query by both keys).</li>
+  <li><strong>GSI on <code>(followee_id, follower_id)</code></strong> — Reverse index for "get all my followers" queries. This allows efficient retrieval of a user's follower list, which is needed by the Fan-Out Service.</li>
 </ul>
 
-<h3>Indexes</h3>
-<ul>
-<li><code>tweets.user_id</code> — Secondary index for "all tweets by user X" (user profile)</li>
-<li><code>follows(follower_id, followee_id)</code> — Composite PK + index on followee_id for fan-out (get all followers of user X)</li>
-<li>Elasticsearch: full-text index on tweet text, hashtag index, user mention index</li>
-</ul>
-</div>
+<p><strong>Read events:</strong> Fan-Out Service looking up followers, Timeline Service identifying followed celebrities, profile page follower/following lists, follow status check.</p>
+<p><strong>Write events:</strong> Follow button tap, unfollow button tap.</p>
 
-<!-- Cache -->
-<div class="section">
-<h2>Cache Deep Dive</h2>
+<p><strong>Sharding:</strong> Shard by <code>follower_id</code> (hash-based). This colocalizes all of a user's "following" edges on the same partition, making "who do I follow" queries single-partition. The reverse index (GSI) is separately partitioned by followee_id. <strong>Celebrity hot-partition risk:</strong> Users with millions of followers will create a hot partition on the GSI. Mitigation: use scatter-gather reads or a separate followers table with its own sharding for large accounts.</p>
+
+<hr style="margin: 30px 0;">
+
+<h4>Likes Table — NoSQL (Wide-Column Store)</h4>
 <table>
-<tr><th>Cache</th><th>Strategy</th><th>Eviction</th><th>TTL</th></tr>
-<tr><td>Timeline Cache (Redis)</td><td>Write-through (fan-out)</td><td>Size-capped (800)</td><td>None</td></tr>
-<tr><td>Tweet Cache (Memcached)</td><td>Read-through</td><td>LRU</td><td>1 hour</td></tr>
-<tr><td>User Cache (Redis)</td><td>Read-through</td><td>LRU</td><td>30 min</td></tr>
-<tr><td>Trending Cache (Redis)</td><td>Write-through</td><td>TTL</td><td>5 min</td></tr>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+  <tr><td><code>tweet_id</code></td><td>BIGINT</td><td><span class="badge badge-pk">Partition Key</span></td><td></td></tr>
+  <tr><td><code>user_id</code></td><td>BIGINT</td><td><span class="badge badge-pk">Sort Key</span></td><td></td></tr>
+  <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
 </table>
 
-<h3>CDN</h3>
+<p><strong>Why NoSQL?</strong> Extremely high write throughput (popular tweets get thousands of likes per second). Simple key-value access pattern. No joins needed. Composite key (tweet_id, user_id) provides natural deduplication.</p>
+
+<p><strong>Indexes:</strong></p>
 <ul>
-<li><strong>Media CDN:</strong> All tweet images, videos, GIFs served via CDN. Multiple resolution variants per image</li>
-<li><strong>Video:</strong> HLS adaptive streaming for video tweets. CDN caches HLS segments</li>
-<li><strong>TTL:</strong> Media: 365 days. Profile pics: 30 days. Trending content pre-warmed at edge</li>
+  <li><strong>Primary: Composite key <code>(tweet_id, user_id)</code></strong> — Supports "has this user liked this tweet?" (needed for UI heart icon state) and "get all users who liked this tweet" (like list).</li>
+  <li><strong>GSI on <code>(user_id, created_at DESC)</code></strong> — For "show me all tweets this user liked" on profile pages.</li>
 </ul>
+
+<p><strong>Read events:</strong> Checking if current user liked a tweet (timeline rendering), viewing who liked a tweet, viewing user's liked tweets.</p>
+<p><strong>Write events:</strong> Like button tap, unlike button tap.</p>
+
+<p><strong>Sharding:</strong> Shard by <code>tweet_id</code> (hash-based). Viral tweets with millions of likes concentrate writes on one partition. Mitigation: use write sharding (add a random suffix to the partition key for hot tweets, scatter-gather on read) or use atomic counters at the Tweet Store level and only store individual likes for the purpose of deduplication and "who liked this" queries.</p>
+
+<hr style="margin: 30px 0;">
+
+<h4>Notifications Table — NoSQL (Wide-Column Store)</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+  <tr><td><code>user_id</code></td><td>BIGINT</td><td><span class="badge badge-pk">Partition Key</span></td><td>Notification recipient</td></tr>
+  <tr><td><code>notification_id</code></td><td>BIGINT</td><td><span class="badge badge-pk">Sort Key</span></td><td>Snowflake ID (time-sortable)</td></tr>
+  <tr><td><code>type</code></td><td>STRING</td><td>NOT NULL</td><td>like, retweet, follow, mention, reply</td></tr>
+  <tr><td><code>actor_id</code></td><td>BIGINT</td><td></td><td>Who triggered the notification</td></tr>
+  <tr><td><code>tweet_id</code></td><td>BIGINT</td><td>NULLABLE</td><td>Related tweet (null for follows)</td></tr>
+  <tr><td><code>is_read</code></td><td>BOOLEAN</td><td>DEFAULT false</td><td></td></tr>
+  <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+</table>
+
+<p><strong>Why NoSQL?</strong> Notifications are write-heavy (many events generate notifications), have a simple access pattern (always queried by user_id, sorted by time), and don't require complex transactions. Eventual consistency is fine — a 1-second delay in notification delivery is acceptable.</p>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>Primary: Composite key <code>(user_id, notification_id)</code></strong> — Supports "get my notifications sorted by time" as the sort key (Snowflake ID) is time-ordered.</li>
+  <li>No additional indexes needed — all queries are by user_id.</li>
+</ul>
+
+<p><strong>Read events:</strong> User opens notification tab, unread badge count.</p>
+<p><strong>Write events:</strong> Like, retweet, follow, mention events consumed from Message Queue.</p>
+
+<p><strong>Sharding:</strong> Shard by <code>user_id</code> (hash-based). All notifications for a user are on the same partition, making retrieval a single-partition query. Celebrity users may have more notifications, but since they only read their own notifications, this is bounded by how many notifications are stored (we cap at ~1000 per user, aging out old ones).</p>
+
+<hr style="margin: 30px 0;">
+
+<h4>Timeline Cache — In-Memory Store (Sorted Set per User)</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+  <tr><td><code>user_id</code></td><td>BIGINT (Key)</td><td>Timeline owner</td></tr>
+  <tr><td><code>tweet entries</code></td><td>Sorted Set</td><td>Each entry: {tweet_id, author_id, content_preview, media_url, timestamp}. Sorted by timestamp descending.</td></tr>
+</table>
+
+<p><strong>Why in-memory?</strong> Timeline reads are the most frequent operation (~23,000/sec). Pre-computing timelines and storing them in memory provides sub-millisecond access times. This is the core optimization that makes the system performant.</p>
+
+<p><strong>Read events:</strong> Every timeline load (user opens app, scrolls feed).</p>
+<p><strong>Write events:</strong> Fan-Out Service writing tweet references after tweet creation; Timeline Service backfilling after a new follow.</p>
+
+<!-- ============================= -->
+<!-- INDEXES                       -->
+<!-- ============================= -->
+<h2 id="indexes">12. Indexes — Summary</h2>
+<table>
+  <tr><th>Table</th><th>Column(s)</th><th>Index Type</th><th>Purpose</th></tr>
+  <tr><td>Users</td><td><code>username</code></td><td>Hash</td><td>Exact-match @mention resolution, profile lookup</td></tr>
+  <tr><td>Users</td><td><code>email</code></td><td>Hash</td><td>Login authentication exact match</td></tr>
+  <tr><td>Users</td><td><code>username, display_name</code></td><td>Full-text (inverted)</td><td>User search with prefix/fuzzy matching</td></tr>
+  <tr><td>Tweets</td><td><code>user_id, created_at DESC</code></td><td>Composite (B-tree / GSI)</td><td>Fetch user's tweets sorted by time (profile, fan-out on read)</td></tr>
+  <tr><td>Follows</td><td><code>followee_id, follower_id</code></td><td>GSI (reverse index)</td><td>Get all followers of a user (Fan-Out Service)</td></tr>
+  <tr><td>Likes</td><td><code>user_id, created_at DESC</code></td><td>GSI</td><td>"Liked tweets" profile page</td></tr>
+  <tr><td>Search Index</td><td>Tweet content, hashtags</td><td>Inverted Index</td><td>Full-text search on tweets</td></tr>
+</table>
+
+<!-- ============================= -->
+<!-- SHARDING                      -->
+<!-- ============================= -->
+<h2 id="sharding">13. Sharding Strategy — Summary</h2>
+<table>
+  <tr><th>Table</th><th>Shard Key</th><th>Strategy</th><th>Rationale</th></tr>
+  <tr><td>Users</td><td><code>user_id</code></td><td>Hash-based</td><td>Evenly distributes users; primary access by user_id</td></tr>
+  <tr><td>Tweets</td><td><code>tweet_id</code></td><td>Hash-based</td><td>Snowflake IDs distribute well; avoids write hot spots</td></tr>
+  <tr><td>Follows</td><td><code>follower_id</code></td><td>Hash-based</td><td>Colocalizes "who do I follow" queries on one shard</td></tr>
+  <tr><td>Likes</td><td><code>tweet_id</code></td><td>Hash-based (with write sharding for hot tweets)</td><td>Groups likes by tweet; write sharding avoids hot partitions</td></tr>
+  <tr><td>Notifications</td><td><code>user_id</code></td><td>Hash-based</td><td>All notifications for a user on one shard</td></tr>
+  <tr><td>Timeline Cache</td><td><code>user_id</code></td><td>Consistent hashing</td><td>Each user's timeline on one cache node; consistent hashing minimizes reshuffling on node addition/removal</td></tr>
+</table>
+
+<!-- ============================= -->
+<!-- DENORMALIZATION                -->
+<!-- ============================= -->
+<h2 id="denormalization">14. Denormalization</h2>
+
+<h3>Where &amp; Why</h3>
+
+<div class="component-card">
+  <h4>1. Engagement Counters on Tweets Table (<code>like_count</code>, <code>retweet_count</code>, <code>reply_count</code>)</h4>
+  <p><strong>Why denormalized:</strong> Displaying like/retweet/reply counts is required on every tweet in the timeline. If these were normalized (i.e., computed by counting rows in the Likes table), each tweet rendering would require a <code>COUNT(*)</code> query on the Likes table — that's unacceptable at 23,000 timeline reads/sec with 20 tweets each. Denormalizing the count onto the tweet itself allows a single read of the Tweet record to get all counts.</p>
+  <p><strong>Consistency mechanism:</strong> The Counter Service updates these counts asynchronously via the Message Queue. They may be slightly stale (off by a few counts for a few seconds), but this is an acceptable tradeoff for performance. For viral tweets, batched updates reduce write pressure.</p>
 </div>
 
-<!-- Scaling & Tradeoffs -->
-<div class="section">
-<h2>Scaling Considerations</h2>
-<ul>
-<li><strong>Fan-out bottleneck:</strong> Celebrity tweet = millions of cache writes. Solution: hybrid approach (no fan-out for celebrities) + priority queues (fan-out to online users first)</li>
-<li><strong>Timeline Cache:</strong> 500M users × 800 IDs × 8 bytes = ~3.2TB Redis. Partitioned across thousands of Redis instances</li>
-<li><strong>Trending:</strong> Count-Min Sketch for approximate hashtag counting in streaming fashion. Top-K maintained per region + global</li>
-<li><strong>Search:</strong> Elasticsearch cluster, partitioned by time (hourly shards). Old shards merged and moved to cheaper storage</li>
-</ul>
+<div class="component-card">
+  <h4>2. Follower/Following/Tweet Counts on Users Table (<code>follower_count</code>, <code>following_count</code>, <code>tweet_count</code>)</h4>
+  <p><strong>Why denormalized:</strong> User profiles display these counts prominently. Computing them on the fly (e.g., <code>SELECT COUNT(*) FROM follows WHERE followee_id = X</code>) would be expensive for users with millions of followers. Storing the pre-computed count on the Users row avoids this.</p>
+  <p><strong>Consistency mechanism:</strong> Incremented/decremented atomically by the User Service when follow/unfollow/tweet events occur. Since the User Store is SQL, this can use atomic <code>UPDATE ... SET follower_count = follower_count + 1</code>.</p>
 </div>
 
-<div class="section">
-<h2>Tradeoffs & Deep Dives</h2>
-<div class="tradeoff">
-<div class="pro"><h4>✅ Hybrid Fan-out</h4><ul><li>Best of both worlds: fast reads for majority, manageable writes</li><li>Only ~0.1% of users are celebrities — fan-out savings are massive</li></ul></div>
-<div class="con"><h4>❌ Hybrid Complexity</h4><ul><li>Two code paths increase complexity</li><li>Celebrity tweet merge at read time adds ~50ms</li><li>Need to maintain "is celebrity" threshold</li></ul></div>
-</div>
+<div class="component-card">
+  <h4>3. Tweet Preview Data in Timeline Cache</h4>
+  <p><strong>Why denormalized:</strong> The Timeline Cache stores not just tweet_ids but also denormalized tweet data (content preview, author username, profile image URL). This avoids a round-trip to the Tweet Store and User Store for every tweet when rendering the timeline. Since timelines are the most latency-sensitive path, this denormalization is critical.</p>
+  <p><strong>Consistency mechanism:</strong> If a user updates their profile image, the cached entries become stale. This is acceptable — the cache has a TTL, and the next fan-out write will include the updated data. For critical updates, a background job can refresh affected cache entries.</p>
 </div>
 
-<div class="section">
-<h2>Alternative Approaches</h2>
-<ul>
-<li><strong>Pure pull model:</strong> No pre-computation. Every timeline request queries all followed users' tweets. Simple but O(following_count) per read — too slow at scale</li>
-<li><strong>GraphQL API:</strong> Single flexible query instead of multiple REST endpoints. Client specifies exactly which tweet fields needed. Reduces over-fetching</li>
-<li><strong>Event sourcing:</strong> Store all events (tweet, like, retweet) as immutable log. Derive timeline views from event stream. Better for analytics but complex to implement</li>
-</ul>
+<!-- ============================= -->
+<!-- CDN                           -->
+<!-- ============================= -->
+<h2 id="cdn">15. CDN (Content Delivery Network)</h2>
+
+<div class="component-card">
+  <h4>Is a CDN Appropriate?</h4>
+  <p><strong>Yes, absolutely.</strong> Twitter serves billions of media requests per day (images, videos, profile pictures) to a globally distributed user base. Without a CDN, every media request would travel to the origin Object Storage, resulting in high latency for users far from the data center and massive bandwidth costs.</p>
 </div>
 
-<div class="section">
-<h2>Additional Information</h2>
+<h3>CDN Deep Dive</h3>
+
 <ul>
-<li><strong>Snowflake IDs:</strong> Twitter invented Snowflake for globally unique, time-sortable, decentralized ID generation. 64-bit = timestamp(41) + datacenter(5) + machine(5) + sequence(12)</li>
-<li><strong>Rate limiting:</strong> 300 tweets/3hrs per user, 900 reads/15min per API key. Sliding window counter in Redis</li>
-<li><strong>Content moderation:</strong> ML classifiers run on every tweet: hate speech, spam, misinformation. Flagged tweets hidden pending review. Appeal process for false positives</li>
-<li><strong>Real-time updates:</strong> WebSocket for real-time timeline updates ("new tweets available" indicator). Long-polling fallback for environments blocking WebSocket</li>
+  <li><strong>What is cached:</strong> Images (tweet images, profile pictures, header images), videos (transcoded variants at multiple bitrates for HLS/DASH adaptive streaming), and static web assets (JavaScript, CSS, fonts for the web client).</li>
+  <li><strong>How it's populated:</strong> <strong>Pull-based (lazy loading).</strong> When a user requests a media URL, the CDN edge checks its local cache. On a cache miss, it pulls the asset from the origin Object Storage, caches it at the edge, and serves it. Subsequent requests from the same geographic region are served directly from the edge.</li>
+  <li><strong>Eviction policy:</strong> <strong>LRU (Least Recently Used)</strong> — Media that hasn't been accessed recently is evicted first. This naturally keeps popular/trending content in the cache while aging out old or unpopular content.</li>
+  <li><strong>Expiration policy (TTL):</strong>
+    <ul>
+      <li>Images: <strong>30 days TTL</strong> — Images are immutable once uploaded (no in-place updates), so a long TTL is safe.</li>
+      <li>Videos: <strong>7 days TTL</strong> — Videos are larger and less likely to be re-watched, shorter TTL frees edge storage.</li>
+      <li>Profile pictures: <strong>1 day TTL</strong> — Users may update profile pictures; shorter TTL ensures freshness.</li>
+      <li>Static assets: <strong>Versioned URLs (cache-bust on deploy)</strong> — static assets use content-hashed filenames (e.g., <code>app.abc123.js</code>) so new deploys don't serve stale JS/CSS.</li>
+    </ul>
+  </li>
+  <li><strong>Cache invalidation:</strong> Rarely needed since media is immutable (new uploads get new URLs). For profile picture updates, the old URL is abandoned and a new URL is generated, so the old cached version naturally expires.</li>
+  <li><strong>Video streaming:</strong> Videos are transcoded into multiple bitrates and stored as HLS segments. The CDN serves the HLS manifest and segments, enabling adaptive bitrate streaming on clients.</li>
 </ul>
+
+<!-- ============================= -->
+<!-- CACHING                       -->
+<!-- ============================= -->
+<h2 id="cache">16. In-Memory Caching</h2>
+
+<div class="component-card">
+  <h4>Is an In-Memory Cache Appropriate?</h4>
+  <p><strong>Yes, critical.</strong> Twitter's read-heavy workload (23,000 timeline reads/sec) makes caching essential. Without caching, every timeline read would hit the database directly, creating unsustainable load. The cache sits in front of the databases, absorbing the vast majority of reads.</p>
 </div>
+
+<h3>Cache 1: Timeline Cache</h3>
+<table>
+  <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+  <tr><td>Caching Strategy</td><td><strong>Write-Behind (Fan-Out on Write)</strong></td><td>The Fan-Out Service writes tweet references directly to the cache when a tweet is created. This pre-computes the timeline, making reads extremely fast. It's "write-behind" because the tweet is written to the Tweet Store first, then asynchronously pushed to the cache by the Fan-Out Service.</td></tr>
+  <tr><td>Populated By</td><td>Fan-Out Service (on tweet creation), Timeline Service (on new follow backfill)</td><td></td></tr>
+  <tr><td>Eviction Policy</td><td><strong>Fixed-size per user</strong> (~800 entries, then drop oldest)</td><td>Users rarely scroll beyond the most recent ~800 tweets. Keeping a fixed cap per user bounds memory usage predictably.</td></tr>
+  <tr><td>Expiration Policy</td><td><strong>No global TTL</strong>; entries age out as new tweets push old ones out</td><td>Timelines are continuously updated by the Fan-Out Service. A TTL would unnecessarily expire active users' timelines.</td></tr>
+  <tr><td>Cache Miss Behavior</td><td>On miss (new user, inactive user), Timeline Service reconstructs timeline from the Tweet Store by fetching tweets from all followed users. The reconstructed timeline is then written back to cache.</td><td></td></tr>
+</table>
+
+<h3>Cache 2: User Cache</h3>
+<table>
+  <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+  <tr><td>Caching Strategy</td><td><strong>Cache-Aside (Lazy Loading)</strong></td><td>On a cache miss, the Timeline Service reads from the User Store (SQL), then writes the result to the cache. This is simple and prevents the cache from storing data that's never read.</td></tr>
+  <tr><td>Populated By</td><td>Any service that reads user data and encounters a cache miss</td><td></td></tr>
+  <tr><td>Eviction Policy</td><td><strong>LRU (Least Recently Used)</strong></td><td>Keeps frequently accessed user profiles (popular users, users whose tweets are in many timelines) in cache. Inactive users' profiles are evicted.</td></tr>
+  <tr><td>Expiration Policy</td><td><strong>1 hour TTL</strong></td><td>User profiles can change (display name, bio, profile image). A 1-hour TTL balances freshness with cache hit rate. Most profile changes are infrequent enough that a 1-hour window is acceptable.</td></tr>
+</table>
+
+<h3>Cache 3: Tweet Cache</h3>
+<table>
+  <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+  <tr><td>Caching Strategy</td><td><strong>Cache-Aside (Lazy Loading)</strong> + <strong>Write-Through for counters</strong></td><td>Tweet content is loaded on first access and cached. Engagement counters (like_count, retweet_count) are updated in both the cache and the store simultaneously by the Counter Service to keep the cache fresh for these frequently-changing values.</td></tr>
+  <tr><td>Populated By</td><td>Any service that reads tweet data; Counter Service for counter updates</td><td></td></tr>
+  <tr><td>Eviction Policy</td><td><strong>LRU</strong></td><td>Hot tweets (trending, viral) stay cached. Old/unpopular tweets are evicted.</td></tr>
+  <tr><td>Expiration Policy</td><td><strong>30 minutes TTL</strong></td><td>Engagement counts change rapidly for popular tweets. A 30-minute TTL ensures counts don't drift too far, while the write-through strategy for the Counter Service keeps hot tweets' counts current.</td></tr>
+</table>
+
+<!-- ============================= -->
+<!-- MESSAGE QUEUE DEEP DIVE       -->
+<!-- ============================= -->
+<h2 id="mq">17. Message Queue — Deep Dive</h2>
+
+<div class="component-card">
+  <h4>Why a Message Queue?</h4>
+  <p>The Message Queue is the backbone of Twitter's asynchronous processing. It decouples the tweet-write path from the expensive fan-out, counter updates, search indexing, and notification delivery. Without it, a single tweet creation would need to synchronously write to potentially millions of follower timelines before returning a response — this is unacceptable for latency.</p>
+</div>
+
+<h3>How Messages Are Produced (Put on Queue)</h3>
+<ol>
+  <li><strong>Tweet Service</strong> publishes a <code>tweet_created</code> event after writing a tweet to the Tweet Store. Payload: <code>{event: "tweet_created", tweet_id, author_id, follower_count, content_preview, media_urls, created_at}</code>.</li>
+  <li><strong>Interaction Service</strong> publishes <code>like_created</code>, <code>like_deleted</code>, <code>retweet_created</code> events after writing to the Like Store.</li>
+  <li><strong>User Service</strong> publishes <code>follow_created</code>, <code>follow_deleted</code> events after writing to the Follow Store.</li>
+</ol>
+<p>Messages are published to <strong>specific topics</strong> (e.g., <code>tweet-events</code>, <code>interaction-events</code>, <code>follow-events</code>). Each topic can have multiple partitions for parallel consumption.</p>
+
+<h3>How Messages Are Consumed (Removed from Queue)</h3>
+<ol>
+  <li><strong>Fan-Out Service</strong> subscribes to <code>tweet-events</code> topic. Multiple consumer instances in a consumer group process messages in parallel (each partition assigned to one consumer). After successfully writing to all follower timelines, the consumer acknowledges (commits the offset) the message, removing it from its processing queue.</li>
+  <li><strong>Counter Service</strong> subscribes to <code>interaction-events</code> topic. Batches counter updates for efficiency (e.g., accumulates 100 likes for the same tweet and performs one atomic increment of +100).</li>
+  <li><strong>Search Indexer</strong> subscribes to <code>tweet-events</code> topic (separate consumer group from Fan-Out). Indexes new tweets in near-real-time.</li>
+  <li><strong>Notification Service</strong> subscribes to <code>interaction-events</code> and <code>follow-events</code>. Creates notification records and triggers push notifications.</li>
+</ol>
+
+<h3>Why a Message Queue Over Alternatives?</h3>
+<table>
+  <tr><th>Alternative</th><th>Why Not Chosen</th></tr>
+  <tr><td><strong>Synchronous HTTP calls</strong></td><td>Fan-out to thousands of timelines synchronously would make tweet creation take seconds. Completely unacceptable for user experience. Also creates tight coupling between services.</td></tr>
+  <tr><td><strong>WebSockets</strong></td><td>WebSockets are for client-server real-time communication, not service-to-service async processing. They don't provide durability, replay, or consumer groups.</td></tr>
+  <tr><td><strong>Pub/Sub (pure)</strong></td><td>Pure pub/sub doesn't guarantee message ordering or provide consumer groups for parallel processing. The message queue provides ordered partitions and exactly-once semantics within a consumer group.</td></tr>
+  <tr><td><strong>Database polling</strong></td><td>Having downstream services poll the Tweet Store for new tweets introduces unnecessary database load and latency. The message queue provides push-based notification with backpressure.</td></tr>
+</table>
+
+<h3>Message Queue Configuration</h3>
+<ul>
+  <li><strong>Ordering:</strong> Messages within a partition are strictly ordered. Tweets are partitioned by <code>author_id</code> to ensure a single user's tweets are processed in order.</li>
+  <li><strong>Retention:</strong> 7 days — allows replay if a consumer falls behind or needs reprocessing.</li>
+  <li><strong>Delivery guarantee:</strong> At-least-once delivery. Consumers must be idempotent (e.g., the Fan-Out Service checks if a tweet reference already exists in the timeline before writing).</li>
+  <li><strong>Dead letter queue:</strong> Messages that fail processing after 3 retries are moved to a dead letter queue for manual investigation.</li>
+</ul>
+
+<!-- ============================= -->
+<!-- LOAD BALANCERS                -->
+<!-- ============================= -->
+<h2 id="lb">18. Load Balancers — Deep Dive</h2>
+
+<h3>Where Load Balancers Are Placed</h3>
+<ol>
+  <li><strong>Between Clients and API Gateway</strong> (L7 Load Balancer) — The primary entry point. Distributes incoming HTTP/HTTPS requests across multiple API Gateway instances.</li>
+  <li><strong>Between API Gateway and Core Services</strong> (L7 Load Balancer or service mesh) — Routes requests to the appropriate service instances (Tweet Service, Timeline Service, etc.).</li>
+  <li><strong>Between Fan-Out Service and Timeline Cache</strong> (L4 Load Balancer) — Distributes cache writes across cache nodes (though consistent hashing handles most of this).</li>
+</ol>
+
+<h3>Load Balancer Configuration</h3>
+<table>
+  <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+  <tr><td>Algorithm (L7)</td><td><strong>Least Connections</strong></td><td>Routes to the instance with fewest active connections. Better than round-robin for requests with variable processing times (e.g., timeline generation varies based on number of followed celebrities).</td></tr>
+  <tr><td>Health Checks</td><td>HTTP GET <code>/health</code> every 10s</td><td>Detects unhealthy instances and removes them from the rotation within 10-20 seconds.</td></tr>
+  <tr><td>SSL Termination</td><td>At the L7 load balancer</td><td>Offloads TLS/SSL processing from backend services. Internal traffic between services can use plain HTTP (within a VPC/private network).</td></tr>
+  <tr><td>Rate Limiting</td><td>Implemented at API Gateway level</td><td>Per-user rate limits (e.g., 300 tweets/3 hours, 1000 likes/day) prevent abuse.</td></tr>
+  <tr><td>Sticky Sessions</td><td>Not used</td><td>All services are stateless — any instance can handle any request. This simplifies scaling and failover.</td></tr>
+</table>
+
+<!-- ============================= -->
+<!-- SCALING CONSIDERATIONS        -->
+<!-- ============================= -->
+<h2 id="scaling">19. Scaling Considerations</h2>
+
+<h3>Horizontal Scaling</h3>
+<ul>
+  <li><strong>All services are stateless</strong> and can be horizontally scaled by adding more instances behind load balancers. Auto-scaling groups adjust instance counts based on CPU/memory/request rate metrics.</li>
+  <li><strong>Tweet Service:</strong> Scale based on write throughput. At 5,800 tweets/sec baseline, ~20-30 instances handle this comfortably with headroom for spikes.</li>
+  <li><strong>Timeline Service:</strong> Scale based on read throughput. At 23,000 reads/sec, this is the most heavily scaled service (~100+ instances).</li>
+  <li><strong>Fan-Out Service:</strong> Scale based on Message Queue consumer lag. If the queue backs up, add more consumer instances. This is the most compute-intensive service during viral tweets.</li>
+  <li><strong>Timeline Cache:</strong> Scale by adding more cache nodes with consistent hashing. This redistributes user timelines across more nodes without invalidating all existing cache entries.</li>
+</ul>
+
+<h3>Database Scaling</h3>
+<ul>
+  <li><strong>Tweet Store (NoSQL):</strong> Add more shards as data grows. With hash-based sharding on tweet_id, adding shards is straightforward (though may require resharding/rebalancing).</li>
+  <li><strong>User Store (SQL):</strong> Read replicas handle read scaling (profile views, user lookups). Writes are lower volume and handled by the primary. If write throughput becomes a bottleneck, shard by user_id.</li>
+  <li><strong>Follow Store (NoSQL):</strong> Shard by follower_id. For the reverse index (followers of a user), a separate sharding strategy by followee_id is used.</li>
+</ul>
+
+<h3>Hot Spot Mitigation</h3>
+<ul>
+  <li><strong>Celebrity tweets:</strong> Hybrid fan-out (fan-out on read for celebrities) prevents write amplification when a celebrity posts.</li>
+  <li><strong>Viral tweets:</strong> Write sharding on the Likes table (scatter-gather) prevents hot partitions when a tweet goes viral.</li>
+  <li><strong>Trending topics:</strong> Computed periodically and cached, not computed per-request.</li>
+</ul>
+
+<h3>Geographic Scaling</h3>
+<ul>
+  <li><strong>Multi-region deployment:</strong> Deploy the full stack in multiple geographic regions (e.g., US-East, US-West, Europe, Asia-Pacific). Users are routed to the nearest region via DNS-based geo-routing.</li>
+  <li><strong>CDN edge caching:</strong> Media is cached at CDN edges worldwide, reducing latency for image/video loads.</li>
+  <li><strong>Cross-region replication:</strong> The Tweet Store and User Store replicate asynchronously across regions for disaster recovery and read locality.</li>
+</ul>
+
+<h3>Load Balancer Placement Summary</h3>
+<div class="diagram-container">
+<pre class="mermaid">
+graph LR
+    C["Clients"] -->|"HTTPS"| LB1["L7 Load Balancer<br/>(Entry Point)"]
+    LB1 --> AG1["API Gateway #1"]
+    LB1 --> AG2["API Gateway #2"]
+    LB1 --> AG3["API Gateway #N"]
+    AG1 --> LB2["L7 Load Balancer<br/>(Service Mesh)"]
+    AG2 --> LB2
+    AG3 --> LB2
+    LB2 --> TS1["Tweet Service #1..N"]
+    LB2 --> TLS1["Timeline Service #1..N"]
+    LB2 --> US1["User Service #1..N"]
+    LB2 --> IS1["Interaction Service #1..N"]
+    LB2 --> SS1["Search Service #1..N"]
+</pre>
+</div>
+
+<!-- ============================= -->
+<!-- TRADEOFFS AND DEEP DIVES      -->
+<!-- ============================= -->
+<h2 id="tradeoffs">20. Tradeoffs &amp; Deep Dives</h2>
+
+<h3>Tradeoff 1: Fan-Out on Write vs. Fan-Out on Read</h3>
+<table>
+  <tr><th></th><th>Fan-Out on Write (Push)</th><th>Fan-Out on Read (Pull)</th></tr>
+  <tr><td><strong>Latency</strong></td><td>Fast reads (pre-computed)</td><td>Slow reads (computed at read time)</td></tr>
+  <tr><td><strong>Write cost</strong></td><td>High (write to many timelines)</td><td>Low (just write the tweet)</td></tr>
+  <tr><td><strong>Celebrity problem</strong></td><td>Very expensive (millions of writes)</td><td>No problem (just one write)</td></tr>
+  <tr><td><strong>Staleness</strong></td><td>Timeline is fresh as of last write</td><td>Always fresh (computed live)</td></tr>
+  <tr><td><strong>Storage</strong></td><td>High (duplicated tweet refs across timelines)</td><td>Low (single tweet record)</td></tr>
+</table>
+<p><strong>Our choice: Hybrid.</strong> Fan-out on write for normal users (fast reads for the common case), fan-out on read for celebrities (avoids write amplification). The celebrity threshold of 10,000 followers is a tunable parameter.</p>
+
+<h3>Tradeoff 2: Consistency vs. Availability</h3>
+<p>Per the <strong>CAP theorem</strong>, we choose <strong>AP (Availability + Partition Tolerance)</strong> for most subsystems. A tweet appearing a few seconds late in a follower's timeline is acceptable. However, for the <strong>User Store</strong> (account management), we lean toward <strong>CP (Consistency + Partition Tolerance)</strong> — email uniqueness and password changes must be strongly consistent.</p>
+
+<h3>Tradeoff 3: Denormalized Counters vs. Accurate Counts</h3>
+<p>Denormalized counters (like_count on Tweets) can be slightly stale (off by a few counts) since they're updated asynchronously. This is an acceptable tradeoff for massive performance gains. The alternative — computing <code>COUNT(*) FROM likes WHERE tweet_id = X</code> on every tweet render — would be prohibitively expensive at scale.</p>
+
+<h3>Tradeoff 4: Pre-computed Timeline Cache vs. On-Demand Computation</h3>
+<p>The Timeline Cache uses significant memory (800 tweet references × 500M users = up to 400B entries in the worst case, though only active users are cached). The tradeoff is <strong>memory cost vs. read latency</strong>. Given that timeline reads are the single most common operation, investing in cache memory is justified.</p>
+
+<h3>Deep Dive: Snowflake IDs</h3>
+<p>Twitter uses <strong>Snowflake IDs</strong> — 64-bit globally unique, time-sortable identifiers. Structure: <code>[41 bits: timestamp (ms since epoch)] [10 bits: machine ID] [13 bits: sequence number]</code>. This gives us:</p>
+<ul>
+  <li><strong>Time-ordering:</strong> Tweets can be sorted by ID instead of a separate timestamp column, which is efficient for cursor-based pagination.</li>
+  <li><strong>No central coordination:</strong> Each service instance generates IDs independently using its machine ID. No single point of failure or bottleneck.</li>
+  <li><strong>Uniqueness:</strong> The combination of timestamp + machine ID + sequence ensures no collisions even at high throughput.</li>
+  <li><strong>Compactness:</strong> 64-bit integer fits in a single database column and is more compact than UUIDs (128 bits).</li>
+</ul>
+
+<h3>Deep Dive: Hybrid Fan-Out Threshold Tuning</h3>
+<p>The 10,000-follower threshold for switching from push to pull is not arbitrary. Analysis shows:</p>
+<ul>
+  <li>~99% of users have fewer than 10,000 followers — they benefit from fan-out on write.</li>
+  <li>The top ~1% of users (celebrities) account for a disproportionate amount of fan-out write load.</li>
+  <li>A user following 5 celebrities adds only 5 extra database reads at timeline load time — negligible latency impact.</li>
+  <li>The threshold can be dynamically adjusted based on system load metrics.</li>
+</ul>
+
+<!-- ============================= -->
+<!-- ALTERNATIVE APPROACHES        -->
+<!-- ============================= -->
+<h2 id="alternatives">21. Alternative Approaches</h2>
+
+<div class="component-card">
+  <h4>Alternative 1: Pure Fan-Out on Write (No Hybrid)</h4>
+  <p><strong>Description:</strong> Push every tweet to every follower's timeline, regardless of follower count.</p>
+  <p><strong>Why not chosen:</strong> Celebrity accounts with 10M+ followers would require 10M+ writes per tweet. At a celebrity tweeting rate of ~10 tweets/day with 100 celebrities, that's 10 billion extra writes/day. This is prohibitively expensive in terms of write throughput, storage, and latency (the tweet post would take minutes to complete all fan-outs). The hybrid approach elegantly solves this by offloading celebrity reads to the client-read path.</p>
+</div>
+
+<div class="component-card">
+  <h4>Alternative 2: Pure Fan-Out on Read (No Pre-Computation)</h4>
+  <p><strong>Description:</strong> Compute the timeline from scratch at read time by fetching and merging tweets from all followed users.</p>
+  <p><strong>Why not chosen:</strong> A user following 500 users would require 500 database queries, merged and sorted, for every timeline load. At 23,000 timeline reads/sec, this creates an unmanageable load on the Tweet Store. Read latency would be hundreds of milliseconds to seconds, far exceeding the 200ms target.</p>
+</div>
+
+<div class="component-card">
+  <h4>Alternative 3: WebSockets for Real-Time Timeline Updates</h4>
+  <p><strong>Description:</strong> Maintain persistent WebSocket connections with all active clients to push new tweets to timelines in real-time.</p>
+  <p><strong>Why not chosen:</strong> With 200M DAU, maintaining 200M+ persistent WebSocket connections requires enormous server resources (memory, file descriptors, connection management). The engineering complexity of WebSocket infrastructure (connection registry, horizontal scaling, reconnection handling, state management) is significant. For Twitter, a slight delay in seeing new tweets (pull on refresh) is completely acceptable. The cost-to-benefit ratio doesn't justify WebSockets for the timeline. However, WebSockets or SSE (Server-Sent Events) could be considered for <strong>notifications</strong> specifically, where real-time delivery has higher value — but we opted for push notifications via APNs/FCM, which are more reliable for mobile users.</p>
+</div>
+
+<div class="component-card">
+  <h4>Alternative 4: Graph Database for Follow Relationships</h4>
+  <p><strong>Description:</strong> Use a graph database to store the social graph (follow relationships) instead of a NoSQL wide-column store.</p>
+  <p><strong>Why not chosen:</strong> While graph databases excel at multi-hop relationship traversals (e.g., "friends of friends"), Twitter's follow graph queries are primarily single-hop ("who do I follow?" and "who follows me?"). These are simple key-value lookups that a wide-column store handles efficiently. Graph databases add complexity without significant benefit for Twitter's access patterns. Additionally, graph databases typically have lower write throughput than wide-column stores, which matters for high-volume follow/unfollow operations.</p>
+</div>
+
+<div class="component-card">
+  <h4>Alternative 5: SQL for Tweets</h4>
+  <p><strong>Description:</strong> Store tweets in a SQL database instead of NoSQL.</p>
+  <p><strong>Why not chosen:</strong> Tweets require ~5,800 writes/sec at baseline with massive spikes during events. SQL databases require schema migrations for schema changes (e.g., adding a new field to tweets). SQL's ACID guarantees are unnecessary for tweets — we don't need strict consistency between tweet writes and reads. NoSQL's horizontal scaling (automatic sharding) is better suited for the write-heavy, high-volume tweet workload.</p>
+</div>
+
+<div class="component-card">
+  <h4>Alternative 6: Long Polling for Notifications Instead of Push</h4>
+  <p><strong>Description:</strong> Clients periodically long-poll the server for new notifications instead of using push notifications.</p>
+  <p><strong>Why not chosen:</strong> Long polling still requires the client to maintain an active connection, wastes bandwidth for users with no new notifications, and doesn't work when the app is in the background. Push notifications (APNs/FCM) are specifically designed for this use case — they work even when the app is closed, are battery-efficient, and leverage platform-native notification UI. The in-app notification feed uses a simple pull model (GET when the user opens the tab), which is sufficient.</p>
+</div>
+
+<!-- ============================= -->
+<!-- ADDITIONAL INFORMATION        -->
+<!-- ============================= -->
+<h2 id="additional">22. Additional Information</h2>
+
+<h3>Snowflake ID Generation</h3>
+<p>Each service instance has an ID generation module. The 64-bit Snowflake ID format ensures globally unique, time-ordered IDs without a centralized ID service (which would be a single point of failure). The 41-bit timestamp gives ~69 years of range. The 10-bit machine ID supports up to 1,024 instances. The 13-bit sequence supports 8,192 IDs per millisecond per machine.</p>
+
+<h3>Rate Limiting</h3>
+<p>The API Gateway enforces per-user rate limits using a token bucket or sliding window algorithm. Limits include:</p>
+<ul>
+  <li>Tweet creation: 300 per 3-hour window</li>
+  <li>Likes: 1,000 per 24-hour window</li>
+  <li>Follows: 400 per 24-hour window</li>
+  <li>API calls: 900 per 15-minute window (for third-party developers)</li>
+</ul>
+<p>Rate limit counters are stored in the in-memory cache (same infrastructure as User Cache) for fast lookups.</p>
+
+<h3>Abuse &amp; Spam Detection</h3>
+<p>A separate <strong>Abuse Detection Service</strong> (not shown in main diagrams for simplicity) consumes tweet and interaction events from the Message Queue and applies ML-based spam/abuse classification. Flagged content is queued for review or automatically hidden.</p>
+
+<h3>Data Retention &amp; Archival</h3>
+<p>Tweets are stored indefinitely in the Tweet Store. Notifications older than 90 days are archived to cold storage. Timeline Cache entries older than the cache capacity naturally age out. Media in Object Storage uses tiered storage — frequently accessed media on hot storage, old media migrated to cold storage after 1 year.</p>
+
+<h3>Disaster Recovery</h3>
+<p>All data stores are replicated across at least 3 availability zones within a region. Cross-region replication (async) provides geographic redundancy. RPO (Recovery Point Objective): &lt;1 minute. RTO (Recovery Time Objective): &lt;5 minutes. Automated failover detects primary failures and promotes replicas.</p>
+
+<h3>Monitoring &amp; Observability</h3>
+<p>Comprehensive monitoring covers:</p>
+<ul>
+  <li><strong>Latency:</strong> P50, P95, P99 for all API endpoints.</li>
+  <li><strong>Throughput:</strong> Requests/sec per service.</li>
+  <li><strong>Error rates:</strong> 4xx and 5xx response rates.</li>
+  <li><strong>Queue depth:</strong> Message Queue consumer lag — critical for detecting fan-out bottlenecks.</li>
+  <li><strong>Cache hit rate:</strong> Timeline Cache, User Cache, Tweet Cache hit rates — should be &gt;95%.</li>
+  <li><strong>Database metrics:</strong> Read/write latency, connection pool utilization, shard balance.</li>
+</ul>
+
+<!-- ============================= -->
+<!-- VENDOR RECOMMENDATIONS        -->
+<!-- ============================= -->
+<h2 id="vendors">23. Vendor Recommendations</h2>
+
+<table>
+  <tr><th>Component</th><th>Vendor Option(s)</th><th>Rationale</th></tr>
+  <tr><td>SQL Database (User Store)</td><td><strong>PostgreSQL</strong> or <strong>MySQL (InnoDB)</strong></td><td>Both are mature, battle-tested relational databases with strong ACID compliance. PostgreSQL offers better full-text search and JSON support. MySQL has a larger operational knowledge base at scale (used by many social platforms historically).</td></tr>
+  <tr><td>NoSQL Wide-Column Store (Tweet, Follow, Like, Notification Stores)</td><td><strong>Apache Cassandra</strong> or <strong>ScyllaDB</strong></td><td>Cassandra provides linear horizontal scaling, tunable consistency, and excels at high write throughput. ScyllaDB is a C++ rewrite of Cassandra with better performance per node. Both support wide-column data model with partition + sort keys.</td></tr>
+  <tr><td>In-Memory Cache (Timeline, User, Tweet Caches)</td><td><strong>Redis</strong> or <strong>Memcached</strong></td><td>Redis supports sorted sets (ideal for timelines), has built-in expiration, LRU eviction, and persistence options. Memcached is simpler and potentially faster for pure key-value caching. Redis is preferred for the Timeline Cache due to sorted set support.</td></tr>
+  <tr><td>Message Queue</td><td><strong>Apache Kafka</strong></td><td>Kafka provides high-throughput, durable, ordered message processing with consumer groups. Its partition model maps perfectly to our fan-out workload. Log-based retention allows replay. Kafka handles millions of messages/sec.</td></tr>
+  <tr><td>Object Storage</td><td><strong>Amazon S3</strong>, <strong>Google Cloud Storage</strong>, or <strong>Azure Blob Storage</strong></td><td>All provide 11 nines of durability, tiered storage classes, and native CDN integration. Choice depends on primary cloud provider.</td></tr>
+  <tr><td>CDN</td><td><strong>Cloudflare</strong>, <strong>Akamai</strong>, or <strong>Amazon CloudFront</strong></td><td>Cloudflare has the largest edge network. Akamai is the industry standard for large-scale media delivery. CloudFront integrates natively with S3.</td></tr>
+  <tr><td>Search Index</td><td><strong>Elasticsearch</strong> or <strong>Apache Solr</strong></td><td>Elasticsearch is the de facto standard for full-text search with inverted indexes, supports real-time indexing, relevance scoring (BM25), and horizontal scaling. Solr is a mature alternative with similar capabilities.</td></tr>
+  <tr><td>Load Balancer</td><td><strong>NGINX</strong>, <strong>HAProxy</strong>, or cloud-native (ALB/NLB)</td><td>NGINX and HAProxy are proven L7 load balancers with excellent performance. Cloud-native load balancers reduce operational overhead.</td></tr>
+  <tr><td>Push Notifications</td><td><strong>APNs</strong> (Apple) + <strong>FCM</strong> (Google Firebase)</td><td>These are the only options for iOS and Android push notifications respectively — they are platform requirements, not vendor choices.</td></tr>
+</table>
+
+<!-- ============================= -->
+<!-- FOOTER                        -->
+<!-- ============================= -->
+<hr style="margin: 60px 0 20px;">
+<p style="color: var(--gray); font-size: 13px; text-align: center;">System Design: Twitter — Generated February 2026</p>
+
+</div><!-- end .main -->
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'neutral',
+    flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+  });
+</script>
 </body>
 </html>
