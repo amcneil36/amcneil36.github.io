@@ -1,370 +1,1165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>System Design: Instagram Push Notifications</title>
-<style>
-  body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:20px;background:#f5f5f5;color:#333}
-  .container{max-width:1200px;margin:0 auto;background:#fff;padding:40px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.1)}
-  h1{color:#1a73e8;border-bottom:3px solid #1a73e8;padding-bottom:10px}h2{color:#2c3e50;margin-top:40px;border-left:4px solid #1a73e8;padding-left:12px}h3{color:#34495e}h4{color:#555}
-  .diagram{background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:20px;margin:20px 0;overflow-x:auto}
-  .example{background:#e8f5e9;border-left:4px solid #4caf50;padding:15px;margin:15px 0;border-radius:4px}
-  .deep-dive{background:#e3f2fd;border-left:4px solid #2196f3;padding:15px;margin:15px 0;border-radius:4px}
-  .tradeoff{background:#fff3e0;border-left:4px solid #ff9800;padding:15px;margin:15px 0;border-radius:4px}
-  .alternative{background:#fce4ec;border-left:4px solid #e91e63;padding:15px;margin:15px 0;border-radius:4px}
-  table{border-collapse:collapse;width:100%;margin:15px 0}th,td{border:1px solid #ddd;padding:10px 14px;text-align:left}th{background:#1a73e8;color:#fff}tr:nth-child(even){background:#f9f9f9}
-  code{background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:.9em}
-  .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.85em;margin:2px}.tag-pk{background:#ffeb3b;color:#333}.tag-fk{background:#ce93d8;color:#333}.tag-idx{background:#80cbc4;color:#333}
-  ul,ol{line-height:1.8}svg text{font-family:'Segoe UI',Arial,sans-serif}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design: Instagram Push Notifications</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card-bg: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-muted: #8b949e;
+            --accent: #58a6ff;
+            --accent2: #f78166;
+            --accent3: #7ee787;
+            --accent4: #d2a8ff;
+            --code-bg: #1c2129;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2.4rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent4));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        h2 {
+            font-size: 1.7rem;
+            color: var(--accent);
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border);
+        }
+        h3 {
+            font-size: 1.3rem;
+            color: var(--accent3);
+            margin-top: 2rem;
+            margin-bottom: 0.7rem;
+        }
+        h4 {
+            font-size: 1.1rem;
+            color: var(--accent4);
+            margin-top: 1.4rem;
+            margin-bottom: 0.5rem;
+        }
+        p, li { color: var(--text); margin-bottom: 0.6rem; }
+        ul, ol { padding-left: 1.6rem; margin-bottom: 1rem; }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        .example {
+            background: #1a2332;
+            border-left: 4px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+        }
+        .example strong { color: var(--accent); }
+        .warn {
+            background: #2a1f0d;
+            border-left: 4px solid var(--accent2);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+        }
+        .warn strong { color: var(--accent2); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+        }
+        th, td {
+            padding: 0.7rem 1rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        th {
+            background: #1c2129;
+            color: var(--accent);
+            font-weight: 600;
+        }
+        td { background: var(--card-bg); }
+        code {
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--accent2);
+        }
+        .mermaid {
+            background: #fff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        .tag {
+            display: inline-block;
+            padding: 0.15rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 0.3rem;
+        }
+        .tag-sql { background: #1a3a2a; color: var(--accent3); }
+        .tag-nosql { background: #2a1a3a; color: var(--accent4); }
+        .tag-cache { background: #1a2a3a; color: var(--accent); }
+        hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem; }
+    </style>
 </head>
 <body>
-<div class="container">
-<h1>System Design: Instagram Push Notifications</h1>
+    <h1>System Design: Instagram Push Notifications</h1>
+    <p class="subtitle">A comprehensive design for real-time push notification delivery at Instagram scale.</p>
 
-<h2>Functional Requirements</h2>
-<ol>
-  <li><strong>Push notifications to mobile devices</strong> – Deliver push notifications for likes, comments, follows, mentions, DMs, live videos, and stories to iOS (APNs) and Android (FCM) devices.</li>
-  <li><strong>Notification preferences</strong> – Users can enable/disable specific notification types (e.g., turn off like notifications but keep comment notifications).</li>
-  <li><strong>Rate limiting/throttling</strong> – Don't overwhelm users with too many notifications in a short period; batch or suppress excess notifications.</li>
-  <li><strong>Rich notifications</strong> – Include thumbnail images, action buttons (like, reply), and deep links in the notification payload.</li>
-  <li><strong>Multi-device support</strong> – Users logged into multiple devices receive notifications on all devices.</li>
-  <li><strong>Quiet hours</strong> – Respect user-configured do-not-disturb schedules.</li>
-</ol>
+    <!-- ========================================================== -->
+    <h2>1. Functional Requirements</h2>
+    <!-- ========================================================== -->
+    <div class="card">
+        <ol>
+            <li><strong>Event-Triggered Notifications</strong> — When a user performs an action (like, comment, follow, mention, DM, story reply, live start, etc.), the affected recipient(s) should receive a push notification on their device(s).</li>
+            <li><strong>Device Registration</strong> — Users can register one or more devices (iOS, Android) to receive push notifications. Device tokens are stored and kept up-to-date.</li>
+            <li><strong>Notification Preferences</strong> — Users can enable or disable specific notification types (e.g., turn off "like" notifications but keep "comment" notifications).</li>
+            <li><strong>Notification Aggregation / Batching</strong> — When many users perform the same action on the same entity in a short window (e.g., 200 people like the same photo), the system should batch them into a single notification like <em>"user_a, user_b, and 198 others liked your photo"</em> rather than sending 200 separate pushes.</li>
+            <li><strong>Notification Feed / History</strong> — Users can view a chronological feed of their past notifications inside the app.</li>
+            <li><strong>Rich Notifications</strong> — Push payloads include text, thumbnail images, deep-link URIs, and action buttons (e.g., "Reply", "View Post").</li>
+            <li><strong>Multi-Device Delivery</strong> — A single user logged into multiple devices receives the notification on all active devices.</li>
+            <li><strong>Read / Seen Tracking</strong> — Notifications can be marked as seen or read by the client.</li>
+        </ol>
+    </div>
 
-<h2>Non-Functional Requirements</h2>
-<ol>
-  <li><strong>Low latency</strong> – Push notifications delivered within 1-3 seconds of the triggering event.</li>
-  <li><strong>High throughput</strong> – Handle billions of push notifications per day.</li>
-  <li><strong>Reliability</strong> – At-least-once delivery to the push notification provider (APNs/FCM).</li>
-  <li><strong>Scalability</strong> – Scale horizontally to handle viral events (celebrity posts generating millions of likes).</li>
-</ol>
+    <!-- ========================================================== -->
+    <h2>2. Non-Functional Requirements</h2>
+    <!-- ========================================================== -->
+    <div class="card">
+        <ol>
+            <li><strong>Low Latency</strong> — Notifications should be delivered to the device within 1–3 seconds of the triggering event under normal conditions.</li>
+            <li><strong>High Throughput</strong> — The system must handle billions of push notifications per day (Instagram has 2B+ MAU, and a single viral post can generate millions of events).</li>
+            <li><strong>High Availability</strong> — 99.99% uptime. Notification delivery should not be a single point of failure.</li>
+            <li><strong>At-Least-Once Delivery</strong> — Notifications must not be silently dropped. It is acceptable to deliver a duplicate rather than miss a notification.</li>
+            <li><strong>Scalability</strong> — Horizontal scaling of all services; the system should handle traffic spikes (e.g., Super Bowl, New Year's Eve) gracefully.</li>
+            <li><strong>Fault Tolerance</strong> — If a downstream dependency (APNs, FCM) is temporarily unavailable, notifications should be retried with exponential backoff.</li>
+            <li><strong>Idempotency</strong> — Retries must not produce duplicate user-visible notifications.</li>
+            <li><strong>Ordering</strong> — Best-effort ordering within a user's notification feed; strict global ordering is not required.</li>
+            <li><strong>Data Durability</strong> — Notification records must be durably stored for feed retrieval.</li>
+        </ol>
+    </div>
 
-<!-- ==================== FLOW 1: SENDING PUSH NOTIFICATION ==================== -->
-<h2>Flow 1: Sending a Push Notification</h2>
-<div class="diagram">
-<svg viewBox="0 0 1150 420" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
-  <!-- Trigger Services -->
-  <rect x="10" y="120" width="95" height="40" rx="6" fill="#2196f3" stroke="#1565c0" stroke-width="1.5"/>
-  <text x="57" y="144" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Like Svc</text>
-  <rect x="10" y="170" width="95" height="40" rx="6" fill="#2196f3" stroke="#1565c0" stroke-width="1.5"/>
-  <text x="57" y="194" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Comment Svc</text>
-  <rect x="10" y="220" width="95" height="40" rx="6" fill="#2196f3" stroke="#1565c0" stroke-width="1.5"/>
-  <text x="57" y="244" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Follow Svc</text>
-  <!-- Arrows to Kafka -->
-  <line x1="105" y1="140" x2="180" y2="190" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <line x1="105" y1="190" x2="180" y2="190" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <line x1="105" y1="240" x2="180" y2="195" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <!-- Kafka -->
-  <rect x="180" y="168" width="110" height="50" rx="8" fill="#9c27b0" stroke="#6a1b9a" stroke-width="2"/>
-  <text x="235" y="197" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Event Queue</text>
-  <!-- Push Notification Service -->
-  <line x1="290" y1="192" x2="370" y2="192" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <rect x="370" y="160" width="130" height="65" rx="8" fill="#e91e63" stroke="#ad1457" stroke-width="2"/>
-  <text x="435" y="187" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Push Notif</text>
-  <text x="435" y="202" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Service</text>
-  <!-- Preference Check -->
-  <line x1="435" y1="160" x2="435" y2="80" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <rect x="380" y="30" width="110" height="50" rx="8" fill="#673ab7" stroke="#4527a0" stroke-width="2"/>
-  <text x="435" y="53" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Preference</text>
-  <text x="435" y="68" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Service</text>
-  <!-- Preference DB -->
-  <line x1="490" y1="55" x2="560" y2="55" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <ellipse cx="610" cy="48" rx="40" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <rect x="570" y="48" width="80" height="22" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <ellipse cx="610" cy="70" rx="40" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="570" y1="48" x2="570" y2="70" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="650" y1="48" x2="650" y2="70" stroke="#d84315" stroke-width="1.5"/>
-  <text x="610" y="63" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Pref DB</text>
-  <!-- Rate Limiter -->
-  <line x1="435" y1="225" x2="435" y2="290" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <rect x="380" y="290" width="110" height="45" rx="8" fill="#00bcd4" stroke="#00838f" stroke-width="2"/>
-  <text x="435" y="317" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Rate Limiter</text>
-  <!-- Rate Limiter to Redis -->
-  <line x1="490" y1="312" x2="560" y2="312" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <ellipse cx="610" cy="305" rx="40" ry="10" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <rect x="570" y="305" width="80" height="22" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <ellipse cx="610" cy="327" rx="40" ry="10" fill="#00796b" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="570" y1="305" x2="570" y2="327" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="650" y1="305" x2="650" y2="327" stroke="#00695c" stroke-width="1.5"/>
-  <text x="610" y="320" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Redis</text>
-  <!-- Device Token Store -->
-  <line x1="500" y1="185" x2="580" y2="155" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <ellipse cx="630" cy="142" rx="45" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <rect x="585" y="142" width="90" height="25" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <ellipse cx="630" cy="167" rx="45" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="585" y1="142" x2="585" y2="167" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="675" y1="142" x2="675" y2="167" stroke="#d84315" stroke-width="1.5"/>
-  <text x="630" y="159" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Device Tokens</text>
-  <!-- Send Queue -->
-  <line x1="500" y1="200" x2="580" y2="220" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <rect x="580" y="200" width="110" height="45" rx="8" fill="#9c27b0" stroke="#6a1b9a" stroke-width="2"/>
-  <text x="635" y="222" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Send Queue</text>
-  <!-- Workers -->
-  <line x1="690" y1="222" x2="770" y2="222" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <rect x="770" y="190" width="100" height="55" rx="8" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
-  <text x="820" y="215" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Push</text>
-  <text x="820" y="230" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Workers</text>
-  <!-- To APNs -->
-  <line x1="870" y1="205" x2="950" y2="175" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <rect x="950" y="155" width="80" height="40" rx="6" fill="#607d8b" stroke="#37474f" stroke-width="1.5"/>
-  <text x="990" y="179" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">APNs</text>
-  <!-- To FCM -->
-  <line x1="870" y1="230" x2="950" y2="255" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <rect x="950" y="240" width="80" height="40" rx="6" fill="#607d8b" stroke="#37474f" stroke-width="1.5"/>
-  <text x="990" y="264" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">FCM</text>
-  <!-- Devices -->
-  <line x1="1030" y1="175" x2="1080" y2="175" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <rect x="1080" y="155" width="50" height="40" rx="6" fill="#4caf50" stroke="#388e3c" stroke-width="1.5"/>
-  <text x="1105" y="179" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">iOS</text>
-  <line x1="1030" y1="260" x2="1080" y2="260" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <rect x="1080" y="240" width="50" height="40" rx="6" fill="#4caf50" stroke="#388e3c" stroke-width="1.5"/>
-  <text x="1105" y="264" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Andro</text>
-</svg>
-</div>
+    <!-- ========================================================== -->
+    <h2>3. Flow 1 — Device Registration</h2>
+    <!-- ========================================================== -->
+    <h3>3.1 Diagram</h3>
+    <div class="mermaid">
+        graph LR
+            A["📱 Mobile App<br/>(iOS / Android)"] -->|"1 — POST /v1/devices<br/>{user_id, device_token, platform}"| B(["🔀 Load Balancer"])
+            B -->|"2 — Forward"| C["Device Registry<br/>Service"]
+            C -->|"3 — Upsert token"| D[("Device Token<br/>DB (NoSQL)")]
+            C -->|"4 — Write-through"| E["Device Token<br/>Cache"]
+    </div>
 
-<div class="example">
-<h4>Example 1: Normal push notification</h4>
-<p>Bob likes Alice's photo. The Like Service publishes a <code>{event: POST_LIKED, actor: bob, target: alice, post_id: 123}</code> event to the <strong>Event Queue</strong> (Kafka). The <strong>Push Notification Service</strong> consumes the event and: (1) Calls the <strong>Preference Service</strong> to check if Alice has like notifications enabled — yes. (2) Checks the <strong>Rate Limiter</strong> (Redis sliding window: max 50 push notifs/hour per user) — Alice has received 12 this hour, under the limit. (3) Fetches Alice's device tokens from the <strong>Device Token Store</strong> — Alice has 2 devices (iPhone, iPad). (4) Constructs the notification payload: <code>{title: "Instagram", body: "bob liked your photo", image: thumbnail_url, deep_link: "instagram://post/123"}</code>. (5) Enqueues two messages (one per device) to the <strong>Send Queue</strong>. <strong>Push Workers</strong> dequeue and send to <strong>APNs</strong> via HTTP/2 for both iOS devices. Alice sees a push notification on both devices.</p>
-</div>
+    <h3>3.2 Examples</h3>
+    <div class="example">
+        <strong>Example 1 — Fresh Install (iOS):</strong><br/>
+        Alice installs Instagram on her new iPhone. On first launch, the app requests push notification permission from iOS. The OS returns a unique APNs device token. The app sends an HTTP <code>POST /v1/devices</code> with body <code>{user_id: "alice_123", device_token: "apns_tok_abc", platform: "ios"}</code> through the Load Balancer to the Device Registry Service. The service upserts the token into the Device Token DB (keyed by <code>user_id + device_id</code>) and also writes through to the Device Token Cache so subsequent lookups are fast.
+    </div>
+    <div class="example">
+        <strong>Example 2 — Token Refresh (Android):</strong><br/>
+        Bob's Android phone periodically refreshes its FCM token. The app detects the new token via the FCM SDK callback and sends <code>POST /v1/devices</code> with <code>{user_id: "bob_456", device_token: "fcm_tok_xyz_new", platform: "android"}</code>. The Device Registry Service finds the existing record for Bob's device (matched by <code>device_id</code>) and updates the token in both the DB and the cache.
+    </div>
+    <div class="example">
+        <strong>Example 3 — Multi-Device Registration:</strong><br/>
+        Carol logs into Instagram on both her iPad and her iPhone. Each device has a distinct APNs token. Two separate <code>POST /v1/devices</code> calls are made — one per device — each with a unique <code>device_id</code>. The Device Registry now stores two records under <code>user_id: "carol_789"</code>, so future notifications can be fanned out to both devices.
+    </div>
 
-<div class="example">
-<h4>Example 2: Notification suppressed (user preference)</h4>
-<p>Carol tags Alice in a story. The Push Notification Service checks Preference Service — Alice has disabled "Tags" notifications. The notification is dropped. No push is sent, but the notification still appears in Alice's in-app notification feed (handled by the Notification Feed system).</p>
-</div>
+    <h3>3.3 Component Deep Dive</h3>
 
-<div class="example">
-<h4>Example 3: Rate limited</h4>
-<p>A celebrity posts a photo and gets 10,000 likes in 1 minute. The celebrity would normally get 10,000 push notifications. The Rate Limiter detects the burst: after the first 50 in the hour, subsequent individual like notifications are suppressed. Instead, a summary notification is sent after a cooldown: "10,423 people liked your photo." This is achieved by aggregating suppressed events and sending a batch notification every 5 minutes when the rate limit is exceeded.</p>
-</div>
+    <h4>Mobile App (iOS / Android)</h4>
+    <div class="card">
+        <ul>
+            <li>Requests push notification permission from the OS on first launch.</li>
+            <li>Receives a platform-specific device token (APNs token for iOS, FCM registration token for Android).</li>
+            <li>Sends the token to the backend whenever it changes (on install, on token refresh, on login).</li>
+            <li>On logout or uninstall, should call <code>DELETE /v1/devices/{device_id}</code> to deregister.</li>
+        </ul>
+    </div>
 
-<h3>Deep Dive: Flow 1 Components</h3>
+    <h4>Load Balancer</h4>
+    <div class="card">
+        <ul>
+            <li>Sits in front of the Device Registry Service (and all client-facing services).</li>
+            <li>Layer-7 (HTTP) load balancer distributing requests via round-robin or least-connections.</li>
+            <li>Terminates TLS. Performs health checks on downstream instances.</li>
+        </ul>
+    </div>
 
-<div class="deep-dive">
-<h4>Push Notification Service</h4>
-<p>Core orchestrator that processes notification events. Steps: validate event → check preferences → apply rate limiting → resolve device tokens → construct payload → enqueue for delivery.</p>
-<p><strong>Protocol:</strong> Kafka consumer (event ingestion). Internal gRPC to Preference Service. HTTP/2 to APNs, HTTPS to FCM.</p>
-</div>
+    <h4>Device Registry Service</h4>
+    <div class="card">
+        <ul>
+            <li><strong>Protocol:</strong> HTTP REST</li>
+            <li><strong>Endpoints:</strong></li>
+        </ul>
+        <table>
+            <tr><th>Method</th><th>Path</th><th>Input</th><th>Output</th><th>Description</th></tr>
+            <tr>
+                <td><code>POST</code></td>
+                <td><code>/v1/devices</code></td>
+                <td><code>{user_id, device_id, device_token, platform, app_version}</code></td>
+                <td><code>201 Created</code> or <code>200 OK</code> (upsert)</td>
+                <td>Register or refresh a device token.</td>
+            </tr>
+            <tr>
+                <td><code>DELETE</code></td>
+                <td><code>/v1/devices/{device_id}</code></td>
+                <td>Path param: <code>device_id</code></td>
+                <td><code>204 No Content</code></td>
+                <td>Deregister a device (logout / uninstall).</td>
+            </tr>
+            <tr>
+                <td><code>GET</code></td>
+                <td><code>/v1/devices?user_id={uid}</code></td>
+                <td>Query param: <code>user_id</code></td>
+                <td><code>200 OK</code> — list of device records</td>
+                <td>Internal use: fetch all device tokens for a user.</td>
+            </tr>
+        </table>
+    </div>
 
-<div class="deep-dive">
-<h4>Preference Service</h4>
-<p>Manages user notification settings. Exposes a gRPC API: <code>GetPreferences(user_id) → {likes: true, comments: true, follows: true, mentions: false, ...}</code>. Caches preferences in Redis (read-heavy, rarely updated).</p>
-<p><strong>Cache strategy:</strong> Read-through cache. TTL = 1 hour. Invalidated on preference update (write-through).</p>
-</div>
+    <h4>Device Token DB (NoSQL)</h4>
+    <div class="card">
+        <ul>
+            <li>Wide-column / document NoSQL store.</li>
+            <li>Partition key: <code>user_id</code>; Sort key: <code>device_id</code>.</li>
+            <li>Chosen for simple key-value access patterns and high write throughput (token refreshes are frequent).</li>
+            <li>Detailed schema in Section 8.</li>
+        </ul>
+    </div>
 
-<div class="deep-dive">
-<h4>Rate Limiter</h4>
-<p>Implemented using a <strong>sliding window counter</strong> in Redis. Key: <code>ratelimit:{user_id}:{hour}</code>. INCR on each notification. If count &gt; 50, suppress. Uses a secondary key <code>batch:{user_id}</code> to accumulate suppressed events for batch notification.</p>
-<p><strong>Why sliding window:</strong> Fixed window can allow bursts at window boundaries. Sliding window provides smoother rate limiting.</p>
-</div>
+    <h4>Device Token Cache (In-Memory Cache)</h4>
+    <div class="card">
+        <ul>
+            <li>In-memory key-value cache sitting in front of the Device Token DB.</li>
+            <li>Key: <code>user_id</code> → Value: list of <code>{device_id, token, platform}</code>.</li>
+            <li>Detailed caching strategy in Section 9.</li>
+        </ul>
+    </div>
 
-<div class="deep-dive">
-<h4>Device Token Store</h4>
-<p>Stores APNs/FCM device tokens per user. Schema: <code>{user_id → [{device_token, platform, app_version, last_active}]}</code>. Users can have multiple devices. Stale tokens (device not seen in 30 days) are periodically purged. Stored in Cassandra for high availability.</p>
-</div>
+    <!-- ========================================================== -->
+    <h2>4. Flow 2 — Notification Generation &amp; Delivery</h2>
+    <!-- ========================================================== -->
+    <h3>4.1 Diagram</h3>
+    <div class="mermaid">
+        graph TD
+            A["Action Service<br/>(Like / Comment / Follow / etc.)"] -->|"1 — Publish event<br/>{type, sender, recipient, entity}"| B["Message Queue<br/>(Notification Events Topic)"]
+            B -->|"2 — Consume event"| C["Notification<br/>Service"]
+            C -->|"3 — Lookup preferences"| D["Preference<br/>Cache"]
+            D -.->|"Cache miss"| D2[("Preference<br/>DB (SQL)")]
+            C -->|"4a — Skip<br/>(if disabled)"| X["🚫 Discard"]
+            C -->|"4b — Check aggregation window"| E["Aggregation<br/>Buffer (Cache)"]
+            E -->|"5a — Window open:<br/>increment counter"| E
+            E -->|"5b — Window closed / first event:<br/>proceed"| F["Notification<br/>Creator"]
+            F -->|"6 — Persist notification"| G[("Notification<br/>DB (NoSQL)")]
+            F -->|"7 — Invalidate feed cache"| H["Notification<br/>Feed Cache"]
+            F -->|"8 — Lookup device tokens"| I["Device Token<br/>Cache"]
+            I -.->|"Cache miss"| I2[("Device Token<br/>DB (NoSQL)")]
+            F -->|"9 — Dispatch payload"| J["Push Gateway<br/>/ Dispatcher"]
+            J -->|"10a — iOS payload"| K["APNs<br/>(Apple Push<br/>Notification Service)"]
+            J -->|"10b — Android payload"| L["FCM<br/>(Firebase Cloud<br/>Messaging)"]
+            K -->|"11a — Push"| M["📱 iOS Device"]
+            L -->|"11b — Push"| N["📱 Android Device"]
+    </div>
 
-<div class="deep-dive">
-<h4>Push Workers</h4>
-<p>Worker pool that dequeues from the Send Queue and makes HTTP calls to APNs/FCM. Uses connection pooling and HTTP/2 multiplexing for high throughput to APNs. Handles retries with exponential backoff for transient failures. Invalid device tokens (APNs returns 410 Gone) are flagged for removal from the Device Token Store.</p>
-</div>
+    <h3>4.2 Examples</h3>
+    <div class="example">
+        <strong>Example 1 — Single Like (Happy Path):</strong><br/>
+        Dave double-taps Alice's photo. The Like Action Service publishes an event <code>{type: "like", sender: "dave", recipient: "alice_123", entity_id: "photo_555"}</code> onto the Message Queue. The Notification Service consumes the event, checks the Preference Cache and confirms Alice has "like" notifications enabled. The Aggregation Buffer has no open window for this entity, so it opens a 30-second window and immediately lets this first event through. The Notification Creator persists a notification record in the Notification DB, invalidates Alice's feed cache, looks up Alice's device tokens from the Device Token Cache (she has one iPhone), and dispatches the payload <code>{"title": "Instagram", "body": "dave liked your photo", "image_url": "cdn.example.com/photo_555_thumb.jpg", "deep_link": "ig://media/photo_555"}</code> to the Push Gateway. The Push Gateway sends it via APNs to Alice's iPhone. Alice sees the push notification on her lock screen within ~2 seconds.
+    </div>
+    <div class="example">
+        <strong>Example 2 — Aggregated Likes (Batching):</strong><br/>
+        Alice's photo goes viral. Within 30 seconds, 500 users like it. The first like (from Dave) opens a 30-second aggregation window. The next 499 like events for <code>photo_555</code> arrive and the Aggregation Buffer increments the counter. When the window closes, the Notification Creator creates a single notification: <code>"dave and 499 others liked your photo"</code>, persists it, and dispatches one push to Alice's device. This prevents Alice from being bombarded with 500 separate pushes.
+    </div>
+    <div class="example">
+        <strong>Example 3 — Notification Disabled (Preference Check Blocks Delivery):</strong><br/>
+        Eve follows Alice. The Follow Action Service publishes <code>{type: "follow", sender: "eve", recipient: "alice_123"}</code>. The Notification Service checks the Preference Cache and discovers Alice has disabled "follow" notifications. The event is discarded — no notification record is created and no push is sent.
+    </div>
+    <div class="example">
+        <strong>Example 4 — Multi-Device Delivery:</strong><br/>
+        Frank comments on Carol's post. Carol is logged in on her iPhone and iPad. The Notification Creator looks up Carol's device tokens and finds two records. The Push Gateway sends the same payload to APNs twice — once per device token. Both of Carol's devices display the push.
+    </div>
+    <div class="example">
+        <strong>Example 5 — Stale Token / Delivery Failure:</strong><br/>
+        The Push Gateway sends a notification to Bob's old Android token. FCM responds with an "InvalidRegistration" error. The Push Gateway marks the token as invalid, sends a <code>DELETE</code> to the Device Registry Service to remove the stale token, and the notification is recorded as "undeliverable" for that device. If Bob has other active devices, those still receive the push.
+    </div>
 
-<div class="deep-dive">
-<h4>APNs and FCM (External Services)</h4>
-<p><strong>APNs (Apple Push Notification service):</strong> Connected via HTTP/2 with persistent connections. Requires JWT-based authentication. Supports alert, badge, and silent notifications.</p>
-<p><strong>FCM (Firebase Cloud Messaging):</strong> Connected via HTTPS POST to <code>https://fcm.googleapis.com/v1/projects/{id}/messages:send</code>. Supports data messages and notification messages.</p>
-<p><strong>Protocol:</strong> Both use TCP/TLS. APNs uses HTTP/2 for multiplexing (sending multiple notifications on one connection). FCM uses standard HTTPS.</p>
-</div>
+    <h3>4.3 Component Deep Dive</h3>
 
-<!-- ==================== FLOW 2: DEVICE TOKEN REGISTRATION ==================== -->
-<h2>Flow 2: Device Token Registration</h2>
-<div class="diagram">
-<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
-  <rect x="10" y="70" width="90" height="55" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
-  <text x="55" y="102" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Client</text>
-  <line x1="100" y1="97" x2="180" y2="97" stroke="#333" stroke-width="2" marker-end="url(#a2)"/>
-  <text x="140" y="88" text-anchor="middle" fill="#555" font-size="9">PUT /device-token</text>
-  <rect x="180" y="70" width="100" height="55" rx="8" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
-  <text x="230" y="95" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">API</text>
-  <text x="230" y="108" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Gateway</text>
-  <line x1="280" y1="97" x2="360" y2="97" stroke="#333" stroke-width="2" marker-end="url(#a2)"/>
-  <rect x="360" y="70" width="120" height="55" rx="8" fill="#e91e63" stroke="#ad1457" stroke-width="2"/>
-  <text x="420" y="95" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Device Token</text>
-  <text x="420" y="108" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Service</text>
-  <line x1="480" y1="97" x2="560" y2="97" stroke="#333" stroke-width="2" marker-end="url(#a2)"/>
-  <ellipse cx="610" cy="90" rx="40" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <rect x="570" y="90" width="80" height="25" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <ellipse cx="610" cy="115" rx="40" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="570" y1="90" x2="570" y2="115" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="650" y1="90" x2="650" y2="115" stroke="#d84315" stroke-width="1.5"/>
-  <text x="610" y="107" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Token Store</text>
-</svg>
-</div>
+    <h4>Action Service (Event Producer)</h4>
+    <div class="card">
+        <ul>
+            <li>There are many Action Services (Like Service, Comment Service, Follow Service, DM Service, etc.). Each owns its own domain.</li>
+            <li>After persisting the action in its own database, the Action Service publishes a lightweight event to the Message Queue.</li>
+            <li>Event schema: <code>{event_id (UUID), type, sender_user_id, recipient_user_id, entity_id, entity_type, timestamp, metadata}</code></li>
+            <li>The Action Service is <strong>not</strong> responsible for notification logic — it simply announces that something happened.</li>
+        </ul>
+    </div>
 
-<div class="example">
-<h4>Example: App install and token registration</h4>
-<p>Alice installs Instagram on her new iPhone. On first launch, the app requests push notification permission from iOS. iOS returns an APNs device token. The app sends <strong>PUT /api/v1/device-token</strong> with <code>{user_id: alice, device_token: "abc123...", platform: "ios", app_version: "310.0"}</code> to the API Gateway → <strong>Device Token Service</strong> → upserts into the <strong>Token Store</strong> (Cassandra). If Alice reinstalls the app, a new token is generated and the old one is replaced.</p>
-</div>
+    <h4>Message Queue</h4>
+    <div class="card">
+        <ul>
+            <li><strong>Purpose:</strong> Decouples event producers (Action Services) from the Notification Service. Provides buffering during traffic spikes, enables retry semantics, and allows the Notification Service to scale consumers independently.</li>
+            <li><strong>How messages are enqueued:</strong> Action Services produce messages to a <code>notification-events</code> topic. Messages are partitioned by <code>recipient_user_id</code> to ensure ordering per user.</li>
+            <li><strong>How messages are dequeued:</strong> The Notification Service runs a consumer group. Each consumer pulls messages from assigned partitions, processes them, and commits the offset on success. Failed messages are retried with exponential backoff or sent to a Dead Letter Queue (DLQ) after max retries.</li>
+            <li><strong>Why Message Queue over Pub/Sub:</strong> Each notification event should be processed exactly once by the Notification Service (single consumer group). Pub/Sub would be useful if multiple independent systems needed the same event — but here, the Action Service only publishes for notification purposes. (If other systems like analytics also need these events, we would use a Pub/Sub fan-out pattern at the Action Service level, with the notification queue being one subscriber.)</li>
+            <li><strong>Why not WebSockets:</strong> Push notifications are delivered through APNs/FCM, not through a persistent connection to our servers. WebSockets would be used for in-app real-time features, which is a separate concern.</li>
+            <li><strong>Why not Polling:</strong> Polling would introduce latency proportional to the polling interval and waste resources when there are no events.</li>
+            <li><strong>Delivery guarantee:</strong> At-least-once. Combined with idempotency keys on the Notification Service to prevent duplicate notifications.</li>
+        </ul>
+    </div>
 
-<!-- ==================== OVERALL COMBINED FLOW ==================== -->
-<h2>Overall Combined Flow</h2>
-<div class="diagram">
-<svg viewBox="0 0 1150 400" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
-  <!-- Sources -->
-  <rect x="5" y="150" width="80" height="35" rx="5" fill="#2196f3" stroke="#1565c0" stroke-width="1.5"/>
-  <text x="45" y="172" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Services</text>
-  <!-- Kafka -->
-  <line x1="85" y1="167" x2="140" y2="167" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <rect x="140" y="148" width="80" height="38" rx="6" fill="#9c27b0" stroke="#6a1b9a" stroke-width="1.5"/>
-  <text x="180" y="171" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Kafka</text>
-  <!-- Push Notif Service -->
-  <line x1="220" y1="167" x2="280" y2="167" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <rect x="280" y="140" width="110" height="55" rx="8" fill="#e91e63" stroke="#ad1457" stroke-width="2"/>
-  <text x="335" y="165" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Push Notif</text>
-  <text x="335" y="178" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Service</text>
-  <!-- Pref check -->
-  <line x1="335" y1="140" x2="335" y2="75" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="295" y="35" width="80" height="40" rx="5" fill="#673ab7" stroke="#4527a0" stroke-width="1.5"/>
-  <text x="335" y="55" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Prefs</text>
-  <text x="335" y="65" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">+ Cache</text>
-  <!-- Rate limiter -->
-  <line x1="335" y1="195" x2="335" y2="250" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="295" y="250" width="80" height="35" rx="5" fill="#00bcd4" stroke="#00838f" stroke-width="1.5"/>
-  <text x="335" y="272" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Rate Limit</text>
-  <!-- Device tokens -->
-  <line x1="390" y1="155" x2="440" y2="105" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <ellipse cx="480" cy="95" rx="35" ry="8" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
-  <rect x="445" y="95" width="70" height="18" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
-  <ellipse cx="480" cy="113" rx="35" ry="8" fill="#e64a19" stroke="#d84315" stroke-width="1"/>
-  <line x1="445" y1="95" x2="445" y2="113" stroke="#d84315" stroke-width="1"/>
-  <line x1="515" y1="95" x2="515" y2="113" stroke="#d84315" stroke-width="1"/>
-  <text x="480" y="108" text-anchor="middle" fill="#fff" font-size="7" font-weight="bold">Tokens</text>
-  <!-- Send Queue -->
-  <line x1="390" y1="170" x2="450" y2="170" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <rect x="450" y="150" width="90" height="38" rx="6" fill="#9c27b0" stroke="#6a1b9a" stroke-width="1.5"/>
-  <text x="495" y="173" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Send Queue</text>
-  <!-- Workers -->
-  <line x1="540" y1="170" x2="600" y2="170" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <rect x="600" y="148" width="90" height="42" rx="6" fill="#ff9800" stroke="#f57c00" stroke-width="1.5"/>
-  <text x="645" y="173" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Workers</text>
-  <!-- APNs/FCM -->
-  <line x1="690" y1="160" x2="750" y2="135" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <rect x="750" y="118" width="60" height="30" rx="5" fill="#607d8b" stroke="#37474f" stroke-width="1.5"/>
-  <text x="780" y="137" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">APNs</text>
-  <line x1="690" y1="178" x2="750" y2="200" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <rect x="750" y="188" width="60" height="30" rx="5" fill="#607d8b" stroke="#37474f" stroke-width="1.5"/>
-  <text x="780" y="207" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">FCM</text>
-  <!-- Devices -->
-  <line x1="810" y1="133" x2="860" y2="133" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <rect x="860" y="118" width="50" height="30" rx="5" fill="#4caf50" stroke="#388e3c" stroke-width="1.5"/>
-  <text x="885" y="137" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">iOS</text>
-  <line x1="810" y1="203" x2="860" y2="203" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <rect x="860" y="188" width="60" height="30" rx="5" fill="#4caf50" stroke="#388e3c" stroke-width="1.5"/>
-  <text x="890" y="207" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Android</text>
-  <!-- Token Registration path (bottom) -->
-  <rect x="5" y="320" width="80" height="35" rx="5" fill="#4caf50" stroke="#388e3c" stroke-width="1.5"/>
-  <text x="45" y="342" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Client</text>
-  <line x1="85" y1="337" x2="140" y2="337" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <text x="112" y="330" text-anchor="middle" fill="#555" font-size="7">PUT</text>
-  <rect x="140" y="320" width="80" height="35" rx="5" fill="#ff9800" stroke="#f57c00" stroke-width="1.5"/>
-  <text x="180" y="342" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">API GW</text>
-  <line x1="220" y1="337" x2="280" y2="337" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <rect x="280" y="320" width="90" height="35" rx="5" fill="#e91e63" stroke="#ad1457" stroke-width="1.5"/>
-  <text x="325" y="342" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Token Svc</text>
-  <line x1="370" y1="337" x2="445" y2="120" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-</svg>
-</div>
+    <h4>Notification Service</h4>
+    <div class="card">
+        <ul>
+            <li>The core orchestrator of the notification pipeline. Consumes events from the Message Queue and coordinates preference checks, aggregation, notification creation, and dispatch.</li>
+            <li><strong>Protocol:</strong> Internal gRPC for inter-service calls (to Device Registry, Preference Service). Consumes from Message Queue via consumer SDK.</li>
+            <li>Stateless — can be horizontally scaled by adding more consumer instances.</li>
+            <li>Implements idempotency by maintaining a short-lived deduplication cache keyed by <code>event_id</code> (TTL ~5 minutes). If a duplicate event arrives (due to retry), it is skipped.</li>
+        </ul>
+    </div>
 
-<div class="example">
-<h4>Combined Example</h4>
-<p><strong>Registration:</strong> Client installs app → requests push permission → gets device token from OS → PUT /device-token → stored in Token Store. <strong>Notification:</strong> Bob likes Alice's photo → Like Service → Kafka → Push Notification Service checks prefs (enabled), checks rate limit (under threshold), fetches Alice's 2 device tokens → constructs payload → enqueues to Send Queue → Push Workers send to APNs (iPhone) and FCM (Android tablet) → Alice sees push on both devices.</p>
-</div>
+    <h4>Preference Cache / Preference DB</h4>
+    <div class="card">
+        <ul>
+            <li>The Notification Service checks whether the recipient has the relevant notification type enabled.</li>
+            <li>Preference Cache is consulted first. On a cache miss, the Preference DB (SQL) is queried and the result is written into the cache.</li>
+            <li>Detailed in Flow 3 and Section 9 (Cache Deep Dive).</li>
+        </ul>
+    </div>
 
-<!-- ==================== SCHEMA ==================== -->
-<h2>Database Schema</h2>
+    <h4>Aggregation Buffer (In-Memory Cache)</h4>
+    <div class="card">
+        <ul>
+            <li><strong>Purpose:</strong> Prevents notification spam when many users perform the same action on the same entity in a short window.</li>
+            <li>Implemented as a distributed in-memory cache with keys of the form <code>{recipient_user_id}:{entity_id}:{notification_type}</code>.</li>
+            <li>When the first event arrives for a key, a counter is set to 1 and a TTL (aggregation window) of 30 seconds is started. Subsequent events within the window increment the counter.</li>
+            <li>The first event is always let through immediately (so the user gets a fast notification). At window expiry, if the counter > 1, an aggregated notification is generated (e.g., "X and Y others liked your photo") and the counter resets.</li>
+            <li>Window duration is configurable per notification type (likes may use 30s, comments may use 10s since they are fewer and more meaningful).</li>
+        </ul>
+    </div>
 
-<h3>NoSQL Tables (Cassandra)</h3>
+    <h4>Notification Creator</h4>
+    <div class="card">
+        <ul>
+            <li>A sub-module within the Notification Service responsible for constructing the notification record and the push payload.</li>
+            <li>Writes the notification record to the Notification DB for feed retrieval.</li>
+            <li>Invalidates the recipient's entry in the Notification Feed Cache.</li>
+            <li>Looks up device tokens from the Device Token Cache (falling back to DB on cache miss).</li>
+            <li>Constructs a platform-specific push payload (APNs JSON for iOS, FCM JSON for Android) including title, body, image URL (served via CDN), deep-link URI, and action buttons.</li>
+            <li>Hands the payload to the Push Gateway for delivery.</li>
+        </ul>
+    </div>
 
-<h4>1. device_tokens</h4>
-<table>
-  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
-  <tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">Partition Key</span></td><td>User who owns the device</td></tr>
-  <tr><td>device_token</td><td>TEXT</td><td><span class="tag tag-pk">Clustering Key</span></td><td>APNs or FCM token</td></tr>
-  <tr><td>platform</td><td>TEXT</td><td></td><td>ios, android</td></tr>
-  <tr><td>app_version</td><td>TEXT</td><td></td><td>App version for targeting</td></tr>
-  <tr><td>last_active</td><td>TIMESTAMP</td><td></td><td>Last time device was seen</td></tr>
-  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Registration time</td></tr>
-</table>
-<p><strong>Why NoSQL:</strong> Simple key-value lookup (get all tokens for user_id). High availability required. No relational queries.</p>
-<p><strong>Read:</strong> When sending a push notification (fetch all device tokens for a user). <strong>Write:</strong> On app launch (device token registration/update), on token invalidation (APNs returns error).</p>
+    <h4>Push Gateway / Dispatcher</h4>
+    <div class="card">
+        <ul>
+            <li><strong>Purpose:</strong> Abstracts the platform-specific delivery protocols. The Notification Service doesn't need to know about APNs vs. FCM internals.</li>
+            <li><strong>Protocol:</strong>
+                <ul>
+                    <li>APNs: HTTP/2 persistent connections to Apple's push servers. Uses JWT-based authentication. Payloads are JSON up to 4 KB.</li>
+                    <li>FCM: HTTP/2 or XMPP connections to Google's push servers. Uses OAuth 2.0. Payloads are JSON up to 4 KB.</li>
+                </ul>
+            </li>
+            <li>Maintains a pool of persistent connections to APNs and FCM to avoid connection setup overhead per notification.</li>
+            <li>Handles responses from APNs/FCM:
+                <ul>
+                    <li><strong>Success (200):</strong> Notification accepted for delivery.</li>
+                    <li><strong>Invalid Token (410 / InvalidRegistration):</strong> Removes the stale token from the Device Registry.</li>
+                    <li><strong>Rate Limited (429):</strong> Backs off and retries.</li>
+                    <li><strong>Server Error (5xx):</strong> Retries with exponential backoff. Writes to DLQ after max retries.</li>
+                </ul>
+            </li>
+            <li>Internally uses gRPC between itself and the Notification Service.</li>
+        </ul>
+    </div>
 
-<h3>SQL Tables (PostgreSQL)</h3>
+    <h4>APNs / FCM (External Services)</h4>
+    <div class="card">
+        <ul>
+            <li>Apple Push Notification Service (APNs) and Firebase Cloud Messaging (FCM) are the platform-mandated gateways for delivering push notifications to iOS and Android devices respectively.</li>
+            <li>We do not control these services. Our system must handle their specific protocols, rate limits, and error codes.</li>
+            <li>APNs uses the <strong>HTTP/2</strong> protocol, while FCM supports both <strong>HTTP/2</strong> and <strong>XMPP</strong>.</li>
+        </ul>
+    </div>
 
-<h4>2. notification_preferences</h4>
-<table>
-  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
-  <tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td><td>User</td></tr>
-  <tr><td>likes_enabled</td><td>BOOLEAN</td><td></td><td>Default: true</td></tr>
-  <tr><td>comments_enabled</td><td>BOOLEAN</td><td></td><td>Default: true</td></tr>
-  <tr><td>follows_enabled</td><td>BOOLEAN</td><td></td><td>Default: true</td></tr>
-  <tr><td>mentions_enabled</td><td>BOOLEAN</td><td></td><td>Default: true</td></tr>
-  <tr><td>dm_enabled</td><td>BOOLEAN</td><td></td><td>Default: true</td></tr>
-  <tr><td>quiet_hours_start</td><td>TIME</td><td></td><td>DND start time (nullable)</td></tr>
-  <tr><td>quiet_hours_end</td><td>TIME</td><td></td><td>DND end time (nullable)</td></tr>
-  <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>Last update time</td></tr>
-</table>
-<p><strong>Why SQL:</strong> Small table (one row per user), strong consistency needed (preference changes must take effect immediately), ACID for updates.</p>
-<p><strong>Index:</strong> PK on user_id (hash). No additional indexes needed.</p>
-<p><strong>Read:</strong> On every push notification event (cached in Redis). <strong>Write:</strong> When user changes notification settings.</p>
+    <!-- ========================================================== -->
+    <h2>5. Flow 3 — Notification Preference Management</h2>
+    <!-- ========================================================== -->
+    <h3>5.1 Diagram</h3>
+    <div class="mermaid">
+        graph LR
+            A["📱 Mobile App"] -->|"1 — GET /v1/preferences?user_id={uid}"| B(["🔀 Load Balancer"])
+            B -->|"2 — Forward"| C["Preference<br/>Service"]
+            C -->|"3 — Read"| D["Preference<br/>Cache"]
+            D -.->|"Cache miss"| E[("Preference<br/>DB (SQL)")]
+            C -->|"4 — Return preferences"| A
+            A -->|"5 — PUT /v1/preferences<br/>{user_id, notification_type, enabled}"| B
+            B -->|"6 — Forward"| C
+            C -->|"7 — Update DB"| E
+            C -->|"8 — Write-through<br/>to cache"| D
+            C -->|"9 — 200 OK"| A
+    </div>
 
-<!-- ==================== CACHE ==================== -->
-<h2>Cache Deep Dive</h2>
-<div class="deep-dive">
-<h4>Preference Cache (Redis)</h4>
-<p><strong>Purpose:</strong> Cache notification preferences to avoid hitting PostgreSQL on every event.</p>
-<p><strong>Strategy:</strong> <strong>Read-through with write-invalidation.</strong> On read: check Redis first, if miss → query PostgreSQL → populate Redis. On write: update PostgreSQL → invalidate Redis key → next read repopulates.</p>
-<p><strong>Eviction:</strong> LRU. <strong>Expiration:</strong> TTL = 1 hour.</p>
-</div>
+    <h3>5.2 Examples</h3>
+    <div class="example">
+        <strong>Example 1 — Reading Preferences:</strong><br/>
+        Alice opens the Instagram Settings → Notifications page. The app fires <code>GET /v1/preferences?user_id=alice_123</code> through the Load Balancer to the Preference Service. The service checks the Preference Cache. Cache hit → returns immediately. Cache miss → queries the Preference DB (SQL), populates the cache, and returns the list of notification types with their enabled/disabled states. The app renders toggle switches accordingly.
+    </div>
+    <div class="example">
+        <strong>Example 2 — Disabling a Notification Type:</strong><br/>
+        Alice toggles off "Likes" notifications. The app sends <code>PUT /v1/preferences</code> with body <code>{user_id: "alice_123", notification_type: "like", enabled: false}</code>. The Preference Service writes the update to the Preference DB (SQL transaction) and then writes through to the Preference Cache. Returns <code>200 OK</code>. From this point forward, any like event for Alice will be discarded at step 4a in Flow 2.
+    </div>
 
-<h2>Scaling Considerations</h2>
-<ul>
-  <li><strong>Load Balancer:</strong> L7 LB in front of API Gateway for device token registration. Internal LB for Push Workers.</li>
-  <li><strong>Push Workers:</strong> Auto-scale based on Send Queue depth. Peak load (celebrity posts) may require 10x normal capacity.</li>
-  <li><strong>Connection pooling:</strong> Each Push Worker maintains persistent HTTP/2 connections to APNs (multiplexed) and connection pools to FCM.</li>
-  <li><strong>Kafka partitioning:</strong> Partition by <code>target_user_id % N</code> to distribute load evenly across consumers.</li>
-</ul>
+    <h3>5.3 Component Deep Dive</h3>
 
-<h2>Tradeoffs and Deep Dives</h2>
-<div class="tradeoff">
-<h4>Push vs. Pull for Notifications</h4>
-<p>Push (proactive delivery via APNs/FCM) is chosen over pull (client polling). Push provides real-time delivery with minimal battery drain. The tradeoff is dependency on third-party services (APNs/FCM) and their rate limits/quotas.</p>
-</div>
+    <h4>Preference Service</h4>
+    <div class="card">
+        <ul>
+            <li><strong>Protocol:</strong> HTTP REST</li>
+            <li><strong>Endpoints:</strong></li>
+        </ul>
+        <table>
+            <tr><th>Method</th><th>Path</th><th>Input</th><th>Output</th><th>Description</th></tr>
+            <tr>
+                <td><code>GET</code></td>
+                <td><code>/v1/preferences</code></td>
+                <td>Query: <code>user_id</code></td>
+                <td><code>200 OK</code> — JSON array of <code>{notification_type, enabled}</code></td>
+                <td>Retrieve all notification preferences for a user.</td>
+            </tr>
+            <tr>
+                <td><code>PUT</code></td>
+                <td><code>/v1/preferences</code></td>
+                <td><code>{user_id, notification_type, enabled}</code></td>
+                <td><code>200 OK</code></td>
+                <td>Update a specific notification preference.</td>
+            </tr>
+        </table>
+        <ul>
+            <li>Stateless. All state is in the Preference DB and cache.</li>
+            <li>Uses write-through caching to keep the cache consistent with the DB.</li>
+        </ul>
+    </div>
 
-<div class="tradeoff">
-<h4>Two-Queue Architecture</h4>
-<p>We use two queues: Event Queue (Kafka, for raw events) and Send Queue (for processed, ready-to-send notifications). This separation allows the Push Notification Service to filter/enrich events without blocking delivery workers.</p>
-</div>
+    <h4>Preference DB (SQL)</h4>
+    <div class="card">
+        <ul>
+            <li>Relational SQL database storing user notification preferences.</li>
+            <li>SQL chosen because: structured schema, ACID guarantees for updates, relatively small dataset (one row per user per notification type), and straightforward relational queries.</li>
+            <li>Detailed schema in Section 8.</li>
+        </ul>
+    </div>
 
-<h2>Alternative Approaches</h2>
-<div class="alternative">
-<h4>Alternative: WebSocket for Real-time In-app Notifications</h4>
-<p>Instead of APNs/FCM, use a persistent WebSocket to push notifications while the app is open. This is used for in-app real-time updates but doesn't replace push notifications because WebSocket only works when the app is in the foreground. Push notifications via APNs/FCM work even when the app is closed/backgrounded.</p>
-</div>
+    <!-- ========================================================== -->
+    <h2>6. Flow 4 — Notification Feed Retrieval</h2>
+    <!-- ========================================================== -->
+    <h3>6.1 Diagram</h3>
+    <div class="mermaid">
+        graph LR
+            A["📱 Mobile App"] -->|"1 — GET /v1/notifications?user_id={uid}<br/>&cursor={cursor}&limit=20"| B(["🔀 Load Balancer"])
+            B -->|"2 — Forward"| C["Notification<br/>Service"]
+            C -->|"3 — Check cache"| D["Notification<br/>Feed Cache"]
+            D -.->|"Cache miss"| E[("Notification<br/>DB (NoSQL)")]
+            C -->|"4 — Return paginated<br/>notification list"| A
+            A -->|"5 — PATCH /v1/notifications/{id}<br/>{is_read: true}"| B
+            B -->|"6 — Forward"| C
+            C -->|"7 — Update read status"| E
+    </div>
 
-<div class="alternative">
-<h4>Alternative: SMS Fallback</h4>
-<p>For critical notifications (e.g., security alerts), fall back to SMS if push delivery fails. Not used for social notifications due to cost (~$0.01/SMS at scale = millions of dollars/day).</p>
-</div>
+    <h3>6.2 Examples</h3>
+    <div class="example">
+        <strong>Example 1 — Opening Notification Feed (Cache Hit):</strong><br/>
+        Alice taps the heart icon (notification tab) in Instagram. The app sends <code>GET /v1/notifications?user_id=alice_123&limit=20</code>. The Notification Service checks the Notification Feed Cache, finds a cached page, and returns it immediately. Alice sees her 20 most recent notifications including "dave liked your photo" and "eve started following you". Latency is very low (~10ms).
+    </div>
+    <div class="example">
+        <strong>Example 2 — Opening Notification Feed (Cache Miss):</strong><br/>
+        Bob hasn't opened the app in a week. His notification feed has been evicted from the cache. The <code>GET</code> request hits a cache miss, so the Notification Service queries the Notification DB (NoSQL) using Bob's <code>user_id</code> as the partition key, ordered by <code>created_at DESC</code>, limit 20. The result is populated into the feed cache and returned to the client.
+    </div>
+    <div class="example">
+        <strong>Example 3 — Cursor-Based Pagination (Load More):</strong><br/>
+        Alice scrolls down in her notification feed. The app sends <code>GET /v1/notifications?user_id=alice_123&cursor=notif_xyz_timestamp&limit=20</code>. The service fetches the next 20 notifications older than the cursor. This continues as Alice scrolls.
+    </div>
+    <div class="example">
+        <strong>Example 4 — Marking a Notification as Read:</strong><br/>
+        Alice taps on the "dave liked your photo" notification. The app sends <code>PATCH /v1/notifications/notif_001</code> with body <code>{is_read: true}</code>. The Notification Service updates the <code>is_read</code> flag in the Notification DB. The notification feed cache entry is also invalidated or updated lazily on next fetch.
+    </div>
 
-<h2>Additional Information</h2>
-<h3>Notification Analytics</h3>
-<p>Track notification delivery rates, open rates, and engagement (did the user tap the notification?). APNs provides delivery receipts; FCM provides message delivery data. Analytics are streamed to a data warehouse (BigQuery/Hive) for analysis.</p>
+    <h3>6.3 Component Deep Dive</h3>
 
-<h3>A/B Testing Notifications</h3>
-<p>The notification payload (copy, image, timing) can be A/B tested. The Push Notification Service integrates with an experimentation platform to select notification variants per user cohort.</p>
-</div>
+    <h4>Notification Service (Feed Retrieval Role)</h4>
+    <div class="card">
+        <ul>
+            <li><strong>Protocol:</strong> HTTP REST</li>
+            <li><strong>Endpoints:</strong></li>
+        </ul>
+        <table>
+            <tr><th>Method</th><th>Path</th><th>Input</th><th>Output</th><th>Description</th></tr>
+            <tr>
+                <td><code>GET</code></td>
+                <td><code>/v1/notifications</code></td>
+                <td>Query: <code>user_id, cursor, limit</code></td>
+                <td><code>200 OK</code> — paginated list of notifications, next_cursor</td>
+                <td>Retrieve a user's notification feed.</td>
+            </tr>
+            <tr>
+                <td><code>PATCH</code></td>
+                <td><code>/v1/notifications/{notification_id}</code></td>
+                <td><code>{is_read: true}</code></td>
+                <td><code>200 OK</code></td>
+                <td>Mark a notification as read.</td>
+            </tr>
+        </table>
+    </div>
+
+    <h4>Notification DB (NoSQL)</h4>
+    <div class="card">
+        <ul>
+            <li>Wide-column NoSQL store optimized for high write throughput and time-range scans.</li>
+            <li>Partition key: <code>recipient_user_id</code>. Sort key: <code>created_at</code> (descending) or <code>notification_id</code> (ULID for time-ordering).</li>
+            <li>Detailed schema in Section 8.</li>
+        </ul>
+    </div>
+
+    <h4>Notification Feed Cache</h4>
+    <div class="card">
+        <ul>
+            <li>Caches the most recent page of notifications per user for fast feed loading.</li>
+            <li>Detailed caching strategy in Section 9.</li>
+        </ul>
+    </div>
+
+    <!-- ========================================================== -->
+    <h2>7. Combined Overall Flow</h2>
+    <!-- ========================================================== -->
+    <h3>7.1 Diagram</h3>
+    <div class="mermaid">
+        graph TD
+            subgraph "Client Layer"
+                APP["📱 Mobile App<br/>(iOS / Android)"]
+            end
+
+            subgraph "Gateway Layer"
+                LB(["🔀 Load Balancer"])
+            end
+
+            subgraph "Service Layer"
+                DRS["Device Registry<br/>Service"]
+                PS["Preference<br/>Service"]
+                NS["Notification<br/>Service"]
+                PGW["Push Gateway<br/>/ Dispatcher"]
+            end
+
+            subgraph "Async Layer"
+                MQ["Message Queue<br/>(Notification Events)"]
+                AS["Action Services<br/>(Like, Comment, Follow, …)"]
+                AB["Aggregation<br/>Buffer"]
+            end
+
+            subgraph "Cache Layer"
+                DTC["Device Token<br/>Cache"]
+                PC["Preference<br/>Cache"]
+                NFC["Notification<br/>Feed Cache"]
+            end
+
+            subgraph "Data Layer"
+                DTD[("Device Token<br/>DB (NoSQL)")]
+                PD[("Preference<br/>DB (SQL)")]
+                ND[("Notification<br/>DB (NoSQL)")]
+            end
+
+            subgraph "External Push"
+                APNS["APNs"]
+                FCM["FCM"]
+            end
+
+            subgraph CDNLayer ["CDN"]
+                CDN["CDN<br/>(Media Thumbnails)"]
+            end
+
+            %% Device Registration
+            APP -->|"POST /v1/devices"| LB
+            LB --> DRS
+            DRS --> DTD
+            DRS --> DTC
+
+            %% Preference Management
+            APP -->|"GET/PUT /v1/preferences"| LB
+            LB --> PS
+            PS --> PD
+            PS --> PC
+
+            %% Notification Feed
+            APP -->|"GET /v1/notifications"| LB
+            LB --> NS
+            NS --> NFC
+            NFC -.->|"miss"| ND
+
+            %% Event-Driven Notification
+            AS -->|"Publish event"| MQ
+            MQ -->|"Consume"| NS
+            NS -->|"Check prefs"| PC
+            PC -.->|"miss"| PD
+            NS --> AB
+            AB -->|"Proceed"| NS
+            NS -->|"Persist"| ND
+            NS -->|"Invalidate"| NFC
+            NS -->|"Lookup tokens"| DTC
+            DTC -.->|"miss"| DTD
+            NS -->|"Dispatch"| PGW
+            PGW --> APNS
+            PGW --> FCM
+            APNS --> APP
+            FCM --> APP
+
+            %% CDN for media
+            APP -->|"Fetch thumbnails"| CDN
+    </div>
+
+    <h3>7.2 Combined Flow Examples</h3>
+    <div class="example">
+        <strong>End-to-End Example — Full Lifecycle:</strong><br/>
+        <strong>Step A (Registration):</strong> Carol installs Instagram on her iPhone. The app gets an APNs token and calls <code>POST /v1/devices</code>. The Device Registry Service stores the token in the Device Token DB and Device Token Cache.<br/><br/>
+        <strong>Step B (Preference):</strong> Carol goes into Settings and turns off "Follow" notifications by calling <code>PUT /v1/preferences</code>. The Preference Service writes to the SQL Preference DB and the Preference Cache.<br/><br/>
+        <strong>Step C (Event — Follow):</strong> Dave follows Carol. The Follow Action Service publishes <code>{type: "follow", sender: "dave", recipient: "carol"}</code> to the Message Queue. The Notification Service consumes it, checks Carol's preferences in the Preference Cache, sees "follow" is disabled, and discards the event. No push is sent.<br/><br/>
+        <strong>Step D (Event — Like):</strong> Later, Eve likes Carol's reel. The Like Action Service publishes <code>{type: "like", sender: "eve", recipient: "carol", entity_id: "reel_999"}</code>. The Notification Service consumes it, checks preferences (likes are enabled), the Aggregation Buffer has no open window so the event proceeds. The Notification Creator persists the notification in the Notification DB, invalidates Carol's Notification Feed Cache, looks up Carol's APNs token from the Device Token Cache, and dispatches the payload to the Push Gateway. The Push Gateway sends it to APNs over HTTP/2. Carol sees <em>"eve liked your reel"</em> on her lock screen. The notification includes a thumbnail image URL served via the CDN.<br/><br/>
+        <strong>Step E (Feed Retrieval):</strong> Carol opens Instagram and taps the notification tab. The app calls <code>GET /v1/notifications?user_id=carol</code>. The Notification Service finds a cache miss (the feed cache was invalidated in Step D), queries the Notification DB, populates the cache, and returns the paginated feed. Carol sees "eve liked your reel" in her feed and taps it, triggering <code>PATCH /v1/notifications/notif_042 {is_read: true}</code>.
+    </div>
+
+    <!-- ========================================================== -->
+    <h2>8. Database Schema</h2>
+    <!-- ========================================================== -->
+
+    <!-- ---- SQL TABLES ---- -->
+    <h3>8.1 SQL Tables</h3>
+
+    <h4><span class="tag tag-sql">SQL</span> notification_preferences</h4>
+    <table>
+        <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+        <tr><td><code>user_id</code></td><td>BIGINT</td><td>PK (composite), FK → users.user_id, NOT NULL</td><td>The user whose preference this is.</td></tr>
+        <tr><td><code>notification_type</code></td><td>VARCHAR(50)</td><td>PK (composite), NOT NULL</td><td>Type of notification (e.g., "like", "comment", "follow", "dm", "story_reply", "live").</td></tr>
+        <tr><td><code>is_enabled</code></td><td>BOOLEAN</td><td>NOT NULL, DEFAULT TRUE</td><td>Whether this notification type is enabled.</td></tr>
+        <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last time this preference was updated.</td></tr>
+    </table>
+    <div class="card">
+        <strong>Why SQL:</strong> The notification preferences dataset is small (bounded by the number of users × notification types), highly structured, benefits from ACID transactions (a toggle must be atomic), and requires no horizontal scaling beyond what a SQL database with read replicas can handle. The schema is rigid and well-defined, making SQL's strong typing advantageous.<br/><br/>
+        <strong>Primary Key:</strong> Composite key on <code>(user_id, notification_type)</code>.<br/>
+        <strong>Foreign Key:</strong> <code>user_id</code> references the <code>users</code> table (assumed external).<br/><br/>
+        <strong>Indexing:</strong> The composite primary key <code>(user_id, notification_type)</code> already serves as a B-tree index. This efficiently supports the query pattern: <code>SELECT * FROM notification_preferences WHERE user_id = ?</code> (prefix scan on the composite key) and <code>SELECT * FROM notification_preferences WHERE user_id = ? AND notification_type = ?</code> (exact key lookup). B-tree is chosen over hash because we may scan all preferences for a user (range scan on user_id prefix).<br/><br/>
+        <strong>Read events:</strong> When the Notification Service processes an event and checks if the recipient has the notification type enabled. Also when the user opens the notification settings screen.<br/>
+        <strong>Write events:</strong> When the user toggles a notification preference on/off in the settings screen.
+    </div>
+
+    <!-- ---- NoSQL TABLES ---- -->
+    <h3>8.2 NoSQL Tables</h3>
+
+    <h4><span class="tag tag-nosql">NoSQL</span> device_tokens</h4>
+    <table>
+        <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+        <tr><td><code>user_id</code></td><td>STRING</td><td>Partition Key</td><td>The user who owns this device.</td></tr>
+        <tr><td><code>device_id</code></td><td>STRING</td><td>Sort Key</td><td>Unique identifier for the device (app-generated UUID).</td></tr>
+        <tr><td><code>device_token</code></td><td>STRING</td><td>NOT NULL</td><td>Platform-specific push token (APNs token or FCM token).</td></tr>
+        <tr><td><code>platform</code></td><td>STRING</td><td>NOT NULL</td><td>"ios" or "android".</td></tr>
+        <tr><td><code>app_version</code></td><td>STRING</td><td></td><td>App version at time of registration.</td></tr>
+        <tr><td><code>last_active_at</code></td><td>TIMESTAMP</td><td></td><td>Last time a heartbeat was received from this device.</td></tr>
+        <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>When the device was first registered.</td></tr>
+    </table>
+    <div class="card">
+        <strong>Why NoSQL (wide-column):</strong> Access pattern is purely key-value: "get all device tokens for user X". No joins or complex queries are needed. Device tokens are updated frequently (token refreshes) requiring high write throughput. The dataset scales with the number of user-device pairs (billions). Horizontal scaling via partitioning on <code>user_id</code> is essential.<br/><br/>
+        <strong>Partition Key:</strong> <code>user_id</code> — all devices for a user are co-located on the same partition for efficient lookups.<br/>
+        <strong>Sort Key:</strong> <code>device_id</code> — distinguishes multiple devices per user.<br/><br/>
+        <strong>Indexing:</strong> The partition key (<code>user_id</code>) uses a hash index for O(1) partition routing. Within a partition, the sort key (<code>device_id</code>) is stored in sorted order (B-tree-like). This is optimal for the exact-match access pattern.<br/><br/>
+        <strong>Sharding:</strong> Hash-based sharding on <code>user_id</code>. The <code>user_id</code> is hashed to determine the shard/partition. This strategy was selected because it distributes data evenly across shards (avoiding hot partitions), and the only query pattern is by <code>user_id</code>, which aligns perfectly with the partition key. Range queries across users are not needed.<br/><br/>
+        <strong>Read events:</strong> When the Notification Creator needs to dispatch a push (looks up all device tokens for a recipient). Also when the Device Registry Service handles a <code>GET</code> for internal token lookup.<br/>
+        <strong>Write events:</strong> When a user installs the app or the device token refreshes (<code>POST /v1/devices</code>). When a user logs out or a token is invalidated (<code>DELETE</code>).
+    </div>
+
+    <h4><span class="tag tag-nosql">NoSQL</span> notifications</h4>
+    <table>
+        <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+        <tr><td><code>recipient_user_id</code></td><td>STRING</td><td>Partition Key</td><td>The user who received this notification.</td></tr>
+        <tr><td><code>notification_id</code></td><td>STRING (ULID)</td><td>Sort Key</td><td>Time-ordered unique ID (ULID embeds timestamp).</td></tr>
+        <tr><td><code>notification_type</code></td><td>STRING</td><td>NOT NULL</td><td>"like", "comment", "follow", "dm", etc.</td></tr>
+        <tr><td><code>sender_user_id</code></td><td>STRING</td><td></td><td>The user who triggered the notification (null for system notifications).</td></tr>
+        <tr><td><code>entity_id</code></td><td>STRING</td><td></td><td>The entity the notification is about (post ID, reel ID, etc.).</td></tr>
+        <tr><td><code>entity_type</code></td><td>STRING</td><td></td><td>"post", "reel", "story", "profile", etc.</td></tr>
+        <tr><td><code>message</code></td><td>STRING</td><td>NOT NULL</td><td>Human-readable notification text.</td></tr>
+        <tr><td><code>thumbnail_url</code></td><td>STRING</td><td></td><td>CDN URL of the thumbnail image for rich notifications.</td></tr>
+        <tr><td><code>deep_link</code></td><td>STRING</td><td></td><td>URI for in-app navigation when the notification is tapped.</td></tr>
+        <tr><td><code>is_read</code></td><td>BOOLEAN</td><td>DEFAULT FALSE</td><td>Whether the user has read/tapped this notification.</td></tr>
+        <tr><td><code>is_aggregated</code></td><td>BOOLEAN</td><td>DEFAULT FALSE</td><td>Whether this is an aggregated notification ("X and 50 others...").</td></tr>
+        <tr><td><code>aggregation_count</code></td><td>INT</td><td>DEFAULT 1</td><td>Number of events aggregated into this notification.</td></tr>
+        <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>When the notification was created.</td></tr>
+    </table>
+    <div class="card">
+        <strong>Why NoSQL (wide-column):</strong> This is the highest-volume table. Instagram generates billions of notifications daily. The access pattern is straightforward: "get the N most recent notifications for user X, ordered by time." No joins or transactions needed. NoSQL wide-column stores excel at this: partition by user, sort by time, scan the top N. Horizontal scaling is critical.<br/><br/>
+        <strong>Partition Key:</strong> <code>recipient_user_id</code> — all notifications for a user are co-located.<br/>
+        <strong>Sort Key:</strong> <code>notification_id</code> (ULID) — ULIDs encode timestamps, so sorting by ID gives chronological order. Descending scan gives the most recent notifications first.<br/><br/>
+        <strong>Denormalization:</strong> The <code>message</code> and <code>thumbnail_url</code> fields are denormalized (the message text is pre-computed and stored, rather than assembling it at read time from sender_user_id + entity_id + type). This is done because: (a) notification feed reads are far more frequent than writes at the per-user level, and (b) we want sub-millisecond read latency without needing to join with the Users or Posts table. The trade-off is increased storage and the possibility that a username change makes old notification text stale — but this is acceptable since old notifications are rarely revisited and can be lazily updated or left as-is.<br/><br/>
+        <strong>Indexing:</strong> The partition key (<code>recipient_user_id</code>) uses a hash index for shard routing. The sort key (<code>notification_id</code> / ULID) is stored in sorted order within each partition, enabling efficient reverse-chronological scans for feed retrieval. No secondary indexes are needed because all queries are by <code>recipient_user_id</code>.<br/><br/>
+        <strong>Sharding:</strong> Hash-based sharding on <code>recipient_user_id</code>. Same rationale as device_tokens: even distribution and query alignment. Celebrity accounts (many incoming notifications) could create large partitions — but since we are partitioning by <strong>recipient</strong>, the partition size is bounded by the number of notifications a user receives (which is manageable with TTL-based cleanup of old notifications, e.g., 90 days).<br/><br/>
+        <strong>Read events:</strong> When the user opens the notification tab (<code>GET /v1/notifications</code>).<br/>
+        <strong>Write events:</strong> When the Notification Creator persists a new notification after event processing. When a user marks a notification as read (<code>PATCH</code>).<br/><br/>
+        <strong>TTL:</strong> Notifications older than 90 days are automatically expired to bound partition size.
+    </div>
+
+    <!-- ========================================================== -->
+    <h2>9. CDN &amp; Cache Deep Dive</h2>
+    <!-- ========================================================== -->
+
+    <h3>9.1 CDN</h3>
+    <div class="card">
+        <strong>Is CDN appropriate?</strong> Yes — but not for the push delivery pipeline itself. Push notifications are delivered through APNs/FCM, which are platform-mandated gateways. The CDN's role is to serve <strong>media assets referenced in rich notifications</strong>:<br/>
+        <ul>
+            <li><strong>Thumbnail images:</strong> When a push notification includes a sender's profile picture or a post thumbnail (iOS Notification Service Extension can download and display it), the URL in the payload points to the CDN.</li>
+            <li><strong>Notification feed assets:</strong> When the user opens the in-app notification feed, profile pictures and post thumbnails are loaded from the CDN.</li>
+        </ul>
+        <strong>Why CDN:</strong> Reduces latency for image loading (edge caching close to the user), offloads traffic from origin servers, and handles high throughput efficiently. Without CDN, every notification feed load would hit the origin image server.<br/><br/>
+        <strong>What the CDN does NOT do:</strong> It does not deliver the push notification itself. That always goes through APNs/FCM.
+    </div>
+
+    <h3>9.2 Device Token Cache</h3>
+    <div class="card">
+        <table>
+            <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+            <tr>
+                <td><strong>Caching Strategy</strong></td>
+                <td>Write-Through</td>
+                <td>When a device token is registered or refreshed, the cache is updated synchronously alongside the DB write. This ensures the cache always has the freshest token. Stale tokens cause delivery failures, so consistency is critical.</td>
+            </tr>
+            <tr>
+                <td><strong>Populated When</strong></td>
+                <td>(1) Device registers/updates token (write-through). (2) Cache miss during notification dispatch (cache-aside read).</td>
+                <td>Combination of write-through for freshness and cache-aside for reads that missed.</td>
+            </tr>
+            <tr>
+                <td><strong>Eviction Policy</strong></td>
+                <td>LRU (Least Recently Used)</td>
+                <td>Users who haven't received a notification recently are less likely to need their tokens cached. LRU naturally keeps active users' tokens hot.</td>
+            </tr>
+            <tr>
+                <td><strong>Expiration (TTL)</strong></td>
+                <td>1 hour</td>
+                <td>Device tokens can be refreshed by the OS at any time. A short TTL ensures we don't serve severely stale tokens for too long, even if the write-through was missed. 1 hour balances freshness with cache hit rate.</td>
+            </tr>
+        </table>
+    </div>
+
+    <h3>9.3 Preference Cache</h3>
+    <div class="card">
+        <table>
+            <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+            <tr>
+                <td><strong>Caching Strategy</strong></td>
+                <td>Write-Through</td>
+                <td>When a user updates a preference, the cache is updated synchronously. This is critical because a stale "enabled" value could cause unwanted notifications (user disabled likes but still gets them) — a poor user experience.</td>
+            </tr>
+            <tr>
+                <td><strong>Populated When</strong></td>
+                <td>(1) User updates a preference (write-through). (2) Cache miss during notification event processing (cache-aside read).</td>
+                <td>Preferences are read on every notification event (very high read frequency) but updated rarely. Write-through ensures consistency; cache-aside handles cold starts.</td>
+            </tr>
+            <tr>
+                <td><strong>Eviction Policy</strong></td>
+                <td>LRU (Least Recently Used)</td>
+                <td>Inactive users' preferences are evicted first. Active users (who frequently receive notifications) stay hot.</td>
+            </tr>
+            <tr>
+                <td><strong>Expiration (TTL)</strong></td>
+                <td>24 hours</td>
+                <td>Preferences change infrequently. A longer TTL maximizes cache hit rate. Even if the write-through was missed (e.g., due to a cache node failure), the 24-hour TTL bounds the staleness window.</td>
+            </tr>
+        </table>
+    </div>
+
+    <h3>9.4 Notification Feed Cache</h3>
+    <div class="card">
+        <table>
+            <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+            <tr>
+                <td><strong>Caching Strategy</strong></td>
+                <td>Cache-Aside (Lazy Loading) with Invalidation</td>
+                <td>Unlike preferences and device tokens, notifications are written very frequently (every time an event is processed) but the feed is read only when the user opens the app. Write-through would cause excessive cache writes for users who rarely open the notification tab. Cache-aside ensures we only cache what's actually requested.</td>
+            </tr>
+            <tr>
+                <td><strong>Populated When</strong></td>
+                <td>On cache miss when the user opens the notification feed (<code>GET /v1/notifications</code>).</td>
+                <td>Lazy loading avoids wasting cache memory on inactive users.</td>
+            </tr>
+            <tr>
+                <td><strong>Invalidated When</strong></td>
+                <td>When a new notification is created for the user (the Notification Creator invalidates the cache key).</td>
+                <td>Ensures the user always sees the latest notifications. The next <code>GET</code> will repopulate from the DB.</td>
+            </tr>
+            <tr>
+                <td><strong>Eviction Policy</strong></td>
+                <td>LRU (Least Recently Used)</td>
+                <td>Users who haven't opened their feed recently are evicted first, making room for active users.</td>
+            </tr>
+            <tr>
+                <td><strong>Expiration (TTL)</strong></td>
+                <td>10 minutes</td>
+                <td>Short TTL because notification feeds are highly dynamic. A user may receive new notifications at any time. 10 minutes provides a good balance: if a user is actively browsing, the cache is warm; but if they leave, the cache is freed quickly.</td>
+            </tr>
+        </table>
+        <p><strong>Cache contents:</strong> The first page (most recent 20 notifications) for a user. Key: <code>notif_feed:{user_id}</code>. Value: serialized list of notification objects.</p>
+    </div>
+
+    <h3>9.5 Aggregation Buffer (In-Memory Cache)</h3>
+    <div class="card">
+        <table>
+            <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+            <tr>
+                <td><strong>Caching Strategy</strong></td>
+                <td>Write-Behind (accumulate then flush)</td>
+                <td>Events are accumulated in the buffer during the aggregation window, then a single aggregated notification is flushed. This is a specialized use of cache where the "write to DB" happens at window expiry.</td>
+            </tr>
+            <tr>
+                <td><strong>Populated When</strong></td>
+                <td>When a notification event arrives for an entity that already has an open aggregation window.</td>
+                <td>Each event increments the counter for the key <code>{recipient}:{entity}:{type}</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Eviction Policy</strong></td>
+                <td>TTL-based (auto-expiry at window close)</td>
+                <td>Each key has a TTL equal to the aggregation window (30 seconds for likes, 10 seconds for comments). When the TTL fires, the aggregated notification is created and the key is removed.</td>
+            </tr>
+            <tr>
+                <td><strong>Expiration (TTL)</strong></td>
+                <td>30 seconds (configurable per notification type)</td>
+                <td>Short enough to maintain near real-time delivery, long enough to batch bursty events. A 30-second window catches the initial burst of likes on a popular post.</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- ========================================================== -->
+    <h2>10. Scaling Considerations</h2>
+    <!-- ========================================================== -->
+
+    <h3>10.1 Load Balancers</h3>
+    <div class="card">
+        <p>Load balancers are placed in front of every client-facing and inter-service communication path:</p>
+        <ul>
+            <li><strong>LB 1 — Client → API Gateway/Services:</strong> A Layer-7 (HTTP/HTTPS) load balancer sits between mobile clients and the API layer (Device Registry Service, Preference Service, Notification Service's REST endpoints). Uses round-robin with health checks. Handles TLS termination. Supports sticky sessions if needed (though services are stateless, so stickiness is not required).</li>
+            <li><strong>LB 2 — Notification Service → Push Gateway:</strong> An internal Layer-4 (TCP) load balancer distributes dispatch requests across Push Gateway instances. This ensures no single Push Gateway instance becomes a bottleneck when dispatching to APNs/FCM.</li>
+        </ul>
+        <p><strong>Why Load Balancers help at scale:</strong></p>
+        <ul>
+            <li>Distribute traffic evenly across horizontally scaled service instances.</li>
+            <li>Enable zero-downtime deployments (rolling restarts behind the LB).</li>
+            <li>Provide automatic failover when an instance goes down.</li>
+            <li>Enable auto-scaling: as new instances spin up, the LB routes traffic to them.</li>
+        </ul>
+    </div>
+
+    <h3>10.2 Horizontal Scaling</h3>
+    <div class="card">
+        <ul>
+            <li><strong>Notification Service consumers:</strong> Scale by adding more consumer instances to the Message Queue consumer group. Partitions are rebalanced automatically.</li>
+            <li><strong>Push Gateway:</strong> Scale independently to handle dispatch throughput. Connection pooling to APNs/FCM across instances.</li>
+            <li><strong>Device Registry &amp; Preference Services:</strong> Stateless HTTP services — scale horizontally behind load balancers.</li>
+            <li><strong>Message Queue:</strong> Scale by adding more partitions. Partition by <code>recipient_user_id</code> for ordering guarantees per user.</li>
+            <li><strong>NoSQL databases:</strong> Scale by adding more shards. Hash-based sharding on <code>user_id</code> distributes data evenly.</li>
+            <li><strong>SQL (Preferences):</strong> Read replicas for read scaling. The dataset is small enough that a single primary with replicas is sufficient for a long time.</li>
+            <li><strong>Caches:</strong> Use a distributed, clustered cache. Add nodes to scale capacity. Consistent hashing for key distribution.</li>
+        </ul>
+    </div>
+
+    <h3>10.3 Traffic Spikes</h3>
+    <div class="card">
+        <ul>
+            <li><strong>Message Queue as a buffer:</strong> During spikes (e.g., a celebrity posts, or New Year's Eve), the Message Queue absorbs the burst. Consumers process at their own pace. This prevents cascading failures.</li>
+            <li><strong>Auto-scaling policies:</strong> Notification Service and Push Gateway instances auto-scale based on queue depth / consumer lag metrics. When lag increases, more consumers are spun up.</li>
+            <li><strong>Rate limiting at the Push Gateway:</strong> APNs and FCM have their own rate limits. The Push Gateway implements client-side rate limiting with token bucket algorithms to stay within platform limits and avoid 429 responses.</li>
+            <li><strong>Aggregation reduces volume:</strong> The Aggregation Buffer naturally reduces outgoing push volume during spikes by batching similar events.</li>
+        </ul>
+    </div>
+
+    <h3>10.4 Back-of-the-Envelope Estimates</h3>
+    <div class="card">
+        <ul>
+            <li><strong>Users:</strong> 2 billion MAU, ~500 million DAU.</li>
+            <li><strong>Events per day:</strong> Assume each DAU generates ~10 events (likes, comments, follows, etc.) → ~5 billion events/day.</li>
+            <li><strong>Notifications per day:</strong> After preference filtering and aggregation, ~2–3 billion push notifications/day.</li>
+            <li><strong>Peak QPS:</strong> ~100K–200K notifications/second during peak hours (assuming 10x peak-to-average ratio).</li>
+            <li><strong>Notification record size:</strong> ~500 bytes per record → ~1.5 TB/day of new notification data. With 90-day TTL → ~135 TB total.</li>
+            <li><strong>Device token records:</strong> ~3 billion records (some users have multiple devices) × ~200 bytes = ~600 GB.</li>
+        </ul>
+    </div>
+
+    <!-- ========================================================== -->
+    <h2>11. Tradeoffs &amp; Deep Dives</h2>
+    <!-- ========================================================== -->
+
+    <h3>11.1 At-Least-Once vs. Exactly-Once Delivery</h3>
+    <div class="card">
+        <p><strong>Chosen: At-least-once</strong> with idempotency.</p>
+        <p>Exactly-once delivery is extremely difficult in distributed systems and adds significant complexity. Instead, we guarantee at-least-once delivery at the Message Queue level and use idempotency keys (based on <code>event_id</code>) at the Notification Service to deduplicate. This means:</p>
+        <ul>
+            <li>A duplicate event from a retry will be detected and skipped.</li>
+            <li>In rare edge cases, a user might receive the same push twice (if dedup cache failed), which is far more acceptable than missing a notification entirely.</li>
+        </ul>
+    </div>
+
+    <h3>11.2 Push vs. Pull for Notification Feed</h3>
+    <div class="card">
+        <p><strong>Chosen: Pull (on-demand)</strong> for the notification feed.</p>
+        <p>The notification feed is fetched when the user opens the notification tab (pull model). We do not push-update the in-app feed in real time via WebSockets. Rationale:</p>
+        <ul>
+            <li>Push notifications (via APNs/FCM) already alert the user in real time. The in-app feed is a secondary view.</li>
+            <li>Maintaining persistent WebSocket connections for 500M+ DAU is expensive and complex.</li>
+            <li>The feed is not latency-critical — a few seconds of staleness when the tab is opened is acceptable.</li>
+        </ul>
+        <p><strong>Tradeoff:</strong> If the user has the notification tab open and a new notification arrives, they won't see it until they refresh. This is acceptable for notifications (unlike chat, where real-time is critical).</p>
+    </div>
+
+    <h3>11.3 Aggregation Window Tradeoff</h3>
+    <div class="card">
+        <p><strong>Short window (e.g., 10s):</strong> More individual pushes, more real-time, but risks spamming the user.</p>
+        <p><strong>Long window (e.g., 5 min):</strong> Fewer pushes, better batching, but increased delay before the user is notified.</p>
+        <p><strong>Chosen: 30 seconds</strong> for likes (bursty), <strong>10 seconds</strong> for comments (fewer, more meaningful). The first event in a window is always delivered immediately, so there's no added latency for the first notification — only subsequent events in the burst are batched.</p>
+    </div>
+
+    <h3>11.4 Denormalization in Notifications Table</h3>
+    <div class="card">
+        <p>The <code>message</code> field stores the pre-rendered notification text (e.g., "dave liked your photo") rather than requiring a join with the Users and Posts tables at read time.</p>
+        <p><strong>Pro:</strong> Fast reads — no cross-service calls at feed retrieval time. Single partition scan returns everything needed.</p>
+        <p><strong>Con:</strong> If "dave" changes their username to "david", old notifications still show "dave". Stale data.</p>
+        <p><strong>Mitigation:</strong> Acceptable because (a) old notifications are rarely read, (b) username changes are infrequent, and (c) we can lazily update via a background job if needed.</p>
+    </div>
+
+    <h3>11.5 Single Notification Service vs. Separate Services per Type</h3>
+    <div class="card">
+        <p><strong>Chosen: Single Notification Service</strong> that handles all notification types.</p>
+        <p>An alternative would be separate services for likes, comments, follows, etc. However:</p>
+        <ul>
+            <li>The processing logic is largely the same (check prefs → aggregate → create → dispatch). Only the payload template varies.</li>
+            <li>A single service reduces operational overhead (fewer services to deploy, monitor, and scale).</li>
+            <li>The notification type is parameterized — templates and aggregation windows are configured per type, not per service.</li>
+        </ul>
+    </div>
+
+    <h3>11.6 Connection Management with APNs/FCM</h3>
+    <div class="card">
+        <p>The Push Gateway maintains long-lived HTTP/2 connections to APNs and FCM. This is critical because:</p>
+        <ul>
+            <li>Establishing a new TLS connection per notification would add ~100ms+ latency and is not scalable.</li>
+            <li>HTTP/2 supports multiplexing — multiple notification requests can be sent over a single connection concurrently.</li>
+            <li>Connection pools are sized per Push Gateway instance (e.g., 100 connections to APNs, 100 to FCM), with connections rebalanced when instances scale up/down.</li>
+        </ul>
+    </div>
+
+    <!-- ========================================================== -->
+    <h2>12. Alternative Approaches</h2>
+    <!-- ========================================================== -->
+
+    <h3>12.1 Pub/Sub Instead of Message Queue</h3>
+    <div class="card">
+        <p><strong>Alternative:</strong> Use a Pub/Sub system where Action Services publish events and multiple subscribers (Notification Service, Analytics, Feed Service) consume independently.</p>
+        <p><strong>Why not chosen as the primary pattern:</strong> For the push notification pipeline specifically, there is only one consumer (the Notification Service). A message queue with consumer groups provides simpler exactly-once-per-consumer-group semantics, built-in offset tracking, and partition-based ordering. However, in practice, the Action Services likely do use a Pub/Sub fan-out at the top level, with the notification message queue being one subscriber. This design focuses on the notification-specific pipeline downstream of that fan-out.</p>
+    </div>
+
+    <h3>12.2 WebSockets for Real-Time In-App Notifications</h3>
+    <div class="card">
+        <p><strong>Alternative:</strong> Maintain persistent WebSocket connections to all active users and push notifications directly to the app in real time, bypassing APNs/FCM.</p>
+        <p><strong>Why not chosen:</strong></p>
+        <ul>
+            <li>Push notifications must work when the app is in the background or closed — only APNs/FCM can wake the app. WebSockets only work while the app is in the foreground.</li>
+            <li>Maintaining WebSocket connections for 500M+ DAU is extremely resource-intensive (each connection consumes server memory and a file descriptor).</li>
+            <li>WebSockets would supplement APNs/FCM (for foreground real-time updates), not replace them. The added complexity and infrastructure cost is not justified for notifications, where a 1–2 second delay is acceptable.</li>
+        </ul>
+        <p><strong>When WebSockets would be appropriate:</strong> For features like Instagram DMs or live video, where real-time bidirectional communication is essential and users are actively in the app.</p>
+    </div>
+
+    <h3>12.3 Polling for Notification Feed</h3>
+    <div class="card">
+        <p><strong>Alternative:</strong> The mobile app periodically polls <code>GET /v1/notifications</code> to check for new notifications instead of relying on push.</p>
+        <p><strong>Why not chosen:</strong></p>
+        <ul>
+            <li>Polling introduces latency proportional to the polling interval (e.g., 30-second interval = up to 30 seconds late).</li>
+            <li>Wasteful — most polls return "no new notifications," consuming bandwidth and server resources.</li>
+            <li>Drains mobile battery.</li>
+        </ul>
+        <p>Push notifications via APNs/FCM are the industry standard for this exact reason — they provide near-instant delivery with no wasted polls.</p>
+    </div>
+
+    <h3>12.4 Storing Notifications in SQL Instead of NoSQL</h3>
+    <div class="card">
+        <p><strong>Alternative:</strong> Use a SQL database for the notifications table.</p>
+        <p><strong>Why not chosen:</strong></p>
+        <ul>
+            <li>Write throughput of billions of records/day exceeds what a single SQL instance can handle, even with sharding.</li>
+            <li>The access pattern (partition by user, scan by time) maps perfectly to a wide-column NoSQL store.</li>
+            <li>No joins, no transactions, no complex queries are needed for notifications.</li>
+            <li>NoSQL provides easier horizontal scaling with hash-based partitioning.</li>
+        </ul>
+    </div>
+
+    <h3>12.5 Client-Side Aggregation Instead of Server-Side</h3>
+    <div class="card">
+        <p><strong>Alternative:</strong> Send every individual notification and let the mobile app aggregate/batch them into grouped displays.</p>
+        <p><strong>Why not chosen:</strong></p>
+        <ul>
+            <li>Each push notification is a separate OS-level alert. Sending 500 individual pushes for likes would overwhelm the user's device and is a terrible UX.</li>
+            <li>APNs/FCM have rate limits per device — sending 500 pushes quickly would trigger throttling.</li>
+            <li>Server-side aggregation reduces network traffic, push gateway load, and platform API usage.</li>
+        </ul>
+    </div>
+
+    <!-- ========================================================== -->
+    <h2>13. Additional Considerations</h2>
+    <!-- ========================================================== -->
+
+    <h3>13.1 Priority Levels</h3>
+    <div class="card">
+        <p>Not all notifications are equally important. DMs and mentions are higher priority than likes. The system should support priority levels:</p>
+        <ul>
+            <li><strong>High priority:</strong> DMs, mentions, live videos from close friends. Delivered immediately, bypass aggregation.</li>
+            <li><strong>Medium priority:</strong> Comments, follows. Short aggregation window.</li>
+            <li><strong>Low priority:</strong> Likes, suggested content. Longer aggregation window, may be suppressed during quiet hours.</li>
+        </ul>
+        <p>APNs and FCM both support priority fields in their payloads (APNs: <code>apns-priority: 10</code> for immediate, <code>5</code> for power-efficient; FCM: <code>"priority": "high"</code> vs. <code>"normal"</code>).</p>
+    </div>
+
+    <h3>13.2 Quiet Hours / Do Not Disturb</h3>
+    <div class="card">
+        <p>Users may set quiet hours (e.g., 10 PM – 8 AM) during which push notifications are suppressed. The Notification Service checks the user's quiet hours setting (stored in preferences). If within quiet hours:</p>
+        <ul>
+            <li>High-priority notifications (DMs) may still be delivered.</li>
+            <li>Other notifications are persisted in the DB (for the feed) but the push dispatch is skipped.</li>
+            <li>Optionally, a summary push is sent when quiet hours end ("You have 15 new notifications").</li>
+        </ul>
+    </div>
+
+    <h3>13.3 Uninstall / Token Cleanup</h3>
+    <div class="card">
+        <p>When a user uninstalls the app, the device token becomes invalid. APNs returns a 410 Gone response; FCM returns "NotRegistered". The Push Gateway must:</p>
+        <ul>
+            <li>Remove the invalid token from the Device Registry.</li>
+            <li>Periodically run a background job that pings APNs/FCM feedback services to proactively discover stale tokens.</li>
+        </ul>
+    </div>
+
+    <h3>13.4 Localization</h3>
+    <div class="card">
+        <p>Notification messages must be localized to the recipient's language. The Notification Creator uses the recipient's locale (stored in user profile) to select the appropriate message template. Templates are parameterized (e.g., <code>"{sender} liked your {entity_type}"</code>) and stored in a localization service or configuration.</p>
+    </div>
+
+    <h3>13.5 Analytics &amp; Monitoring</h3>
+    <div class="card">
+        <ul>
+            <li><strong>Delivery tracking:</strong> Track delivery status (sent, delivered, opened, dismissed) per notification. APNs/FCM provide delivery receipts.</li>
+            <li><strong>Metrics:</strong> Notification volume by type, delivery latency (p50, p95, p99), failure rate, queue depth/consumer lag, cache hit rates.</li>
+            <li><strong>Alerting:</strong> Alert on delivery failure spikes, queue lag exceeding thresholds, APNs/FCM error rate increases.</li>
+            <li><strong>A/B testing:</strong> Test different notification copy, aggregation windows, and delivery timing to optimize engagement.</li>
+        </ul>
+    </div>
+
+    <h3>13.6 Dead Letter Queue (DLQ)</h3>
+    <div class="card">
+        <p>When a notification event fails processing after max retries (e.g., 3 attempts with exponential backoff), it is moved to a Dead Letter Queue. The DLQ is monitored by an operations team and/or an automated recovery process. Common failure reasons include:</p>
+        <ul>
+            <li>Recipient user account deleted.</li>
+            <li>Malformed event payload.</li>
+            <li>Persistent APNs/FCM outage beyond retry window.</li>
+        </ul>
+    </div>
+
+    <h3>13.7 Security</h3>
+    <div class="card">
+        <ul>
+            <li>All client-server communication over HTTPS (TLS 1.3).</li>
+            <li>Device tokens are sensitive — stored encrypted at rest.</li>
+            <li>Push payloads should not contain sensitive content in the visible preview (e.g., truncate DM content to "New message from {sender}").</li>
+            <li>Authentication via OAuth 2.0 tokens on all API endpoints.</li>
+            <li>Rate limiting on all public endpoints to prevent abuse.</li>
+        </ul>
+    </div>
+
+    <!-- ========================================================== -->
+    <h2>14. Vendor Recommendations</h2>
+    <!-- ========================================================== -->
+    <div class="card">
+        <p>The design is vendor-agnostic, but the following vendors are strong candidates for each component:</p>
+        <table>
+            <tr><th>Component</th><th>Vendor Options</th><th>Rationale</th></tr>
+            <tr>
+                <td>NoSQL DB (device_tokens, notifications)</td>
+                <td>Apache Cassandra, Amazon DynamoDB, ScyllaDB</td>
+                <td><strong>Cassandra/ScyllaDB:</strong> Excellent for wide-column access patterns, tunable consistency, proven at Instagram scale. ScyllaDB offers better single-node performance. <strong>DynamoDB:</strong> Fully managed, auto-scaling, built-in TTL support.</td>
+            </tr>
+            <tr>
+                <td>SQL DB (preferences)</td>
+                <td>PostgreSQL, MySQL, Amazon Aurora</td>
+                <td><strong>PostgreSQL:</strong> Battle-tested, rich feature set, strong ACID. <strong>Aurora:</strong> MySQL/PostgreSQL compatible with automatic scaling and high availability.</td>
+            </tr>
+            <tr>
+                <td>Message Queue</td>
+                <td>Apache Kafka, Amazon SQS/SNS, Apache Pulsar</td>
+                <td><strong>Kafka:</strong> Industry standard for high-throughput event streaming, partition-based ordering, consumer groups, proven at scale. <strong>Pulsar:</strong> Newer alternative with built-in multi-tenancy and tiered storage.</td>
+            </tr>
+            <tr>
+                <td>In-Memory Cache</td>
+                <td>Redis, Memcached, Dragonfly</td>
+                <td><strong>Redis:</strong> Rich data structures (hashes, sorted sets), built-in TTL, clustering support, Lua scripting for atomic operations (useful for aggregation counters). <strong>Memcached:</strong> Simpler, slightly faster for pure key-value, lower memory overhead.</td>
+            </tr>
+            <tr>
+                <td>CDN</td>
+                <td>Cloudflare, Amazon CloudFront, Akamai, Fastly</td>
+                <td><strong>Cloudflare:</strong> Global edge network, easy setup. <strong>CloudFront:</strong> Tight AWS integration. <strong>Akamai:</strong> Largest CDN, proven for media-heavy apps.</td>
+            </tr>
+            <tr>
+                <td>Object Storage (media originals)</td>
+                <td>Amazon S3, Google Cloud Storage, MinIO</td>
+                <td><strong>S3:</strong> Industry standard, 11 nines durability, tiered storage. Used as CDN origin for notification thumbnails.</td>
+            </tr>
+            <tr>
+                <td>Load Balancer</td>
+                <td>NGINX, HAProxy, AWS ALB/NLB, Envoy</td>
+                <td><strong>Envoy:</strong> Modern, gRPC-native, excellent observability. <strong>NGINX:</strong> Proven, lightweight, widely supported. <strong>AWS ALB:</strong> Managed, auto-scaling.</td>
+            </tr>
+        </table>
+    </div>
+
+    <hr/>
+    <p style="text-align:center; color: var(--text-muted); font-size: 0.9rem; margin-top: 2rem;">
+        System Design Document — Instagram Push Notifications — Generated February 2026
+    </p>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
 </body>
 </html>
