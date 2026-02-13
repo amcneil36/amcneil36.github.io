@@ -1,235 +1,873 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>System Design: Pastebin</title>
-<style>body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:20px;background:#f5f5f5;color:#333}.container{max-width:1200px;margin:0 auto;background:#fff;padding:40px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.1)}h1{color:#1a73e8;border-bottom:3px solid #1a73e8;padding-bottom:10px}h2{color:#2c3e50;margin-top:40px;border-left:4px solid #1a73e8;padding-left:12px}h3{color:#34495e}h4{color:#555}.diagram{background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:20px;margin:20px 0;overflow-x:auto}.example{background:#e8f5e9;border-left:4px solid #4caf50;padding:15px;margin:15px 0;border-radius:4px}.deep-dive{background:#e3f2fd;border-left:4px solid #2196f3;padding:15px;margin:15px 0;border-radius:4px}.tradeoff{background:#fff3e0;border-left:4px solid #ff9800;padding:15px;margin:15px 0;border-radius:4px}.alternative{background:#fce4ec;border-left:4px solid #e91e63;padding:15px;margin:15px 0;border-radius:4px}table{border-collapse:collapse;width:100%;margin:15px 0}th,td{border:1px solid #ddd;padding:10px 14px;text-align:left}th{background:#1a73e8;color:#fff}tr:nth-child(even){background:#f9f9f9}code{background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:.9em}.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.85em;margin:2px}.tag-pk{background:#ffeb3b;color:#333}.tag-fk{background:#ce93d8;color:#333}.tag-idx{background:#80cbc4;color:#333}ul,ol{line-height:1.8}svg text{font-family:'Segoe UI',Arial,sans-serif}</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pastebin – System Design</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root { --bg: #fdfdfd; --fg: #1a1a1a; --accent: #2563eb; --accent2: #7c3aed;
+                --border: #e5e7eb; --code-bg: #f3f4f6; --section-bg: #f9fafb;
+                --table-header: #eef2ff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+               background: var(--bg); color: var(--fg); line-height: 1.7;
+               max-width: 1100px; margin: 0 auto; padding: 2rem 2.5rem 4rem; }
+        h1 { font-size: 2.2rem; border-bottom: 3px solid var(--accent); padding-bottom: .5rem; margin-bottom: 1.5rem; }
+        h2 { font-size: 1.6rem; color: var(--accent); margin-top: 2.8rem; margin-bottom: .8rem;
+             border-left: 4px solid var(--accent); padding-left: .75rem; }
+        h3 { font-size: 1.25rem; color: var(--accent2); margin-top: 1.8rem; margin-bottom: .5rem; }
+        h4 { font-size: 1.05rem; margin-top: 1.4rem; margin-bottom: .4rem; }
+        p, li { margin-bottom: .55rem; }
+        ul, ol { padding-left: 1.6rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: .92rem; }
+        th, td { border: 1px solid var(--border); padding: .55rem .75rem; text-align: left; }
+        th { background: var(--table-header); font-weight: 600; }
+        tr:nth-child(even) { background: var(--section-bg); }
+        code { background: var(--code-bg); padding: .15rem .4rem; border-radius: 4px; font-size: .9em; }
+        pre { background: var(--code-bg); padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 1rem 0; }
+        .diagram-box { background: #fff; border: 1px solid var(--border); border-radius: 8px;
+                       padding: 1.2rem; margin: 1.2rem 0; overflow-x: auto; }
+        .example-box { background: #eff6ff; border-left: 4px solid var(--accent); padding: 1rem 1.2rem;
+                       border-radius: 0 6px 6px 0; margin: 1rem 0; }
+        .example-box strong { color: var(--accent); }
+        .warn-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1rem 1.2rem;
+                    border-radius: 0 6px 6px 0; margin: 1rem 0; }
+        .toc { background: var(--section-bg); border: 1px solid var(--border); border-radius: 8px;
+               padding: 1.2rem 1.5rem; margin-bottom: 2rem; }
+        .toc ol { padding-left: 1.4rem; }
+        .toc a { color: var(--accent); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .mermaid { display: flex; justify-content: center; }
+    </style>
 </head>
 <body>
-<div class="container">
-<h1>System Design: Pastebin</h1>
 
-<h2>Functional Requirements</h2>
+<h1>🖊️ System Design: Pastebin</h1>
+
+<!-- ================================================================ -->
+<!-- TABLE OF CONTENTS                                                 -->
+<!-- ================================================================ -->
+<div class="toc">
+    <strong>Table of Contents</strong>
+    <ol>
+        <li><a href="#fr">Functional Requirements</a></li>
+        <li><a href="#nfr">Non-Functional Requirements</a></li>
+        <li><a href="#capacity">Capacity Estimation</a></li>
+        <li><a href="#flow1">Flow 1 – Create a Paste</a></li>
+        <li><a href="#flow2">Flow 2 – Read a Paste</a></li>
+        <li><a href="#flow3">Flow 3 – Delete / Expire a Paste</a></li>
+        <li><a href="#combined">Combined System Diagram</a></li>
+        <li><a href="#schema">Database Schema</a></li>
+        <li><a href="#cdn-cache">CDN &amp; Cache Deep Dive</a></li>
+        <li><a href="#scaling">Scaling Considerations</a></li>
+        <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+        <li><a href="#alternatives">Alternative Approaches</a></li>
+        <li><a href="#additional">Additional Information</a></li>
+        <li><a href="#vendors">Vendor Section</a></li>
+    </ol>
+</div>
+
+<!-- ================================================================ -->
+<!-- 1  FUNCTIONAL REQUIREMENTS                                        -->
+<!-- ================================================================ -->
+<h2 id="fr">1. Functional Requirements</h2>
 <ol>
-  <li><strong>Create paste</strong> – Users can upload text content and get a unique URL to share it.</li>
-  <li><strong>Read paste</strong> – Anyone with the URL can view the paste content.</li>
-  <li><strong>Expiration</strong> – Pastes can have configurable expiration (10 min, 1 hour, 1 day, 1 week, 1 month, never).</li>
-  <li><strong>Syntax highlighting</strong> – Pastes can specify a language for syntax highlighting.</li>
-  <li><strong>User accounts (optional)</strong> – Registered users can manage their pastes (edit, delete, view history).</li>
-  <li><strong>Private pastes</strong> – Pastes can be public (listed) or unlisted (only accessible via URL).</li>
-  <li><strong>Custom URL</strong> – Users can optionally specify a custom URL suffix.</li>
+    <li><strong>Create Paste</strong> – A user (anonymous or authenticated) can submit text content and receive a unique, short URL.</li>
+    <li><strong>Read Paste</strong> – Anyone with the URL can retrieve the paste content. If the paste is private and password-protected, a valid password is required.</li>
+    <li><strong>Set Expiration</strong> – A user may optionally set an expiration time (e.g., 10 min, 1 hour, 1 day, 1 week, never). Expired pastes are no longer accessible.</li>
+    <li><strong>Delete Paste</strong> – An authenticated owner can manually delete their paste before it expires.</li>
+    <li><strong>Syntax Highlighting</strong> – Users can choose a programming language so the paste renders with syntax highlighting on read.</li>
+    <li><strong>Custom Alias (optional)</strong> – Users can provide a human-readable alias (e.g., <code>/my-notes</code>) instead of the auto-generated key.</li>
+    <li><strong>Raw View</strong> – Users can access the raw text of a paste (no HTML wrapping).</li>
 </ol>
 
-<h2>Non-Functional Requirements</h2>
+<!-- ================================================================ -->
+<!-- 2  NON-FUNCTIONAL REQUIREMENTS                                    -->
+<!-- ================================================================ -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
 <ol>
-  <li><strong>High availability</strong> – 99.9% uptime.</li>
-  <li><strong>Low latency</strong> – Paste read in &lt;100ms, creation in &lt;500ms.</li>
-  <li><strong>Scalability</strong> – Handle 5M pastes/day, 25M reads/day (5:1 read-to-write).</li>
-  <li><strong>Storage</strong> – Pastes up to 10MB in size; average ~10KB.</li>
-  <li><strong>Durability</strong> – Pastes must not be lost before expiration.</li>
+    <li><strong>High Availability</strong> – Reads must be highly available (99.99%). Users should always be able to access a valid, non-expired paste.</li>
+    <li><strong>Low Read Latency</strong> – Paste retrieval should complete in &lt; 200 ms at the p99 level worldwide.</li>
+    <li><strong>Durability</strong> – Once a paste is successfully created, it must not be lost (until intentionally deleted or expired).</li>
+    <li><strong>Scalability</strong> – The system should handle millions of pastes per day and a high read-to-write ratio (~10:1).</li>
+    <li><strong>Unique URLs</strong> – Every auto-generated URL must be globally unique with no collisions.</li>
+    <li><strong>Paste Size Limit</strong> – Maximum paste size of 10 MB.</li>
+    <li><strong>Security</strong> – Password-protected pastes encrypt the password at rest. Rate limiting prevents abuse.</li>
+    <li><strong>Consistency</strong> – Eventual consistency is acceptable for reads (a newly created paste may take a few seconds to propagate globally).</li>
 </ol>
 
-<h2>Flow 1: Creating a Paste</h2>
-<div class="diagram">
-<svg viewBox="0 0 950 320" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
-  <rect x="10" y="120" width="80" height="50" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
-  <text x="50" y="150" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">User</text>
-  <line x1="90" y1="145" x2="160" y2="145" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <text x="125" y="135" text-anchor="middle" fill="#555" font-size="9">POST /paste</text>
-  <rect x="160" y="120" width="80" height="50" rx="8" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
-  <text x="200" y="143" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">API</text>
-  <text x="200" y="155" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">GW + LB</text>
-  <line x1="240" y1="145" x2="310" y2="145" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <rect x="310" y="115" width="110" height="60" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
-  <text x="365" y="143" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Paste</text>
-  <text x="365" y="158" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Service</text>
-  <!-- To Object Storage -->
-  <line x1="420" y1="135" x2="510" y2="85" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <text x="480" y="95" text-anchor="middle" fill="#555" font-size="8">Store content</text>
-  <rect x="510" y="60" width="100" height="45" rx="8" fill="#795548" stroke="#4e342e" stroke-width="2"/>
-  <text x="560" y="80" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Object Store</text>
-  <text x="560" y="93" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">(S3)</text>
-  <!-- To Metadata DB -->
-  <line x1="420" y1="155" x2="510" y2="195" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <text x="480" y="190" text-anchor="middle" fill="#555" font-size="8">Store metadata</text>
-  <ellipse cx="565" cy="195" rx="45" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <rect x="520" y="195" width="90" height="25" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <ellipse cx="565" cy="220" rx="45" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="520" y1="195" x2="520" y2="220" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="610" y1="195" x2="610" y2="220" stroke="#d84315" stroke-width="1.5"/>
-  <text x="565" y="212" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Metadata DB</text>
-  <!-- KGS -->
-  <line x1="365" y1="115" x2="365" y2="50" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <rect x="315" y="5" width="100" height="45" rx="8" fill="#673ab7" stroke="#4527a0" stroke-width="2"/>
-  <text x="365" y="32" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">KGS</text>
-</svg>
-</div>
-
-<div class="example">
-<h4>Example: Creating a code paste</h4>
-<p>Alice pastes a Python code snippet (500 bytes), selects language=Python, expiration=1 week. Client sends <strong>POST /api/v1/paste</strong> with <code>{content: "def hello()...", language: "python", expires_in: "7d"}</code>. The API Gateway routes to <strong>Paste Service</strong>. It obtains a unique 8-char key "xK9mL2pQ" from <strong>KGS</strong>, stores the content in <strong>S3</strong> at key <code>pastes/xK9mL2pQ</code>, and writes metadata to <strong>Metadata DB</strong> (MySQL): <code>{paste_id: "xK9mL2pQ", user_id: alice, language: "python", size: 500, created_at: now, expires_at: now+7d, visibility: "unlisted"}</code>. Returns <code>{url: "https://pastebin.com/xK9mL2pQ"}</code>.</p>
-</div>
-
-<h2>Flow 2: Reading a Paste</h2>
-<div class="diagram">
-<svg viewBox="0 0 900 250" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
-  <rect x="10" y="90" width="80" height="50" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
-  <text x="50" y="120" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">User</text>
-  <line x1="90" y1="115" x2="160" y2="115" stroke="#333" stroke-width="2" marker-end="url(#a2)"/>
-  <text x="125" y="105" text-anchor="middle" fill="#555" font-size="9">GET /xK9mL2pQ</text>
-  <rect x="160" y="90" width="80" height="50" rx="8" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
-  <text x="200" y="113" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">LB</text>
-  <line x1="240" y1="115" x2="310" y2="115" stroke="#333" stroke-width="2" marker-end="url(#a2)"/>
-  <rect x="310" y="90" width="100" height="50" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
-  <text x="360" y="120" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Paste Svc</text>
-  <!-- Cache check -->
-  <line x1="410" y1="105" x2="490" y2="55" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
-  <text x="465" y="68" text-anchor="middle" fill="#555" font-size="8">1. Cache?</text>
-  <ellipse cx="540" cy="45" rx="40" ry="10" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <rect x="500" y="45" width="80" height="20" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <ellipse cx="540" cy="65" rx="40" ry="10" fill="#00796b" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="500" y1="45" x2="500" y2="65" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="580" y1="45" x2="580" y2="65" stroke="#00695c" stroke-width="1.5"/>
-  <text x="540" y="59" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Redis</text>
-  <!-- S3 fallback -->
-  <line x1="410" y1="125" x2="490" y2="165" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
-  <text x="465" y="158" text-anchor="middle" fill="#555" font-size="8">2. S3</text>
-  <rect x="490" y="145" width="90" height="40" rx="6" fill="#795548" stroke="#4e342e" stroke-width="1.5"/>
-  <text x="535" y="170" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">S3</text>
-  <!-- Metadata DB -->
-  <line x1="360" y1="140" x2="360" y2="200" stroke="#333" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a2)"/>
-  <text x="360" y="190" text-anchor="start" fill="#555" font-size="8"> Check expiry</text>
-  <ellipse cx="360" cy="210" rx="40" ry="8" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
-  <rect x="320" y="210" width="80" height="16" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
-  <ellipse cx="360" cy="226" rx="40" ry="8" fill="#e64a19" stroke="#d84315" stroke-width="1"/>
-  <line x1="320" y1="210" x2="320" y2="226" stroke="#d84315" stroke-width="1"/>
-  <line x1="400" y1="210" x2="400" y2="226" stroke="#d84315" stroke-width="1"/>
-  <text x="360" y="222" text-anchor="middle" fill="#fff" font-size="7" font-weight="bold">Meta DB</text>
-</svg>
-</div>
-
-<div class="example">
-<h4>Example: Reading a paste (cache hit)</h4>
-<p>Bob visits <code>pastebin.com/xK9mL2pQ</code>. Client sends <strong>GET /api/v1/paste/xK9mL2pQ</strong>. Paste Service checks <strong>Redis Cache</strong> — hit! Returns the paste content with metadata (language, created_at). The HTML page renders with Python syntax highlighting.</p>
-</div>
-<div class="example">
-<h4>Example: Expired paste</h4>
-<p>Carol visits a paste that expired 2 days ago. Paste Service checks metadata — <code>expires_at &lt; now()</code>. Returns <strong>HTTP 404</strong> with "This paste has expired."</p>
-</div>
-
-<h2>Overall Combined Flow</h2>
-<div class="diagram">
-<svg viewBox="0 0 950 300" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
-  <rect x="10" y="120" width="70" height="45" rx="6" fill="#4caf50" stroke="#388e3c" stroke-width="1.5"/>
-  <text x="45" y="147" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Client</text>
-  <line x1="80" y1="142" x2="130" y2="142" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <rect x="130" y="120" width="65" height="45" rx="6" fill="#ff9800" stroke="#f57c00" stroke-width="1.5"/>
-  <text x="162" y="147" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">LB</text>
-  <line x1="195" y1="142" x2="240" y2="142" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <rect x="240" y="115" width="95" height="55" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
-  <text x="287" y="147" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Paste Svc</text>
-  <line x1="335" y1="132" x2="400" y2="80" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <ellipse cx="440" cy="70" rx="35" ry="8" fill="#009688" stroke="#00695c" stroke-width="1"/>
-  <rect x="405" y="70" width="70" height="16" fill="#009688" stroke="#00695c" stroke-width="1"/>
-  <ellipse cx="440" cy="86" rx="35" ry="8" fill="#00796b" stroke="#00695c" stroke-width="1"/>
-  <line x1="405" y1="70" x2="405" y2="86" stroke="#00695c" stroke-width="1"/>
-  <line x1="475" y1="70" x2="475" y2="86" stroke="#00695c" stroke-width="1"/>
-  <text x="440" y="82" text-anchor="middle" fill="#fff" font-size="7" font-weight="bold">Redis</text>
-  <line x1="335" y1="152" x2="400" y2="195" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="400" y="180" width="80" height="35" rx="6" fill="#795548" stroke="#4e342e" stroke-width="1.5"/>
-  <text x="440" y="202" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">S3</text>
-  <line x1="335" y1="142" x2="400" y2="142" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <ellipse cx="440" cy="135" rx="40" ry="8" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
-  <rect x="400" y="135" width="80" height="16" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
-  <ellipse cx="440" cy="151" rx="40" ry="8" fill="#e64a19" stroke="#d84315" stroke-width="1"/>
-  <line x1="400" y1="135" x2="400" y2="151" stroke="#d84315" stroke-width="1"/>
-  <line x1="480" y1="135" x2="480" y2="151" stroke="#d84315" stroke-width="1"/>
-  <text x="440" y="147" text-anchor="middle" fill="#fff" font-size="7" font-weight="bold">Meta DB</text>
-  <line x1="287" y1="115" x2="287" y2="60" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="250" y="20" width="75" height="40" rx="6" fill="#673ab7" stroke="#4527a0" stroke-width="1.5"/>
-  <text x="287" y="44" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">KGS</text>
-  <!-- Cleanup -->
-  <rect x="550" y="130" width="90" height="40" rx="6" fill="#e91e63" stroke="#ad1457" stroke-width="1.5"/>
-  <text x="595" y="155" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Cleanup Job</text>
-  <line x1="550" y1="150" x2="480" y2="145" stroke="#333" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a3)"/>
-  <line x1="550" y1="155" x2="480" y2="195" stroke="#333" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a3)"/>
-</svg>
-</div>
-
-<div class="example">
-<h4>Combined Example</h4>
-<p><strong>Write:</strong> User POSTs content → LB → Paste Svc → KGS gets unique key → content stored in S3 → metadata in MySQL → cached in Redis → return URL.<br/>
-<strong>Read:</strong> User GETs /key → LB → Paste Svc → Redis hit → return content. On cache miss: fetch from S3, check metadata for expiry → populate cache → return.<br/>
-<strong>Cleanup:</strong> Background Cleanup Job scans Metadata DB for expired pastes, deletes from S3 and Metadata DB.</p>
-</div>
-
-<h2>Database Schema</h2>
-
-<h3>SQL Table (MySQL)</h3>
-<h4>1. paste_metadata</h4>
+<!-- ================================================================ -->
+<!-- 3  CAPACITY ESTIMATION                                            -->
+<!-- ================================================================ -->
+<h2 id="capacity">3. Capacity Estimation</h2>
 <table>
-  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
-  <tr><td>paste_id</td><td>VARCHAR(8)</td><td><span class="tag tag-pk">PK</span></td><td>Unique paste key</td></tr>
-  <tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → users</span> <span class="tag tag-idx">B-tree Index</span></td><td>Creator (nullable)</td></tr>
-  <tr><td>s3_key</td><td>TEXT</td><td></td><td>S3 object key for content</td></tr>
-  <tr><td>language</td><td>VARCHAR(30)</td><td></td><td>Syntax highlighting language</td></tr>
-  <tr><td>size_bytes</td><td>INT</td><td></td><td>Content size in bytes</td></tr>
-  <tr><td>visibility</td><td>ENUM('public','unlisted')</td><td></td><td>Public or unlisted</td></tr>
-  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Creation time</td></tr>
-  <tr><td>expires_at</td><td>TIMESTAMP</td><td><span class="tag tag-idx">B-tree Index</span></td><td>Expiration time (nullable for never)</td></tr>
-  <tr><td>view_count</td><td>INT DEFAULT 0</td><td></td><td>Denormalized view count</td></tr>
+    <tr><th>Metric</th><th>Estimate</th></tr>
+    <tr><td>Paste creates / day</td><td>~10 million</td></tr>
+    <tr><td>Paste reads / day</td><td>~100 million (10:1 read-to-write)</td></tr>
+    <tr><td>Write QPS (avg)</td><td>~115 / sec</td></tr>
+    <tr><td>Read QPS (avg)</td><td>~1,160 / sec</td></tr>
+    <tr><td>Average paste size</td><td>~10 KB</td></tr>
+    <tr><td>Storage / day</td><td>~100 GB</td></tr>
+    <tr><td>Storage / year</td><td>~36.5 TB</td></tr>
+    <tr><td>URL key space (6 chars, Base62)</td><td>62<sup>6</sup> ≈ 56.8 billion (ample for decades)</td></tr>
 </table>
-<p><strong>Why SQL:</strong> Metadata is small, relational (users → pastes), and requires indexed queries (find expired pastes, list user's pastes sorted by date). MySQL handles this well with ACID guarantees.</p>
-<p><strong>Index:</strong> B-tree index on <code>expires_at</code> for the cleanup job to efficiently find expired pastes (<code>WHERE expires_at < NOW() AND expires_at IS NOT NULL</code>). B-tree is chosen because it's a range query. B-tree index on <code>user_id</code> for "my pastes" listing.</p>
-<p><strong>Content stored in S3, not DB:</strong> Paste content can be up to 10MB. Storing large blobs in MySQL is inefficient and would bloat the DB. S3 is designed for blob storage with 11 9's of durability.</p>
-<p><strong>Sharding:</strong> Hash-based sharding on <code>paste_id</code> across MySQL instances. Since paste_ids are random strings, they distribute evenly.</p>
 
-<h2>Cache Deep Dive</h2>
-<div class="deep-dive">
-<h4>Redis Cache</h4>
-<p><strong>What's cached:</strong> Paste content + metadata for recently accessed pastes. Key: <code>paste:{paste_id}</code>. Value: JSON with content and metadata.</p>
-<p><strong>Caching strategy:</strong> <strong>Read-through with write-through.</strong> On create: write to S3 + DB + Redis. On read: check Redis first, if miss → fetch from S3 + DB → populate Redis.</p>
-<p><strong>Eviction:</strong> LRU. ~80% of reads go to ~20% of pastes (popular code snippets shared on forums).</p>
-<p><strong>Expiration:</strong> TTL = min(paste_expiry, 24 hours). Ensures expired pastes don't linger in cache.</p>
+<!-- ================================================================ -->
+<!-- 4  FLOW 1 – CREATE A PASTE                                        -->
+<!-- ================================================================ -->
+<h2 id="flow1">4. Flow 1 – Create a Paste</h2>
+
+<div class="diagram-box">
+<pre class="mermaid">
+graph LR
+    A["👤 Client<br/>(Browser / CLI)"] -->|"HTTP POST<br/>/api/pastes"| B["⚖️ Load Balancer"]
+    B --> C["🔐 API Gateway<br/>(Auth · Rate Limit)"]
+    C --> D["📝 Paste Service"]
+    D -->|"Request Key"| E["🔑 Key Generation<br/>Service (KGS)"]
+    E -->|"Return Unique Key"| D
+    D -->|"PUT content blob"| F[("🗄️ Object<br/>Storage")]
+    D -->|"INSERT metadata"| G[("🗃️ NoSQL DB<br/>(Paste Metadata)")]
+    D -->|"Return short URL"| A
+</pre>
 </div>
 
-<div class="deep-dive">
-<h4>CDN</h4>
-<p><strong>CDN is appropriate</strong> for public/popular pastes. A CDN edge can cache paste content, reducing origin load. However, since pastes can be edited/deleted, CDN TTL should be short (5 minutes) with cache invalidation on update/delete.</p>
+<h3>Examples</h3>
+
+<div class="example-box">
+    <strong>Example 1 – Anonymous paste with expiration:</strong><br/>
+    A developer pastes a Python traceback into the browser text area, selects <em>Python</em> as the language, sets expiration to <em>1 hour</em>, and clicks <strong>Create</strong>.
+    The browser issues an <code>HTTP POST /api/pastes</code> with body <code>{ content: "Traceback …", syntax: "python", expires_in: 3600 }</code>.
+    The request hits the <strong>Load Balancer</strong>, which routes it to an <strong>API Gateway</strong> instance that enforces the rate limit (e.g., 30 creates/min per IP).
+    The <strong>Paste Service</strong> calls the <strong>Key Generation Service</strong> to obtain a unique 6-character key (e.g., <code>aX9kQ2</code>).
+    The service then writes the raw text to <strong>Object Storage</strong> under path <code>/pastes/aX9kQ2</code> and inserts a metadata record into the <strong>NoSQL DB</strong> with <code>paste_id = aX9kQ2</code>, <code>expires_at = now + 3600s</code>.
+    The service returns <code>{ url: "https://paste.example.com/aX9kQ2" }</code> to the client.
 </div>
 
-<h2>Scaling Considerations</h2>
+<div class="example-box">
+    <strong>Example 2 – Authenticated paste with custom alias:</strong><br/>
+    A logged-in user creates a paste and supplies the custom alias <code>my-config</code>.
+    The <strong>Paste Service</strong> first checks the NoSQL DB to verify the alias is not already taken. Since it is available, the service uses <code>my-config</code> as the paste key (skipping KGS).
+    Metadata is stored with <code>paste_id = my-config</code> and <code>user_id = U12345</code>.
+    The response returns <code>{ url: "https://paste.example.com/my-config" }</code>.
+    If the alias were already taken, the service returns <code>HTTP 409 Conflict</code>.
+</div>
+
+<div class="example-box">
+    <strong>Example 3 – Paste exceeds size limit:</strong><br/>
+    A user attempts to paste a 15 MB log file. The <strong>API Gateway</strong> inspects the <code>Content-Length</code> header, detects it exceeds the 10 MB limit, and immediately returns <code>HTTP 413 Payload Too Large</code> without forwarding the request to the Paste Service.
+</div>
+
+<h3>Component Deep Dive – Flow 1</h3>
+
+<h4>Client (Browser / CLI)</h4>
+<p>The web frontend or a CLI tool (e.g., <code>curl</code>) that composes the paste creation request. The browser may perform client-side validation (size check, required fields) before sending.</p>
+
+<h4>Load Balancer</h4>
+<p>Distributes incoming requests across multiple API Gateway instances using a <strong>round-robin</strong> or <strong>least-connections</strong> algorithm. Operates at Layer 7 (HTTP) to enable path-based routing. Health checks remove unhealthy instances from the pool. Terminates TLS so backend services communicate over plain HTTP internally.</p>
+
+<h4>API Gateway</h4>
 <ul>
-  <li><strong>Load Balancer:</strong> L7 LB with round-robin for stateless Paste Service instances.</li>
-  <li><strong>S3:</strong> Infinitely scalable object storage. No action needed.</li>
-  <li><strong>MySQL:</strong> Read replicas for read scaling. Sharding for write scaling.</li>
-  <li><strong>Redis:</strong> Cluster mode for cache scaling.</li>
+    <li><strong>Authentication:</strong> Validates JWT tokens for logged-in users; passes through anonymous requests with an anonymous session.</li>
+    <li><strong>Rate Limiting:</strong> Token-bucket algorithm keyed on IP (anonymous) or user ID (authenticated). Limits: 30 creates/min anonymous, 120 creates/min authenticated.</li>
+    <li><strong>Request Validation:</strong> Enforces payload size (10 MB), required fields, content-type.</li>
 </ul>
 
-<h2>Tradeoffs and Deep Dives</h2>
-<div class="tradeoff">
-<h4>S3 vs. Database for Content Storage</h4>
-<p>S3 is cheaper ($0.023/GB/month), more durable (11 9's), and designed for blob storage. The tradeoff is an extra network hop to fetch content. For small pastes (&lt;1KB), storing inline in the DB would be faster. Hybrid approach: inline small pastes in the metadata DB, use S3 for large ones. We chose S3-only for simplicity.</p>
+<h4>Paste Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP REST</li>
+    <li><strong>Endpoint:</strong> <code>POST /api/pastes</code></li>
+    <li><strong>Input:</strong> <code>{ content: string, title?: string, syntax_language?: string, expires_in?: int (seconds), is_private?: bool, password?: string, custom_alias?: string }</code></li>
+    <li><strong>Output:</strong> <code>{ paste_id: string, url: string, created_at: ISO-8601, expires_at?: ISO-8601 }</code></li>
+    <li><strong>Responsibilities:</strong>
+        <ol>
+            <li>Request a unique key from KGS (or validate a custom alias).</li>
+            <li>Upload the raw content to Object Storage.</li>
+            <li>Hash the password (if provided) using bcrypt.</li>
+            <li>Write metadata to NoSQL DB.</li>
+            <li>Return the short URL.</li>
+        </ol>
+    </li>
+    <li><strong>Error Handling:</strong> If Object Storage write fails, the key is returned to the KGS pool. If the DB write fails after the storage write, the orphaned blob is cleaned up asynchronously via a reconciliation job.</li>
+</ul>
+
+<h4>Key Generation Service (KGS)</h4>
+<ul>
+    <li><strong>Protocol:</strong> Internal gRPC (low-latency, binary protocol between internal services).</li>
+    <li><strong>How it works:</strong>
+        <ol>
+            <li>Pre-generates a large batch of unique 6-character Base62 keys offline and stores them in a <strong>Key DB</strong> (two tables: <code>unused_keys</code>, <code>used_keys</code>).</li>
+            <li>Each KGS instance loads a range of unused keys into memory at startup (e.g., 100K keys).</li>
+            <li>On request, a key is popped from the in-memory pool and marked as used in the Key DB asynchronously.</li>
+            <li>When the in-memory pool drops below a threshold, a new batch is loaded.</li>
+        </ol>
+    </li>
+    <li><strong>Concurrency Safety:</strong> Each KGS instance reserves a disjoint range of keys, so no two instances hand out the same key.</li>
+    <li><strong>Input:</strong> (none – just a request for a key)</li>
+    <li><strong>Output:</strong> <code>{ key: string }</code></li>
+</ul>
+
+<h4>Object Storage</h4>
+<p>A distributed blob/object store optimised for large, immutable files. Each paste's raw content is stored as a blob keyed by <code>paste_id</code>. Offers high durability (typically 11 nines) through internal replication. Ideal for Pastebin because paste content can be up to 10 MB, making inline DB storage impractical.</p>
+
+<h4>NoSQL DB (Paste Metadata)</h4>
+<p>A key-value / document store holding structured metadata for each paste. Chosen over SQL because the primary access pattern is a simple key-value lookup by <code>paste_id</code>, with no joins or complex transactions required. See <a href="#schema">Schema</a> section for details.</p>
+
+
+<!-- ================================================================ -->
+<!-- 5  FLOW 2 – READ A PASTE                                          -->
+<!-- ================================================================ -->
+<h2 id="flow2">5. Flow 2 – Read a Paste</h2>
+
+<div class="diagram-box">
+<pre class="mermaid">
+graph LR
+    A["👤 Client<br/>(Browser / CLI)"] -->|"HTTP GET<br/>/api/pastes/{id}"| B["🌐 CDN<br/>(Edge Cache)"]
+    B -->|"Cache HIT"| A
+    B -->|"Cache MISS"| C["⚖️ Load Balancer"]
+    C --> D["🔐 API Gateway"]
+    D --> E["📝 Paste Service"]
+    E -->|"Lookup"| F[("⚡ In-Memory<br/>Cache")]
+    F -->|"HIT → return"| E
+    F -->|"MISS"| G[("🗃️ NoSQL DB<br/>(Metadata)")]
+    G -->|"metadata"| E
+    E -->|"GET blob"| H[("🗄️ Object<br/>Storage")]
+    H -->|"content"| E
+    E -->|"Populate cache"| F
+    E -->|"Return paste"| A
+</pre>
 </div>
 
-<h2>Alternative Approaches</h2>
-<div class="alternative">
-<h4>Alternative: Store everything in one DB</h4>
-<p>Use a single PostgreSQL instance with content stored as TEXT/BYTEA. Simpler architecture. Not chosen because large pastes would bloat the DB, and blob storage is S3's sweet spot.</p>
-</div>
-<div class="alternative">
-<h4>Alternative: Content-addressable storage (deduplication)</h4>
-<p>Hash paste content and use the hash as the S3 key. Identical pastes share storage. Saves space but adds complexity (reference counting for deletion). Not worth it at Pastebin's relatively small scale.</p>
+<h3>Examples</h3>
+
+<div class="example-box">
+    <strong>Example 1 – Public paste, CDN cache hit:</strong><br/>
+    A user shares link <code>https://paste.example.com/aX9kQ2</code> in a Slack channel. 50 colleagues click it within a minute.
+    The first request is a CDN cache miss: the CDN forwards it to the <strong>Load Balancer → API Gateway → Paste Service</strong>.
+    The Paste Service checks the <strong>in-memory cache</strong> (miss), reads metadata from the <strong>NoSQL DB</strong> (confirms <code>expires_at</code> is in the future, <code>is_private = false</code>), fetches the content from <strong>Object Storage</strong>, populates the in-memory cache, and returns the response.
+    The CDN caches the response at the edge.
+    The remaining 49 requests are served directly from the <strong>CDN</strong> with sub-10 ms latency.
 </div>
 
-<h2>Additional Information</h2>
-<h3>Abuse Prevention</h3>
-<p>Rate limit paste creation: 10 pastes/minute per IP, 50/hour per account. Content scanning for malware/phishing links. CAPTCHA for anonymous paste creation.</p>
-<h3>Cleanup Job</h3>
-<p>Runs every 5 minutes. Queries <code>SELECT paste_id, s3_key FROM paste_metadata WHERE expires_at < NOW() LIMIT 1000</code>. Deletes S3 objects and metadata rows in batches. Uses the B-tree index on <code>expires_at</code> for efficient scanning.</p>
+<div class="example-box">
+    <strong>Example 2 – Expired paste:</strong><br/>
+    A user accesses <code>https://paste.example.com/bZ3mR7</code>.
+    The CDN does not have it cached (it expired from CDN TTL earlier).
+    The Paste Service reads the metadata from the NoSQL DB and finds <code>expires_at = 2024-01-01T00:00:00Z</code>, which is in the past.
+    The service returns <code>HTTP 404 Not Found</code> with body <code>{ error: "Paste has expired" }</code>.
+    It also asynchronously queues a cleanup task to delete the blob from Object Storage and the metadata from the DB (lazy deletion).
 </div>
+
+<div class="example-box">
+    <strong>Example 3 – Password-protected paste:</strong><br/>
+    A user navigates to <code>https://paste.example.com/pR7xK4</code>.
+    The Paste Service reads metadata and finds <code>password_hash</code> is set.
+    It returns <code>HTTP 401 Unauthorized</code> with a prompt for the password.
+    The client re-sends the request as <code>GET /api/pastes/pR7xK4?password=secret123</code>.
+    The service hashes the provided password and compares it against the stored hash. If it matches, the paste content is returned. If not, <code>HTTP 403 Forbidden</code>.
+    <em>Note:</em> Password-protected pastes are <strong>not cached on the CDN</strong> (the API Gateway sets <code>Cache-Control: private, no-store</code>).
+</div>
+
+<div class="example-box">
+    <strong>Example 4 – Raw view:</strong><br/>
+    A user appends <code>/raw</code> to the URL: <code>GET /api/pastes/aX9kQ2/raw</code>.
+    The service returns the paste content with <code>Content-Type: text/plain</code> (no HTML wrapper, no syntax highlighting), suitable for piping into other tools (e.g., <code>curl https://paste.example.com/aX9kQ2/raw | python3</code>).
+</div>
+
+<h3>Component Deep Dive – Flow 2</h3>
+
+<h4>CDN (Edge Cache)</h4>
+<p>A globally distributed content delivery network that caches responses at edge locations close to users. See the <a href="#cdn-cache">CDN &amp; Cache Deep Dive</a> section for full details on caching strategy, TTL, and invalidation.</p>
+
+<h4>Paste Service (Read Path)</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP REST</li>
+    <li><strong>Endpoint:</strong> <code>GET /api/pastes/{paste_id}</code></li>
+    <li><strong>Input:</strong> Path param <code>paste_id</code>; optional query param <code>password</code>.</li>
+    <li><strong>Output:</strong> <code>{ paste_id, title, content, syntax_language, created_at, expires_at }</code></li>
+    <li><strong>Steps:</strong>
+        <ol>
+            <li>Check in-memory cache for the <code>paste_id</code>.</li>
+            <li>On cache miss: query NoSQL DB for metadata.</li>
+            <li>If paste not found → <code>404</code>. If expired → <code>404</code> + queue async cleanup.</li>
+            <li>If password-protected, verify supplied password against stored hash.</li>
+            <li>Fetch raw content from Object Storage.</li>
+            <li>Populate in-memory cache with combined metadata + content.</li>
+            <li>Return response.</li>
+        </ol>
+    </li>
+</ul>
+
+<h4>In-Memory Cache</h4>
+<p>A distributed in-memory cache layer between the Paste Service and the persistent stores. See <a href="#cdn-cache">CDN &amp; Cache Deep Dive</a> for full strategy details.</p>
+
+
+<!-- ================================================================ -->
+<!-- 6  FLOW 3 – DELETE / EXPIRE A PASTE                               -->
+<!-- ================================================================ -->
+<h2 id="flow3">6. Flow 3 – Delete / Expire a Paste</h2>
+
+<div class="diagram-box">
+<pre class="mermaid">
+graph LR
+    subgraph Manual Delete
+        A["👤 Owner"] -->|"HTTP DELETE<br/>/api/pastes/{id}"| B["⚖️ Load Balancer"]
+        B --> C["🔐 API Gateway"]
+        C --> D["📝 Paste Service"]
+        D -->|"DELETE metadata"| E[("🗃️ NoSQL DB")]
+        D -->|"DELETE blob"| F[("🗄️ Object Storage")]
+        D -->|"INVALIDATE"| G[("⚡ Cache")]
+        D -->|"Purge URL"| H["🌐 CDN"]
+    end
+
+    subgraph Automatic Expiration
+        I["⏰ Cleanup Service<br/>(Scheduled Job)"] -->|"SCAN expired"| J[("🗃️ NoSQL DB")]
+        J -->|"batch of expired IDs"| I
+        I -->|"Batch DELETE blobs"| K[("🗄️ Object Storage")]
+        I -->|"Batch DELETE metadata"| J
+        I -->|"Batch INVALIDATE"| L[("⚡ Cache")]
+    end
+</pre>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+    <strong>Example 1 – Owner manually deletes a paste:</strong><br/>
+    An authenticated user wants to remove their paste <code>aX9kQ2</code>.
+    They issue <code>HTTP DELETE /api/pastes/aX9kQ2</code> with their JWT token.
+    The <strong>API Gateway</strong> validates the token.
+    The <strong>Paste Service</strong> reads the metadata to confirm <code>user_id</code> matches the requester. It then:
+    (1) deletes the metadata from the <strong>NoSQL DB</strong>,
+    (2) deletes the blob from <strong>Object Storage</strong>,
+    (3) invalidates the key in the <strong>in-memory cache</strong>,
+    (4) sends a purge request to the <strong>CDN</strong> for that URL.
+    Returns <code>HTTP 204 No Content</code>.
+</div>
+
+<div class="example-box">
+    <strong>Example 2 – Unauthorized delete attempt:</strong><br/>
+    A different user tries <code>DELETE /api/pastes/aX9kQ2</code>.
+    The Paste Service reads metadata and finds <code>user_id = U12345</code> but the requester is <code>U99999</code>.
+    Returns <code>HTTP 403 Forbidden</code>. No data is deleted.
+</div>
+
+<div class="example-box">
+    <strong>Example 3 – Automatic expiration cleanup:</strong><br/>
+    The <strong>Cleanup Service</strong> runs every 5 minutes as a scheduled cron job.
+    It queries the NoSQL DB using a Global Secondary Index on <code>expires_at</code>: <code>WHERE expires_at &lt; NOW() LIMIT 1000</code>.
+    It receives a batch of 350 expired paste IDs. For each, it:
+    (1) deletes the blob from Object Storage (batched),
+    (2) deletes the metadata row from the DB (batched),
+    (3) invalidates each key from the cache.
+    This runs in batches to avoid overloading the DB. If more expired pastes remain, the next scheduled run picks them up.
+</div>
+
+<h3>Component Deep Dive – Flow 3</h3>
+
+<h4>Paste Service (Delete Path)</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP REST</li>
+    <li><strong>Endpoint:</strong> <code>DELETE /api/pastes/{paste_id}</code></li>
+    <li><strong>Input:</strong> Path param <code>paste_id</code>; JWT auth token in <code>Authorization</code> header.</li>
+    <li><strong>Output:</strong> <code>204 No Content</code> on success; <code>403 Forbidden</code> if not the owner; <code>404 Not Found</code> if paste doesn't exist.</li>
+    <li><strong>Ownership check:</strong> Compares the <code>user_id</code> in the JWT with the <code>user_id</code> stored in the paste metadata. Anonymous pastes without a <code>user_id</code> cannot be manually deleted (they expire naturally).</li>
+</ul>
+
+<h4>Cleanup Service</h4>
+<ul>
+    <li><strong>Type:</strong> Scheduled background worker (cron-based), not exposed via HTTP.</li>
+    <li><strong>Frequency:</strong> Every 5 minutes.</li>
+    <li><strong>Mechanism:</strong> Queries the NoSQL DB's GSI on <code>expires_at</code> for records where <code>expires_at &lt; current_time</code>. Processes in batches (e.g., 1,000 per run) to prevent DB overload.</li>
+    <li><strong>Idempotency:</strong> Deletes are idempotent – running twice on the same paste ID is harmless. Multiple Cleanup Service instances can run concurrently without conflict.</li>
+    <li><strong>Lazy Deletion Complement:</strong> In addition to the Cleanup Service, the read path also performs lazy deletion: if a paste is read and found to be expired, the Paste Service returns 404 and queues an async delete. This provides faster cleanup for accessed expired pastes.</li>
+</ul>
+
+
+<!-- ================================================================ -->
+<!-- 7  COMBINED SYSTEM DIAGRAM                                        -->
+<!-- ================================================================ -->
+<h2 id="combined">7. Combined System Diagram</h2>
+
+<div class="diagram-box">
+<pre class="mermaid">
+graph TB
+    Client["👤 Client<br/>(Browser / CLI)"]
+
+    CDN["🌐 CDN<br/>(Edge Cache)"]
+    LB["⚖️ Load Balancer"]
+    GW["🔐 API Gateway<br/>(Auth · Rate Limit)"]
+    PS["📝 Paste Service"]
+    KGS["🔑 Key Generation<br/>Service"]
+    Cache[("⚡ In-Memory Cache")]
+    NoSQL[("🗃️ NoSQL DB<br/>(Paste Metadata)")]
+    ObjStore[("🗄️ Object Storage")]
+    KeyDB[("🔑 Key DB")]
+    Cleanup["⏰ Cleanup Service<br/>(Cron)"]
+
+    Client -->|"GET (read)"| CDN
+    CDN -->|"MISS"| LB
+    Client -->|"POST / DELETE"| LB
+    LB --> GW
+    GW --> PS
+
+    PS -->|"Request key"| KGS
+    KGS -->|"Load keys"| KeyDB
+
+    PS -->|"Read / Write<br/>metadata"| NoSQL
+    PS -->|"Read / Write<br/>content"| ObjStore
+    PS -->|"Read / Write<br/>/ Invalidate"| Cache
+
+    CDN -->|"HIT → response"| Client
+
+    Cleanup -->|"Scan expired<br/>& batch delete"| NoSQL
+    Cleanup -->|"Batch delete blobs"| ObjStore
+    Cleanup -->|"Batch invalidate"| Cache
+</pre>
+</div>
+
+<h3>Examples (Combined Flow)</h3>
+
+<div class="example-box">
+    <strong>End-to-end Example – Full lifecycle of a paste:</strong><br/>
+    <ol>
+        <li><strong>Create:</strong> User pastes a JSON config, sets expiration to 24 hours, and clicks Create.
+            <code>POST /api/pastes</code> → Load Balancer → API Gateway (rate limit OK) → Paste Service → KGS returns key <code>qW3rT9</code> → content stored in Object Storage → metadata (with <code>expires_at = +24h</code>) stored in NoSQL DB → URL returned to user.</li>
+        <li><strong>Read (first access):</strong> User shares the link. Colleague clicks it.
+            <code>GET /api/pastes/qW3rT9</code> → CDN miss → Load Balancer → API Gateway → Paste Service → Cache miss → NoSQL DB returns metadata (not expired) → Object Storage returns content → Cache populated → response returned → CDN caches it.</li>
+        <li><strong>Read (subsequent access):</strong> Another colleague clicks the link within CDN TTL.
+            <code>GET</code> → CDN cache hit → response served from edge in &lt; 10 ms. The backend is never touched.</li>
+        <li><strong>Expiration:</strong> 24 hours pass. The CDN TTL expires and the entry is evicted. A user clicks the link.
+            <code>GET</code> → CDN miss → backend → Paste Service reads metadata → <code>expires_at</code> is in the past → returns <code>404</code> → queues async cleanup.</li>
+        <li><strong>Cleanup:</strong> The Cleanup Service's next run picks up <code>qW3rT9</code>, deletes the blob from Object Storage, the metadata from NoSQL DB, and invalidates the cache entry.</li>
+    </ol>
+</div>
+
+
+<!-- ================================================================ -->
+<!-- 8  DATABASE SCHEMA                                                -->
+<!-- ================================================================ -->
+<h2 id="schema">8. Database Schema</h2>
+
+<!-- ---- NoSQL: Paste Metadata ---- -->
+<h3>8.1 &nbsp; Paste Metadata (NoSQL – Key-Value / Document Store)</h3>
+
+<table>
+    <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td><code>paste_id</code></td><td>String (6 chars)</td><td><strong>Partition Key (PK)</strong></td><td>Unique identifier / short URL key</td></tr>
+    <tr><td><code>user_id</code></td><td>String (UUID)</td><td>GSI Partition Key</td><td>Owner's user ID (null for anonymous)</td></tr>
+    <tr><td><code>title</code></td><td>String</td><td>—</td><td>Optional paste title</td></tr>
+    <tr><td><code>content_key</code></td><td>String</td><td>—</td><td>Object Storage path for the paste content blob</td></tr>
+    <tr><td><code>syntax_language</code></td><td>String</td><td>—</td><td>Language hint for syntax highlighting (e.g., "python")</td></tr>
+    <tr><td><code>is_private</code></td><td>Boolean</td><td>—</td><td>Whether the paste is publicly listed</td></tr>
+    <tr><td><code>password_hash</code></td><td>String</td><td>—</td><td>Bcrypt hash of access password (null if unprotected)</td></tr>
+    <tr><td><code>size_bytes</code></td><td>Integer</td><td>—</td><td>Size of the paste in bytes</td></tr>
+    <tr><td><code>created_at</code></td><td>Timestamp</td><td>—</td><td>Creation time (ISO-8601)</td></tr>
+    <tr><td><code>expires_at</code></td><td>Timestamp</td><td><strong>GSI Partition Key</strong> (Expiration Index)</td><td>Expiration time (null = never)</td></tr>
+</table>
+
+<p><strong>Why NoSQL?</strong></p>
+<ul>
+    <li>The primary access pattern is a single-key lookup by <code>paste_id</code> — a classic key-value pattern that NoSQL excels at.</li>
+    <li>No joins, no multi-table transactions, no complex relational queries.</li>
+    <li>Horizontal scalability via hash-based sharding on <code>paste_id</code> is straightforward.</li>
+    <li>Schema flexibility allows adding new fields (e.g., <code>view_count</code>, <code>forked_from</code>) without migrations.</li>
+    <li>The high read throughput requirement (1,160+ QPS average, spikes much higher) is well-served by NoSQL's distributed architecture.</li>
+</ul>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>Primary index on <code>paste_id</code> (Hash index):</strong> Default partition key. All reads and writes are O(1) lookups. Hash-based because we always look up by exact <code>paste_id</code> — no range queries on this field.</li>
+    <li><strong>Global Secondary Index (GSI) on <code>user_id</code> (Hash index):</strong> Enables the "list my pastes" feature for authenticated users. Hash-based because the query is <code>WHERE user_id = ?</code>, returning all pastes for a given user.</li>
+    <li><strong>Global Secondary Index (GSI) on <code>expires_at</code> (Range/B-tree index):</strong> Used by the Cleanup Service to scan for expired pastes with <code>WHERE expires_at < NOW()</code>. A range index (not hash) because we need a range comparison (<code>&lt;</code>), not an equality check.</li>
+</ul>
+
+<p><strong>Sharding Strategy:</strong></p>
+<ul>
+    <li><strong>Hash-based sharding on <code>paste_id</code>.</strong></li>
+    <li>The 6-character Base62 key is already pseudo-random (generated by KGS), so hashing it distributes data uniformly across shards with no hotspots.</li>
+    <li>This strategy was chosen over range-based sharding because there is no need for range scans on <code>paste_id</code>. Range sharding would also risk hotspots if keys are generated sequentially.</li>
+    <li>Shard count should be provisioned based on storage and throughput: ~36.5 TB/year with 10+ shards gives ~3.6 TB/shard/year, well within capacity.</li>
+</ul>
+
+<p><strong>Read/Write Triggers:</strong></p>
+<ul>
+    <li><strong>Written to</strong> when a user creates a new paste (<code>POST /api/pastes</code>).</li>
+    <li><strong>Read from</strong> when a user accesses a paste (<code>GET /api/pastes/{id}</code>) and the cache misses.</li>
+    <li><strong>Deleted from</strong> when a user manually deletes a paste (<code>DELETE /api/pastes/{id}</code>) or the Cleanup Service removes expired pastes.</li>
+</ul>
+
+<!-- ---- SQL: User Accounts ---- -->
+<h3>8.2 &nbsp; User Accounts (SQL – Relational Database)</h3>
+
+<table>
+    <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td><td>Unique user identifier</td></tr>
+    <tr><td><code>username</code></td><td>VARCHAR(64)</td><td>Unique Index</td><td>Display name / login</td></tr>
+    <tr><td><code>email</code></td><td>VARCHAR(255)</td><td>Unique Index</td><td>Email for account recovery</td></tr>
+    <tr><td><code>password_hash</code></td><td>VARCHAR(255)</td><td>—</td><td>Bcrypt hash of account password</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>—</td><td>Account creation date</td></tr>
+    <tr><td><code>is_active</code></td><td>BOOLEAN</td><td>—</td><td>Soft-delete flag</td></tr>
+</table>
+
+<p><strong>Why SQL?</strong></p>
+<ul>
+    <li>User data is highly structured and relational (user → pastes relationship).</li>
+    <li>ACID transactions are important for account operations (e.g., email change, password reset must be atomic).</li>
+    <li>The user table is orders of magnitude smaller than the paste table (millions of users vs. billions of pastes), so SQL's scaling limitations are not a concern.</li>
+    <li>Complex queries for admin dashboards (e.g., "users who created >100 pastes this month") benefit from SQL's expressive query language.</li>
+</ul>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>Primary index on <code>user_id</code> (B-tree):</strong> Default clustered index for primary key lookups and joins.</li>
+    <li><strong>Unique B-tree index on <code>username</code>:</strong> Login lookups are by username. B-tree supports the equality match needed and also enforces uniqueness.</li>
+    <li><strong>Unique B-tree index on <code>email</code>:</strong> Used for password reset and duplicate checking. B-tree for the same reasons.</li>
+</ul>
+
+<p><strong>Sharding:</strong> Not required at the expected scale. A single replicated SQL instance with read replicas is sufficient for the user table. If needed in the future, hash-based sharding on <code>user_id</code> would work.</p>
+
+<p><strong>Read/Write Triggers:</strong></p>
+<ul>
+    <li><strong>Written to</strong> when a new user registers.</li>
+    <li><strong>Read from</strong> when a user logs in (lookup by <code>username</code>), or when the Paste Service verifies ownership for a delete request.</li>
+</ul>
+
+<!-- ---- KGS Key DB ---- -->
+<h3>8.3 &nbsp; Key Generation DB (SQL)</h3>
+
+<table>
+    <tr><th>Table</th><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td rowspan="1"><code>unused_keys</code></td><td><code>key_value</code></td><td>CHAR(6)</td><td><strong>Primary Key</strong></td><td>Pre-generated Base62 key not yet assigned</td></tr>
+    <tr><td rowspan="2"><code>used_keys</code></td><td><code>key_value</code></td><td>CHAR(6)</td><td><strong>Primary Key</strong></td><td>Key that has been assigned to a paste</td></tr>
+    <tr><td><code>used_at</code></td><td>TIMESTAMP</td><td>—</td><td>When the key was assigned</td></tr>
+</table>
+
+<p><strong>Why SQL?</strong></p>
+<ul>
+    <li>The KGS needs ACID guarantees to ensure a key is moved from <code>unused_keys</code> to <code>used_keys</code> atomically (no double-assignment).</li>
+    <li>Simple two-table design fits SQL well.</li>
+    <li>Low write volume (keys are fetched in batches, not individually per paste).</li>
+</ul>
+
+<p><strong>Read/Write Triggers:</strong></p>
+<ul>
+    <li><strong>Read from <code>unused_keys</code></strong> when a KGS instance loads a batch of keys into memory.</li>
+    <li><strong>Written to <code>used_keys</code> / Deleted from <code>unused_keys</code></strong> atomically when a batch is reserved.</li>
+    <li><strong>Written to <code>unused_keys</code></strong> by an offline key generation job that pre-computes new keys.</li>
+</ul>
+
+<!-- ---- Denormalization ---- -->
+<h3>8.4 &nbsp; Denormalization Notes</h3>
+<p>The paste metadata table is <strong>denormalized by design</strong>. Instead of normalizing into separate tables (e.g., a separate <code>paste_settings</code> table for <code>is_private</code>, <code>password_hash</code>, <code>syntax_language</code>), all fields are embedded in a single document. This is intentional because:</p>
+<ul>
+    <li>Every read fetches all metadata fields in a single query — no joins are needed.</li>
+    <li>NoSQL document stores are optimised for this pattern (fetch a full document by key).</li>
+    <li>There is no update anomaly risk because pastes are essentially immutable after creation.</li>
+    <li>Write amplification is negligible since we write once and read many times.</li>
+</ul>
+
+
+<!-- ================================================================ -->
+<!-- 9  CDN & CACHE DEEP DIVE                                          -->
+<!-- ================================================================ -->
+<h2 id="cdn-cache">9. CDN &amp; Cache Deep Dive</h2>
+
+<h3>9.1 &nbsp; CDN</h3>
+
+<h4>Why a CDN is appropriate</h4>
+<ul>
+    <li>Pastebin is <strong>read-heavy</strong> (10:1 read-to-write ratio). The CDN absorbs the majority of read traffic.</li>
+    <li>Paste content is <strong>immutable</strong> — once created, it never changes. This is the ideal CDN workload: high cache-hit ratios with no stale-data concerns.</li>
+    <li>Users are <strong>globally distributed</strong>. Edge caching reduces latency from hundreds of milliseconds to single-digit milliseconds.</li>
+    <li>A viral paste (shared on social media) can spike to thousands of reads per second. The CDN absorbs this "thundering herd" without impacting backend services.</li>
+</ul>
+
+<h4>CDN Configuration</h4>
+<table>
+    <tr><th>Parameter</th><th>Value</th><th>Rationale</th></tr>
+    <tr><td>TTL for public pastes</td><td>10 minutes</td><td>Balance between freshness (detecting deletion/expiration) and cache efficiency. Since content is immutable, the main concern is pastes that are deleted or expired.</td></tr>
+    <tr><td>Private/password-protected pastes</td><td>Not cached (<code>Cache-Control: private, no-store</code>)</td><td>Sensitive content must not be stored on shared edge servers.</td></tr>
+    <tr><td>Cache key</td><td>URL path (<code>/api/pastes/{id}</code>)</td><td>Simple 1:1 mapping between URL and cached resource.</td></tr>
+    <tr><td>Purge mechanism</td><td>API-based purge on manual delete</td><td>When an owner deletes a paste, a CDN purge request is sent to remove the cached entry before TTL expiry.</td></tr>
+</table>
+
+<h3>9.2 &nbsp; In-Memory Cache</h3>
+
+<h4>Why an in-memory cache is appropriate</h4>
+<ul>
+    <li>Even after the CDN absorbs most traffic, cache misses still hit the backend. A distributed in-memory cache provides <strong>sub-millisecond reads</strong> for the backend, reducing load on the NoSQL DB and Object Storage.</li>
+    <li>Popular pastes (e.g., shared on a forum) will be accessed repeatedly. Caching avoids redundant DB + Object Storage reads.</li>
+    <li>The combined metadata + content for a typical paste is ~10 KB. A cache cluster with 50 GB of memory can hold ~5 million hot pastes, covering the vast majority of recent traffic.</li>
+</ul>
+
+<h4>Caching Strategy: Cache-Aside with Write-Around</h4>
+<table>
+    <tr><th>Aspect</th><th>Strategy</th><th>Rationale</th></tr>
+    <tr>
+        <td>Read Path</td>
+        <td><strong>Cache-Aside (Lazy Loading)</strong></td>
+        <td>On a cache miss, the Paste Service reads from the DB/Object Storage, then populates the cache. This ensures only actually-accessed pastes consume cache space. Many pastes are created but never read again — cache-aside avoids wasting memory on them.</td>
+    </tr>
+    <tr>
+        <td>Write Path</td>
+        <td><strong>Write-Around</strong></td>
+        <td>On paste creation, data is written <em>only</em> to the DB and Object Storage — <strong>not</strong> to the cache. This was chosen over write-through because many pastes are created, shared once, and never accessed again. Write-through would pollute the cache with cold data. Write-around lets the cache organically fill with genuinely popular pastes via the read path.</td>
+    </tr>
+    <tr>
+        <td>Delete / Expire</td>
+        <td><strong>Cache Invalidation</strong></td>
+        <td>On manual delete or cleanup, the cache entry is explicitly invalidated (deleted). This prevents serving stale/deleted content.</td>
+    </tr>
+</table>
+
+<h4>Eviction Policy: LRU (Least Recently Used)</h4>
+<p>When the cache reaches capacity, the <strong>least recently used</strong> entry is evicted. LRU is chosen because:</p>
+<ul>
+    <li>Access patterns exhibit <strong>temporal locality</strong> — recently shared pastes are far more likely to be accessed again than old ones.</li>
+    <li>LRU naturally adapts to shifting popularity (e.g., a paste shared on social media becomes hot, then cools off).</li>
+    <li>LRU is simple to implement in most distributed cache systems and has low overhead.</li>
+</ul>
+
+<h4>Expiration Policy: TTL of 24 Hours</h4>
+<ul>
+    <li>Since paste content is <strong>immutable</strong>, a long TTL is safe — there is no risk of serving outdated data.</li>
+    <li>The 24-hour TTL acts as a safety net: even if a delete/invalidation message is lost, the stale entry will be evicted within a day.</li>
+    <li>For pastes with an <code>expires_at</code> earlier than 24 hours from now, the TTL is set to <code>min(24h, time_until_expiration)</code> to avoid caching an expired paste.</li>
+</ul>
+
+<h4>What is stored in the cache?</h4>
+<p>The cache stores a <strong>combined payload</strong>: paste metadata (from NoSQL DB) + paste content (from Object Storage), serialised as a single blob. This eliminates two separate lookups on a cache hit. The cache key is simply the <code>paste_id</code>.</p>
+
+
+<!-- ================================================================ -->
+<!-- 10  SCALING CONSIDERATIONS                                        -->
+<!-- ================================================================ -->
+<h2 id="scaling">10. Scaling Considerations</h2>
+
+<h3>10.1 &nbsp; Load Balancers</h3>
+<p>Load balancers are placed at <strong>two points</strong> in the architecture:</p>
+<ol>
+    <li><strong>Between the Client and API Gateway:</strong> This is the primary external load balancer. It distributes incoming HTTP(S) requests across multiple API Gateway instances. It terminates TLS, performs health checks, and uses round-robin or least-connections routing.</li>
+    <li><strong>Between the API Gateway and Paste Service:</strong> An internal load balancer (or service mesh / service discovery) distributes traffic across Paste Service instances. Uses least-connections to account for varying request processing times (e.g., a large 10 MB paste upload takes longer than a small metadata read).</li>
+</ol>
+<p>Load balancers enable <strong>horizontal scaling</strong>: adding more Paste Service instances behind the LB increases throughput proportionally. Auto-scaling policies can add/remove instances based on CPU utilisation or request queue depth.</p>
+
+<h3>10.2 &nbsp; Stateless Services</h3>
+<p>Both the API Gateway and Paste Service are <strong>stateless</strong> — they hold no session data in memory. All state lives in the external stores (NoSQL DB, Object Storage, Cache). This means they can be scaled horizontally by adding more instances behind the load balancer without sticky sessions or coordination.</p>
+
+<h3>10.3 &nbsp; Database Scaling</h3>
+<ul>
+    <li><strong>NoSQL (Paste Metadata):</strong> Hash-sharded on <code>paste_id</code>. Adding shards rebalances data automatically. Read replicas can be added per shard for read-heavy workloads.</li>
+    <li><strong>SQL (User Accounts):</strong> Single primary with read replicas is sufficient at expected scale. If user count grows beyond one machine's capacity, hash-sharding on <code>user_id</code> is straightforward.</li>
+    <li><strong>Object Storage:</strong> Inherently distributed and horizontally scalable. No manual sharding required.</li>
+</ul>
+
+<h3>10.4 &nbsp; KGS Scaling</h3>
+<p>Each KGS instance reserves a disjoint batch of keys. Scaling KGS is as simple as spinning up more instances, each taking its own batch. The Key DB is a bottleneck only during batch loading (infrequent), not per-request.</p>
+
+<h3>10.5 &nbsp; CDN as a Scaling Lever</h3>
+<p>The CDN absorbs the vast majority of read traffic. For viral pastes, the CDN prevents backend overload entirely. This is the single most impactful scaling mechanism for a read-heavy system like Pastebin.</p>
+
+<h3>10.6 &nbsp; Cache Cluster Scaling</h3>
+<p>The in-memory cache is a distributed cluster. Consistent hashing is used to distribute keys across cache nodes, allowing nodes to be added/removed with minimal cache invalidation. If cache hit rates drop (monitored via metrics), additional cache nodes are added.</p>
+
+<h3>10.7 &nbsp; Cleanup Service Scaling</h3>
+<p>The Cleanup Service is a batch job that can be parallelised by assigning different shard ranges to different workers. A distributed lock or partition assignment ensures no two workers process the same shard simultaneously.</p>
+
+
+<!-- ================================================================ -->
+<!-- 11  TRADEOFFS & DEEP DIVES                                        -->
+<!-- ================================================================ -->
+<h2 id="tradeoffs">11. Tradeoffs &amp; Deep Dives</h2>
+
+<h3>11.1 &nbsp; Key Generation: Pre-generated KGS vs. On-the-fly Hashing</h3>
+<table>
+    <tr><th>Approach</th><th>Pros</th><th>Cons</th></tr>
+    <tr>
+        <td>Pre-generated KGS (chosen)</td>
+        <td>Zero collision risk; O(1) key retrieval; simple Paste Service logic</td>
+        <td>Extra service to maintain; Key DB is an additional dependency; keys must be pre-generated in bulk</td>
+    </tr>
+    <tr>
+        <td>MD5/SHA hash of content</td>
+        <td>No separate service; deterministic (same content → same key, enabling deduplication)</td>
+        <td>Hash collisions are possible (especially with truncation to 6 chars); collision handling adds complexity; same content submitted by different users would collide undesirably if they have different expiration settings</td>
+    </tr>
+</table>
+<p><strong>Decision:</strong> KGS was chosen because guaranteed uniqueness with no runtime collision handling is worth the operational overhead of one extra lightweight service.</p>
+
+<h3>11.2 &nbsp; Content Storage: Object Storage vs. Inline in DB</h3>
+<table>
+    <tr><th>Approach</th><th>Pros</th><th>Cons</th></tr>
+    <tr>
+        <td>Object Storage (chosen)</td>
+        <td>Optimised for large blobs (up to 10 MB); 11-nines durability; cost-effective at scale; CDN can pull directly from origin</td>
+        <td>Extra network hop on read (DB for metadata + Object Storage for content); eventual consistency on writes</td>
+    </tr>
+    <tr>
+        <td>Inline in DB</td>
+        <td>Single read for metadata + content; transactional consistency</td>
+        <td>DB row sizes balloon (10 MB per row); degrades DB performance; expensive to store large blobs in DB; backup/restore times increase</td>
+    </tr>
+</table>
+<p><strong>Decision:</strong> Object Storage was chosen. The extra network hop is mitigated by the in-memory cache (which stores the combined payload). The cost and performance benefits at scale are decisive.</p>
+
+<h3>11.3 &nbsp; Consistency Model: Strong vs. Eventual</h3>
+<p>We accept <strong>eventual consistency</strong> for reads. A newly created paste may take a few seconds to be globally readable (due to DB replication lag and cache propagation). This is acceptable because:</p>
+<ul>
+    <li>The create flow returns the URL synchronously — the creator can immediately share it.</li>
+    <li>By the time a recipient clicks the link (even seconds later), replication has typically completed.</li>
+    <li>Strong consistency would require reading from the primary node for every read, negating the benefits of read replicas and increasing latency.</li>
+</ul>
+
+<h3>11.4 &nbsp; Expiration: Eager vs. Lazy Deletion</h3>
+<p>We use a <strong>hybrid approach</strong>:</p>
+<ul>
+    <li><strong>Lazy deletion</strong> on the read path: if a read discovers the paste is expired, return 404 and queue an async cleanup. This provides fast response times and instant expiration semantics from the user's perspective.</li>
+    <li><strong>Eager (batch) deletion</strong> via the Cleanup Service: periodically scans and deletes expired pastes in bulk. This reclaims storage for pastes that are expired but never accessed again.</li>
+</ul>
+<p>Using only lazy deletion would leave expired-but-unaccessed pastes consuming storage indefinitely. Using only eager deletion would mean a paste accessed just after expiration (but before the next cleanup run) might still be served.</p>
+
+<h3>11.5 &nbsp; API Protocol: REST vs. gRPC</h3>
+<p>External-facing APIs use <strong>REST over HTTP/HTTPS</strong> because clients are browsers and CLI tools that natively support HTTP. Internal service-to-service communication (e.g., Paste Service ↔ KGS) uses <strong>gRPC</strong> for lower latency (binary protocol, persistent connections, schema enforcement via Protobuf).</p>
+
+<h3>11.6 &nbsp; Why WebSockets / Pub-Sub / Message Queues Are Not Used</h3>
+<p>Pastebin is a <strong>request-response</strong> system with no real-time collaboration or push notification requirements:</p>
+<ul>
+    <li><strong>WebSockets:</strong> Not needed because pastes are immutable. There is no "live editing" scenario where the server needs to push updates to connected clients. A simple HTTP GET suffices for reading.</li>
+    <li><strong>Pub-Sub:</strong> Not needed because there are no subscribers waiting for events. Unlike a social media feed, there is no "notify followers when a new paste is created" feature.</li>
+    <li><strong>Message Queue:</strong> Could theoretically be used for async cleanup tasks (instead of the cron-based Cleanup Service), but the cleanup workload is simple, periodic, and idempotent — a cron job is simpler and sufficient. If cleanup volume became extreme, a message queue for delete tasks could be considered as a future optimization.</li>
+    <li><strong>Long Polling:</strong> Same reasoning as WebSockets — no use case for server-initiated updates.</li>
+</ul>
+
+
+<!-- ================================================================ -->
+<!-- 12  ALTERNATIVE APPROACHES                                        -->
+<!-- ================================================================ -->
+<h2 id="alternatives">12. Alternative Approaches</h2>
+
+<h3>12.1 &nbsp; URL Shortener Style (Counter + Base62)</h3>
+<p>Instead of a KGS, use an auto-incrementing counter and Base62-encode it to produce keys (e.g., counter 1000000 → <code>4c92</code>).</p>
+<p><strong>Why not chosen:</strong> A single global counter is a scalability bottleneck (single point of coordination). Distributed counters (e.g., Snowflake IDs) work but produce longer keys (18+ chars) and are more complex than KGS for this use case. Sequential keys also leak information (you can guess the total number of pastes and enumerate recent ones).</p>
+
+<h3>12.2 &nbsp; Content-Addressable Storage (Hash-based Keys)</h3>
+<p>Use a hash (e.g., SHA-256) of the paste content as the key. Identical content maps to the same URL, enabling deduplication.</p>
+<p><strong>Why not chosen:</strong> Two users pasting the same content but with different expiration or privacy settings would collide. Resolving this (e.g., appending user-specific salt) negates the deduplication benefit. Truncating a hash to 6 characters also increases collision probability unacceptably.</p>
+
+<h3>12.3 &nbsp; Store Everything in SQL</h3>
+<p>Use a single SQL database for metadata, content, and keys.</p>
+<p><strong>Why not chosen:</strong> Storing 10 MB blobs in SQL rows degrades query performance, increases backup times, and is cost-prohibitive at 36.5 TB/year. SQL also lacks the seamless horizontal scaling that NoSQL provides for the high-volume paste metadata.</p>
+
+<h3>12.4 &nbsp; Store Content Inline in NoSQL</h3>
+<p>Skip Object Storage entirely and store the paste content directly in the NoSQL document alongside metadata.</p>
+<p><strong>Why not chosen:</strong> While feasible for small pastes, documents up to 10 MB strain NoSQL document size limits (many NoSQL stores cap documents at 400 KB – 16 MB). Even where supported, large documents degrade read performance for index scans and increase replication bandwidth. Object Storage is purpose-built for large blobs.</p>
+
+<h3>12.5 &nbsp; Use a Time-Series DB for Expiration</h3>
+<p>Store paste expiration data in a time-series database optimized for time-based range queries.</p>
+<p><strong>Why not chosen:</strong> Adds a third database to the architecture for minimal benefit. The GSI on <code>expires_at</code> in the NoSQL store handles the cleanup query adequately. A time-series DB would make sense only if expiration analytics (e.g., "how many pastes expire per hour?") were a core feature.</p>
+
+
+<!-- ================================================================ -->
+<!-- 13  ADDITIONAL INFORMATION                                        -->
+<!-- ================================================================ -->
+<h2 id="additional">13. Additional Information</h2>
+
+<h3>13.1 &nbsp; Rate Limiting Strategy</h3>
+<p>Rate limiting is enforced at the API Gateway using a <strong>token bucket</strong> algorithm:</p>
+<ul>
+    <li>Anonymous users: 30 creates/min, 300 reads/min (keyed on IP address).</li>
+    <li>Authenticated users: 120 creates/min, 1,000 reads/min (keyed on user ID).</li>
+    <li>Exceeding the limit returns <code>HTTP 429 Too Many Requests</code> with a <code>Retry-After</code> header.</li>
+</ul>
+
+<h3>13.2 &nbsp; Abuse Prevention</h3>
+<ul>
+    <li><strong>Content scanning:</strong> An async pipeline can scan newly created pastes for malware links, PII, or illegal content. Flagged pastes are quarantined for review.</li>
+    <li><strong>CAPTCHA:</strong> Anonymous paste creation can require a CAPTCHA to prevent bot spam.</li>
+    <li><strong>Reporting:</strong> A "Report Paste" button sends a report to a moderation queue.</li>
+</ul>
+
+<h3>13.3 &nbsp; Analytics</h3>
+<p>A separate analytics pipeline (write-optimised, append-only) can track paste view counts, popular languages, geographic distribution, etc. This data is written asynchronously and does not affect the critical read/write path. A time-series database is well-suited for this analytics use case.</p>
+
+<h3>13.4 &nbsp; Monitoring &amp; Alerting</h3>
+<ul>
+    <li>Monitor CDN cache-hit ratio (target: &gt; 90%).</li>
+    <li>Monitor in-memory cache hit ratio (target: &gt; 80%).</li>
+    <li>Monitor KGS key pool size (alert if unused keys drop below 10 million).</li>
+    <li>Monitor p99 read latency (alert if &gt; 200 ms).</li>
+    <li>Monitor Cleanup Service lag (alert if expired pastes backlog &gt; 100K).</li>
+</ul>
+
+<h3>13.5 &nbsp; Disaster Recovery</h3>
+<ul>
+    <li>NoSQL DB: Multi-region replication with automatic failover.</li>
+    <li>Object Storage: Cross-region replication for durability.</li>
+    <li>KGS Key DB: Regular backups; in a failure scenario, new keys can be regenerated (no data loss — only the convenience of pre-generated keys is lost).</li>
+</ul>
+
+<h3>13.6 &nbsp; Protocol Choices</h3>
+<ul>
+    <li><strong>HTTPS (TLS over TCP):</strong> Used for all client-facing traffic. TCP provides reliable, ordered delivery which is essential for submitting and retrieving text content. TLS encrypts data in transit.</li>
+    <li><strong>gRPC over HTTP/2:</strong> Used for internal service-to-service calls (Paste Service ↔ KGS). HTTP/2 provides multiplexed streams over a single TCP connection, reducing connection overhead. Protobuf serialisation is more efficient than JSON.</li>
+    <li>UDP is <strong>not used</strong> anywhere because all operations require reliable delivery (you cannot afford to lose a paste or a key).</li>
+</ul>
+
+
+<!-- ================================================================ -->
+<!-- 14  VENDOR SECTION                                                 -->
+<!-- ================================================================ -->
+<h2 id="vendors">14. Vendor Section</h2>
+
+<p>The design above is vendor-agnostic. Below are potential vendor choices with rationale, should one need to make concrete technology selections:</p>
+
+<table>
+    <tr><th>Component</th><th>Potential Vendors</th><th>Rationale</th></tr>
+    <tr>
+        <td>NoSQL DB (Paste Metadata)</td>
+        <td>Amazon DynamoDB, Apache Cassandra, ScyllaDB, Google Cloud Bigtable</td>
+        <td>All support hash-partitioned key-value access with GSIs. DynamoDB offers fully managed auto-scaling. Cassandra/ScyllaDB offer more control and multi-datacenter replication. Bigtable excels at high-throughput, low-latency reads.</td>
+    </tr>
+    <tr>
+        <td>SQL DB (Users, Keys)</td>
+        <td>PostgreSQL, MySQL, Amazon Aurora, Google Cloud SQL</td>
+        <td>PostgreSQL offers robust ACID guarantees and a mature ecosystem. Aurora provides managed scaling with PostgreSQL compatibility. MySQL is lightweight and well-suited for simple schemas.</td>
+    </tr>
+    <tr>
+        <td>Object Storage</td>
+        <td>Amazon S3, Google Cloud Storage, Azure Blob Storage, MinIO</td>
+        <td>All offer 11-nines durability, cross-region replication, and cost-effective blob storage. S3 is the de facto standard. MinIO is an option for on-premise deployments.</td>
+    </tr>
+    <tr>
+        <td>In-Memory Cache</td>
+        <td>Redis, Memcached, Hazelcast</td>
+        <td>Redis offers rich data structures and TTL support. Memcached is simpler and lightweight for pure key-value caching. For this use case (simple key-value with TTL), either works well. Redis is preferred for its TTL granularity and cluster mode.</td>
+    </tr>
+    <tr>
+        <td>CDN</td>
+        <td>Cloudflare, Amazon CloudFront, Fastly, Akamai</td>
+        <td>Cloudflare offers edge caching with generous free tiers. CloudFront integrates natively with AWS origin services. Fastly provides sub-second cache purging (important for delete propagation). Akamai has the largest global edge network.</td>
+    </tr>
+    <tr>
+        <td>Load Balancer</td>
+        <td>AWS ALB/NLB, Google Cloud Load Balancing, Nginx, HAProxy, Envoy</td>
+        <td>Cloud-native LBs (ALB, GCLB) offer auto-scaling and managed TLS. Nginx/HAProxy are self-managed but highly configurable. Envoy is ideal as a sidecar proxy in a service-mesh architecture.</td>
+    </tr>
+    <tr>
+        <td>API Gateway</td>
+        <td>Kong, AWS API Gateway, Apigee, Nginx (with plugins)</td>
+        <td>Kong and Apigee provide built-in rate limiting, auth, and analytics. AWS API Gateway integrates with AWS Lambda for serverless paste handling. Nginx with OpenResty plugins is a high-performance self-managed option.</td>
+    </tr>
+</table>
+
+<hr style="margin-top: 3rem;" />
+<p style="text-align: center; color: #6b7280; font-size: .85rem;">
+    Pastebin System Design Document &bull; Generated 2026-02-13
+</p>
+
+<script>
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral', flowchart: { useMaxWidth: true, htmlLabels: true } });
+</script>
 </body>
 </html>
