@@ -3,411 +3,1401 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Slack - System Design</title>
+<title>System Design: Slack</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <style>
-:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--heading:#E01E5A;--accent:#36C5F0;--accent2:#2EB67D;--accent3:#ECB22E;--muted:#888}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
-h1{color:var(--heading);font-size:2.2rem;border-bottom:3px solid var(--heading);padding-bottom:.5rem;margin-bottom:1.5rem}
-h2{color:var(--accent);margin:2rem 0 1rem;font-size:1.5rem}
-h3{color:var(--accent2);margin:1.5rem 0 .75rem;font-size:1.2rem}
-h4{color:var(--accent3);margin:1rem 0 .5rem}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
-ul,ol{margin:.75rem 0 .75rem 1.5rem}
-li{margin:.4rem 0}
-code{background:#2d2d2d;padding:.2rem .5rem;border-radius:4px;font-size:.9rem;color:#f8f8f2}
-pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:1rem 0}
-pre code{padding:0;background:none}
-.tag{display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600;margin:.2rem}
-.tag-pk{background:#E53935;color:#fff}
-.tag-fk{background:#1E88E5;color:#fff}
-.tag-idx{background:#43A047;color:#fff}
-.tag-shard{background:#FB8C00;color:#fff}
-svg text{font-family:'Segoe UI',system-ui,sans-serif}
-.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
-.pro{background:#1b3a1b;border:1px solid #2d5a2d;border-radius:8px;padding:1rem}
-.con{background:#3a1b1b;border:1px solid #5a2d2d;border-radius:8px;padding:1rem}
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e0e0e0;
+    --text-muted: #9a9daa;
+    --accent: #611f69;
+    --accent-light: #8b3f96;
+    --green: #2eb67d;
+    --blue: #36c5f0;
+    --yellow: #ecb22e;
+    --red: #e01e5a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 2rem;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 {
+    font-size: 2.4rem;
+    background: linear-gradient(135deg, var(--accent-light), var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+  }
+  .subtitle { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem; }
+  h2 {
+    font-size: 1.6rem;
+    color: var(--blue);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--border);
+  }
+  h3 {
+    font-size: 1.25rem;
+    color: var(--green);
+    margin-top: 2rem;
+    margin-bottom: 0.6rem;
+  }
+  h4 {
+    font-size: 1.05rem;
+    color: var(--yellow);
+    margin-top: 1.4rem;
+    margin-bottom: 0.4rem;
+  }
+  p, li { margin-bottom: 0.5rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1.2rem 0;
+  }
+  .example {
+    border-left: 4px solid var(--green);
+    background: rgba(46,182,125,0.07);
+  }
+  .warning {
+    border-left: 4px solid var(--yellow);
+    background: rgba(236,178,46,0.07);
+  }
+  .info {
+    border-left: 4px solid var(--blue);
+    background: rgba(54,197,240,0.07);
+  }
+  .alt {
+    border-left: 4px solid var(--red);
+    background: rgba(224,30,90,0.07);
+  }
+  .mermaid {
+    background: #23263a;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1.2rem 0;
+    text-align: center;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.95rem;
+  }
+  th, td {
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+  th {
+    background: var(--accent);
+    color: #fff;
+  }
+  tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+  code {
+    background: rgba(255,255,255,0.08);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: var(--yellow);
+  }
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+  }
+  .toc a { color: var(--blue); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc li { margin-bottom: 0.3rem; }
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 0.3rem;
+  }
+  .badge-get { background: var(--green); color: #000; }
+  .badge-post { background: var(--blue); color: #000; }
+  .badge-put { background: var(--yellow); color: #000; }
+  .badge-delete { background: var(--red); color: #fff; }
+  .badge-ws { background: var(--accent-light); color: #fff; }
 </style>
 </head>
 <body>
+<div class="container">
 
-<h1>💬 Slack - System Design</h1>
+<h1>System Design: Slack</h1>
+<p class="subtitle">Real-time enterprise messaging &amp; collaboration platform</p>
 
-<div class="card">
-<h2>Functional Requirements</h2>
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+<strong>Table of Contents</strong>
 <ol>
-<li><strong>Real-Time Messaging:</strong> Channels (public/private), DMs, threads, reactions, file sharing, mentions (@user/@channel/@here), message editing/deletion, rich formatting (mrkdwn), link unfurling</li>
-<li><strong>Search:</strong> Full-text search across all messages, files, and channels with filters (from:, in:, before:, has:link, has:emoji) — results within seconds across years of history</li>
-<li><strong>Integration Platform:</strong> Slack Apps (Bolt SDK), slash commands, webhooks, interactive messages (buttons/modals), Workflow Builder, 2,600+ app directory integrations</li>
+  <li><a href="#fr">Functional Requirements</a></li>
+  <li><a href="#nfr">Non-Functional Requirements</a></li>
+  <li><a href="#flow1">Flow 1 — Sending &amp; Receiving a Real-Time Message</a></li>
+  <li><a href="#flow2">Flow 2 — Loading Message History</a></li>
+  <li><a href="#flow3">Flow 3 — File Upload &amp; Sharing</a></li>
+  <li><a href="#flow4">Flow 4 — Presence &amp; Typing Indicators</a></li>
+  <li><a href="#flow5">Flow 5 — Message Search</a></li>
+  <li><a href="#flow6">Flow 6 — Notifications</a></li>
+  <li><a href="#overall">Overall Combined Diagram</a></li>
+  <li><a href="#schema">Schema Design</a></li>
+  <li><a href="#cdn">CDN &amp; Caching Deep Dive</a></li>
+  <li><a href="#websocket">WebSocket Deep Dive</a></li>
+  <li><a href="#pubsub">Pub/Sub Deep Dive</a></li>
+  <li><a href="#mq">Message Queue Deep Dive</a></li>
+  <li><a href="#scaling">Scaling Considerations</a></li>
+  <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+  <li><a href="#alternatives">Alternative Approaches</a></li>
+  <li><a href="#additional">Additional Information</a></li>
+  <li><a href="#vendors">Vendor Section</a></li>
 </ol>
 </div>
 
+<!-- ================================================================== -->
+<h2 id="fr">1. Functional Requirements</h2>
+<!-- ================================================================== -->
 <div class="card">
-<h2>Non-Functional Requirements</h2>
+<ol>
+  <li><strong>1:1 Direct Messaging</strong> — Users can send and receive private messages to/from another user in real time.</li>
+  <li><strong>Channel Messaging</strong> — Users can create public or private channels within a workspace and send messages to all channel members.</li>
+  <li><strong>Workspaces &amp; Organizations</strong> — Users belong to one or more workspaces; each workspace has its own channels, members, and settings.</li>
+  <li><strong>Threaded Replies</strong> — Users can reply to a specific message, creating a thread that keeps conversations organized without cluttering the main channel feed.</li>
+  <li><strong>Reactions</strong> — Users can add emoji reactions to any message.</li>
+  <li><strong>File Upload &amp; Sharing</strong> — Users can upload and share files (images, documents, videos) within channels or DMs.</li>
+  <li><strong>Message History &amp; Pagination</strong> — Users can scroll up through conversation history; messages are loaded in paginated chunks.</li>
+  <li><strong>Full-Text Search</strong> — Users can search for messages across all channels and DMs they have access to within a workspace.</li>
+  <li><strong>Presence &amp; Typing Indicators</strong> — Users see who is online/offline/away, and see when someone is typing in a channel or DM.</li>
+  <li><strong>Notifications</strong> — Users receive push notifications, email digests, and in-app notifications for mentions, DMs, and channel activity.</li>
+  <li><strong>Read Receipts / Unread Tracking</strong> — The system tracks the last message each user has read in each channel, showing unread badges.</li>
+  <li><strong>Message Editing &amp; Deletion</strong> — Users can edit or delete their own messages after sending.</li>
+</ol>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
+<!-- ================================================================== -->
+<div class="card">
+<ol>
+  <li><strong>Low Latency</strong> — Messages should be delivered in &lt;200ms end-to-end for online recipients.</li>
+  <li><strong>High Availability</strong> — Target 99.99% uptime; messaging must remain operational even during partial failures.</li>
+  <li><strong>Message Ordering</strong> — Messages within a channel must appear in a consistent, chronological order for all participants.</li>
+  <li><strong>Durability</strong> — Zero message loss. Every sent message must be durably persisted before delivery acknowledgment.</li>
+  <li><strong>Scalability</strong> — Support 10M+ concurrent WebSocket connections, 1B+ messages/day, 100K+ workspaces.</li>
+  <li><strong>Eventual Consistency</strong> — Acceptable for presence, typing indicators, and read receipts (not for message content).</li>
+  <li><strong>Security</strong> — TLS encryption in transit (WSS for WebSockets, HTTPS for REST); encryption at rest for messages and files.</li>
+  <li><strong>Idempotency</strong> — Duplicate message sends (e.g., due to retries) must not produce duplicate messages in the channel.</li>
+</ol>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="flow1">3. Flow 1 — Sending &amp; Receiving a Real-Time Message</h2>
+<!-- ================================================================== -->
+
+<div class="mermaid">
+graph LR
+    subgraph Clients
+        S["👤 Sender Client"]
+        R1["👤 Recipient A"]
+        R2["👤 Recipient B"]
+    end
+    subgraph WebSocket Layer
+        WS1["WebSocket Server 1"]
+        WS2["WebSocket Server 2"]
+    end
+    S -->|"WSS: send_message"| WS1
+    WS1 -->|"gRPC"| MS["Message Service"]
+    MS --> MDB[("Messages DB<br/>(NoSQL)")]
+    MS --> PS["Pub/Sub"]
+    PS --> WS1
+    PS --> WS2
+    PS --> NS["Notification Service"]
+    WS1 -->|"WSS: new_message"| R1
+    WS2 -->|"WSS: new_message"| R2
+    NS -->|"Push"| OFF["📱 Offline Device"]
+</div>
+
+<h3>Examples</h3>
+
+<div class="card example">
+<h4>Example 1 — Normal channel message</h4>
+<p>Alice types "Hey team, standup in 5 min!" in the #engineering channel and hits Enter. Her Slack client sends a <code>send_message</code> frame over the existing WSS connection to WebSocket Server 1. WebSocket Server 1 forwards the message via internal gRPC to the Message Service. The Message Service assigns a server timestamp and sequence number, writes the message to the Messages DB (NoSQL), and then publishes a <code>channel_message</code> event to the Pub/Sub system on the topic for channel #engineering. WebSocket Server 1 (which has Bob connected) and WebSocket Server 2 (which has Carol connected) both receive the event from Pub/Sub and push the message to Bob and Carol over their respective WSS connections. Both Bob and Carol see the message appear in real time. Dave, who is offline, receives a push notification via the Notification Service because he has notifications enabled for #engineering.</p>
+</div>
+
+<div class="card example">
+<h4>Example 2 — Direct message</h4>
+<p>Bob sends a DM "Can you review my PR?" to Alice. His client sends the message via WSS to his WebSocket Server. The Message Service writes it to the DM channel's partition in the Messages DB and publishes to the DM channel's Pub/Sub topic. Alice's WebSocket Server receives the event and pushes it to her client. If Alice is offline, the Notification Service sends a push notification.</p>
+</div>
+
+<div class="card example">
+<h4>Example 3 — Retry / Idempotency</h4>
+<p>Alice sends a message but her network drops briefly. Her client retries the same message with the same client-generated <code>idempotency_key</code>. The Message Service detects the duplicate key, returns the existing message without re-inserting, and no duplicate appears in the channel.</p>
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Sender Client</h4>
+<div class="card info">
+<p>The Slack client application (Web/Desktop via Electron, iOS, Android). Maintains a persistent WSS (WebSocket Secure) connection to a WebSocket Server. Sends structured JSON frames for actions like <code>send_message</code>, <code>typing</code>, <code>heartbeat</code>. Generates a unique <code>idempotency_key</code> (UUID) per message to prevent duplicates on retry.</p>
+</div>
+
+<h4>WebSocket Server</h4>
+<div class="card info">
+<p><span class="badge badge-ws">WSS</span> Maintains long-lived WebSocket connections with clients. Each server holds an in-memory <strong>Connection Registry</strong> mapping <code>user_id → WebSocket connection object</code>. Also registers itself in a <strong>Distributed Connection Registry</strong> (stored in cache) mapping <code>user_id → websocket_server_id</code> so the system knows which server a user is connected to. Subscribes to Pub/Sub topics for all channels its connected users belong to. When it receives a message event from Pub/Sub, it looks up local connections and pushes the message to the right users.</p>
+<p><strong>Protocol:</strong> WSS (WebSocket over TLS) for client ↔ server. Internal communication to Message Service via gRPC for efficiency.</p>
+<p><strong>Input (from client):</strong> JSON frame: <code>{ "type": "send_message", "channel_id": "C123", "content": "Hello", "idempotency_key": "uuid-xxx", "thread_id": null }</code></p>
+<p><strong>Output (to client):</strong> JSON frame: <code>{ "type": "new_message", "message_id": "M456", "channel_id": "C123", "sender_id": "U789", "content": "Hello", "timestamp": "2024-01-15T10:30:00Z" }</code></p>
+</div>
+
+<h4>Message Service</h4>
+<div class="card info">
+<p><span class="badge badge-post">POST</span> <code>/api/v1/messages</code> — Also accepts internal gRPC calls from WebSocket Servers. Stateless service responsible for message validation, persistence, and event publishing.</p>
+<p><strong>Responsibilities:</strong></p>
 <ul>
-<li><strong>Scale:</strong> 200K+ paying customers, 65M+ daily active users, 2.6B+ messages/day, 1.5B+ API calls/day</li>
-<li><strong>Latency:</strong> Message delivery &lt;500ms, search &lt;1s, file upload &lt;3s for typical files</li>
-<li><strong>Availability:</strong> 99.99% (4 nines); real-time messaging cannot tolerate extended downtime</li>
-<li><strong>Consistency:</strong> Message ordering must be consistent within a channel — causal ordering with Lamport-like timestamps</li>
-<li><strong>Multi-Tenancy:</strong> Complete workspace isolation; Enterprise Grid: multiple workspaces under single org with shared channels</li>
+  <li>Validate the user has permission to post in the channel</li>
+  <li>Check the idempotency key against a short-lived idempotency store (cache with 5-min TTL)</li>
+  <li>Assign a server timestamp and monotonically increasing sequence number per channel</li>
+  <li>Write the message to the Messages DB</li>
+  <li>Publish a <code>channel_message</code> event to the Pub/Sub system</li>
+</ul>
+<p><strong>Input:</strong> <code>{ channel_id, sender_id, content, idempotency_key, thread_id?, attachments? }</code></p>
+<p><strong>Output:</strong> <code>{ message_id, channel_id, sender_id, content, timestamp, seq_num }</code></p>
+</div>
+
+<h4>Messages DB (NoSQL)</h4>
+<div class="card info">
+<p>Wide-column NoSQL store optimized for write-heavy workloads. Partition key: <code>channel_id</code>. Sort key: <code>created_at</code> (timestamp). Stores all message data. Chosen for horizontal scalability and efficient range queries (loading messages for a channel within a time window). See Schema section for full details.</p>
+</div>
+
+<h4>Pub/Sub</h4>
+<div class="card info">
+<p>Distributed publish-subscribe system. Topics are created per channel (<code>channel:{channel_id}</code>). When a message is published, all subscribers (WebSocket Servers, Notification Service) receive the event. Provides at-least-once delivery semantics. See Pub/Sub Deep Dive section for full details.</p>
+</div>
+
+<h4>Notification Service</h4>
+<div class="card info">
+<p>Subscribes to Pub/Sub for all message events. For each message, checks: (a) which channel members are offline (via Presence Service), (b) which members have notifications enabled for this channel/mention, (c) any @channel or @here mentions. Enqueues push notification jobs into a Message Queue for reliable delivery. The queue workers send notifications to APNS (iOS) and FCM (Android).</p>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="flow2">4. Flow 2 — Loading Message History</h2>
+<!-- ================================================================== -->
+
+<div class="mermaid">
+graph LR
+    C["👤 Client"] -->|"HTTP GET"| AG["API Gateway /<br/>Load Balancer"]
+    AG --> MS["Message Service"]
+    MS --> CA["Cache"]
+    CA -->|"Cache Hit"| MS
+    CA -.->|"Cache Miss"| MDB[("Messages DB<br/>(NoSQL)")]
+    MDB -.-> CA
+    MS --> AG
+    AG --> C
+</div>
+
+<h3>Examples</h3>
+
+<div class="card example">
+<h4>Example 1 — Opening a channel (initial load)</h4>
+<p>Alice clicks on the #engineering channel. Her client sends an <code>HTTP GET /api/v1/channels/C123/messages?limit=50</code> request to the API Gateway. The API Gateway routes it to the Message Service. The Message Service checks the cache for recent messages in channel C123. If the last 50 messages are cached (cache hit), they are returned immediately. If not (cache miss), the Message Service queries the Messages DB for the most recent 50 messages ordered by <code>created_at DESC</code>, populates the cache, and returns them to Alice's client. The client renders the messages with the newest at the bottom.</p>
+</div>
+
+<div class="card example">
+<h4>Example 2 — Scrolling up (pagination)</h4>
+<p>Alice scrolls up to see older messages. Her client sends <code>HTTP GET /api/v1/channels/C123/messages?limit=50&before=2024-01-15T08:00:00Z</code>. The Message Service queries the Messages DB for the 50 messages before the given timestamp in channel C123. These older messages are unlikely to be cached, so the query goes directly to the DB. The results are returned and Alice's client prepends them above the existing messages.</p>
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>API Gateway / Load Balancer</h4>
+<div class="card info">
+<p>L7 (application-layer) load balancer for HTTP traffic. Routes REST API calls to the appropriate backend service based on URL path. Handles TLS termination, rate limiting, authentication token validation, and request routing. Uses round-robin or least-connections algorithm for load distribution across Message Service instances.</p>
+</div>
+
+<h4>Message Service (Read Path)</h4>
+<div class="card info">
+<p><span class="badge badge-get">GET</span> <code>/api/v1/channels/{channel_id}/messages?limit=50&before={cursor}</code></p>
+<p><strong>Input:</strong> <code>channel_id</code> (path param), <code>limit</code> (query param, default 50), <code>before</code> (cursor-based pagination timestamp)</p>
+<p><strong>Output:</strong> <code>{ messages: [ { message_id, channel_id, sender_id, sender_display_name, sender_avatar_url, content, timestamp, thread_id, reply_count, reactions, attachments } ], has_more: true/false }</code></p>
+<p>Note: <code>sender_display_name</code> and <code>sender_avatar_url</code> are denormalized onto the message record (see Schema section for rationale).</p>
+</div>
+
+<h4>Cache (Message History)</h4>
+<div class="card info">
+<p>In-memory distributed cache storing the most recent N messages (e.g., 100) per channel. Key: <code>channel:{channel_id}:recent_messages</code>. Value: sorted list of message objects. Strategy: <strong>Write-through</strong> — when a new message is written via Message Service, it is simultaneously written to both the DB and the cache. See CDN &amp; Caching Deep Dive for full eviction/expiration policies.</p>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="flow3">5. Flow 3 — File Upload &amp; Sharing</h2>
+<!-- ================================================================== -->
+
+<div class="mermaid">
+graph LR
+    C["👤 Client"] -->|"HTTP POST<br/>multipart/form-data"| AG["API Gateway"]
+    AG --> FS["File Service"]
+    FS -->|"Upload binary"| OS["Object Storage"]
+    OS -->|"File URL"| FS
+    FS --> FDB[("File Metadata DB<br/>(SQL)")]
+    FS -->|"{ file_id, url }"| AG
+    AG --> C
+    C -->|"WSS: send_message<br/>with attachment"| WS["WebSocket Server"]
+    OS --> CDN["CDN"]
+    CDN -->|"Serve file"| DL["👤 Downloading Client"]
+</div>
+
+<h3>Examples</h3>
+
+<div class="card example">
+<h4>Example 1 — Image upload in a channel</h4>
+<p>Alice drags a screenshot into the #bugs channel. Her client sends an <code>HTTP POST /api/v1/files</code> with <code>multipart/form-data</code> containing the image binary. The API Gateway routes to the File Service. The File Service generates a unique <code>file_id</code>, uploads the binary to Object Storage, receives the storage URL, saves metadata (file_id, filename, size, mime_type, uploader_id, workspace_id, storage_url) to the File Metadata DB, and returns <code>{ file_id, url }</code> to Alice's client. Alice's client then sends a message via WSS with the attachment reference: <code>{ "type": "send_message", "channel_id": "C456", "content": "Found this bug", "attachments": [{ "file_id": "F789" }] }</code>. When Bob views the message, his client fetches the image from the CDN (which pulls from Object Storage on first request and caches it).</p>
+</div>
+
+<div class="card example">
+<h4>Example 2 — Large file upload</h4>
+<p>Bob uploads a 500MB video file. The client uses chunked upload: <code>HTTP POST /api/v1/files/init</code> to initialize, then multiple <code>HTTP PUT /api/v1/files/{upload_id}/chunks/{chunk_num}</code> for each chunk, then <code>HTTP POST /api/v1/files/{upload_id}/complete</code> to finalize. The File Service assembles chunks in Object Storage and returns the final file URL.</p>
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>File Service</h4>
+<div class="card info">
+<p><span class="badge badge-post">POST</span> <code>/api/v1/files</code> — Single file upload (small files &lt;50MB)</p>
+<p><span class="badge badge-post">POST</span> <code>/api/v1/files/init</code> — Initialize chunked upload</p>
+<p><span class="badge badge-put">PUT</span> <code>/api/v1/files/{upload_id}/chunks/{chunk_num}</code> — Upload a chunk</p>
+<p><span class="badge badge-post">POST</span> <code>/api/v1/files/{upload_id}/complete</code> — Finalize chunked upload</p>
+<p><strong>Input (single upload):</strong> <code>multipart/form-data</code> with file binary, workspace_id, channel_id</p>
+<p><strong>Output:</strong> <code>{ file_id, filename, url, size, mime_type }</code></p>
+<p>Validates file size limits, performs virus scanning asynchronously (queue a scan job), generates thumbnails for images.</p>
+</div>
+
+<h4>Object Storage</h4>
+<div class="card info">
+<p>Blob/object storage for file binaries. Files are stored with unique keys: <code>{workspace_id}/{channel_id}/{file_id}/{filename}</code>. Provides high durability (11 nines), supports multipart upload for large files. Files are served via CDN for low-latency access.</p>
+</div>
+
+<h4>File Metadata DB (SQL)</h4>
+<div class="card info">
+<p>Relational database storing file metadata. SQL was chosen because file metadata has well-defined relational structure, needs ACID transactions (e.g., ensuring upload completion is atomic), and the read/write ratio is moderate. See Schema section for table definition.</p>
+</div>
+
+<h4>CDN</h4>
+<div class="card info">
+<p>Content Delivery Network caches files at edge locations globally. When a user requests a file, the CDN serves it from the nearest edge POP (Point of Presence). On cache miss, the CDN pulls from Object Storage (origin pull). See CDN &amp; Caching Deep Dive for details.</p>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="flow4">6. Flow 4 — Presence &amp; Typing Indicators</h2>
+<!-- ================================================================== -->
+
+<div class="mermaid">
+graph LR
+    C["👤 Client"] -->|"WSS: heartbeat / typing"| WS["WebSocket Server"]
+    WS --> PS["Presence Service"]
+    PS --> PC["Presence Cache"]
+    PS -->|"presence_update /<br/>typing_indicator"| PB["Pub/Sub"]
+    PB --> WS2["WebSocket Server N"]
+    WS2 -->|"WSS: presence_update /<br/>typing_indicator"| C2["👤 Other Clients"]
+</div>
+
+<h3>Examples</h3>
+
+<div class="card example">
+<h4>Example 1 — Online presence heartbeat</h4>
+<p>Alice's Slack client sends a <code>heartbeat</code> frame every 10 seconds over the WSS connection to her WebSocket Server. The WebSocket Server forwards this to the Presence Service. The Presence Service updates Alice's entry in the Presence Cache: <code>user:U123:presence → { status: "online", last_heartbeat: 1705312200 }</code> with a TTL of 30 seconds. If no heartbeat is received for 30 seconds, the key expires and Alice is considered offline. When Alice's status changes (e.g., online → offline), the Presence Service publishes a <code>presence_update</code> event to Pub/Sub on topics for all channels Alice belongs to. Bob's WebSocket Server receives the event and pushes it to Bob's client, which updates Alice's avatar indicator from green to gray.</p>
+</div>
+
+<div class="card example">
+<h4>Example 2 — Typing indicator</h4>
+<p>Bob starts typing in #engineering. His client sends a <code>typing</code> frame: <code>{ "type": "typing", "channel_id": "C123" }</code> via WSS. His WebSocket Server forwards this to the Presence Service. The Presence Service publishes a <code>typing_indicator</code> event to Pub/Sub for the #engineering channel topic. All other WebSocket Servers with connected members of #engineering receive the event and push it to those clients. Alice sees "Bob is typing..." at the bottom of the channel. The typing indicator has a 5-second client-side timeout — if no new typing event arrives, it disappears.</p>
+</div>
+
+<div class="card example">
+<h4>Example 3 — User goes idle</h4>
+<p>Carol has not interacted with Slack for 15 minutes. Her client detects inactivity and sends a status update: <code>{ "type": "status_update", "status": "away" }</code>. The Presence Service updates her cache entry and publishes a <code>presence_update</code>. Her contacts see her status change from green (online) to a yellow clock icon (away).</p>
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Presence Service</h4>
+<div class="card info">
+<p>Stateless service that manages user online/offline/away status and typing indicators. Receives heartbeats and typing events from WebSocket Servers via internal gRPC. Reads/writes the Presence Cache for current status. Publishes status change events and typing indicators to Pub/Sub.</p>
+<p><strong>Protocol:</strong> Internal gRPC from WebSocket Servers.</p>
+<p><strong>Heartbeat processing:</strong> Updates the user's TTL-based key in Presence Cache. If the previous status was "offline" and a heartbeat arrives, publishes an "online" event.</p>
+<p><strong>Typing processing:</strong> Rate-limited to 1 typing event per user per channel per 3 seconds to reduce fan-out noise.</p>
+</div>
+
+<h4>Presence Cache</h4>
+<div class="card info">
+<p>In-memory distributed cache storing presence data. Key: <code>user:{user_id}:presence</code>. Value: <code>{ status, last_heartbeat, custom_status_text, custom_status_emoji }</code>. TTL: 30 seconds (auto-expire = offline). This is a <strong>write-behind</strong> cache — the cache IS the source of truth for presence (presence data is ephemeral and does not need to be persisted to a database). Eviction: TTL-based expiration (no LRU needed since entries auto-expire).</p>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="flow5">7. Flow 5 — Message Search</h2>
+<!-- ================================================================== -->
+
+<div class="mermaid">
+graph LR
+    C["👤 Client"] -->|"HTTP GET"| AG["API Gateway"]
+    AG --> SS["Search Service"]
+    SS --> SI[("Search Index<br/>(Inverted Index)")]
+    SI --> SS
+    SS --> AG
+    AG --> C
+</div>
+
+<h3>Examples</h3>
+
+<div class="card example">
+<h4>Example 1 — Simple keyword search</h4>
+<p>Alice searches for "deployment script" in the search bar. Her client sends <code>HTTP GET /api/v1/search?q=deployment+script&workspace_id=W100&limit=20</code>. The API Gateway routes to the Search Service. The Search Service queries the Search Index (inverted index) for tokens "deployment" and "script" within workspace W100, filtered to channels Alice has access to. Results are ranked by relevance (TF-IDF or BM25) and recency. The top 20 results are returned with highlighted snippets.</p>
+</div>
+
+<div class="card example">
+<h4>Example 2 — Filtered search</h4>
+<p>Bob searches for messages from Alice in #engineering containing "bug": <code>HTTP GET /api/v1/search?q=bug&workspace_id=W100&from=U123&in=C456&limit=20</code>. The Search Service applies the filters (sender = U123, channel = C456) as part of the index query, returning only matching messages.</p>
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Search Service</h4>
+<div class="card info">
+<p><span class="badge badge-get">GET</span> <code>/api/v1/search?q={query}&workspace_id={wid}&from={uid}&in={cid}&limit={n}&offset={n}</code></p>
+<p><strong>Input:</strong> Query string, workspace_id (required), optional filters: from (sender_id), in (channel_id), before/after (date range), has (file, link, reaction)</p>
+<p><strong>Output:</strong> <code>{ results: [ { message_id, channel_id, channel_name, sender_id, sender_name, content, highlighted_content, timestamp } ], total_count, has_more }</code></p>
+<p>Enforces access control: only returns messages from channels the requesting user is a member of. Applies ranking algorithm combining relevance score and recency.</p>
+</div>
+
+<h4>Search Index (Inverted Index)</h4>
+<div class="card info">
+<p>Full-text search engine using an <strong>inverted index</strong>. Indexes message content, tokenized and stemmed, along with metadata fields (sender_id, channel_id, workspace_id, timestamp). Partitioned by <code>workspace_id</code> for data isolation and query performance. Updated asynchronously — when a new message is written, the Message Service publishes an event to Pub/Sub, and a Search Indexer consumer reads the event and updates the index. This means search results have a slight delay (typically &lt;2 seconds) after message send.</p>
+<p><strong>Index structure:</strong> Inverted index mapping tokens → list of (message_id, channel_id, position, timestamp). Secondary indexes on sender_id, channel_id, and timestamp for filtered queries.</p>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="flow6">8. Flow 6 — Notifications</h2>
+<!-- ================================================================== -->
+
+<div class="mermaid">
+graph LR
+    PB["Pub/Sub<br/>(message events)"] --> NS["Notification Service"]
+    NS -->|"Check status"| PS["Presence Service"]
+    NS -->|"Check preferences"| UP[("User Preferences DB<br/>(SQL)")]
+    NS --> MQ["Message Queue<br/>(notification jobs)"]
+    MQ --> PW["Push Worker"]
+    PW -->|"iOS"| APNS["APNS"]
+    PW -->|"Android"| FCM["FCM"]
+    MQ --> EW["Email Worker"]
+    EW --> EP["Email Provider"]
+</div>
+
+<h3>Examples</h3>
+
+<div class="card example">
+<h4>Example 1 — Push notification for offline user</h4>
+<p>Alice sends "@bob check this out" in #engineering. The Message Service publishes the message event to Pub/Sub. The Notification Service receives it, detects the @bob mention, checks the Presence Service — Bob is offline. It checks Bob's notification preferences in the User Preferences DB — Bob has push notifications enabled for mentions. The Notification Service enqueues a push notification job into the Message Queue: <code>{ user_id: "U456", title: "#engineering", body: "Alice: @bob check this out", badge_count: 3 }</code>. The Push Worker dequeues the job and sends it to APNS (Bob has an iPhone). Bob's phone vibrates and shows the notification.</p>
+</div>
+
+<div class="card example">
+<h4>Example 2 — User is online, no push sent</h4>
+<p>Same scenario, but Bob is online and actively viewing the #engineering channel. The Notification Service checks presence — Bob is online. It checks the Distributed Connection Registry — Bob is connected and his client reported the channel as "active/focused". No push notification is sent to avoid redundancy.</p>
+</div>
+
+<div class="card example">
+<h4>Example 3 — Email digest for inactive user</h4>
+<p>Carol hasn't opened Slack in 2 hours. Multiple messages were sent in her DMs and channels where she is mentioned. The Notification Service accumulates these events. After a configurable delay (e.g., 15 minutes of being offline), it enqueues an email digest job into the Message Queue. The Email Worker sends Carol an email: "You have 5 unread messages including 2 mentions."</p>
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Notification Service</h4>
+<div class="card info">
+<p>Subscribes to Pub/Sub for all message events. Applies notification rules: (1) Is the recipient online and actively viewing the channel? If yes, skip notification. (2) Does the message contain @mentions, @channel, @here? (3) What are the user's notification preferences (all messages, mentions only, nothing) for this channel? (4) Is the user in Do Not Disturb mode? Based on these rules, it enqueues notification jobs into the Message Queue.</p>
+<p><strong>Protocol:</strong> Consumes from Pub/Sub. Reads from Presence Service (gRPC) and User Preferences DB (SQL). Produces to Message Queue.</p>
+</div>
+
+<h4>Message Queue (Notification Jobs)</h4>
+<div class="card info">
+<p>Durable message queue for reliable notification delivery. Jobs are enqueued by the Notification Service and dequeued by Push Workers and Email Workers. Provides at-least-once delivery guarantees with message acknowledgment — workers ack after successful delivery. Failed deliveries are retried with exponential backoff. Dead letter queue for messages that fail after N retries. See Message Queue Deep Dive for full details.</p>
+</div>
+
+<h4>Push Worker</h4>
+<div class="card info">
+<p>Consumes push notification jobs from the Message Queue. Looks up the user's device tokens (stored in a Device Tokens table). Sends to APNS for iOS devices and FCM for Android devices. Handles token invalidation (if a token is rejected, marks it as invalid in the DB).</p>
+</div>
+
+<h4>Email Worker</h4>
+<div class="card info">
+<p>Consumes email notification jobs from the Message Queue. Renders email templates with message content/summaries. Sends via an external email provider. Handles bounce/complaint notifications to update user email status.</p>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="overall">9. Overall Combined Diagram</h2>
+<!-- ================================================================== -->
+
+<div class="mermaid">
+graph TB
+    subgraph Clients
+        WEB["🖥 Web/Desktop"]
+        MOB["📱 Mobile"]
+    end
+
+    subgraph Edge Layer
+        CDN["CDN"]
+        LB["Load Balancer<br/>(L7)"]
+    end
+
+    subgraph Gateway
+        AG["API Gateway"]
+    end
+
+    subgraph WebSocket Layer
+        WSLB["WS Load Balancer<br/>(L4, sticky)"]
+        WS1["WebSocket Server 1"]
+        WS2["WebSocket Server 2"]
+        WSN["WebSocket Server N"]
+    end
+
+    subgraph Core Services
+        MS["Message Service"]
+        CS["Channel Service"]
+        US["User / Auth Service"]
+        FS["File Service"]
+        SS["Search Service"]
+        NS["Notification Service"]
+        PRS["Presence Service"]
+    end
+
+    subgraph Async Layer
+        PUBSUB["Pub/Sub"]
+        MQ["Message Queue"]
+        SIDX["Search Indexer"]
+    end
+
+    subgraph Data Layer
+        CACHE["Distributed Cache"]
+        MDB[("Messages DB<br/>(NoSQL)")]
+        RDB[("Users/Channels/<br/>Files DB (SQL)")]
+        SI[("Search Index")]
+        OBJ["Object Storage"]
+    end
+
+    subgraph Notification Delivery
+        PW["Push Worker"]
+        EW["Email Worker"]
+    end
+
+    WEB & MOB -->|"HTTPS"| LB
+    WEB & MOB -->|"WSS"| WSLB
+    WEB & MOB -->|"File download"| CDN
+    CDN --> OBJ
+
+    LB --> AG
+    AG --> MS & CS & US & FS & SS
+
+    WSLB --> WS1 & WS2 & WSN
+    WS1 & WS2 & WSN --> MS
+    WS1 & WS2 & WSN --> PRS
+
+    MS --> MDB
+    MS --> CACHE
+    MS --> PUBSUB
+    CS --> RDB
+    CS --> CACHE
+    US --> RDB
+    US --> CACHE
+    FS --> OBJ
+    FS --> RDB
+    SS --> SI
+    NS --> MQ
+    NS --> PRS
+    PRS --> CACHE
+
+    PUBSUB --> WS1 & WS2 & WSN
+    PUBSUB --> NS
+    PUBSUB --> SIDX
+    SIDX --> SI
+
+    MQ --> PW
+    MQ --> EW
+</div>
+
+<h3>Examples (End-to-End Combined Flows)</h3>
+
+<div class="card example">
+<h4>Example 1 — Full lifecycle of a message with file</h4>
+<p>Alice opens Slack on her laptop. Her browser loads static assets from the <strong>CDN</strong>. Her client establishes a WSS connection through the <strong>WS Load Balancer</strong> (L4, using sticky sessions based on a connection token) to <strong>WebSocket Server 1</strong>. WebSocket Server 1 registers Alice in its local Connection Registry and in the Distributed Cache, then subscribes to Pub/Sub topics for all channels Alice belongs to.</p>
+<p>Alice drags a screenshot into #bugs. Her client sends an <code>HTTP POST /api/v1/files</code> through the <strong>L7 Load Balancer → API Gateway → File Service</strong>. The File Service uploads the binary to <strong>Object Storage</strong>, saves metadata in the <strong>SQL DB</strong>, and returns a file URL. Alice's client then sends a <code>send_message</code> frame via WSS to WebSocket Server 1 with the attachment reference.</p>
+<p>WebSocket Server 1 forwards to the <strong>Message Service</strong>, which writes to the <strong>Messages DB (NoSQL)</strong> and the <strong>Cache</strong>, then publishes to <strong>Pub/Sub</strong>. Pub/Sub fans out to WebSocket Servers 2 and N (where Bob and Carol are connected). Bob and Carol see the message in real time. The <strong>Search Indexer</strong> also receives the event and updates the <strong>Search Index</strong>. Dave is offline, so the <strong>Notification Service</strong> enqueues a push notification in the <strong>Message Queue</strong>; the <strong>Push Worker</strong> sends it via FCM to Dave's Android phone.</p>
+<p>When Bob clicks the image, his client requests it from the <strong>CDN</strong>. The CDN has a cache miss on first request, pulls from <strong>Object Storage</strong>, caches it at the edge, and serves it to Bob. Carol, requesting the same image moments later, gets a CDN cache hit.</p>
+</div>
+
+<div class="card example">
+<h4>Example 2 — Search after conversation</h4>
+<p>Two days later, Alice needs to find the bug screenshot. She types "screenshot bug" in the search bar. Her client sends <code>HTTP GET /api/v1/search?q=screenshot+bug&workspace_id=W100</code> through the <strong>L7 Load Balancer → API Gateway → Search Service</strong>. The Search Service queries the <strong>Search Index</strong> (inverted index), finds the matching message, and returns it with the attachment URL. Alice clicks the result and is taken to the message in #bugs.</p>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="schema">10. Schema Design</h2>
+<!-- ================================================================== -->
+
+<h3>SQL Tables</h3>
+
+<h4>Users</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>user_id</td><td>UUID</td><td>PK</td><td>Globally unique identifier</td></tr>
+<tr><td>email</td><td>VARCHAR(255)</td><td>UNIQUE</td><td>Login credential</td></tr>
+<tr><td>display_name</td><td>VARCHAR(100)</td><td></td><td></td></tr>
+<tr><td>avatar_url</td><td>VARCHAR(512)</td><td></td><td>CDN URL for profile photo</td></tr>
+<tr><td>password_hash</td><td>VARCHAR(255)</td><td></td><td>Bcrypt hash</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+<tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<div class="card info">
+<p><strong>Why SQL:</strong> User data is highly relational (users ↔ workspaces ↔ channels), requires ACID transactions for account operations (signup, profile updates), and has a moderate read/write ratio. The schema is stable and well-defined.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>Hash index</strong> on <code>user_id</code> — Primary key lookups are the most common access pattern (O(1) lookup).</li>
+  <li><strong>Hash index</strong> on <code>email</code> — Used during login authentication; needs fast exact-match lookup.</li>
+</ul>
+<p><strong>Read:</strong> User logs in (email lookup), user profile is viewed, message history is loaded (sender info).</p>
+<p><strong>Write:</strong> User signs up, user updates profile/avatar.</p>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code> (hash-based). User lookups are always by user_id. Cross-shard queries (email lookup during login) are handled by a global secondary index or a separate email→user_id mapping table.</p>
+</div>
+
+<h4>Workspaces</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>workspace_id</td><td>UUID</td><td>PK</td><td></td></tr>
+<tr><td>name</td><td>VARCHAR(100)</td><td></td><td></td></tr>
+<tr><td>slug</td><td>VARCHAR(100)</td><td>UNIQUE</td><td>URL-friendly name (e.g., "acme-corp")</td></tr>
+<tr><td>icon_url</td><td>VARCHAR(512)</td><td></td><td></td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<div class="card info">
+<p><strong>Why SQL:</strong> Small number of rows relative to messages/users. Relational structure (workspace has many channels, many members). Rarely updated after creation. ACID needed for workspace creation.</p>
+<p><strong>Indexes:</strong> Hash index on <code>workspace_id</code> (PK), hash index on <code>slug</code> (unique lookup for URL routing).</p>
+<p><strong>Read:</strong> User opens Slack (load workspace info). <strong>Write:</strong> Admin creates or updates workspace settings.</p>
+<p><strong>Sharding:</strong> Not necessary — small table that fits on a single node with replication for reads.</p>
+</div>
+
+<h4>Workspace_Members</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>workspace_id</td><td>UUID</td><td>PK (composite), FK → Workspaces</td><td></td></tr>
+<tr><td>user_id</td><td>UUID</td><td>PK (composite), FK → Users</td><td></td></tr>
+<tr><td>role</td><td>ENUM('owner','admin','member','guest')</td><td></td><td></td></tr>
+<tr><td>joined_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<div class="card info">
+<p><strong>Why SQL:</strong> Junction table for many-to-many relationship. Needs ACID for member add/remove operations. Moderate size.</p>
+<p><strong>Indexes:</strong> B-tree composite index on <code>(workspace_id, user_id)</code> — PK. B-tree index on <code>(user_id, workspace_id)</code> — for "list my workspaces" query.</p>
+<p><strong>Read:</strong> List members of a workspace, list user's workspaces. <strong>Write:</strong> User joins/leaves workspace, role changes.</p>
+</div>
+
+<h4>Channels</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>channel_id</td><td>UUID</td><td>PK</td><td></td></tr>
+<tr><td>workspace_id</td><td>UUID</td><td>FK → Workspaces</td><td></td></tr>
+<tr><td>name</td><td>VARCHAR(100)</td><td></td><td></td></tr>
+<tr><td>type</td><td>ENUM('public','private','dm','group_dm')</td><td></td><td></td></tr>
+<tr><td>topic</td><td>VARCHAR(500)</td><td></td><td>Channel topic/description</td></tr>
+<tr><td>created_by</td><td>UUID</td><td>FK → Users</td><td></td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+<tr><td>is_archived</td><td>BOOLEAN</td><td></td><td>Default false</td></tr>
+</table>
+<div class="card info">
+<p><strong>Why SQL:</strong> Relational (belongs to workspace, has members). Requires ACID for channel creation and archival. Moderate size (far fewer channels than messages).</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>Hash index</strong> on <code>channel_id</code> — PK, fast lookups when loading a channel.</li>
+  <li><strong>B-tree index</strong> on <code>(workspace_id, type)</code> — "List all public channels in this workspace" query. B-tree chosen because we may filter/sort by type.</li>
+</ul>
+<p><strong>Read:</strong> User opens channel list, user opens a specific channel. <strong>Write:</strong> Admin creates channel, updates topic, archives channel.</p>
+<p><strong>Sharding:</strong> Shard by <code>workspace_id</code>. All channels for a workspace are co-located, supporting efficient "list channels" queries.</p>
+</div>
+
+<h4>Channel_Members</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>channel_id</td><td>UUID</td><td>PK (composite), FK → Channels</td><td></td></tr>
+<tr><td>user_id</td><td>UUID</td><td>PK (composite), FK → Users</td><td></td></tr>
+<tr><td>last_read_message_id</td><td>UUID</td><td></td><td>Denormalized for unread count</td></tr>
+<tr><td>last_read_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+<tr><td>notification_pref</td><td>ENUM('all','mentions','none')</td><td></td><td>Per-channel notification preference</td></tr>
+<tr><td>joined_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<div class="card info">
+<p><strong>Why SQL:</strong> Junction table with additional metadata. ACID needed for join/leave operations and read receipt updates.</p>
+<p><strong>Denormalization:</strong> <code>last_read_message_id</code> and <code>last_read_at</code> are stored here rather than in a separate table. This avoids a join when computing unread counts — we simply compare the channel's latest message_id against each member's <code>last_read_message_id</code>. This denormalization is justified because: (1) unread count is computed on every channel load (high frequency), and (2) the data is tightly coupled to the membership relationship.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>B-tree composite index</strong> on <code>(channel_id, user_id)</code> — PK. Used for "is this user a member of this channel?" authorization checks (every message send).</li>
+  <li><strong>B-tree composite index</strong> on <code>(user_id, channel_id)</code> — "List all channels this user belongs to" (channel sidebar rendering).</li>
+</ul>
+<p><strong>Read:</strong> Every message send (auth check), loading channel sidebar (my channels), computing unread counts. <strong>Write:</strong> User joins/leaves channel, user reads a message (update last_read_message_id), user changes notification preference.</p>
+<p><strong>Sharding:</strong> Shard by <code>channel_id</code>. Message fan-out needs all members of a channel, so co-locating by channel is optimal.</p>
+</div>
+
+<h4>Files_Metadata</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>file_id</td><td>UUID</td><td>PK</td><td></td></tr>
+<tr><td>workspace_id</td><td>UUID</td><td>FK → Workspaces</td><td></td></tr>
+<tr><td>uploader_id</td><td>UUID</td><td>FK → Users</td><td></td></tr>
+<tr><td>filename</td><td>VARCHAR(255)</td><td></td><td>Original filename</td></tr>
+<tr><td>storage_url</td><td>VARCHAR(512)</td><td></td><td>Object storage URL</td></tr>
+<tr><td>cdn_url</td><td>VARCHAR(512)</td><td></td><td>CDN-served URL</td></tr>
+<tr><td>size_bytes</td><td>BIGINT</td><td></td><td></td></tr>
+<tr><td>mime_type</td><td>VARCHAR(100)</td><td></td><td></td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<div class="card info">
+<p><strong>Why SQL:</strong> Well-structured relational data. Needs ACID for upload completion (mark file as complete atomically). Moderate read/write ratio.</p>
+<p><strong>Indexes:</strong> Hash index on <code>file_id</code> (PK). B-tree index on <code>(workspace_id, created_at)</code> — for listing files in a workspace sorted by recency.</p>
+<p><strong>Read:</strong> User downloads a file, user views file details. <strong>Write:</strong> User uploads a file.</p>
+</div>
+
+<h4>User_Notification_Preferences</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>user_id</td><td>UUID</td><td>PK, FK → Users</td><td></td></tr>
+<tr><td>push_enabled</td><td>BOOLEAN</td><td></td><td>Default true</td></tr>
+<tr><td>email_enabled</td><td>BOOLEAN</td><td></td><td>Default true</td></tr>
+<tr><td>email_digest_interval</td><td>INT</td><td></td><td>Minutes (0 = immediate, 15, 60, etc.)</td></tr>
+<tr><td>dnd_start</td><td>TIME</td><td></td><td>Do Not Disturb start</td></tr>
+<tr><td>dnd_end</td><td>TIME</td><td></td><td>Do Not Disturb end</td></tr>
+<tr><td>timezone</td><td>VARCHAR(50)</td><td></td><td></td></tr>
+</table>
+<div class="card info">
+<p><strong>Why SQL:</strong> Small table (one row per user), well-structured, needs ACID.</p>
+<p><strong>Read:</strong> Notification Service checks preferences for every notification decision. <strong>Write:</strong> User updates notification settings.</p>
+</div>
+
+<h4>Device_Tokens</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>token_id</td><td>UUID</td><td>PK</td><td></td></tr>
+<tr><td>user_id</td><td>UUID</td><td>FK → Users</td><td></td></tr>
+<tr><td>platform</td><td>ENUM('ios','android','web')</td><td></td><td></td></tr>
+<tr><td>device_token</td><td>VARCHAR(512)</td><td></td><td>APNS/FCM token</td></tr>
+<tr><td>is_active</td><td>BOOLEAN</td><td></td><td>Invalidated tokens marked false</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+<tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<div class="card info">
+<p><strong>Why SQL:</strong> Relational (user has many devices). ACID for token registration/invalidation.</p>
+<p><strong>Indexes:</strong> B-tree index on <code>(user_id, is_active)</code> — Push Worker needs all active tokens for a user.</p>
+<p><strong>Read:</strong> Push Worker fetching tokens. <strong>Write:</strong> User installs app / registers device, token invalidation on APNS/FCM rejection.</p>
+</div>
+
+<h3>NoSQL Tables</h3>
+
+<h4>Messages</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>channel_id</td><td>UUID</td><td>Partition Key</td><td></td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td>Sort Key</td><td>Server-assigned timestamp</td></tr>
+<tr><td>message_id</td><td>UUID</td><td>Global secondary index</td><td>Globally unique</td></tr>
+<tr><td>sender_id</td><td>UUID</td><td></td><td></td></tr>
+<tr><td>sender_display_name</td><td>VARCHAR</td><td></td><td>Denormalized from Users table</td></tr>
+<tr><td>sender_avatar_url</td><td>VARCHAR</td><td></td><td>Denormalized from Users table</td></tr>
+<tr><td>content</td><td>TEXT</td><td></td><td>Message body (supports markdown)</td></tr>
+<tr><td>thread_id</td><td>UUID (nullable)</td><td></td><td>Parent message_id if this is a thread reply</td></tr>
+<tr><td>seq_num</td><td>BIGINT</td><td></td><td>Monotonic sequence number per channel</td></tr>
+<tr><td>attachments</td><td>JSON/LIST</td><td></td><td>[{ file_id, filename, url, mime_type }]</td></tr>
+<tr><td>reactions</td><td>MAP</td><td></td><td>{ "👍": ["U1","U2"], "❤️": ["U3"] }</td></tr>
+<tr><td>is_edited</td><td>BOOLEAN</td><td></td><td></td></tr>
+<tr><td>is_deleted</td><td>BOOLEAN</td><td></td><td>Soft delete</td></tr>
+<tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<div class="card info">
+<p><strong>Why NoSQL (Wide-Column Store):</strong></p>
+<ul>
+  <li><strong>Write-heavy workload:</strong> Slack processes billions of messages/day. NoSQL wide-column stores are optimized for high write throughput with LSM-tree storage engines.</li>
+  <li><strong>Simple access patterns:</strong> Messages are almost always queried by (channel_id + time range). No complex joins needed. Partition key = channel_id, Sort key = created_at gives us efficient range scans.</li>
+  <li><strong>Horizontal scalability:</strong> Automatically partitions data across nodes by channel_id. Adding nodes increases capacity linearly.</li>
+  <li><strong>Flexible schema:</strong> Nested structures (attachments as JSON, reactions as MAP) fit naturally into NoSQL models.</li>
+</ul>
+<p><strong>Denormalization:</strong> <code>sender_display_name</code> and <code>sender_avatar_url</code> are denormalized from the Users table onto each message. This is done because: (1) loading message history is the most frequent read operation, (2) without denormalization we'd need to join or batch-lookup user profiles for every message — this is expensive at scale, (3) display names and avatars change infrequently, and (4) when they do change, we can lazily update via an async process (or accept stale data for historical messages, which is the norm in chat apps). The tradeoff is slight data staleness for significantly reduced read latency.</p>
+<p><strong>Sharding:</strong> Sharded by <code>channel_id</code> (partition key). All messages for a channel live on the same partition, enabling efficient range scans. For extremely active channels ("hot partitions"), we mitigate by: (1) the NoSQL store's built-in partition splitting, and (2) for the largest channels, adding a time-bucket suffix to the partition key (e.g., <code>channel_id#2024-01-15</code>) to spread load across partitions while maintaining time-range query efficiency.</p>
+</div>
+
+<h4>Threads (NoSQL)</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>thread_id</td><td>UUID</td><td>Partition Key</td><td>Same as parent message_id</td></tr>
+<tr><td>channel_id</td><td>UUID</td><td></td><td></td></tr>
+<tr><td>reply_count</td><td>INT</td><td></td><td>Counter, denormalized</td></tr>
+<tr><td>last_reply_at</td><td>TIMESTAMP</td><td></td><td>For sorting threads by activity</td></tr>
+<tr><td>participant_ids</td><td>SET&lt;UUID&gt;</td><td></td><td>Users who replied</td></tr>
+</table>
+<div class="card info">
+<p><strong>Why NoSQL:</strong> Same store as Messages for consistency. Thread metadata is accessed alongside messages. <code>reply_count</code> and <code>last_reply_at</code> are denormalized counters — updated atomically on each reply using the NoSQL store's counter/conditional update features. This avoids counting replies on every render (which would require scanning all thread replies).</p>
+<p><strong>Read:</strong> Viewing a channel (to show reply count badges). Opening a thread (to show thread metadata). <strong>Write:</strong> User replies to a thread (increment counter, update last_reply_at, add to participant_ids).</p>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="cdn">11. CDN &amp; Caching Deep Dive</h2>
+<!-- ================================================================== -->
+
+<h3>CDN</h3>
+<div class="card info">
+<p><strong>Why a CDN is appropriate:</strong></p>
+<ul>
+  <li><strong>Static assets:</strong> Slack's web/desktop app consists of JavaScript bundles, CSS, images, and fonts that are identical for all users. A CDN caches these at edge locations worldwide, reducing load on origin servers and decreasing page load time.</li>
+  <li><strong>User-uploaded files:</strong> Files (images, documents, videos) are uploaded once and read many times by channel members. A CDN caches these after first access, serving subsequent requests from the edge.</li>
+  <li><strong>Global user base:</strong> Enterprise teams are distributed globally. CDN edge POPs ensure low-latency access regardless of user geography.</li>
+</ul>
+<p><strong>What is NOT served via CDN:</strong> Real-time messages, presence data, and WebSocket connections are NOT served via CDN because they are highly dynamic, personalized, and require persistent server connections.</p>
+<p><strong>CDN Caching Strategy:</strong></p>
+<ul>
+  <li><strong>Static assets:</strong> Cache-Control: <code>public, max-age=31536000, immutable</code>. Files are fingerprinted (hash in filename), so cache can be long-lived. New deployments use new filenames.</li>
+  <li><strong>User-uploaded files:</strong> Cache-Control: <code>public, max-age=86400</code> (24 hours). Origin pull on cache miss. Access-controlled via signed URLs with expiration.</li>
 </ul>
 </div>
 
-<!-- ============ FLOW 1: MESSAGING ============ -->
-<h2>Flow 1: Real-Time Messaging</h2>
-<div class="card">
-<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#36C5F0"/></marker></defs>
-<rect x="20" y="50" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Client</text><text x="80" y="87" text-anchor="middle" fill="#fff" font-size="10">(Desktop/Web/Mobile)</text>
-<rect x="190" y="50" width="130" height="50" rx="8" fill="#FB8C00"/><text x="255" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Edge Gateway</text><text x="255" y="87" text-anchor="middle" fill="#fff" font-size="10">(Envoy / HAProxy)</text>
-<rect x="370" y="50" width="130" height="50" rx="8" fill="#4285F4"/><text x="435" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Message Server</text><text x="435" y="87" text-anchor="middle" fill="#fff" font-size="10">(Channel Router)</text>
-<rect x="550" y="20" width="130" height="50" rx="8" fill="#607D8B"/><text x="615" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">WebSocket</text><text x="615" y="57" text-anchor="middle" fill="#fff" font-size="10">Gateway (Flannel)</text>
-<rect x="550" y="90" width="130" height="50" rx="8" fill="#795548"/><text x="615" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Message Store</text><text x="615" y="127" text-anchor="middle" fill="#fff" font-size="10">(MySQL Vitess)</text>
-<rect x="740" y="20" width="130" height="50" rx="8" fill="#E53935"/><text x="805" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Push Service</text><text x="805" y="57" text-anchor="middle" fill="#fff" font-size="10">(APNs/FCM)</text>
-<rect x="740" y="90" width="130" height="50" rx="8" fill="#00897B"/><text x="805" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Index</text><text x="805" y="127" text-anchor="middle" fill="#fff" font-size="10">(Solr → ES)</text>
-<rect x="370" y="200" width="130" height="50" rx="8" fill="#9C27B0"/><text x="435" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Job Queue</text><text x="435" y="237" text-anchor="middle" fill="#fff" font-size="10">(Kafka)</text>
-<line x1="140" y1="75" x2="185" y2="75" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="320" y1="75" x2="365" y2="75" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="500" y1="65" x2="545" y2="45" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="500" y1="85" x2="545" y2="110" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="680" y1="45" x2="735" y2="45" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="680" y1="115" x2="735" y2="115" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="435" y1="100" x2="435" y2="195" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah)"/>
-</svg>
+<h3>In-Memory Distributed Cache</h3>
+<div class="card info">
+<p><strong>Why a cache is appropriate:</strong> Slack's read patterns are highly repetitive — the same channel's recent messages are read by all channel members, user profiles are looked up for every message rendered, and channel membership is checked on every message send. Caching these hot data paths dramatically reduces database load and decreases latency.</p>
 </div>
 
+<h4>Cache 1: Recent Messages Cache</h4>
 <div class="card">
-<h3>Steps</h3>
+<table>
+<tr><th>Property</th><th>Value</th></tr>
+<tr><td>Key pattern</td><td><code>channel:{channel_id}:recent_messages</code></td></tr>
+<tr><td>Value</td><td>Sorted list of last 100 message objects per channel</td></tr>
+<tr><td>Caching strategy</td><td><strong>Write-through</strong>: When Message Service writes a new message to the DB, it simultaneously appends it to the cache list (and trims to 100). This ensures the cache is always consistent with the DB for recent messages.</td></tr>
+<tr><td>Why write-through</td><td>Messages are the most frequently read data. Write-through eliminates cache misses for the common case (loading the latest messages in a channel). The slight write overhead is acceptable because each message write is already going to the DB — adding a cache write is minimal additional cost.</td></tr>
+<tr><td>Eviction policy</td><td><strong>LRU (Least Recently Used)</strong>: When the cache cluster approaches memory capacity, channels that haven't been accessed recently are evicted first. This keeps active channels in cache.</td></tr>
+<tr><td>Why LRU</td><td>Slack usage is bursty — some channels are very active (always in cache), while many are dormant. LRU naturally keeps hot channels cached and evicts cold ones.</td></tr>
+<tr><td>Expiration policy</td><td><strong>TTL: 4 hours</strong> for channels with no recent writes. Active channels have their TTL reset on every new message.</td></tr>
+<tr><td>Why 4-hour TTL</td><td>Balances memory usage and cache hit rate. After 4 hours of inactivity, the channel is likely not being viewed, so evicting is safe. On next access, the DB is queried (which is fine for infrequent access).</td></tr>
+<tr><td>Populated by</td><td>Write-through on message send. Also populated on cache miss when a user opens a channel (Message Service queries DB and populates cache).</td></tr>
+</table>
+</div>
+
+<h4>Cache 2: Channel Membership Cache</h4>
+<div class="card">
+<table>
+<tr><th>Property</th><th>Value</th></tr>
+<tr><td>Key pattern</td><td><code>channel:{channel_id}:members</code></td></tr>
+<tr><td>Value</td><td>Set of user_ids who are members of this channel</td></tr>
+<tr><td>Caching strategy</td><td><strong>Write-through</strong>: Updated when a user joins or leaves a channel. The Channel Service writes to both the SQL DB and the cache atomically.</td></tr>
+<tr><td>Why write-through</td><td>Channel membership is checked on every message send (authorization) and is used for Pub/Sub fan-out. Stale membership data could cause messages to be delivered to non-members or missed by new members.</td></tr>
+<tr><td>Eviction policy</td><td><strong>LRU</strong></td></tr>
+<tr><td>Expiration policy</td><td><strong>TTL: 1 hour</strong> (refreshed on access). Membership changes are infrequent, so a longer TTL is safe.</td></tr>
+<tr><td>Populated by</td><td>Write-through on join/leave. Cache miss triggers DB query and cache population.</td></tr>
+</table>
+</div>
+
+<h4>Cache 3: User Profile Cache</h4>
+<div class="card">
+<table>
+<tr><th>Property</th><th>Value</th></tr>
+<tr><td>Key pattern</td><td><code>user:{user_id}:profile</code></td></tr>
+<tr><td>Value</td><td>{ display_name, avatar_url, email, timezone }</td></tr>
+<tr><td>Caching strategy</td><td><strong>Cache-aside (lazy loading)</strong>: On a profile request, check cache first. On miss, load from DB, populate cache, return.</td></tr>
+<tr><td>Why cache-aside</td><td>User profiles are read frequently (displayed in messages, member lists) but updated rarely. Cache-aside avoids unnecessary cache writes on every profile update (which are rare) and keeps the write path simple. The occasional cache miss is acceptable since profile data is small and fast to load from DB.</td></tr>
+<tr><td>Eviction policy</td><td><strong>LRU</strong></td></tr>
+<tr><td>Expiration policy</td><td><strong>TTL: 15 minutes</strong>. Short enough that profile changes (name, avatar) are reflected within 15 minutes. Long enough to provide high cache hit rates for active users.</td></tr>
+<tr><td>Populated by</td><td>Cache miss triggers DB read + cache population. Also explicitly invalidated when a user updates their profile.</td></tr>
+</table>
+</div>
+
+<h4>Cache 4: Presence Cache</h4>
+<div class="card">
+<table>
+<tr><th>Property</th><th>Value</th></tr>
+<tr><td>Key pattern</td><td><code>user:{user_id}:presence</code></td></tr>
+<tr><td>Value</td><td>{ status: "online"|"away"|"offline", last_heartbeat, custom_status }</td></tr>
+<tr><td>Caching strategy</td><td><strong>Write-behind (cache IS source of truth)</strong>: Presence data is ephemeral — it only matters in the moment. The cache stores the current state and the key auto-expires if no heartbeat is received.</td></tr>
+<tr><td>Why write-behind / cache-only</td><td>Presence data is too volatile for a database (updates every 10 seconds per user). The cache is the authoritative store. If the cache loses data (node failure), users simply appear offline temporarily until their next heartbeat re-establishes presence — this is an acceptable degradation.</td></tr>
+<tr><td>Eviction policy</td><td><strong>TTL-based only</strong> (no LRU needed). Each key expires after 30 seconds unless refreshed by a heartbeat.</td></tr>
+<tr><td>Expiration policy</td><td><strong>TTL: 30 seconds</strong>. If no heartbeat is received in 30 seconds, the key expires and the user is considered offline.</td></tr>
+<tr><td>Populated by</td><td>Heartbeat frames from WebSocket Servers via Presence Service.</td></tr>
+</table>
+</div>
+
+<h4>Cache 5: Idempotency Cache</h4>
+<div class="card">
+<table>
+<tr><th>Property</th><th>Value</th></tr>
+<tr><td>Key pattern</td><td><code>idempotency:{idempotency_key}</code></td></tr>
+<tr><td>Value</td><td>message_id of the already-created message</td></tr>
+<tr><td>Caching strategy</td><td><strong>Write-through</strong>: Set when a message is first processed. Checked before writing a new message.</td></tr>
+<tr><td>Eviction policy</td><td><strong>TTL-based only</strong></td></tr>
+<tr><td>Expiration policy</td><td><strong>TTL: 5 minutes</strong>. Retries happen within seconds; 5 minutes provides ample coverage with minimal memory cost.</td></tr>
+<tr><td>Populated by</td><td>Message Service on first successful message write.</td></tr>
+</table>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="websocket">12. WebSocket Deep Dive</h2>
+<!-- ================================================================== -->
+<div class="card info">
+<h4>Why WebSockets?</h4>
+<p>Slack requires <strong>bidirectional, low-latency, real-time communication</strong> between clients and servers. WebSockets provide:</p>
+<ul>
+  <li><strong>Full-duplex communication:</strong> Both client and server can send messages at any time without waiting for a request (unlike HTTP).</li>
+  <li><strong>Low overhead:</strong> After the initial handshake, frames have minimal header overhead (~2-14 bytes), unlike HTTP which has headers on every request.</li>
+  <li><strong>Persistent connection:</strong> No repeated TCP handshakes or TLS negotiations per message.</li>
+</ul>
+
+<h4>Why NOT alternatives?</h4>
+<ul>
+  <li><strong>HTTP Long Polling:</strong> Higher latency (each message requires a new HTTP request/response cycle). Higher server resource usage (each poll is a full HTTP connection). Would work but is significantly less efficient for a high-frequency messaging app.</li>
+  <li><strong>Server-Sent Events (SSE):</strong> Unidirectional (server → client only). Slack needs bidirectional (client sends messages too). SSE would require a separate HTTP channel for client→server communication, adding complexity.</li>
+  <li><strong>WebRTC:</strong> Peer-to-peer, designed for media streaming. Overkill for text messaging and doesn't support server-side message persistence and fan-out easily.</li>
+</ul>
+
+<h4>Connection Establishment</h4>
 <ol>
-<li>Client sends message via HTTPS POST to Edge Gateway (Envoy-based with TLS termination)</li>
-<li>Message Server validates auth (OAuth2 token), checks channel membership, enforces rate limits (1 msg/sec per user)</li>
-<li>Message assigned monotonic channel-scoped timestamp (ts) — format: <code>1707500000.000100</code> (Unix epoch + micro counter)</li>
-<li>Persisted to MySQL (Vitess sharded) — primary source of truth for all messages</li>
-<li>WebSocket Gateway (Flannel) fans out message to all online channel members via persistent WebSocket connections</li>
-<li>Offline users: push notification queued via Kafka → delivered via APNs/FCM with badge count update</li>
-<li>Message indexed asynchronously in Solr/Elasticsearch for full-text search</li>
-<li>Kafka job queue triggers: link unfurling, @mention notifications, bot/webhook deliveries, analytics events</li>
+  <li>Client initiates an <strong>HTTP/1.1 request</strong> with the <code>Upgrade: websocket</code> header to the WebSocket Load Balancer (L4).</li>
+  <li>The L4 Load Balancer routes the connection using <strong>sticky sessions</strong> (based on a connection token or IP hash) to a specific WebSocket Server. Sticky sessions are essential because the connection is long-lived and must stay with the same server.</li>
+  <li>The WebSocket Server validates the user's authentication token (JWT), responds with <code>101 Switching Protocols</code>, and the WSS connection is established.</li>
+  <li>The server adds the user to its <strong>Local Connection Registry</strong> (in-memory map: <code>user_id → WebSocket connection object</code>).</li>
+  <li>The server writes to the <strong>Distributed Connection Registry</strong> (in the cache): <code>user:{user_id}:ws_server → {server_id}</code> with a TTL of 60 seconds (refreshed by heartbeats). This allows other services to know which WebSocket Server holds a specific user's connection.</li>
+  <li>The server subscribes to <strong>Pub/Sub topics</strong> for all channels the user belongs to (looked up from Channel Membership Cache). If the server is already subscribed to a topic (because another connected user is in that channel), no new subscription is needed.</li>
 </ol>
 
-<h3>Example</h3>
-<p>User posts in #engineering (500 members, 45 online). Message Server assigns ts=1707500000.000100, stores in MySQL shard for workspace_123. Flannel pushes to 45 WebSocket connections. 455 offline users: push notifications batched (channel notification setting: "mentions only" → only @mentioned users get push). Kafka fires: unfurl the GitHub PR link, notify @alice (mentioned), deliver to PagerDuty bot webhook.</p>
+<h4>Connection Storage</h4>
+<ul>
+  <li><strong>Local Connection Registry (per server, in-memory):</strong> HashMap of <code>user_id → { ws_connection, channels: [channel_ids], last_heartbeat }</code>. Each WebSocket Server maintains this in its own process memory. Fast O(1) lookup for message delivery.</li>
+  <li><strong>Distributed Connection Registry (cache):</strong> Key: <code>user:{user_id}:ws_server</code>, Value: <code>server_id</code>. Used by the Notification Service to determine if a user is connected. TTL: 60 seconds, refreshed by heartbeats.</li>
+</ul>
 
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>WebSocket Gateway (Flannel)</h4>
-<p><strong>Architecture:</strong> Slack's custom WebSocket layer — stateful, long-lived connections; each server handles ~100K connections</p>
-<p><strong>Protocol:</strong> WebSocket with JSON-framed messages; client maintains single connection for all channels</p>
-<p><strong>Subscription:</strong> Server maintains in-memory map: channel_id → [connection_ids]; broadcast = iterate subscribers</p>
-<p><strong>Reconnect:</strong> Client reconnects with last_event_id → server replays missed events from event log (Redis Streams)</p>
-</div>
-<div class="card">
-<h4>Message Timestamp (ts)</h4>
-<p><strong>Format:</strong> <code>{epoch}.{counter}</code> — e.g., <code>1707500000.000100</code></p>
-<p><strong>Uniqueness:</strong> Globally unique within a channel — serves as both timestamp AND message ID</p>
-<p><strong>Ordering:</strong> String-sortable — lexicographic sort = chronological order</p>
-<p><strong>Counter:</strong> Per-channel monotonic counter prevents collisions for messages in same second</p>
-</div>
-<div class="card">
-<h4>MySQL + Vitess (Sharding)</h4>
-<p><strong>Vitess:</strong> MySQL sharding middleware developed at YouTube; provides horizontal sharding transparent to application</p>
-<p><strong>Shard Key:</strong> workspace_id — all data for a workspace on same shard (channels, messages, members)</p>
-<p><strong>Scale:</strong> Thousands of MySQL shards; Vitess handles routing, connection pooling, schema migration</p>
-<p><strong>Migration:</strong> Slack migrated from single MySQL to Vitess to handle growth; later exploring CockroachDB for some workloads</p>
-</div>
-<div class="card">
-<h4>Link Unfurling</h4>
-<p><strong>Process:</strong> Kafka consumer extracts URLs from message → HTTP HEAD/GET to fetch Open Graph metadata (og:title, og:image, og:description)</p>
-<p><strong>Cache:</strong> Unfurl results cached in Redis by URL (TTL 24h) — same URL shared across messages</p>
-<p><strong>Special:</strong> First-party unfurls for known services (Google Docs, GitHub, Jira) fetch richer metadata via API integration</p>
-</div>
-</div>
-</div>
-
-<!-- ============ FLOW 2: SEARCH ============ -->
-<h2>Flow 2: Message Search</h2>
-<div class="card">
-<svg viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#2EB67D"/></marker></defs>
-<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="90" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Client</text>
-<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Service</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="10">(Query Parser)</text>
-<rect x="370" y="30" width="130" height="50" rx="8" fill="#00897B"/><text x="435" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Index</text><text x="435" y="67" text-anchor="middle" fill="#fff" font-size="10">(Elasticsearch)</text>
-<rect x="370" y="100" width="130" height="50" rx="8" fill="#9C27B0"/><text x="435" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">ACL Filter</text><text x="435" y="137" text-anchor="middle" fill="#fff" font-size="10">(Channel Perms)</text>
-<rect x="560" y="60" width="130" height="50" rx="8" fill="#795548"/><text x="625" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">MySQL (Vitess)</text><text x="625" y="97" text-anchor="middle" fill="#fff" font-size="10">(Message Hydration)</text>
-<line x1="140" y1="85" x2="185" y2="85" stroke="#2EB67D" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="320" y1="75" x2="365" y2="55" stroke="#2EB67D" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="320" y1="95" x2="365" y2="120" stroke="#2EB67D" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="500" y1="75" x2="555" y2="80" stroke="#2EB67D" stroke-width="2" marker-end="url(#ah2)"/>
-</svg>
-</div>
-
-<div class="card">
-<h3>Steps</h3>
+<h4>Finding Other WebSocket Connections</h4>
+<p>When a message is sent to a channel, the system needs to deliver it to ALL connected members, who may be on different WebSocket Servers. This is handled via <strong>Pub/Sub</strong>:</p>
 <ol>
-<li>User types search query with optional operators: <code>from:@alice in:#engineering has:link before:2024-02-01 deploy</code></li>
-<li>Search Service parses query into structured filters + free-text terms</li>
-<li>Elasticsearch queried within workspace scope — BM25 ranking with recency boost</li>
-<li>ACL Filter removes results from channels user doesn't have access to (post-filter on ES results)</li>
-<li>Matching message IDs hydrated from MySQL to get full message content, user profiles, channel names</li>
-<li>Results returned with highlighted snippets and pagination</li>
+  <li>Message is published to Pub/Sub topic <code>channel:{channel_id}</code>.</li>
+  <li>ALL WebSocket Servers that have at least one connected member of that channel are subscribed to that topic.</li>
+  <li>Each subscribed server receives the event, checks its Local Connection Registry for members of that channel, and pushes the message to them.</li>
+</ol>
+<p>This approach avoids needing to look up individual user→server mappings for every message delivery, which would be expensive for large channels.</p>
+
+<h4>Heartbeat &amp; Reconnection</h4>
+<ul>
+  <li>Client sends a <code>heartbeat</code> frame every <strong>10 seconds</strong>.</li>
+  <li>Server responds with a <code>heartbeat_ack</code>.</li>
+  <li>If the server doesn't receive a heartbeat for 30 seconds, it closes the connection and removes the user from registries.</li>
+  <li>If the client doesn't receive <code>heartbeat_ack</code> for 15 seconds, it initiates reconnection.</li>
+  <li>On reconnection, the client sends its <code>last_received_seq_num</code> per channel. The server queries the Messages DB for any messages the client missed and sends them in order.</li>
+</ul>
+
+<h4>Protocol Details</h4>
+<p><strong>Transport:</strong> WSS (WebSocket over TLS) on port 443. TLS is terminated at the Load Balancer (for efficiency) or at the WebSocket Server (for end-to-end encryption).</p>
+<p><strong>Frame format:</strong> JSON over WebSocket text frames. Example frames:</p>
+<ul>
+  <li>Client → Server: <code>{ "type": "send_message", "channel_id": "C123", "content": "Hello", "idempotency_key": "uuid-xxx" }</code></li>
+  <li>Server → Client: <code>{ "type": "new_message", "message_id": "M456", "channel_id": "C123", "sender_id": "U789", "content": "Hello", "timestamp": "..." }</code></li>
+  <li>Client → Server: <code>{ "type": "heartbeat" }</code></li>
+  <li>Server → Client: <code>{ "type": "heartbeat_ack" }</code></li>
+  <li>Client → Server: <code>{ "type": "typing", "channel_id": "C123" }</code></li>
+</ul>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="pubsub">13. Pub/Sub Deep Dive</h2>
+<!-- ================================================================== -->
+<div class="card info">
+<h4>Why Pub/Sub?</h4>
+<p>When a message is sent to a channel with N members connected across M WebSocket Servers, the system must deliver the message to all M servers efficiently. Pub/Sub provides:</p>
+<ul>
+  <li><strong>Decoupled fan-out:</strong> The Message Service publishes once; all subscribed WebSocket Servers receive the event without the publisher needing to know about them.</li>
+  <li><strong>Dynamic subscription:</strong> WebSocket Servers can subscribe/unsubscribe as users connect/disconnect.</li>
+  <li><strong>Multiple consumers:</strong> Both WebSocket Servers AND the Notification Service (and Search Indexer) can subscribe to the same topic independently.</li>
+</ul>
+
+<h4>Why NOT alternatives?</h4>
+<ul>
+  <li><strong>Direct server-to-server RPC:</strong> The Message Service would need to know which WebSocket Servers have channel members. This creates tight coupling, requires a service registry, and doesn't scale well as the number of servers grows. Pub/Sub decouples this.</li>
+  <li><strong>Message Queue (point-to-point):</strong> A message queue delivers each message to exactly ONE consumer, but we need the same message to reach ALL subscribed WebSocket Servers (one-to-many). Pub/Sub's broadcast semantics match this requirement. (Note: We DO use a Message Queue separately for notification delivery, where point-to-point semantics are appropriate.)</li>
+  <li><strong>Polling the database:</strong> WebSocket Servers could poll the Messages DB for new messages. This is extremely inefficient (N servers × M channels = massive query load), adds latency, and wastes resources.</li>
+</ul>
+
+<h4>How It Works</h4>
+<ol>
+  <li><strong>Topics:</strong> One topic per channel: <code>channel:{channel_id}</code>. Topics are created on-demand when the first subscriber subscribes.</li>
+  <li><strong>Publishers:</strong> The Message Service publishes events to the relevant channel topic. Events include: <code>new_message</code>, <code>message_edited</code>, <code>message_deleted</code>, <code>reaction_added</code>, <code>reaction_removed</code>, <code>typing_indicator</code>, <code>presence_update</code>.</li>
+  <li><strong>Subscribers:</strong>
+    <ul>
+      <li><strong>WebSocket Servers:</strong> Subscribe to topics for all channels their connected users belong to. When a user connects, subscribe to their channels. When a user disconnects, if no other local users are in that channel, unsubscribe.</li>
+      <li><strong>Notification Service:</strong> Subscribes to ALL message topics (or uses a wildcard/consumer group) to evaluate notification rules.</li>
+      <li><strong>Search Indexer:</strong> Subscribes to ALL message topics to update the search index asynchronously.</li>
+    </ul>
+  </li>
+  <li><strong>Delivery semantics:</strong> At-least-once delivery. Subscribers must handle duplicate events idempotently (using message_id for deduplication).</li>
+  <li><strong>Message format:</strong> <code>{ "event_type": "new_message", "channel_id": "C123", "message_id": "M456", "sender_id": "U789", "content": "Hello", "timestamp": "...", "seq_num": 1234 }</code></li>
 </ol>
 
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>Search Architecture</h4>
-<p><strong>Migration:</strong> Slack migrated from Solr to Elasticsearch (2017-2019) for better scaling and operational tooling</p>
-<p><strong>Index:</strong> Per-workspace Elasticsearch index; large workspaces split across multiple shards</p>
-<p><strong>Fields:</strong> message_text (analyzed), sender_id, channel_id, timestamp, has_attachment, has_link, reactions</p>
-<p><strong>Near-Real-Time:</strong> New messages searchable within ~5 seconds of posting (ES refresh interval)</p>
-</div>
-<div class="card">
-<h4>ACL Enforcement</h4>
-<p><strong>Problem:</strong> User shouldn't see messages from private channels they're not in</p>
-<p><strong>Solution:</strong> Post-filter — ES returns top-N candidates, ACL filter removes unauthorized, fetch more if needed</p>
-<p><strong>Optimization:</strong> For most users, majority of channels are accessible → filter removes few results</p>
-</div>
-</div>
+<h4>Partitioning &amp; Scalability</h4>
+<p>The Pub/Sub system partitions topics across broker nodes using consistent hashing on <code>channel_id</code>. Each broker handles a subset of channel topics. Adding more brokers redistributes partitions. For very high-throughput channels, a single partition can be further split by message volume.</p>
 </div>
 
-<!-- ============ FLOW 3: APPS & INTEGRATIONS ============ -->
-<h2>Flow 3: Slack Apps & Integrations</h2>
-<div class="card">
-<svg viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#ECB22E"/></marker></defs>
-<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">User Action</text><text x="80" y="97" text-anchor="middle" fill="#fff" font-size="10">(/command, button)</text>
-<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Events API</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="10">(Dispatch)</text>
-<rect x="370" y="60" width="130" height="50" rx="8" fill="#FB8C00"/><text x="435" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">App Server</text><text x="435" y="97" text-anchor="middle" fill="#fff" font-size="10">(Developer's)</text>
-<rect x="560" y="30" width="130" height="50" rx="8" fill="#E53935"/><text x="625" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Web API</text><text x="625" y="67" text-anchor="middle" fill="#fff" font-size="10">(chat.postMessage)</text>
-<rect x="560" y="100" width="130" height="50" rx="8" fill="#9C27B0"/><text x="625" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Block Kit</text><text x="625" y="137" text-anchor="middle" fill="#fff" font-size="10">(Rich UI Blocks)</text>
-<line x1="140" y1="85" x2="185" y2="85" stroke="#ECB22E" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="320" y1="85" x2="365" y2="85" stroke="#ECB22E" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="500" y1="75" x2="555" y2="55" stroke="#ECB22E" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="500" y1="95" x2="555" y2="120" stroke="#ECB22E" stroke-width="2" marker-end="url(#ah3)"/>
-</svg>
-</div>
+<!-- ================================================================== -->
+<h2 id="mq">14. Message Queue Deep Dive</h2>
+<!-- ================================================================== -->
+<div class="card info">
+<h4>Why a Message Queue (for notifications)?</h4>
+<p>The Notification Service needs to deliver push notifications and emails reliably. A message queue provides:</p>
+<ul>
+  <li><strong>Durability:</strong> Notification jobs are persisted until successfully processed. If a Push Worker crashes, the job remains in the queue for another worker.</li>
+  <li><strong>Decoupling:</strong> The Notification Service doesn't need to wait for APNS/FCM to respond. It enqueues and moves on.</li>
+  <li><strong>Rate limiting / backpressure:</strong> If APNS or FCM throttle requests, the queue absorbs the backlog without dropping notifications.</li>
+  <li><strong>Retry with backoff:</strong> Failed deliveries are automatically retried with exponential backoff (1s, 2s, 4s, 8s, ..., up to 5 retries).</li>
+</ul>
 
-<div class="card">
-<h3>Steps</h3>
+<h4>Why NOT Pub/Sub for notifications?</h4>
+<p>Pub/Sub delivers to all subscribers (broadcast). Notification delivery is point-to-point — each notification job should be processed by exactly one worker. A message queue's competing consumers pattern ensures each job is processed once.</p>
+
+<h4>How messages are put on the queue</h4>
 <ol>
-<li>User interaction (slash command, button click, message shortcut) triggers event in Slack</li>
-<li>Events API dispatches HTTP POST webhook to registered app server URL with event payload (signed with HMAC)</li>
-<li>App server processes event, calls Slack Web API methods (chat.postMessage, views.open, reactions.add)</li>
-<li>Block Kit: JSON-based UI framework for rich interactive messages — sections, buttons, selects, date pickers, modals</li>
-<li>Socket Mode (alternative): app connects via WebSocket to receive events instead of HTTP webhooks (no public URL needed)</li>
-<li>Bolt SDK (Node.js, Python, Java) simplifies app development with middleware pattern for event routing</li>
+  <li>The Notification Service evaluates a message event from Pub/Sub.</li>
+  <li>For each user who should be notified, it constructs a notification job: <code>{ user_id, notification_type: "push"|"email", title, body, channel_id, message_id, badge_count }</code>.</li>
+  <li>It publishes the job to the appropriate queue: <code>push_notifications</code> queue or <code>email_notifications</code> queue.</li>
 </ol>
 
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>Events API</h4>
-<p><strong>Delivery:</strong> HTTP POST to app's Request URL with JSON payload; 3-second response timeout (acknowledge immediately, process async)</p>
-<p><strong>Retry:</strong> If app returns non-200, Slack retries 3 times with exponential backoff (1min, 5min, 30min)</p>
-<p><strong>Verification:</strong> <code>x-slack-signature</code> header: HMAC-SHA256(signing_secret, timestamp + body) — prevents forgery</p>
-<p><strong>Event Types:</strong> message, reaction_added, member_joined_channel, app_mention, file_shared, etc.</p>
-</div>
-<div class="card">
-<h4>Block Kit</h4>
-<p><strong>Format:</strong> JSON array of block elements — section, divider, image, actions, input, context</p>
-<p><strong>Interactive:</strong> Buttons, overflow menus, date pickers, multi-select → generate interaction payloads sent to app</p>
-<p><strong>Modals:</strong> Full-screen forms via <code>views.open</code> — supports multi-step workflows with state management</p>
-<p><strong>Builder:</strong> Block Kit Builder (visual editor) at api.slack.com/tools/block-kit-builder</p>
-</div>
-</div>
+<h4>How messages are removed from the queue</h4>
+<ol>
+  <li>Push Workers and Email Workers consume from their respective queues using a <strong>pull-based model</strong> with long polling (wait up to 10 seconds for a new message).</li>
+  <li>When a worker picks up a job, it becomes <strong>invisible</strong> to other workers for a <strong>visibility timeout</strong> (30 seconds).</li>
+  <li>The worker processes the job (sends to APNS/FCM/Email Provider).</li>
+  <li>On success, the worker sends an <strong>ACK</strong> (acknowledge), and the message is permanently deleted from the queue.</li>
+  <li>If the worker fails or crashes (no ACK within the visibility timeout), the message becomes visible again for another worker to pick up.</li>
+  <li>After 5 failed attempts, the message is moved to a <strong>Dead Letter Queue (DLQ)</strong> for manual investigation.</li>
+</ol>
 </div>
 
-<!-- ============ COMBINED ARCHITECTURE ============ -->
-<h2>Combined Architecture</h2>
+<!-- ================================================================== -->
+<h2 id="scaling">15. Scaling Considerations</h2>
+<!-- ================================================================== -->
 <div class="card">
-<svg viewBox="0 0 1050 450" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#36C5F0"/></marker></defs>
-<rect x="20" y="70" width="130" height="50" rx="8" fill="#34A853"/><text x="85" y="92" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Clients</text><text x="85" y="107" text-anchor="middle" fill="#fff" font-size="10">(Electron/Web/Mobile)</text>
-<rect x="200" y="70" width="130" height="50" rx="8" fill="#FB8C00"/><text x="265" y="92" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Edge (Envoy)</text><text x="265" y="107" text-anchor="middle" fill="#fff" font-size="10">(TLS + Routing)</text>
-<rect x="390" y="20" width="130" height="45" rx="8" fill="#4285F4"/><text x="455" y="47" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Message Server</text>
-<rect x="390" y="80" width="130" height="45" rx="8" fill="#4285F4"/><text x="455" y="107" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Service</text>
-<rect x="390" y="140" width="130" height="45" rx="8" fill="#4285F4"/><text x="455" y="167" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">File Service</text>
-<rect x="580" y="20" width="130" height="45" rx="8" fill="#607D8B"/><text x="645" y="47" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Flannel (WS)</text>
-<rect x="580" y="80" width="130" height="45" rx="8" fill="#9C27B0"/><text x="645" y="107" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Events API</text>
-<rect x="580" y="140" width="130" height="45" rx="8" fill="#E53935"/><text x="645" y="167" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Push Service</text>
-<rect x="780" y="70" width="130" height="50" rx="8" fill="#00897B"/><text x="845" y="92" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Kafka</text><text x="845" y="107" text-anchor="middle" fill="#fff" font-size="10">(Event Bus)</text>
-<rect x="390" y="290" width="130" height="55" rx="8" fill="#795548"/><text x="455" y="312" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">MySQL (Vitess)</text><text x="455" y="329" text-anchor="middle" fill="#fff" font-size="10">(Messages + Meta)</text>
-<rect x="580" y="290" width="130" height="55" rx="8" fill="#795548"/><text x="645" y="312" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Elasticsearch</text><text x="645" y="329" text-anchor="middle" fill="#fff" font-size="10">(Search Index)</text>
-<rect x="780" y="290" width="130" height="55" rx="8" fill="#00897B"/><text x="845" y="312" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Redis / Memcached</text><text x="845" y="329" text-anchor="middle" fill="#fff" font-size="10">(Cache)</text>
-<rect x="200" y="290" width="130" height="55" rx="8" fill="#795548"/><text x="265" y="312" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">S3</text><text x="265" y="329" text-anchor="middle" fill="#fff" font-size="10">(Files + Uploads)</text>
-<line x1="150" y1="95" x2="195" y2="95" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="330" y1="85" x2="385" y2="42" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="330" y1="95" x2="385" y2="102" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="330" y1="105" x2="385" y2="162" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="520" y1="42" x2="575" y2="42" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="520" y1="102" x2="575" y2="102" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="520" y1="42" x2="575" y2="162" stroke="#36C5F0" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="710" y1="95" x2="775" y2="95" stroke="#36C5F0" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="455" y1="65" x2="455" y2="285" stroke="#36C5F0" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="520" y1="125" x2="580" y2="300" stroke="#36C5F0" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="710" y1="107" x2="780" y2="305" stroke="#36C5F0" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="390" y1="185" x2="265" y2="285" stroke="#36C5F0" stroke-width="1.5" marker-end="url(#ah4)"/>
-</svg>
-</div>
 
-<!-- ============ DATABASE SCHEMA ============ -->
-<h2>Database Schema</h2>
-<div class="grid">
-<div class="card">
-<h3>MySQL (Vitess) — Messages</h3>
-<pre><code>CREATE TABLE messages (
-  workspace_id  BIGINT,           <span class="tag tag-shard">SHARD KEY</span>
-  channel_id    VARCHAR(20),      <span class="tag tag-idx">INDEX</span>
-  ts            VARCHAR(20),      <span class="tag tag-pk">PK</span> -- "1707500000.000100"
-  user_id       VARCHAR(20),      <span class="tag tag-fk">FK</span>
-  text          TEXT,
-  type          VARCHAR(20) DEFAULT 'message',
-  subtype       VARCHAR(30),      -- bot_message, channel_join, etc.
-  thread_ts     VARCHAR(20),      -- parent message ts (for threads)
-  reply_count   INT DEFAULT 0,
-  reactions     JSON,             -- [{"name":"thumbsup","users":["U123"]}]
-  attachments   JSON,             -- legacy attachments
-  blocks        JSON,             -- Block Kit blocks
-  files         JSON,             -- [{id, name, url_private, mimetype}]
-  edited_ts     VARCHAR(20),
-  is_deleted    BOOLEAN DEFAULT FALSE,
-  PRIMARY KEY (channel_id, ts)
-) ENGINE=InnoDB;
-CREATE INDEX idx_msg_thread ON messages(channel_id, thread_ts);
-CREATE INDEX idx_msg_user ON messages(workspace_id, user_id, ts);</code></pre>
-<p><span class="tag tag-shard">SHARD</span> Vitess shards by workspace_id; channels + messages co-located per workspace</p>
-</div>
+<h4>Load Balancers</h4>
+<p>Load balancers are critical for scaling Slack. They should be placed at:</p>
+<ol>
+  <li><strong>Between Clients and WebSocket Servers (L4 Load Balancer):</strong>
+    <ul>
+      <li><strong>Type:</strong> Layer 4 (transport layer) load balancer.</li>
+      <li><strong>Algorithm:</strong> Consistent hashing based on a connection token (sent in the initial HTTP upgrade request). This ensures reconnections go to the same server when possible (session affinity), which reduces the need to re-subscribe to Pub/Sub topics.</li>
+      <li><strong>Why L4:</strong> WebSocket connections are long-lived TCP connections. L4 load balancers pass through TCP connections without inspecting HTTP content, which is more efficient for persistent connections. L7 load balancers would add unnecessary overhead for an already-established connection.</li>
+      <li><strong>Health checks:</strong> TCP health checks every 5 seconds. Unhealthy servers are removed from the rotation, and their clients reconnect (the client handles reconnection automatically).</li>
+      <li><strong>Scaling:</strong> Multiple LB instances in active-active configuration behind DNS round-robin.</li>
+    </ul>
+  </li>
+  <li><strong>Between Clients and API Gateway (L7 Load Balancer):</strong>
+    <ul>
+      <li><strong>Type:</strong> Layer 7 (application layer) load balancer.</li>
+      <li><strong>Algorithm:</strong> Round-robin or least-connections. REST API calls are stateless, so no session affinity is needed.</li>
+      <li><strong>Why L7:</strong> Enables URL-based routing (e.g., /api/v1/messages → Message Service, /api/v1/files → File Service), SSL termination, rate limiting (per user/IP), and request/response compression.</li>
+      <li><strong>Rate limiting:</strong> Per-user rate limits (e.g., 100 messages/minute, 10 file uploads/minute) to prevent abuse.</li>
+    </ul>
+  </li>
+  <li><strong>Between API Gateway and Backend Services (Internal L7 Load Balancer):</strong>
+    <ul>
+      <li><strong>Type:</strong> Internal L7 load balancer (or service mesh sidecar).</li>
+      <li><strong>Algorithm:</strong> Least-connections, with circuit breaker patterns for fault tolerance.</li>
+      <li><strong>Purpose:</strong> Distributes requests across multiple instances of each service (Message Service, Channel Service, etc.).</li>
+    </ul>
+  </li>
+</ol>
 
-<div class="card">
-<h3>MySQL — Channels & Members</h3>
-<pre><code>CREATE TABLE channels (
-  workspace_id  BIGINT,           <span class="tag tag-shard">SHARD KEY</span>
-  channel_id    VARCHAR(20),      <span class="tag tag-pk">PK</span>
-  name          VARCHAR(80),      <span class="tag tag-idx">INDEX</span>
-  topic         TEXT,
-  purpose       TEXT,
-  is_private    BOOLEAN DEFAULT FALSE,
-  is_archived   BOOLEAN DEFAULT FALSE,
-  creator_id    VARCHAR(20),      <span class="tag tag-fk">FK</span>
-  member_count  INT DEFAULT 0,
-  created_at    BIGINT
-);
+<h4>Horizontal Scaling by Component</h4>
+<table>
+<tr><th>Component</th><th>Scaling Strategy</th></tr>
+<tr><td>WebSocket Servers</td><td>Horizontally scale by adding more servers. Each server handles ~50K-100K concurrent connections. For 10M connections, need ~100-200 servers. Stateless (connection state is in-memory and reconstructable).</td></tr>
+<tr><td>Message Service</td><td>Stateless; horizontally scale behind load balancer. Auto-scale based on request throughput.</td></tr>
+<tr><td>Channel Service</td><td>Stateless; horizontally scale behind load balancer.</td></tr>
+<tr><td>User/Auth Service</td><td>Stateless; horizontally scale behind load balancer.</td></tr>
+<tr><td>File Service</td><td>Stateless; horizontally scale behind load balancer. CPU-intensive operations (thumbnail generation) may require separate scaling policies.</td></tr>
+<tr><td>Search Service</td><td>Stateless; horizontally scale behind load balancer. Bound by Search Index read throughput.</td></tr>
+<tr><td>Presence Service</td><td>Stateless; horizontally scale. High throughput (heartbeats every 10s per user).</td></tr>
+<tr><td>Notification Service</td><td>Scale consumers based on Pub/Sub backlog size.</td></tr>
+<tr><td>Push/Email Workers</td><td>Scale based on Message Queue depth. Auto-scale up during peak hours, down during off-hours.</td></tr>
+<tr><td>Messages DB (NoSQL)</td><td>Horizontally sharded by channel_id. Add nodes to increase capacity. Replication factor of 3 for durability.</td></tr>
+<tr><td>SQL Databases</td><td>Primary-replica setup. Reads go to replicas, writes to primary. Shard by workspace_id or user_id for tables that exceed single-node capacity.</td></tr>
+<tr><td>Cache</td><td>Distributed cache cluster sharded by key. Add nodes to increase memory capacity. Consistent hashing for key distribution.</td></tr>
+<tr><td>Pub/Sub</td><td>Partition topics across broker nodes. Add brokers to increase throughput. Replication for fault tolerance.</td></tr>
+<tr><td>Search Index</td><td>Shard by workspace_id. Replicate shards for read scaling.</td></tr>
+<tr><td>Object Storage</td><td>Inherently scalable (managed service). No manual scaling needed.</td></tr>
+</table>
 
-CREATE TABLE channel_members (
-  workspace_id  BIGINT,
-  channel_id    VARCHAR(20),      <span class="tag tag-fk">FK</span>
-  user_id       VARCHAR(20),      <span class="tag tag-fk">FK</span>
-  role          VARCHAR(20) DEFAULT 'member',
-  notification_pref VARCHAR(20) DEFAULT 'default',
-  last_read_ts  VARCHAR(20),      -- for unread tracking
-  joined_at     BIGINT,
-  PRIMARY KEY (channel_id, user_id)
-);
-CREATE INDEX idx_member_user ON channel_members(workspace_id, user_id);</code></pre>
-</div>
-</div>
+<h4>Geographic Distribution</h4>
+<p>For a global user base, deploy WebSocket Servers and API Gateways in multiple regions (US, EU, APAC). Use DNS-based geographic routing to direct users to the nearest region. Messages DB can be multi-region with eventual consistency for cross-region reads. CDN edge POPs provide global static asset and file delivery.</p>
 
-<!-- ============ CACHE & CDN ============ -->
-<h2>Cache & CDN Deep Dive</h2>
-<div class="card">
-<div class="grid">
-<div class="card">
-<h4>Memcached (Hot Data)</h4>
-<p><strong>Cached:</strong> Channel membership lists, user profiles, workspace settings, recent messages (last 50 per channel)</p>
-<p><strong>Strategy:</strong> Cache-aside with invalidation via Kafka events on write</p>
-<p><strong>Scale:</strong> ~6TB aggregate Memcached cluster; 99%+ hit rate for channel membership lookups</p>
-<p><strong>TTL:</strong> Channel membership: 10min; user profiles: 5min; settings: 1hr</p>
-</div>
-<div class="card">
-<h4>Redis (Real-Time State)</h4>
-<p><strong>Presence:</strong> Online/away/DND status per user — Redis SET with heartbeat TTL (60s)</p>
-<p><strong>Typing:</strong> Typing indicators stored in Redis with 5-second TTL — auto-expire when user stops typing</p>
-<p><strong>Unread:</strong> Per-user per-channel last_read_ts — compared against channel's latest message ts</p>
-<p><strong>Event Log:</strong> Redis Streams for WebSocket reconnection replay (last 1000 events per channel)</p>
-</div>
-<div class="card">
-<h4>CDN (Cloudfront)</h4>
-<p><strong>Files:</strong> Uploaded files stored in S3; served via CloudFront CDN with signed URLs (expiring tokens for access control)</p>
-<p><strong>Static:</strong> App bundles, emoji sprites, default avatars cached at edge</p>
-<p><strong>Unfurl Cache:</strong> Link preview images/metadata cached at CDN; 24hr TTL</p>
-</div>
-</div>
-</div>
-
-<!-- ============ SCALING ============ -->
-<h2>Scaling & Load Balancing</h2>
-<div class="card">
+<h4>Back-of-Envelope Capacity Estimates</h4>
+<div class="card warning">
 <ul>
-<li><strong>Edge:</strong> Envoy-based edge proxies in multiple AWS regions; anycast routing to nearest edge; TLS 1.3 termination</li>
-<li><strong>Vitess:</strong> Thousands of MySQL shards; Vitess vtgate handles query routing; online resharding for hot workspaces (e.g., Salesforce's 100K+ user workspace)</li>
-<li><strong>WebSocket (Flannel):</strong> Horizontally scaled; consistent hashing by workspace_id → specific Flannel instances; connection migration on server restart</li>
-<li><strong>Kafka:</strong> Central event bus — 100+ topics; partitioned by workspace_id; used for async processing (search indexing, push notifications, analytics, compliance)</li>
-<li><strong>Enterprise Grid:</strong> Multi-workspace organizations; shared channels span workspaces via federation protocol (cross-shard message routing)</li>
-</ul>
-</div>
-
-<!-- ============ TRADEOFFS ============ -->
-<h2>Tradeoffs</h2>
-<div class="tradeoff-grid">
-<div class="pro">
-<h4>✅ MySQL + Vitess</h4>
-<ul>
-<li>Proven reliability — MySQL is battle-tested for ACID transactions</li>
-<li>Rich query capabilities — JOINs, subqueries, complex predicates</li>
-<li>Vitess provides horizontal scaling without application changes</li>
-</ul>
-</div>
-<div class="con">
-<h4>❌ MySQL + Vitess</h4>
-<ul>
-<li>Cross-shard queries are expensive (scatter-gather through vtgate)</li>
-<li>Schema changes require careful online DDL management</li>
-<li>Write amplification from JSON columns (reactions, blocks, files)</li>
-</ul>
-</div>
-<div class="pro">
-<h4>✅ Channel-Based Model (vs. DM-First)</h4>
-<ul>
-<li>Transparent communication — reduces information silos</li>
-<li>Searchable organizational knowledge base</li>
-<li>Easier onboarding — new members can read channel history</li>
-</ul>
-</div>
-<div class="con">
-<h4>❌ Channel-Based Model</h4>
-<ul>
-<li>Channel sprawl — large orgs have thousands of channels (discovery problem)</li>
-<li>Information overload — users in many channels face notification fatigue</li>
-<li>Context switching cost — managing multiple concurrent conversations</li>
+  <li><strong>Daily Active Users:</strong> 20M</li>
+  <li><strong>Concurrent connections:</strong> 10M (50% of DAU online at any time)</li>
+  <li><strong>Messages/day:</strong> 1B (50 messages/user/day average)</li>
+  <li><strong>Messages/second (peak):</strong> ~30K (assuming 2.5x peak-to-average ratio)</li>
+  <li><strong>Average message size:</strong> 500 bytes</li>
+  <li><strong>Daily message storage:</strong> 1B × 500B = 500 GB/day → 182 TB/year</li>
+  <li><strong>File uploads/day:</strong> 50M (2.5 files/user/day)</li>
+  <li><strong>Average file size:</strong> 2 MB → 100 TB/day in Object Storage</li>
+  <li><strong>WebSocket Servers:</strong> 10M connections / 100K per server = 100 servers</li>
+  <li><strong>Pub/Sub throughput:</strong> 30K messages/sec × average 50 channel members = 1.5M fan-out events/sec</li>
 </ul>
 </div>
 </div>
 
-<!-- ============ ALTERNATIVES ============ -->
-<h2>Alternative Approaches</h2>
-<div class="grid">
+<!-- ================================================================== -->
+<h2 id="tradeoffs">16. Tradeoffs &amp; Deep Dives</h2>
+<!-- ================================================================== -->
+
+<h3>Fan-Out on Write vs. Fan-Out on Read</h3>
 <div class="card">
-<h4>NoSQL (Cassandra/DynamoDB)</h4>
-<p>Wide-column store for messages — partition by channel_id, sort by timestamp. Infinite horizontal scale, no cross-partition queries needed for messaging. But loses JOIN capability, complex consistency model, and Slack's existing MySQL expertise would be wasted.</p>
-</div>
-<div class="card">
-<h4>CRDT-Based (Linear Chat)</h4>
-<p>Conflict-free data types for offline-first messaging. Each client maintains local state, syncs via CRDT merge. Enables true offline mode and reduces server dependency. But adds complexity, larger message metadata, and challenges with message ordering guarantees.</p>
-</div>
+<p><strong>Chosen: Fan-out on Write</strong> — When a message is sent, it is pushed in real time to all connected recipients via Pub/Sub → WebSocket.</p>
+<p><strong>Tradeoff:</strong></p>
+<ul>
+  <li><strong>Pro:</strong> Ultra-low latency for message delivery (recipients see messages instantly). Simple client logic (just listen for incoming messages).</li>
+  <li><strong>Con:</strong> Write amplification for large channels. A message in a 10,000-member channel generates 10,000 delivery events.</li>
+</ul>
+<p><strong>Mitigation:</strong> For very large channels (>500 members), use a hybrid approach: push to the first ~500 online members via fan-out on write, and have remaining members fetch via fan-out on read (pull when they open the channel). Slack's typical workspace channels are small enough (&lt;100 members) that fan-out on write is efficient.</p>
 </div>
 
-<!-- ============ ADDITIONAL INFO ============ -->
-<h2>Additional Information</h2>
+<h3>Message Ordering</h3>
 <div class="card">
+<p><strong>Strategy:</strong> Server-assigned timestamps + per-channel monotonically increasing sequence numbers. The Message Service holds a per-channel counter (stored atomically in the NoSQL DB using conditional writes / compare-and-swap).</p>
+<p><strong>Why not Lamport timestamps / vector clocks?</strong> Lamport timestamps are needed for distributed systems without a central authority. Slack uses a centralized Message Service that assigns sequence numbers, so a simpler approach works. If the Message Service were distributed across regions, vector clocks or Hybrid Logical Clocks (HLC) would be needed.</p>
+<p><strong>Tradeoff:</strong> Simplicity and strong ordering within a channel vs. potential bottleneck if the sequence number assignment becomes a hot spot. Mitigated by partitioning the Message Service by channel_id ranges.</p>
+</div>
+
+<h3>Denormalized Sender Info on Messages</h3>
+<div class="card">
+<p><strong>Chosen:</strong> Store <code>sender_display_name</code> and <code>sender_avatar_url</code> directly on each message document.</p>
+<p><strong>Pro:</strong> Loading message history requires zero additional lookups — all display data is self-contained in each message. At 1B messages/day, avoiding N user profile lookups per page of messages saves enormous read amplification.</p>
+<p><strong>Con:</strong> When a user changes their display name or avatar, historical messages show the old name/avatar. Data storage is slightly increased.</p>
+<p><strong>Mitigation:</strong> Client can optionally fetch fresh user profiles for visible messages on screen and overlay the latest name/avatar. This is done lazily and doesn't block rendering. Alternatively, an async job can update recent messages (last 30 days) when a profile changes.</p>
+</div>
+
+<h3>SQL for Relational Data vs. NoSQL for Messages</h3>
+<div class="card">
+<p><strong>Why not all-SQL?</strong> Messages are the highest-volume data by far (billions/day). SQL databases require vertical scaling for write throughput, and horizontal sharding for SQL is complex (cross-shard transactions, rebalancing). NoSQL wide-column stores are designed for exactly this workload: high write volume, simple key-value/range access patterns, automatic horizontal sharding.</p>
+<p><strong>Why not all-NoSQL?</strong> User, workspace, and channel data is inherently relational (many-to-many relationships, foreign key constraints). These tables benefit from JOIN operations, ACID transactions (e.g., atomically adding a user to a workspace and channels), and the rich query capabilities of SQL. The volume is low enough that SQL handles it well.</p>
+</div>
+
+<h3>Ephemeral Presence vs. Persisted Presence</h3>
+<div class="card">
+<p><strong>Chosen:</strong> Presence is stored ONLY in cache (ephemeral). Not persisted to a database.</p>
+<p><strong>Pro:</strong> Eliminates enormous write load (20M users × heartbeat every 10s = 2M writes/sec just for presence). Cache is the right tool for this — fast, in-memory, supports TTL natively.</p>
+<p><strong>Con:</strong> If a cache node fails, all users on that shard temporarily appear offline until their next heartbeat (within 10 seconds). No historical "last seen" data is stored.</p>
+<p><strong>Tradeoff:</strong> We accept this brief inconsistency in exchange for massive write reduction. "Last seen" can be approximated by storing a separate <code>last_active_at</code> timestamp in the SQL Users table, updated less frequently (e.g., every 5 minutes via batched writes).</p>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="alternatives">17. Alternative Approaches</h2>
+<!-- ================================================================== -->
+
+<div class="card alt">
+<h4>Alternative 1: XMPP-Based Architecture</h4>
+<p><strong>Description:</strong> Use the XMPP (Extensible Messaging and Presence Protocol) as the foundation, which was designed specifically for instant messaging and presence. Servers would communicate via XMPP's federation model.</p>
+<p><strong>Why not chosen:</strong></p>
 <ul>
-<li><strong>Slack Connect:</strong> Cross-organization channels — two companies share a channel without guest accounts. Each org's data stays on their shard; messages routed cross-org via federation layer. Requires admin approval on both sides.</li>
-<li><strong>Huddles:</strong> Lightweight audio (and optional video) calls within channels/DMs — WebRTC-based with Janus SFU. Always-on ambient audio for remote pair programming. Lower ceremony than scheduled meetings.</li>
-<li><strong>Canvas:</strong> Rich document editor within Slack — collaborative notes with formatting, checklists, embedded messages. Backed by Quill.js editor with custom OT (operational transformation) for real-time co-editing.</li>
-<li><strong>Slack AI:</strong> Search answers (summarize search results), channel recaps (catch up on missed messages), thread summaries. Powered by Anthropic Claude and OpenAI models; data stays within Slack's infrastructure (not used for training).</li>
-<li><strong>Rate Limiting:</strong> Web API: tier-based — Tier 1: 1 req/sec, Tier 2: 20 req/min, Tier 3: 50 req/min, Tier 4: 100 req/min. Events API: 30K events/hour per app. Rate limit headers (X-RateLimit-Remaining) enable client-side throttling.</li>
+  <li>XMPP uses XML, which has higher parsing overhead compared to JSON over WebSockets.</li>
+  <li>XMPP's protocol is rigid and prescriptive, making it harder to implement custom features (threads, reactions, app integrations) without protocol extensions.</li>
+  <li>Modern web/mobile clients are better served by WebSocket + REST APIs, which are native to the web platform.</li>
+  <li>XMPP's federation model adds complexity that isn't needed for a centralized SaaS product like Slack.</li>
 </ul>
 </div>
 
+<div class="card alt">
+<h4>Alternative 2: Polling / Long Polling Instead of WebSockets</h4>
+<p><strong>Description:</strong> Clients periodically poll the server for new messages (short polling) or hold open an HTTP connection waiting for new data (long polling).</p>
+<p><strong>Why not chosen:</strong></p>
+<ul>
+  <li><strong>Short polling:</strong> Wastes bandwidth and server resources with constant requests. At 20M users polling every 1 second, that's 20M HTTP requests/second just for checking messages — vastly more expensive than persistent WebSocket connections.</li>
+  <li><strong>Long polling:</strong> Better than short polling but still creates a new HTTP connection for each message cycle. Higher latency (the response-reconnect cycle adds delay). Doesn't support server push of multiple rapid messages efficiently.</li>
+  <li>WebSockets are the standard for modern real-time applications and are supported by all major platforms.</li>
+</ul>
+</div>
+
+<div class="card alt">
+<h4>Alternative 3: All-SQL Architecture (Single Database Type)</h4>
+<p><strong>Description:</strong> Use SQL for everything, including messages. Shard the messages table using application-level sharding.</p>
+<p><strong>Why not chosen:</strong></p>
+<ul>
+  <li>SQL databases are not optimized for the write-heavy, append-only workload of chat messages. NoSQL wide-column stores use LSM-trees that are specifically designed for sequential write throughput.</li>
+  <li>Application-level sharding for SQL adds significant complexity (routing logic, cross-shard queries, rebalancing) that NoSQL handles natively.</li>
+  <li>SQL's ACID guarantees are unnecessary for messages — eventual consistency is acceptable, and strong consistency is only needed within a single channel (which maps to a single NoSQL partition).</li>
+</ul>
+</div>
+
+<div class="card alt">
+<h4>Alternative 4: gRPC for All Client-Server Communication</h4>
+<p><strong>Description:</strong> Replace REST APIs with gRPC (using Protocol Buffers) for all client-server and service-to-service communication.</p>
+<p><strong>Why not chosen for client-server:</strong></p>
+<ul>
+  <li>gRPC has limited browser support (requires gRPC-Web proxy). This adds an extra infrastructure layer.</li>
+  <li>REST is simpler to debug (human-readable JSON, standard HTTP tooling like curl, browser dev tools).</li>
+  <li>REST's widespread adoption means easier third-party integrations (bots, apps, webhooks).</li>
+</ul>
+<p><strong>Where we DO use gRPC:</strong> Internal service-to-service communication (WebSocket Server → Message Service) uses gRPC for its efficiency (binary protobuf serialization, HTTP/2 multiplexing, bidirectional streaming). This is appropriate for internal services where browser compatibility isn't a concern.</p>
+</div>
+
+<div class="card alt">
+<h4>Alternative 5: Event Sourcing for Messages</h4>
+<p><strong>Description:</strong> Instead of storing the current state of messages, store an append-only log of events (message_created, message_edited, reaction_added, etc.) and derive the current state by replaying events.</p>
+<p><strong>Why not chosen:</strong></p>
+<ul>
+  <li>Adds complexity to read paths — must replay events to reconstruct current message state, increasing read latency.</li>
+  <li>Messages are already largely append-only (edits and deletes are rare relative to creates), so the benefit of event sourcing is marginal.</li>
+  <li>Storage overhead increases (must store every intermediate event rather than just the current state).</li>
+  <li>Suitable for systems with complex business logic and audit requirements, but overkill for chat messages.</li>
+</ul>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="additional">18. Additional Information</h2>
+<!-- ================================================================== -->
+
+<h3>Security Considerations</h3>
+<div class="card">
+<ul>
+  <li><strong>Encryption in transit:</strong> All connections use TLS 1.3. WebSocket connections use WSS (WebSocket over TLS). Internal service-to-service communication uses mTLS (mutual TLS).</li>
+  <li><strong>Encryption at rest:</strong> Messages and files are encrypted at rest using AES-256. Encryption keys are managed by a Key Management Service (KMS) with key rotation.</li>
+  <li><strong>Authentication:</strong> JWT tokens with short TTL (15 minutes) + refresh tokens. WebSocket connections are authenticated during the HTTP upgrade handshake.</li>
+  <li><strong>Authorization:</strong> Every message send checks channel membership (via cache). Every API call checks workspace membership. RBAC (Role-Based Access Control) for admin operations.</li>
+  <li><strong>Rate limiting:</strong> Per-user rate limits at the API Gateway level to prevent spam and abuse.</li>
+  <li><strong>Data isolation:</strong> Workspaces are logically isolated. Cross-workspace data access is impossible by design (workspace_id is part of every query).</li>
+</ul>
+</div>
+
+<h3>Message Editing &amp; Deletion</h3>
+<div class="card">
+<p><strong>Edit:</strong> <span class="badge badge-put">PUT</span> <code>/api/v1/messages/{message_id}</code> — Updates the message content in the Messages DB and publishes a <code>message_edited</code> event to Pub/Sub. Connected clients update the message in-place and show an "(edited)" indicator. The cache entry for that channel's recent messages is also updated.</p>
+<p><strong>Delete:</strong> <span class="badge badge-delete">DELETE</span> <code>/api/v1/messages/{message_id}</code> — Soft-deletes the message (sets <code>is_deleted = true</code>) and publishes a <code>message_deleted</code> event to Pub/Sub. Connected clients remove the message or show "This message was deleted." Soft delete preserves data for compliance and audit purposes.</p>
+</div>
+
+<h3>Unread Count &amp; Read Receipts</h3>
+<div class="card">
+<p>When a user views a channel, the client sends: <span class="badge badge-post">POST</span> <code>/api/v1/channels/{channel_id}/read</code> with <code>{ last_read_message_id: "M456" }</code>. The Channel Service updates <code>Channel_Members.last_read_message_id</code> for that user in that channel.</p>
+<p>Unread count for a channel is computed as: count of messages where <code>seq_num > last_read_seq_num</code>. This can be approximated by comparing timestamps or sequence numbers without counting each individual message, by storing the latest <code>seq_num</code> on the channel and computing the difference.</p>
+</div>
+
+<h3>Thread Model</h3>
+<div class="card">
+<p>Threads in Slack are implemented as follows: when a user replies to a message, the reply's <code>thread_id</code> field is set to the parent message's <code>message_id</code>. The parent message's channel still shows a "N replies" indicator (using the denormalized <code>reply_count</code> from the Threads table). Opening a thread fetches messages from the Messages DB filtered by <code>thread_id = parent_message_id</code>, sorted by <code>created_at ASC</code>. Thread replies are also published to Pub/Sub so that users viewing the thread see replies in real time.</p>
+</div>
+
+<h3>Reactions</h3>
+<div class="card">
+<p><span class="badge badge-post">POST</span> <code>/api/v1/messages/{message_id}/reactions</code> with <code>{ emoji: "👍" }</code></p>
+<p><span class="badge badge-delete">DELETE</span> <code>/api/v1/messages/{message_id}/reactions/{emoji}</code></p>
+<p>Reactions are stored as a MAP on the message document in the NoSQL store: <code>{ "👍": ["U1", "U2"], "❤️": ["U3"] }</code>. This denormalization avoids a separate reactions table and makes reading reactions a single document fetch (part of the message). Adding/removing a reaction uses the NoSQL store's atomic MAP update operation. A <code>reaction_added</code> or <code>reaction_removed</code> event is published to Pub/Sub for real-time updates.</p>
+</div>
+
+<h3>Bot &amp; Integration Framework</h3>
+<div class="card">
+<p>Slack supports third-party integrations via:</p>
+<ul>
+  <li><strong>Incoming Webhooks:</strong> External services send <code>HTTP POST</code> to a Slack-provided URL to post messages to a channel.</li>
+  <li><strong>Outgoing Webhooks / Event Subscriptions:</strong> Slack sends <code>HTTP POST</code> to an external URL when events occur (message posted, reaction added, etc.).</li>
+  <li><strong>Slash Commands:</strong> User types <code>/jira create ticket</code>. The command is sent to the integration's configured URL, which responds with a message to display.</li>
+  <li>All integration messages flow through the same Message Service pipeline (with the sender marked as a bot user).</li>
+</ul>
+</div>
+
+<h3>Compliance &amp; Data Retention</h3>
+<div class="card">
+<p>Enterprise workspaces may require message retention policies (e.g., delete messages older than 1 year) or compliance holds (preserve messages for legal discovery). This is implemented via a background <strong>Data Retention Service</strong> that scans the Messages DB for messages past their retention period and permanently deletes them (hard delete after soft delete + retention period). Compliance holds override retention policies for specific users or channels.</p>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="vendors">19. Vendor Section</h2>
+<!-- ================================================================== -->
+<div class="card">
+<p>The following are potential vendor options for the vendor-agnostic components in this design:</p>
+
+<table>
+<tr><th>Component</th><th>Potential Vendors</th><th>Rationale</th></tr>
+<tr>
+  <td>NoSQL (Messages DB)</td>
+  <td>Apache Cassandra, ScyllaDB, Amazon DynamoDB, Google Cloud Bigtable</td>
+  <td>All are wide-column stores optimized for high write throughput and range queries. Cassandra/ScyllaDB offer tunable consistency and linear horizontal scalability. DynamoDB and Bigtable provide managed operations.</td>
+</tr>
+<tr>
+  <td>SQL (Users, Channels, etc.)</td>
+  <td>PostgreSQL, MySQL, Amazon Aurora, CockroachDB</td>
+  <td>PostgreSQL is the most feature-rich open-source SQL database. Aurora provides managed scaling. CockroachDB offers distributed SQL for global deployments without manual sharding.</td>
+</tr>
+<tr>
+  <td>In-Memory Cache</td>
+  <td>Redis, Memcached, Amazon ElastiCache, Dragonfly</td>
+  <td>Redis is the most popular choice, supporting complex data structures (sorted sets for message lists, sets for membership, hash maps for profiles). Redis Cluster supports sharding. Dragonfly is a newer, more memory-efficient alternative.</td>
+</tr>
+<tr>
+  <td>Pub/Sub</td>
+  <td>Apache Kafka, Apache Pulsar, Redis Pub/Sub, NATS, Google Cloud Pub/Sub</td>
+  <td>Kafka provides durable, partitioned, high-throughput event streaming. Pulsar offers multi-tenancy and geo-replication. Redis Pub/Sub is simpler but lacks durability (fire-and-forget). NATS is ultra-low-latency. For Slack's scale, Kafka or Pulsar is recommended for durability and scalability.</td>
+</tr>
+<tr>
+  <td>Message Queue</td>
+  <td>RabbitMQ, Amazon SQS, Apache ActiveMQ, Redis Streams</td>
+  <td>RabbitMQ is mature and supports complex routing. SQS is fully managed with built-in dead letter queues. For notification delivery (moderate throughput, reliability needed), RabbitMQ or SQS are both suitable.</td>
+</tr>
+<tr>
+  <td>Object Storage</td>
+  <td>Amazon S3, Google Cloud Storage, Azure Blob Storage, MinIO</td>
+  <td>S3 is the de facto standard for object storage. All provide 11-nines durability, lifecycle policies, and CDN integration. MinIO is the self-hosted alternative.</td>
+</tr>
+<tr>
+  <td>CDN</td>
+  <td>Cloudflare, Amazon CloudFront, Fastly, Akamai</td>
+  <td>Cloudflare offers the broadest free tier and DDoS protection. CloudFront integrates natively with S3. Fastly provides real-time purging (useful for file updates). Akamai has the largest edge network.</td>
+</tr>
+<tr>
+  <td>Search Index</td>
+  <td>Elasticsearch, Apache Solr, OpenSearch, Typesense</td>
+  <td>Elasticsearch is the most widely adopted full-text search engine with inverted indexing, relevance ranking, and horizontal sharding. OpenSearch is the open-source fork. Typesense is a lighter alternative for smaller scale.</td>
+</tr>
+<tr>
+  <td>Load Balancer</td>
+  <td>NGINX, HAProxy, Envoy, AWS ALB/NLB, Traefik</td>
+  <td>NGINX and HAProxy are battle-tested for both L4 and L7 load balancing. Envoy is modern and designed for microservices (service mesh). AWS ALB (L7) and NLB (L4) are fully managed. For WebSocket load balancing, HAProxy and NGINX both have excellent support.</td>
+</tr>
+</table>
+</div>
+
+</div><!-- /container -->
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#611f69',
+      primaryTextColor: '#e0e0e0',
+      primaryBorderColor: '#8b3f96',
+      lineColor: '#36c5f0',
+      secondaryColor: '#1a1d27',
+      tertiaryColor: '#2a2d3a',
+      fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif'
+    },
+    flowchart: {
+      useMaxWidth: true,
+      htmlLabels: true,
+      curve: 'basis'
+    }
+  });
+</script>
 </body>
 </html>
