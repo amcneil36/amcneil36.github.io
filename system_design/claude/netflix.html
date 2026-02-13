@@ -4,484 +4,1022 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>System Design: Netflix</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true, theme:'neutral', securityLevel:'loose'});</script>
 <style>
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #e0e0e0; margin: 0; padding: 20px; line-height: 1.7; }
-  h1 { color: #e50914; font-size: 2.2em; border-bottom: 3px solid #e50914; padding-bottom: 10px; }
-  h2 { color: #ff3d47; margin-top: 40px; }
-  h3 { color: #ff6b73; }
-  h4 { color: #ff9aa0; }
-  .section { background: #1a1a1a; padding: 25px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #e50914; }
-  .subsection { background: #222; padding: 15px; border-radius: 8px; margin: 15px 0; }
-  .diagram-container { background: #1e1e1e; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; overflow-x: auto; }
-  .tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.85em; margin: 2px 4px; }
-  .tag-pk { background: #4a9eff33; color: #4a9eff; border: 1px solid #4a9eff66; }
-  .tag-fk { background: #ff4a4a33; color: #ff4a4a; border: 1px solid #ff4a4a66; }
-  .tag-idx { background: #4aff4a33; color: #4aff4a; border: 1px solid #4aff4a66; }
-  .tag-shard { background: #ffa54a33; color: #ffa54a; border: 1px solid #ffa54a66; }
-  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-  th, td { padding: 12px; text-align: left; border: 1px solid #333; }
-  th { background: #2a2a2a; color: #ff3d47; }
-  tr:nth-child(even) { background: #1a1a1a; }
-  code { background: #2a2a2a; padding: 2px 8px; border-radius: 4px; color: #ff6b73; font-family: 'Fira Code', monospace; }
-  pre { background: #1a1a1a; padding: 20px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; }
-  .example { background: #0d2818; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #4aff4a; }
-  .tradeoff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-  .tradeoff-pro { background: #0d2818; padding: 15px; border-radius: 8px; border-left: 3px solid #4aff4a; }
-  .tradeoff-con { background: #2d1018; padding: 15px; border-radius: 8px; border-left: 3px solid #ff4a4a; }
-  ul, ol { padding-left: 25px; }
-  li { margin: 6px 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; line-height:1.7; max-width:1100px; margin:40px auto; padding:0 30px; color:#1a1a2e; background:#f8f9fa; }
+  h1 { font-size:2.4em; border-bottom:4px solid #e50914; padding-bottom:12px; color:#141414; }
+  h2 { font-size:1.7em; margin-top:48px; border-left:5px solid #e50914; padding-left:14px; color:#141414; }
+  h3 { font-size:1.3em; margin-top:32px; color:#333; }
+  h4 { font-size:1.1em; margin-top:24px; color:#444; }
+  ul, ol { margin:10px 0; padding-left:28px; }
+  li { margin:6px 0; }
+  table { border-collapse:collapse; width:100%; margin:16px 0; }
+  th, td { border:1px solid #ccc; padding:10px 14px; text-align:left; }
+  th { background:#e50914; color:#fff; }
+  tr:nth-child(even) { background:#f2f2f2; }
+  code { background:#eee; padding:2px 6px; border-radius:4px; font-size:0.95em; }
+  .mermaid { background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.08); margin:20px 0; }
+  .example-box { background:#fff8e1; border-left:4px solid #ffc107; padding:16px 20px; margin:16px 0; border-radius:6px; }
+  .deep-dive { background:#e8f5e9; border-left:4px solid #4caf50; padding:16px 20px; margin:16px 0; border-radius:6px; }
+  .callout { background:#e3f2fd; border-left:4px solid #2196f3; padding:16px 20px; margin:16px 0; border-radius:6px; }
+  .warn { background:#fce4ec; border-left:4px solid #e50914; padding:16px 20px; margin:16px 0; border-radius:6px; }
+  .toc { background:#fff; padding:24px 30px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin:30px 0; }
+  .toc a { text-decoration:none; color:#e50914; }
+  .toc a:hover { text-decoration:underline; }
+  .toc ul { list-style:none; padding-left:18px; }
+  .toc > ul { padding-left:0; }
 </style>
 </head>
 <body>
 
-<h1>🎬 System Design: Netflix (Video Streaming Service)</h1>
+<h1>🎬 System Design: Netflix</h1>
 
-<div class="section">
-<h2>📋 Functional Requirements</h2>
+<div class="toc">
+<h3>Table of Contents</h3>
 <ul>
-  <li>Users can browse a personalized catalog and stream movies/shows on demand</li>
-  <li>Content is available in multiple resolutions with adaptive bitrate streaming</li>
-  <li>Users can manage profiles, watchlists, and continue watching from any device</li>
-  <li>Content ingestion pipeline processes new titles through encoding and DRM packaging</li>
+  <li><a href="#fr">1. Functional Requirements</a></li>
+  <li><a href="#nfr">2. Non-Functional Requirements</a></li>
+  <li><a href="#flow1">3. Flow 1 — Content Upload &amp; Processing</a></li>
+  <li><a href="#flow2">4. Flow 2 — Content Browsing &amp; Search</a></li>
+  <li><a href="#flow3">5. Flow 3 — Video Streaming</a></li>
+  <li><a href="#flow4">6. Flow 4 — Recommendation Generation (Offline)</a></li>
+  <li><a href="#overall">7. Overall Combined Diagram</a></li>
+  <li><a href="#schema">8. Database Schema</a></li>
+  <li><a href="#cdn-cache">9. CDN &amp; Caching Deep Dive</a></li>
+  <li><a href="#scaling">10. Scaling Considerations</a></li>
+  <li><a href="#tradeoffs">11. Tradeoffs &amp; Deep Dives</a></li>
+  <li><a href="#alternatives">12. Alternative Approaches</a></li>
+  <li><a href="#additional">13. Additional Information</a></li>
+  <li><a href="#vendors">14. Vendor Recommendations</a></li>
 </ul>
 </div>
 
-<div class="section">
-<h2>🔒 Non-Functional Requirements</h2>
-<ul>
-  <li><strong>Scale:</strong> 260M+ subscribers, 15,000+ titles, peak ~15% of global internet traffic</li>
-  <li><strong>Availability:</strong> 99.99% uptime — "Netflix is always on"</li>
-  <li><strong>Low latency:</strong> Playback start &lt;3s, zero rebuffering on stable connections</li>
-  <li><strong>Global distribution:</strong> Serve content from edge (Open Connect Appliances) in 1,000+ ISP locations</li>
-  <li><strong>Personalization:</strong> Every user sees a different homepage — ML-driven row selection, artwork, and ranking</li>
-</ul>
-</div>
-
-<!-- ============================================================ -->
-<h2>🔄 Flow 1 — Content Ingestion & Encoding</h2>
-<!-- ============================================================ -->
-
-<div class="diagram-container">
-<svg viewBox="0 0 1200 380" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="160" width="120" height="60" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="80" y="188" text-anchor="middle" fill="white" font-size="12">Content Studio</text>
-  <text x="80" y="205" text-anchor="middle" fill="white" font-size="10">(Mezzanine File)</text>
-  <line x1="140" y1="190" x2="210" y2="190" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="220" y="160" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="290" y="185" text-anchor="middle" fill="white" font-size="12">Ingestion Service</text>
-  <text x="290" y="202" text-anchor="middle" fill="white" font-size="10">(QC + Validation)</text>
-  <line x1="360" y1="190" x2="430" y2="190" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="440" y="160" width="150" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="515" y="185" text-anchor="middle" fill="white" font-size="11">Shot-Based Encoder</text>
-  <text x="515" y="202" text-anchor="middle" fill="white" font-size="10">(Per-Title Encoding)</text>
-  <line x1="590" y1="175" x2="660" y2="120" stroke="#aaa" marker-end="url(#ah1)"/>
-  <line x1="590" y1="205" x2="660" y2="260" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="670" y="90" width="150" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="745" y="113" text-anchor="middle" fill="white" font-size="11">DRM Packager</text>
-  <text x="745" y="130" text-anchor="middle" fill="white" font-size="10">(Widevine/FairPlay/PR)</text>
-  <rect x="670" y="235" width="150" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="745" y="258" text-anchor="middle" fill="white" font-size="11">Subtitle/Audio</text>
-  <text x="745" y="275" text-anchor="middle" fill="white" font-size="10">(30+ Languages)</text>
-  <line x1="820" y1="118" x2="900" y2="180" stroke="#aaa" marker-end="url(#ah1)"/>
-  <line x1="820" y1="262" x2="900" y2="195" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="910" y="160" width="150" height="60" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="985" y="185" text-anchor="middle" fill="white" font-size="11">S3 → Open Connect</text>
-  <text x="985" y="202" text-anchor="middle" fill="white" font-size="10">(CDN Distribution)</text>
-</svg>
-</div>
-
-<div class="section">
-<h3>Step-by-Step</h3>
+<!-- ============================= SECTION 1 ============================= -->
+<h2 id="fr">1. Functional Requirements</h2>
 <ol>
-  <li><strong>Mezzanine delivery:</strong> Studios deliver high-quality master files (ProRes 4444, 4K/HDR, ~100GB for a movie) via Aspera or dedicated upload portal</li>
-  <li><strong>Quality Control:</strong> Automated checks — audio sync, color space validation, black frame detection, loudness normalization (EBU R128 standard). Issues flagged for manual review</li>
-  <li><strong>Per-Title Encoding:</strong> Netflix's innovation — analyzes video complexity per-shot. Simple scenes (dialogue) get lower bitrate; complex scenes (action, fire) get higher. Optimizes unique bitrate ladder per title. A cartoon needs different encoding profile than Game of Thrones</li>
-  <li><strong>Shot-based encoding:</strong> Video split at scene boundaries (shot detection ML). Each shot encoded independently at optimal quality, then concatenated. Results in 20-30% bandwidth savings vs fixed-ladder encoding</li>
-  <li><strong>DRM packaging:</strong> Same content encrypted with multiple DRM systems — CENC (Common Encryption) with Widevine (Android/Chrome), FairPlay (Apple), PlayReady (Windows/Xbox). Single encrypted file, multiple license servers</li>
-  <li><strong>Multi-language:</strong> 30+ subtitle languages, 20+ audio tracks, audio description tracks. Each a separate stream selectable by player</li>
-  <li><strong>Open Connect distribution:</strong> Encoded content pushed to S3 → replicated to Open Connect Appliances (OCAs) in ISP data centers worldwide during off-peak hours</li>
+  <li><strong>Content Upload &amp; Processing</strong> — Content providers / studio admins can upload raw video files. The system transcodes them into multiple resolutions and bitrates.</li>
+  <li><strong>Content Browsing</strong> — Users can browse a personalized homepage of content organized by genre, trending, "continue watching," etc.</li>
+  <li><strong>Content Search</strong> — Users can search for movies and TV shows by title, genre, actor, director, etc.</li>
+  <li><strong>Video Streaming</strong> — Users can play video with adaptive bitrate streaming. Playback should seamlessly adjust quality based on network conditions.</li>
+  <li><strong>Resume Playback ("Continue Watching")</strong> — Users can resume watching from where they previously stopped.</li>
+  <li><strong>User Profiles</strong> — A single account can have multiple profiles (e.g., family members), each with their own watch history and preferences.</li>
+  <li><strong>Ratings &amp; Reviews</strong> — Users can rate content (thumbs up / thumbs down or star rating).</li>
+  <li><strong>Personalized Recommendations</strong> — The system recommends content based on viewing history, ratings, and behavior.</li>
 </ol>
 
-<div class="example">
-<strong>Example:</strong> "Stranger Things S5E1" delivered as 100GB ProRes 4K HDR mezzanine → QC passes → Per-title analysis: episode has dark scenes (Upside Down) needing higher bitrate + bright dialogue scenes → Custom bitrate ladder generated → Encoded into 12 renditions (from 235kbps mobile to 16Mbps 4K HDR) → DRM encrypted → 34 subtitle tracks + 24 audio tracks → Pushed to 17,000+ OCA servers in 6,000+ ISP locations → Available globally at midnight local time for each region
-</div>
-</div>
-
-<div class="section">
-<h3>🔍 Component Deep Dives — Ingestion</h3>
-
-<div class="subsection">
-<h4>Per-Title Encoding (Netflix Innovation)</h4>
-<p><strong>Problem:</strong> Fixed bitrate ladder wastes bandwidth. A simple animation at 4K needs ~5Mbps; a fast-action sports scene needs 15Mbps at the same quality (VMAF score)</p>
-<p><strong>Solution:</strong> For each title, run multiple encodes at different bitrate/resolution combinations. Plot quality (VMAF) vs bitrate for each resolution. Select the Pareto-optimal ladder — convex hull of quality-bitrate tradeoff</p>
-<p><strong>VMAF (Video Multi-Method Assessment Fusion):</strong> Netflix's perceptual quality metric. Scores 0-100 (target: VMAF ≥ 93 for HD, ≥ 80 for mobile). Combines spatial detail, temporal complexity, and human-calibrated models</p>
-</div>
-
-<div class="subsection">
-<h4>Open Connect CDN</h4>
-<p><strong>Architecture:</strong> Netflix builds custom hardware appliances (OCA boxes — each with 100-200TB storage, 40-100 Gbps NICs) and deploys them inside ISP data centers for free. ISPs benefit from reduced transit traffic; Netflix benefits from lower latency and bandwidth costs</p>
-<p><strong>Content placement algorithm:</strong> Popular titles cached on all OCAs. Regional content (Bollywood in India, anime in Japan) cached on regional OCAs. Long-tail content served from regional hubs or AWS origin</p>
-<p><strong>Scale:</strong> 17,000+ OCA servers across 6,000+ ISP locations in 175+ countries. Serves ~95% of Netflix traffic directly from ISP networks</p>
-</div>
-</div>
-
-<!-- ============================================================ -->
-<h2>🔄 Flow 2 — Video Playback (Streaming)</h2>
-<!-- ============================================================ -->
-
-<div class="diagram-container">
-<svg viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="170" width="110" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="75" y="198" text-anchor="middle" fill="white" font-size="13">Device</text>
-  <text x="75" y="215" text-anchor="middle" fill="white" font-size="10">(Netflix App)</text>
-  <line x1="130" y1="190" x2="200" y2="190" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="210" y="170" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="280" y="195" text-anchor="middle" fill="white" font-size="12">Playback Service</text>
-  <text x="280" y="212" text-anchor="middle" fill="white" font-size="10">(License + Manifest)</text>
-  <line x1="350" y1="180" x2="420" y2="120" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="350" y1="200" x2="420" y2="260" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="430" y="90" width="150" height="55" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="505" y="113" text-anchor="middle" fill="white" font-size="11">DRM License Server</text>
-  <text x="505" y="130" text-anchor="middle" fill="white" font-size="10">(Decrypt Keys)</text>
-  <rect x="430" y="235" width="150" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="505" y="258" text-anchor="middle" fill="white" font-size="11">Steering Service</text>
-  <text x="505" y="275" text-anchor="middle" fill="white" font-size="10">(Best OCA Selection)</text>
-  <line x1="580" y1="118" x2="650" y2="188" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="580" y1="262" x2="650" y2="195" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="660" y="170" width="140" height="60" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="730" y="195" text-anchor="middle" fill="white" font-size="12">Open Connect OCA</text>
-  <text x="730" y="212" text-anchor="middle" fill="white" font-size="10">(ISP Edge Cache)</text>
-  <line x1="800" y1="200" x2="870" y2="200" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="880" y="170" width="120" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="940" y="195" text-anchor="middle" fill="white" font-size="12">Playback</text>
-  <text x="940" y="212" text-anchor="middle" fill="white" font-size="10">(Adaptive ABR)</text>
-</svg>
-</div>
-
-<div class="section">
-<h3>Step-by-Step</h3>
+<!-- ============================= SECTION 2 ============================= -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
 <ol>
-  <li><strong>Play button pressed:</strong> Client calls Playback Service: <code>POST /api/play { title_id, profile_id, device_type, network_info }</code></li>
-  <li><strong>DRM License:</strong> Playback Service issues DRM license — client must prove device integrity (Widevine L1 for HD, L3 for SD-only). License contains decryption keys bound to device, expires in 24-48 hours</li>
-  <li><strong>Manifest generation:</strong> Dynamic manifest created for this device — includes only supported resolutions/codecs (4K HDR only if device supports it, mobile gets lower bitrate tiers)</li>
-  <li><strong>OCA steering:</strong> Steering Service selects optimal OCA based on: (1) user's ISP, (2) OCA health/load, (3) content availability. Returns ranked list of OCA URLs. Uses BGP routing data + probe measurements</li>
-  <li><strong>Content delivery:</strong> Client requests segments from selected OCA via HTTPS. Adaptive bitrate algorithm (Netflix's custom ABR) adjusts quality based on buffer + throughput + device capabilities</li>
-  <li><strong>Quality of Experience (QoE) reporting:</strong> Client reports rebuffer events, bitrate switches, startup time back to Netflix → feeds into A/B tests for algorithm improvements</li>
+  <li><strong>High Availability</strong> — 99.99% uptime. Users should be able to stream content at all times.</li>
+  <li><strong>Low Latency</strong> — Video playback should begin within 2 seconds of pressing "Play." Homepage and search should respond in &lt;200 ms.</li>
+  <li><strong>Massive Scale</strong> — Support 200M+ subscribers, with 10M+ concurrent streams at peak.</li>
+  <li><strong>Global Reach</strong> — Content should be available worldwide with low latency via edge infrastructure.</li>
+  <li><strong>Adaptive Quality</strong> — Streaming must dynamically adapt to varying network conditions without buffering.</li>
+  <li><strong>Eventual Consistency (acceptable)</strong> — Watch history, recommendations, and like counts can be eventually consistent. Billing and account data must be strongly consistent.</li>
+  <li><strong>Fault Tolerance</strong> — No single point of failure. The system should gracefully degrade (e.g., serve generic recommendations if the ML pipeline is down).</li>
+  <li><strong>Data Durability</strong> — Video content and user data must be durable and replicated across regions.</li>
+  <li><strong>Security</strong> — Content must be protected with DRM. User credentials and payment data must be encrypted.</li>
 </ol>
 
-<div class="example">
-<strong>Example:</strong> User plays "Stranger Things" on Samsung TV → Playback Service: device supports Widevine L1 (4K HDR), issues license → Steering selects OCA at Comcast San Francisco PoP → Manifest: 12 video renditions (235kbps–16Mbps) + H.265 codec for this TV → ABR starts at 5Mbps, ramps to 16Mbps 4K HDR within 15 seconds → All traffic stays within Comcast's network (OCA in their datacenter) → Zero buffering, startup in 1.2s
-</div>
+<!-- ============================= SECTION 3 — FLOW 1 ============================= -->
+<h2 id="flow1">3. Flow 1 — Content Upload &amp; Processing</h2>
+
+<div class="mermaid">
+graph LR
+    CP["🎬 Content Provider"] -->|"HTTP POST /upload\n(multipart)"| AG["API Gateway\n+ Load Balancer"]
+    AG --> US["Upload Service"]
+    US -->|"Store raw file"| OS_RAW[("Object Storage\n(Raw Video)")]
+    US -->|"Enqueue transcode job"| MQ["Message Queue"]
+    MQ --> TS["Transcoding Service\n(Worker Pool)"]
+    TS -->|"Read raw file"| OS_RAW
+    TS -->|"Write transcoded\nchunks + manifests"| OS_PROC[("Object Storage\n(Processed Video)")]
+    TS -->|"Update metadata"| MS["Metadata Service"]
+    MS --> CDB[("Content DB\n(SQL)")]
+    OS_PROC -->|"Push to edge"| CDN["CDN\n(Edge Servers)"]
 </div>
 
-<div class="section">
-<h3>🔍 Component Deep Dives — Streaming</h3>
+<h3>Examples</h3>
 
-<div class="subsection">
-<h4>Netflix ABR Algorithm</h4>
-<p>Netflix developed custom ABR that outperforms standard throughput-based or buffer-based approaches:</p>
+<div class="example-box">
+<strong>Example 1 — New Movie Upload:</strong><br>
+A studio admin at "Lionsgate" uploads a 4K raw movie file (40 GB) via the admin portal. This triggers an <code>HTTP POST /upload</code> to the API Gateway, which routes it to the <strong>Upload Service</strong>. The Upload Service stores the raw file in <strong>Object Storage (Raw)</strong> and enqueues a transcode job message on the <strong>Message Queue</strong> with the content ID and storage path. A <strong>Transcoding Service</strong> worker picks up the message, reads the raw file, and produces multiple output renditions: 240p, 360p, 480p, 720p, 1080p, 4K — each at multiple bitrates. Each rendition is split into 4-second HLS chunks and an HLS manifest (<code>.m3u8</code>) is generated. All chunks and manifests are written to <strong>Object Storage (Processed)</strong>. The Transcoding Service then calls the <strong>Metadata Service</strong> via <code>HTTP POST /metadata</code> to store the content's title, genre, duration, available resolutions, and manifest URLs in the <strong>Content DB</strong>. Finally, the processed video chunks are pushed to <strong>CDN</strong> edge servers worldwide.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Transcoding Failure &amp; Retry:</strong><br>
+A content provider uploads a corrupted video file. The <strong>Upload Service</strong> successfully stores the raw file and enqueues the job. When the <strong>Transcoding Service</strong> worker picks up the message and attempts to transcode, it fails. The message is <em>not</em> acknowledged, so the <strong>Message Queue</strong> re-delivers it after the visibility timeout. After 3 retries, the message is moved to a <strong>Dead Letter Queue</strong>. An alert is generated for the operations team, and the content provider is notified that the upload failed validation.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<div class="deep-dive">
+<h4>API Gateway + Load Balancer</h4>
 <ul>
-  <li><strong>Throughput prediction:</strong> Harmonic mean of recent segment download speeds (more conservative than arithmetic mean)</li>
-  <li><strong>Buffer reservoir:</strong> Maintains target buffer of 30-60s. Quality changes are gradual — no jumping from 4K to 240p</li>
-  <li><strong>Startup optimization:</strong> Start with lower quality for fast first-frame. Ramp up aggressively once buffer > 10s</li>
-  <li><strong>Device-aware:</strong> Phone on cellular? Cap at 720p by default. 4K TV on fiber? Go to max immediately</li>
+  <li><strong>Protocol:</strong> HTTPS (TLS terminated here)</li>
+  <li><strong>Responsibilities:</strong> Authentication, rate limiting, request routing, SSL termination</li>
+  <li><strong>Load balancing strategy:</strong> Round-robin or least-connections across service instances</li>
+  <li><strong>Input:</strong> Client HTTP requests</li>
+  <li><strong>Output:</strong> Routed request to the appropriate downstream microservice</li>
 </ul>
 </div>
 
-<div class="subsection">
-<h4>DRM — Multi-DRM Strategy</h4>
-<p><strong>CENC (Common Encryption):</strong> Content encrypted once, multiple DRM license servers can decrypt. Single file serves all platforms</p>
-<table>
-<tr><th>DRM System</th><th>Platform</th><th>Max Quality</th></tr>
-<tr><td>Widevine L1</td><td>Android, Chrome (hardware)</td><td>4K HDR</td></tr>
-<tr><td>Widevine L3</td><td>Chrome (software)</td><td>720p</td></tr>
-<tr><td>FairPlay</td><td>iOS, Safari, Apple TV</td><td>4K HDR</td></tr>
-<tr><td>PlayReady SL3000</td><td>Windows, Xbox, Edge</td><td>4K HDR</td></tr>
-</table>
-<p><strong>Why hardware DRM matters:</strong> Studios mandate hardware-backed DRM (L1/SL3000) for 4K/HDR content — prevents screen capture tools from recording in high quality</p>
-</div>
-</div>
-
-<!-- ============================================================ -->
-<h2>🔄 Flow 3 — Personalized Homepage (Recommendation)</h2>
-<!-- ============================================================ -->
-
-<div class="diagram-container">
-<svg viewBox="0 0 1000 320" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="130" width="110" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="75" y="165" text-anchor="middle" fill="white" font-size="14">User</text>
-  <line x1="130" y1="160" x2="200" y2="160" stroke="#aaa" marker-end="url(#ah3)"/>
-  <rect x="210" y="130" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="280" y="155" text-anchor="middle" fill="white" font-size="12">Homepage Service</text>
-  <text x="280" y="172" text-anchor="middle" fill="white" font-size="10">(Row Assembly)</text>
-  <line x1="350" y1="145" x2="420" y2="100" stroke="#aaa" marker-end="url(#ah3)"/>
-  <line x1="350" y1="160" x2="420" y2="160" stroke="#aaa" marker-end="url(#ah3)"/>
-  <line x1="350" y1="175" x2="420" y2="220" stroke="#aaa" marker-end="url(#ah3)"/>
-  <rect x="430" y="70" width="160" height="55" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="510" y="93" text-anchor="middle" fill="white" font-size="11">Row Selection Model</text>
-  <text x="510" y="110" text-anchor="middle" fill="white" font-size="10">(Which rows to show)</text>
-  <rect x="430" y="135" width="160" height="55" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="510" y="158" text-anchor="middle" fill="white" font-size="11">Item Ranking Model</text>
-  <text x="510" y="175" text-anchor="middle" fill="white" font-size="10">(Order within row)</text>
-  <rect x="430" y="200" width="160" height="55" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="510" y="223" text-anchor="middle" fill="white" font-size="11">Artwork Selection</text>
-  <text x="510" y="240" text-anchor="middle" fill="white" font-size="10">(Personalized thumbnails)</text>
-  <line x1="590" y1="97" x2="670" y2="155" stroke="#aaa" marker-end="url(#ah3)"/>
-  <line x1="590" y1="162" x2="670" y2="160" stroke="#aaa" marker-end="url(#ah3)"/>
-  <line x1="590" y1="227" x2="670" y2="165" stroke="#aaa" marker-end="url(#ah3)"/>
-  <rect x="680" y="130" width="150" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="755" y="155" text-anchor="middle" fill="white" font-size="12">Assembled Page</text>
-  <text x="755" y="172" text-anchor="middle" fill="white" font-size="10">(~40 rows, ranked)</text>
-</svg>
-</div>
-
-<div class="section">
-<h3>Step-by-Step</h3>
-<ol>
-  <li><strong>Homepage request:</strong> User opens Netflix → <code>GET /api/homepage?profile_id=prof_123</code></li>
-  <li><strong>Row Selection:</strong> From ~10K possible rows (genres, "Because you watched X", "Trending", "New Releases"), ML model selects ~40 most relevant rows for this user. Features: watch history, ratings, time of day, day of week, device type</li>
-  <li><strong>Item Ranking:</strong> Within each row, rank ~75 titles. Candidate generation (collaborative filtering) → ranking model (probability of play × predicted engagement). Two-tower architecture: user tower (history embeddings) + item tower (content features)</li>
-  <li><strong>Artwork Selection:</strong> For each title, Netflix has 9-15 different artwork variants. ML selects which image to show this user. If user watches a lot of comedies → show comedian's face. If user watches action → show explosion scene. Personalized per-user artwork increases CTR by ~20%</li>
-  <li><strong>Page assembly:</strong> Combine rows + ranked items + personalized artwork → single response. Pre-computed during off-peak, cached per profile with 5-min TTL. Real-time signals (continue watching, new episodes) injected at request time</li>
-</ol>
-
-<div class="example">
-<strong>Example:</strong> User who watches Korean dramas + sci-fi → Row Selection: "Korean Dramas", "Because You Watched Squid Game", "Trending Now", "Sci-Fi Adventures", "Continue Watching" (top 5 of 40 rows) → Within "Sci-Fi": "3 Body Problem" ranked #1 (new, matches taste) → Artwork for "3 Body Problem" shows the VR headset scene (sci-fi interest) vs romance couple scene (for romance fans). Every user sees a different Netflix homepage.
-</div>
-</div>
-
-<!-- ============================================================ -->
-<h2>🏗️ Combined Architecture</h2>
-<!-- ============================================================ -->
-
-<div class="diagram-container">
-<svg viewBox="0 0 1200 650" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ahc" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <!-- Control Plane (AWS) -->
-  <text x="500" y="25" fill="#ff3d47" font-size="14" font-weight="bold">Control Plane (AWS)</text>
-  <rect x="40" y="40" width="900" height="320" rx="15" fill="none" stroke="#ff3d4755" stroke-width="1" stroke-dasharray="5,5"/>
-  <!-- Clients -->
-  <rect x="60" y="60" width="110" height="40" rx="8" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="115" y="85" text-anchor="middle" fill="white" font-size="11">Netflix Apps</text>
-  <line x1="170" y1="80" x2="240" y2="80" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="250" y="55" width="130" height="50" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="315" y="78" text-anchor="middle" fill="white" font-size="11">Zuul (API Gateway)</text>
-  <text x="315" y="92" text-anchor="middle" fill="white" font-size="9">(Routing + Auth)</text>
-  <!-- Services -->
-  <line x1="380" y1="70" x2="440" y2="70" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="380" y1="80" x2="440" y2="140" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="380" y1="90" x2="440" y2="210" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="380" y1="95" x2="440" y2="280" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="450" y="45" width="140" height="45" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="520" y="72" text-anchor="middle" fill="white" font-size="10">Homepage / Recommendation</text>
-  <rect x="450" y="115" width="140" height="45" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="520" y="142" text-anchor="middle" fill="white" font-size="10">Playback Service</text>
-  <rect x="450" y="185" width="140" height="45" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="520" y="212" text-anchor="middle" fill="white" font-size="10">Search Service</text>
-  <rect x="450" y="255" width="140" height="45" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="520" y="282" text-anchor="middle" fill="white" font-size="10">User / Profile Service</text>
-  <!-- Data stores -->
-  <line x1="590" y1="68" x2="660" y2="68" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="590" y1="138" x2="660" y2="138" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="590" y1="208" x2="660" y2="208" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="590" y1="278" x2="660" y2="278" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="670" y="45" width="130" height="45" rx="8" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
-  <text x="735" y="72" text-anchor="middle" fill="white" font-size="10">Cassandra (Catalog)</text>
-  <rect x="670" y="115" width="130" height="45" rx="8" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="735" y="142" text-anchor="middle" fill="white" font-size="10">DRM License Store</text>
-  <rect x="670" y="185" width="130" height="45" rx="8" fill="#8a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="735" y="212" text-anchor="middle" fill="white" font-size="10">Elasticsearch</text>
-  <rect x="670" y="255" width="130" height="45" rx="8" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
-  <text x="735" y="282" text-anchor="middle" fill="white" font-size="10">EVCache (Memcached)</text>
-  <!-- Data Plane (Open Connect) -->
-  <text x="500" y="395" fill="#ff3d47" font-size="14" font-weight="bold">Data Plane (Open Connect CDN)</text>
-  <rect x="40" y="410" width="900" height="120" rx="15" fill="none" stroke="#ff3d4755" stroke-width="1" stroke-dasharray="5,5"/>
-  <rect x="80" y="435" width="140" height="50" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="150" y="465" text-anchor="middle" fill="white" font-size="11">OCA (ISP A)</text>
-  <rect x="260" y="435" width="140" height="50" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="330" y="465" text-anchor="middle" fill="white" font-size="11">OCA (ISP B)</text>
-  <rect x="440" y="435" width="140" height="50" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="510" y="465" text-anchor="middle" fill="white" font-size="11">OCA (ISP C)</text>
-  <rect x="620" y="435" width="140" height="50" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="690" y="465" text-anchor="middle" fill="white" font-size="11">OCA Hub (Region)</text>
-  <rect x="800" y="435" width="130" height="50" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="865" y="465" text-anchor="middle" fill="white" font-size="11">S3 Origin (AWS)</text>
-  <!-- Arrows from control to data -->
-  <line x1="520" y1="160" x2="200" y2="430" stroke="#4a9eff" stroke-dasharray="5,5" marker-end="url(#ahc)"/>
-  <text x="300" y="310" fill="#4a9eff" font-size="10">Steering → Closest OCA</text>
-</svg>
-</div>
-
-<div class="example">
-<strong>End-to-End:</strong> User opens Netflix on TV → Zuul routes to Homepage service → ML selects 40 personalized rows with ranked titles + personalized artwork → User selects "Stranger Things" → Playback Service: DRM license issued (Widevine L1), steering selects OCA in user's ISP → TV's ABR downloads encrypted segments from OCA 2ms away → DRM module decrypts in hardware → 4K HDR playback starts in 1.5s → Viewing event → Kafka → updates recommendation models + "Continue Watching" position. Control plane (AWS) handles all API calls; data plane (Open Connect) handles all video bytes.
-</div>
-
-<!-- ============================================================ -->
-<h2>🗄️ Database Schema</h2>
-<!-- ============================================================ -->
-
-<div class="section">
-<h3>Cassandra — Content Catalog + User Data</h3>
-<pre>
-Table: titles
-Partition Key: title_id
-Clustering: locale
-  - title_id: UUID
-  - locale: text (en-US, ko-KR, etc.)
-  - name: text
-  - synopsis: text
-  - release_year: int
-  - maturity_rating: text
-  - genres: set&lt;text&gt;
-  - cast: list&lt;text&gt;
-  - duration_minutes: int
-  - type: text (movie / series)
-
-Table: viewing_history
-Partition Key: profile_id
-Clustering: viewed_at DESC
-  - profile_id: UUID
-  - viewed_at: timestamp
-  - title_id: UUID
-  - watch_duration: int
-  - position_seconds: int  -- resume position
-  - device_type: text
-
-Table: my_list (Watchlist)
-Partition Key: profile_id
-Clustering: added_at DESC
-  - profile_id: UUID
-  - added_at: timestamp
-  - title_id: UUID
-</pre>
-
-<h3>MySQL — Account/Billing (ACID needed)</h3>
-<table>
-<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-<tr><td>account_id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>email</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">UNIQUE</span></td></tr>
-<tr><td>plan_type</td><td>VARCHAR(20)</td><td>basic / standard / premium</td></tr>
-<tr><td>billing_status</td><td>VARCHAR(20)</td><td>active / past_due / cancelled</td></tr>
-<tr><td>payment_method_token</td><td>VARCHAR(64)</td><td>Tokenized card</td></tr>
-<tr><td>next_billing_date</td><td>DATE</td><td></td></tr>
-<tr><td>country</td><td>VARCHAR(3)</td><td>Content licensing varies by country</td></tr>
-</table>
-
-<h3>EVCache (Memcached) — Hot Data</h3>
-<pre>
-# User's homepage (pre-computed)
-Key: homepage:{profile_id}
-Value: { rows: [...], ttl: 300 }
-
-# Title metadata (high-traffic)
-Key: title:{title_id}:{locale}
-Value: { name, synopsis, artwork_urls, ratings }
-
-# Viewing position (continue watching)
-Key: position:{profile_id}:{title_id}
-Value: { seconds: 1842, updated_at: ... }
-</pre>
-
-<h3>Sharding</h3>
-<p><strong>Cassandra:</strong> Consistent hashing on partition key. Viewing history partitioned by profile_id — all history for one user on same node <span class="tag tag-shard">CONSISTENT HASH</span></p>
-<p><strong>MySQL:</strong> Vitess-like sharding by account_id for billing data <span class="tag tag-shard">HASH SHARD</span></p>
-</div>
-
-<!-- ============================================================ -->
-<h2>💾 Cache & CDN Deep Dive</h2>
-<!-- ============================================================ -->
-
-<div class="section">
-<h3>EVCache (Netflix's Memcached Layer)</h3>
-<p>Netflix's distributed caching layer — wraps Memcached with replication across availability zones. Every read goes to cache first; cache miss falls through to Cassandra.</p>
-<table>
-<tr><th>Cache</th><th>Key Pattern</th><th>TTL</th><th>Strategy</th></tr>
-<tr><td>Homepage</td><td><code>homepage:{profile_id}</code></td><td>5 min</td><td>Pre-computed, write-through</td></tr>
-<tr><td>Title metadata</td><td><code>title:{id}:{locale}</code></td><td>1 hr</td><td>Read-through</td></tr>
-<tr><td>Viewing position</td><td><code>pos:{profile}:{title}</code></td><td>30 days</td><td>Write-through (updated on every pause/stop)</td></tr>
-<tr><td>Recommendations</td><td><code>recs:{profile_id}</code></td><td>24 hr</td><td>Pre-computed offline, refreshed daily</td></tr>
-</table>
-
-<h3>Open Connect CDN</h3>
-<p><strong>Content placement:</strong> Popularity-based. Top 20% of content cached on all OCAs (covers ~80% of views). Regional content pushed to local OCAs. Cache fill happens during off-peak hours (2-6 AM local time) to avoid competing with viewing traffic.</p>
-<p><strong>Cache eviction:</strong> LRU-based. Each OCA has 100-200TB. Least-recently-viewed content evicted. Eviction is rare because Netflix's catalog is finite (~15K titles) and most are pre-cached.</p>
-</div>
-
-<!-- ============================================================ -->
-<h2>⚖️ Tradeoffs</h2>
-<!-- ============================================================ -->
-
-<div class="section">
-<div class="tradeoff-grid">
-  <div class="tradeoff-pro">
-    <h4>✅ Open Connect (Own CDN)</h4>
-    <p>Total control over content delivery, lowest possible latency (ISP co-location), no CDN vendor costs, custom hardware optimized for streaming</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Open Connect</h4>
-    <p>Massive capital investment (~$100M+ in hardware), ISP relationship management in 175+ countries, hardware refresh cycles, maintenance logistics</p>
-  </div>
-  <div class="tradeoff-pro">
-    <h4>✅ Per-Title Encoding</h4>
-    <p>20-30% bandwidth savings × billions of streams = massive cost savings + better quality for viewers</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Per-Title Encoding</h4>
-    <p>Compute-intensive analysis per title (multiple trial encodes), longer ingestion pipeline, complex infrastructure to maintain custom encoding profiles per title</p>
-  </div>
-  <div class="tradeoff-pro">
-    <h4>✅ Cassandra for User Data</h4>
-    <p>Always-available (AP in CAP), linear horizontal scaling, great for write-heavy viewing history, multi-DC replication</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Cassandra for User Data</h4>
-    <p>Eventually consistent (user might not see last viewing position for a few seconds across devices), no JOINs, schema design requires upfront query planning</p>
-  </div>
-</div>
-</div>
-
-<!-- ============================================================ -->
-<h2>🔄 Alternative Approaches</h2>
-<!-- ============================================================ -->
-
-<div class="section">
-<div class="subsection">
-<h4>Third-Party CDN (Akamai/CloudFront)</h4>
-<p>Easier to set up, no hardware investment. Akamai has 300K+ servers globally. Netflix actually migrated AWAY from CDNs to Open Connect in 2012 because CDN costs at Netflix's scale were astronomical and they needed more control over content placement algorithms.</p>
-</div>
-<div class="subsection">
-<h4>Just-In-Time Transcoding (vs Pre-encoding)</h4>
-<p>Encode only when someone requests a specific resolution. Saves storage for rarely-watched content. Used by some smaller platforms. Not viable for Netflix because first-viewer experience would be degraded, and their catalog size (15K titles) makes pre-encoding feasible.</p>
-</div>
-<div class="subsection">
-<h4>Microservices Chaos Engineering</h4>
-<p>Netflix pioneered chaos engineering (Chaos Monkey, Chaos Kong). Instead of preventing failures, they actively inject failures in production to ensure resilience. Alternative: traditional redundancy/failover. Netflix's approach creates confidence that any component failure is gracefully handled — critical at their scale.</p>
-</div>
-</div>
-
-<!-- ============================================================ -->
-<h2>📚 Additional Information</h2>
-<!-- ============================================================ -->
-
-<div class="section">
-<h3>Netflix OSS (Open Source Stack)</h3>
+<div class="deep-dive">
+<h4>Upload Service</h4>
 <ul>
-  <li><strong>Zuul:</strong> API gateway — routing, authentication, rate limiting, load shedding</li>
-  <li><strong>Eureka:</strong> Service discovery — microservices register/discover each other</li>
-  <li><strong>Hystrix:</strong> Circuit breaker — prevents cascade failures when downstream service is down (now replaced by Resilience4j)</li>
-  <li><strong>Conductor:</strong> Workflow orchestration — manages multi-step encoding/ingestion workflows</li>
-  <li><strong>EVCache:</strong> Distributed caching (Memcached wrapper with cross-AZ replication)</li>
+  <li><strong>Protocol:</strong> <code>HTTP POST /upload</code> (multipart/form-data for large file uploads; supports resumable uploads via chunked upload protocol for files &gt;1 GB)</li>
+  <li><strong>Input:</strong> Raw video file + metadata (title, description, genre, cast, etc.)</li>
+  <li><strong>Output:</strong> <code>202 Accepted</code> with a <code>content_id</code> and upload status URL for polling</li>
+  <li><strong>Responsibilities:</strong> Validates the upload, stores the raw file in Object Storage, and enqueues a transcode job to the Message Queue.</li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>Object Storage (Raw Video)</h4>
+<ul>
+  <li><strong>Type:</strong> Blob / Object Storage</li>
+  <li><strong>Usage:</strong> Stores the original unprocessed video files. Retained for potential re-transcoding if new codecs emerge.</li>
+  <li><strong>Durability:</strong> 99.999999999% (11 nines) via replication across multiple availability zones.</li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>Message Queue</h4>
+<ul>
+  <li><strong>Purpose:</strong> Decouples the upload path from the CPU-intensive transcoding path. Enables asynchronous processing, backpressure handling, and retry on failure.</li>
+  <li><strong>How messages are enqueued:</strong> The Upload Service publishes a message containing <code>{content_id, raw_storage_path, desired_resolutions, codec_preferences}</code>.</li>
+  <li><strong>How messages are dequeued:</strong> Transcoding Service workers pull messages. Upon successful transcoding, the worker acknowledges (ACKs) the message, removing it from the queue. On failure, the message becomes visible again after a visibility timeout for retry.</li>
+  <li><strong>Dead Letter Queue (DLQ):</strong> Messages that fail after N retries are moved to a DLQ for manual inspection.</li>
+  <li><strong>Why Message Queue over Pub/Sub:</strong> We need guaranteed at-least-once delivery with backpressure control. Each transcode job should be processed by exactly one worker — this is a point-to-point pattern, not fan-out. Pub/Sub would deliver to all subscribers, which is wasteful here.</li>
+  <li><strong>Why Message Queue over synchronous processing:</strong> Transcoding is extremely CPU-intensive (can take 30 min – several hours for a 4K film). Synchronous processing would block the upload API and timeout.</li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>Transcoding Service (Worker Pool)</h4>
+<ul>
+  <li><strong>Type:</strong> Stateless workers that pull jobs from the Message Queue</li>
+  <li><strong>Responsibilities:</strong>
+    <ul>
+      <li>Read raw video from Object Storage</li>
+      <li>Transcode into multiple resolutions (240p, 360p, 480p, 720p, 1080p, 4K) and bitrates</li>
+      <li>Encode with video codecs (H.264/AVC for broad compatibility; H.265/HEVC or AV1 for higher efficiency)</li>
+      <li>Segment the video into small chunks (2–6 seconds each) for HLS/DASH streaming</li>
+      <li>Generate HLS manifests (<code>.m3u8</code>) or DASH manifests (<code>.mpd</code>) listing all chunks and quality levels</li>
+      <li>Write processed output to Object Storage (Processed)</li>
+      <li>Call Metadata Service to register the content</li>
+    </ul>
+  </li>
+  <li><strong>Scaling:</strong> Horizontally scaled — more workers are added during peak upload times. Workers are stateless and disposable.</li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>Object Storage (Processed Video)</h4>
+<ul>
+  <li><strong>Type:</strong> Blob / Object Storage</li>
+  <li><strong>Contents:</strong> HLS/DASH video chunks and manifest files, organized by <code>content_id/resolution/chunk_number</code></li>
+  <li><strong>This storage serves as the origin for the CDN.</strong></li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>Metadata Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> <code>HTTP POST /metadata</code> (internal service-to-service call)</li>
+  <li><strong>Input:</strong> <code>{content_id, title, genre, duration, resolutions[], manifest_urls, thumbnail_url, ...}</code></li>
+  <li><strong>Output:</strong> <code>201 Created</code></li>
+  <li><strong>Writes to:</strong> Content DB (SQL) — inserts a new row in the <code>content</code> table and rows in <code>content_resolution</code></li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>CDN (Edge Servers)</h4>
+<ul>
+  <li>Processed video chunks are pushed proactively to CDN edge servers worldwide (push-based for new releases; pull-based for long-tail content).</li>
+  <li>Detailed CDN deep dive is in <a href="#cdn-cache">Section 9</a>.</li>
+</ul>
+</div>
+
+<!-- ============================= SECTION 4 — FLOW 2 ============================= -->
+<h2 id="flow2">4. Flow 2 — Content Browsing &amp; Search</h2>
+
+<div class="mermaid">
+graph LR
+    C["📱 Client App"] -->|"HTTP GET /home"| AG["API Gateway\n+ Load Balancer"]
+    C -->|"HTTP GET /search?q=..."| AG
+    AG --> CS["Content Service"]
+    AG --> SS["Search Service"]
+    AG --> RS["Recommendation\nService"]
+    CS --> CC["Content Cache\n(In-Memory)"]
+    CC -->|"Cache Miss"| CDB[("Content DB\n(SQL)")]
+    SS --> SI[("Search Index\n(Inverted Index)")]
+    RS --> RC["Recommendation\nCache (In-Memory)"]
+    RC -->|"Cache Miss"| RDB[("Recommendation\nStore (NoSQL)")]
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — User Opens Homepage (Browse):</strong><br>
+User "Alice" opens the Netflix app on her iPhone. The client sends <code>HTTP GET /home?profile_id=abc123</code> to the <strong>API Gateway</strong>. The gateway routes parallel requests to: (1) the <strong>Recommendation Service</strong> to fetch Alice's personalized rows (e.g., "Because You Watched Stranger Things", "Trending Now"), (2) the <strong>Content Service</strong> to fetch metadata for each recommended <code>content_id</code> (title, thumbnail URL, rating). The Recommendation Service checks the <strong>Recommendation Cache</strong>; since Alice's recommendations were pre-computed in last night's batch run, they are found in cache. It returns a list of <code>[{row_title, [content_ids]}]</code>. The Content Service checks the <strong>Content Cache</strong> for each content_id's metadata — most are cache hits. The API Gateway aggregates the results and returns the homepage payload to Alice's client. The client fetches thumbnails directly from the <strong>CDN</strong>.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — User Searches for Content:</strong><br>
+User "Bob" types "dark knight" into the search bar. The client sends <code>HTTP GET /search?q=dark+knight&profile_id=xyz789</code>. The API Gateway routes this to the <strong>Search Service</strong>, which queries the <strong>Search Index</strong> (an inverted index over content title, description, actors, directors, genres). The index returns ranked content IDs matching the query: "The Dark Knight," "The Dark Knight Rises," "Dark," etc. The Search Service then calls the <strong>Content Service</strong> to hydrate these content IDs with metadata (title, thumbnail, rating, year). Results are returned to the client.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Cache Miss on Content Metadata:</strong><br>
+A newly uploaded indie film has just been published. When a user's homepage includes this film in "New Releases," the <strong>Content Service</strong> checks the <strong>Content Cache</strong> — it's a cache miss. The service falls back to the <strong>Content DB (SQL)</strong>, fetches the metadata, returns it, and populates the cache for subsequent requests.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<div class="deep-dive">
+<h4>Content Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> <code>HTTP GET /content/{content_id}</code> — returns metadata for a single piece of content; <code>HTTP GET /content?ids=a,b,c</code> — batch fetch</li>
+  <li><strong>Input:</strong> <code>content_id</code> (or list of IDs)</li>
+  <li><strong>Output:</strong> JSON with title, description, genre, cast, rating, thumbnail_url, duration, release_year, available_resolutions</li>
+  <li><strong>Reads from:</strong> Content Cache → Content DB (SQL) on miss</li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>Search Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> <code>HTTP GET /search?q={query}&page={n}&size={m}</code></li>
+  <li><strong>Input:</strong> Search query string, pagination parameters, optional filters (genre, year, rating)</li>
+  <li><strong>Output:</strong> Ranked list of <code>{content_id, title, thumbnail_url, relevance_score}</code></li>
+  <li><strong>Reads from:</strong> Search Index (inverted index). The index is built and kept up-to-date by an indexing pipeline that reads from the Content DB whenever content is added/updated.</li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>Search Index (Inverted Index)</h4>
+<ul>
+  <li><strong>Type:</strong> Inverted index (full-text search engine)</li>
+  <li><strong>Indexed fields:</strong> title, description, genre, actors, directors, keywords/tags</li>
+  <li><strong>Features:</strong> Tokenization, stemming, fuzzy matching (to handle typos), relevance scoring (TF-IDF or BM25)</li>
+  <li><strong>Why inverted index:</strong> It is the gold standard for full-text search. It maps each term to the list of documents (content) containing that term, enabling sub-second lookups even across millions of titles.</li>
+  <li><strong>Kept in sync:</strong> An async indexing pipeline reads change events from the Content DB (via change data capture or periodic polling) and updates the index.</li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>Recommendation Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> <code>HTTP GET /recommendations?profile_id={id}</code></li>
+  <li><strong>Input:</strong> <code>profile_id</code></li>
+  <li><strong>Output:</strong> Ordered list of recommendation rows, each containing a title and a list of content_ids: <code>[{row_title: "Action Movies For You", content_ids: [...]}]</code></li>
+  <li><strong>Reads from:</strong> Recommendation Cache → Recommendation Store (NoSQL) on miss</li>
+  <li><strong>Note:</strong> Recommendations are pre-computed offline (see Flow 4). This service simply reads them.</li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>Content Cache (In-Memory)</h4>
+<ul>
+  <li>Caches content metadata (title, genre, thumbnail_url, etc.) keyed by <code>content_id</code></li>
+  <li><strong>Strategy:</strong> Read-through cache (on miss, fetch from Content DB and populate cache)</li>
+  <li><strong>Eviction policy:</strong> LRU (Least Recently Used) — popular content stays in cache; rarely-accessed long-tail content is evicted</li>
+  <li><strong>Expiration (TTL):</strong> 1 hour — balances freshness (metadata updates like a corrected description) with cache hit rate</li>
+  <li><strong>Populated by:</strong> Cache misses during read operations. Optionally, a cache-warming job pre-loads top 1,000 most popular titles on startup.</li>
+  <li>See <a href="#cdn-cache">Section 9</a> for full caching deep dive.</li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>Recommendation Cache (In-Memory)</h4>
+<ul>
+  <li>Caches pre-computed recommendation lists keyed by <code>profile_id</code></li>
+  <li><strong>Strategy:</strong> Write-through cache — when the offline batch pipeline generates new recommendations, it writes to both the Recommendation Store and the cache simultaneously</li>
+  <li><strong>Eviction policy:</strong> LRU — active users' recommendations stay in cache; inactive users are evicted</li>
+  <li><strong>Expiration (TTL):</strong> 24 hours — recommendations are refreshed daily by the batch pipeline</li>
+  <li><strong>Populated by:</strong> The offline recommendation batch pipeline (Flow 4), and on cache miss during reads</li>
+  <li>See <a href="#cdn-cache">Section 9</a> for full caching deep dive.</li>
+</ul>
+</div>
+
+<!-- ============================= SECTION 5 — FLOW 3 ============================= -->
+<h2 id="flow3">5. Flow 3 — Video Streaming</h2>
+
+<div class="mermaid">
+graph LR
+    C["📱 Client App\n(Video Player)"] -->|"1. HTTP GET /stream/{content_id}"| AG["API Gateway\n+ Load Balancer"]
+    AG --> StS["Streaming Service"]
+    StS -->|"Read manifest URL\n+ DRM license"| CDB[("Content DB\n(SQL)")]
+    StS -->|"2. Return manifest URL\n+ DRM token"| C
+    C -->|"3. HTTP GET manifest\n(.m3u8 / .mpd)"| CDN["CDN\n(Edge Servers)"]
+    CDN -->|"4. Return manifest"| C
+    C -->|"5. HTTP GET video chunks\n(Adaptive Bitrate)"| CDN
+    CDN -->|"Cache Miss"| OS[("Object Storage\n(Processed Video)")]
+    C -->|"6. HTTP PUT /watch-history\n{progress, timestamp}"| AG
+    AG --> WHS["Watch History\nService"]
+    WHS --> WHDB[("Watch History DB\n(NoSQL)")]
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Normal Playback:</strong><br>
+User "Alice" clicks "Play" on "Stranger Things S4E1." The client sends <code>HTTP GET /stream/content_abc?profile_id=abc123</code> to the <strong>API Gateway</strong>, which routes to the <strong>Streaming Service</strong>. The Streaming Service looks up the content in the <strong>Content DB</strong> to find the HLS manifest URL and generates a time-limited DRM license token. It returns <code>{manifest_url: "https://cdn.example.com/.../master.m3u8", drm_token: "...", resume_position_seconds: 0}</code>. The client fetches the HLS manifest from the <strong>CDN</strong>. The manifest lists available quality levels (240p–4K) and the URLs for each chunk. The client's ABR (Adaptive Bitrate) algorithm measures current bandwidth (~25 Mbps on WiFi), selects 1080p, and begins fetching 4-second video chunks from the CDN via <code>HTTP GET</code>. As Alice watches, the client periodically (every 30 seconds) sends <code>HTTP PUT /watch-history</code> with <code>{profile_id, content_id, progress_seconds: 120}</code> to the <strong>Watch History Service</strong>, which writes to the <strong>Watch History DB (NoSQL)</strong>.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Resume Playback:</strong><br>
+User "Alice" stopped watching "Stranger Things S4E1" at the 23-minute mark yesterday. Today she opens the app and clicks "Continue Watching." The client sends <code>HTTP GET /stream/content_abc?profile_id=abc123</code>. The <strong>Streaming Service</strong> queries the <strong>Watch History Service</strong> (or the Watch History DB directly) and finds <code>progress_seconds: 1380</code>. It returns <code>{manifest_url: "...", resume_position_seconds: 1380}</code>. The client seeks to the appropriate chunk in the manifest and begins playback from minute 23.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Network Degradation (Adaptive Bitrate):</strong><br>
+User "Bob" is streaming "The Witcher" at 1080p on a train. As the train enters a tunnel, bandwidth drops from 15 Mbps to 2 Mbps. The client's ABR algorithm detects increased chunk download time and buffer depletion. It switches the next chunk request from 1080p (5 Mbps bitrate) to 480p (1.5 Mbps bitrate). The user sees a momentary quality reduction but no buffering interruption. When the train exits the tunnel and bandwidth recovers, the ABR algorithm gradually steps back up to 1080p.
+</div>
+
+<div class="example-box">
+<strong>Example 4 — CDN Cache Miss:</strong><br>
+A user in Iceland requests a rarely-watched documentary. The <strong>CDN</strong> edge server in Reykjavik does not have the video chunks cached (cache miss). The edge server fetches the chunks from the <strong>Object Storage (Processed Video)</strong> origin, caches them locally, and serves them to the user. Subsequent users in Iceland requesting the same documentary will get a cache hit.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<div class="deep-dive">
+<h4>Streaming Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> <code>HTTP GET /stream/{content_id}?profile_id={id}</code></li>
+  <li><strong>Input:</strong> <code>content_id</code>, <code>profile_id</code></li>
+  <li><strong>Output:</strong> <code>{manifest_url, drm_token, resume_position_seconds, available_subtitles[], available_audio_tracks[]}</code></li>
+  <li><strong>Reads from:</strong> Content DB (for manifest URL), Watch History DB (for resume position)</li>
+  <li><strong>Responsibilities:</strong> Determine which manifest to serve, generate DRM license tokens, determine resume position, return streaming metadata to the client</li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>HLS / DASH Streaming Protocol</h4>
+<ul>
+  <li><strong>Protocol:</strong> HLS (HTTP Live Streaming) or DASH (Dynamic Adaptive Streaming over HTTP), both over <strong>HTTP/TCP</strong></li>
+  <li><strong>Why HLS/DASH:</strong>
+    <ul>
+      <li>Designed for Video-on-Demand (VoD) of pre-recorded content — perfect for Netflix</li>
+      <li>Works natively over HTTP, meaning video chunks can be served from standard CDNs, proxies, and web infrastructure</li>
+      <li>Supports Adaptive Bitrate (ABR): the client selects the appropriate quality level for each chunk based on measured bandwidth and buffer health</li>
+      <li>Industry standard supported by all major platforms (iOS/Safari natively support HLS; Android/Chrome/Smart TVs support DASH)</li>
+    </ul>
+  </li>
+  <li><strong>Why NOT UDP:</strong> TCP's reliability is critical — a dropped video chunk would cause visual glitches. TCP retransmission ensures every byte arrives. The latency penalty of TCP vs. UDP is irrelevant for VoD (we aren't doing real-time communication).</li>
+  <li><strong>Why NOT WebRTC:</strong> WebRTC is designed for real-time peer-to-peer communication (video calls). It adds complexity (STUN/TURN servers, ICE negotiation) that is unnecessary for one-directional VoD streaming from a CDN.</li>
+  <li><strong>Why NOT WebSockets:</strong> Video streaming is a request-response pattern (client requests a chunk, server responds). There is no need for bidirectional server-push. HLS/DASH over HTTP are simpler, more cacheable (by CDN), and more widely supported.</li>
+  <li><strong>How it works:</strong>
+    <ol>
+      <li>The client fetches the <strong>master manifest</strong> (e.g., <code>master.m3u8</code>) which lists available quality levels (e.g., 480p@1.5Mbps, 720p@3Mbps, 1080p@5Mbps)</li>
+      <li>The client's ABR algorithm selects a quality level based on current bandwidth</li>
+      <li>The client fetches the <strong>media playlist</strong> for that quality level, which lists the URLs of all chunks</li>
+      <li>The client sequentially fetches chunks (each 2–6 seconds of video) and feeds them to the video decoder</li>
+      <li>Before each chunk request, the ABR algorithm re-evaluates bandwidth and may switch quality levels</li>
+    </ol>
+  </li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>Watch History Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> <code>HTTP PUT /watch-history</code></li>
+  <li><strong>Input:</strong> <code>{profile_id, content_id, progress_seconds, timestamp}</code></li>
+  <li><strong>Output:</strong> <code>200 OK</code></li>
+  <li><strong>Protocol (read):</strong> <code>HTTP GET /watch-history?profile_id={id}</code></li>
+  <li><strong>Output (read):</strong> <code>[{content_id, progress_seconds, last_watched_at}]</code></li>
+  <li><strong>Writes to:</strong> Watch History DB (NoSQL) — high write throughput (millions of concurrent watchers updating progress every 30 seconds)</li>
+  <li><strong>Write pattern:</strong> Upsert (insert or update) — keyed by <code>(profile_id, content_id)</code></li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>CDN for Video Chunks</h4>
+<ul>
+  <li>Video chunks are served entirely from CDN edge servers close to the user.</li>
+  <li>On cache miss, the edge server pulls from Object Storage (origin) and caches locally.</li>
+  <li>Popular content has near-100% cache hit rate; long-tail content has lower hit rates.</li>
+  <li>Full deep dive in <a href="#cdn-cache">Section 9</a>.</li>
+</ul>
+</div>
+
+<!-- ============================= SECTION 6 — FLOW 4 ============================= -->
+<h2 id="flow4">6. Flow 4 — Recommendation Generation (Offline Batch)</h2>
+
+<div class="mermaid">
+graph LR
+    WHDB[("Watch History DB\n(NoSQL)")] -->|"Export watch data"| ETL["ETL / Batch\nProcessing Pipeline"]
+    CDB[("Content DB\n(SQL)")] -->|"Export content features"| ETL
+    RATINGS[("Ratings DB\n(NoSQL)")] -->|"Export ratings"| ETL
+    ETL -->|"Feature engineering"| ML["ML Training\nPipeline"]
+    ML -->|"Generate per-profile\nrecommendations"| RDB[("Recommendation\nStore (NoSQL)")]
+    RDB -->|"Pre-warm cache"| RC["Recommendation\nCache (In-Memory)"]
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Nightly Batch Recommendation Run:</strong><br>
+Every night at 2:00 AM UTC, the <strong>ETL / Batch Processing Pipeline</strong> kicks off. It exports the last 30 days of watch history from the <strong>Watch History DB</strong>, content metadata and features (genre, cast, tags) from the <strong>Content DB</strong>, and user ratings from the <strong>Ratings DB</strong>. The ETL pipeline performs feature engineering — e.g., computing "Alice watched 15 hours of sci-fi in the last month" and "Alice rated 'Interstellar' 5 stars." These features are fed to the <strong>ML Training Pipeline</strong>, which uses collaborative filtering and content-based filtering models to generate personalized recommendation lists for each of the 200M+ profiles. The output — e.g., <code>{profile_id: "abc123", rows: [{title: "Sci-Fi Picks For You", content_ids: [...]}, ...]}</code> — is written to the <strong>Recommendation Store (NoSQL)</strong>. The pipeline then pre-warms the <strong>Recommendation Cache</strong> for the most active profiles (top 20M daily active users).
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Cold Start (New User):</strong><br>
+User "Charlie" just signed up and has no watch history. The ML pipeline has no data for him. The <strong>Recommendation Service</strong> falls back to a <strong>default recommendation set</strong>: globally trending content, top-rated by genre, and popular in Charlie's geographic region. As Charlie watches content and rates titles, the next nightly batch run will produce personalized recommendations.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<div class="deep-dive">
+<h4>ETL / Batch Processing Pipeline</h4>
+<ul>
+  <li><strong>Type:</strong> Distributed batch processing (MapReduce-style)</li>
+  <li><strong>Schedule:</strong> Nightly (or every few hours for near-real-time refresh)</li>
+  <li><strong>Input:</strong> Watch history, content metadata, user ratings, user demographics</li>
+  <li><strong>Output:</strong> Feature vectors for the ML pipeline</li>
+  <li><strong>Why batch over real-time:</strong> Recommendation quality benefits from considering the full history, not just the last action. Batch is more cost-efficient for processing 200M+ profiles. Real-time recommendations can supplement batch (e.g., "because you just watched X") but the core homepage is batch-generated.</li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>ML Training Pipeline</h4>
+<ul>
+  <li><strong>Models:</strong> Collaborative filtering (user-to-user and item-to-item similarity), content-based filtering (genre/cast/director features), deep learning models for engagement prediction</li>
+  <li><strong>Output:</strong> For each profile, an ordered list of recommendation "rows" (e.g., "Action Movies For You," "Trending Now," "Because You Watched X"), each containing a ranked list of content IDs</li>
+</ul>
+</div>
+
+<div class="deep-dive">
+<h4>Recommendation Store (NoSQL)</h4>
+<ul>
+  <li><strong>Type:</strong> NoSQL (key-value or wide-column)</li>
+  <li><strong>Key:</strong> <code>profile_id</code></li>
+  <li><strong>Value:</strong> JSON document containing the recommendation rows and content IDs</li>
+  <li><strong>Why NoSQL:</strong> The data is denormalized (one record per profile), read-heavy, and doesn't require joins. NoSQL provides high read throughput and horizontal scalability.</li>
+</ul>
+</div>
+
+<!-- ============================= SECTION 7 — OVERALL ============================= -->
+<h2 id="overall">7. Overall Combined Diagram</h2>
+
+<div class="mermaid">
+graph TB
+    CP["🎬 Content\nProvider"] -->|"HTTP POST\n/upload"| AG["API Gateway + Load Balancer"]
+    CLIENT["📱 Client App\n(iOS / Android / Smart TV / Browser)"] -->|"HTTP GET/PUT"| AG
+
+    subgraph Upload & Processing
+        AG --> US["Upload\nService"]
+        US --> OS_RAW[("Object Storage\n(Raw)")]
+        US --> MQ["Message Queue"]
+        MQ --> TS["Transcoding\nService"]
+        TS --> OS_RAW
+        TS --> OS_PROC[("Object Storage\n(Processed)")]
+        TS --> MS["Metadata\nService"]
+    end
+
+    subgraph Browsing & Search
+        AG --> CS["Content\nService"]
+        AG --> SS["Search\nService"]
+        AG --> RS["Recommendation\nService"]
+        CS --> CC["Content\nCache"]
+        CC --> CDB[("Content DB\n(SQL)")]
+        SS --> SI[("Search Index\n(Inverted Index)")]
+        RS --> RC["Recommendation\nCache"]
+        RC --> RDB[("Recommendation\nStore (NoSQL)")]
+    end
+
+    subgraph Streaming
+        AG --> StS["Streaming\nService"]
+        StS --> CDB
+        CLIENT -->|"HLS/DASH\nchunk requests"| CDN["CDN\n(Edge Servers)"]
+        CDN --> OS_PROC
+    end
+
+    subgraph Watch History & Ratings
+        AG --> WHS["Watch History\nService"]
+        WHS --> WHDB[("Watch History DB\n(NoSQL)")]
+        AG --> RATS["Rating\nService"]
+        RATS --> RATDB[("Ratings DB\n(NoSQL)")]
+    end
+
+    subgraph Offline Recommendation Pipeline
+        WHDB --> ETL["ETL / Batch\nProcessing"]
+        CDB --> ETL
+        RATDB --> ETL
+        ETL --> ML["ML Pipeline"]
+        ML --> RDB
+        ML --> RC
+    end
+
+    MS --> CDB
+    OS_PROC --> CDN
+</div>
+
+<h3>Examples (End-to-End)</h3>
+
+<div class="example-box">
+<strong>Example 1 — Full Content Lifecycle:</strong><br>
+(1) A studio admin uploads a new film via <code>HTTP POST /upload</code> → API Gateway → Upload Service → Object Storage (Raw) + Message Queue. (2) A Transcoding worker processes the raw video into HLS chunks at multiple quality levels → Object Storage (Processed) → CDN push. The Metadata Service registers the film in the Content DB. (3) That night, the ETL pipeline picks up the new content's metadata and refreshes the recommendation model. (4) The next morning, user "Alice" opens the app. Her homepage (<code>HTTP GET /home</code>) is assembled from the Recommendation Service (cache hit: pre-computed rows including the new film in "New Releases") and the Content Service (metadata for each title). (5) Alice clicks "Play" → Streaming Service returns the HLS manifest URL → Client fetches chunks from the CDN via HLS. Watch History Service records her progress. (6) After watching, Alice rates the film 👍 → Rating Service writes to Ratings DB. This feeds into tomorrow's recommendation pipeline.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Search to Stream:</strong><br>
+User "Bob" searches "breaking bad" → API Gateway → Search Service queries the inverted Search Index → returns ranked results → Content Service hydrates metadata from Content Cache → Client displays results with thumbnails from CDN → Bob clicks "Play" on S1E1 → Streaming Service returns manifest → Client streams HLS chunks from CDN → Watch History Service tracks progress.
+</div>
+
+<!-- ============================= SECTION 8 — SCHEMA ============================= -->
+<h2 id="schema">8. Database Schema</h2>
+
+<h3>8.1 SQL Tables</h3>
+
+<h4><code>users</code> Table</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>user_id</td><td>UUID</td><td>PK</td><td>Unique user identifier</td></tr>
+  <tr><td>email</td><td>VARCHAR(255)</td><td>UNIQUE INDEX</td><td>User's email (login credential)</td></tr>
+  <tr><td>password_hash</td><td>VARCHAR(255)</td><td></td><td>Hashed password</td></tr>
+  <tr><td>subscription_tier</td><td>ENUM('basic','standard','premium')</td><td></td><td>Current subscription level</td></tr>
+  <tr><td>country</td><td>VARCHAR(2)</td><td></td><td>ISO country code (for content licensing)</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Account creation timestamp</td></tr>
+  <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>Last update timestamp</td></tr>
+</table>
+<div class="callout">
+<strong>Why SQL:</strong> User account data requires strong consistency (especially for billing and authentication). ACID transactions ensure that subscription changes, password updates, and billing events are atomic. The dataset is relatively small (~200M rows) and fits well in a relational model.<br>
+<strong>Index:</strong> <code>email</code> — B-tree index for fast login lookups by email. Hash index would also work but B-tree supports range queries and is the default for most SQL databases.<br>
+<strong>Read:</strong> On every login/authentication; when the Streaming Service checks subscription tier for DRM quality limits.<br>
+<strong>Write:</strong> On user registration; on subscription changes; on profile updates.<br>
+<strong>Sharding:</strong> Shard by <code>user_id</code> (hash-based). This distributes users uniformly across shards. Since most queries are by <code>user_id</code> or <code>email</code> (with a global secondary index on email), lookups are efficient.
+</div>
+
+<h4><code>profiles</code> Table</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>profile_id</td><td>UUID</td><td>PK</td><td>Unique profile identifier</td></tr>
+  <tr><td>user_id</td><td>UUID</td><td>FK → users.user_id</td><td>Parent account</td></tr>
+  <tr><td>name</td><td>VARCHAR(100)</td><td></td><td>Profile display name</td></tr>
+  <tr><td>avatar_url</td><td>VARCHAR(500)</td><td></td><td>URL to avatar image on CDN</td></tr>
+  <tr><td>maturity_rating</td><td>ENUM('kids','teen','adult')</td><td></td><td>Content restriction level</td></tr>
+  <tr><td>language</td><td>VARCHAR(5)</td><td></td><td>Preferred language (e.g., "en-US")</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Profile creation timestamp</td></tr>
+</table>
+<div class="callout">
+<strong>Why SQL:</strong> Profiles are tightly coupled to users (FK relationship). Strong consistency is needed — if a profile is deleted, related watch history cleanup should be coordinated. Low cardinality (~5 profiles per user, ~1B rows total).<br>
+<strong>Index:</strong> <code>user_id</code> — B-tree index for fetching all profiles belonging to a user (common query: "show me my profiles on login").<br>
+<strong>Read:</strong> On app launch (profile selection screen).<br>
+<strong>Write:</strong> On profile creation/update/deletion.<br>
+<strong>Sharding:</strong> Co-located with <code>users</code> table on the same shard by <code>user_id</code> to enable efficient joins.
+</div>
+
+<h4><code>content</code> Table</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>content_id</td><td>UUID</td><td>PK</td><td>Unique content identifier</td></tr>
+  <tr><td>title</td><td>VARCHAR(500)</td><td></td><td>Title of movie/show</td></tr>
+  <tr><td>description</td><td>TEXT</td><td></td><td>Synopsis</td></tr>
+  <tr><td>type</td><td>ENUM('movie','series')</td><td></td><td>Content type</td></tr>
+  <tr><td>genre</td><td>VARCHAR(100)</td><td></td><td>Primary genre</td></tr>
+  <tr><td>release_year</td><td>INT</td><td></td><td>Year of release</td></tr>
+  <tr><td>duration_seconds</td><td>INT</td><td></td><td>Total duration (for movies; NULL for series)</td></tr>
+  <tr><td>maturity_rating</td><td>VARCHAR(10)</td><td></td><td>PG, PG-13, R, etc.</td></tr>
+  <tr><td>thumbnail_url</td><td>VARCHAR(500)</td><td></td><td>URL to thumbnail on CDN</td></tr>
+  <tr><td>manifest_url</td><td>VARCHAR(500)</td><td></td><td>URL to HLS/DASH master manifest</td></tr>
+  <tr><td>avg_rating</td><td>DECIMAL(3,2)</td><td></td><td>Denormalized average rating</td></tr>
+  <tr><td>total_views</td><td>BIGINT</td><td></td><td>Denormalized total view count</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>When content was added</td></tr>
+  <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>Last metadata update</td></tr>
+</table>
+<div class="callout">
+<strong>Why SQL:</strong> Content metadata is structured, relational (joins with episodes, genres, actors tables), and relatively small (~500K–1M titles). Strong consistency ensures metadata accuracy. SQL's schema enforcement prevents bad data.<br>
+<strong>Denormalization:</strong> <code>avg_rating</code> and <code>total_views</code> are denormalized (pre-computed aggregates stored directly on the content row). This avoids expensive COUNT/AVG queries across millions of ratings/views at read time. These denormalized fields are updated asynchronously by background jobs that periodically aggregate data from the Ratings DB and Watch History DB.<br>
+<strong>Index:</strong> <code>genre</code> — B-tree index for filtering by genre on the browse page. <code>(type, release_year)</code> — composite B-tree index for queries like "show me movies from 2024."<br>
+<strong>Read:</strong> On every homepage load, search result hydration, and stream initiation.<br>
+<strong>Write:</strong> On content upload (by Metadata Service); periodic updates to avg_rating and total_views by background jobs.<br>
+<strong>Sharding:</strong> Generally not needed (small dataset). If needed, shard by <code>content_id</code>.
+</div>
+
+<h4><code>episodes</code> Table (for series)</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>episode_id</td><td>UUID</td><td>PK</td><td>Unique episode identifier</td></tr>
+  <tr><td>content_id</td><td>UUID</td><td>FK → content.content_id</td><td>Parent series</td></tr>
+  <tr><td>season_number</td><td>INT</td><td></td><td>Season number</td></tr>
+  <tr><td>episode_number</td><td>INT</td><td></td><td>Episode number within season</td></tr>
+  <tr><td>title</td><td>VARCHAR(500)</td><td></td><td>Episode title</td></tr>
+  <tr><td>duration_seconds</td><td>INT</td><td></td><td>Episode duration</td></tr>
+  <tr><td>manifest_url</td><td>VARCHAR(500)</td><td></td><td>HLS/DASH manifest URL for this episode</td></tr>
+  <tr><td>thumbnail_url</td><td>VARCHAR(500)</td><td></td><td>Episode-specific thumbnail</td></tr>
+</table>
+<div class="callout">
+<strong>Why SQL:</strong> Tightly coupled to the <code>content</code> table via FK. Requires ordered retrieval (by season and episode number). Small dataset.<br>
+<strong>Index:</strong> <code>(content_id, season_number, episode_number)</code> — composite B-tree index for fetching episodes in order for a given series.<br>
+<strong>Read:</strong> When a user selects a series and browses episodes.<br>
+<strong>Write:</strong> When new episodes are uploaded/published.
+</div>
+
+<h3>8.2 NoSQL Tables</h3>
+
+<h4><code>watch_history</code> Table</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>profile_id</td><td>UUID</td><td>Partition Key</td><td>The profile watching</td></tr>
+  <tr><td>content_id</td><td>UUID</td><td>Sort Key</td><td>The content being watched (or episode_id for series)</td></tr>
+  <tr><td>progress_seconds</td><td>INT</td><td></td><td>Current playback position</td></tr>
+  <tr><td>duration_seconds</td><td>INT</td><td></td><td>Total content duration</td></tr>
+  <tr><td>completed</td><td>BOOLEAN</td><td></td><td>Whether the user finished watching</td></tr>
+  <tr><td>last_watched_at</td><td>TIMESTAMP</td><td></td><td>When the user last watched this content</td></tr>
+</table>
+<div class="callout">
+<strong>Why NoSQL:</strong> Extremely write-heavy — millions of concurrent viewers each updating their progress every ~30 seconds. This requires massive write throughput that scales horizontally. The access pattern is simple: read/write by <code>(profile_id, content_id)</code> — no joins needed. Eventual consistency is acceptable (a slight delay in resume position is fine).<br>
+<strong>Sharding:</strong> Shard (partition) by <code>profile_id</code> using consistent hashing. This ensures all watch history for a single profile resides on the same partition, enabling efficient reads like "get all continue-watching items for Alice." Consistent hashing minimizes data redistribution when nodes are added/removed.<br>
+<strong>Read:</strong> When user opens "Continue Watching" row on homepage; when Streaming Service determines resume position.<br>
+<strong>Write:</strong> Every ~30 seconds during active playback (upsert by <code>(profile_id, content_id)</code>).
+</div>
+
+<h4><code>ratings</code> Table</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>profile_id</td><td>UUID</td><td>Partition Key</td><td>The profile that rated</td></tr>
+  <tr><td>content_id</td><td>UUID</td><td>Sort Key</td><td>The content being rated</td></tr>
+  <tr><td>rating</td><td>TINYINT</td><td></td><td>1 (👎) or 2 (👍) or 1–5 stars</td></tr>
+  <tr><td>rated_at</td><td>TIMESTAMP</td><td></td><td>When the rating was submitted</td></tr>
+</table>
+<div class="callout">
+<strong>Why NoSQL:</strong> High write volume (millions of ratings), simple key-value access pattern (<code>profile_id + content_id → rating</code>), no complex queries. Eventual consistency is acceptable for ratings.<br>
+<strong>Sharding:</strong> Shard by <code>profile_id</code> (consistent hashing) — same rationale as watch_history.<br>
+<strong>Read:</strong> By recommendation pipeline (batch export); when showing a user their rating on a content detail page.<br>
+<strong>Write:</strong> When a user clicks 👍/👎 or sets a star rating.
+</div>
+
+<h4><code>recommendations</code> Table</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>profile_id</td><td>UUID</td><td>Partition Key (only key)</td><td>The profile these recommendations are for</td></tr>
+  <tr><td>rows</td><td>JSON / LIST</td><td></td><td>Ordered list of recommendation rows, each with a title and list of content_ids</td></tr>
+  <tr><td>generated_at</td><td>TIMESTAMP</td><td></td><td>When these recommendations were generated</td></tr>
+</table>
+<div class="callout">
+<strong>Why NoSQL:</strong> Pure key-value lookup by <code>profile_id</code>. The value is a large JSON blob of recommendations — no relational structure. Read-heavy (every homepage load). NoSQL provides high throughput for this simple access pattern.<br>
+<strong>Sharding:</strong> Shard by <code>profile_id</code> (consistent hashing).<br>
+<strong>Read:</strong> On every homepage load (via Recommendation Cache → Recommendation Store on miss).<br>
+<strong>Write:</strong> By the nightly ML batch pipeline.
+</div>
+
+<!-- ============================= SECTION 9 — CDN & CACHE ============================= -->
+<h2 id="cdn-cache">9. CDN &amp; Caching Deep Dive</h2>
+
+<h3>9.1 CDN (Content Delivery Network)</h3>
+
+<div class="deep-dive">
+<h4>Why a CDN is Appropriate (Critical)</h4>
+<p>A CDN is <strong>absolutely essential</strong> for Netflix. Video streaming is extremely bandwidth-intensive, and users are distributed globally. Without a CDN:</p>
+<ul>
+  <li>Every video chunk request would travel to a centralized origin, introducing high latency (100s of ms cross-continent)</li>
+  <li>The origin would be crushed under the load of 10M+ concurrent streams</li>
+  <li>User experience would degrade massively (buffering, slow start times)</li>
 </ul>
 
-<h3>Multi-Region Active-Active</h3>
-<p>Netflix runs in 3 AWS regions (us-east-1, us-west-2, eu-west-1) in active-active configuration. All regions serve traffic simultaneously. If one region goes down, traffic automatically shifts to surviving regions via Route 53 DNS failover. Tested regularly via Chaos Kong (simulates entire region failure).</p>
+<h4>What the CDN Caches</h4>
+<ul>
+  <li><strong>Video chunks</strong> (HLS .ts / DASH .m4s segments) — the primary payload</li>
+  <li><strong>HLS/DASH manifests</strong> (.m3u8 / .mpd files)</li>
+  <li><strong>Thumbnail images</strong> — movie/show poster art</li>
+  <li><strong>Static assets</strong> — app JavaScript, CSS, fonts</li>
+</ul>
 
-<h3>Content Licensing & Geofencing</h3>
-<p>Content availability varies by country due to licensing agreements. Catalog service filters titles based on user's country (derived from IP geolocation). VPN detection employed to enforce geographic restrictions. Each title has a <code>country_availability</code> map in Cassandra.</p>
+<h4>CDN Strategy</h4>
+<ul>
+  <li><strong>Push-based for popular/new content:</strong> When a new blockbuster is released, the processed video chunks are proactively <em>pushed</em> to CDN edge servers worldwide before the content goes live. This ensures zero cache misses on launch.</li>
+  <li><strong>Pull-based for long-tail content:</strong> Rarely watched content is loaded into CDN edge servers on-demand (pull on first request). If nobody in a region requests it, it never occupies edge cache space.</li>
+  <li><strong>Tiered architecture:</strong> Edge servers (closest to users) → Regional mid-tier caches → Origin (Object Storage). A miss at the edge tries the regional cache before going all the way to origin.</li>
+</ul>
+
+<h4>CDN Eviction Policy</h4>
+<ul>
+  <li><strong>LRU (Least Recently Used)</strong> at the edge — popular content stays cached; old/unpopular content is evicted to make room.</li>
+  <li><strong>Frequency-weighted LRU:</strong> Content that was accessed many times recently is prioritized over content accessed only once recently.</li>
+</ul>
+
+<h4>CDN Expiration (TTL)</h4>
+<ul>
+  <li><strong>Video chunks:</strong> Long TTL (30 days+). Video chunks are immutable once transcoded — they never change. If a video needs re-encoding, a new manifest with new chunk URLs is generated.</li>
+  <li><strong>Manifests:</strong> Medium TTL (1 hour). Manifests may change if a new audio track or subtitle is added.</li>
+  <li><strong>Thumbnails:</strong> Medium TTL (6 hours). Thumbnails can be A/B tested (Netflix personalizes artwork).</li>
+</ul>
 </div>
+
+<h3>9.2 In-Memory Caches</h3>
+
+<div class="deep-dive">
+<h4>Content Cache</h4>
+<table>
+  <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+  <tr><td>What it caches</td><td>Content metadata (title, description, genre, thumbnail_url, rating, etc.) keyed by <code>content_id</code></td><td>Content metadata is read on every homepage and search result. Hot data that benefits hugely from caching.</td></tr>
+  <tr><td>Caching Strategy</td><td>Read-through</td><td>On cache miss, the Content Service reads from the Content DB, returns the result, and populates the cache. Simple and ensures eventual consistency.</td></tr>
+  <tr><td>Eviction Policy</td><td>LRU (Least Recently Used)</td><td>Popular titles (top 10K) are accessed millions of times/day and should stay cached. Long-tail titles are evicted when space is needed.</td></tr>
+  <tr><td>Expiration (TTL)</td><td>1 hour</td><td>Content metadata changes infrequently (occasional description edits, rating updates). 1-hour TTL balances freshness with hit rate. For critical updates, cache invalidation can be triggered explicitly.</td></tr>
+  <tr><td>Populated by</td><td>Cache misses; optional cache-warming job on service startup for top 1,000 titles</td><td></td></tr>
+</table>
+</div>
+
+<div class="deep-dive">
+<h4>Recommendation Cache</h4>
+<table>
+  <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+  <tr><td>What it caches</td><td>Pre-computed recommendation lists keyed by <code>profile_id</code></td><td>Every homepage load needs recommendations. Caching avoids hitting the Recommendation Store (NoSQL) for every request.</td></tr>
+  <tr><td>Caching Strategy</td><td>Write-through</td><td>When the nightly batch ML pipeline generates new recommendations, it writes to both the Recommendation Store and the cache simultaneously. This ensures the cache is always fresh after a pipeline run.</td></tr>
+  <tr><td>Eviction Policy</td><td>LRU</td><td>Active daily users' recommendations stay in cache. Inactive users (who haven't logged in for weeks) are evicted. Active users represent a small fraction of total profiles.</td></tr>
+  <tr><td>Expiration (TTL)</td><td>24 hours</td><td>Recommendations are regenerated nightly. A 24-hour TTL ensures stale recommendations are evicted even if the pipeline doesn't explicitly overwrite them.</td></tr>
+  <tr><td>Populated by</td><td>Nightly ML batch pipeline (write-through); cache misses on read</td><td></td></tr>
+</table>
+</div>
+
+<div class="deep-dive">
+<h4>Session / Auth Cache</h4>
+<table>
+  <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+  <tr><td>What it caches</td><td>User session tokens and auth data keyed by session token</td><td>Every API request requires authentication. Caching sessions avoids a DB lookup on every request.</td></tr>
+  <tr><td>Caching Strategy</td><td>Write-through</td><td>On login, the session is written to both the cache and the session store.</td></tr>
+  <tr><td>Eviction Policy</td><td>TTL-based (no LRU needed)</td><td>Sessions have a natural expiry.</td></tr>
+  <tr><td>Expiration (TTL)</td><td>30 minutes (sliding window)</td><td>Each API request resets the TTL. Sessions expire after 30 minutes of inactivity.</td></tr>
+  <tr><td>Populated by</td><td>Login events</td><td></td></tr>
+</table>
+</div>
+
+<!-- ============================= SECTION 10 — SCALING ============================= -->
+<h2 id="scaling">10. Scaling Considerations</h2>
+
+<h3>10.1 Load Balancers</h3>
+<div class="deep-dive">
+<p>Load balancers are placed at the following points:</p>
+<ol>
+  <li><strong>In front of the API Gateway:</strong> Distributes incoming client traffic (HTTP/HTTPS) across multiple API Gateway instances. Uses <strong>Layer 7 (application-level)</strong> load balancing to inspect HTTP headers and route based on path (e.g., <code>/upload</code> → Upload Service cluster, <code>/stream</code> → Streaming Service cluster). Algorithm: <strong>Least connections</strong> — ensures no single gateway instance is overloaded.</li>
+  <li><strong>Between API Gateway and each microservice:</strong> Each service (Content Service, Search Service, Streaming Service, etc.) sits behind its own internal load balancer. Algorithm: <strong>Round-robin</strong> for stateless services. <strong>Consistent hashing</strong> for cache-affinity (e.g., requests for the same <code>profile_id</code> route to the same Recommendation Service instance to improve local cache hit rates).</li>
+  <li><strong>In front of the Transcoding Service workers:</strong> The Message Queue inherently distributes work, so a traditional load balancer isn't needed here. Instead, workers pull from the queue (consumer-based distribution).</li>
+  <li><strong>CDN edge servers:</strong> DNS-based (GeoDNS / Anycast) load balancing routes users to the nearest edge server based on geographic location and server health.</li>
+</ol>
+
+<h4>Health Checks</h4>
+<p>All load balancers perform periodic health checks (HTTP <code>GET /health</code>) on downstream instances. Unhealthy instances are removed from the pool automatically.</p>
+
+<h4>SSL/TLS Termination</h4>
+<p>TLS is terminated at the outermost load balancer (in front of API Gateway). Internal service-to-service traffic uses mTLS or plaintext within a trusted VPC.</p>
+</div>
+
+<h3>10.2 Horizontal Scaling</h3>
+<ul>
+  <li><strong>All microservices</strong> (Content Service, Search Service, Streaming Service, Watch History Service, Recommendation Service, Upload Service, Metadata Service, Rating Service) are <strong>stateless</strong> and can be scaled horizontally by adding more instances behind load balancers.</li>
+  <li><strong>Transcoding Service:</strong> Scaled by adding more workers. Auto-scale based on Message Queue depth — when queue depth exceeds a threshold, spin up more workers.</li>
+  <li><strong>CDN:</strong> Scaled by adding more edge server locations globally.</li>
+</ul>
+
+<h3>10.3 Database Scaling</h3>
+<ul>
+  <li><strong>SQL (users, profiles, content):</strong> Primary-replica replication. Reads are distributed across replicas. Writes go to the primary. For users table, shard by <code>user_id</code> (hash-based) when the dataset exceeds a single node's capacity.</li>
+  <li><strong>NoSQL (watch_history, ratings, recommendations):</strong> Natively supports horizontal sharding. Add nodes to the cluster as data grows. Consistent hashing distributes partitions across nodes.</li>
+  <li><strong>Search Index:</strong> Partitioned by content_id range or hash. Replicated across nodes for read throughput.</li>
+</ul>
+
+<h3>10.4 Back-of-the-Envelope Estimates</h3>
+<table>
+  <tr><th>Metric</th><th>Estimate</th></tr>
+  <tr><td>Total users</td><td>~200M subscribers, ~1B profiles</td></tr>
+  <tr><td>Daily active users</td><td>~100M</td></tr>
+  <tr><td>Peak concurrent streams</td><td>~10M</td></tr>
+  <tr><td>Average stream bitrate</td><td>~5 Mbps</td></tr>
+  <tr><td>Peak egress bandwidth</td><td>~10M × 5 Mbps = <strong>50 Tbps</strong></td></tr>
+  <tr><td>Watch history writes/sec (peak)</td><td>10M streams ÷ 30s interval = <strong>~333K writes/sec</strong></td></tr>
+  <tr><td>Homepage requests/sec (peak)</td><td>~500K RPS (accounting for browse, scroll, etc.)</td></tr>
+  <tr><td>Content catalog size</td><td>~500K titles</td></tr>
+  <tr><td>Storage (processed video)</td><td>~100 PB+ (each title × multiple resolutions × multiple bitrates)</td></tr>
+</table>
+
+<h3>10.5 Geographic Distribution</h3>
+<ul>
+  <li>Deploy services in multiple regions (US, EU, Asia-Pacific, South America) with independent database clusters per region.</li>
+  <li>CDN edge servers in 50+ countries.</li>
+  <li>Use GeoDNS to route users to the nearest API Gateway region.</li>
+</ul>
+
+<!-- ============================= SECTION 11 — TRADEOFFS ============================= -->
+<h2 id="tradeoffs">11. Tradeoffs &amp; Deep Dives</h2>
+
+<h3>11.1 Consistency vs. Availability</h3>
+<ul>
+  <li><strong>Watch history:</strong> Eventual consistency is acceptable. If a user watches on their TV and immediately opens their phone, a 1–2 second delay in resume position sync is tolerable. We favor availability and partition tolerance (AP in CAP theorem).</li>
+  <li><strong>User accounts / billing:</strong> Strong consistency required. A subscription downgrade should immediately affect streaming quality limits. We use SQL with ACID transactions.</li>
+  <li><strong>Recommendations:</strong> Eventual consistency is fine. Stale recommendations (showing yesterday's list) is acceptable.</li>
+</ul>
+
+<h3>11.2 Batch vs. Real-Time Recommendations</h3>
+<ul>
+  <li><strong>Chosen: Batch (nightly).</strong> Pros: Cost-effective, can use full user history, simpler architecture. Cons: Recommendations are up to 24 hours stale.</li>
+  <li><strong>Enhancement:</strong> A lightweight real-time layer can supplement batch recommendations. E.g., "Because you just watched X" can be computed in real-time by the Recommendation Service using simple rules (same genre, same director) without a full ML pipeline.</li>
+</ul>
+
+<h3>11.3 Denormalization Tradeoffs</h3>
+<ul>
+  <li><code>avg_rating</code> and <code>total_views</code> on the <code>content</code> table are denormalized to avoid expensive aggregation queries. The tradeoff is potential staleness (updated by background jobs every few minutes) and write amplification (each rating/view triggers an eventual update to the content row). This is acceptable because exact real-time counts are not user-facing critical.</li>
+</ul>
+
+<h3>11.4 Push vs. Pull CDN Strategy</h3>
+<ul>
+  <li><strong>Push (proactive):</strong> Used for new releases and popular content. Guarantees zero cache misses on launch day. Costs more in edge storage.</li>
+  <li><strong>Pull (reactive):</strong> Used for long-tail content. Saves edge storage but causes a cold-start latency for the first user in each region.</li>
+  <li><strong>Chosen: Hybrid.</strong> Best of both worlds.</li>
+</ul>
+
+<h3>11.5 HLS vs. DASH</h3>
+<ul>
+  <li><strong>HLS:</strong> Created by Apple, natively supported on iOS/Safari. Widely supported. Uses <code>.m3u8</code> manifests and <code>.ts</code> segments.</li>
+  <li><strong>DASH:</strong> Open standard (ISO), supported on Android/Chrome. Uses <code>.mpd</code> manifests and <code>.m4s</code> segments.</li>
+  <li><strong>Chosen: Support both.</strong> The Transcoding Service generates both HLS and DASH outputs. The Streaming Service returns the appropriate manifest URL based on the client's platform (iOS → HLS, Android/Browser → DASH).</li>
+</ul>
+
+<h3>11.6 Codec Tradeoffs</h3>
+<ul>
+  <li><strong>H.264/AVC:</strong> Universal compatibility. Higher bitrate for same quality. Used as baseline for all devices.</li>
+  <li><strong>H.265/HEVC:</strong> ~50% bitrate reduction at same quality. Supported on newer devices. Patent licensing complexity.</li>
+  <li><strong>AV1:</strong> Open-source, ~30% better than HEVC. Growing device support. Higher encoding cost (slower transcoding).</li>
+  <li><strong>Chosen:</strong> Encode in all three. Serve the most efficient codec that the client device supports.</li>
+</ul>
+
+<!-- ============================= SECTION 12 — ALTERNATIVES ============================= -->
+<h2 id="alternatives">12. Alternative Approaches</h2>
+
+<h3>12.1 Peer-to-Peer (P2P) Streaming</h3>
+<p><strong>Approach:</strong> Use P2P (like BitTorrent) to distribute video chunks between viewers, reducing CDN load.</p>
+<p><strong>Why not chosen:</strong></p>
+<ul>
+  <li>Quality control is difficult — peers may have different bandwidth, causing inconsistent playback</li>
+  <li>DRM enforcement is nearly impossible in a P2P model</li>
+  <li>Legal and copyright concerns with content being distributed through user devices</li>
+  <li>Latency and reliability are unpredictable</li>
+  <li>CDN infrastructure is proven and reliable at Netflix's scale</li>
+</ul>
+
+<h3>12.2 Monolithic Architecture</h3>
+<p><strong>Approach:</strong> Single application handling all functionality (upload, browse, stream, recommend).</p>
+<p><strong>Why not chosen:</strong></p>
+<ul>
+  <li>Cannot scale components independently. Streaming needs far more resources than content upload.</li>
+  <li>A bug in the recommendation engine could crash the streaming service</li>
+  <li>Deployment becomes risky — every change requires redeploying the entire application</li>
+  <li>Team velocity decreases as the codebase grows</li>
+  <li>Microservices enable independent scaling, deployment, and technology choices per service</li>
+</ul>
+
+<h3>12.3 Real-Time Recommendations Only</h3>
+<p><strong>Approach:</strong> Compute recommendations on-the-fly for every homepage request.</p>
+<p><strong>Why not chosen:</strong></p>
+<ul>
+  <li>Real-time ML inference for 200M+ profiles at 500K RPS would require enormous compute resources</li>
+  <li>Latency: running a recommendation model per request would add 100s of ms to homepage load</li>
+  <li>The quality of recommendations improves when considering full user history (batch approach), not just the last few actions</li>
+  <li>A hybrid approach (batch + lightweight real-time supplement) provides the best balance of quality, cost, and latency</li>
+</ul>
+
+<h3>12.4 WebSocket-Based Streaming</h3>
+<p><strong>Approach:</strong> Use WebSockets for video delivery instead of HLS/DASH.</p>
+<p><strong>Why not chosen:</strong></p>
+<ul>
+  <li>WebSockets are designed for bidirectional, low-latency messaging — overkill for one-directional video delivery</li>
+  <li>Video chunks served over WebSocket cannot be cached by CDNs (CDNs cache HTTP responses, not WebSocket frames)</li>
+  <li>HLS/DASH are industry standards with mature ABR algorithms, DRM integration, and device support</li>
+  <li>WebSocket connections are stateful and harder to load-balance</li>
+</ul>
+
+<h3>12.5 Server-Side Adaptive Bitrate (Instead of Client-Side ABR)</h3>
+<p><strong>Approach:</strong> Have the server decide which quality level to send to the client.</p>
+<p><strong>Why not chosen:</strong></p>
+<ul>
+  <li>The client has the most accurate, real-time information about its network conditions (measured download speed, buffer level)</li>
+  <li>Server-side ABR introduces a feedback loop delay: client reports bandwidth → server decides → server sends — this lag causes more buffering</li>
+  <li>Client-side ABR is the industry standard for VoD streaming (HLS/DASH are designed around it)</li>
+</ul>
+
+<h3>12.6 Pub/Sub Instead of Message Queue for Transcoding</h3>
+<p><strong>Approach:</strong> Use a pub/sub system to broadcast transcode jobs.</p>
+<p><strong>Why not chosen:</strong></p>
+<ul>
+  <li>Transcoding is a point-to-point job — each video should be transcoded by exactly one worker, not fanned out to all workers</li>
+  <li>Pub/Sub would deliver the same job to multiple subscribers, causing redundant work unless additional deduplication logic is added</li>
+  <li>A Message Queue with competing consumers is the natural fit for task distribution with at-least-once delivery</li>
+</ul>
+
+<!-- ============================= SECTION 13 — ADDITIONAL ============================= -->
+<h2 id="additional">13. Additional Information</h2>
+
+<h3>13.1 DRM (Digital Rights Management)</h3>
+<ul>
+  <li>Netflix must protect content from piracy using DRM. Industry standards include:
+    <ul>
+      <li><strong>Widevine</strong> (Google) — Android, Chrome</li>
+      <li><strong>FairPlay</strong> (Apple) — iOS, Safari, Apple TV</li>
+      <li><strong>PlayReady</strong> (Microsoft) — Windows, Xbox, Smart TVs</li>
+    </ul>
+  </li>
+  <li>The <strong>Streaming Service</strong> generates DRM license tokens. The client's video player decrypts video chunks using the DRM license before rendering.</li>
+  <li>Video chunks are encrypted at rest (during transcoding) and the decryption key is only provided via the DRM license server.</li>
+</ul>
+
+<h3>13.2 Content Licensing &amp; Geo-Restrictions</h3>
+<ul>
+  <li>Different content is licensed for different regions. The Content Service must filter available titles based on the user's <code>country</code> field.</li>
+  <li>This can be implemented as a <code>content_availability</code> table mapping <code>(content_id, country_code)</code> or as a list of allowed/blocked countries on each content record.</li>
+</ul>
+
+<h3>13.3 A/B Testing for Thumbnails</h3>
+<ul>
+  <li>Netflix famously A/B tests thumbnail artwork. Different users see different thumbnails for the same title to optimize click-through rate.</li>
+  <li>The Content Service can return a personalized <code>thumbnail_url</code> based on the user's A/B test group assignment.</li>
+</ul>
+
+<h3>13.4 Subtitle &amp; Audio Track Management</h3>
+<ul>
+  <li>Subtitles (SRT/WebVTT) and multiple audio tracks (e.g., English, Spanish, Japanese) are stored alongside video chunks in Object Storage and served via CDN.</li>
+  <li>The HLS/DASH manifest includes references to available subtitle and audio track URLs.</li>
+</ul>
+
+<h3>13.5 Monitoring &amp; Observability</h3>
+<ul>
+  <li><strong>Metrics:</strong> Stream start time, buffering ratio, error rate, ABR quality distribution, CDN cache hit ratio</li>
+  <li><strong>Distributed tracing:</strong> Trace requests across microservices for debugging latency issues</li>
+  <li><strong>Alerting:</strong> Alerts on anomalies (spike in error rates, CDN miss rate increase, transcoding queue depth)</li>
+</ul>
+
+<h3>13.6 Offline Downloads</h3>
+<ul>
+  <li>Netflix allows users to download content for offline viewing on mobile devices.</li>
+  <li>The Streaming Service provides a download manifest with DRM-protected chunks. The client downloads and stores them locally with a time-limited DRM license (e.g., 48-hour offline playback window).</li>
+</ul>
+
+<h3>13.7 Rate Limiting &amp; Abuse Prevention</h3>
+<ul>
+  <li>The API Gateway enforces rate limiting per user/IP to prevent abuse.</li>
+  <li>Concurrent stream limits are enforced based on subscription tier (Basic: 1 stream, Standard: 2, Premium: 4).</li>
+</ul>
+
+<!-- ============================= SECTION 14 — VENDORS ============================= -->
+<h2 id="vendors">14. Vendor Recommendations</h2>
+
+<div class="callout">
+<p>The design above is vendor-agnostic. Below are potential vendors for key infrastructure components:</p>
+</div>
+
+<table>
+  <tr><th>Component</th><th>Potential Vendors</th><th>Rationale</th></tr>
+  <tr>
+    <td>SQL Database</td>
+    <td>PostgreSQL, MySQL, Amazon Aurora, Google Cloud Spanner</td>
+    <td>PostgreSQL offers rich feature set (JSONB, full-text search, advanced indexing). Aurora provides managed MySQL/PostgreSQL with auto-scaling replicas. Spanner provides global strong consistency if needed.</td>
+  </tr>
+  <tr>
+    <td>NoSQL Database</td>
+    <td>Apache Cassandra, Amazon DynamoDB, ScyllaDB</td>
+    <td>Cassandra excels at high-write workloads with tunable consistency — ideal for watch history (333K writes/sec). DynamoDB offers fully managed scaling with single-digit ms latency. ScyllaDB is a high-performance Cassandra-compatible option.</td>
+  </tr>
+  <tr>
+    <td>In-Memory Cache</td>
+    <td>Redis, Memcached, Hazelcast</td>
+    <td>Redis offers rich data structures (sorted sets for ranked recommendations), persistence, and replication. Memcached is simpler and slightly faster for pure key-value caching.</td>
+  </tr>
+  <tr>
+    <td>Message Queue</td>
+    <td>Apache Kafka, RabbitMQ, Amazon SQS</td>
+    <td>Kafka provides high throughput, durability, and replay capability — useful for the transcoding pipeline and change data capture. RabbitMQ is simpler for traditional task queues. SQS is fully managed with no operational overhead.</td>
+  </tr>
+  <tr>
+    <td>Object Storage</td>
+    <td>Amazon S3, Google Cloud Storage, Azure Blob Storage</td>
+    <td>S3 is the industry standard for durable object storage (11 nines durability). All three major clouds offer equivalent services with cross-region replication.</td>
+  </tr>
+  <tr>
+    <td>CDN</td>
+    <td>Netflix Open Connect (custom), Akamai, Cloudflare, Amazon CloudFront</td>
+    <td>Netflix actually built their own CDN (Open Connect) to control the last mile. For a greenfield design, Akamai or Cloudflare offer global edge networks with ~50Tbps+ capacity.</td>
+  </tr>
+  <tr>
+    <td>Search Index</td>
+    <td>Elasticsearch, Apache Solr, Meilisearch</td>
+    <td>Elasticsearch is the most popular inverted index engine with excellent full-text search, fuzzy matching, and scalability. Solr is a mature alternative.</td>
+  </tr>
+  <tr>
+    <td>Batch Processing</td>
+    <td>Apache Spark, Apache Flink, Google Dataflow</td>
+    <td>Spark is the de facto standard for large-scale batch ML pipelines. Flink offers true streaming with batch capability. Dataflow is fully managed.</td>
+  </tr>
+  <tr>
+    <td>Transcoding</td>
+    <td>FFmpeg (open source), AWS Elemental MediaConvert, Bitmovin</td>
+    <td>FFmpeg is the universal video processing tool. Cloud transcoding services offer managed scaling.</td>
+  </tr>
+</table>
+
+<hr>
+<p style="text-align:center; color:#888; margin-top:40px;">System Design Document — Netflix — Generated 2026-02-13</p>
 
 </body>
 </html>

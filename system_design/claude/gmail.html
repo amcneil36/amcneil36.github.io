@@ -1,503 +1,1390 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gmail - System Design</title>
-<style>
-:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--heading:#EA4335;--accent:#4285F4;--accent2:#34A853;--accent3:#FBBC05;--muted:#888}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
-h1{color:var(--heading);font-size:2.2rem;border-bottom:3px solid var(--heading);padding-bottom:.5rem;margin-bottom:1.5rem}
-h2{color:var(--accent);margin:2rem 0 1rem;font-size:1.5rem}
-h3{color:var(--accent2);margin:1.5rem 0 .75rem;font-size:1.2rem}
-h4{color:var(--accent3);margin:1rem 0 .5rem}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
-ul,ol{margin:.75rem 0 .75rem 1.5rem}
-li{margin:.4rem 0}
-code{background:#2d2d2d;padding:.2rem .5rem;border-radius:4px;font-size:.9rem;color:#f8f8f2}
-pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:1rem 0}
-pre code{padding:0;background:none}
-.tag{display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600;margin:.2rem}
-.tag-pk{background:#E53935;color:#fff}
-.tag-fk{background:#1E88E5;color:#fff}
-.tag-idx{background:#43A047;color:#fff}
-.tag-shard{background:#FB8C00;color:#fff}
-.tag-cache{background:#8E24AA;color:#fff}
-.tag-ttl{background:#00897B;color:#fff}
-svg text{font-family:'Segoe UI',system-ui,sans-serif}
-.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
-.pro{background:#1b3a1b;border:1px solid #2d5a2d;border-radius:8px;padding:1rem}
-.con{background:#3a1b1b;border:1px solid #5a2d2d;border-radius:8px;padding:1rem}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design: Gmail</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface2: #334155;
+            --border: #475569;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent2: #818cf8;
+            --green: #4ade80;
+            --orange: #fb923c;
+            --red: #f87171;
+            --yellow: #facc15;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        h2 {
+            font-size: 1.8rem;
+            color: var(--accent);
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--surface2);
+        }
+        h3 {
+            font-size: 1.3rem;
+            color: var(--accent2);
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+        h4 {
+            font-size: 1.1rem;
+            color: var(--green);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        p, li { color: var(--text); margin-bottom: 0.5rem; }
+        ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--surface2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        .example {
+            background: #1a2332;
+            border-left: 4px solid var(--accent);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .example strong { color: var(--accent); }
+        .warn {
+            background: #2d1f0e;
+            border-left: 4px solid var(--orange);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .warn strong { color: var(--orange); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: var(--surface);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th {
+            background: var(--surface2);
+            color: var(--accent);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid var(--surface2);
+        }
+        code {
+            background: var(--surface2);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--green);
+        }
+        .mermaid {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+        .toc {
+            background: var(--surface);
+            border: 1px solid var(--surface2);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+        }
+        .toc a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .toc a:hover { text-decoration: underline; }
+        .toc ul { list-style: none; padding-left: 1rem; }
+        .toc > ul { padding-left: 0; }
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-sql { background: #1e3a5f; color: #60a5fa; }
+        .badge-nosql { background: #3b1f3b; color: #c084fc; }
+        .badge-obj { background: #1f3b2e; color: #4ade80; }
+        .badge-idx { background: #3b3b1f; color: #facc15; }
+        hr { border: none; border-top: 1px solid var(--surface2); margin: 2rem 0; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
 
-<h1>📧 Gmail - System Design</h1>
+<h1>📧 System Design: Gmail</h1>
+<p style="color:var(--text-muted); font-size:1.1rem; margin-bottom:2rem;">A scalable, highly available email service supporting billions of users</p>
 
-<!-- ============ FUNCTIONAL REQUIREMENTS ============ -->
-<div class="card">
-<h2>Functional Requirements</h2>
-<ol>
-<li><strong>Send & Receive Email:</strong> Compose, send, receive, and deliver emails with attachments (up to 25MB inline, 50MB receive)</li>
-<li><strong>Inbox Management:</strong> Labels, folders, starring, archiving, snoozing, threaded conversations, tabs (Primary/Social/Promotions)</li>
-<li><strong>Search:</strong> Full-text search across all mail, labels, attachments, date ranges — sub-second results over years of history</li>
-</ol>
-</div>
-
-<!-- ============ NON-FUNCTIONAL REQUIREMENTS ============ -->
-<div class="card">
-<h2>Non-Functional Requirements</h2>
-<ul>
-<li><strong>Scale:</strong> 1.8B+ users, ~333B emails sent/day globally, 15GB free storage/user</li>
-<li><strong>Latency:</strong> Inbox load &lt;500ms, search &lt;1s, send &lt;2s perceived</li>
-<li><strong>Availability:</strong> 99.99% uptime (Google Workspace SLA)</li>
-<li><strong>Durability:</strong> Zero data loss — multi-region replication, 99.999999999% (11 nines) durability</li>
-<li><strong>Security:</strong> TLS in transit, at-rest encryption, SPF/DKIM/DMARC, phishing/spam detection</li>
-</ul>
-</div>
-
-<!-- ============ FLOW 1: SEND EMAIL ============ -->
-<h2>Flow 1: Sending an Email</h2>
-<div class="card">
-<svg viewBox="0 0 1000 370" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#4285F4"/></marker></defs>
-<rect x="20" y="50" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="80" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Client (Web/App)</text>
-<rect x="190" y="50" width="120" height="50" rx="8" fill="#4285F4"/><text x="250" y="80" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">API Gateway</text>
-<rect x="360" y="50" width="120" height="50" rx="8" fill="#4285F4"/><text x="420" y="80" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Compose Service</text>
-<rect x="530" y="20" width="120" height="50" rx="8" fill="#9C27B0"/><text x="590" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Spam/Phishing</text><text x="590" y="57" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Filter</text>
-<rect x="530" y="90" width="120" height="50" rx="8" fill="#FB8C00"/><text x="590" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Attachment</text><text x="590" y="127" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Service (GCS)</text>
-<rect x="700" y="50" width="120" height="50" rx="8" fill="#E53935"/><text x="760" y="80" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">SMTP Relay</text>
-<rect x="700" y="150" width="120" height="50" rx="8" fill="#795548"/><text x="760" y="172" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Sent Mail Store</text><text x="760" y="187" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Bigtable)</text>
-<rect x="360" y="200" width="120" height="50" rx="8" fill="#00897B"/><text x="420" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Outbound Queue</text><text x="420" y="237" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Pub/Sub)</text>
-<rect x="530" y="200" width="120" height="50" rx="8" fill="#4285F4"/><text x="590" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">DKIM Signer /</text><text x="590" y="237" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">SPF Validator</text>
-<rect x="700" y="280" width="120" height="50" rx="8" fill="#607D8B"/><text x="760" y="302" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Remote MTA</text><text x="760" y="317" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Recipient ISP)</text>
-<line x1="140" y1="75" x2="185" y2="75" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="310" y1="75" x2="355" y2="75" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="480" y1="65" x2="525" y2="50" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="480" y1="85" x2="525" y2="110" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="650" y1="45" x2="695" y2="65" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="480" y1="95" x2="420" y2="195" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="480" y1="225" x2="525" y2="225" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="650" y1="225" x2="695" y2="175" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="760" y1="100" x2="760" y2="145" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="760" y1="200" x2="760" y2="275" stroke="#4285F4" stroke-width="2" marker-end="url(#ah)"/>
-</svg>
+<!-- ================= TABLE OF CONTENTS ================= -->
+<div class="toc">
+    <h3 style="margin-top:0; color:var(--text);">Table of Contents</h3>
+    <ul>
+        <li><a href="#fr">1. Functional Requirements</a></li>
+        <li><a href="#nfr">2. Non-Functional Requirements</a></li>
+        <li><a href="#flow1">3. Flow 1 — Send Email</a></li>
+        <li><a href="#flow2">4. Flow 2 — Receive / Read Emails</a></li>
+        <li><a href="#flow3">5. Flow 3 — Search Emails</a></li>
+        <li><a href="#flow4">6. Flow 4 — Attachments (Upload &amp; Download)</a></li>
+        <li><a href="#flow5">7. Flow 5 — Real-Time Notification (New Email)</a></li>
+        <li><a href="#combined">8. Combined Overall Diagram</a></li>
+        <li><a href="#schema">9. Database Schema</a></li>
+        <li><a href="#cdn-cache">10. CDN &amp; Cache Deep Dive</a></li>
+        <li><a href="#websocket">11. WebSocket Deep Dive</a></li>
+        <li><a href="#mq">12. Message Queue Deep Dive</a></li>
+        <li><a href="#lb">13. Load Balancers</a></li>
+        <li><a href="#scaling">14. Scaling Considerations</a></li>
+        <li><a href="#tradeoffs">15. Tradeoffs &amp; Deep Dives</a></li>
+        <li><a href="#alternatives">16. Alternative Approaches</a></li>
+        <li><a href="#additional">17. Additional Considerations</a></li>
+        <li><a href="#vendors">18. Vendor Section</a></li>
+    </ul>
 </div>
 
+<!-- ================= 1. FUNCTIONAL REQUIREMENTS ================= -->
+<h2 id="fr">1. Functional Requirements</h2>
 <div class="card">
-<h3>Steps</h3>
-<ol>
-<li>Client sends composed email via HTTPS POST to API Gateway (or SMTP submission on port 587)</li>
-<li>Compose Service validates headers, body, recipients, rate limits, and drafts (stored in Bigtable)</li>
-<li>Attachments uploaded to Google Cloud Storage (GCS), referenced by blob ID in email metadata</li>
-<li>Spam/phishing filter scans outbound email (TensorFlow models for abuse prevention)</li>
-<li>Email enqueued to outbound Pub/Sub queue for asynchronous delivery</li>
-<li>DKIM signer adds cryptographic signature header; SPF TXT record validated for sender domain</li>
-<li>SMTP relay delivers to recipient MTA via STARTTLS (MX record lookup, retry with exponential backoff)</li>
-<li>Copy saved to sender's "Sent" folder in Bigtable; threading ID linked</li>
-</ol>
-
-<h3>Example</h3>
-<p>User sends email to colleague@company.com. Compose service validates, attachment (3MB PDF) uploaded to GCS, spam filter passes, DKIM signed with d=gmail.com selector, queued, SMTP relay resolves MX for company.com → delivers to corporate Exchange server over TLS 1.3.</p>
-
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>SMTP Protocol</h4>
-<p><strong>Protocol:</strong> SMTP (RFC 5321) over TCP port 25 (server-to-server) or 587 (submission with AUTH)</p>
-<p><strong>Commands:</strong> EHLO → MAIL FROM → RCPT TO → DATA → QUIT</p>
-<p><strong>STARTTLS:</strong> Opportunistic encryption upgrade; Gmail enforces TLS for 90%+ of outbound</p>
-<p><strong>Retry:</strong> Exponential backoff (1min → 5min → 15min → 1hr → 4hr) for up to 5 days per RFC 5321</p>
-</div>
-<div class="card">
-<h4>DKIM / SPF / DMARC</h4>
-<p><strong>DKIM:</strong> RSA-2048 signature over headers + body hash; selector rotated quarterly</p>
-<p><strong>SPF:</strong> DNS TXT record listing authorized sending IPs; soft fail (~all) vs hard fail (-all)</p>
-<p><strong>DMARC:</strong> Policy alignment — both DKIM and SPF must pass with From: domain alignment; p=reject for Google domains</p>
-</div>
-<div class="card">
-<h4>Attachment Storage</h4>
-<p><strong>Service:</strong> Google Cloud Storage (multi-region, Standard class)</p>
-<p><strong>Limit:</strong> 25MB per email (outbound), 50MB receive; larger files auto-redirect to Drive link</p>
-<p><strong>Dedup:</strong> Content-addressable storage — SHA-256 hash → blob; same attachment shared across copies</p>
-<p><strong>Virus Scan:</strong> Every attachment scanned by ClamAV + proprietary ML before delivery</p>
-</div>
-<div class="card">
-<h4>Outbound Queue</h4>
-<p><strong>System:</strong> Google Pub/Sub — at-least-once delivery, exactly-once processing via dedup ID</p>
-<p><strong>Partitioning:</strong> By recipient domain for batching — multiple emails to same domain sent in single SMTP session</p>
-<p><strong>Rate Limiting:</strong> Per-domain throttling to avoid being flagged as spam by recipient ISPs</p>
-</div>
-</div>
+    <ol>
+        <li><strong>Compose &amp; Send Email</strong> — Users can compose an email (To, CC, BCC, Subject, Body) and send it to one or more recipients, including recipients on external mail servers.</li>
+        <li><strong>Receive Email</strong> — Users can receive emails from internal and external senders; emails arrive in the Inbox.</li>
+        <li><strong>Read Email</strong> — Users can view their mailbox folders/labels (Inbox, Sent, Drafts, Spam, Trash, custom labels) with a paginated, time-sorted list of conversations, and open an individual email to see its full content.</li>
+        <li><strong>Reply / Forward</strong> — Users can reply (single or all) or forward an email; replies are grouped into threads/conversations.</li>
+        <li><strong>Attachments</strong> — Users can attach files when composing, and download attachments from received emails.</li>
+        <li><strong>Search</strong> — Users can search their mailbox by keyword, sender, recipient, date range, and advanced operators (e.g., <code>has:attachment</code>, <code>from:alice</code>).</li>
+        <li><strong>Labels / Folders</strong> — Users can organize emails with system labels (Inbox, Sent, Spam, Trash) and custom labels. A single email can have multiple labels.</li>
+        <li><strong>Mark Read / Unread / Star</strong> — Users can toggle read status and star/unstar emails.</li>
+        <li><strong>Drafts</strong> — Users can save drafts manually or have them auto-saved periodically while composing.</li>
+        <li><strong>Spam Filtering</strong> — Incoming emails are automatically classified as spam or not-spam.</li>
+        <li><strong>Contacts</strong> — Auto-complete suggestions when composing based on previous correspondents.</li>
+    </ol>
 </div>
 
-<!-- ============ FLOW 2: RECEIVE & INBOX ============ -->
-<h2>Flow 2: Receiving Email & Inbox Delivery</h2>
+<!-- ================= 2. NON-FUNCTIONAL REQUIREMENTS ================= -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
 <div class="card">
-<svg viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#34A853"/></marker></defs>
-<rect x="20" y="50" width="120" height="50" rx="8" fill="#607D8B"/><text x="80" y="80" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Sender MTA</text>
-<rect x="190" y="50" width="120" height="50" rx="8" fill="#E53935"/><text x="250" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Inbound MX</text><text x="250" y="87" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Gateway</text>
-<rect x="360" y="20" width="130" height="50" rx="8" fill="#9C27B0"/><text x="425" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Spam Classifier</text><text x="425" y="57" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(TensorFlow)</text>
-<rect x="360" y="90" width="130" height="50" rx="8" fill="#FB8C00"/><text x="425" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Phishing / Malware</text><text x="425" y="127" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Scanner</text>
-<rect x="540" y="50" width="120" height="50" rx="8" fill="#4285F4"/><text x="600" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Delivery Service</text><text x="600" y="87" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Categorizer)</text>
-<rect x="710" y="20" width="120" height="50" rx="8" fill="#795548"/><text x="770" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Mailbox Store</text><text x="770" y="57" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Bigtable)</text>
-<rect x="710" y="90" width="120" height="50" rx="8" fill="#00897B"/><text x="770" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Index</text><text x="770" y="127" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Custom)</text>
-<rect x="540" y="180" width="120" height="50" rx="8" fill="#4285F4"/><text x="600" y="202" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Push Notifier</text><text x="600" y="217" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(FCM / APNs)</text>
-<rect x="710" y="180" width="120" height="50" rx="8" fill="#34A853"/><text x="770" y="202" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Client Sync</text><text x="770" y="217" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(IMAP / API)</text>
-<line x1="140" y1="75" x2="185" y2="75" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="310" y1="65" x2="355" y2="50" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="310" y1="85" x2="355" y2="110" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="490" y1="45" x2="535" y2="65" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="490" y1="115" x2="535" y2="85" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="660" y1="65" x2="705" y2="45" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="660" y1="85" x2="705" y2="110" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="600" y1="100" x2="600" y2="175" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="660" y1="205" x2="705" y2="205" stroke="#34A853" stroke-width="2" marker-end="url(#ah2)"/>
-</svg>
+    <ol>
+        <li><strong>High Availability</strong> — The service should target 99.99% uptime; email is a critical communication channel.</li>
+        <li><strong>Durability</strong> — Zero email loss. Every email that is accepted for delivery must be persisted durably before acknowledgment.</li>
+        <li><strong>Low Latency</strong> — Inbox loading &lt; 300 ms (P95); email send acknowledgment &lt; 500 ms; search results &lt; 1 s.</li>
+        <li><strong>Scalability</strong> — Support 1 billion+ users, hundreds of billions of emails per day, petabytes of storage.</li>
+        <li><strong>Consistency</strong> — Strong consistency for a user's own mailbox operations (read-after-write); eventual consistency acceptable for cross-user views (e.g., contact suggestions).</li>
+        <li><strong>Security</strong> — TLS in transit, encryption at rest, OAuth2 / SAML authentication, spam/phishing/malware filtering.</li>
+        <li><strong>Global Reach</strong> — Users worldwide should have low-latency access via geographically distributed infrastructure.</li>
+        <li><strong>Fault Tolerance</strong> — The system should tolerate individual node, rack, or datacenter failures without data loss or prolonged downtime.</li>
+    </ol>
 </div>
 
-<div class="card">
-<h3>Steps</h3>
-<ol>
-<li>Sender MTA connects to Gmail MX (aspmx.l.google.com) on port 25 over STARTTLS</li>
-<li>Inbound gateway validates SPF, DKIM signature, DMARC alignment; rejects on hard fail</li>
-<li>TensorFlow spam classifier scores email (0-1.0); >0.7 → Spam folder, >0.95 → reject at SMTP level</li>
-<li>Phishing scanner checks URLs against Safe Browsing DB, attachment sandboxing via gVisor</li>
-<li>Delivery Service categorizes: Primary / Social / Promotions / Updates using ML classifier trained on user behavior</li>
-<li>Email written to Bigtable (mailbox row) with thread linking via References/In-Reply-To headers</li>
-<li>Search index updated asynchronously (body, headers, attachment text via OCR/Tika extraction)</li>
-<li>Push notification sent via FCM (Android) / APNs (iOS); IMAP IDLE notify for desktop clients</li>
-</ol>
+<!-- ================= 3. FLOW 1 — SEND EMAIL ================= -->
+<h2 id="flow1">3. Flow 1 — Send Email</h2>
 
-<h3>Example</h3>
-<p>Newsletter from service@shopify.com arrives. SPF passes (IP in Shopify's SPF record), DKIM valid. Spam score 0.15 — not spam. ML categorizer routes to "Promotions" tab. Stored in Bigtable under user's mailbox, indexed for search. No push notification (Promotions tab notifications disabled by user preference).</p>
+<div class="mermaid">
+flowchart LR
+    subgraph Client
+        A[Web / Mobile Client]
+    end
+    subgraph Gateway
+        B[API Gateway<br/>+ Load Balancer]
+    end
+    subgraph Services
+        C[Email Send Service]
+        D[Spam / Virus<br/>Scanner]
+    end
+    subgraph Storage
+        E[(Email Metadata DB<br/>NoSQL)]
+        F[(Email Body Store<br/>Object Storage)]
+    end
+    subgraph Async
+        G[Message Queue]
+        H[SMTP Delivery<br/>Worker]
+        I[Notification<br/>Service]
+    end
+    subgraph External
+        J[External Mail<br/>Server via SMTP]
+    end
 
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>Spam Classification</h4>
-<p><strong>Model:</strong> TensorFlow deep neural network — features include sender reputation, content analysis, URL patterns, header anomalies, user feedback signals</p>
-<p><strong>Training:</strong> Continuously retrained on billions of labeled examples from user "Report Spam" / "Not Spam" actions</p>
-<p><strong>Accuracy:</strong> 99.9% spam detection, <0.05% false positive rate</p>
-<p><strong>RBL:</strong> Real-time blackhole lists consulted (Spamhaus, Barracuda) for known bad IPs</p>
-</div>
-<div class="card">
-<h4>Tab Categorization</h4>
-<p><strong>Categories:</strong> Primary, Social, Promotions, Updates, Forums — ML classifier per user</p>
-<p><strong>Features:</strong> Sender domain, List-Unsubscribe header presence, content keywords, user interaction history</p>
-<p><strong>Personalization:</strong> User drag-and-drop re-categorization feeds back into per-user model fine-tuning</p>
-</div>
-<div class="card">
-<h4>Thread Linking</h4>
-<p><strong>Algorithm:</strong> Match by Message-ID, In-Reply-To, References headers (RFC 5322)</p>
-<p><strong>Fallback:</strong> Subject normalization (strip Re:/Fwd: prefixes) + sender/recipient overlap heuristic</p>
-<p><strong>Storage:</strong> Conversation ID (thread_id) in Bigtable — all messages in thread share same key prefix</p>
-</div>
-<div class="card">
-<h4>IMAP Protocol</h4>
-<p><strong>Protocol:</strong> IMAP4rev1 (RFC 3501) over TLS port 993</p>
-<p><strong>IDLE:</strong> Long-lived TCP connection for push-like real-time notification (RFC 2177)</p>
-<p><strong>CONDSTORE:</strong> Conditional STORE for efficient sync — mod-sequence numbers track mailbox changes</p>
-<p><strong>Gmail Extensions:</strong> X-GM-LABELS for label sync, X-GM-THRID for thread ID mapping</p>
-</div>
-</div>
+    A -- "HTTP POST<br/>/api/v1/emails" --> B
+    B --> C
+    C --> D
+    D --> C
+    C -- "store sender copy<br/>(Sent label)" --> E
+    C -- "store body" --> F
+    C -- "internal recipient:<br/>store in recipient mailbox" --> E
+    C -- "external recipient" --> G
+    G --> H
+    H -- "SMTP over TCP" --> J
+    C -- "notify recipient<br/>(if internal)" --> I
 </div>
 
-<!-- ============ FLOW 3: SEARCH ============ -->
-<h2>Flow 3: Email Search</h2>
-<div class="card">
-<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FBBC05"/></marker></defs>
-<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="90" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Client</text>
-<rect x="190" y="60" width="120" height="50" rx="8" fill="#4285F4"/><text x="250" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Frontend</text><text x="250" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Service</text>
-<rect x="360" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="425" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Query Parser</text><text x="425" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Structured)</text>
-<rect x="540" y="30" width="130" height="50" rx="8" fill="#00897B"/><text x="605" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Per-User Index</text><text x="605" y="67" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Inverted)</text>
-<rect x="540" y="100" width="130" height="50" rx="8" fill="#795548"/><text x="605" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Mailbox Store</text><text x="605" y="137" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">(Bigtable)</text>
-<rect x="720" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="785" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Ranking &</text><text x="785" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Snippeting</text>
-<line x1="140" y1="85" x2="185" y2="85" stroke="#FBBC05" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="310" y1="85" x2="355" y2="85" stroke="#FBBC05" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="490" y1="75" x2="535" y2="55" stroke="#FBBC05" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="490" y1="95" x2="535" y2="120" stroke="#FBBC05" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="670" y1="55" x2="715" y2="75" stroke="#FBBC05" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="670" y1="125" x2="715" y2="95" stroke="#FBBC05" stroke-width="2" marker-end="url(#ah3)"/>
-</svg>
+<h3>Examples</h3>
+
+<div class="example">
+    <strong>Example 1 — Internal Recipient:</strong> Alice composes an email to Bob (both are on our platform) and clicks Send. The web client sends an <code>HTTP POST /api/v1/emails</code> to the API Gateway with the JSON payload <code>{to: ["bob@gmail.com"], subject: "Meeting", body: "..."}</code>. The API Gateway routes to the Email Send Service. The service runs the outgoing spam/virus scanner, stores the email body in Object Storage, writes a metadata row to Bob's mailbox (label: INBOX) and a metadata row to Alice's mailbox (label: SENT) in the Email Metadata DB. The Notification Service is invoked to push a real-time alert to Bob. Alice sees a "Sent" confirmation in under 500 ms.
 </div>
 
-<div class="card">
-<h3>Steps</h3>
-<ol>
-<li>User types query (e.g., <code>from:boss@company.com has:attachment after:2024/01/01 budget</code>)</li>
-<li>Query parser tokenizes into structured operators: from_filter, has_attachment, date_range, full_text_terms</li>
-<li>Per-user inverted index consulted — each user has dedicated index partitions (not global web-scale index)</li>
-<li>Posting lists intersected: matching message IDs retrieved, filtered by date range predicate</li>
-<li>Full message metadata fetched from Bigtable for ranking (recency, sender importance, interaction history)</li>
-<li>Snippets generated by highlighting matching terms in message body (KWIC — keyword in context)</li>
-<li>Results returned ranked by relevance with pagination (cursor-based using message timestamp)</li>
-</ol>
-
-<h3>Example</h3>
-<p>Search <code>from:hr@company.com subject:benefits</code>. Parser extracts from: and subject: operators. Per-user index lookups: from:hr@company.com → {msg_42, msg_187, msg_301}, subject:benefits → {msg_42, msg_899}. Intersection: {msg_42}. Bigtable fetch for msg_42 metadata, snippet generated, returned in ~200ms.</p>
-
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>Per-User Index Architecture</h4>
-<p><strong>Design:</strong> Each user's mailbox has its own inverted index — not a shared global index</p>
-<p><strong>Reason:</strong> Privacy isolation (no cross-user data leaks), simpler ACL model</p>
-<p><strong>Storage:</strong> Index shards co-located with mailbox data in Bigtable for locality</p>
-<p><strong>Update:</strong> Near-real-time — new emails indexed within seconds of delivery</p>
-</div>
-<div class="card">
-<h4>Search Operators</h4>
-<p><strong>Supported:</strong> from:, to:, subject:, has:attachment, filename:, label:, after:, before:, is:starred, is:unread, larger:, in:anywhere</p>
-<p><strong>Boolean:</strong> AND (implicit), OR, NOT/- (negation)</p>
-<p><strong>Grouping:</strong> Parentheses for complex queries: <code>(from:a OR from:b) subject:meeting</code></p>
-</div>
-</div>
+<div class="example">
+    <strong>Example 2 — External Recipient:</strong> Alice sends an email to <code>dave@outlook.com</code>. The flow is identical up to storing Alice's sent copy. Since the recipient is external, the Email Send Service enqueues a delivery job on the Message Queue instead of writing directly to a mailbox. An SMTP Delivery Worker picks up the job, performs a DNS MX lookup for <code>outlook.com</code>, opens a TCP connection to the external mail server, and delivers the email via SMTP. If the remote server is temporarily unavailable, the message stays on the queue and is retried with exponential backoff.
 </div>
 
-<!-- ============ COMBINED ARCHITECTURE ============ -->
-<h2>Combined Architecture</h2>
-<div class="card">
-<svg viewBox="0 0 1050 520" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#4285F4"/></marker></defs>
-<rect x="20" y="30" width="140" height="50" rx="8" fill="#34A853"/><text x="90" y="55" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Web Client</text><text x="90" y="70" text-anchor="middle" fill="#fff" font-size="10">(React SPA)</text>
-<rect x="20" y="100" width="140" height="50" rx="8" fill="#34A853"/><text x="90" y="125" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Mobile Apps</text><text x="90" y="140" text-anchor="middle" fill="#fff" font-size="10">(iOS / Android)</text>
-<rect x="20" y="170" width="140" height="50" rx="8" fill="#34A853"/><text x="90" y="195" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">IMAP/SMTP</text><text x="90" y="210" text-anchor="middle" fill="#fff" font-size="10">(3rd Party Clients)</text>
-<rect x="220" y="80" width="140" height="70" rx="8" fill="#FB8C00"/><text x="290" y="110" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Google Front End</text><text x="290" y="127" text-anchor="middle" fill="#fff" font-size="10">(GFE / L7 LB)</text>
-<rect x="420" y="20" width="130" height="50" rx="8" fill="#4285F4"/><text x="485" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Compose Service</text><text x="485" y="57" text-anchor="middle" fill="#fff" font-size="10">(Send Pipeline)</text>
-<rect x="420" y="90" width="130" height="50" rx="8" fill="#4285F4"/><text x="485" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Delivery Service</text><text x="485" y="127" text-anchor="middle" fill="#fff" font-size="10">(Receive Pipeline)</text>
-<rect x="420" y="160" width="130" height="50" rx="8" fill="#4285F4"/><text x="485" y="182" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Search Service</text><text x="485" y="197" text-anchor="middle" fill="#fff" font-size="10">(Per-User Index)</text>
-<rect x="610" y="20" width="130" height="50" rx="8" fill="#9C27B0"/><text x="675" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Spam / Phishing</text><text x="675" y="57" text-anchor="middle" fill="#fff" font-size="10">(TensorFlow)</text>
-<rect x="610" y="90" width="130" height="50" rx="8" fill="#9C27B0"/><text x="675" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Tab Categorizer</text><text x="675" y="127" text-anchor="middle" fill="#fff" font-size="10">(ML Classifier)</text>
-<rect x="800" y="20" width="130" height="50" rx="8" fill="#E53935"/><text x="865" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">SMTP Relay</text><text x="865" y="57" text-anchor="middle" fill="#fff" font-size="10">(Outbound)</text>
-<rect x="800" y="90" width="130" height="50" rx="8" fill="#E53935"/><text x="865" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">MX Gateway</text><text x="865" y="127" text-anchor="middle" fill="#fff" font-size="10">(Inbound)</text>
-<rect x="420" y="290" width="130" height="60" rx="8" fill="#795548"/><text x="485" y="315" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Bigtable</text><text x="485" y="332" text-anchor="middle" fill="#fff" font-size="10">(Mailbox + Index)</text>
-<rect x="610" y="290" width="130" height="60" rx="8" fill="#795548"/><text x="675" y="315" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Google Cloud</text><text x="675" y="332" text-anchor="middle" fill="#fff" font-size="10">Storage (Blobs)</text>
-<rect x="800" y="290" width="130" height="60" rx="8" fill="#00897B"/><text x="865" y="315" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Pub/Sub</text><text x="865" y="332" text-anchor="middle" fill="#fff" font-size="10">(Async Queues)</text>
-<rect x="220" y="400" width="140" height="50" rx="8" fill="#4285F4"/><text x="290" y="425" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Push Notifier</text><text x="290" y="440" text-anchor="middle" fill="#fff" font-size="10">(FCM / APNs)</text>
-<rect x="420" y="400" width="130" height="50" rx="8" fill="#00897B"/><text x="485" y="425" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Memcached</text><text x="485" y="440" text-anchor="middle" fill="#fff" font-size="10">(Session/Labels)</text>
-<line x1="160" y1="55" x2="215" y2="100" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="160" y1="125" x2="215" y2="115" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="160" y1="195" x2="215" y2="140" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="360" y1="100" x2="415" y2="45" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="360" y1="115" x2="415" y2="115" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="360" y1="130" x2="415" y2="185" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="550" y1="45" x2="605" y2="45" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="550" y1="115" x2="605" y2="115" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="740" y1="45" x2="795" y2="45" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="740" y1="115" x2="795" y2="115" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="485" y1="210" x2="485" y2="285" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="520" y1="140" x2="610" y2="290" stroke="#4285F4" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="865" y1="140" x2="865" y2="285" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="485" y1="350" x2="485" y2="395" stroke="#4285F4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="420" y1="350" x2="350" y2="400" stroke="#4285F4" stroke-width="1.5" marker-end="url(#ah4)"/>
-</svg>
+<div class="example">
+    <strong>Example 3 — Multiple Recipients (Mixed):</strong> Alice sends to <code>bob@gmail.com</code> (internal) and <code>dave@outlook.com</code> (external). The Email Send Service handles both paths: it directly stores a mailbox entry for Bob and enqueues an SMTP delivery job for Dave. The email body is stored only once in Object Storage; both Bob's metadata row and the SMTP job reference the same body ID.
 </div>
 
+<h3>Component Deep Dive — Flow 1</h3>
+
+<h4>API Gateway + Load Balancer</h4>
 <div class="card">
-<h3>Architecture Notes</h3>
-<ul>
-<li><strong>Google Front End (GFE):</strong> L7 load balancer handling TLS termination, DDoS mitigation, rate limiting — all Gmail traffic enters here</li>
-<li><strong>Bigtable:</strong> Primary storage for mailbox data — row key: <code>user_id#timestamp#msg_id</code>; column families for headers, body, labels, flags</li>
-<li><strong>Per-User Index:</strong> Co-located with mailbox in Bigtable — inverted index mapping terms → message IDs within a single user's data</li>
-<li><strong>Pub/Sub:</strong> Decouples send/receive pipelines — delivery retries, webhook notifications, analytics all consume from shared topics</li>
-<li><strong>Colossus (GFS v2):</strong> Underlying distributed filesystem for Bigtable and GCS — handles replication and erasure coding</li>
-</ul>
+    <p>A reverse-proxy layer that terminates TLS, authenticates the user (via OAuth2 token / session cookie), applies rate limiting, and routes the request to the appropriate microservice. It also performs request validation (payload size limits, required fields). The load balancer distributes traffic across multiple instances of the Email Send Service using a round-robin or least-connections strategy.</p>
 </div>
 
-<!-- ============ DATABASE SCHEMA ============ -->
-<h2>Database Schema</h2>
-<div class="grid">
+<h4>Email Send Service</h4>
 <div class="card">
-<h3>Bigtable — Mailbox Table</h3>
-<pre><code>Row Key: {user_id}#{reverse_timestamp}#{message_id}
-Column Families:
-  headers:
-    - from         (string)
-    - to           (string[])
-    - cc           (string[])
-    - subject      (string)
-    - date         (timestamp)
-    - message_id   (string, RFC 5322 Message-ID)
-    - in_reply_to  (string)
-    - references   (string[])
-  body:
-    - text_plain   (bytes, compressed)
-    - text_html    (bytes, compressed)
-    - snippet      (string, first 200 chars)
-  meta:
-    - thread_id    (string)  <span class="tag tag-idx">INDEX</span>
-    - labels       (string[], e.g., ["INBOX","UNREAD","IMPORTANT"])
-    - category     (enum: primary|social|promotions|updates|forums)
-    - is_read      (bool)
-    - is_starred   (bool)
-    - spam_score   (float)
-  attachments:
-    - att_0_name   (string)
-    - att_0_mime   (string)
-    - att_0_size   (int64)
-    - att_0_blob   (string → GCS reference)</code></pre>
-<p><span class="tag tag-shard">SHARD</span> Sharded by user_id — each user's data co-located on same Bigtable tablet</p>
-<p><span class="tag tag-pk">ROW KEY</span> Reverse timestamp ensures newest messages sort first in scan</p>
+    <p><strong>Protocol:</strong> HTTP (REST)</p>
+    <table>
+        <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th></tr>
+        <tr>
+            <td><code>/api/v1/emails</code></td>
+            <td><code>POST</code></td>
+            <td>JSON body: <code>{ to: string[], cc?: string[], bcc?: string[], subject: string, body_html: string, body_text: string, attachment_ids?: string[], thread_id?: string, in_reply_to?: string }</code></td>
+            <td><code>{ email_id: string, status: "sent" | "queued", timestamp: string }</code></td>
+        </tr>
+    </table>
+    <p>On receiving a request: (1) validate inputs; (2) invoke the spam/virus scanner; (3) generate a unique <code>email_id</code> (ULID for time-sortability); (4) store the email body in Object Storage; (5) write metadata rows for the sender (SENT label) and each internal recipient (INBOX label) to the Email Metadata DB; (6) for external recipients, publish a delivery job to the Message Queue; (7) trigger the Notification Service for internal recipients; (8) return the response.</p>
 </div>
 
+<h4>Spam / Virus Scanner</h4>
 <div class="card">
-<h3>Bigtable — Per-User Search Index</h3>
-<pre><code>Row Key: {user_id}#idx#{term}
-Column Family:
-  postings:
-    - msg_ids     (sorted list of message_ids)
-    - positions   (term positions for snippet generation)
-    - doc_freq    (count of messages containing term)
-
-Terms indexed:
-  - Body tokens (stemmed, lowercased)
-  - Header values (from:, to:, subject:)
-  - Attachment filenames
-  - Label names
-  - Date ranges (bucketed by month)</code></pre>
-<p><span class="tag tag-idx">INDEX</span> One inverted index per user — privacy isolated, no cross-user leakage</p>
+    <p>An inline service invoked synchronously by the Email Send Service. For outgoing emails, it checks the content against spam patterns and scans attachments for malware. For incoming emails (received via SMTP from external senders), the same service runs more aggressive heuristics and ML-based classification. The scanner returns a verdict: <code>CLEAN</code>, <code>SPAM</code>, or <code>MALWARE</code>. If <code>SPAM</code>, the email is labeled accordingly; if <code>MALWARE</code>, the email is quarantined.</p>
 </div>
 
+<h4>Email Metadata DB (NoSQL — Wide-Column Store)</h4>
 <div class="card">
-<h3>Labels & Filters (Spanner)</h3>
-<pre><code>CREATE TABLE user_labels (
-  user_id     STRING(36),   <span class="tag tag-pk">PK</span>
-  label_id    STRING(36),   <span class="tag tag-pk">PK</span>
-  name        STRING(256),
-  color       STRING(7),
-  type        STRING(20),   -- system | user
-  visibility  STRING(20),   -- show | hide
-  created_at  TIMESTAMP
-) PRIMARY KEY (user_id, label_id);
-
-CREATE TABLE user_filters (
-  user_id     STRING(36),   <span class="tag tag-pk">PK</span>
-  filter_id   STRING(36),   <span class="tag tag-pk">PK</span>
-  criteria    JSON,         -- {from, to, subject, has_words, size_gt}
-  actions     JSON,         -- {add_label, archive, delete, mark_read, forward}
-  created_at  TIMESTAMP
-) PRIMARY KEY (user_id, filter_id);</code></pre>
-</div>
+    <p>Stores all email metadata: sender, recipients, subject, snippet, labels, timestamps, read/star status, thread_id, attachment references, and size. Chosen as NoSQL because the access pattern is almost exclusively <code>user_id</code>-scoped (get all my emails in INBOX sorted by time). See <a href="#schema">Schema section</a> for full details.</p>
 </div>
 
-<!-- ============ CACHE & CDN ============ -->
-<h2>Cache & CDN Deep Dive</h2>
+<h4>Email Body Store (Object Storage)</h4>
 <div class="card">
-<div class="grid">
-<div class="card">
-<h4>Session & Label Cache</h4>
-<p><strong>System:</strong> Memcached (Google internal Memcache service)</p>
-<p><strong>Cached:</strong> User session, label list, unread counts, draft state, contact autocomplete</p>
-<p><strong>Strategy:</strong> Write-through for label changes; invalidate on new email delivery</p>
-<p><strong>TTL:</strong> 15 minutes for unread counts; session cache: tied to auth token expiry</p>
-</div>
-<div class="card">
-<h4>Attachment CDN</h4>
-<p><strong>System:</strong> Google's global edge network (same infra as YouTube/Drive)</p>
-<p><strong>Caching:</strong> Attachment thumbnails and previews cached at edge; full downloads proxied through GCS</p>
-<p><strong>Policy:</strong> Private cache-control (no public CDN caching for email content — privacy)</p>
-<p><strong>Auth:</strong> Signed URLs with 15-minute expiry for attachment download links</p>
-</div>
-<div class="card">
-<h4>Inbox Prefetch</h4>
-<p><strong>Strategy:</strong> First page of inbox (25 conversations) prefetched and cached on client</p>
-<p><strong>Service Worker:</strong> Web client uses service worker for offline inbox access</p>
-<p><strong>Delta Sync:</strong> Client sends last sync token → server returns only new/changed messages since</p>
-<p><strong>Compression:</strong> Protocol Buffers over gRPC — 60-80% smaller than JSON equivalent</p>
-</div>
-<div class="card">
-<h4>DNS & Routing Cache</h4>
-<p><strong>MX Cache:</strong> SMTP relay caches MX record lookups (TTL from DNS, min 5 minutes)</p>
-<p><strong>TLS Cache:</strong> SMTP TLS session tickets cached to avoid full handshake on repeated connections</p>
-<p><strong>Reputation Cache:</strong> Sender reputation scores cached per-domain (hourly refresh from scoring pipeline)</p>
-</div>
-</div>
+    <p>Stores the full HTML and plain-text body of every email. Each body is keyed by <code>email_id</code>. Object Storage is chosen because email bodies are write-once-read-many (WORM), can be large, and benefit from cheap, durable, scalable blob storage. When multiple recipients receive the same email, only one body object is stored; all metadata rows reference the same key.</p>
 </div>
 
-<!-- ============ SCALING ============ -->
-<h2>Scaling & Load Balancing</h2>
+<h4>Message Queue</h4>
 <div class="card">
-<ul>
-<li><strong>Google Front End (GFE):</strong> Anycast-based global load balancing — routes to nearest healthy datacenter; Maglev (kernel-bypass L4 LB) handles millions of connections per server</li>
-<li><strong>Bigtable Auto-Scaling:</strong> Tablets auto-split when size exceeds threshold; hotspot detection moves heavy-usage tablets to dedicated nodes</li>
-<li><strong>SMTP Relay Scaling:</strong> Horizontally scaled relay pool; per-destination-domain queues with configurable concurrency (avoid overwhelming small mail servers)</li>
-<li><strong>Multi-Region:</strong> User data replicated across 3+ zones within a region (synchronous); cross-region async for disaster recovery (RPO < 1 minute)</li>
-<li><strong>Borg (Kubernetes predecessor):</strong> All Gmail services run on Borg — auto-restart, bin-packing, priority-based scheduling</li>
-<li><strong>Batch Processing:</strong> Spam model retraining, storage reclamation, and analytics run on Flume/MapReduce pipelines during off-peak</li>
-</ul>
+    <p>Holds delivery jobs for emails destined for external mail servers. See <a href="#mq">Message Queue Deep Dive</a> for full details on enqueue/dequeue, retry, and dead-letter behavior.</p>
 </div>
 
-<!-- ============ TRADEOFFS ============ -->
-<h2>Tradeoffs</h2>
-<div class="tradeoff-grid">
-<div class="pro">
-<h4>✅ Per-User Index</h4>
-<ul>
-<li>Perfect privacy isolation — no cross-user data leakage possible</li>
-<li>Simpler ACL model (no per-document permission checks)</li>
-<li>Index size per user is small → fast queries</li>
-</ul>
-</div>
-<div class="con">
-<h4>❌ Per-User Index</h4>
-<ul>
-<li>Cannot do cross-user analytics or global search</li>
-<li>Index maintenance overhead — billions of small indexes vs. one large one</li>
-<li>Cold start for new users requires index build from scratch</li>
-</ul>
-</div>
-<div class="pro">
-<h4>✅ Bigtable (NoSQL)</h4>
-<ul>
-<li>Handles massive write throughput (billions of emails/day)</li>
-<li>Flexible schema — easy to add new column families</li>
-<li>Horizontal scaling without application changes</li>
-</ul>
-</div>
-<div class="con">
-<h4>❌ Bigtable (NoSQL)</h4>
-<ul>
-<li>No SQL joins — application-level joins required for cross-entity queries</li>
-<li>Limited secondary indexing (must maintain manually)</li>
-<li>Eventual consistency for cross-region reads</li>
-</ul>
-</div>
+<h4>SMTP Delivery Worker</h4>
+<div class="card">
+    <p>A pool of workers that consume delivery jobs from the Message Queue. Each worker: (1) performs a DNS MX lookup for the recipient domain; (2) establishes a TCP connection to the highest-priority MX server; (3) delivers the email using SMTP (port 25 with STARTTLS upgrade); (4) on success, acknowledges and removes the message from the queue; (5) on failure, leaves the message for retry with exponential backoff (1 min → 5 min → 15 min → 1 hr → 4 hr, up to 72 hours). Failed messages after max retries go to a dead-letter queue and a bounce notification is sent back to the sender.</p>
+    <p><strong>Why TCP:</strong> SMTP is a TCP-based protocol by specification; it requires reliable, ordered delivery of commands and data.</p>
 </div>
 
-<!-- ============ ALTERNATIVES ============ -->
-<h2>Alternative Approaches</h2>
-<div class="grid">
+<h4>Notification Service</h4>
 <div class="card">
-<h4>Traditional RDBMS (PostgreSQL)</h4>
-<p>Could use sharded PostgreSQL (like Citus) for mailbox storage. Provides ACID transactions, rich querying, and built-in full-text search (tsvector). However, scaling to billions of users with billions of rows each is impractical without extreme sharding complexity.</p>
-</div>
-<div class="card">
-<h4>Elasticsearch for Search</h4>
-<p>Dedicated Elasticsearch cluster per user partition instead of Bigtable-embedded index. Better full-text capabilities (BM25 ranking, fuzzy matching) but adds operational complexity, higher memory cost, and cross-cluster coordination overhead.</p>
-</div>
-<div class="card">
-<h4>Event Sourcing Architecture</h4>
-<p>Store all mailbox mutations as immutable events (EmailReceived, LabelAdded, MessageDeleted). Rebuild current state from event log. Excellent for audit trails and undo, but read performance requires maintained projections (materialized views), adding complexity.</p>
-</div>
+    <p>Publishes real-time notifications to recipients who are online. See <a href="#flow5">Flow 5</a> and the <a href="#websocket">WebSocket Deep Dive</a> for details.</p>
 </div>
 
-<!-- ============ ADDITIONAL INFO ============ -->
-<h2>Additional Information</h2>
-<div class="card">
-<ul>
-<li><strong>Confidential Mode:</strong> Time-expiring emails with revocable access — stored server-side, recipient gets a link (not full email body); SMS passcode for non-Gmail recipients</li>
-<li><strong>Google Workspace Vault:</strong> Legal hold and eDiscovery — all emails retained in immutable audit store regardless of user deletion</li>
-<li><strong>AMP for Email:</strong> Interactive emails (carousels, forms, real-time content) rendered via AMP runtime sandboxed within Gmail client</li>
-<li><strong>Smart Compose / Smart Reply:</strong> On-device LSTM/Transformer models suggest completions; server-side models for Smart Reply (3 suggestions). Federated learning for personalization without sending raw email content to training pipeline.</li>
-<li><strong>Storage Quota:</strong> 15GB shared across Gmail, Drive, Photos (free tier). Bigtable stores compressed — actual storage efficiency ~3-5x over raw size via Snappy compression + deduplication of repeated MIME parts.</li>
-<li><strong>Migration:</strong> Gmail Import supports IMAP pull from external providers; Google Takeout exports all email as MBOX format for data portability (GDPR compliance).</li>
-</ul>
+<!-- ================= 4. FLOW 2 — RECEIVE / READ EMAILS ================= -->
+<h2 id="flow2">4. Flow 2 — Receive / Read Emails</h2>
+
+<div class="mermaid">
+flowchart LR
+    subgraph Client
+        A[Web / Mobile Client]
+    end
+    subgraph Gateway
+        B[API Gateway<br/>+ Load Balancer]
+    end
+    subgraph Services
+        C[Email Read Service]
+    end
+    subgraph Cache
+        D[(In-Memory Cache)]
+    end
+    subgraph Storage
+        E[(Email Metadata DB<br/>NoSQL)]
+        F[(Email Body Store<br/>Object Storage)]
+    end
+
+    A -- "HTTP GET<br/>/api/v1/emails?label=INBOX" --> B
+    B --> C
+    C -- "check cache" --> D
+    D -. "cache miss" .-> C
+    C -- "query" --> E
+    E -- "metadata list" --> C
+    C -- "response" --> B
+    B --> A
+
+    A -- "HTTP GET<br/>/api/v1/emails/:id" --> B
+    B --> C
+    C -- "fetch body" --> F
+    F -- "body" --> C
+    C -- "HTTP PATCH<br/>mark as read" --> E
 </div>
+
+<h3>Examples</h3>
+
+<div class="example">
+    <strong>Example 1 — Loading Inbox (Cache Hit):</strong> Bob opens Gmail in his browser. The client sends <code>HTTP GET /api/v1/emails?label=INBOX&page_size=50</code>. The API Gateway routes to the Email Read Service. The service checks the in-memory cache for Bob's inbox page 1. Cache hit: the cached metadata list (subject, sender, snippet, timestamp, is_read, is_starred for each email) is returned directly. Response time: ~50 ms.
+</div>
+
+<div class="example">
+    <strong>Example 2 — Loading Inbox (Cache Miss):</strong> Carol opens Gmail for the first time today. The cache does not have her inbox. The Email Read Service queries the Email Metadata DB with partition key <code>user_id=carol</code>, filter <code>label=INBOX</code>, sorted by <code>created_at DESC</code>, limit 50. The result is written to the cache (TTL: 5 min) and returned. Response time: ~200 ms.
+</div>
+
+<div class="example">
+    <strong>Example 3 — Opening a Specific Email:</strong> Bob clicks on an email in his inbox. The client sends <code>HTTP GET /api/v1/emails/email_123</code>. The Email Read Service fetches the full email body from Object Storage using the <code>body_key</code> stored in the metadata. Simultaneously, it sends <code>HTTP PATCH /api/v1/emails/email_123</code> with <code>{is_read: true}</code> to update the metadata. The full email (headers + body + attachment list) is returned.
+</div>
+
+<div class="example">
+    <strong>Example 4 — Loading a Thread/Conversation:</strong> Bob clicks on a conversation. The client sends <code>HTTP GET /api/v1/threads/thread_456</code>. The Email Read Service queries all emails with <code>thread_id=thread_456</code> for Bob's user_id, sorted by time ascending, and returns the full conversation.
+</div>
+
+<h3>Component Deep Dive — Flow 2</h3>
+
+<h4>Email Read Service</h4>
+<div class="card">
+    <p><strong>Protocol:</strong> HTTP (REST)</p>
+    <table>
+        <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th></tr>
+        <tr>
+            <td><code>/api/v1/emails</code></td>
+            <td><code>GET</code></td>
+            <td>Query params: <code>label</code>, <code>page_token</code>, <code>page_size</code> (default 50)</td>
+            <td><code>{ emails: [{email_id, subject, sender, snippet, is_read, is_starred, has_attachments, timestamp, thread_id}], next_page_token }</code></td>
+        </tr>
+        <tr>
+            <td><code>/api/v1/emails/:email_id</code></td>
+            <td><code>GET</code></td>
+            <td>Path param: <code>email_id</code></td>
+            <td><code>{ email_id, subject, from, to, cc, body_html, body_text, attachments: [{id, filename, size, content_type}], labels, thread_id, timestamp }</code></td>
+        </tr>
+        <tr>
+            <td><code>/api/v1/emails/:email_id</code></td>
+            <td><code>PATCH</code></td>
+            <td>JSON body: <code>{ is_read?: bool, is_starred?: bool, labels_add?: string[], labels_remove?: string[] }</code></td>
+            <td><code>{ success: bool }</code></td>
+        </tr>
+        <tr>
+            <td><code>/api/v1/threads/:thread_id</code></td>
+            <td><code>GET</code></td>
+            <td>Path param: <code>thread_id</code></td>
+            <td><code>{ thread_id, subject, emails: [...], participant_count }</code></td>
+        </tr>
+    </table>
+    <p>The service implements cache-aside: check the in-memory cache first for list queries; on miss, query the Email Metadata DB and populate the cache. Individual email body reads always go to Object Storage (bodies are too large and varied to cache efficiently, except for the most recent ones of power users, which may optionally be cached).</p>
+</div>
+
+<h4>In-Memory Cache</h4>
+<div class="card">
+    <p>See <a href="#cdn-cache">CDN &amp; Cache Deep Dive</a> for full details. Key point: the cache stores serialized inbox page results keyed by <code>(user_id, label, page_token)</code>. Invalidated when a new email arrives for the user.</p>
+</div>
+
+<!-- ================= 5. FLOW 3 — SEARCH EMAILS ================= -->
+<h2 id="flow3">5. Flow 3 — Search Emails</h2>
+
+<div class="mermaid">
+flowchart LR
+    subgraph Client
+        A[Web / Mobile Client]
+    end
+    subgraph Gateway
+        B[API Gateway<br/>+ Load Balancer]
+    end
+    subgraph Services
+        C[Search Service]
+    end
+    subgraph Index
+        D[(Search Index<br/>Inverted Index)]
+    end
+    subgraph AsyncIndexing
+        E[Message Queue]
+        F[Search Indexer<br/>Worker]
+    end
+    subgraph Storage
+        G[(Email Metadata DB<br/>NoSQL)]
+    end
+
+    A -- "HTTP GET<br/>/api/v1/emails/search?q=..." --> B
+    B --> C
+    C -- "query index" --> D
+    D -- "matching email_ids" --> C
+    C -- "fetch metadata" --> G
+    C -- "results" --> B
+
+    G -. "new email event" .-> E
+    E --> F
+    F -- "index content" --> D
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+    <strong>Example 1 — Simple Keyword Search:</strong> Bob types "quarterly report" into the search bar and hits Enter. The client sends <code>HTTP GET /api/v1/emails/search?q=quarterly+report&page_size=20</code>. The Search Service parses the query, searches the inverted index for the tokens "quarterly" and "report" within Bob's user partition, intersects the posting lists, ranks results by relevance and recency, fetches metadata for the top 20 matching email_ids from the Email Metadata DB, and returns the results.
+</div>
+
+<div class="example">
+    <strong>Example 2 — Advanced Operator Search:</strong> Alice searches <code>from:bob has:attachment after:2025-01-01</code>. The Search Service parses the operators: it filters the inverted index for emails where <code>sender=bob</code>, <code>has_attachments=true</code>, and <code>created_at > 2025-01-01</code>, all scoped to Alice's user_id. Results are returned ranked by date.
+</div>
+
+<div class="example">
+    <strong>Example 3 — Index Lag Edge Case:</strong> Alice sends Bob an email containing "budget proposal." Bob immediately searches "budget proposal." If the Search Indexer Worker hasn't yet processed the event from the Message Queue, the search may not return the just-received email. This is acceptable eventual consistency; the email will appear in search within a few seconds once indexing completes. The email is, however, immediately visible in Bob's Inbox (read path is separate from search path).
+</div>
+
+<h3>Component Deep Dive — Flow 3</h3>
+
+<h4>Search Service</h4>
+<div class="card">
+    <p><strong>Protocol:</strong> HTTP (REST)</p>
+    <table>
+        <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th></tr>
+        <tr>
+            <td><code>/api/v1/emails/search</code></td>
+            <td><code>GET</code></td>
+            <td>Query params: <code>q</code> (query string), <code>page_token</code>, <code>page_size</code></td>
+            <td><code>{ emails: [{email_id, subject, sender, snippet, timestamp, is_read, labels}], next_page_token, total_estimate }</code></td>
+        </tr>
+    </table>
+    <p>The service: (1) tokenizes and parses the query (supporting operators like <code>from:</code>, <code>to:</code>, <code>subject:</code>, <code>has:attachment</code>, <code>before:</code>, <code>after:</code>, <code>label:</code>); (2) queries the inverted index scoped to the authenticated user's partition; (3) applies ranking (TF-IDF or BM25 + recency boost); (4) hydrates results with metadata from the Email Metadata DB; (5) returns paginated results.</p>
+</div>
+
+<h4>Search Index (Inverted Index)</h4>
+<div class="card">
+    <p>A distributed inverted index partitioned by <code>user_id</code>. Each user's index contains tokens extracted from email subjects, bodies, sender addresses, and recipient addresses. The index maps each token to a posting list of <code>email_id</code>s. Partitioning by <code>user_id</code> ensures that a single user's search never requires cross-partition scatter-gather, keeping latency low.</p>
+    <p><strong>Why an inverted index:</strong> Email search is full-text search over unstructured content. Inverted indexes are the standard data structure for this — they allow O(1) lookup per token and efficient intersection of posting lists for multi-term queries.</p>
+</div>
+
+<h4>Search Indexer Worker</h4>
+<div class="card">
+    <p>An asynchronous consumer that reads "new email" events from the Message Queue. For each event: (1) fetches the email body from Object Storage; (2) tokenizes the subject, body, sender, and recipients; (3) updates the inverted index for the recipient's user partition. Indexing is asynchronous to avoid adding latency to the email send/receive path. Typical indexing lag: 1-5 seconds.</p>
+</div>
+
+<!-- ================= 6. FLOW 4 — ATTACHMENTS ================= -->
+<h2 id="flow4">6. Flow 4 — Attachments (Upload &amp; Download)</h2>
+
+<div class="mermaid">
+flowchart LR
+    subgraph Client
+        A[Web / Mobile Client]
+    end
+    subgraph Gateway
+        B[API Gateway<br/>+ Load Balancer]
+    end
+    subgraph Services
+        C[Attachment Service]
+        D[Spam / Virus<br/>Scanner]
+    end
+    subgraph Storage
+        E[(Object Storage)]
+        F[(Attachment<br/>Metadata DB<br/>NoSQL)]
+    end
+    subgraph Delivery
+        G[CDN Edge Nodes]
+    end
+
+    A -- "HTTP POST multipart<br/>/api/v1/attachments" --> B
+    B --> C
+    C --> D
+    D -- "clean" --> C
+    C -- "store file" --> E
+    C -- "store metadata" --> F
+    C -- "{attachment_id}" --> A
+
+    A -- "HTTP GET<br/>/api/v1/attachments/:id" --> G
+    G -. "cache miss" .-> E
+    G -- "file bytes" --> A
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+    <strong>Example 1 — Uploading an Attachment:</strong> Alice is composing an email and drags a 5 MB PDF into the compose window. The client sends <code>HTTP POST /api/v1/attachments</code> as a multipart form upload with the file binary and metadata (filename, content_type). The Attachment Service receives the file, runs it through the Virus Scanner, stores the file in Object Storage, writes a metadata record (attachment_id, filename, size, content_type, storage_path) to the Attachment Metadata DB, and returns <code>{attachment_id: "att_789"}</code>. Alice's compose UI now shows the attached file. When she clicks Send, the <code>attachment_ids: ["att_789"]</code> is included in the send payload.
+</div>
+
+<div class="example">
+    <strong>Example 2 — Downloading an Attachment (CDN Hit):</strong> Bob opens an email with a PDF attachment and clicks Download. The client requests <code>HTTP GET /api/v1/attachments/att_789</code>. The CDN edge node has this file cached (another user who received the same email recently downloaded it). The file is served directly from the CDN edge. Response time: ~20 ms.
+</div>
+
+<div class="example">
+    <strong>Example 3 — Downloading an Attachment (CDN Miss):</strong> Carol downloads a rarely-accessed old attachment. The CDN does not have it cached. The CDN fetches the file from the origin Object Storage, caches it at the edge (TTL: 7 days), and serves it to Carol. Subsequent downloads by any user at the same edge are served from cache.
+</div>
+
+<div class="example">
+    <strong>Example 4 — Attachment Size Limit Exceeded:</strong> Alice attempts to upload a 30 MB file (exceeding the 25 MB limit). The API Gateway rejects the request with <code>HTTP 413 Payload Too Large</code> before it even reaches the Attachment Service. The client displays an error suggesting the user use a link-sharing service instead.
+</div>
+
+<h3>Component Deep Dive — Flow 4</h3>
+
+<h4>Attachment Service</h4>
+<div class="card">
+    <p><strong>Protocol:</strong> HTTP (REST)</p>
+    <table>
+        <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th></tr>
+        <tr>
+            <td><code>/api/v1/attachments</code></td>
+            <td><code>POST</code></td>
+            <td>Multipart form: <code>file</code> (binary), <code>filename</code>, <code>content_type</code></td>
+            <td><code>{ attachment_id, filename, size, content_type }</code></td>
+        </tr>
+        <tr>
+            <td><code>/api/v1/attachments/:id</code></td>
+            <td><code>GET</code></td>
+            <td>Path param: <code>attachment_id</code></td>
+            <td>Redirect (HTTP 302) to a signed CDN URL, or direct file bytes</td>
+        </tr>
+    </table>
+    <p>For downloads, the service generates a time-limited signed URL pointing to the CDN. This ensures that (a) only authenticated users can access the file, (b) the file is served from the CDN edge, and (c) the URL expires after a short window (e.g., 1 hour).</p>
+</div>
+
+<h4>CDN Edge Nodes</h4>
+<div class="card">
+    <p>See <a href="#cdn-cache">CDN &amp; Cache Deep Dive</a> for full details. Attachments are immutable (write-once), making them ideal CDN content. The CDN caches files at edge locations closest to users for low-latency downloads.</p>
+</div>
+
+<!-- ================= 7. FLOW 5 — REAL-TIME NOTIFICATION ================= -->
+<h2 id="flow5">7. Flow 5 — Real-Time New Email Notification</h2>
+
+<div class="mermaid">
+flowchart LR
+    subgraph EmailDelivery
+        A[Email Send Service]
+    end
+    subgraph Messaging
+        B[Pub/Sub System]
+    end
+    subgraph Realtime
+        C[WebSocket Gateway<br/>Instance 1]
+        D[WebSocket Gateway<br/>Instance 2]
+    end
+    subgraph ConnectionStore
+        E[(Connection Registry<br/>In-Memory Cache)]
+    end
+    subgraph Clients
+        F[Bob Browser<br/>WebSocket]
+        G[Bob Mobile<br/>Push Notification]
+    end
+    subgraph Push
+        H[Push Notification<br/>Service<br/>APNs / FCM]
+    end
+
+    A -- "publish event:<br/>new_email for bob" --> B
+    B --> C
+    B --> D
+    C -- "lookup connection" --> E
+    C -- "push via WebSocket" --> F
+    A -- "trigger push" --> H
+    H --> G
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+    <strong>Example 1 — Web Client Online (WebSocket):</strong> Bob has Gmail open in his browser. When the page loaded, the client established a WebSocket connection to the WebSocket Gateway (via an HTTP Upgrade handshake). The gateway stored the mapping <code>user_id:bob → connection_ref</code> in the Connection Registry (in-memory cache). Now Alice sends Bob an email. The Email Send Service publishes a <code>new_email</code> event to the Pub/Sub system on channel <code>user:bob</code>. All WebSocket Gateway instances are subscribed to Pub/Sub. Gateway Instance 1, which holds Bob's connection, receives the event, looks up Bob's connection in the Connection Registry, and pushes a lightweight notification <code>{type: "new_email", email_id: "email_123", sender: "alice", subject: "Meeting"}</code> over the WebSocket. Bob's browser immediately shows the new email at the top of his inbox without a page refresh.
+</div>
+
+<div class="example">
+    <strong>Example 2 — Mobile Client (Push Notification):</strong> Bob does not have Gmail open on any device. His mobile device has registered with APNs (iOS) or FCM (Android). The Email Send Service triggers the Push Notification Service, which sends a push notification to Bob's registered device: "New email from Alice: Meeting". Bob taps the notification, which opens the Gmail app and loads the email.
+</div>
+
+<div class="example">
+    <strong>Example 3 — Multiple Devices:</strong> Bob has Gmail open in his browser and on his tablet. Both devices have WebSocket connections to potentially different Gateway instances. The Pub/Sub event fans out to all gateway instances. Each instance checks the Connection Registry for Bob and pushes the notification on all matching connections. Both devices update simultaneously.
+</div>
+
+<h3>Component Deep Dive — Flow 5</h3>
+
+<h4>Pub/Sub System</h4>
+<div class="card">
+    <p>A publish/subscribe messaging system that decouples the Email Send Service from the WebSocket Gateway. When a new email is delivered internally, the send service publishes an event to a topic/channel named after the recipient's user_id. All WebSocket Gateway instances subscribe to the relevant channels for the users they currently hold connections for.</p>
+    <p><strong>Why Pub/Sub (not Message Queue) for this:</strong> This is a fan-out scenario. A single event needs to reach all WebSocket Gateway instances that hold a connection for the target user. Pub/Sub supports one-to-many delivery (every subscriber gets the message), whereas a message queue typically delivers each message to exactly one consumer. Since the user might have multiple devices connected to different gateway instances, fan-out is essential.</p>
+</div>
+
+<h4>WebSocket Gateway</h4>
+<div class="card">
+    <p>See <a href="#websocket">WebSocket Deep Dive</a> for full details on connection establishment, the Connection Registry, scaling, and heartbeats.</p>
+</div>
+
+<h4>Push Notification Service</h4>
+<div class="card">
+    <p>Responsible for delivering notifications to mobile devices via platform-specific push services (APNs for iOS, FCM for Android). It maintains a registry of device tokens per user. When triggered, it constructs the appropriate push payload and sends it to the platform's push gateway. This service is a fallback/complement to WebSocket for when the user doesn't have an active WebSocket connection.</p>
+</div>
+
+<!-- ================= 8. COMBINED OVERALL DIAGRAM ================= -->
+<h2 id="combined">8. Combined Overall Diagram</h2>
+
+<div class="mermaid">
+flowchart TB
+    subgraph Clients["Clients"]
+        WEB[Web Client]
+        MOB[Mobile Client]
+    end
+
+    subgraph EdgeLayer["Edge Layer"]
+        CDN[CDN Edge Nodes]
+        LB[Load Balancer]
+    end
+
+    subgraph GatewayLayer["Gateway Layer"]
+        AG[API Gateway]
+        WSG[WebSocket Gateway]
+    end
+
+    subgraph ServiceLayer["Service Layer"]
+        ESS[Email Send<br/>Service]
+        ERS[Email Read<br/>Service]
+        SS[Search Service]
+        AS[Attachment<br/>Service]
+        SVS[Spam / Virus<br/>Scanner]
+        NS[Notification<br/>Service]
+        PNS[Push Notification<br/>Service]
+    end
+
+    subgraph AsyncLayer["Async Processing"]
+        MQ[Message Queue]
+        PS[Pub/Sub]
+        SMTP_W[SMTP Delivery<br/>Worker]
+        SIW[Search Indexer<br/>Worker]
+    end
+
+    subgraph DataLayer["Data Layer"]
+        CACHE[(In-Memory<br/>Cache)]
+        EMD[(Email Metadata DB<br/>NoSQL)]
+        EBS[(Email Body Store<br/>Object Storage)]
+        AMD[(Attachment<br/>Metadata DB)]
+        AOS[(Attachment<br/>Object Storage)]
+        SI[(Search Index<br/>Inverted Index)]
+        CR[(Connection<br/>Registry)]
+    end
+
+    subgraph External["External"]
+        EXT[External Mail<br/>Servers]
+        APNS[APNs / FCM]
+    end
+
+    WEB --> CDN
+    WEB --> LB
+    WEB <--> WSG
+    MOB --> LB
+    MOB <--> WSG
+
+    CDN --> AOS
+    LB --> AG
+
+    AG --> ESS
+    AG --> ERS
+    AG --> SS
+    AG --> AS
+
+    ESS --> SVS
+    ESS --> EMD
+    ESS --> EBS
+    ESS --> MQ
+    ESS --> NS
+
+    ERS --> CACHE
+    ERS --> EMD
+    ERS --> EBS
+
+    SS --> SI
+    SS --> EMD
+
+    AS --> SVS
+    AS --> AOS
+    AS --> AMD
+
+    NS --> PS
+    PS --> WSG
+    WSG --> CR
+    NS --> PNS
+    PNS --> APNS
+
+    MQ --> SMTP_W
+    MQ --> SIW
+    SMTP_W --> EXT
+    SIW --> SI
+</div>
+
+<h3>Combined Flow Examples</h3>
+
+<div class="example">
+    <strong>End-to-End Example — Send &amp; Receive with Notification:</strong> Alice composes an email with a 2 MB image attachment to Bob. (1) Alice's browser uploads the image via <code>HTTP POST /api/v1/attachments</code> → API Gateway → Attachment Service → Virus Scanner → Object Storage. The <code>attachment_id</code> is returned. (2) Alice clicks Send. The browser sends <code>HTTP POST /api/v1/emails</code> with the attachment_id → API Gateway → Email Send Service → Spam Scanner → stores body in Object Storage → writes metadata for Alice (SENT) and Bob (INBOX) in Email Metadata DB → publishes <code>new_email</code> event to Pub/Sub → enqueues search indexing job on Message Queue. (3) The Search Indexer Worker picks up the job, fetches the email body, tokenizes it, and updates the Search Index. (4) The Pub/Sub event reaches the WebSocket Gateway instance holding Bob's connection. The gateway pushes a notification over the WebSocket. Bob's browser immediately shows the new email. (5) Bob clicks on the email → <code>HTTP GET /api/v1/emails/:id</code> → Email Read Service → fetches body from Object Storage → marks as read. (6) Bob clicks download on the attachment → CDN edge serves the image (on miss, fetches from Object Storage and caches).
+</div>
+
+<div class="example">
+    <strong>End-to-End Example — External Send + Search:</strong> Alice sends an email to <code>dave@yahoo.com</code>. (1) Email Send Service stores Alice's sent copy, enqueues an SMTP delivery job. (2) SMTP Worker delivers via SMTP to Yahoo's mail server. (3) The search indexer indexes Alice's sent email. (4) Two weeks later, Alice searches "dave quarterly report." The Search Service queries the inverted index, finds the matching email, hydrates with metadata, and returns the result.
+</div>
+
+<!-- ================= 9. DATABASE SCHEMA ================= -->
+<h2 id="schema">9. Database Schema</h2>
+
+<!-- SQL TABLES -->
+<h3>SQL Tables</h3>
+
+<h4>Users Table <span class="badge badge-sql">SQL</span></h4>
+<div class="card">
+    <table>
+        <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+        <tr><td><code>user_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+        <tr><td><code>email_address</code></td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td></tr>
+        <tr><td><code>password_hash</code></td><td>VARCHAR(255)</td><td>NOT NULL</td></tr>
+        <tr><td><code>display_name</code></td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+        <tr><td><code>storage_quota_bytes</code></td><td>BIGINT</td><td>NOT NULL, DEFAULT 15 GB</td></tr>
+        <tr><td><code>storage_used_bytes</code></td><td>BIGINT</td><td>NOT NULL, DEFAULT 0</td></tr>
+        <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td></tr>
+        <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td></tr>
+    </table>
+    <p><strong>Indexes:</strong></p>
+    <ul>
+        <li><span class="badge badge-idx">B-Tree Index</span> on <code>email_address</code> — Supports fast equality lookups for login and recipient resolution (<code>SELECT * FROM users WHERE email_address = ?</code>). B-tree chosen because email addresses are unique and lookups are exact-match.</li>
+    </ul>
+    <p><strong>Why SQL:</strong> The Users table has a fixed schema, is relatively small (one row per user), and benefits from ACID properties for critical operations like registration and quota updates. Relational integrity (foreign keys from labels, contacts) is also valuable. Read and write volume is modest compared to email data.</p>
+    <p><strong>Read/Write triggers:</strong></p>
+    <ul>
+        <li><strong>Read:</strong> On login (authenticate), on composing (resolve recipient email to user_id), on settings page load.</li>
+        <li><strong>Write:</strong> On user registration, on password change, on storage usage update (after sending/receiving email with attachments).</li>
+    </ul>
+</div>
+
+<h4>Labels Table <span class="badge badge-sql">SQL</span></h4>
+<div class="card">
+    <table>
+        <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+        <tr><td><code>label_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+        <tr><td><code>user_id</code></td><td>UUID</td><td><strong>Foreign Key → Users(user_id)</strong>, NOT NULL</td></tr>
+        <tr><td><code>label_name</code></td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+        <tr><td><code>label_type</code></td><td>ENUM('system','custom')</td><td>NOT NULL</td></tr>
+        <tr><td><code>color</code></td><td>VARCHAR(7)</td><td>NULL (hex code)</td></tr>
+        <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td></tr>
+    </table>
+    <p><strong>Indexes:</strong></p>
+    <ul>
+        <li><span class="badge badge-idx">B-Tree Index</span> on <code>(user_id, label_name)</code> — Composite index for fast lookup of a user's labels and to enforce uniqueness per user.</li>
+    </ul>
+    <p><strong>Why SQL:</strong> Small table with fixed schema, benefits from foreign key to Users. Each user has at most a few dozen labels. ACID ensures no duplicate labels per user.</p>
+    <p><strong>Read/Write triggers:</strong></p>
+    <ul>
+        <li><strong>Read:</strong> On Gmail page load (fetch label sidebar), on compose (auto-complete labels).</li>
+        <li><strong>Write:</strong> On user registration (create system labels: INBOX, SENT, DRAFTS, SPAM, TRASH), on user creating/editing/deleting a custom label.</li>
+    </ul>
+</div>
+
+<h4>Contacts Table <span class="badge badge-sql">SQL</span></h4>
+<div class="card">
+    <table>
+        <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+        <tr><td><code>contact_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+        <tr><td><code>user_id</code></td><td>UUID</td><td><strong>Foreign Key → Users(user_id)</strong>, NOT NULL</td></tr>
+        <tr><td><code>contact_email</code></td><td>VARCHAR(255)</td><td>NOT NULL</td></tr>
+        <tr><td><code>contact_name</code></td><td>VARCHAR(100)</td><td>NULL</td></tr>
+        <tr><td><code>frequency</code></td><td>INT</td><td>DEFAULT 0 (email count for ranking)</td></tr>
+        <tr><td><code>last_emailed_at</code></td><td>TIMESTAMP</td><td>NULL</td></tr>
+    </table>
+    <p><strong>Indexes:</strong></p>
+    <ul>
+        <li><span class="badge badge-idx">B-Tree Index</span> on <code>(user_id, contact_email)</code> — For looking up and deduplicating contacts per user.</li>
+        <li><span class="badge badge-idx">B-Tree Index</span> on <code>(user_id, frequency DESC)</code> — For returning top contacts during auto-complete, sorted by frequency.</li>
+    </ul>
+    <p><strong>Why SQL:</strong> Fixed schema, small per-user dataset, benefits from ACID for deduplication. Joins with Users table are straightforward.</p>
+    <p><strong>Read/Write triggers:</strong></p>
+    <ul>
+        <li><strong>Read:</strong> On compose auto-complete (user starts typing a recipient name/email).</li>
+        <li><strong>Write:</strong> On email send (upsert contact entry: increment frequency, update last_emailed_at).</li>
+    </ul>
+</div>
+
+<!-- NoSQL TABLES -->
+<h3>NoSQL Tables</h3>
+
+<h4>Email Metadata Table <span class="badge badge-nosql">NoSQL — Wide-Column Store</span></h4>
+<div class="card">
+    <table>
+        <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+        <tr><td><code>user_id</code></td><td>UUID</td><td><strong>Partition Key</strong></td></tr>
+        <tr><td><code>email_id</code></td><td>ULID</td><td><strong>Sort Key</strong> (time-sortable)</td></tr>
+        <tr><td><code>thread_id</code></td><td>UUID</td><td>NOT NULL</td></tr>
+        <tr><td><code>subject</code></td><td>TEXT</td><td>NOT NULL</td></tr>
+        <tr><td><code>sender_email</code></td><td>TEXT</td><td>NOT NULL</td></tr>
+        <tr><td><code>sender_name</code></td><td>TEXT</td><td></td></tr>
+        <tr><td><code>recipient_emails</code></td><td>LIST&lt;TEXT&gt;</td><td></td></tr>
+        <tr><td><code>cc_emails</code></td><td>LIST&lt;TEXT&gt;</td><td></td></tr>
+        <tr><td><code>labels</code></td><td>SET&lt;TEXT&gt;</td><td>e.g., {"INBOX", "Work"}</td></tr>
+        <tr><td><code>snippet</code></td><td>TEXT</td><td>First ~100 chars of body</td></tr>
+        <tr><td><code>body_storage_key</code></td><td>TEXT</td><td>Pointer to Object Storage</td></tr>
+        <tr><td><code>is_read</code></td><td>BOOLEAN</td><td>DEFAULT false</td></tr>
+        <tr><td><code>is_starred</code></td><td>BOOLEAN</td><td>DEFAULT false</td></tr>
+        <tr><td><code>has_attachments</code></td><td>BOOLEAN</td><td></td></tr>
+        <tr><td><code>attachment_ids</code></td><td>LIST&lt;TEXT&gt;</td><td></td></tr>
+        <tr><td><code>size_bytes</code></td><td>BIGINT</td><td></td></tr>
+        <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td></td></tr>
+    </table>
+    <p><strong>Indexes:</strong></p>
+    <ul>
+        <li><span class="badge badge-idx">Local Secondary Index</span> on <code>(user_id, labels, created_at DESC)</code> — This is the most critical query: "get Bob's emails in INBOX sorted by newest first." The index allows efficient range scans within a user's partition filtered by label.</li>
+        <li><span class="badge badge-idx">Local Secondary Index</span> on <code>(user_id, thread_id, created_at ASC)</code> — For fetching all emails in a conversation thread for a user, sorted chronologically.</li>
+    </ul>
+
+    <p><strong>Denormalization Notes:</strong></p>
+    <ul>
+        <li><code>sender_name</code> is denormalized (could be looked up from Users table). This avoids a join/lookup on every inbox load, which is the hottest path. The tradeoff is that if a user changes their display name, old emails still show the old name — this matches Gmail's actual behavior and is acceptable.</li>
+        <li><code>snippet</code> is denormalized from the email body. Storing the first ~100 characters in the metadata avoids fetching the full body from Object Storage for the inbox list view, which would be extremely expensive at scale.</li>
+        <li><code>labels</code> as a SET inside the email metadata is a denormalization of the many-to-many relationship between emails and labels. In a normalized SQL design, this would require a join table. Here, since we read labels with every email and a user has few labels, embedding them is far more efficient.</li>
+    </ul>
+
+    <p><strong>Sharding Strategy:</strong></p>
+    <ul>
+        <li><strong>Shard by:</strong> <code>user_id</code> (hash-based partitioning)</li>
+        <li><strong>Why:</strong> Virtually all queries are scoped to a single user ("get my inbox," "search my emails," "get this thread"). Sharding by user_id ensures all of a user's emails are co-located on the same shard, eliminating cross-shard queries. Hash-based partitioning distributes users evenly across shards.</li>
+        <li><strong>Hot shard mitigation:</strong> Power users (those with millions of emails) could create hot shards. Mitigation: virtual sharding (split a user's data across sub-partitions within the logical shard) and throttling at the application layer.</li>
+    </ul>
+
+    <p><strong>Why NoSQL (Wide-Column):</strong> The access pattern is partition-scoped range scans (all emails for user X in label Y, sorted by time). Wide-column stores excel at this pattern. The dataset is massive (trillions of rows), requiring horizontal scalability that is natural in NoSQL. There are no cross-user joins. The schema is somewhat flexible (emails may have varying fields). Write throughput needs are very high (billions of emails/day).</p>
+
+    <p><strong>Read/Write triggers:</strong></p>
+    <ul>
+        <li><strong>Read:</strong> On inbox load (list query), on opening an email (single-row fetch), on opening a thread (range query by thread_id), on applying label filters.</li>
+        <li><strong>Write:</strong> On email send (write sender's SENT row + each internal recipient's INBOX row), on marking read/unread, on starring, on labeling/unlabeling, on deleting (move to TRASH label or hard-delete).</li>
+    </ul>
+</div>
+
+<h4>Attachment Metadata Table <span class="badge badge-nosql">NoSQL — Key-Value / Document Store</span></h4>
+<div class="card">
+    <table>
+        <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+        <tr><td><code>attachment_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+        <tr><td><code>email_id</code></td><td>ULID</td><td>NOT NULL</td></tr>
+        <tr><td><code>filename</code></td><td>TEXT</td><td>NOT NULL</td></tr>
+        <tr><td><code>content_type</code></td><td>TEXT</td><td>NOT NULL (e.g., "application/pdf")</td></tr>
+        <tr><td><code>size_bytes</code></td><td>BIGINT</td><td>NOT NULL</td></tr>
+        <tr><td><code>storage_path</code></td><td>TEXT</td><td>NOT NULL (Object Storage key)</td></tr>
+        <tr><td><code>uploaded_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td></tr>
+        <tr><td><code>virus_scan_status</code></td><td>TEXT</td><td>"clean" / "infected" / "pending"</td></tr>
+    </table>
+    <p><strong>Indexes:</strong></p>
+    <ul>
+        <li><span class="badge badge-idx">Hash Index</span> on <code>attachment_id</code> — The primary access pattern is direct lookup by ID. Hash index provides O(1) lookups.</li>
+        <li><span class="badge badge-idx">Secondary Index</span> on <code>email_id</code> — For fetching all attachments associated with an email (e.g., "list attachments for this email").</li>
+    </ul>
+    <p><strong>Why NoSQL (Document/Key-Value):</strong> Simple key-value access pattern (get attachment by ID). No joins needed. High volume (many attachments across billions of emails). Schema flexibility for future metadata fields.</p>
+    <p><strong>Read/Write triggers:</strong></p>
+    <ul>
+        <li><strong>Read:</strong> When a user opens an email with attachments (to display attachment list), when a user clicks download.</li>
+        <li><strong>Write:</strong> When a user uploads an attachment during compose.</li>
+    </ul>
+</div>
+
+<!-- ================= 10. CDN & CACHE DEEP DIVE ================= -->
+<h2 id="cdn-cache">10. CDN &amp; Cache Deep Dive</h2>
+
+<h3>CDN (Content Delivery Network)</h3>
+<div class="card">
+    <h4>Why a CDN is Appropriate</h4>
+    <p>A CDN is highly appropriate for Gmail for two reasons:</p>
+    <ol>
+        <li><strong>Static assets:</strong> Gmail's web client consists of JavaScript bundles, CSS, images, and fonts that are identical for all users. Serving these from globally distributed edge nodes dramatically reduces page load time.</li>
+        <li><strong>Attachments:</strong> Email attachments are immutable (write-once, read-many). Once uploaded, they never change. They can be large (up to 25 MB). Serving them from edge nodes reduces latency and offloads bandwidth from origin servers. Popular attachments (shared across many recipients) benefit most.</li>
+    </ol>
+
+    <h4>CDN Strategy</h4>
+    <table>
+        <tr><th>Aspect</th><th>Static Assets</th><th>Attachments</th></tr>
+        <tr><td><strong>Type</strong></td><td>Pull-based CDN</td><td>Pull-based CDN</td></tr>
+        <tr><td><strong>How Populated</strong></td><td>First request to an edge triggers a fetch from origin; subsequent requests served from edge cache</td><td>First download request triggers a fetch from Object Storage; subsequent requests served from edge cache</td></tr>
+        <tr><td><strong>TTL (Expiration)</strong></td><td>Long (1 year) with cache-busted versioned URLs (e.g., <code>app.v2.3.1.js</code>)</td><td>Medium (7 days) — attachments are immutable but less frequently re-accessed after initial download</td></tr>
+        <tr><td><strong>Eviction Policy</strong></td><td>LRU — least recently used assets evicted when edge storage is full</td><td>LRU — rarely-downloaded old attachments evicted first</td></tr>
+        <tr><td><strong>Access Control</strong></td><td>Public (no auth needed)</td><td>Signed URLs with expiration (generated by Attachment Service, valid for ~1 hour)</td></tr>
+    </table>
+</div>
+
+<h3>In-Memory Cache</h3>
+<div class="card">
+    <h4>Why a Cache is Appropriate</h4>
+    <p>Email reading is the most frequent operation. Users check their inbox dozens of times per day. Without caching, every inbox load would query the Email Metadata DB, which at 1 billion+ users would create unsustainable read pressure. Caching the most common queries (inbox page 1) dramatically reduces DB load.</p>
+
+    <h4>What is Cached</h4>
+    <table>
+        <tr><th>Cache Entry</th><th>Key</th><th>Value</th><th>Strategy</th><th>TTL</th><th>Eviction</th></tr>
+        <tr>
+            <td>Inbox page 1</td>
+            <td><code>inbox:{user_id}:page1</code></td>
+            <td>Serialized list of email metadata (top 50 emails)</td>
+            <td><strong>Cache-aside (lazy loading)</strong></td>
+            <td>5 minutes</td>
+            <td>LRU</td>
+        </tr>
+        <tr>
+            <td>User session/profile</td>
+            <td><code>user:{user_id}</code></td>
+            <td>User profile + preferences</td>
+            <td><strong>Cache-aside</strong></td>
+            <td>30 minutes</td>
+            <td>LRU</td>
+        </tr>
+        <tr>
+            <td>Label list</td>
+            <td><code>labels:{user_id}</code></td>
+            <td>User's labels</td>
+            <td><strong>Cache-aside</strong></td>
+            <td>1 hour</td>
+            <td>LRU</td>
+        </tr>
+        <tr>
+            <td>Unread count</td>
+            <td><code>unread:{user_id}:{label}</code></td>
+            <td>Integer count</td>
+            <td><strong>Write-through</strong></td>
+            <td>10 minutes</td>
+            <td>LRU</td>
+        </tr>
+    </table>
+
+    <h4>Caching Strategy Rationale</h4>
+    <ul>
+        <li><strong>Cache-aside (lazy loading)</strong> for inbox, user profile, labels: The application checks the cache first. On a miss, it queries the DB, stores the result in the cache, and returns it. This is chosen because not all users are active at the same time — we only cache data for active users, which is memory-efficient. There's no need to pre-populate the cache for dormant users.</li>
+        <li><strong>Write-through</strong> for unread count: When an email is received or marked read, the cache is updated synchronously along with the DB write. This ensures the unread count badge is always accurate (users are very sensitive to incorrect unread counts). The write-through overhead is minimal since unread count updates are simple increment/decrement operations.</li>
+    </ul>
+
+    <h4>Eviction Policy: LRU</h4>
+    <p>LRU (Least Recently Used) is chosen because email access follows a strong temporal locality pattern — users who are actively using Gmail will hit the cache frequently, while inactive users' cache entries will naturally age out. LRU efficiently identifies and evicts stale entries without requiring explicit invalidation for inactive users.</p>
+
+    <h4>Invalidation</h4>
+    <ul>
+        <li>When a new email arrives for a user (internal delivery), the inbox cache for that user is invalidated: <code>DELETE inbox:{user_id}:page1</code>. The next inbox load will fetch fresh data from the DB.</li>
+        <li>When a user modifies labels, the labels cache is invalidated.</li>
+        <li>Unread counts are updated via write-through (no explicit invalidation needed).</li>
+    </ul>
+
+    <h4>TTL Rationale</h4>
+    <ul>
+        <li><strong>Inbox (5 min):</strong> Short TTL because emails arrive frequently. Even without explicit invalidation (e.g., from external emails), the short TTL ensures users see new emails within 5 minutes at most. This balances freshness with cache hit rate.</li>
+        <li><strong>User profile (30 min):</strong> Profile changes are rare; a longer TTL reduces DB pressure without noticeable staleness.</li>
+        <li><strong>Labels (1 hr):</strong> Label creation/editing is infrequent.</li>
+        <li><strong>Unread count (10 min):</strong> Acts as a safety net TTL since write-through keeps it fresh; the TTL handles edge cases where a write-through update might fail.</li>
+    </ul>
+</div>
+
+<!-- ================= 11. WEBSOCKET DEEP DIVE ================= -->
+<h2 id="websocket">11. WebSocket Deep Dive</h2>
+<div class="card">
+    <h4>Why WebSocket</h4>
+    <p>Users expect to see new emails appear in their inbox in real time, without refreshing the page. This requires a server-push mechanism. The alternatives considered:</p>
+    <table>
+        <tr><th>Option</th><th>Pros</th><th>Cons</th><th>Verdict</th></tr>
+        <tr>
+            <td><strong>Short Polling</strong></td>
+            <td>Simple to implement</td>
+            <td>High server load (e.g., polling every 5 seconds × 1 billion users = 200 million requests/second); high latency (up to poll interval); wasteful when no new emails</td>
+            <td>❌ Rejected — does not scale</td>
+        </tr>
+        <tr>
+            <td><strong>Long Polling</strong></td>
+            <td>Reduces empty responses; lower latency than short polling</td>
+            <td>Still creates one HTTP request per notification; connection management complexity; not truly bidirectional</td>
+            <td>⚠️ Acceptable fallback</td>
+        </tr>
+        <tr>
+            <td><strong>Server-Sent Events (SSE)</strong></td>
+            <td>Simple, native browser support, efficient for server→client push</td>
+            <td>Unidirectional (server→client only); limited browser connection limits (6 per domain in HTTP/1.1)</td>
+            <td>⚠️ Viable — but WebSocket is more flexible</td>
+        </tr>
+        <tr>
+            <td><strong>WebSocket</strong></td>
+            <td>Bidirectional; persistent connection; low overhead per message; wide browser support</td>
+            <td>Requires sticky sessions or connection registry; stateful</td>
+            <td>✅ Chosen</td>
+        </tr>
+    </table>
+    <p>WebSocket is chosen because it provides the lowest latency push, the connection overhead is amortized over the session lifetime, and the bidirectional channel can also be used for typing indicators in chat features, draft sync, etc.</p>
+
+    <h4>Connection Establishment</h4>
+    <ol>
+        <li>User opens Gmail in browser. The client JavaScript sends an HTTP request: <code>GET /ws?token=&lt;auth_token&gt;</code> with the header <code>Upgrade: websocket</code>.</li>
+        <li>The Load Balancer (L4) routes the request to a WebSocket Gateway instance using IP-hash (sticky sessions) to ensure reconnections go to the same instance when possible.</li>
+        <li>The WebSocket Gateway validates the auth token, performs the HTTP→WebSocket upgrade (101 Switching Protocols).</li>
+        <li>The gateway registers the connection in the <strong>Connection Registry</strong> (distributed in-memory cache): key = <code>user_id</code>, value = <code>{gateway_instance_id, connection_id, connected_at}</code>. A user can have multiple entries (multiple devices).</li>
+        <li>The gateway subscribes to the Pub/Sub channel <code>user:{user_id}</code> to receive notifications for this user.</li>
+    </ol>
+
+    <h4>Connection Registry</h4>
+    <p>The Connection Registry is a distributed in-memory cache that maps <code>user_id → list of {gateway_instance_id, connection_id}</code>. It is used by the Pub/Sub subscription mechanism to determine which gateway instance(s) hold a connection for a given user. The registry is stored in the same in-memory cache cluster as the application cache but in a separate namespace.</p>
+    <ul>
+        <li><strong>Write:</strong> On WebSocket connection open → add entry; on connection close → remove entry.</li>
+        <li><strong>Read:</strong> By the gateway when a Pub/Sub event arrives and needs to be routed to the correct connection.</li>
+        <li><strong>TTL:</strong> Entries expire after 30 minutes (heartbeat refreshes the TTL). This handles the case where a gateway crashes without cleanly removing entries.</li>
+    </ul>
+
+    <h4>Finding Other WebSocket Connections (Multi-Instance Fan-Out)</h4>
+    <p>Since the WebSocket Gateway is horizontally scaled across many instances, a user's connections may be on different instances (e.g., browser on Instance 1, tablet on Instance 2). The Pub/Sub system solves this:</p>
+    <ol>
+        <li>Each gateway instance subscribes to Pub/Sub channels for the users it holds connections for.</li>
+        <li>When a <code>new_email</code> event is published to <code>user:bob</code>, the Pub/Sub system delivers it to <strong>all</strong> subscribed gateway instances.</li>
+        <li>Each instance checks its local connection table for Bob and pushes the notification on any matching connections.</li>
+    </ol>
+
+    <h4>Heartbeat &amp; Reconnection</h4>
+    <ul>
+        <li>The server sends a <code>PING</code> frame every 30 seconds. The client responds with <code>PONG</code>. If no PONG is received within 10 seconds, the server closes the connection and removes the registry entry.</li>
+        <li>On the client side, if the WebSocket connection drops, the client attempts reconnection with exponential backoff (1s, 2s, 4s, 8s, max 30s). During the disconnected window, the client falls back to periodic HTTP polling (every 30 seconds) to avoid missing emails.</li>
+    </ul>
+</div>
+
+<!-- ================= 12. MESSAGE QUEUE DEEP DIVE ================= -->
+<h2 id="mq">12. Message Queue Deep Dive</h2>
+<div class="card">
+    <h4>Why a Message Queue</h4>
+    <p>The message queue is used in two places: (1) SMTP delivery of outgoing emails to external servers, and (2) asynchronous search indexing. Both are operations that should not block the user-facing send API.</p>
+
+    <h4>Why Not Alternatives</h4>
+    <table>
+        <tr><th>Alternative</th><th>Why Not</th></tr>
+        <tr>
+            <td>Synchronous SMTP call in the send API</td>
+            <td>SMTP delivery can take seconds or fail with transient errors (DNS timeout, remote server busy). Blocking the send API on this would create unacceptable latency and fragile failure modes. The user should get an immediate "sent" confirmation.</td>
+        </tr>
+        <tr>
+            <td>Pub/Sub instead of Message Queue</td>
+            <td>For SMTP delivery, we need exactly-once (or at-least-once with dedup) processing semantics — each email must be delivered once. A message queue provides this via consumer acknowledgment. Pub/Sub is fire-and-forget (all subscribers get the message), which is wrong for delivery — we want exactly one SMTP worker to handle each email.</td>
+        </tr>
+        <tr>
+            <td>Cron job batch processing</td>
+            <td>Would introduce high latency (emails wait until the next batch). Email delivery is time-sensitive.</td>
+        </tr>
+    </table>
+
+    <h4>How Messages are Enqueued</h4>
+    <ol>
+        <li>The Email Send Service constructs a delivery message: <code>{ email_id, recipient_email, recipient_domain, body_storage_key, retry_count: 0, enqueued_at }</code>.</li>
+        <li>The service publishes this message to the <code>smtp-delivery</code> queue (or the <code>search-indexing</code> queue for indexing jobs).</li>
+        <li>The queue persists the message to disk for durability. The publish call returns success only after the message is durably written.</li>
+    </ol>
+
+    <h4>How Messages are Dequeued</h4>
+    <ol>
+        <li>SMTP Delivery Workers are long-running consumer processes that subscribe to the <code>smtp-delivery</code> queue.</li>
+        <li>The queue delivers a message to exactly one worker (competing consumers pattern).</li>
+        <li>The worker processes the message (DNS lookup → TCP connect → SMTP send).</li>
+        <li>On success: the worker sends an <code>ACK</code> to the queue. The queue removes the message permanently.</li>
+        <li>On failure: the worker sends a <code>NACK</code> (or the visibility timeout expires without an ACK). The queue re-delivers the message after a backoff delay. The <code>retry_count</code> is incremented.</li>
+        <li>After exceeding max retries (e.g., 10 retries over 72 hours), the message is moved to a <strong>dead-letter queue (DLQ)</strong>. An alert is generated, and a bounce notification email is sent to the original sender.</li>
+    </ol>
+
+    <h4>Queue Configuration</h4>
+    <table>
+        <tr><th>Parameter</th><th>SMTP Delivery Queue</th><th>Search Indexing Queue</th></tr>
+        <tr><td>Delivery guarantee</td><td>At-least-once</td><td>At-least-once</td></tr>
+        <tr><td>Visibility timeout</td><td>5 minutes (SMTP delivery can be slow)</td><td>30 seconds</td></tr>
+        <tr><td>Max retries</td><td>10</td><td>5</td></tr>
+        <tr><td>Retry backoff</td><td>Exponential: 1m, 5m, 15m, 1h, 4h, 8h…</td><td>Exponential: 1s, 5s, 30s, 2m, 10m</td></tr>
+        <tr><td>Dead-letter queue</td><td>Yes (for permanently undeliverable emails)</td><td>Yes (for indexing failures to investigate)</td></tr>
+    </table>
+</div>
+
+<!-- ================= 13. LOAD BALANCERS ================= -->
+<h2 id="lb">13. Load Balancers</h2>
+<div class="card">
+    <h4>Where Load Balancers Are Placed</h4>
+    <table>
+        <tr><th>Location</th><th>Layer</th><th>Algorithm</th><th>Rationale</th></tr>
+        <tr>
+            <td>Between Clients and API Gateway</td>
+            <td>L7 (Application)</td>
+            <td>Round Robin / Least Connections</td>
+            <td>Distributes incoming HTTP requests evenly across API Gateway instances. L7 enables path-based routing, SSL termination, and health-check awareness.</td>
+        </tr>
+        <tr>
+            <td>Between API Gateway and Backend Services</td>
+            <td>L7 (Application)</td>
+            <td>Least Connections</td>
+            <td>Routes requests to the least-loaded instance of each microservice. L7 allows routing by service path (e.g., <code>/api/v1/emails</code> → Email Service, <code>/api/v1/attachments</code> → Attachment Service).</td>
+        </tr>
+        <tr>
+            <td>Between Clients and WebSocket Gateway</td>
+            <td>L4 (Transport)</td>
+            <td>IP Hash (Sticky Sessions)</td>
+            <td>WebSocket connections are persistent and stateful. L4 is used because WebSocket traffic, after the initial HTTP upgrade, is a raw TCP stream that L7 proxies may not handle efficiently. IP hash ensures reconnections are routed to the same gateway instance when possible, reducing Connection Registry churn.</td>
+        </tr>
+        <tr>
+            <td>Between SMTP Workers and the queue</td>
+            <td>N/A</td>
+            <td>N/A (pull-based)</td>
+            <td>Workers pull from the queue; no LB needed. The queue itself distributes work.</td>
+        </tr>
+    </table>
+
+    <h4>Health Checks</h4>
+    <p>All load balancers perform periodic health checks (HTTP GET to <code>/health</code>) on backend instances. Unhealthy instances (3 consecutive failures) are removed from the rotation. This ensures that crashed or overloaded instances do not receive traffic.</p>
+
+    <h4>Auto-Scaling Integration</h4>
+    <p>The load balancers integrate with auto-scaling groups. When traffic increases (e.g., morning email rush), new instances are spun up and registered with the LB. When traffic decreases, instances are drained and terminated.</p>
+</div>
+
+<!-- ================= 14. SCALING CONSIDERATIONS ================= -->
+<h2 id="scaling">14. Scaling Considerations</h2>
+<div class="card">
+    <h4>Scale Estimates</h4>
+    <table>
+        <tr><th>Metric</th><th>Estimate</th></tr>
+        <tr><td>Total users</td><td>1.5 billion</td></tr>
+        <tr><td>Daily active users (DAU)</td><td>500 million</td></tr>
+        <tr><td>Emails sent/day</td><td>300 billion (incl. automated/marketing)</td></tr>
+        <tr><td>Avg. email metadata size</td><td>~2 KB</td></tr>
+        <tr><td>Avg. email body size</td><td>~75 KB</td></tr>
+        <tr><td>Avg. attachments/day</td><td>~20 billion</td></tr>
+        <tr><td>Storage growth/day (bodies)</td><td>~20 PB</td></tr>
+        <tr><td>Read:Write ratio</td><td>~10:1 (users read inbox more than send)</td></tr>
+    </table>
+
+    <h4>Horizontal Scaling Strategy</h4>
+    <ol>
+        <li><strong>Stateless services</strong> (Email Send Service, Email Read Service, Search Service, Attachment Service): Scale horizontally by adding instances behind load balancers. No shared in-process state; all state lives in external stores (DB, cache, queue).</li>
+        <li><strong>Email Metadata DB (NoSQL)</strong>: Shard by <code>user_id</code> (hash-based). Add shards as data grows. Each shard handles a subset of users. Replication factor of 3 for fault tolerance.</li>
+        <li><strong>Object Storage (Email Bodies &amp; Attachments)</strong>: Inherently horizontally scalable. Data is distributed across storage nodes with replication. No capacity ceiling.</li>
+        <li><strong>Search Index</strong>: Partitioned by <code>user_id</code>. Each partition can be further sharded as the index grows. Search Indexer Workers scale independently based on queue depth.</li>
+        <li><strong>In-Memory Cache</strong>: Cluster mode with consistent hashing. Add nodes to increase capacity. Each node handles a subset of cache keys.</li>
+        <li><strong>Message Queue</strong>: Partition queues by domain or region for SMTP delivery. Add partitions to handle higher throughput. Consumers scale independently.</li>
+        <li><strong>WebSocket Gateway</strong>: Scale horizontally by adding instances. Pub/Sub ensures notifications reach the correct instance regardless of which one holds the connection.</li>
+    </ol>
+
+    <h4>Geographic Distribution</h4>
+    <p>Deploy the entire stack in multiple geographic regions (e.g., US, Europe, Asia). Use DNS-based routing to direct users to the nearest region. Cross-region replication for the Email Metadata DB ensures availability during regional outages. The CDN naturally provides geographic distribution for static assets and attachments.</p>
+
+    <h4>Rate Limiting</h4>
+    <p>Applied at the API Gateway: per-user limits (e.g., 500 emails/day for free tier) and per-IP limits to prevent abuse. SMTP delivery workers rate-limit outgoing connections per recipient domain to avoid being blocklisted as spammers.</p>
+
+    <h4>Bottleneck Analysis</h4>
+    <table>
+        <tr><th>Component</th><th>Potential Bottleneck</th><th>Mitigation</th></tr>
+        <tr><td>Email Metadata DB</td><td>Hot shards (power users with millions of emails)</td><td>Virtual sharding, read replicas, caching</td></tr>
+        <tr><td>Object Storage</td><td>Throughput for large attachment uploads</td><td>Multi-part upload, client-side chunking, upload to nearest region</td></tr>
+        <tr><td>Search Index</td><td>Indexing lag during email spikes</td><td>Auto-scale indexer workers, prioritize recent emails</td></tr>
+        <tr><td>WebSocket Gateway</td><td>Memory for millions of concurrent connections</td><td>Each instance handles ~100K connections; horizontal scaling</td></tr>
+        <tr><td>SMTP Delivery</td><td>Slow external mail servers, bounced emails</td><td>Queue-based retry with backoff; DLQ; connection pooling per domain</td></tr>
+    </table>
+</div>
+
+<!-- ================= 15. TRADEOFFS & DEEP DIVES ================= -->
+<h2 id="tradeoffs">15. Tradeoffs &amp; Deep Dives</h2>
+<div class="card">
+    <h4>1. Email Body Storage: In DB vs. Object Storage</h4>
+    <table>
+        <tr><th>Approach</th><th>Pros</th><th>Cons</th></tr>
+        <tr><td>In Database</td><td>Simpler architecture (one store); atomic reads with metadata</td><td>Expensive storage at petabyte scale; bloats DB; slows down metadata queries</td></tr>
+        <tr><td>Object Storage (chosen)</td><td>Cheap, virtually unlimited; separates hot (metadata) from cold (body) data; bodies are WORM</td><td>Extra network hop; eventual consistency on read-after-write in some implementations</td></tr>
+    </table>
+    <p><strong>Decision:</strong> Object Storage. At this scale, cost is decisive. Metadata DB stays lean and fast for list queries.</p>
+
+    <h4>2. Email Threading: Compute at Write Time vs. Read Time</h4>
+    <table>
+        <tr><th>Approach</th><th>Pros</th><th>Cons</th></tr>
+        <tr><td>Write time (chosen)</td><td>Fast reads; thread_id pre-computed; simple thread queries</td><td>Thread assignment is permanent; edge cases with subject changes</td></tr>
+        <tr><td>Read time</td><td>More flexible; can re-thread retroactively</td><td>Expensive computation on every inbox load; complex client logic</td></tr>
+    </table>
+    <p><strong>Decision:</strong> Write time. <code>thread_id</code> is generated using the <code>In-Reply-To</code> / <code>References</code> email headers (standard RFC 2822). If those are absent, a hash of (subject, participants) is used. This matches Gmail's actual behavior.</p>
+
+    <h4>3. Spam Filtering: Synchronous vs. Asynchronous</h4>
+    <table>
+        <tr><th>Approach</th><th>Pros</th><th>Cons</th></tr>
+        <tr><td>Synchronous (chosen for incoming)</td><td>Spam never reaches inbox; better UX</td><td>Adds latency to email delivery (~50 ms with optimized ML model)</td></tr>
+        <tr><td>Asynchronous</td><td>Zero delivery latency</td><td>Spam briefly appears in inbox before being reclassified; confusing UX</td></tr>
+    </table>
+    <p><strong>Decision:</strong> Synchronous for incoming emails (the 50 ms latency is acceptable and invisible to users). The ML model runs on a dedicated inference fleet with GPU/TPU acceleration for low latency.</p>
+
+    <h4>4. Consistency Model</h4>
+    <p><strong>Strong consistency</strong> for a user's own mailbox: When Alice sends an email, she must immediately see it in her Sent folder. When Bob reads an email, it must immediately show as read. This is achieved via quorum reads/writes on the NoSQL store (read from majority of replicas).</p>
+    <p><strong>Eventual consistency</strong> for search indexing: An email may take 1-5 seconds to appear in search results. This is acceptable because (a) users typically don't search for emails they just received, and (b) the email is visible in the inbox immediately (the read path is separate from the search path).</p>
+
+    <h4>5. Single Email Copy vs. Per-Recipient Copy</h4>
+    <table>
+        <tr><th>Approach</th><th>Pros</th><th>Cons</th></tr>
+        <tr><td>Single body copy + per-recipient metadata (chosen)</td><td>Saves massive storage (an email to 100 recipients stores body once)</td><td>Deleting body requires reference counting; slightly more complex</td></tr>
+        <tr><td>Per-recipient full copy</td><td>Simple; each user owns their copy</td><td>Enormous storage waste for mass emails/newsletters</td></tr>
+    </table>
+    <p><strong>Decision:</strong> Store the email body once in Object Storage with a reference count. Each recipient gets their own metadata row pointing to the same <code>body_storage_key</code>. When a user deletes their email, only the metadata row is deleted. The body is garbage-collected when the reference count reaches zero.</p>
+
+    <h4>6. Push Notifications: WebSocket vs. Push Services</h4>
+    <p>We use <strong>both</strong>. WebSocket for users who have the web app open (immediate, rich notification). APNs/FCM push for users who don't have the app open (system notification on mobile). This dual approach maximizes notification delivery.</p>
+</div>
+
+<!-- ================= 16. ALTERNATIVE APPROACHES ================= -->
+<h2 id="alternatives">16. Alternative Approaches</h2>
+<div class="card">
+    <h4>1. Monolithic Architecture</h4>
+    <p><strong>Description:</strong> A single large application handling all email operations.</p>
+    <p><strong>Why not chosen:</strong> At Gmail's scale (1 billion+ users), different components have vastly different scaling needs. The SMTP delivery system needs to scale differently from the search indexer, which scales differently from the inbox read service. A monolith would require scaling the entire application for each bottleneck, wasting resources. Microservices allow independent scaling, deployment, and fault isolation.</p>
+
+    <h4>2. IMAP/POP3 as Primary Client Protocol</h4>
+    <p><strong>Description:</strong> Expose IMAP/POP3 as the primary API, even for the web and mobile clients.</p>
+    <p><strong>Why not chosen:</strong> IMAP is designed for general-purpose email clients and is a chatty, connection-oriented protocol. It doesn't map well to a web application's request-response model and lacks support for Gmail-specific features (labels, advanced search operators, threading). A custom HTTP REST API gives us full control over the client experience. However, IMAP/POP3 should still be supported as a secondary protocol for third-party email clients (Outlook, Thunderbird, etc.).</p>
+
+    <h4>3. SQL Database for Email Metadata</h4>
+    <p><strong>Description:</strong> Use a traditional relational database (SQL) for storing email metadata.</p>
+    <p><strong>Why not chosen:</strong> At trillions of rows and billions of writes per day, a SQL database would require extreme sharding (losing many relational benefits like joins and transactions). The access pattern (partition by user_id, range scan by time) maps naturally to a wide-column NoSQL store. SQL would add complexity (ORM mapping for dynamic fields like labels) without providing benefits we need (we don't need cross-user joins).</p>
+
+    <h4>4. Full-Text Search in the Email DB Instead of Dedicated Search Index</h4>
+    <p><strong>Description:</strong> Add full-text search capabilities directly to the Email Metadata DB.</p>
+    <p><strong>Why not chosen:</strong> While some NoSQL stores support secondary indexes, full-text search with ranking, tokenization, and complex query operators (from:, has:, date ranges) requires a purpose-built inverted index. A dedicated search index provides better query performance, more flexible ranking algorithms (BM25, TF-IDF), and can be scaled independently from the metadata DB.</p>
+
+    <h4>5. GraphQL Instead of REST</h4>
+    <p><strong>Description:</strong> Use GraphQL for the client API.</p>
+    <p><strong>Why not chosen:</strong> GraphQL's flexibility (clients request exactly the fields they need) is valuable, but for Gmail the query patterns are well-defined and stable. REST with carefully designed endpoints provides simplicity, better caching (HTTP cache headers on GET requests), and avoids the complexity of GraphQL query planning at this scale. GraphQL could be considered as an enhancement layer on top of the REST services in the future.</p>
+
+    <h4>6. Event Sourcing for Email State</h4>
+    <p><strong>Description:</strong> Instead of storing current state, store a log of events (email received, email read, label added) and reconstruct state on read.</p>
+    <p><strong>Why not chosen:</strong> Event sourcing provides excellent auditability and supports temporal queries. However, reconstructing the current state of a user's inbox from potentially millions of events would be very slow. The read-heavy nature of email (inbox loaded dozens of times a day) makes materialized views (current state in the metadata DB) far more practical. The event log approach would be useful for analytics but not for the primary read path.</p>
+</div>
+
+<!-- ================= 17. ADDITIONAL CONSIDERATIONS ================= -->
+<h2 id="additional">17. Additional Considerations</h2>
+<div class="card">
+    <h4>SMTP Incoming (Receiving External Emails)</h4>
+    <p>While Flow 1 covered sending to external servers, receiving from external servers is equally important. The system exposes SMTP endpoints (MX records in DNS) that external mail servers connect to for delivery. The incoming flow:</p>
+    <ol>
+        <li>External server performs DNS MX lookup for <code>gmail.com</code>, finds our SMTP endpoint.</li>
+        <li>External server connects via TCP and delivers the email via SMTP.</li>
+        <li>Our SMTP Receiver Service accepts the email, runs the spam/virus scanner (synchronous), resolves the recipient to an internal <code>user_id</code>.</li>
+        <li>The receiver stores the email body in Object Storage, writes metadata to the recipient's mailbox in the Email Metadata DB, and triggers the Notification Service.</li>
+        <li>If the recipient doesn't exist, an SMTP 550 bounce is returned to the sender.</li>
+    </ol>
+    <p>The SMTP Receiver is a separate, dedicated service pool that must be highly available (if it goes down, external senders will get temporary failures and retry, but prolonged downtime causes email loss).</p>
+
+    <h4>Drafts &amp; Auto-Save</h4>
+    <p>When a user is composing an email, the client auto-saves the draft every 30 seconds via <code>HTTP PUT /api/v1/drafts/:draft_id</code>. The draft is stored in the Email Metadata DB with label <code>DRAFTS</code> and the body in Object Storage. When the user sends the draft, the metadata is updated (remove DRAFTS label, add SENT label) and the normal send flow is triggered. This is essentially an upsert operation on an existing email metadata row.</p>
+
+    <h4>Email Deletion &amp; Storage Reclamation</h4>
+    <ul>
+        <li><strong>Soft delete:</strong> When a user deletes an email, it is moved to the TRASH label. After 30 days, a background job hard-deletes it.</li>
+        <li><strong>Hard delete:</strong> Metadata row is removed from the NoSQL store. The user's <code>storage_used_bytes</code> is decremented. The email body's reference count in Object Storage is decremented. When the reference count hits zero, the body object is deleted by a garbage collection job.</li>
+    </ul>
+
+    <h4>Encryption</h4>
+    <ul>
+        <li><strong>In transit:</strong> All client-server communication uses TLS 1.3. SMTP connections use STARTTLS when supported by the remote server.</li>
+        <li><strong>At rest:</strong> All data in the Email Metadata DB, Object Storage, and Search Index is encrypted with AES-256. Per-user encryption keys (envelope encryption) can be used for enterprise customers with stricter requirements.</li>
+    </ul>
+
+    <h4>Abuse Prevention</h4>
+    <ul>
+        <li><strong>Rate limiting:</strong> Per-user send limits (500/day free, 2000/day paid) enforced at the API Gateway.</li>
+        <li><strong>Outgoing reputation:</strong> SMTP workers implement DKIM signing, SPF, and DMARC to maintain deliverability. Sending IPs are rotated and warmed up to avoid blocklisting.</li>
+        <li><strong>Attachment safety:</strong> Virus scanning on upload. Executable file types (.exe, .bat) are blocked. Large attachments prompt users to use link-sharing instead.</li>
+    </ul>
+
+    <h4>IMAP/POP3 Support (Third-Party Clients)</h4>
+    <p>While the primary interface is the custom REST API, an IMAP/POP3 adapter service translates between standard email protocols and the internal microservices. This allows users to access their email from third-party clients like Outlook, Thunderbird, and Apple Mail.</p>
+
+    <h4>Monitoring &amp; Observability</h4>
+    <ul>
+        <li>Distributed tracing across all microservices (trace a single email from send to inbox).</li>
+        <li>Metrics dashboards: email delivery latency, queue depth, cache hit rates, error rates.</li>
+        <li>Alerting: queue depth exceeding thresholds, error rate spikes, SMTP delivery failure rate increases.</li>
+    </ul>
+</div>
+
+<!-- ================= 18. VENDOR SECTION ================= -->
+<h2 id="vendors">18. Vendor Section</h2>
+<div class="card">
+    <p>The design above is vendor-agnostic. Below are potential vendor choices for each component, along with rationale:</p>
+
+    <table>
+        <tr><th>Component</th><th>Vendor Options</th><th>Rationale</th></tr>
+        <tr>
+            <td>Email Metadata DB (NoSQL Wide-Column)</td>
+            <td><strong>Apache Cassandra</strong>, Google Bigtable, ScyllaDB</td>
+            <td>Cassandra provides tunable consistency (needed for strong read-after-write on user's own data), excellent write throughput, and linear horizontal scalability. Partition-key-based access pattern is its sweet spot. ScyllaDB offers the same model with better per-node performance.</td>
+        </tr>
+        <tr>
+            <td>SQL Database (Users, Labels, Contacts)</td>
+            <td><strong>PostgreSQL</strong>, MySQL</td>
+            <td>PostgreSQL for its robust ACID compliance, rich indexing (B-tree, GIN), and excellent ecosystem. These tables are small relative to email data, so a traditional RDBMS is ideal.</td>
+        </tr>
+        <tr>
+            <td>Object Storage</td>
+            <td><strong>Amazon S3</strong>, Google Cloud Storage, Azure Blob Storage, MinIO (self-hosted)</td>
+            <td>S3 provides 99.999999999% (11 nines) durability, virtually unlimited capacity, and a simple key-value API. Perfect for immutable email bodies and attachments at petabyte scale.</td>
+        </tr>
+        <tr>
+            <td>In-Memory Cache</td>
+            <td><strong>Redis</strong> (cluster mode), Memcached</td>
+            <td>Redis for its data structure support (sorted sets for ranked results, sets for connection registries), cluster mode for horizontal scaling, and pub/sub capabilities (can double as the Pub/Sub system for notifications). Memcached is simpler but lacks data structures and pub/sub.</td>
+        </tr>
+        <tr>
+            <td>Search Index</td>
+            <td><strong>Apache Lucene</strong> (via Elasticsearch or Apache Solr)</td>
+            <td>Elasticsearch provides distributed inverted indexing, BM25 ranking, and supports complex query operators. It scales horizontally via sharding and is the industry standard for full-text search at scale.</td>
+        </tr>
+        <tr>
+            <td>Message Queue</td>
+            <td><strong>Apache Kafka</strong>, RabbitMQ, Amazon SQS</td>
+            <td>Kafka for high-throughput, durable message streaming with consumer group support (competing consumers for SMTP workers). Its partitioning model aligns well with per-domain SMTP delivery. RabbitMQ is simpler for traditional queue semantics. SQS for managed simplicity.</td>
+        </tr>
+        <tr>
+            <td>Pub/Sub System</td>
+            <td><strong>Redis Pub/Sub</strong>, Apache Kafka, Google Pub/Sub</td>
+            <td>If Redis is already used for caching, its built-in pub/sub avoids adding a separate system. For higher throughput/reliability, Kafka topics with consumer groups can serve the same fan-out purpose.</td>
+        </tr>
+        <tr>
+            <td>CDN</td>
+            <td><strong>Cloudflare</strong>, AWS CloudFront, Google Cloud CDN, Akamai</td>
+            <td>Cloudflare for its global edge network, DDoS protection, and signed URL support. CloudFront for tight integration with S3 (attachment origin). Akamai for enterprise-grade global reach.</td>
+        </tr>
+        <tr>
+            <td>Load Balancer</td>
+            <td><strong>NGINX</strong>, HAProxy, AWS ALB/NLB, Envoy</td>
+            <td>NGINX for its proven L7 load balancing, WebSocket support, and SSL termination. Envoy for advanced service mesh capabilities. AWS ALB for managed HTTP load balancing; NLB for L4 WebSocket traffic.</td>
+        </tr>
+        <tr>
+            <td>Spam / ML Inference</td>
+            <td><strong>TensorFlow Serving</strong>, NVIDIA Triton, custom inference fleet</td>
+            <td>TensorFlow Serving for deploying trained spam classification models with low-latency inference. GPU-accelerated inference nodes can process millions of emails per second.</td>
+        </tr>
+    </table>
+</div>
+
+<hr>
+<p style="text-align:center; color:var(--text-muted); margin-top:2rem;">Gmail System Design — Generated February 2026</p>
+
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+            curve: 'basis'
+        }
+    });
+</script>
 
 </body>
 </html>
