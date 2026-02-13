@@ -103,6 +103,74 @@ li { margin: 5px 0; }
 <strong>Example:</strong> 10,000 app servers each emit 50 metrics every 10 seconds = 50K data points/second. Agents batch and send to Kafka. Ingestion Service pre-aggregates: for "api.latency.p99" across 10K servers, computes regional aggregates (us-east: 45ms, eu-west: 120ms). Writes 2 aggregated data points instead of 10K raw ones. Anomaly Detector sees eu-west p99 jump from 120ms baseline to 850ms → triggers anomaly alert within 30 seconds.
 </div>
 
+<h3>Deep Dive: How Metric Agents Push to Kafka</h3>
+<p>Metric agents do <strong>not</strong> call an HTTP API to reach Kafka. Instead, each agent uses an embedded <strong>Kafka producer client</strong> (via the agent's Kafka output plugin) that speaks Kafka's native binary protocol over <strong>TCP</strong>. The flow works as follows:</p>
+<ol>
+<li><strong>Local collection:</strong> The agent (Telegraf/StatsD) collects metrics from the host — system metrics via OS interfaces (e.g., <code>/proc</code>, <code>sysfs</code>) and application metrics via a local UDP socket (StatsD line protocol, port 8125) or Telegraf input plugins</li>
+<li><strong>Batching &amp; serialization:</strong> The agent accumulates metrics over a configurable flush interval (e.g., 10 seconds), then serializes the batch into a compact wire format. Telegraf's Kafka output plugin serializes metrics as <strong>Avro</strong> or <strong>JSON</strong> (configurable), keyed by <code>metric_name</code></li>
+<li><strong>Kafka binary protocol (TCP):</strong> The agent's embedded Kafka producer opens a persistent TCP connection to the Kafka broker cluster. It sends a <code>ProduceRequest</code> (Kafka's binary framing protocol) directly to the partition leader for each metric's topic-partition. This is <strong>not HTTP</strong> — it is Kafka's custom binary protocol on port <strong>9092</strong> (plaintext) or <strong>9093</strong> (TLS)</li>
+<li><strong>Acknowledgement:</strong> The producer is configured with <code>acks=1</code> (leader acknowledges) for a balance of durability and latency. The broker replies with a <code>ProduceResponse</code> containing the offset. If the write fails, the agent retries with exponential backoff (up to 3 retries)</li>
+<li><strong>Partitioning:</strong> The producer hashes the message key (<code>metric_name</code>) to determine the target partition, ensuring all data points for the same metric land on the same partition for ordering guarantees</li>
+</ol>
+
+<div class="diagram-container">
+<svg viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arrow-agent" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00e676"/></marker></defs>
+<text x="450" y="20" text-anchor="middle" fill="#aaa" font-size="14" font-weight="bold">Agent → Kafka: Protocol Detail</text>
+
+<rect x="10" y="50" width="120" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/>
+<text x="70" y="72" text-anchor="middle" fill="white" font-size="10">App / Host</text>
+<text x="70" y="88" text-anchor="middle" fill="white" font-size="9">emits metrics via</text>
+<text x="70" y="100" text-anchor="middle" fill="#ff79c6" font-size="9">UDP :8125 / plugins</text>
+
+<rect x="180" y="40" width="160" height="70" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/>
+<text x="260" y="62" text-anchor="middle" fill="white" font-size="11">Metric Agent</text>
+<text x="260" y="78" text-anchor="middle" fill="white" font-size="9">(Telegraf / StatsD)</text>
+<text x="260" y="96" text-anchor="middle" fill="#ff79c6" font-size="9">Kafka Producer Client</text>
+
+<rect x="410" y="40" width="140" height="70" rx="8" fill="none" stroke="#f0c040" stroke-width="1" stroke-dasharray="5,3"/>
+<text x="480" y="60" text-anchor="middle" fill="#f0c040" font-size="9">Batch + Serialize</text>
+<text x="480" y="78" text-anchor="middle" fill="white" font-size="9">Avro / JSON payload</text>
+<text x="480" y="96" text-anchor="middle" fill="white" font-size="9">key = metric_name</text>
+
+<rect x="620" y="40" width="130" height="70" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/>
+<text x="685" y="62" text-anchor="middle" fill="white" font-size="11">Kafka Broker</text>
+<text x="685" y="78" text-anchor="middle" fill="#ff79c6" font-size="9">TCP :9092 / :9093</text>
+<text x="685" y="96" text-anchor="middle" fill="white" font-size="9">Binary Protocol</text>
+
+<line x1="130" y1="75" x2="178" y2="75" stroke="#00e676" stroke-width="1.5" marker-end="url(#arrow-agent)"/>
+<text x="155" y="68" text-anchor="middle" fill="#aaa" font-size="8">UDP</text>
+
+<line x1="340" y1="75" x2="408" y2="75" stroke="#00e676" stroke-width="1.5" marker-end="url(#arrow-agent)"/>
+
+<line x1="550" y1="75" x2="618" y2="75" stroke="#00e676" stroke-width="2" marker-end="url(#arrow-agent)"/>
+<text x="584" y="68" text-anchor="middle" fill="#aaa" font-size="8">ProduceRequest</text>
+
+<line x1="618" y1="90" x2="550" y2="90" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow-agent)"/>
+<text x="584" y="104" text-anchor="middle" fill="#aaa" font-size="8">ProduceResponse</text>
+
+<rect x="180" y="140" width="570" height="60" rx="8" fill="#1e293b" stroke="#444" stroke-width="1"/>
+<text x="200" y="162" fill="#f59e0b" font-size="10" font-weight="bold">Why not HTTP?</text>
+<text x="200" y="178" fill="#e0e0e0" font-size="9">Kafka's binary protocol is significantly more efficient than HTTP: persistent TCP connections avoid per-request overhead,</text>
+<text x="200" y="192" fill="#e0e0e0" font-size="9">binary framing is ~3x smaller than JSON/HTTP, and native batching sends thousands of metrics in a single request.</text>
+</svg>
+</div>
+
+<table>
+<tr><th>Aspect</th><th>Kafka Binary Protocol (chosen)</th><th>HTTP Gateway Alternative</th></tr>
+<tr><td>Transport</td><td>Persistent TCP connection, Kafka binary framing (port 9092/9093)</td><td>HTTP/1.1 or HTTP/2 POST to an ingestion gateway endpoint</td></tr>
+<tr><td>Overhead</td><td>~50 bytes framing per batch. Single TCP connection reused for all writes</td><td>~200-400 bytes HTTP headers per request. Connection pooling needed to reduce overhead</td></tr>
+<tr><td>Batching</td><td>Native. Producer accumulates records for <code>linger.ms</code> (5-10ms) then sends one <code>ProduceRequest</code> containing thousands of metrics</td><td>Application-level batching required. Gateway must re-serialize and produce to Kafka internally</td></tr>
+<tr><td>Backpressure</td><td>Producer-level. <code>buffer.memory</code> and <code>max.block.ms</code> control flow when brokers are slow</td><td>HTTP 429 / 503 responses signal backpressure. Agent must implement retry logic</td></tr>
+<tr><td>Durability guarantee</td><td>Direct <code>acks=1</code> (or <code>acks=all</code>) from Kafka broker confirms data persisted</td><td>Gateway returns HTTP 200 but data may not yet be in Kafka — two-hop failure modes</td></tr>
+<tr><td>Latency</td><td>~2-5ms per batch (single network hop to broker)</td><td>~10-20ms (HTTP parsing + gateway processing + Kafka produce = two network hops)</td></tr>
+<tr><td>When to prefer</td><td>High-throughput internal infrastructure where agents run on trusted hosts</td><td>When agents are external / behind firewalls, or when you need auth/rate-limiting at the gateway</td></tr>
+</table>
+
+<div class="example">
+<strong>Example — Agent to Kafka flow:</strong> A Telegraf agent on host <code>web-042</code> collects 50 metrics (CPU, memory, disk, network, plus app-specific counters). Every 10 seconds it batches them into a single Kafka <code>ProduceRequest</code> (~4KB Avro payload, ~50 bytes Kafka framing overhead). The producer hashes <code>"cpu_usage"</code> → partition 7, <code>"api_latency"</code> → partition 12, etc. It sends the request over a persistent TLS connection to the partition leaders on port 9093. The broker writes to its commit log and replies with offsets. Total time: ~3ms. If the broker is unreachable, the agent buffers in memory (up to 64MB by default) and retries with exponential backoff. No HTTP, no REST API, no gateway — it's a direct binary TCP connection.
+</div>
+
 <h3>Deep Dive: Ingestion Service</h3>
 <ul>
 <li><strong>Protocol:</strong> Kafka consumer (pull-based). Alternative: Prometheus pull model (HTTP scrape)</li>
@@ -214,6 +282,38 @@ li { margin: 5px 0; }
 <div class="section">
 <h2>Database Schema</h2>
 
+<h3>Why Two Different Databases?</h3>
+<p>This design uses a <strong>polyglot persistence</strong> strategy — each data store is chosen for the access pattern it serves best, rather than forcing one database to do everything.</p>
+
+<div class="tradeoff">
+<div class="pro">
+<h4>Time-Series DB (InfluxDB / VictoriaMetrics) — for Metric Data</h4>
+<ul>
+<li><strong>Write-optimized append-only model:</strong> Metrics are immutable — once emitted, they are never updated. TSDBs exploit this by using an append-only commit log with no row-level locking, achieving 10–100x higher write throughput than a relational database for the same hardware</li>
+<li><strong>Time-range query performance:</strong> Data is physically organized by time (LSM trees or time-partitioned blocks). A query like "show CPU for the last 6 hours" reads a contiguous chunk of data rather than scanning a B-tree index across random disk pages. This turns range queries from O(n log n) index lookups into sequential I/O</li>
+<li><strong>Purpose-built compression:</strong> Gorilla encoding (XOR delta for timestamps, delta-of-delta for values) achieves 12:1 compression because consecutive metric samples are numerically similar. A general SQL DB using generic page compression would achieve ~3:1 at best</li>
+<li><strong>Native downsampling &amp; retention:</strong> Built-in support for automatic data rollup (10s → 1min → 1hr) and TTL-based expiration. In PostgreSQL you'd need custom cron jobs, partitioned tables, and manual <code>DROP PARTITION</code> logic</li>
+<li><strong>Tag-based inverted index:</strong> Designed for high-cardinality label filtering (e.g., <code>service=api AND region=us-east</code>). SQL would require composite indexes for every tag combination, which is impractical when tags are dynamic</li>
+</ul>
+<p><strong>Why not SQL for metrics?</strong> At 500K data points/second, PostgreSQL would require aggressive partitioning, custom compression, and significant tuning. A TSDB handles this natively. Additionally, SQL's ACID guarantees (transactions, row-level locking, foreign keys) add overhead that metrics don't need — metric writes are append-only and never require UPDATE or DELETE.</p>
+</div>
+<div class="con">
+<h4>PostgreSQL (SQL) — for Alert Rules &amp; Incidents</h4>
+<ul>
+<li><strong>Relational integrity:</strong> Alert rules reference notification channels, teams, and escalation policies. Alert incidents reference rules via <code>rule_id</code> foreign key. SQL enforces these relationships — if a rule is deleted, associated incidents can be cascaded or protected. A TSDB has no concept of foreign keys or referential integrity</li>
+<li><strong>Mutable state:</strong> Alert incidents transition through states (<code>firing → acknowledged → resolved</code>) via UPDATE operations. TSDBs are append-only and don't support in-place updates — you'd need to write a new data point for each state change and query "latest state," which is awkward and slow</li>
+<li><strong>Complex queries:</strong> Alert management requires joins (e.g., "show all P1 incidents for rules owned by team-X that were not acknowledged within 10 minutes"), aggregations with GROUP BY, and subqueries. SQL is purpose-built for this. TSDBs support only time-range + tag filtering</li>
+<li><strong>ACID transactions:</strong> When an alert fires, the system must atomically: (1) insert an incident row, (2) update the rule's <code>last_fired_at</code>, and (3) insert a notification record. If any step fails, the entire operation must roll back. SQL transactions guarantee this; TSDBs offer no transactional semantics</li>
+<li><strong>Low write volume:</strong> Alert rule changes happen at human speed (tens per day) and incident state changes happen at alert speed (thousands per day). This is 6 orders of magnitude less than metric ingestion — PostgreSQL handles this trivially on a single instance</li>
+</ul>
+<p><strong>Why not a TSDB for alerts?</strong> Alert data is fundamentally relational and mutable. Modeling state machines (firing → acknowledged → resolved), enforcing referential integrity, and running ad-hoc analytical queries are SQL's core strengths and a TSDB's weaknesses.</p>
+</div>
+</div>
+
+<div class="example">
+<strong>Example — why polyglot matters:</strong> An engineer changes an alert rule's threshold from 5% to 3% (SQL UPDATE on <code>alert_rules</code>). This triggers a cache invalidation, and Flink reloads the rule. Minutes later, the lower threshold fires an alert: SQL atomically INSERTs an <code>alert_incidents</code> row (status=firing) and UPDATEs the rule's <code>last_fired_at</code>. Meanwhile, the TSDB is busy ingesting 500K metric data points/second with zero contention — the two workloads never compete for the same resources. If you tried to put both workloads in one database, the metric write throughput would tank during alert rule queries, or alert state updates would be delayed behind metric writes.
+</div>
+
 <h3>Time-Series DB — InfluxDB / VictoriaMetrics</h3>
 <table>
 <tr><th>Measurement</th><th>Tags</th><th>Fields</th><th>Timestamp</th></tr>
@@ -301,6 +401,69 @@ li { margin: 5px 0; }
 
 <div class="section">
 <h2>Alternative Approaches</h2>
+
+<h3>Alternative: Agent-to-Kafka Communication</h3>
+<p>The chosen approach uses agents with an <strong>embedded Kafka producer client</strong> that speaks Kafka's native binary protocol over a persistent TCP connection. Here are the alternatives considered and why they were not chosen:</p>
+
+<div class="tradeoff">
+<div class="pro">
+<h4>✅ Chosen: Direct Kafka Binary Protocol (TCP)</h4>
+<ul>
+<li>Single network hop — agent writes directly to Kafka broker partition leader</li>
+<li>Native batching, compression, and partitioning built into the Kafka client</li>
+<li>Direct <code>acks</code> from broker confirm durability — no ambiguous intermediate layer</li>
+<li>~2-5ms per batch, ~50 bytes framing overhead</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ Alternative 1: HTTP Ingestion Gateway</h4>
+<ul>
+<li>Agents POST metric batches (JSON/Protobuf) to an HTTP REST API (e.g., <code>POST /v1/metrics</code>), gateway produces to Kafka internally</li>
+<li>Adds a stateless HTTP service between agents and Kafka — easier to add auth, rate-limiting, schema validation, and protocol translation</li>
+<li><strong>Why not chosen:</strong> Adds a second network hop and an extra service to operate. Gateway becomes a bottleneck and single point of failure unless horizontally scaled. HTTP 200 from the gateway doesn't guarantee the data reached Kafka — if the gateway crashes after acknowledging but before producing, metrics are lost. At 500K data points/second, the overhead of HTTP parsing, TLS handshake per connection (unless using connection pooling), and JSON deserialization/re-serialization is significant (~10-20ms latency vs. ~3ms direct). For internal infrastructure where agents run on trusted hosts, the auth/rate-limiting benefits don't justify the added complexity and failure modes</li>
+</ul>
+</div>
+</div>
+
+<div class="tradeoff">
+<div class="con">
+<h4>❌ Alternative 2: StatsD UDP → Aggregator → Kafka</h4>
+<ul>
+<li>Applications emit metrics over UDP (port 8125) to a local or remote StatsD aggregator daemon, which pre-aggregates and then produces to Kafka</li>
+<li>Simple integration for applications — just fire UDP packets, no client library needed. StatsD protocol is a de facto standard</li>
+<li><strong>Why not chosen:</strong> UDP is fire-and-forget with no delivery guarantee — under network congestion or high load, packets are silently dropped with no retry and no backpressure signal. The StatsD aggregator is a stateful single point of failure per host; if it crashes, all buffered metrics are lost. Pre-aggregation at the agent level means the raw data points never reach Kafka, limiting the Anomaly Detector (Flink) which needs raw granularity for accurate statistical analysis. Our design does support StatsD as an <em>input</em> to the Telegraf agent, but the agent-to-Kafka hop uses the reliable TCP-based Kafka producer, not UDP</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ Alternative 3: gRPC Streaming to Ingestion Service (bypass Kafka)</h4>
+<ul>
+<li>Agents open a persistent gRPC stream (HTTP/2) directly to the Ingestion Service, which writes to the TSDB. No message queue in between</li>
+<li>Lower end-to-end latency (no Kafka hop). Protobuf serialization is compact and fast. HTTP/2 multiplexing supports many concurrent streams</li>
+<li><strong>Why not chosen:</strong> Tightly couples producers to consumers — if the Ingestion Service is down or slow, agents have no buffer and must either drop metrics or block. Kafka provides hours of buffering during downstream outages. Loses Kafka's fan-out capability — in our design, both the Ingestion Service and the Anomaly Detector (Flink) consume the same Kafka topic independently. With gRPC, you'd need the agents to maintain streams to <em>both</em> services, or the Ingestion Service to re-publish data, adding complexity. Also loses Kafka's replay capability — if Flink needs to reprocess the last 6 hours of data after a bug fix, it simply rewinds its consumer offset. With gRPC, that data is gone</li>
+</ul>
+</div>
+</div>
+
+<div class="tradeoff">
+<div class="con">
+<h4>❌ Alternative 4: MQTT (Lightweight IoT Protocol)</h4>
+<ul>
+<li>Agents publish metrics to an MQTT broker (e.g., Mosquitto/EMQX) using MQTT's lightweight pub/sub protocol. A bridge component forwards messages to Kafka</li>
+<li>Extremely low overhead (~2 bytes header), ideal for constrained devices. QoS levels (0, 1, 2) provide tunable delivery guarantees</li>
+<li><strong>Why not chosen:</strong> MQTT is designed for IoT/edge environments with unreliable networks and constrained devices — our agents run on server-grade infrastructure with reliable networks. MQTT brokers don't offer Kafka's partitioning, consumer group semantics, or replay from offset. Adding a bridge from MQTT → Kafka introduces another service to maintain and another failure point. The Kafka client library is already lightweight enough for server-side agents (~5MB), so MQTT's tiny footprint advantage is irrelevant here</li>
+</ul>
+</div>
+<div class="con">
+<h4>❌ Alternative 5: Write to Local Disk → Filebeat/Fluentd → Kafka</h4>
+<ul>
+<li>Agents write metrics to local log files. A log shipper (Filebeat/Fluentd) tails the files and produces to Kafka</li>
+<li>Durable by default — metrics survive agent restarts because they're on disk. Decouples collection from shipping. Well-understood pattern from the logging world</li>
+<li><strong>Why not chosen:</strong> Adds 5-30 seconds of latency (file write → flush → tail → parse → produce) which violates our 60-second anomaly detection SLA. Two processes to manage per host (agent + shipper) doubles operational complexity. Disk I/O becomes a bottleneck on hosts already under load. Log file parsing is brittle — format changes break the shipper. The Kafka producer's in-memory buffer (64MB default) already provides crash resilience for short outages, and Kafka's <code>acks=1</code> confirms durability within milliseconds rather than relying on fsync</li>
+</ul>
+</div>
+</div>
+
+<h3>Alternative: Overall Architecture</h3>
 <ul>
 <li><strong>Prometheus + Thanos:</strong> Prometheus for short-term (2 weeks) with Thanos for long-term S3-backed storage. Pull-based model. Good for Kubernetes-native environments but pull model limits scale</li>
 <li><strong>OpenTelemetry + ClickHouse:</strong> OTLP for collection, ClickHouse (columnar DB) for storage. Excellent query performance for wide time ranges. ClickHouse handles metrics + logs + traces in one system</li>
