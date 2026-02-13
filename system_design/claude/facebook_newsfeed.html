@@ -1,337 +1,1334 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>System Design: Facebook Newsfeed</title>
-<style>
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: #e0e0e0; line-height: 1.7; }
-h1 { color: #1877f2; border-bottom: 3px solid #1877f2; padding-bottom: 10px; font-size: 2.2em; }
-h2 { color: #4599ff; margin-top: 40px; font-size: 1.6em; border-left: 4px solid #4599ff; padding-left: 12px; }
-h3 { color: #70b5ff; font-size: 1.3em; }
-h4 { color: #99ccff; }
-.section { background: #1a1a2e; border-radius: 10px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
-.diagram-container { background: #0d1117; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
-.example { background: #1e293b; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
-.example strong { color: #f59e0b; }
-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-th { background: #2a2a4a; color: #4599ff; padding: 12px; text-align: left; border: 1px solid #444; }
-td { padding: 10px 12px; border: 1px solid #333; }
-tr:nth-child(even) { background: #1a1a2e; }
-tr:nth-child(odd) { background: #151528; }
-code { background: #2d2d4d; padding: 2px 8px; border-radius: 4px; color: #ff79c6; font-size: 0.95em; }
-.tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
-.tag-pk { background: #4a1a6b; color: #d4a5ff; }
-.tag-fk { background: #1a4a3b; color: #a5ffd4; }
-.tag-idx { background: #4a3a1a; color: #ffd4a5; }
-ul { padding-left: 25px; }
-li { margin: 5px 0; }
-.tradeoff { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-.pro { background: #0a2a1a; border: 1px solid #2a5a3a; padding: 15px; border-radius: 8px; }
-.con { background: #2a0a1a; border: 1px solid #5a2a3a; padding: 15px; border-radius: 8px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design: Facebook Newsfeed</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #fdfdfd;
+            --text: #1a1a2e;
+            --heading: #16213e;
+            --accent: #0f3460;
+            --accent2: #1a73e8;
+            --border: #d0d7de;
+            --code-bg: #f0f3f6;
+            --table-header: #0f3460;
+            --table-header-text: #fff;
+            --table-stripe: #f6f8fa;
+            --card-bg: #fff;
+            --card-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --section-bg: #f8f9fb;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 0 0 60px 0;
+        }
+        header {
+            background: linear-gradient(135deg, #0f3460, #1a73e8);
+            color: white;
+            padding: 48px 40px;
+            text-align: center;
+        }
+        header h1 { font-size: 2.4rem; font-weight: 700; margin-bottom: 8px; }
+        header p { font-size: 1.1rem; opacity: 0.9; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+        h2 {
+            font-size: 1.7rem;
+            color: var(--heading);
+            margin: 48px 0 18px 0;
+            padding-bottom: 8px;
+            border-bottom: 3px solid var(--accent2);
+            display: inline-block;
+        }
+        h3 {
+            font-size: 1.25rem;
+            color: var(--accent);
+            margin: 30px 0 12px 0;
+        }
+        h4 {
+            font-size: 1.08rem;
+            color: #333;
+            margin: 20px 0 8px 0;
+        }
+        p, li { font-size: 1.01rem; }
+        ul, ol { margin: 10px 0 16px 28px; }
+        li { margin-bottom: 6px; }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px 28px;
+            margin: 18px 0;
+            box-shadow: var(--card-shadow);
+        }
+        .example-card {
+            background: #eef6ff;
+            border-left: 5px solid var(--accent2);
+            border-radius: 6px;
+            padding: 18px 22px;
+            margin: 14px 0;
+        }
+        .example-card strong { color: var(--accent); }
+        .diagram-container {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+            margin: 18px 0;
+            overflow-x: auto;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 14px 0 22px 0;
+            font-size: 0.97rem;
+        }
+        thead th {
+            background: var(--table-header);
+            color: var(--table-header-text);
+            padding: 12px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+        tbody td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        tbody tr:nth-child(even) { background: var(--table-stripe); }
+        code {
+            background: var(--code-bg);
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.94em;
+            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+        }
+        pre {
+            background: var(--code-bg);
+            padding: 16px 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.93rem;
+            line-height: 1.5;
+            margin: 12px 0;
+        }
+        .tag {
+            display: inline-block;
+            background: var(--accent2);
+            color: #fff;
+            font-size: 0.8rem;
+            padding: 2px 10px;
+            border-radius: 12px;
+            margin: 2px 4px 2px 0;
+            font-weight: 600;
+        }
+        .tag.green { background: #1b8a3a; }
+        .tag.orange { background: #d97706; }
+        .tag.red { background: #c0392b; }
+        .tag.purple { background: #7c3aed; }
+        .toc { margin: 30px 0; }
+        .toc ol { list-style-type: none; counter-reset: toc-counter; padding-left: 0; }
+        .toc ol li { counter-increment: toc-counter; margin-bottom: 6px; }
+        .toc ol li::before {
+            content: counter(toc-counter) ". ";
+            font-weight: 700;
+            color: var(--accent2);
+        }
+        .toc a { color: var(--accent2); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+        .highlight { background: #fffbe6; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 6px; margin: 14px 0; }
+        .mermaid { margin: 0 auto; }
+        .section-divider { border: none; border-top: 2px dashed var(--border); margin: 50px 0; }
+    </style>
 </head>
 <body>
-<h1>System Design: Facebook Newsfeed (Deep Dive)</h1>
 
-<div class="section">
-<h2>Functional Requirements</h2>
+<header>
+    <h1>System Design: Facebook Newsfeed</h1>
+    <p>A comprehensive system design for a social media newsfeed at scale — supporting billions of users</p>
+</header>
+
+<div class="container">
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc card">
+    <h3 style="margin-top:0;">Table of Contents</h3>
+    <ol>
+        <li><a href="#fr">Functional Requirements</a></li>
+        <li><a href="#nfr">Non-Functional Requirements</a></li>
+        <li><a href="#flow1">Flow 1 — Post Creation &amp; Distribution</a></li>
+        <li><a href="#flow2">Flow 2 — Feed Retrieval &amp; Display</a></li>
+        <li><a href="#flow3">Flow 3 — Post Interaction (Like, Comment, Share)</a></li>
+        <li><a href="#overall">Overall Combined Diagram</a></li>
+        <li><a href="#schema">Schema Design</a></li>
+        <li><a href="#cdn">CDN Deep Dive</a></li>
+        <li><a href="#cache">Cache Deep Dive</a></li>
+        <li><a href="#mq">Message Queue Deep Dive</a></li>
+        <li><a href="#scaling">Scaling Considerations</a></li>
+        <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+        <li><a href="#alternatives">Alternative Approaches</a></li>
+        <li><a href="#additional">Additional Information</a></li>
+        <li><a href="#vendors">Vendor Section</a></li>
+    </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="fr">1. Functional Requirements</h2>
+<!-- ============================================================ -->
+<div class="card">
 <ul>
-<li>Display a personalized, ranked feed of posts from friends, followed pages, and groups</li>
-<li>Feed includes posts, photos, videos, shared links, life events, and ads</li>
-<li>Infinite scroll with real-time updates ("X new posts" indicator)</li>
-<li>Ranking based on relevance (engagement prediction) not just chronological</li>
-<li>Support "seen" tracking to avoid showing same posts repeatedly</li>
-<li>Allow users to hide posts, unfollow, or snooze sources</li>
+    <li><strong>Post Creation:</strong> Users can create posts containing text, images, videos, or a combination thereof.</li>
+    <li><strong>Social Graph:</strong> Users can add friends / follow other users. The newsfeed is driven by these relationships.</li>
+    <li><strong>Newsfeed Generation:</strong> Each user has a personalised newsfeed composed of posts from friends and followed accounts.</li>
+    <li><strong>Feed Ranking:</strong> Posts in the newsfeed are ranked by relevance (not purely chronological) based on affinity, content type, recency, and engagement.</li>
+    <li><strong>Post Interactions:</strong> Users can like, comment on, and share posts.</li>
+    <li><strong>Media Support:</strong> Posts can include images and videos; media is processed (thumbnails, transcoding) and served efficiently.</li>
+    <li><strong>Pagination:</strong> The feed supports infinite scroll via cursor-based pagination.</li>
 </ul>
 </div>
 
-<div class="section">
-<h2>Non-Functional Requirements</h2>
+<!-- ============================================================ -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
+<!-- ============================================================ -->
+<div class="card">
 <ul>
-<li><strong>Latency:</strong> Feed loads in &lt;500ms (first page of ~50 posts)</li>
-<li><strong>Freshness:</strong> New posts appear within 30 seconds of creation</li>
-<li><strong>Scalability:</strong> 2B+ daily active users, each generating unique personalized feed</li>
-<li><strong>Availability:</strong> 99.99% — feed is the core product surface</li>
-<li><strong>Read-heavy:</strong> 100x more feed reads than post writes</li>
+    <li><strong>High Availability:</strong> 99.99% uptime — the newsfeed is the core product surface.</li>
+    <li><strong>Low Latency:</strong> Feed retrieval should complete in &lt; 200 ms (p99).</li>
+    <li><strong>Scalability:</strong> Support billions of users and hundreds of thousands of posts per second.</li>
+    <li><strong>Eventual Consistency:</strong> It is acceptable for a new post to appear in followers' feeds within a few seconds rather than instantly.</li>
+    <li><strong>Fault Tolerance:</strong> No single point of failure; graceful degradation under partial outages.</li>
+    <li><strong>Data Durability:</strong> Posts and interactions must never be lost once acknowledged.</li>
+    <li><strong>Throughput:</strong> Read-heavy workload (feed reads ≫ post writes); optimise for reads.</li>
 </ul>
 </div>
 
-<!-- Flow 1: Feed Generation (Write Path) -->
-<div class="section">
-<h2>Flow 1: Feed Generation — Write Path (Fan-out on Write)</h2>
+<!-- ============================================================ -->
+<hr class="section-divider">
+<h2 id="flow1">3. Flow 1 — Post Creation &amp; Distribution</h2>
+<!-- ============================================================ -->
+
+<h3>3.1 Diagram</h3>
 <div class="diagram-container">
-<svg viewBox="0 0 1100 450" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#1877f2"/></marker></defs>
-<rect x="20" y="180" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="80" y="215" text-anchor="middle" fill="white" font-size="13">Author</text>
-<rect x="190" y="180" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="255" y="215" text-anchor="middle" fill="white" font-size="13">Post Service</text>
-<rect x="370" y="100" width="140" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="440" y="130" text-anchor="middle" fill="white" font-size="12">Kafka (Post Events)</text>
-<rect x="370" y="220" width="140" height="60" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="440" y="248" text-anchor="middle" fill="white" font-size="12">Fan-out Workers</text><text x="440" y="265" text-anchor="middle" fill="white" font-size="10">(parallel, async)</text>
-<rect x="570" y="140" width="140" height="50" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="640" y="168" text-anchor="middle" fill="white" font-size="11">Social Graph (TAO)</text>
-<rect x="570" y="260" width="140" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="640" y="288" text-anchor="middle" fill="white" font-size="11">Feed Cache (Redis)</text>
-<text x="640" y="330" fill="#aaa" font-size="11">Sorted Set per user</text>
-<text x="640" y="348" fill="#aaa" font-size="11">ZADD feed:{user_id} {timestamp} {post_id}</text>
-<rect x="570" y="370" width="140" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="640" y="400" text-anchor="middle" fill="white" font-size="12">Eligibility Filter</text>
-<ellipse cx="830" cy="165" rx="60" ry="25" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="830" y="170" text-anchor="middle" fill="white" font-size="11">Post DB</text>
-<line x1="140" y1="210" x2="188" y2="210" stroke="#1877f2" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="320" y1="195" x2="368" y2="130" stroke="#1877f2" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="320" y1="220" x2="368" y2="245" stroke="#1877f2" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="440" y1="150" x2="440" y2="218" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="510" y1="235" x2="568" y2="170" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="510" y1="265" x2="568" y2="280" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="510" y1="270" x2="568" y2="390" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow1)"/>
-<line x1="710" y1="160" x2="768" y2="162" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow1)"/>
-<text x="550" y="30" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Facebook Newsfeed: Write Path (Fan-out)</text>
-</svg>
+<div class="mermaid">
+graph LR
+    subgraph Client
+        A["📱 Client App"]
+    end
+    A -->|"HTTP POST /api/v1/posts"| B["⚖️ Load Balancer"]
+    B --> C["Post Service"]
+    C -->|"Store post"| D[("Post DB<br/>(NoSQL)")]
+    C -->|"Upload media"| E["Media Processing<br/>Service"]
+    E -->|"Store originals +<br/>processed variants"| F[("Object Storage")]
+    E -->|"Invalidate / warm"| CDN["CDN"]
+    C -->|"Publish<br/>PostCreated event"| G["Message Queue"]
+    G --> H["Fan-out Service"]
+    H -->|"Get follower list"| I["Social Graph<br/>Service"]
+    I -->|"Query"| J[("Social Graph DB<br/>(SQL)")]
+    H -->|"Write post ref<br/>to each follower feed"| K[("Feed Cache")]
+
+    style A fill:#e3f2fd,stroke:#1565c0
+    style B fill:#fff3e0,stroke:#e65100
+    style C fill:#e8f5e9,stroke:#2e7d32
+    style D fill:#fce4ec,stroke:#c62828
+    style E fill:#e8f5e9,stroke:#2e7d32
+    style F fill:#fce4ec,stroke:#c62828
+    style G fill:#f3e5f5,stroke:#6a1b9a
+    style H fill:#e8f5e9,stroke:#2e7d32
+    style I fill:#e8f5e9,stroke:#2e7d32
+    style J fill:#fce4ec,stroke:#c62828
+    style K fill:#fce4ec,stroke:#c62828
+    style CDN fill:#fff8e1,stroke:#f9a825
+</div>
 </div>
 
-<h3>Step-by-Step</h3>
+<h3>3.2 Examples</h3>
+
+<div class="example-card">
+<strong>Example 1 — Text-Only Post (Regular User):</strong><br/>
+Alice (500 friends) writes "Happy Friday everyone! 🎉". Her client sends an <code>HTTP POST</code> to <code>/api/v1/posts</code> with <code>{"content": "Happy Friday everyone! 🎉", "media": []}</code> via the Load Balancer. The Post Service validates the request (checks auth token, content length, spam filters), generates a unique <code>post_id</code>, and writes the post to the Post DB. The Post Service then publishes a <code>PostCreated</code> event (containing <code>post_id</code> and <code>user_id</code>) onto the Message Queue. The Fan-out Service picks up this event, calls the Social Graph Service to retrieve Alice's 500 friends, and for each friend writes a record <code>(friend_user_id, post_id, timestamp)</code> into that friend's pre-computed feed in the Feed Cache. When any of Alice's friends next open their app, the post will be in their feed.
+</div>
+
+<div class="example-card">
+<strong>Example 2 — Media Post (Image + Video):</strong><br/>
+Bob uploads a vacation photo and a 30-second video clip with the caption "Paradise 🌴". The client first calls the Media Processing Service (via <code>HTTP POST /api/v1/media/upload</code>) which stores the raw files in Object Storage and asynchronously generates: a thumbnail (200×200), a medium image (800×600), a full-resolution image, and a transcoded video (HLS adaptive bitrate segments at 360p, 720p, 1080p). The Media Processing Service returns a list of media URLs. The client then sends <code>HTTP POST /api/v1/posts</code> with the caption and media URLs. The Post Service stores the post in the Post DB, and the fan-out proceeds identically to Example 1. When the post appears in a friend's feed, the client fetches the thumbnail from the CDN, and streams the video via HLS from the CDN.
+</div>
+
+<div class="example-card">
+<strong>Example 3 — Celebrity Post (Fan-out on Write Skipped):</strong><br/>
+A celebrity with 10 million followers posts "Excited for the new album drop 🎵". The Post Service stores the post in the Post DB and publishes a <code>PostCreated</code> event. The Fan-out Service detects that this user is a <em>celebrity</em> (follower count &gt; configurable threshold, e.g. 100,000). Instead of writing to 10 million individual feeds (which would take too long and waste resources), the Fan-out Service <strong>skips the write fan-out</strong> and instead marks the post as a <code>celebrity_post</code> in the Post DB. These posts will be fetched at read-time when followers request their feeds (see Flow 2).
+</div>
+
+<h3>3.3 Component Deep Dive</h3>
+
+<div class="card">
+<h4>📱 Client App</h4>
+<p>Native mobile application (iOS / Android) or web SPA. Communicates with the backend exclusively over <strong>HTTPS</strong> (TLS-encrypted HTTP/2). Responsible for composing posts, uploading media, rendering the feed, and handling interactions. Uses token-based authentication (JWT or session token in the <code>Authorization</code> header).</p>
+</div>
+
+<div class="card">
+<h4>⚖️ Load Balancer (External)</h4>
+<p>A <strong>Layer 7 (Application)</strong> load balancer that sits at the edge of the backend infrastructure.</p>
+<ul>
+    <li><strong>Responsibilities:</strong> SSL/TLS termination, request routing (routes <code>/api/v1/posts</code> to Post Service, <code>/api/v1/feed</code> to Feed Service, etc.), rate limiting, health checking of downstream services.</li>
+    <li><strong>Algorithm:</strong> Least-connections with weighted health checks. Round-robin is also acceptable.</li>
+    <li><strong>Protocol:</strong> Terminates HTTPS from clients, forwards requests as HTTP (or gRPC) to internal services.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Post Service</h4>
+<table>
+    <thead><tr><th>Aspect</th><th>Details</th></tr></thead>
+    <tbody>
+    <tr><td>Protocol</td><td><strong>HTTP REST</strong> (external-facing); <strong>gRPC</strong> for inter-service calls</td></tr>
+    <tr><td>Endpoint</td><td><code>POST /api/v1/posts</code></td></tr>
+    <tr><td>Input</td><td><code>{ "content": string, "media_urls": string[], "visibility": "public"|"friends"|"private" }</code> + Auth header</td></tr>
+    <tr><td>Output</td><td><code>{ "post_id": string, "created_at": ISO8601, "status": "created" }</code></td></tr>
+    <tr><td>Responsibilities</td><td>Validates input, generates <code>post_id</code>, writes to Post DB, publishes <code>PostCreated</code> event to Message Queue</td></tr>
+    </tbody>
+</table>
+</div>
+
+<div class="card">
+<h4>Media Processing Service</h4>
+<table>
+    <thead><tr><th>Aspect</th><th>Details</th></tr></thead>
+    <tbody>
+    <tr><td>Protocol</td><td><strong>HTTP REST</strong> for upload; internal workers are event-driven via Message Queue</td></tr>
+    <tr><td>Endpoint</td><td><code>POST /api/v1/media/upload</code></td></tr>
+    <tr><td>Input</td><td>Multipart file upload (images: JPEG/PNG/WEBP; videos: MP4/MOV)</td></tr>
+    <tr><td>Output</td><td><code>{ "media_id": string, "urls": { "thumbnail": string, "medium": string, "original": string, "hls_playlist"?: string } }</code></td></tr>
+    <tr><td>Responsibilities</td><td>Stores raw files in Object Storage, generates thumbnails and resized variants for images, transcodes video into HLS adaptive bitrate segments (360p, 720p, 1080p), stores processed assets in Object Storage, warms CDN edge caches for the media URLs.</td></tr>
+    </tbody>
+</table>
+</div>
+
+<div class="card">
+<h4>Object Storage</h4>
+<p>Distributed blob/object storage for media files (images, video segments, thumbnails). Designed for high durability (11 nines) and high throughput. Serves as the <strong>origin</strong> for the CDN. Data is stored with redundancy across multiple data centres.</p>
+</div>
+
+<div class="card">
+<h4>Post DB (NoSQL — Document Store)</h4>
+<p>Stores the canonical post records. Chosen as <strong>NoSQL (document store)</strong> because:</p>
+<ul>
+    <li>Posts have flexible schema (some have media, some have text only, some have link previews, etc.).</li>
+    <li>Write-heavy during peak hours; NoSQL handles high write throughput well.</li>
+    <li>No complex joins needed — posts are accessed individually or by user_id.</li>
+    <li>Horizontal scaling via sharding is native to document stores.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Message Queue</h4>
+<p>A durable, distributed message queue that decouples the Post Service from the Fan-out Service. The Post Service publishes <code>PostCreated</code> events; the Fan-out Service subscribes and processes them asynchronously. Provides at-least-once delivery with consumer acknowledgement. Failed messages are routed to a <strong>Dead Letter Queue (DLQ)</strong> for investigation. See <a href="#mq">Section 11</a> for a full deep dive.</p>
+</div>
+
+<div class="card">
+<h4>Fan-out Service</h4>
+<p>Consumes <code>PostCreated</code> events from the Message Queue. For each event:</p>
 <ol>
-<li><strong>Author publishes post</strong> → Post Service stores in Post DB → publishes event to Kafka</li>
-<li><strong>Fan-out Workers</strong> consume from Kafka. For each post:
-    <ul>
-    <li>Query TAO for author's friend list (e.g., 500 friends)</li>
-    <li>For each friend, check <strong>Eligibility Filter</strong>: Is friend active? Has friend muted/unfollowed author? Privacy check?</li>
-    <li>For eligible friends: <code>ZADD feed:{friend_id} {timestamp} {post_id}</code> into Redis</li>
-    </ul>
-</li>
-<li><strong>Skip fan-out</strong> for authors with >5000 followers (celebrities/pages) — handled at read time</li>
-<li><strong>Feed cache bounded:</strong> Each user's sorted set capped at 800 post_ids. Older entries evicted automatically</li>
+    <li>Calls the Social Graph Service to get the poster's friend/follower list.</li>
+    <li>Checks if the poster is a <em>celebrity</em> (follower count &gt; threshold). If yes, skips fan-out (post will be fetched at read-time).</li>
+    <li>For regular users, writes a feed entry <code>(follower_user_id, post_id, timestamp, score)</code> into each follower's pre-computed feed in the Feed Cache.</li>
+</ol>
+<p><strong>Protocol:</strong> gRPC to Social Graph Service. Direct writes to Feed Cache.</p>
+</div>
+
+<div class="card">
+<h4>Social Graph Service</h4>
+<table>
+    <thead><tr><th>Aspect</th><th>Details</th></tr></thead>
+    <tbody>
+    <tr><td>Protocol</td><td><strong>gRPC</strong> (internal service-to-service)</td></tr>
+    <tr><td>RPC</td><td><code>GetFollowers(user_id) → list&lt;user_id&gt;</code></td></tr>
+    <tr><td>Input</td><td><code>user_id: string</code></td></tr>
+    <tr><td>Output</td><td><code>{ "follower_ids": string[], "is_celebrity": bool }</code></td></tr>
+    <tr><td>Data Store</td><td>Social Graph DB (SQL — relational), caches hot adjacency lists in an in-memory cache</td></tr>
+    </tbody>
+</table>
+</div>
+
+<div class="card">
+<h4>Feed Cache</h4>
+<p>An in-memory data store that holds each user's pre-computed feed as a <strong>sorted set</strong> (sorted by score/timestamp). Each entry is a lightweight pointer <code>(post_id, timestamp, score)</code> — not the full post object. This keeps memory usage low and allows the Feed Service to hydrate (enrich) posts at read-time. See <a href="#cache">Section 10</a> for full cache deep dive.</p>
+</div>
+
+<div class="card">
+<h4>CDN (Content Delivery Network)</h4>
+<p>Caches and serves media (images, video segments) from edge nodes geographically close to the user. Reduces latency and offloads traffic from Object Storage. See <a href="#cdn">Section 9</a> for full deep dive.</p>
+</div>
+
+<!-- ============================================================ -->
+<hr class="section-divider">
+<h2 id="flow2">4. Flow 2 — Feed Retrieval &amp; Display</h2>
+<!-- ============================================================ -->
+
+<h3>4.1 Diagram</h3>
+<div class="diagram-container">
+<div class="mermaid">
+graph LR
+    subgraph Client
+        A["📱 Client App"]
+    end
+    A -->|"HTTP GET<br/>/api/v1/feed?cursor=X&limit=20"| B["⚖️ Load Balancer"]
+    B --> C["Feed Service"]
+    C -->|"1. Fetch pre-computed<br/>feed entries"| D[("Feed Cache")]
+    C -->|"2. Fetch celebrity<br/>posts (fan-out on read)"| E["Post Service"]
+    E -->|"Query recent posts<br/>by celebrity user_ids"| F[("Post DB<br/>(NoSQL)")]
+    C -->|"3. Merge &amp; Rank"| G["Ranking Service"]
+    C -->|"4. Hydrate post data"| H[("Post Cache")]
+    H -.->|"Cache miss"| F
+    C -->|"5. Enrich with<br/>author info"| I["User Service"]
+    I --> J[("User DB<br/>(SQL)")]
+    C -->|"Ranked feed response"| A
+
+    style A fill:#e3f2fd,stroke:#1565c0
+    style B fill:#fff3e0,stroke:#e65100
+    style C fill:#e8f5e9,stroke:#2e7d32
+    style D fill:#fce4ec,stroke:#c62828
+    style E fill:#e8f5e9,stroke:#2e7d32
+    style F fill:#fce4ec,stroke:#c62828
+    style G fill:#e8eaf6,stroke:#283593
+    style H fill:#fce4ec,stroke:#c62828
+    style I fill:#e8f5e9,stroke:#2e7d32
+    style J fill:#fce4ec,stroke:#c62828
+</div>
+</div>
+
+<h3>4.2 Examples</h3>
+
+<div class="example-card">
+<strong>Example 1 — Normal Feed Load (Cache Hit):</strong><br/>
+Charlie opens the Facebook app. The client sends <code>HTTP GET /api/v1/feed?limit=20</code> via the Load Balancer to the Feed Service. The Feed Service retrieves Charlie's pre-computed feed from the Feed Cache — a sorted set of <code>(post_id, timestamp, score)</code> entries. It also checks whether Charlie follows any celebrities (via a cached celebrity-follow list); Charlie follows 3 celebrities, so the Feed Service queries the Post DB for the 3 celebrities' most recent posts from the last 24 hours (fan-out on read). The two sets of post references are merged and sent to the Ranking Service, which applies the ranking model (affinity × weight × decay) to score each post. The top 20 are selected. The Feed Service hydrates these 20 <code>post_id</code>s by fetching full post objects from the Post Cache (with fallback to Post DB on cache miss) and enriches them with author profile data from the User Service. The final ranked, hydrated feed is returned as JSON to the client, which renders it in under 200 ms.
+</div>
+
+<div class="example-card">
+<strong>Example 2 — Pagination (Infinite Scroll):</strong><br/>
+Charlie scrolls to the bottom of the initial 20 posts. The client sends <code>HTTP GET /api/v1/feed?cursor=eyJwb3N0X2lkIjoiYWJjMTIzIiwidHMiOjE2OTk5fQ==&limit=20</code>. The <code>cursor</code> is an opaque, base64-encoded token containing the last post's ID and score/timestamp. The Feed Service uses this cursor to seek into the Feed Cache starting after the last seen post, fetches the next batch, merges in celebrity posts that fall within that time window, ranks, hydrates, and returns the next 20 posts. This continues until the client has scrolled through all available content or reaches a configured depth limit (e.g. 500 posts).
+</div>
+
+<div class="example-card">
+<strong>Example 3 — Cold Start / Cache Miss:</strong><br/>
+Diana just created her account and followed 100 people. She immediately opens her feed. The Feed Cache has no pre-computed feed for Diana yet (no fan-out has occurred since she only just followed people). The Feed Service detects the cache miss and falls back to the <strong>fan-out on read</strong> path: it queries the Social Graph Service for Diana's 100 followed users, then fetches recent posts from each (batched query to Post DB), merges them, sends them through the Ranking Service, caches the result in the Feed Cache for future requests, and returns the ranked feed to Diana. Subsequent feed loads will hit the warm cache.
+</div>
+
+<h3>4.3 Component Deep Dive</h3>
+
+<div class="card">
+<h4>Feed Service</h4>
+<table>
+    <thead><tr><th>Aspect</th><th>Details</th></tr></thead>
+    <tbody>
+    <tr><td>Protocol</td><td><strong>HTTP REST</strong> (external-facing)</td></tr>
+    <tr><td>Endpoint</td><td><code>GET /api/v1/feed</code></td></tr>
+    <tr><td>Query Params</td><td><code>cursor</code> (optional, opaque pagination token), <code>limit</code> (default 20, max 50)</td></tr>
+    <tr><td>Input</td><td>Auth header (JWT / session token identifying the user)</td></tr>
+    <tr><td>Output</td><td><code>{ "posts": [ { "post_id", "author": {...}, "content", "media_urls", "like_count", "comment_count", "created_at", "score" } ], "next_cursor": string|null }</code></td></tr>
+    <tr><td>Responsibilities</td><td>Orchestrates the entire feed assembly: reads Feed Cache, fetches celebrity posts, calls Ranking Service, hydrates posts, enriches with user data, builds pagination cursor.</td></tr>
+    </tbody>
+</table>
+</div>
+
+<div class="card">
+<h4>Ranking Service</h4>
+<table>
+    <thead><tr><th>Aspect</th><th>Details</th></tr></thead>
+    <tbody>
+    <tr><td>Protocol</td><td><strong>gRPC</strong> (internal)</td></tr>
+    <tr><td>RPC</td><td><code>RankPosts(user_id, candidate_posts[]) → ranked_posts[]</code></td></tr>
+    <tr><td>Algorithm</td><td>Multi-signal scoring:<br/>
+        <code>Score = Σ (Affinity × Weight × Decay)</code><br/>
+        <strong>Affinity:</strong> How closely connected the viewer is to the poster (interaction frequency, message frequency).<br/>
+        <strong>Weight:</strong> Type of content (video &gt; image &gt; text) and type of edge (comment &gt; like &gt; view).<br/>
+        <strong>Decay:</strong> Exponential time decay — newer posts score higher.</td></tr>
+    <tr><td>ML Integration</td><td>A pre-trained ML model (gradient-boosted decision tree or neural network) predicts engagement probability for each candidate post. The model is retrained periodically on historical engagement data.</td></tr>
+    </tbody>
+</table>
+</div>
+
+<div class="card">
+<h4>User Service</h4>
+<table>
+    <thead><tr><th>Aspect</th><th>Details</th></tr></thead>
+    <tbody>
+    <tr><td>Protocol</td><td><strong>gRPC</strong> (internal); also exposes <code>HTTP GET /api/v1/users/{id}</code> for external</td></tr>
+    <tr><td>Input</td><td>Batch of <code>user_id</code>s</td></tr>
+    <tr><td>Output</td><td><code>{ "users": [ { "user_id", "name", "profile_pic_url", "is_verified" } ] }</code></td></tr>
+    <tr><td>Caching</td><td>Results are cached in an in-memory cache with a TTL of 1 hour (user profiles change infrequently).</td></tr>
+    </tbody>
+</table>
+</div>
+
+<div class="card">
+<h4>Post Cache (In-Memory Cache)</h4>
+<p>Caches full post objects to avoid repeated reads to the Post DB during feed hydration. Key is <code>post_id</code>, value is the serialised post object. This is a <strong>read-through</strong> cache: on cache miss, the Feed Service reads from Post DB and populates the cache. See <a href="#cache">Section 10</a> for eviction and expiration details.</p>
+</div>
+
+<!-- ============================================================ -->
+<hr class="section-divider">
+<h2 id="flow3">5. Flow 3 — Post Interaction (Like, Comment, Share)</h2>
+<!-- ============================================================ -->
+
+<h3>5.1 Diagram</h3>
+<div class="diagram-container">
+<div class="mermaid">
+graph LR
+    subgraph Client
+        A["📱 Client App"]
+    end
+    A -->|"HTTP POST<br/>/api/v1/posts/:id/likes<br/>/api/v1/posts/:id/comments<br/>/api/v1/posts/:id/shares"| B["⚖️ Load Balancer"]
+    B --> C["Interaction Service"]
+    C -->|"Store interaction"| D[("Interaction DB<br/>(NoSQL)")]
+    C -->|"Increment counter"| E[("Counter Cache")]
+    E -.->|"Periodic flush"| D
+    C -->|"Publish event<br/>(LikeCreated,<br/>CommentCreated,<br/>ShareCreated)"| F["Message Queue"]
+    F --> G["Notification Service"]
+    G -->|"Store notification"| H[("Notification DB<br/>(NoSQL)")]
+    G -->|"Push notification"| I["Push Gateway<br/>(APNs / FCM)"]
+
+    style A fill:#e3f2fd,stroke:#1565c0
+    style B fill:#fff3e0,stroke:#e65100
+    style C fill:#e8f5e9,stroke:#2e7d32
+    style D fill:#fce4ec,stroke:#c62828
+    style E fill:#fce4ec,stroke:#c62828
+    style F fill:#f3e5f5,stroke:#6a1b9a
+    style G fill:#e8f5e9,stroke:#2e7d32
+    style H fill:#fce4ec,stroke:#c62828
+    style I fill:#e3f2fd,stroke:#1565c0
+</div>
+</div>
+
+<h3>5.2 Examples</h3>
+
+<div class="example-card">
+<strong>Example 1 — Like:</strong><br/>
+Eve scrolls through her feed and likes Frank's vacation post. The client sends <code>HTTP POST /api/v1/posts/post_789/likes</code> with Eve's auth token via the Load Balancer to the Interaction Service. The Interaction Service checks for duplicate likes (idempotency — Eve can't like the same post twice), writes a record <code>(post_id=post_789, user_id=eve_id, type=like, created_at=now)</code> to the Interaction DB, and atomically increments the like counter for <code>post_789</code> in the Counter Cache. It also publishes a <code>LikeCreated</code> event to the Message Queue. The Notification Service picks up the event and creates a notification for Frank: "Eve liked your post." This is stored in the Notification DB and a push notification is sent to Frank's device via the Push Gateway (APNs for iOS, FCM for Android).
+</div>
+
+<div class="example-card">
+<strong>Example 2 — Comment:</strong><br/>
+Eve writes "Looks amazing! 😍" on Frank's post. The client sends <code>HTTP POST /api/v1/posts/post_789/comments</code> with <code>{"content": "Looks amazing! 😍"}</code>. The Interaction Service generates a <code>comment_id</code>, writes the comment to the Interaction DB, increments the comment counter in the Counter Cache, and publishes a <code>CommentCreated</code> event. The Notification Service creates a notification for Frank: "Eve commented on your post: 'Looks amazing! 😍'." If other users (say, Grace) previously commented on this post, they may also receive a notification: "Eve also commented on Frank's post."
+</div>
+
+<div class="example-card">
+<strong>Example 3 — Share:</strong><br/>
+Eve shares Frank's post with her own caption "Everyone should see this!". The client sends <code>HTTP POST /api/v1/posts/post_789/shares</code> with <code>{"caption": "Everyone should see this!"}</code>. The Interaction Service creates a new post record (a "share" type post that references the original <code>post_789</code>) in the Post DB via the Post Service, increments the share counter for the original post in the Counter Cache, and publishes a <code>ShareCreated</code> event. The share post then goes through the standard post-creation fan-out flow (Flow 1). Frank receives a notification: "Eve shared your post."
+</div>
+
+<h3>5.3 Component Deep Dive</h3>
+
+<div class="card">
+<h4>Interaction Service</h4>
+<table>
+    <thead><tr><th>Aspect</th><th>Details</th></tr></thead>
+    <tbody>
+    <tr><td>Protocol</td><td><strong>HTTP REST</strong></td></tr>
+    <tr><td>Endpoints</td><td>
+        <code>POST /api/v1/posts/{post_id}/likes</code> — Input: Auth header. Output: <code>{ "status": "liked", "like_count": int }</code><br/>
+        <code>DELETE /api/v1/posts/{post_id}/likes</code> — Unlike. Output: <code>{ "status": "unliked", "like_count": int }</code><br/>
+        <code>POST /api/v1/posts/{post_id}/comments</code> — Input: <code>{ "content": string }</code>. Output: <code>{ "comment_id": string, "comment_count": int }</code><br/>
+        <code>POST /api/v1/posts/{post_id}/shares</code> — Input: <code>{ "caption"?: string }</code>. Output: <code>{ "share_post_id": string, "share_count": int }</code>
+    </td></tr>
+    <tr><td>Idempotency</td><td>Like endpoint is idempotent — duplicate likes are silently ignored (checked via composite key <code>(post_id, user_id)</code>).</td></tr>
+    </tbody>
+</table>
+</div>
+
+<div class="card">
+<h4>Counter Cache</h4>
+<p>An in-memory cache storing aggregated counters (like_count, comment_count, share_count) keyed by <code>post_id</code>. Updated atomically via <code>INCR</code>/<code>DECR</code> operations. Counters are <strong>periodically flushed</strong> (write-back) to the Interaction DB every few seconds to avoid overwhelming the database with per-interaction writes. See <a href="#cache">Section 10</a> for details.</p>
+</div>
+
+<div class="card">
+<h4>Notification Service</h4>
+<table>
+    <thead><tr><th>Aspect</th><th>Details</th></tr></thead>
+    <tbody>
+    <tr><td>Trigger</td><td>Consumes events from Message Queue (<code>LikeCreated</code>, <code>CommentCreated</code>, <code>ShareCreated</code>)</td></tr>
+    <tr><td>Responsibilities</td><td>Creates notification records in the Notification DB, aggregates notifications (e.g. "Alice and 5 others liked your post"), sends push notifications via the Push Gateway (APNs for Apple, FCM for Google/Android).</td></tr>
+    <tr><td>Batching</td><td>Notifications are batched for users receiving high volumes (e.g., a popular post getting thousands of likes won't generate thousands of individual push notifications — they are aggregated).</td></tr>
+    </tbody>
+</table>
+</div>
+
+<div class="card">
+<h4>Notification DB (NoSQL — Wide-Column Store)</h4>
+<p>Stores notification records. Each record contains <code>recipient_user_id</code>, <code>notification_id</code>, <code>type</code>, <code>actor_user_id</code>, <code>post_id</code>, <code>is_read</code>, <code>created_at</code>. Partitioned by <code>recipient_user_id</code> for fast retrieval of a user's notification feed.</p>
+</div>
+
+<div class="card">
+<h4>Push Gateway</h4>
+<p>Abstracts the platform-specific push notification services: Apple Push Notification Service (APNs) for iOS and Firebase Cloud Messaging (FCM) for Android. Maintains device tokens per user and handles delivery, retries, and token invalidation.</p>
+</div>
+
+<!-- ============================================================ -->
+<hr class="section-divider">
+<h2 id="overall">6. Overall Combined Diagram</h2>
+<!-- ============================================================ -->
+
+<div class="diagram-container">
+<div class="mermaid">
+graph TD
+    subgraph Clients
+        CL["📱 Client App<br/>(iOS / Android / Web)"]
+    end
+
+    subgraph Edge
+        LB["⚖️ Load Balancer"]
+        CDNX["CDN"]
+    end
+
+    subgraph Services
+        PS["Post Service"]
+        FS["Feed Service"]
+        IS["Interaction Service"]
+        MPS["Media Processing<br/>Service"]
+        SGS["Social Graph<br/>Service"]
+        RS["Ranking Service"]
+        US["User Service"]
+        FOS["Fan-out Service"]
+        NS["Notification Service"]
+    end
+
+    subgraph Async
+        MQ["Message Queue"]
+    end
+
+    subgraph Data Stores
+        PDB[("Post DB<br/>(NoSQL)")]
+        SGDB[("Social Graph DB<br/>(SQL)")]
+        UDB[("User DB<br/>(SQL)")]
+        IDB[("Interaction DB<br/>(NoSQL)")]
+        NDB[("Notification DB<br/>(NoSQL)")]
+        OBJ[("Object Storage")]
+    end
+
+    subgraph Caches
+        FC[("Feed Cache")]
+        PC[("Post Cache")]
+        CC[("Counter Cache")]
+    end
+
+    subgraph Push
+        PG["Push Gateway<br/>(APNs / FCM)"]
+    end
+
+    CL -->|"HTTPS"| LB
+    CL -->|"Media fetch"| CDNX
+    CDNX -.->|"Origin pull"| OBJ
+
+    LB --> PS
+    LB --> FS
+    LB --> IS
+    LB --> MPS
+
+    PS -->|"Write"| PDB
+    PS -->|"Publish PostCreated"| MQ
+
+    MPS -->|"Store media"| OBJ
+    MPS -->|"Warm CDN"| CDNX
+
+    MQ --> FOS
+    MQ --> NS
+
+    FOS -->|"Get followers"| SGS
+    SGS --> SGDB
+    FOS -->|"Write feed entries"| FC
+
+    FS -->|"Read feed"| FC
+    FS -->|"Celebrity posts"| PS
+    FS -->|"Rank"| RS
+    FS -->|"Hydrate posts"| PC
+    PC -.->|"Miss"| PDB
+    FS -->|"User data"| US
+    US --> UDB
+
+    IS -->|"Write interaction"| IDB
+    IS -->|"Update counter"| CC
+    IS -->|"Publish event"| MQ
+
+    NS -->|"Store notification"| NDB
+    NS -->|"Push"| PG
+
+    style CL fill:#e3f2fd,stroke:#1565c0
+    style LB fill:#fff3e0,stroke:#e65100
+    style CDNX fill:#fff8e1,stroke:#f9a825
+    style PS fill:#e8f5e9,stroke:#2e7d32
+    style FS fill:#e8f5e9,stroke:#2e7d32
+    style IS fill:#e8f5e9,stroke:#2e7d32
+    style MPS fill:#e8f5e9,stroke:#2e7d32
+    style SGS fill:#e8f5e9,stroke:#2e7d32
+    style RS fill:#e8eaf6,stroke:#283593
+    style US fill:#e8f5e9,stroke:#2e7d32
+    style FOS fill:#e8f5e9,stroke:#2e7d32
+    style NS fill:#e8f5e9,stroke:#2e7d32
+    style MQ fill:#f3e5f5,stroke:#6a1b9a
+    style PDB fill:#fce4ec,stroke:#c62828
+    style SGDB fill:#fce4ec,stroke:#c62828
+    style UDB fill:#fce4ec,stroke:#c62828
+    style IDB fill:#fce4ec,stroke:#c62828
+    style NDB fill:#fce4ec,stroke:#c62828
+    style OBJ fill:#fce4ec,stroke:#c62828
+    style FC fill:#fff3e0,stroke:#e65100
+    style PC fill:#fff3e0,stroke:#e65100
+    style CC fill:#fff3e0,stroke:#e65100
+    style PG fill:#e3f2fd,stroke:#1565c0
+</div>
+</div>
+
+<h3>6.1 Overall Flow Examples</h3>
+
+<div class="example-card">
+<strong>End-to-End Example — Post to Feed to Interaction:</strong><br/>
+<strong>Step 1 (Post):</strong> Alice opens the app and creates a new photo post. The client uploads the photo via <code>HTTP POST /api/v1/media/upload</code> → Load Balancer → Media Processing Service → Object Storage. The processed image URLs are returned. The client then sends <code>HTTP POST /api/v1/posts</code> → Load Balancer → Post Service → Post DB (write) + Message Queue (PostCreated event).<br/><br/>
+<strong>Step 2 (Fan-out):</strong> The Fan-out Service consumes the PostCreated event from the Message Queue, calls the Social Graph Service (→ Social Graph DB) to get Alice's 500 friends, and writes a feed entry for each friend into the Feed Cache.<br/><br/>
+<strong>Step 3 (Feed Read):</strong> Charlie (one of Alice's friends) opens the app. The client sends <code>HTTP GET /api/v1/feed</code> → Load Balancer → Feed Service → Feed Cache (gets pre-computed entries including Alice's new post) + Post DB (celebrity posts via fan-out on read). The Ranking Service ranks the candidate posts. The Feed Service hydrates post data from the Post Cache (with fallback to Post DB) and enriches with author data from the User Service (→ User DB). The ranked feed is returned to Charlie's app.<br/><br/>
+<strong>Step 4 (Interaction):</strong> Charlie likes Alice's photo. The client sends <code>HTTP POST /api/v1/posts/{post_id}/likes</code> → Load Balancer → Interaction Service → Interaction DB (write like) + Counter Cache (increment like_count) + Message Queue (LikeCreated event).<br/><br/>
+<strong>Step 5 (Notification):</strong> The Notification Service consumes the LikeCreated event from the Message Queue, creates a notification record in the Notification DB ("Charlie liked your photo"), and sends a push notification to Alice's phone via the Push Gateway (APNs / FCM).
+</div>
+
+<!-- ============================================================ -->
+<hr class="section-divider">
+<h2 id="schema">7. Schema Design</h2>
+<!-- ============================================================ -->
+
+<h3>7.1 SQL Tables</h3>
+
+<div class="card">
+<h4>Users Table</h4>
+<table>
+    <thead><tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr></thead>
+    <tbody>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><span class="tag">PK</span></td><td>Unique user identifier</td></tr>
+    <tr><td><code>name</code></td><td>VARCHAR(100)</td><td>NOT NULL</td><td>Display name</td></tr>
+    <tr><td><code>email</code></td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td><td>Login identifier</td></tr>
+    <tr><td><code>password_hash</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Bcrypt hash</td></tr>
+    <tr><td><code>profile_pic_url</code></td><td>VARCHAR(500)</td><td></td><td>CDN URL</td></tr>
+    <tr><td><code>is_celebrity</code></td><td>BOOLEAN</td><td>DEFAULT FALSE</td><td>True if follower count &gt; threshold</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+    </tbody>
+</table>
+<p><strong>Why SQL:</strong> User data is highly relational (referenced by friendships, posts, interactions). Strong consistency is required for authentication (email uniqueness, password verification). The dataset size is bounded (one row per user), making SQL perfectly suitable.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>Hash index on <code>user_id</code></strong> (primary key) — O(1) lookups by user ID.</li>
+    <li><strong>B-tree index on <code>email</code></strong> — Used for login queries (<code>WHERE email = ?</code>). B-tree supports equality and range queries; uniqueness constraint enforced at the index level.</li>
+</ul>
+<p><strong>Read from:</strong> Feed Service (to enrich posts with author data), Auth Service (login), User Service (profile views).<br/>
+<strong>Written to:</strong> User registration (<code>INSERT</code>), profile updates (<code>UPDATE</code>).</p>
+</div>
+
+<div class="card">
+<h4>Friendships Table</h4>
+<table>
+    <thead><tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr></thead>
+    <tbody>
+    <tr><td><code>user_id_1</code></td><td>UUID</td><td><span class="tag">PK</span> <span class="tag green">FK → Users</span></td><td>Smaller user_id to avoid duplicate pairs</td></tr>
+    <tr><td><code>user_id_2</code></td><td>UUID</td><td><span class="tag">PK</span> <span class="tag green">FK → Users</span></td><td>Larger user_id</td></tr>
+    <tr><td><code>status</code></td><td>ENUM</td><td>NOT NULL</td><td>'pending', 'accepted', 'blocked'</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+    </tbody>
+</table>
+<p><strong>Composite primary key:</strong> <code>(user_id_1, user_id_2)</code> where <code>user_id_1 &lt; user_id_2</code> to enforce uniqueness and avoid storing both directions.</p>
+<p><strong>Why SQL:</strong> Friendships are inherently relational (many-to-many between users). ACID transactions ensure that friend requests are processed correctly (e.g., no duplicate friendships). Joins with the Users table are needed for friend list queries.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>Composite B-tree index on <code>(user_id_1, status)</code></strong> — Efficiently retrieves all accepted friends for a given user: <code>WHERE user_id_1 = ? AND status = 'accepted'</code>.</li>
+    <li><strong>Composite B-tree index on <code>(user_id_2, status)</code></strong> — Since friendships are stored in one direction (user_id_1 &lt; user_id_2), we need a reverse index so we can find friendships where a user appears as <code>user_id_2</code>.</li>
+</ul>
+<p><strong>Read from:</strong> Social Graph Service (to get a user's friends list for fan-out).<br/>
+<strong>Written to:</strong> When a user sends a friend request (<code>INSERT</code> with status='pending'), accepts a request (<code>UPDATE</code> to status='accepted'), or blocks a user (<code>UPDATE</code> to status='blocked').</p>
+<p><strong>Sharding Strategy:</strong> Shard by <code>user_id_1</code> using consistent hashing. Since each user's friendships are queried as a unit, this keeps most friend lookups on a single shard. The reverse index (on <code>user_id_2</code>) may require scatter-gather across shards, but this is acceptable because the Social Graph Service caches friend lists aggressively in an in-memory cache.</p>
+</div>
+
+<h3>7.2 NoSQL Tables</h3>
+
+<div class="card">
+<h4>Posts Table <span class="tag purple">NoSQL — Document Store</span></h4>
+<table>
+    <thead><tr><th>Field</th><th>Type</th><th>Key</th><th>Notes</th></tr></thead>
+    <tbody>
+    <tr><td><code>post_id</code></td><td>String</td><td><span class="tag">Partition Key</span></td><td>Globally unique (e.g., ULID for time-sortability)</td></tr>
+    <tr><td><code>user_id</code></td><td>String</td><td></td><td>Author's user_id. Used for secondary index.</td></tr>
+    <tr><td><code>content</code></td><td>String</td><td></td><td>Text body of the post</td></tr>
+    <tr><td><code>media_urls</code></td><td>List&lt;String&gt;</td><td></td><td>CDN URLs for images/videos</td></tr>
+    <tr><td><code>post_type</code></td><td>String</td><td></td><td>'text', 'image', 'video', 'share'</td></tr>
+    <tr><td><code>original_post_id</code></td><td>String</td><td></td><td>For shares — references the original post</td></tr>
+    <tr><td><code>visibility</code></td><td>String</td><td></td><td>'public', 'friends', 'private'</td></tr>
+    <tr><td><code>like_count</code></td><td>Number</td><td></td><td><strong>Denormalized</strong> counter</td></tr>
+    <tr><td><code>comment_count</code></td><td>Number</td><td></td><td><strong>Denormalized</strong> counter</td></tr>
+    <tr><td><code>share_count</code></td><td>Number</td><td></td><td><strong>Denormalized</strong> counter</td></tr>
+    <tr><td><code>is_celebrity_post</code></td><td>Boolean</td><td></td><td>True if fan-out was skipped</td></tr>
+    <tr><td><code>created_at</code></td><td>Timestamp</td><td></td><td></td></tr>
+    </tbody>
+</table>
+<p><strong>Why NoSQL (Document Store):</strong></p>
+<ul>
+    <li>Posts have a <strong>flexible schema</strong> — some posts have media, some don't; shares have an <code>original_post_id</code>, regular posts don't.</li>
+    <li>Posts are read by <code>post_id</code> (point reads) or by <code>user_id + created_at</code> (range scans for a user's timeline). No complex joins are needed.</li>
+    <li>The system is <strong>write-heavy</strong> at peak hours (hundreds of thousands of posts per second globally). Document stores excel at horizontal write scaling.</li>
+    <li>Eventual consistency is acceptable for posts (a new post appearing a second later in search results is fine).</li>
+</ul>
+<p><strong>Denormalization — <code>like_count</code>, <code>comment_count</code>, <code>share_count</code>:</strong></p>
+<p>These counters are <strong>denormalized</strong> directly into the post document. Without denormalization, rendering a single feed page of 20 posts would require 20 separate <code>COUNT(*)</code> queries against the Interactions table — an unacceptable latency cost at scale. The trade-off is that these counters may be slightly stale (updated via Counter Cache write-back). Periodic reconciliation jobs ensure eventual accuracy.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>Hash index on <code>post_id</code></strong> (partition key) — O(1) point reads for individual post lookups.</li>
+    <li><strong>Global Secondary Index (GSI) on <code>(user_id, created_at DESC)</code></strong> — Enables efficient retrieval of a user's most recent posts. This is used for: (a) fan-out on read for celebrity posts, (b) rendering a user's profile/timeline. B-tree index (within the GSI) enables range queries on <code>created_at</code>.</li>
+</ul>
+<p><strong>Sharding Strategy:</strong> Shard by <code>post_id</code> (consistent hashing). ULIDs embed a timestamp prefix, providing time-sortability while maintaining even shard distribution. The GSI on <code>user_id</code> is maintained separately and sharded by <code>user_id</code> to keep all of a user's post references co-located.</p>
+<p><strong>Read from:</strong> Feed Service (hydrate posts during feed retrieval), Profile Service (user's own timeline), Fan-out on Read path (celebrity posts).<br/>
+<strong>Written to:</strong> Post Service writes on post creation (<code>INSERT</code>), Counter Cache flushes update counters (<code>UPDATE</code>).</p>
+</div>
+
+<div class="card">
+<h4>Feed Table <span class="tag purple">NoSQL — Wide-Column Store</span></h4>
+<table>
+    <thead><tr><th>Field</th><th>Type</th><th>Key</th><th>Notes</th></tr></thead>
+    <tbody>
+    <tr><td><code>user_id</code></td><td>String</td><td><span class="tag">Partition Key</span></td><td>The user whose feed this belongs to</td></tr>
+    <tr><td><code>sort_key</code></td><td>String</td><td><span class="tag orange">Sort Key</span></td><td>Composite: <code>timestamp#post_id</code> for ordering</td></tr>
+    <tr><td><code>post_id</code></td><td>String</td><td></td><td>Reference to the post</td></tr>
+    <tr><td><code>author_id</code></td><td>String</td><td></td><td><strong>Denormalized</strong> — avoids join</td></tr>
+    <tr><td><code>author_name</code></td><td>String</td><td></td><td><strong>Denormalized</strong> — for fast rendering</td></tr>
+    <tr><td><code>author_pic_url</code></td><td>String</td><td></td><td><strong>Denormalized</strong> — CDN URL</td></tr>
+    <tr><td><code>post_type</code></td><td>String</td><td></td><td><strong>Denormalized</strong></td></tr>
+    <tr><td><code>created_at</code></td><td>Timestamp</td><td></td><td>When the post was created</td></tr>
+    </tbody>
+</table>
+<p><strong>Why NoSQL (Wide-Column Store):</strong></p>
+<ul>
+    <li>The feed is a <strong>time-series access pattern</strong>: always queried for a single user, sorted by time, with pagination. Wide-column stores are optimised for this pattern.</li>
+    <li>Extremely high write throughput needed — the Fan-out Service writes millions of feed entries per second.</li>
+    <li>No joins needed — feed entries are self-contained pointers with denormalized metadata.</li>
+</ul>
+<p><strong>Denormalization — <code>author_name</code>, <code>author_pic_url</code>, <code>post_type</code>:</strong></p>
+<p>Author information is denormalized into feed entries so that the client can render a basic feed preview (author name and avatar next to each post) without additional network calls. The trade-off: when a user changes their name or profile photo, stale data may briefly appear in other users' feeds. A background job propagates updates, and the Feed Service also does a lightweight check against the User Cache during hydration for the currently viewed page.</p>
+<p><strong>Indexes:</strong> The wide-column store natively supports efficient range queries on <code>(user_id, sort_key)</code> — no additional indexes needed. The sort key ensures chronological ordering.</p>
+<p><strong>Sharding Strategy:</strong> Shard by <code>user_id</code> using consistent hashing. Each user's entire feed resides on a single shard, enabling efficient range scans for pagination without scatter-gather.</p>
+<p><strong>Read from:</strong> Feed Service on every feed retrieval request (<code>HTTP GET /api/v1/feed</code>).<br/>
+<strong>Written to:</strong> Fan-out Service writes a new entry whenever a followed user creates a post. Entries older than 30 days are TTL-expired to bound storage.</p>
+</div>
+
+<div class="card">
+<h4>Interactions Table <span class="tag purple">NoSQL — Wide-Column Store</span></h4>
+<table>
+    <thead><tr><th>Field</th><th>Type</th><th>Key</th><th>Notes</th></tr></thead>
+    <tbody>
+    <tr><td><code>post_id</code></td><td>String</td><td><span class="tag">Partition Key</span></td><td>The post being interacted with</td></tr>
+    <tr><td><code>sort_key</code></td><td>String</td><td><span class="tag orange">Sort Key</span></td><td>Composite: <code>type#user_id</code> (e.g., <code>like#user_123</code>)</td></tr>
+    <tr><td><code>user_id</code></td><td>String</td><td></td><td>Who performed the interaction</td></tr>
+    <tr><td><code>type</code></td><td>String</td><td></td><td>'like', 'comment', 'share'</td></tr>
+    <tr><td><code>content</code></td><td>String</td><td></td><td>Comment text (null for likes)</td></tr>
+    <tr><td><code>created_at</code></td><td>Timestamp</td><td></td><td></td></tr>
+    </tbody>
+</table>
+<p><strong>Why NoSQL (Wide-Column Store):</strong></p>
+<ul>
+    <li>Access patterns are always per-post: "get all likes for post X", "get all comments for post X". Partitioning by <code>post_id</code> keeps all interactions for a post co-located.</li>
+    <li>Extremely high write volume — popular posts can receive thousands of likes per second.</li>
+    <li>The composite sort key <code>type#user_id</code> enables efficient queries like "did user Y like post X?" (point read) and "get all likes for post X" (prefix scan on <code>like#</code>).</li>
+</ul>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>Primary index on <code>(post_id, sort_key)</code></strong> — Natively supports all query patterns.</li>
+    <li><strong>GSI on <code>(user_id, created_at DESC)</code></strong> — For "show all of user X's recent activity" queries (e.g., the user's activity log). B-tree within the GSI for range queries on <code>created_at</code>.</li>
+</ul>
+<p><strong>Sharding Strategy:</strong> Shard by <code>post_id</code> using consistent hashing. Hot posts (viral content) may cause hot shards; mitigated by the Counter Cache absorbing most read/write traffic for counters, and by adding a small random suffix to the partition key for extremely hot posts (write sharding).</p>
+<p><strong>Read from:</strong> When a user views the list of likes or comments on a post. Also used by Counter Cache reconciliation jobs.<br/>
+<strong>Written to:</strong> Interaction Service on every like, comment, or share action.</p>
+</div>
+
+<div class="card">
+<h4>Notifications Table <span class="tag purple">NoSQL — Wide-Column Store</span></h4>
+<table>
+    <thead><tr><th>Field</th><th>Type</th><th>Key</th><th>Notes</th></tr></thead>
+    <tbody>
+    <tr><td><code>recipient_user_id</code></td><td>String</td><td><span class="tag">Partition Key</span></td><td>Who receives the notification</td></tr>
+    <tr><td><code>notification_id</code></td><td>String</td><td><span class="tag orange">Sort Key</span></td><td>ULID for time-sortability</td></tr>
+    <tr><td><code>type</code></td><td>String</td><td></td><td>'like', 'comment', 'share', 'friend_request'</td></tr>
+    <tr><td><code>actor_user_id</code></td><td>String</td><td></td><td>Who triggered the notification</td></tr>
+    <tr><td><code>post_id</code></td><td>String</td><td></td><td>Related post (nullable)</td></tr>
+    <tr><td><code>message</code></td><td>String</td><td></td><td>Human-readable notification text</td></tr>
+    <tr><td><code>is_read</code></td><td>Boolean</td><td></td><td>Read/unread status</td></tr>
+    <tr><td><code>created_at</code></td><td>Timestamp</td><td></td><td></td></tr>
+    </tbody>
+</table>
+<p><strong>Why NoSQL:</strong> Same reasoning as Feed Table — time-series, single-user access pattern, high write volume, no joins.</p>
+<p><strong>Sharding:</strong> Shard by <code>recipient_user_id</code>.</p>
+<p><strong>Read from:</strong> When a user opens their notification feed (<code>GET /api/v1/notifications</code>).<br/>
+<strong>Written to:</strong> Notification Service writes when interaction events are consumed from the Message Queue.</p>
+</div>
+
+<!-- ============================================================ -->
+<hr class="section-divider">
+<h2 id="cdn">8. CDN Deep Dive</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+<p><strong>Is a CDN appropriate?</strong> <span class="tag green">Yes — Essential</span></p>
+<p>A CDN is <strong>critical</strong> for this system. The newsfeed is media-heavy (images and videos in every scroll position), and users are globally distributed. Without a CDN, every media request would travel to the origin Object Storage, resulting in high latency and enormous bandwidth costs.</p>
+
+<h4>What the CDN Caches</h4>
+<ul>
+    <li><strong>Images:</strong> Thumbnails, medium-resolution, and full-resolution variants of all post images and profile pictures.</li>
+    <li><strong>Videos:</strong> HLS segments (.ts files) and HLS manifests (.m3u8). Adaptive bitrate streaming allows the client to select the appropriate quality.</li>
+    <li><strong>Static Assets:</strong> JavaScript bundles, CSS, fonts, and icons for the web client.</li>
+</ul>
+
+<h4>CDN Strategy: Pull-Based (Lazy Population)</h4>
+<p>The CDN operates in <strong>pull mode</strong>: when a user requests a media URL, the CDN edge node checks its local cache. On a miss, it pulls the asset from the Object Storage origin, caches it at the edge, and serves it. Subsequent requests from the same geographic region are served directly from the edge.</p>
+<p><strong>Exception — CDN Warming:</strong> For media in posts from celebrities or trending content, the Media Processing Service proactively <strong>pushes</strong> (warms) the content to major CDN edge regions immediately after processing. This ensures the first wave of viewers doesn't experience cache misses.</p>
+
+<h4>Eviction &amp; Expiration</h4>
+<ul>
+    <li><strong>Eviction:</strong> LRU (Least Recently Used). Infrequently accessed media (e.g., photos from 3 years ago) naturally falls out of the CDN edge cache.</li>
+    <li><strong>Expiration (TTL):</strong> 30 days for images and video segments. Profile pictures have a shorter TTL of 24 hours (since they can be updated). TTL is set via the <code>Cache-Control: max-age</code> header from the origin.</li>
+    <li><strong>Invalidation:</strong> If a user deletes a post or changes their profile picture, the origin sends a purge request to the CDN to invalidate the cached asset.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<hr class="section-divider">
+<h2 id="cache">9. Cache Deep Dive</h2>
+<!-- ============================================================ -->
+
+<p>Three distinct caches serve different purposes:</p>
+
+<div class="card">
+<h4>1. Feed Cache <span class="tag">In-Memory Cache</span></h4>
+<table>
+    <thead><tr><th>Aspect</th><th>Details</th></tr></thead>
+    <tbody>
+    <tr><td>Data Stored</td><td>Per-user sorted set of feed entries: <code>(post_id, timestamp, score)</code></td></tr>
+    <tr><td>Key</td><td><code>feed:{user_id}</code></td></tr>
+    <tr><td>Caching Strategy</td><td><strong>Write-behind (Write-back):</strong> The Fan-out Service writes new feed entries directly to the Feed Cache. Asynchronously, a background process persists entries to the Feed Table (NoSQL) for durability. This ensures writes are fast (in-memory) while still durable.</td></tr>
+    <tr><td>Population</td><td>Populated by the Fan-out Service when a followed user creates a post. Also populated by the Feed Service on a cache miss (reads from Feed Table and loads into cache).</td></tr>
+    <tr><td>Eviction Policy</td><td><strong>LRU (Least Recently Used):</strong> Inactive users' feeds are evicted first. Since only ~20% of users are active daily, evicting stale feeds frees significant memory. When an evicted user returns, their feed is rebuilt from the Feed Table.</td></tr>
+    <tr><td>Expiration Policy</td><td><strong>TTL of 7 days</strong> for the entire feed key. If a user hasn't opened the app in 7 days, their cached feed expires. Individual entries within the feed have no separate TTL (they are bounded by a max feed length of ~1000 entries; oldest entries are trimmed).</td></tr>
+    <tr><td>Max Feed Length</td><td>1000 entries per user. When a new entry is added and the feed exceeds 1000, the lowest-scored entry is evicted.</td></tr>
+    </tbody>
+</table>
+<p><strong>Why write-behind:</strong> The Fan-out Service writes to millions of user feeds per second. Writing directly to the NoSQL Feed Table for each entry would saturate the database. Write-behind absorbs the burst in-memory and flushes in batches, reducing DB write load by orders of magnitude.</p>
+</div>
+
+<div class="card">
+<h4>2. Post Cache <span class="tag">In-Memory Cache</span></h4>
+<table>
+    <thead><tr><th>Aspect</th><th>Details</th></tr></thead>
+    <tbody>
+    <tr><td>Data Stored</td><td>Full serialised post objects (post_id, content, media_urls, like_count, etc.)</td></tr>
+    <tr><td>Key</td><td><code>post:{post_id}</code></td></tr>
+    <tr><td>Caching Strategy</td><td><strong>Read-through (Cache-aside):</strong> On a cache miss during feed hydration, the Feed Service reads the post from the Post DB and stores it in the cache. The Post Service also writes to cache on post creation (write-through for new posts).</td></tr>
+    <tr><td>Population</td><td>(a) Write-through on post creation by the Post Service. (b) Read-through on cache miss by the Feed Service.</td></tr>
+    <tr><td>Eviction Policy</td><td><strong>LFU (Least Frequently Used):</strong> Posts that are rarely viewed (old posts from weeks ago that are no longer appearing in feeds) are evicted. LFU is preferred over LRU here because a trending post may not have been accessed in the last millisecond but is accessed very frequently overall — LFU keeps it cached.</td></tr>
+    <tr><td>Expiration Policy</td><td><strong>TTL of 24 hours.</strong> Posts older than 24 hours are less likely to appear at the top of feeds (due to time decay in ranking). Refreshed on access.</td></tr>
+    </tbody>
+</table>
+</div>
+
+<div class="card">
+<h4>3. Counter Cache <span class="tag">In-Memory Cache</span></h4>
+<table>
+    <thead><tr><th>Aspect</th><th>Details</th></tr></thead>
+    <tbody>
+    <tr><td>Data Stored</td><td>Aggregate counters: like_count, comment_count, share_count per post</td></tr>
+    <tr><td>Key</td><td><code>counters:{post_id}</code></td></tr>
+    <tr><td>Caching Strategy</td><td><strong>Write-back (Write-behind):</strong> The Interaction Service increments counters atomically in cache using <code>INCR</code> operations. A background flush job writes the current counter values to the Post DB every 5-10 seconds. This absorbs the high write rate of likes on popular posts.</td></tr>
+    <tr><td>Population</td><td>Initialised from the Post DB on first access (cache miss). Updated by every interaction.</td></tr>
+    <tr><td>Eviction Policy</td><td><strong>LRU.</strong> Counters for posts no longer receiving interactions are evicted.</td></tr>
+    <tr><td>Expiration Policy</td><td><strong>No TTL.</strong> Counters are always relevant as long as the post exists. Eviction is purely capacity-based (LRU).</td></tr>
+    </tbody>
+</table>
+<p><strong>Why write-back for counters:</strong> A viral post can receive 10,000+ likes per second. Writing each like individually to the Post DB would cause massive write contention. By batching counter updates in memory and flushing periodically, database write volume is reduced by 99%+ while maintaining near-real-time accuracy.</p>
+</div>
+
+<div class="highlight">
+<strong>⚠️ Is an in-memory cache appropriate?</strong> <span class="tag green">Yes — Critical</span><br/>
+Without caching, the system would need to: (a) query the Feed Table for every feed load, (b) query the Post DB for every post hydration, (c) query the Interactions table for every counter display. At Facebook scale (billions of feed loads per day), this would overwhelm even the most horizontally scaled database cluster. Caching absorbs the read load and reduces database traffic by &gt; 95%.
+</div>
+
+<!-- ============================================================ -->
+<hr class="section-divider">
+<h2 id="mq">10. Message Queue Deep Dive</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+<h4>Why a Message Queue?</h4>
+<p>The Message Queue decouples <strong>synchronous request paths</strong> (post creation, interaction recording) from <strong>asynchronous background processing</strong> (fan-out, notifications). This is essential because:</p>
+<ul>
+    <li><strong>Fan-out is expensive:</strong> Writing to 500+ feed caches per post cannot be done synchronously within the HTTP request lifecycle. The user would experience unacceptable latency.</li>
+    <li><strong>Spike absorption:</strong> During peak hours (e.g., New Year's Eve), post creation may spike dramatically. The queue acts as a buffer, allowing the Fan-out Service to process events at its own pace.</li>
+    <li><strong>Reliability:</strong> If the Fan-out Service is temporarily down, events are retained in the queue and processed when the service recovers. No data is lost.</li>
+    <li><strong>Multiple consumers:</strong> A single <code>PostCreated</code> event can be consumed by both the Fan-out Service and an Analytics Service independently (topic-based routing).</li>
+</ul>
+
+<h4>How Messages Are Put on the Queue</h4>
+<ol>
+    <li>The Post Service completes the DB write for the new post.</li>
+    <li>It publishes a message to the <code>post-events</code> topic: <code>{ "event_type": "PostCreated", "post_id": "...", "user_id": "...", "timestamp": "...", "is_celebrity": false }</code>.</li>
+    <li>The queue acknowledges receipt (durable write to the queue's internal log).</li>
+    <li>The Post Service returns the HTTP response to the client.</li>
 </ol>
 
-<div class="example">
-<strong>Example:</strong> Alice (350 friends) posts a photo. Kafka event consumed by fan-out worker. TAO returns 350 friends. Eligibility filter removes 20 (10 inactive >30 days, 5 unfollowed Alice, 5 blocked). Worker does 330 ZADD operations on Redis. Each ZADD is O(log N) ~ 1μs. Total fan-out time: ~50ms (pipelined Redis commands). Bob's feed cache now contains Alice's post_id.
-</div>
-
-<h3>Deep Dive: Eligibility Filter</h3>
-<ul>
-<li><strong>Checks performed:</strong> User active in last 30 days? User unfollowed author? User blocked author? Privacy settings allow? Content policy violation?</li>
-<li><strong>Why filter at write time:</strong> Avoids wasting cache space on ineligible users. Reduces read-time processing</li>
-<li><strong>Data sources:</strong> User activity status (Redis counter), unfollow/block relationships (TAO), privacy settings (User Service cache)</li>
-</ul>
-</div>
-
-<!-- Flow 2: Feed Reading (Read Path) -->
-<div class="section">
-<h2>Flow 2: Feed Reading — Read Path (Ranking & Serving)</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1150 450" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffaa00"/></marker></defs>
-<rect x="20" y="180" width="110" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="215" text-anchor="middle" fill="white" font-size="13">User</text>
-<rect x="170" y="180" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="235" y="215" text-anchor="middle" fill="white" font-size="13">Feed Service</text>
-<rect x="340" y="80" width="140" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="410" y="108" text-anchor="middle" fill="white" font-size="12">Feed Cache</text>
-<rect x="340" y="180" width="140" height="50" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="410" y="208" text-anchor="middle" fill="white" font-size="11">Celebrity Post Svc</text>
-<rect x="340" y="280" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="410" y="308" text-anchor="middle" fill="white" font-size="12">Post Hydration</text>
-<rect x="540" y="80" width="150" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="615" y="108" text-anchor="middle" fill="white" font-size="12">Seen Filter</text>
-<rect x="540" y="180" width="150" height="60" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="615" y="205" text-anchor="middle" fill="white" font-size="12">Ranking Service</text><text x="615" y="225" text-anchor="middle" fill="white" font-size="10">(ML Model)</text>
-<rect x="540" y="300" width="150" height="50" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="615" y="330" text-anchor="middle" fill="white" font-size="12">Ad Insertion</text>
-<rect x="760" y="180" width="140" height="60" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="830" y="208" text-anchor="middle" fill="white" font-size="12">Diversity Filter</text><text x="830" y="225" text-anchor="middle" fill="white" font-size="10">(dedup authors)</text>
-<rect x="960" y="180" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="1020" y="208" text-anchor="middle" fill="white" font-size="12">Final Feed</text><text x="1020" y="225" text-anchor="middle" fill="white" font-size="11">(50 posts)</text>
-<line x1="130" y1="210" x2="168" y2="210" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="300" y1="195" x2="338" y2="110" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="300" y1="210" x2="338" y2="205" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="480" y1="105" x2="538" y2="105" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="480" y1="200" x2="538" y2="200" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="300" y1="225" x2="338" y2="300" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="480" y1="305" x2="538" y2="310" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="690" y1="105" x2="690" y2="175" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
-<line x1="690" y1="210" x2="758" y2="210" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="690" y1="325" x2="758" y2="225" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
-<line x1="900" y1="210" x2="958" y2="210" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<text x="575" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Facebook Newsfeed: Read Path (5-Stage Pipeline)</text>
-</svg>
-</div>
-
-<h3>5-Stage Pipeline</h3>
+<h4>How Messages Are Removed from the Queue</h4>
 <ol>
-<li><strong>Stage 1 — Candidate Retrieval:</strong>
-    <ul>
-    <li>Read top 500 post_ids from Feed Cache (Redis sorted set)</li>
-    <li>Fetch recent posts from followed celebrities/pages (fan-out on read for >5K follower accounts)</li>
-    <li>Merge into ~600 candidate posts</li>
-    </ul>
-</li>
-<li><strong>Stage 2 — Seen Filter:</strong> Remove posts user has already seen (tracked in Redis bitmap <code>seen:{user_id}</code>). Removes ~30%</li>
-<li><strong>Stage 3 — Post Hydration:</strong> Fetch full post objects (text, media URLs, author info, like/comment counts) from Post DB + caches. Batch fetch for efficiency</li>
-<li><strong>Stage 4 — ML Ranking:</strong>
-    <ul>
-    <li>Neural network predicts P(like), P(comment), P(share), P(hide) for each post</li>
-    <li>Score = weighted sum: <code>0.3*P(like) + 0.35*P(comment) + 0.25*P(share) - 0.5*P(hide)</code></li>
-    <li>Features: author-viewer relationship strength, post type, recency, historical engagement, time of day</li>
-    </ul>
-</li>
-<li><strong>Stage 5 — Diversity + Ad Insertion:</strong>
-    <ul>
-    <li>Diversity filter: max 2 consecutive posts from same author, mix content types (photos, text, videos, links)</li>
-    <li>Ad Service inserts sponsored posts at positions 3, 8, 15, etc. (based on ad auction results)</li>
-    </ul>
-</li>
+    <li>The Fan-out Service (consumer group) pulls a batch of messages from the <code>post-events</code> topic.</li>
+    <li>For each message, it performs the fan-out operation.</li>
+    <li>Upon successful processing, it sends an <strong>acknowledgement (ACK)</strong> to the queue, which marks the message as consumed.</li>
+    <li>If processing fails (exception, timeout), the message is <strong>not acknowledged</strong> and is retried after a configurable delay.</li>
+    <li>After a maximum number of retries (e.g., 5), the message is routed to a <strong>Dead Letter Queue (DLQ)</strong> for manual investigation.</li>
 </ol>
 
-<div class="example">
-<strong>Example:</strong> Bob opens Facebook. Feed Service retrieves 500 post_ids from Redis cache + 100 celebrity/page posts. Seen filter removes 180 already-viewed posts. 420 posts hydrated (batch Cassandra read: ~30ms). ML Ranking scores all 420 — Alice's wedding photo scores 0.92 (high engagement signals), random acquaintance's check-in scores 0.15. Top 50 posts selected. Diversity filter reorders: no 3 consecutive text posts. Ad inserted at position 4. Final 50-post feed returned in ~350ms total.
-</div>
-
-<h3>Deep Dive: ML Ranking Model</h3>
-<ul>
-<li><strong>Model:</strong> Deep neural network (DeepFM or DIN architecture) with ~1000 features</li>
-<li><strong>Key features:</strong>
-    <ul>
-    <li><strong>Edge features:</strong> How often viewer interacts with author (message, like, comment frequency → affinity score)</li>
-    <li><strong>Post features:</strong> Content type, text length, media quality score, number of reactions, age of post</li>
-    <li><strong>User features:</strong> User's historical engagement rates, preferred content types, active hours</li>
-    <li><strong>Context features:</strong> Time of day, day of week, device type, network speed</li>
-    </ul>
-</li>
-<li><strong>Inference:</strong> ~10ms per batch of 500 posts using GPU inference servers</li>
-<li><strong>Training:</strong> Continuous learning on billions of daily interactions. Model updated every few hours</li>
-</ul>
-</div>
-
-<!-- Combined Architecture -->
-<div class="section">
-<h2>Combined Overall Architecture</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1200 550" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#1877f2"/></marker></defs>
-<text x="600" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Facebook Newsfeed: Combined Architecture</text>
-<text x="200" y="55" fill="#66ff66" font-size="12">WRITE PATH (post creation → fan-out)</text>
-<text x="700" y="55" fill="#ffaa00" font-size="12">READ PATH (feed request → ranked feed)</text>
-<rect x="20" y="250" width="100" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="70" y="280" text-anchor="middle" fill="white" font-size="12">Clients</text>
-<rect x="160" y="150" width="110" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="215" y="175" text-anchor="middle" fill="white" font-size="11">Post Service</text>
-<rect x="160" y="320" width="110" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="215" y="345" text-anchor="middle" fill="white" font-size="11">Feed Service</text>
-<rect x="320" y="100" width="120" height="40" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="380" y="125" text-anchor="middle" fill="white" font-size="11">Kafka</text>
-<rect x="320" y="200" width="120" height="40" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="380" y="225" text-anchor="middle" fill="white" font-size="11">Fan-out Workers</text>
-<rect x="320" y="320" width="120" height="40" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="380" y="345" text-anchor="middle" fill="white" font-size="11">TAO (Graph)</text>
-<rect x="510" y="100" width="120" height="40" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="570" y="125" text-anchor="middle" fill="white" font-size="11">Feed Cache</text>
-<rect x="510" y="200" width="120" height="40" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="570" y="225" text-anchor="middle" fill="white" font-size="11">Seen Filter</text>
-<rect x="510" y="300" width="120" height="40" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="570" y="325" text-anchor="middle" fill="white" font-size="11">Post Hydration</text>
-<rect x="700" y="200" width="130" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="765" y="225" text-anchor="middle" fill="white" font-size="11">ML Ranking</text>
-<rect x="700" y="310" width="130" height="40" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="765" y="335" text-anchor="middle" fill="white" font-size="11">Ad Insertion</text>
-<rect x="700" y="100" width="130" height="40" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="765" y="125" text-anchor="middle" fill="white" font-size="11">Diversity Filter</text>
-<rect x="900" y="200" width="110" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="955" y="230" text-anchor="middle" fill="white" font-size="11">Final Feed</text>
-<ellipse cx="570" cy="430" rx="70" ry="25" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="570" y="435" text-anchor="middle" fill="white" font-size="11">Post DB</text>
-<line x1="120" y1="265" x2="158" y2="175" stroke="#66ff66" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="120" y1="285" x2="158" y2="340" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="270" y1="170" x2="318" y2="125" stroke="#66ff66" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="440" y1="120" x2="440" y2="198" stroke="#66ff66" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="380" y1="240" x2="380" y2="318" stroke="#66ff66" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow3)"/>
-<line x1="440" y1="220" x2="508" y2="120" stroke="#66ff66" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="270" y1="340" x2="508" y2="120" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="630" y1="120" x2="630" y2="198" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="570" y1="240" x2="570" y2="298" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="570" y1="340" x2="570" y2="403" stroke="#ff6b6b" stroke-width="1" stroke-dasharray="4,4" marker-end="url(#arrow3)"/>
-<line x1="630" y1="320" x2="698" y2="225" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="830" y1="225" x2="898" y2="225" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="765" y1="250" x2="765" y2="308" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="830" y1="120" x2="898" y2="210" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-</svg>
-</div>
-
-<div class="example">
-<strong>Example — End-to-end:</strong> Alice posts "Got engaged! 💍" with a photo. POST /posts → stored in Post DB → Kafka event → Fan-out Worker reads Alice's 350 eligible friends from TAO → ZADD to 350 Redis sorted sets (~50ms). 10 minutes later, Bob opens Facebook. Feed Service reads 500 post_ids from his Redis cache + 80 celebrity posts → Seen filter removes 200 → Hydrates remaining 380 posts → ML Ranking scores Alice's engagement post at 0.95 (top score — close friend, photo, high engagement type) → Diversity filter ensures mix → Ad at position 4 → Bob sees Alice's post at #1 in his feed.
-</div>
-</div>
-
-<!-- Database Schema -->
-<div class="section">
-<h2>Database Schema</h2>
-
-<h3>Feed Cache — Redis</h3>
+<h4>Why Not Alternatives?</h4>
 <table>
-<tr><th>Structure</th><th>Key</th><th>Type</th><th>Details</th></tr>
-<tr><td>User Feed</td><td><code>feed:{user_id}</code></td><td>Sorted Set</td><td>Members: post_ids, Scores: timestamps. Max 800 entries (ZREMRANGEBYRANK to cap)</td></tr>
-<tr><td>Seen Posts</td><td><code>seen:{user_id}:{date}</code></td><td>Bitmap / HyperLogLog</td><td>Tracks which post_ids user has viewed today. 1 bit per post. TTL: 7 days</td></tr>
-<tr><td>Celebrity Posts</td><td><code>celeb_recent:{user_id}</code></td><td>Sorted Set</td><td>Latest 50 posts from celebrities. Queried at read time</td></tr>
+    <thead><tr><th>Alternative</th><th>Why Not Chosen</th></tr></thead>
+    <tbody>
+    <tr><td><strong>Synchronous (no queue)</strong></td><td>Fan-out for 500+ followers would take seconds, blocking the user's HTTP request. Unacceptable latency.</td></tr>
+    <tr><td><strong>WebSocket</strong></td><td>WebSocket is for real-time client-server communication. Fan-out is a backend-to-backend operation. Wrong tool for the job.</td></tr>
+    <tr><td><strong>Polling</strong></td><td>The Fan-out Service would need to continuously poll the Post DB for new posts — wasteful and adds latency.</td></tr>
+    <tr><td><strong>Pub/Sub</strong></td><td>A pub/sub system <em>could</em> work (and the queue operates similarly with topic-based routing). The distinction is that we need <strong>durable, at-least-once delivery with consumer groups</strong> and <strong>backpressure handling</strong>. A message queue provides these guarantees more naturally than a lightweight pub/sub system. In practice, modern message queue systems support pub/sub semantics (topics + consumer groups), so the line is blurred.</td></tr>
+    </tbody>
 </table>
 
-<h3>NoSQL — Cassandra (Post Storage)</h3>
+<h4>Topics and Consumer Groups</h4>
 <table>
-<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
-<tr><td rowspan="7"><strong>posts</strong></td><td>post_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>author_id</td><td>BIGINT</td><td><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>content_text</td><td>TEXT</td><td></td></tr>
-<tr><td>media_urls</td><td>LIST&lt;TEXT&gt;</td><td></td></tr>
-<tr><td>post_type</td><td>TEXT</td><td>text, photo, video, link, life_event</td></tr>
-<tr><td>engagement</td><td>MAP&lt;TEXT,BIGINT&gt;</td><td>{likes: 42, comments: 5, shares: 2}</td></tr>
-<tr><td>created_at</td><td>TIMESTAMP</td><td></td></tr>
+    <thead><tr><th>Topic</th><th>Producers</th><th>Consumer Groups</th></tr></thead>
+    <tbody>
+    <tr><td><code>post-events</code></td><td>Post Service</td><td>Fan-out Service, Analytics Service</td></tr>
+    <tr><td><code>interaction-events</code></td><td>Interaction Service</td><td>Notification Service, Analytics Service, Counter Reconciliation Service</td></tr>
+    </tbody>
 </table>
 
-<h3>Ranking Feature Store — Redis / Feature Service</h3>
+<h4>Ordering &amp; Partitioning</h4>
+<p>Messages are partitioned by <code>user_id</code> (the poster's user_id for post events, the post author's user_id for interaction events). This ensures all events for a single user are processed in order by the same consumer instance. Different users' events are processed in parallel across consumer instances for high throughput.</p>
+</div>
+
+<!-- ============================================================ -->
+<hr class="section-divider">
+<h2 id="scaling">11. Scaling Considerations</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+<h4>Load Balancers</h4>
+<p>Load balancers are placed at <strong>two levels</strong>:</p>
+<ol>
+    <li><strong>External Load Balancer (L7):</strong> Between clients and the API gateway/services. Handles SSL termination, rate limiting, request routing (URL-based routing to the correct service), geographic routing. Multiple instances in active-active configuration across data centres.</li>
+    <li><strong>Internal Load Balancer (L4/L7):</strong> Between services (e.g., Feed Service → Ranking Service, Fan-out Service → Social Graph Service). In a microservice mesh, this may be implemented as a sidecar proxy (service mesh). Provides health-check-based routing and circuit breaking.</li>
+</ol>
+<p><strong>Algorithm:</strong> Least-connections for the external LB (to evenly distribute across API servers with varying request durations). Round-robin for internal LB (requests are short-lived gRPC calls).</p>
+</div>
+
+<div class="card">
+<h4>Horizontal Scaling</h4>
 <table>
-<tr><th>Feature</th><th>Storage</th><th>Update Frequency</th></tr>
-<tr><td>User-Author affinity score</td><td>Redis Hash <code>affinity:{user_id}</code></td><td>Daily batch + real-time increments</td></tr>
-<tr><td>Post engagement velocity</td><td>Redis <code>velocity:{post_id}</code></td><td>Real-time (INCR on each interaction)</td></tr>
-<tr><td>User engagement history</td><td>Feature Service (ML platform)</td><td>Hourly batch</td></tr>
+    <thead><tr><th>Component</th><th>Scaling Strategy</th></tr></thead>
+    <tbody>
+    <tr><td>Post Service</td><td>Stateless — scale horizontally behind load balancer. Auto-scale based on CPU / request rate.</td></tr>
+    <tr><td>Feed Service</td><td>Stateless — scale horizontally. Most read-heavy service; likely needs the most instances.</td></tr>
+    <tr><td>Interaction Service</td><td>Stateless — scale horizontally. Scale up during high-engagement periods.</td></tr>
+    <tr><td>Fan-out Service</td><td>Scale with Message Queue consumer group — add more consumer instances to increase throughput. Monitor queue depth (lag) for auto-scaling triggers.</td></tr>
+    <tr><td>Ranking Service</td><td>Stateless, but compute-intensive (ML inference). May require GPU-backed instances or model optimisation (quantisation, distillation).</td></tr>
+    <tr><td>Media Processing Service</td><td>Scale based on upload volume. Video transcoding is CPU-intensive; use dedicated compute pools.</td></tr>
+    </tbody>
 </table>
+</div>
 
-<h4>Sharding</h4>
+<div class="card">
+<h4>Database Scaling</h4>
 <ul>
-<li><strong>Feed Cache:</strong> Redis Cluster, sharded by <code>user_id</code> consistent hashing. Each user's feed on exactly one shard</li>
-<li><strong>posts table:</strong> Partitioned by <code>post_id</code> in Cassandra. Hydration does batch multi-get across partitions</li>
-<li><strong>Affinity scores:</strong> Sharded by <code>user_id</code> — all a user's affinity data co-located for efficient ranking feature retrieval</li>
+    <li><strong>SQL (Users, Friendships):</strong> Vertical scaling for modest user table sizes. Read replicas for read-heavy queries (friend lists, user lookups). Friendships table may eventually need sharding (see schema section).</li>
+    <li><strong>NoSQL (Posts, Feed, Interactions, Notifications):</strong> All tables are sharded from day one. Add shard nodes as data volume grows. Replication factor of 3 for fault tolerance.</li>
+    <li><strong>In-Memory Cache:</strong> Clustered with consistent hashing for key distribution. Add nodes to increase memory capacity and throughput.</li>
 </ul>
 </div>
 
-<!-- Cache -->
-<div class="section">
-<h2>Cache Deep Dive</h2>
+<div class="card">
+<h4>Geographic Distribution</h4>
+<p>Deploy the full stack in multiple geographic regions (e.g., US-East, US-West, Europe, Asia). Each region has its own:</p>
+<ul>
+    <li>Load balancers, service instances, caches</li>
+    <li>Database replicas (read replicas; writes go to the primary region)</li>
+    <li>CDN edge nodes</li>
+</ul>
+<p>DNS-based geographic routing directs users to the nearest region. Cross-region replication ensures data availability in the event of a regional outage.</p>
+</div>
+
+<div class="card">
+<h4>Rate Limiting &amp; Circuit Breakers</h4>
+<ul>
+    <li><strong>Rate Limiting:</strong> Applied at the Load Balancer level. Per-user limits (e.g., 100 posts/day, 1000 likes/hour) and per-IP limits to prevent abuse.</li>
+    <li><strong>Circuit Breakers:</strong> If the Ranking Service is slow or failing, the Feed Service falls back to a simple chronological feed (bypasses ranking) rather than timing out. If the Post DB is unavailable, serve stale data from the Post Cache.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<hr class="section-divider">
+<h2 id="tradeoffs">12. Tradeoffs &amp; Deep Dives</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+<h4>Fan-out on Write vs. Fan-out on Read — The Hybrid Approach</h4>
+<p>This is the <strong>most critical architectural decision</strong> in this system.</p>
 <table>
-<tr><th>Cache</th><th>Strategy</th><th>Eviction</th><th>TTL</th><th>Hit Rate</th></tr>
-<tr><td>Feed Cache (Redis)</td><td>Write-through (fan-out writes)</td><td>Size-capped (800 items)</td><td>None</td><td>~95%</td></tr>
-<tr><td>Post Cache (Memcached)</td><td>Read-through</td><td>LRU</td><td>1 hr</td><td>~92%</td></tr>
-<tr><td>TAO Cache</td><td>Write-through</td><td>LRU</td><td>Invalidated on write</td><td>~99.9%</td></tr>
-<tr><td>Feature Cache (Redis)</td><td>Write-behind (batch update)</td><td>TTL</td><td>1 hr</td><td>~90%</td></tr>
+    <thead><tr><th>Approach</th><th>Pros</th><th>Cons</th></tr></thead>
+    <tbody>
+    <tr>
+        <td><strong>Fan-out on Write (Push)</strong></td>
+        <td>Ultra-fast reads (feed is pre-computed). Feed retrieval is a single cache read.</td>
+        <td>Celebrity problem: writing to 10M+ feeds per post is slow and wasteful. Wasted writes for inactive users who may never read the feed.</td>
+    </tr>
+    <tr>
+        <td><strong>Fan-out on Read (Pull)</strong></td>
+        <td>No wasted writes. Always fresh. No celebrity problem.</td>
+        <td>Slow reads — fetching posts from hundreds of followed users at read-time is expensive. Doesn't scale for a read-heavy system.</td>
+    </tr>
+    <tr>
+        <td><strong>Hybrid (Chosen)</strong></td>
+        <td>Best of both worlds. Fast reads for most users. No celebrity bottleneck.</td>
+        <td>Added complexity — two code paths to maintain. Celebrity threshold tuning.</td>
+    </tr>
+    </tbody>
 </table>
+<p><strong>Decision:</strong> We chose the <strong>hybrid approach</strong>. For users with fewer than 100K followers, fan-out on write. For users with 100K+ followers (celebrities), fan-out on read. The celebrity threshold is configurable and monitored. This matches what major social platforms use in production.</p>
+</div>
 
-<h3>CDN</h3>
+<div class="card">
+<h4>Consistency vs. Availability</h4>
+<p>We favour <strong>availability over strict consistency</strong> (AP in the CAP theorem context). Specifically:</p>
 <ul>
-<li>CDN serves media (photos, video thumbnails) referenced in feed posts. Each media URL is a CDN URL</li>
-<li>Feed API responses are NOT cached at CDN — they're personalized per user and change on every refresh</li>
-<li>Static assets (app JS/CSS bundles) cached at CDN with 30-day TTL</li>
+    <li>A new post may take 1–5 seconds to appear in all followers' feeds — <strong>eventual consistency is acceptable</strong>.</li>
+    <li>Like/comment counters may be slightly stale (write-back cache) — users tolerate approximate counts.</li>
+    <li>If a database partition fails, the system continues serving from cache and read replicas (potentially stale data) rather than going offline.</li>
+</ul>
+<p>The <strong>one exception</strong> is the Users table (authentication) where we need strong consistency for password and email uniqueness — hence SQL with ACID transactions.</p>
+</div>
+
+<div class="card">
+<h4>Pre-computation vs. On-demand Computation</h4>
+<p>We pre-compute feeds (via fan-out on write) rather than computing them on demand. This is the correct trade-off for a <strong>read-heavy system</strong> where feeds are read 100x more often than posts are created.</p>
+</div>
+
+<div class="card">
+<h4>Denormalization Trade-offs</h4>
+<ul>
+    <li><strong>Counters in Post documents:</strong> Faster reads, but requires careful synchronisation (Counter Cache + reconciliation). Acceptable trade-off because counter accuracy within ±1% is sufficient for display purposes.</li>
+    <li><strong>Author data in Feed entries:</strong> Faster feed rendering (no extra lookup), but stale when users update profiles. Acceptable because profile updates are infrequent and staleness is temporary.</li>
 </ul>
 </div>
 
-<!-- Scaling -->
-<div class="section">
-<h2>Scaling Considerations</h2>
+<div class="card">
+<h4>Protocol Choices</h4>
+<table>
+    <thead><tr><th>Layer</th><th>Protocol</th><th>Why</th></tr></thead>
+    <tbody>
+    <tr><td>Client ↔ Load Balancer</td><td>HTTPS (HTTP/2 over TLS)</td><td>Secure, multiplexed, widely supported. HTTP/2 enables header compression and multiplexing which improves mobile performance.</td></tr>
+    <tr><td>Service ↔ Service</td><td>gRPC (HTTP/2 + Protobuf)</td><td>Efficient binary serialisation (protobuf), strongly typed contracts, bidirectional streaming support, lower overhead than REST for internal communication.</td></tr>
+    <tr><td>Transport</td><td>TCP</td><td>All communication requires reliable, ordered delivery. Posts, interactions, and feed data cannot afford dropped packets. TCP provides this guarantee. UDP is not used — we don't have a real-time streaming or gaming use case where low latency matters more than reliability.</td></tr>
+    <tr><td>Video Streaming</td><td>HLS over HTTPS (TCP)</td><td>HTTP Live Streaming is widely supported on iOS and Android, works through CDNs, and supports adaptive bitrate. DASH is an alternative but HLS has broader device support. RTMP/WebRTC are for live streaming — not applicable to pre-recorded post videos.</td></tr>
+    </tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<hr class="section-divider">
+<h2 id="alternatives">13. Alternative Approaches</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+<h4>1. Pure Fan-out on Write (No Hybrid)</h4>
+<p><strong>Description:</strong> Pre-compute every post into every follower's feed, including celebrities.</p>
+<p><strong>Why not chosen:</strong> A celebrity with 10M followers would require 10M writes per post. At 10 posts/day, that's 100M writes/day per celebrity. With thousands of celebrities, this creates unsustainable write load. It also wastes resources writing to feeds of inactive users who may never read the post.</p>
+</div>
+
+<div class="card">
+<h4>2. Pure Fan-out on Read (No Pre-computation)</h4>
+<p><strong>Description:</strong> Compute the feed entirely at read-time by querying posts from all followed users.</p>
+<p><strong>Why not chosen:</strong> A user following 500 people would require the system to query 500 users' recent posts, merge them, and rank them — all within the HTTP request lifecycle. At billions of feed requests per day, this would require enormous compute and database capacity. P99 latency would exceed several seconds.</p>
+</div>
+
+<div class="card">
+<h4>3. Chronological Feed (No Ranking)</h4>
+<p><strong>Description:</strong> Show posts in simple reverse chronological order without ML-based ranking.</p>
+<p><strong>Why not chosen:</strong> Studies consistently show that ranked feeds increase engagement by 2–3x over chronological feeds. Users follow hundreds of people but only care deeply about a subset. A chronological feed buries important posts under high-volume posters. However, this is a <em>simpler</em> system, and could be used as a V1 or a fallback when the Ranking Service is degraded.</p>
+</div>
+
+<div class="card">
+<h4>4. Graph Database for Social Graph</h4>
+<p><strong>Description:</strong> Use a graph database instead of SQL for the social graph (friendships).</p>
+<p><strong>Why not chosen:</strong> A graph database would excel at complex traversal queries (e.g., "friends of friends", "shortest path between two users"). However, our primary query is simple adjacency retrieval ("get all friends of user X"), which is efficiently handled by a SQL table with proper indexes. A graph database adds operational complexity without a clear benefit for our access patterns. If we needed features like "People You May Know" (multi-hop traversals), we might reconsider.</p>
+</div>
+
+<div class="card">
+<h4>5. WebSocket for Real-Time Feed Updates</h4>
+<p><strong>Description:</strong> Use WebSocket connections so new posts appear in the feed instantly without refreshing.</p>
+<p><strong>Why not chosen (as the primary mechanism):</strong> Maintaining persistent WebSocket connections for billions of users requires enormous server resources (memory, file descriptors). The trade-off of eventual consistency (new posts appearing in 1–5 seconds via pull-to-refresh or periodic polling) is acceptable for a newsfeed. WebSocket is better suited for chat (e.g., Messenger) where sub-second latency is critical. That said, a <strong>lightweight enhancement</strong> could use Server-Sent Events (SSE) or long polling to notify the client that "3 new posts are available" — prompting the user to pull-to-refresh.</p>
+</div>
+
+<div class="card">
+<h4>6. CQRS (Command Query Responsibility Segregation)</h4>
+<p><strong>Description:</strong> Separate the write model (post creation, interactions) entirely from the read model (feed retrieval), with event sourcing.</p>
+<p><strong>Why not fully chosen:</strong> Our architecture <em>partially</em> adopts CQRS — the write path (Post Service → Post DB → Message Queue) is separate from the read path (Feed Service → Feed Cache). However, full event sourcing (reconstructing state from an event log) adds complexity without clear benefit. The hybrid fan-out approach already provides the separation we need.</p>
+</div>
+
+<!-- ============================================================ -->
+<hr class="section-divider">
+<h2 id="additional">14. Additional Information</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+<h4>Idempotency</h4>
+<p>All write endpoints must be idempotent or protected against duplicate submissions:</p>
 <ul>
-<li><strong>Fan-out Worker scaling:</strong> Kafka consumer group with thousands of workers. Auto-scale based on queue depth. During peak (e.g., election night), scale up 3-5x</li>
-<li><strong>ML Ranking inference:</strong> GPU cluster for real-time inference. Batch multiple users' ranking requests for GPU throughput. ~10ms per 500 posts per user</li>
-<li><strong>Feed Cache size:</strong> 2B users × 800 post_ids × 8 bytes = ~12TB of Redis. Distributed across thousands of Redis instances</li>
-<li><strong>Thundering herd:</strong> Celebrity post → millions of feed cache writes. Mitigated by: (1) async fan-out, (2) rate limiting per-author fan-out, (3) celebrity posts handled at read time instead</li>
-<li><strong>Cold start:</strong> New user or user returning after long absence → feed cache empty. Fall back to "pull model": query friends' recent posts directly from Post DB. Slower (~2s) but only for first load</li>
+    <li><strong>Likes:</strong> The composite key <code>(post_id, user_id)</code> in the Interactions table naturally deduplicates. A second like request is a no-op.</li>
+    <li><strong>Posts:</strong> The client generates a unique <code>idempotency_key</code> per post submission. The Post Service checks for duplicate keys before writing.</li>
+    <li><strong>Fan-out:</strong> If the Fan-out Service processes the same <code>PostCreated</code> event twice (at-least-once delivery), writing the same feed entry twice is harmless (upsert / last-write-wins).</li>
 </ul>
 </div>
 
-<!-- Tradeoffs -->
-<div class="section">
-<h2>Tradeoffs & Deep Dives</h2>
-<div class="tradeoff">
-<div class="pro"><h4>✅ ML Ranking</h4><ul><li>Dramatically higher engagement than reverse-chronological</li><li>Personalizes content to each user's interests</li><li>Can optimize for multiple objectives (engagement, time well spent, diversity)</li></ul></div>
-<div class="con"><h4>❌ ML Ranking Downsides</h4><ul><li>Filter bubble: users see increasingly homogeneous content</li><li>Engagement optimization can promote sensational/clickbait content</li><li>Lack of transparency: users don't understand why they see what they see</li><li>Computational cost: GPU inference for every feed load</li></ul></div>
-</div>
+<div class="card">
+<h4>Feed Freshness — Pull-to-Refresh</h4>
+<p>When a user pulls-to-refresh, the client sends a <code>GET /api/v1/feed?refresh=true</code> request. The Feed Service fetches the latest entries from the Feed Cache (which is continuously updated by the Fan-out Service), re-ranks with the Ranking Service, and returns the updated feed. This ensures the user always sees fresh content when they explicitly request it.</p>
 </div>
 
-<!-- Alternatives -->
-<div class="section">
-<h2>Alternative Approaches</h2>
+<div class="card">
+<h4>Privacy &amp; Visibility</h4>
+<p>Posts have a <code>visibility</code> field ('public', 'friends', 'private'). The Fan-out Service respects this:</p>
 <ul>
-<li><strong>Pure chronological feed:</strong> Twitter's original approach. Simple, transparent, no ranking bias. But: information overload for users following 1000+ accounts. Users miss important posts buried under noise</li>
-<li><strong>Interest-based clustering:</strong> Instead of social graph, cluster content by topic. Recommend content from strangers based on interests (TikTok model). Higher discovery but weaker social bonds</li>
-<li><strong>Federated fan-out:</strong> Instead of centralized Redis, each server maintains its shard of feeds. Reduces network hops but complicates cross-shard friend fan-out</li>
-<li><strong>Edge ranking at client:</strong> Server sends candidate pool (200 posts), client does final ranking on-device using lightweight model. Reduces server compute, enables offline feed construction</li>
+    <li><strong>Public:</strong> Fanned out to all followers.</li>
+    <li><strong>Friends:</strong> Fanned out only to mutual friends (checked via Social Graph Service).</li>
+    <li><strong>Private:</strong> Not fanned out at all (only visible on the author's own profile).</li>
+</ul>
+<p>The Feed Service also performs a visibility check at read-time (defense in depth) to ensure no unauthorized posts leak through.</p>
+</div>
+
+<div class="card">
+<h4>Content Moderation</h4>
+<p>The Post Service runs newly created posts through a <strong>Content Moderation pipeline</strong> (not shown in diagrams for simplicity) that includes:</p>
+<ul>
+    <li>Automated text analysis (hate speech, misinformation classifiers)</li>
+    <li>Image/video analysis (NSFW detection, violence detection)</li>
+    <li>If flagged, the post is held for human review before fan-out proceeds.</li>
 </ul>
 </div>
 
-<div class="section">
-<h2>Additional Information</h2>
+<div class="card">
+<h4>Monitoring &amp; Observability</h4>
+<p>Key metrics to monitor:</p>
 <ul>
-<li><strong>Feed invalidation:</strong> When a post is deleted, must remove from all friends' feed caches. Fan-out deletion event to all friends' Redis sets. Eventual consistency — may take seconds</li>
-<li><strong>"New posts" indicator:</strong> WebSocket/long-poll connection. When fan-out writes to user's feed cache, push notification via WebSocket: "5 new posts available". User clicks to refresh — Feed Service re-reads cache</li>
-<li><strong>A/B testing:</strong> Different ranking models tested on user segments. Metrics: session duration, interactions per session, negative actions (hide, unfollow). ~1000 concurrent experiments at any time</li>
-<li><strong>Integrity signals:</strong> Misinformation demoted in ranking. Fact-checked posts get -0.8 ranking penalty. Repeat offenders get -0.5 author-level penalty. These adjustments layered into the ranking model</li>
+    <li><strong>Feed latency:</strong> P50, P95, P99 of <code>GET /api/v1/feed</code> response time.</li>
+    <li><strong>Fan-out lag:</strong> Message Queue consumer lag (how far behind the Fan-out Service is).</li>
+    <li><strong>Cache hit rate:</strong> Feed Cache, Post Cache, and Counter Cache hit rates. Target &gt; 95%.</li>
+    <li><strong>Error rates:</strong> 5xx rates for each service.</li>
+    <li><strong>Celebrity fan-out on read latency:</strong> Monitor separately since this is the slowest feed path.</li>
 </ul>
 </div>
+
+<div class="card">
+<h4>Data Retention &amp; Cleanup</h4>
+<ul>
+    <li><strong>Feed entries:</strong> TTL of 30 days. Users don't scroll back more than a few days in practice.</li>
+    <li><strong>Notifications:</strong> TTL of 90 days.</li>
+    <li><strong>Posts &amp; Interactions:</strong> Retained indefinitely (user data). Subject to user deletion requests (GDPR compliance).</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<hr class="section-divider">
+<h2 id="vendors">15. Vendor Section</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+<p>While the design above is <strong>vendor-agnostic</strong>, the following vendors are commonly used for each component category:</p>
+
+<table>
+    <thead><tr><th>Component</th><th>Potential Vendors</th><th>Rationale</th></tr></thead>
+    <tbody>
+    <tr>
+        <td>SQL Database</td>
+        <td>PostgreSQL, MySQL, CockroachDB, Amazon Aurora</td>
+        <td>PostgreSQL offers rich indexing and JSONB support for flexibility. CockroachDB/Aurora for distributed SQL if global scale is needed for the Users table.</td>
+    </tr>
+    <tr>
+        <td>NoSQL — Document Store (Posts)</td>
+        <td>MongoDB, Amazon DynamoDB, Couchbase</td>
+        <td>MongoDB is the most mature document store with flexible schema and rich query support. DynamoDB if running on AWS for seamless integration and auto-scaling.</td>
+    </tr>
+    <tr>
+        <td>NoSQL — Wide-Column Store (Feed, Interactions, Notifications)</td>
+        <td>Apache Cassandra, ScyllaDB, HBase, Amazon DynamoDB</td>
+        <td>Cassandra excels at high write throughput, time-series access patterns, and linear horizontal scaling — ideal for feed and interaction tables. ScyllaDB is a high-performance C++ rewrite of Cassandra.</td>
+    </tr>
+    <tr>
+        <td>In-Memory Cache</td>
+        <td>Redis, Memcached, Dragonfly</td>
+        <td>Redis provides sorted sets (perfect for feed storage), atomic INCR (perfect for counters), and Lua scripting. Memcached is simpler but lacks data structures. Dragonfly is a Redis-compatible, multi-threaded alternative.</td>
+    </tr>
+    <tr>
+        <td>Message Queue</td>
+        <td>Apache Kafka, Amazon SQS/SNS, Apache Pulsar, RabbitMQ</td>
+        <td>Kafka is ideal for high-throughput, durable, partitioned event streaming with consumer groups. Pulsar offers similar capabilities with tiered storage. RabbitMQ is simpler but less suited for the throughput needed at this scale.</td>
+    </tr>
+    <tr>
+        <td>Object Storage</td>
+        <td>Amazon S3, Google Cloud Storage, Azure Blob Storage, MinIO</td>
+        <td>S3 is the industry standard for high-durability object storage. MinIO for on-prem deployments.</td>
+    </tr>
+    <tr>
+        <td>CDN</td>
+        <td>Cloudflare, Amazon CloudFront, Akamai, Fastly</td>
+        <td>Cloudflare offers the largest global edge network with competitive pricing. CloudFront integrates seamlessly with S3. Akamai/Fastly for enterprise-grade performance.</td>
+    </tr>
+    <tr>
+        <td>Load Balancer</td>
+        <td>NGINX, HAProxy, AWS ALB/NLB, Envoy</td>
+        <td>NGINX and HAProxy are proven, high-performance L7 load balancers. Envoy is increasingly popular as a sidecar in service mesh architectures. AWS ALB for managed cloud deployments.</td>
+    </tr>
+    <tr>
+        <td>Service Mesh</td>
+        <td>Istio + Envoy, Linkerd</td>
+        <td>For managing inter-service communication, load balancing, circuit breaking, and observability in a microservices architecture.</td>
+    </tr>
+    <tr>
+        <td>Video Transcoding</td>
+        <td>FFmpeg, AWS Elemental MediaConvert, Coconut</td>
+        <td>FFmpeg is open-source and highly flexible. Managed services reduce operational overhead.</td>
+    </tr>
+    </tbody>
+</table>
+</div>
+
+</div> <!-- end container -->
+
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'base',
+        themeVariables: {
+            primaryColor: '#e8f5e9',
+            primaryTextColor: '#1a1a2e',
+            primaryBorderColor: '#2e7d32',
+            lineColor: '#546e7a',
+            fontSize: '14px'
+        },
+        flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+            curve: 'basis'
+        }
+    });
+</script>
+
 </body>
 </html>
