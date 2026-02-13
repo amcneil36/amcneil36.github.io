@@ -116,9 +116,9 @@
   <rect x="730" y="370" width="140" height="50" rx="8" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
   <text x="800" y="392" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="11">Push Notification</text>
   <text x="800" y="410" text-anchor="middle" fill="#8b8fa3" font-size="10">Service</text>
-  <rect x="530" y="70" width="130" height="50" rx="8" fill="#2a2418" stroke="#fbbf24" stroke-width="2"/>
-  <text x="595" y="92" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="11">Message Queue</text>
-  <text x="595" y="108" text-anchor="middle" fill="#8b8fa3" font-size="10">(Offline Delivery)</text>
+  <ellipse cx="595" cy="95" rx="60" ry="22" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <rect x="535" y="73" width="120" height="24" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <text x="595" y="103" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="11">Inbox DB</text>
   <line x1="120" y1="225" x2="193" y2="225" stroke="#25d366" stroke-width="2" marker-end="url(#ag)"/>
   <text x="155" y="215" text-anchor="middle" fill="#8b8fa3" font-size="9">WebSocket</text>
   <line x1="265" y1="225" x2="308" y2="225" stroke="#38bdf8" stroke-width="2" marker-end="url(#ab)"/>
@@ -132,8 +132,8 @@
   <text x="370" y="320" text-anchor="end" fill="#8b8fa3" font-size="9">persist</text>
   <line x1="450" y1="242" x2="532" y2="375" stroke="#f87171" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ar)"/>
   <text x="500" y="320" text-anchor="middle" fill="#8b8fa3" font-size="9">lookup</text>
-  <line x1="595" y1="190" x2="595" y2="122" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ay)"/>
-  <text x="620" y="158" text-anchor="start" fill="#8b8fa3" font-size="9">if offline</text>
+  <line x1="595" y1="190" x2="595" y2="119" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ay)"/>
+  <text x="620" y="158" text-anchor="start" fill="#8b8fa3" font-size="9">write to inbox</text>
   <line x1="650" y1="246" x2="732" y2="375" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ay)"/>
   <text x="710" y="310" text-anchor="middle" fill="#8b8fa3" font-size="9">if offline</text>
 </svg>
@@ -146,11 +146,11 @@ User A types "Hey, are you free tonight?" and taps Send. The client sends an enc
 </div>
 <div class="example">
 <strong>Example 2 — Recipient offline:</strong><br>
-User A sends "Call me when you can" to User B, but User B has no active WebSocket connection. The Chat Service persists the message to the Message DB with status <code>SENT</code>, checks the Session Store, finds no active session for User B, and publishes to <code>user_{B_id}</code>. Since no Chat Service instance is subscribed to that topic (nobody holding B's WebSocket), the message goes to the Message Queue for offline delivery. The Push Notification Service is also triggered to send an APNs/FCM push notification to User B's device. When User B opens WhatsApp later, a new WebSocket is established, the Chat Service subscribes to <code>user_{B_id}</code> on the Pub/Sub, and then pulls all pending messages from the Message Queue and sends them down the WebSocket. User B's client responds with <code>DELIVERED</code> ACKs for each message.
+User A sends "Call me when you can" to User B, but User B has no active WebSocket connection. The Chat Service persists the message to the Message DB with status <code>SENT</code> and also writes it to the <code>undelivered_messages</code> Inbox DB table (partitioned by <code>recipient_id</code>). The Chat Service checks the Session Store, finds no active session for User B, and publishes to <code>user_{B_id}</code>. Since no Chat Service instance is subscribed to that topic, the message sits in the Pub/Sub topic unacknowledged. A push notification is triggered via the Push Notification Service. When User B opens WhatsApp later, a new WebSocket is established, the Chat Service subscribes to <code>user_{B_id}</code> on the Pub/Sub, and then queries the Inbox DB: <code>SELECT * FROM undelivered_messages WHERE recipient_id = B_id ORDER BY created_at</code>. All pending messages are sent down the WebSocket. As User B's client ACKs each message, the corresponding row is deleted from the Inbox DB.
 </div>
 <div class="example">
 <strong>Example 3 — Network flap (User B briefly disconnects mid-delivery):</strong><br>
-User A sends a photo. The Chat Service publishes to <code>user_{B_id}</code>, but User B's WebSocket drops 50ms before delivery. The message remains in the Pub/Sub topic because no subscriber ACKed it. When User B reconnects within seconds, the Chat Service re-subscribes to <code>user_{B_id}</code> and the unacknowledged message is re-delivered automatically by the Pub/Sub system. If the reconnection takes longer than the Pub/Sub retention window (e.g., 7 days), the message is still safe in the Message DB and gets delivered via the offline queue pull on reconnection.
+User A sends a photo. The Chat Service publishes to <code>user_{B_id}</code> and writes to the Inbox DB, but User B's WebSocket drops 50ms before delivery. The message remains in the Pub/Sub topic because no subscriber ACKed it. When User B reconnects within seconds, the Chat Service re-subscribes to <code>user_{B_id}</code> and the unacknowledged message is re-delivered automatically by the Pub/Sub system. Separately, the Chat Service also queries the Inbox DB for any undelivered messages (deduplicating against messages already received via Pub/Sub using <code>message_id</code>). If the reconnection takes longer than the Pub/Sub retention window, the message is still safe in the Inbox DB and gets delivered on reconnection.
 </div>
 
 <h3>Flow 1 — Component Deep Dive</h3>
@@ -190,15 +190,16 @@ User A sends a photo. The Chat Service publishes to <code>user_{B_id}</code>, bu
   <li><strong>Topic model:</strong> Each user has a dedicated topic <code>user_{user_id}</code>. When a Chat Service instance handles User B's WebSocket, it subscribes to <code>user_{B_id}</code>.</li>
   <li><strong>Why Pub/Sub:</strong> Decouples sender's server from receiver's server. No need for an extra "connection registry" lookup + direct RPC.</li>
   <li><strong>Delivery guarantee:</strong> At-least-once delivery with client-side deduplication via <code>message_id</code>.</li>
-  <li><strong>Unsubscribed topics:</strong> If no Chat Service is subscribed to a user's topic (user offline), messages are retained or drained to the Message Queue.</li>
+  <li><strong>Unsubscribed topics:</strong> If no Chat Service is subscribed to a user's topic (user offline), messages remain in the topic until the Pub/Sub retention expires. The Inbox DB serves as the durable fallback for offline delivery.</li>
 </ul>
-<h4>Message Queue (Offline Delivery)</h4>
+<h4>Inbox DB (Offline Delivery Table)</h4>
 <ul>
-  <li><strong>Purpose:</strong> Stores messages for users who are offline beyond the Pub/Sub retention window.</li>
-  <li><strong>How messages are enqueued:</strong> A drain consumer on the Pub/Sub detects undeliverable messages and moves them to the per-user offline queue.</li>
-  <li><strong>How messages are dequeued:</strong> When a user reconnects, the Chat Service pulls all pending messages from the user's offline queue and delivers them via WebSocket. Messages are removed only after client ACK.</li>
-  <li><strong>Why not just use Pub/Sub for offline:</strong> Pub/Sub topics have limited retention and are not optimized for long-term storage. A dedicated message queue provides durable storage with configurable retention (e.g., 30 days).</li>
-  <li><strong>Ordering:</strong> FIFO, ordered by <code>timestamp</code> within each user's queue.</li>
+  <li><strong>Purpose:</strong> A per-user inbox table that stores undelivered messages, partitioned by <code>recipient_id</code>. When a user is offline, messages are written here. On reconnection, the Chat Service queries this table to retrieve all pending messages efficiently in a single partition read.</li>
+  <li><strong>Why a database table instead of a message queue:</strong> Offline delivery is a storage problem, not an async processing task. A database table partitioned by <code>recipient_id</code> provides a natural, efficient lookup ("get all pending messages for User B") without introducing an additional infrastructure component. There is no "worker" consuming and processing messages — they just sit until the user logs in.</li>
+  <li><strong>How messages are written:</strong> When a message is sent, the Chat Service writes to both the Message DB (partitioned by <code>conversation_id</code>) and the Inbox DB (partitioned by <code>recipient_id</code>). This dual-write ensures the message is accessible both by conversation (for chat history) and by recipient (for offline delivery).</li>
+  <li><strong>How messages are read and cleaned up:</strong> On reconnection, the Chat Service queries <code>SELECT * FROM undelivered_messages WHERE recipient_id = ? ORDER BY created_at</code>. Messages are sent via WebSocket. After the client ACKs each message, the corresponding row is deleted from the Inbox DB.</li>
+  <li><strong>Ordering:</strong> Messages are sorted by <code>created_at</code> (sort key) within each recipient's partition — chronological delivery.</li>
+  <li><strong>Retention:</strong> 30-day TTL. Undelivered messages older than 30 days are automatically purged.</li>
 </ul>
 <h4>Message DB (NoSQL)</h4>
 <ul>
@@ -284,11 +285,11 @@ User A sends "Meeting at 3pm" to the group "Project Team" (members: A, B, C, D).
 </div>
 <div class="example">
 <strong>Example 2 — Some members offline:</strong><br>
-User A sends "Don't forget the slides" to "Project Team". The Chat Service fans out to <code>user_{B_id}</code>, <code>user_{C_id}</code>, <code>user_{D_id}</code>. Users B and C are online and receive the message instantly. User D is offline — the message on <code>user_{D_id}</code> has no active subscriber, so it is routed to the offline Message Queue and a push notification is sent. When User D opens the app 2 hours later, the Chat Service pulls the pending message from the queue and delivers it.
+User A sends "Don't forget the slides" to "Project Team". The Chat Service fans out to <code>user_{B_id}</code>, <code>user_{C_id}</code>, <code>user_{D_id}</code>. Users B and C are online and receive the message instantly. User D is offline — the message is written to User D's Inbox DB partition and a push notification is sent. When User D opens the app 2 hours later, the Chat Service queries the Inbox DB for User D's pending messages and delivers them.
 </div>
 <div class="example">
 <strong>Example 3 — Large group (500 members):</strong><br>
-User A sends a message to a 500-member group. The Chat Service retrieves the member list from the Group Service (which uses a cached result from the in-memory cache since group membership doesn't change often). The Chat Service then publishes to 499 individual Pub/Sub user topics. The Pub/Sub system handles the fan-out efficiently. For the ~80 members who are offline, the messages are queued and push notifications are batched. This approach avoids the "thundering herd" problem that a single group topic would cause.
+User A sends a message to a 500-member group. The Chat Service retrieves the member list from the Group Service (which uses a cached result from the in-memory cache since group membership doesn't change often). The Chat Service then publishes to 499 individual Pub/Sub user topics. The Pub/Sub system handles the fan-out efficiently. For the ~80 members who are offline, the messages are written to each user's Inbox DB partition and push notifications are batched. This approach avoids the "thundering herd" problem that a single group topic would cause.
 </div>
 
 <h3>Flow 2 — Component Deep Dive (Additional)</h3>
@@ -575,10 +576,10 @@ User A shares a video in a 200-person group. The first few members who download 
   <rect x="200" y="330" width="260" height="55" rx="10" fill="#2a1832" stroke="#c084fc" stroke-width="2"/>
   <text x="330" y="352" text-anchor="middle" fill="#c084fc" font-weight="bold" font-size="12">Pub/Sub System</text>
   <text x="330" y="372" text-anchor="middle" fill="#8b8fa3" font-size="10">Per-user topics: user_{id}</text>
-  <!-- MQ -->
-  <rect x="520" y="335" width="150" height="45" rx="10" fill="#2a2418" stroke="#fbbf24" stroke-width="2"/>
-  <text x="595" y="355" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="10">Message Queue</text>
-  <text x="595" y="370" text-anchor="middle" fill="#8b8fa3" font-size="9">(Offline Delivery)</text>
+  <!-- Inbox DB -->
+  <ellipse cx="595" cy="358" rx="65" ry="20" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <rect x="530" y="338" width="130" height="22" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <text x="595" y="365" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="9">Inbox DB (NoSQL)</text>
   <!-- Databases -->
   <ellipse cx="100" cy="480" rx="58" ry="20" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
   <rect x="42" y="460" width="116" height="22" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
@@ -611,8 +612,8 @@ User A shares a video in a 200-person group. The first few members who download 
   <line x1="325" y1="175" x2="405" y2="218" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#ab)"/>
   <line x1="325" y1="175" x2="695" y2="218" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#ab)"/>
   <line x1="120" y1="270" x2="240" y2="330" stroke="#c084fc" stroke-width="1.5" marker-end="url(#ap)"/>
-  <line x1="460" y1="358" x2="518" y2="358" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ay)"/>
-  <text x="489" y="350" text-anchor="middle" fill="#8b8fa3" font-size="8">offline</text>
+  <line x1="460" y1="358" x2="528" y2="358" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ay)"/>
+  <text x="489" y="350" text-anchor="middle" fill="#8b8fa3" font-size="8">write inbox</text>
   <line x1="120" y1="270" x2="100" y2="458" stroke="#fbbf24" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ay)"/>
   <line x1="265" y1="270" x2="250" y2="458" stroke="#fbbf24" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ay)"/>
   <line x1="405" y1="270" x2="560" y2="458" stroke="#fbbf24" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ay)"/>
@@ -658,8 +659,8 @@ User A shares a video in a 200-person group. The first few members who download 
   <li><strong>User A sends "Sprint review at 4pm" to "Dev Team" (A, B, C, D, E):</strong> Chat Service calls Group Service (gRPC) which checks Group Cache. Cache hit returns <code>[B, C, D, E]</code>.</li>
   <li><strong>Fan-out:</strong> Chat Service publishes to <code>user_{B_id}</code>, <code>user_{C_id}</code>, <code>user_{D_id}</code>, <code>user_{E_id}</code>.</li>
   <li><strong>B and C online:</strong> Delivered via WebSocket immediately. Both send DELIVERED ACKs.</li>
-  <li><strong>D and E offline:</strong> No subscribers. Messages drain to Message Queue. Push notifications sent.</li>
-  <li><strong>D opens app 30 min later:</strong> WebSocket established, subscribes to <code>user_{D_id}</code>, pulls pending from offline queue. DELIVERED ACK sent.</li>
+  <li><strong>D and E offline:</strong> No subscribers. Messages written to each user's Inbox DB partition. Push notifications sent.</li>
+  <li><strong>D opens app 30 min later:</strong> WebSocket established, subscribes to <code>user_{D_id}</code>, Chat Service queries Inbox DB for D's pending messages and delivers them. DELIVERED ACK sent.</li>
   <li><strong>Receipt aggregation:</strong> Individual receipts flow back to User A via <code>user_{A_id}</code>. Client shows gray ✓✓ on first delivery, blue ✓✓ only when ALL members have read.</li>
 </ol>
 </div>
@@ -741,6 +742,31 @@ User A shares a video in a 200-person group. The first few members who download 
 </table>
 <p><strong>Read triggers:</strong> User long-presses a group message to see "Message info" (who has read it).</p>
 <p><strong>Write triggers:</strong> Every DELIVERED or READ ACK received from a recipient.</p>
+</div>
+
+<div class="card">
+<h4>undelivered_messages (Inbox Table)</h4>
+<p><strong>Why NoSQL (Wide-Column):</strong> This is the offline delivery inbox. Access pattern is exclusively: write when a message is sent, read all pending messages for a recipient on login, delete on ACK. Partitioned by <code>recipient_id</code> — the exact opposite of the Message DB (which is partitioned by <code>conversation_id</code>). This table exists specifically to enable efficient per-user retrieval without scatter-gather queries across the conversation-partitioned Message DB.</p>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+  <tr><td>recipient_id</td><td>UUID</td><td><span class="tag tag-pk">Partition Key</span> <span class="tag tag-shard">Shard Key</span></td><td>All pending messages for one user are co-located</td></tr>
+  <tr><td>message_id</td><td>TimeUUID / ULID</td><td><span class="tag tag-pk">Sort Key</span></td><td>Time-ordered for chronological delivery</td></tr>
+  <tr><td>conversation_id</td><td>UUID</td><td>NOT NULL</td><td>Which conversation this message belongs to</td></tr>
+  <tr><td>sender_id</td><td>UUID</td><td>NOT NULL</td><td></td></tr>
+  <tr><td>encrypted_content</td><td>BLOB</td><td></td><td>E2EE ciphertext</td></tr>
+  <tr><td>message_type</td><td>STRING</td><td></td><td>text, image, video, audio, document</td></tr>
+  <tr><td>media_url</td><td>STRING</td><td></td><td>URL if applicable</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+  <tr><td>expires_at</td><td>TIMESTAMP</td><td></td><td>30-day TTL for auto-purge</td></tr>
+</table>
+<p><strong>Partition key:</strong> <code>recipient_id</code> — All undelivered messages for one user are in the same partition. Fetching them is a single sequential read, not a scatter-gather.</p>
+<p><strong>Sort key:</strong> <code>message_id</code> (TimeUUID) — Chronological order within the partition. Loading all pending messages is a simple range scan.</p>
+<p><strong>Sharding:</strong> Sharded by <code>recipient_id</code> (hash-based). Each user's inbox is on one shard. Even distribution because user IDs are UUIDs.</p>
+<p><strong>TTL:</strong> <code>expires_at</code> = 30 days after creation. Auto-purged by the NoSQL store.</p>
+<p><strong>Denormalization rationale:</strong> This table duplicates data from the <code>messages</code> table. This is intentional — the messages table is partitioned by <code>conversation_id</code> (optimized for chat history), while this table is partitioned by <code>recipient_id</code> (optimized for offline delivery). Without this denormalization, fetching undelivered messages for a user would require scanning every conversation they belong to — potentially hundreds of partitions on different shards.</p>
+<p><strong>Read triggers:</strong> User opens the app after being offline — Chat Service queries all pending messages for that user.</p>
+<p><strong>Write triggers:</strong> Every message sent (1:1 or group). The Chat Service dual-writes to both the messages table and this inbox table.</p>
+<p><strong>Delete triggers:</strong> Client ACKs a delivered message → the corresponding row is deleted.</p>
 </div>
 
 <div class="card">
@@ -839,7 +865,7 @@ User A shares a video in a 200-person group. The first few members who download 
   <li><strong>Publishers:</strong> Any Chat Service that processes a send request publishes to recipient's topic(s). Group: 99 publishes for a 100-member group.</li>
   <li><strong>Subscribers:</strong> Exactly 0 or 1 per topic (user can have one active connection).</li>
   <li><strong>Delivery guarantee:</strong> At-least-once. Client deduplicates via <code>message_id</code>.</li>
-  <li><strong>Retention:</strong> 7 days if no subscriber. Beyond that, drain consumer moves to offline Message Queue.</li>
+  <li><strong>Retention:</strong> 7 days if no subscriber. Beyond that, messages are still available in the Inbox DB for delivery on reconnection.</li>
 </ul>
 
 <h3>Why Pub/Sub Instead of Alternatives</h3>
@@ -863,32 +889,46 @@ User A shares a video in a 200-person group. The first few members who download 
 </ol>
 </div>
 
-<!-- =========== MESSAGE QUEUE DEEP DIVE =========== -->
-<h2>12. Message Queue Deep Dive</h2>
+<!-- =========== INBOX TABLE DEEP DIVE =========== -->
+<h2>12. Inbox Table Deep Dive</h2>
 <div class="card">
 <h3>Purpose &amp; Role</h3>
-<p>The Message Queue is the <strong>durable offline delivery buffer</strong>. NOT the primary delivery mechanism (that's Pub/Sub + WebSocket). It catches messages the Pub/Sub cannot deliver because the recipient has no active subscription.</p>
+<p>The <code>undelivered_messages</code> Inbox DB table is the <strong>durable offline delivery store</strong>. It is NOT the primary delivery mechanism (that's Pub/Sub + WebSocket). It stores messages for users who are offline so they can be efficiently retrieved in a single partition read on reconnection.</p>
 
-<h3>How Messages Enter the Queue</h3>
+<h3>Why a Database Table Instead of a Message Queue</h3>
 <ul>
-  <li>A <strong>drain consumer</strong> monitors Pub/Sub topics. If a message is unacknowledged for 30+ seconds, it's moved to the per-user offline queue.</li>
-  <li>Alternatively, Chat Service checks Session Store <em>before</em> publishing. If user is offline, writes directly to both Message DB and Message Queue.</li>
+  <li><strong>Offline delivery is storage, not async processing.</strong> There is no "worker" consuming messages and doing work. Messages simply sit until the user logs in and picks them up. This is fundamentally a database pattern, not a queue pattern.</li>
+  <li><strong>Message queues are for async operations</strong> like "send a push notification" or "generate a thumbnail" — where a producer enqueues a task and a consumer processes it. Storing a message until a user logs in days later doesn't fit this model.</li>
+  <li><strong>Simpler architecture:</strong> One fewer infrastructure component to operate, monitor, and troubleshoot. The Inbox DB lives in the same NoSQL cluster as other tables.</li>
+  <li><strong>Simpler consistency:</strong> No need to synchronize state between a database and a separate queue system.</li>
 </ul>
 
-<h3>How Messages Leave the Queue</h3>
+<h3>How Messages Are Written</h3>
 <ul>
-  <li>On reconnect, Chat Service pulls all messages from the user's offline queue (FIFO).</li>
-  <li>Each is sent via WebSocket. Client ACKs each message.</li>
-  <li>Only after ACK does Chat Service delete from queue (<strong>explicit acknowledgment-based deletion</strong>).</li>
-  <li>If connection drops mid-sync, unACKed messages remain for next reconnect.</li>
+  <li>When any message is sent (1:1 or group), the Chat Service performs a <strong>dual write</strong>: one to the Message DB (partitioned by <code>conversation_id</code> for chat history) and one to the Inbox DB (partitioned by <code>recipient_id</code> for offline delivery).</li>
+  <li>The dual write happens for ALL messages, not just offline ones. This avoids the need to check online status before deciding where to write. If the user is online, the message is delivered via Pub/Sub in real-time AND the Inbox DB row is deleted immediately upon client ACK.</li>
 </ul>
 
-<h3>Queue Properties</h3>
+<h3>How Messages Are Read and Cleaned Up</h3>
 <ul>
-  <li><strong>Ordering:</strong> FIFO per user. Messages delivered in chronological order.</li>
-  <li><strong>Retention:</strong> 30 days. Messages older than 30 days are purged (aligned with E2EE model).</li>
-  <li><strong>Durability:</strong> Replicated across multiple nodes for fault tolerance.</li>
-  <li><strong>Partitioning:</strong> Queues are partitioned by <code>user_id</code> hash. Each user's offline messages are in a single partition for ordered delivery.</li>
+  <li>On reconnect, the Chat Service queries: <code>SELECT * FROM undelivered_messages WHERE recipient_id = ? ORDER BY created_at</code>.</li>
+  <li>This is a <strong>single partition read</strong> — all messages for a user are co-located. Fast and efficient.</li>
+  <li>Messages are sent to the client via WebSocket.</li>
+  <li>After each client ACK, the Chat Service deletes the corresponding row: <code>DELETE FROM undelivered_messages WHERE recipient_id = ? AND message_id = ?</code>.</li>
+  <li>If the connection drops mid-sync, unACKed messages remain in the table for the next reconnection.</li>
+</ul>
+
+<h3>Properties</h3>
+<ul>
+  <li><strong>Ordering:</strong> Messages sorted by <code>created_at</code> (sort key) within each recipient's partition — chronological delivery.</li>
+  <li><strong>Retention:</strong> 30-day TTL. The NoSQL store automatically purges expired rows. Aligns with E2EE model.</li>
+  <li><strong>Durability:</strong> Replicated across multiple nodes (same guarantees as any other NoSQL table).</li>
+  <li><strong>Partitioning:</strong> Partitioned by <code>recipient_id</code> hash. Each user's undelivered messages are in a single partition for efficient retrieval.</li>
+</ul>
+
+<h3>Contrast: Where a Message Queue IS Used</h3>
+<ul>
+  <li>A message queue is still used in this design for <strong>actual async tasks</strong>: triggering push notifications via the Push Notification Service. When a user is offline, the Chat Service enqueues a task like <code>{ type: "send_push", user_id, sender_name, notification_type }</code>. The Push Notification Service consumes this and calls APNs/FCM. This IS a true async job — a producer creates work, a consumer processes it.</li>
 </ul>
 </div>
 
@@ -914,7 +954,7 @@ User A shares a video in a 200-person group. The first few members who download 
   <tr><td>Group Service</td><td>Horizontal — stateless, scale on request rate</td><td>Fan-out request rate</td></tr>
   <tr><td>Media Service</td><td>Horizontal — stateless, scale on throughput</td><td>Network bandwidth</td></tr>
   <tr><td>Presence Service</td><td>Horizontal — stateless, scale on query rate</td><td>Cache throughput</td></tr>
-  <tr><td>Push Notification Svc</td><td>Horizontal — scale on queue depth</td><td>APNs/FCM rate limits</td></tr>
+  <tr><td>Push Notification Svc</td><td>Horizontal — scale on async task queue depth</td><td>APNs/FCM rate limits</td></tr>
   <tr><td>Pub/Sub</td><td>Partition topics by user_id hash across brokers</td><td>Pub/sub throughput</td></tr>
   <tr><td>Message DB</td><td>Shard by conversation_id; add shards as volume grows</td><td>Write throughput</td></tr>
   <tr><td>User DB</td><td>Shard by user_id; read replicas for contact sync</td><td>Read throughput</td></tr>
@@ -987,7 +1027,7 @@ User A shares a video in a 200-person group. The first few members who download 
   <li><strong>Auth:</strong> Chat Service validates JWT, extracts <code>user_id</code>, accepts upgrade.</li>
   <li><strong>Session Registration:</strong> Writes <code>{ user_id → (server_id, connection_id) }</code> to Session Store (90s TTL).</li>
   <li><strong>Pub/Sub Subscribe:</strong> Subscribes to <code>user_{user_id}</code>.</li>
-  <li><strong>Offline Drain:</strong> Pulls pending messages from offline Message Queue.</li>
+  <li><strong>Offline Inbox Drain:</strong> Queries the Inbox DB for all undelivered messages for this user and sends them via WebSocket.</li>
   <li><strong>Steady State:</strong> Bidirectional messages + heartbeat ping/pong every 30s.</li>
   <li><strong>Disconnect:</strong> Remove from Session Store → Unsubscribe Pub/Sub → Update Presence Cache to OFFLINE.</li>
 </ol>
@@ -1047,7 +1087,7 @@ User A shares a video in a 200-person group. The first few members who download 
   <tr><td>SQL — Users</td><td>PostgreSQL, MySQL/Vitess</td><td>PostgreSQL for advanced indexing. Vitess for sharding at YouTube/Slack scale.</td></tr>
   <tr><td>In-Memory Cache</td><td>Redis, Dragonfly</td><td>Redis for TTL + rich data structures. Dragonfly for multi-threaded Redis-compatible alternative.</td></tr>
   <tr><td>Pub/Sub</td><td>Apache Kafka, Apache Pulsar, NATS</td><td>Kafka for durability/throughput. Pulsar for multi-tenancy. NATS for lower latency.</td></tr>
-  <tr><td>Message Queue</td><td>Kafka, RabbitMQ, Amazon SQS</td><td>Kafka dual duty as Pub/Sub + queue. SQS for managed low-ops.</td></tr>
+  <tr><td>Message Queue (Push Notifications)</td><td>Kafka, RabbitMQ, Amazon SQS</td><td>Used only for async tasks (triggering push notifications). Kafka for throughput. SQS for managed low-ops.</td></tr>
   <tr><td>Object Storage</td><td>Amazon S3, MinIO</td><td>S3 for 11-nines durability. MinIO for self-hosted S3-compatible.</td></tr>
   <tr><td>CDN</td><td>Cloudflare, CloudFront, Akamai</td><td>Cloudflare for global edge + signed URLs. CloudFront for S3 integration.</td></tr>
   <tr><td>Push Notifications</td><td>APNs, FCM</td><td>Required by iOS/Android. No choice — both mandatory.</td></tr>
