@@ -1,515 +1,1316 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Design Google Search</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0f0f0f;color:#e0e0e0;line-height:1.7;padding:2rem}h1{font-size:2.5rem;text-align:center;background:linear-gradient(135deg,#4285F4,#EA4335,#FBBC05,#34A853);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}h2{color:#4285F4;font-size:1.8rem;margin:2rem 0 1rem;border-bottom:2px solid #4285F4;padding-bottom:.5rem}h3{color:#FBBC05;font-size:1.3rem;margin:1.5rem 0 .8rem}h4{color:#34A853;margin:1rem 0 .5rem}.container{max-width:1400px;margin:0 auto}.card{background:#1a1a2e;border-radius:12px;padding:1.5rem;margin:1rem 0;border:1px solid #333}.diagram-box{background:#0d1117;border-radius:12px;padding:1.5rem;margin:1rem 0;text-align:center;overflow-x:auto}.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}.tag-pk{background:#E53935;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-fk{background:#1E88E5;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-idx{background:#43A047;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-shard{background:#F4511E;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}.tradeoff-card{background:#1a1a2e;border-radius:8px;padding:1rem;border-left:4px solid}.tradeoff-card.pro{border-color:#34A853}.tradeoff-card.con{border-color:#EA4335}code{background:#2d2d2d;padding:2px 6px;border-radius:4px;font-family:'Fira Code',monospace;font-size:.85rem}pre{background:#1e1e2e;padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}ul,ol{padding-left:1.5rem;margin:.5rem 0}table{width:100%;border-collapse:collapse;margin:1rem 0}th,td{padding:.75rem;border:1px solid #333;text-align:left}th{background:#1a1a2e}svg text{font-family:'Segoe UI',system-ui,sans-serif}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design: Google Search</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --card: #ffffff;
+            --accent: #4285f4;
+            --accent2: #34a853;
+            --accent3: #ea4335;
+            --accent4: #fbbc05;
+            --text: #202124;
+            --text2: #5f6368;
+            --border: #dadce0;
+            --code-bg: #f1f3f4;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 40px 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        h1 {
+            font-size: 2.4em;
+            margin-bottom: 8px;
+            color: var(--accent);
+            border-bottom: 4px solid var(--accent);
+            padding-bottom: 12px;
+        }
+        h2 {
+            font-size: 1.7em;
+            margin-top: 48px;
+            margin-bottom: 16px;
+            color: var(--text);
+            border-left: 5px solid var(--accent);
+            padding-left: 16px;
+        }
+        h3 {
+            font-size: 1.25em;
+            margin-top: 28px;
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+        h4 {
+            font-size: 1.05em;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            color: var(--text2);
+        }
+        p { margin-bottom: 14px; }
+        ul, ol { margin-left: 28px; margin-bottom: 16px; }
+        li { margin-bottom: 6px; }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .diagram-card {
+            background: var(--card);
+            border: 2px solid var(--accent);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            overflow-x: auto;
+        }
+        .example-card {
+            background: #e8f0fe;
+            border-left: 4px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 20px 24px;
+            margin: 16px 0;
+        }
+        .example-card strong { color: var(--accent); }
+        .warning-card {
+            background: #fef7e0;
+            border-left: 4px solid var(--accent4);
+            border-radius: 0 8px 8px 0;
+            padding: 20px 24px;
+            margin: 16px 0;
+        }
+        .alt-card {
+            background: #fce8e6;
+            border-left: 4px solid var(--accent3);
+            border-radius: 0 8px 8px 0;
+            padding: 20px 24px;
+            margin: 16px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0 24px 0;
+            font-size: 0.95em;
+        }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            text-align: left;
+        }
+        th {
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+        }
+        tr:nth-child(even) { background: #f8f9fa; }
+        code {
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.92em;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+        }
+        pre {
+            background: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.82em;
+            font-weight: 600;
+            margin-right: 6px;
+        }
+        .badge-sql { background: #e8f0fe; color: #1a73e8; }
+        .badge-nosql { background: #e6f4ea; color: #137333; }
+        .badge-http { background: #fef7e0; color: #b06000; }
+        .badge-rpc { background: #fce8e6; color: #c5221f; }
+        .toc { margin: 24px 0; }
+        .toc a { text-decoration: none; color: var(--accent); }
+        .toc a:hover { text-decoration: underline; }
+        .toc li { margin-bottom: 4px; }
+        .mermaid { text-align: center; }
+        .section-divider {
+            border: none;
+            border-top: 2px dashed var(--border);
+            margin: 48px 0;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
-<h1>🔍 Design Google Search</h1>
-<p style="text-align:center;color:#aaa;margin-bottom:2rem;">Web-scale search engine processing 8.5B+ queries/day with sub-200ms latency, indexing 400B+ web pages</p>
 
-<h2>1. Functional Requirements</h2>
+<h1>📐 System Design: Google Search</h1>
+<p style="color: var(--text2); font-size: 1.05em;">
+    A comprehensive design for a web-scale search engine capable of crawling, indexing, and serving billions of queries per day across trillions of web pages.
+</p>
+
+<!-- TABLE OF CONTENTS -->
+<div class="card toc">
+    <h3 style="margin-top:0;">Table of Contents</h3>
+    <ol>
+        <li><a href="#fr">Functional Requirements</a></li>
+        <li><a href="#nfr">Non-Functional Requirements</a></li>
+        <li><a href="#flow1">Flow 1: Web Crawling &amp; Indexing</a></li>
+        <li><a href="#flow2">Flow 2: Search Query Processing</a></li>
+        <li><a href="#flow3">Flow 3: Autocomplete Suggestions</a></li>
+        <li><a href="#combined">Combined Overall Flow</a></li>
+        <li><a href="#schema">Schema Design</a></li>
+        <li><a href="#cdn-cache">CDN &amp; Caching Deep Dive</a></li>
+        <li><a href="#scaling">Scaling Considerations</a></li>
+        <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+        <li><a href="#alternatives">Alternative Approaches</a></li>
+        <li><a href="#additional">Additional Information</a></li>
+        <li><a href="#vendors">Vendor Suggestions</a></li>
+    </ol>
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- FUNCTIONAL REQUIREMENTS -->
+<!-- ============================================================ -->
+<h2 id="fr">1. Functional Requirements</h2>
 <div class="card">
-<ul>
-<li><strong>Web Search:</strong> Return ranked results for keyword/natural-language queries within 200ms</li>
-<li><strong>Query Autocomplete:</strong> Suggest completions and corrections as user types (prefetch within 50ms)</li>
-<li><strong>Crawl & Index:</strong> Continuously discover, fetch, parse, and index web pages (400B+ pages)</li>
-<li><strong>Snippet Generation:</strong> Extract and highlight relevant text snippets from matched documents</li>
-<li><strong>Ranking:</strong> Order results by relevance using PageRank, content signals, user behavior, and ML re-ranking</li>
-<li><strong>Vertical Search:</strong> Images, news, videos, shopping, maps integrated into universal results</li>
-<li><strong>Knowledge Graph:</strong> Display entity cards, knowledge panels, and direct answers</li>
-<li><strong>Ads Serving:</strong> Display auction-based sponsored results (CPC/CPM)</li>
-</ul>
+    <ol>
+        <li><strong>Web Search:</strong> Users can enter a text query and receive a ranked list of relevant web page results.</li>
+        <li><strong>Result Ranking:</strong> Results are ordered by relevance using signals such as page importance (PageRank), content relevance (TF-IDF / BM25), freshness, and user engagement.</li>
+        <li><strong>Autocomplete / Search Suggestions:</strong> As the user types, the system provides real-time query suggestions based on popularity and personal history.</li>
+        <li><strong>Spell Correction:</strong> The system detects misspelled queries and offers a "Did you mean…?" correction.</li>
+        <li><strong>Snippet Generation:</strong> Each result displays a title, URL, and a short text snippet highlighting the query terms in context.</li>
+        <li><strong>Pagination:</strong> Results are paginated (e.g., 10 per page) with the ability to navigate to subsequent pages.</li>
+        <li><strong>Web Crawling:</strong> The system continuously discovers and fetches new and updated web pages across the internet.</li>
+        <li><strong>Indexing:</strong> Crawled content is processed, tokenized, and stored in an inverted index for fast retrieval.</li>
+        <li><strong>Freshness:</strong> The index is updated frequently so that search results reflect recent changes on the web.</li>
+    </ol>
 </div>
 
-<h2>2. Non-Functional Requirements</h2>
+<!-- ============================================================ -->
+<!-- NON-FUNCTIONAL REQUIREMENTS -->
+<!-- ============================================================ -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
 <div class="card">
-<ul>
-<li><strong>Latency:</strong> p50 &lt;200ms, p99 &lt;500ms end-to-end for organic results</li>
-<li><strong>Throughput:</strong> 100K+ queries/second globally (8.5B queries/day)</li>
-<li><strong>Index Size:</strong> 400B+ pages, 100PB+ compressed index</li>
-<li><strong>Freshness:</strong> Breaking news indexed within minutes, regular crawl cycle hours-to-weeks</li>
-<li><strong>Availability:</strong> 99.999% uptime (Google SRE target)</li>
-<li><strong>Scalability:</strong> Horizontal scaling across dozens of data centers worldwide</li>
-<li><strong>Consistency:</strong> Eventual consistency for index updates; strong consistency for user accounts</li>
-</ul>
+    <table>
+        <tr><th>Property</th><th>Target</th><th>Rationale</th></tr>
+        <tr><td><strong>Latency</strong></td><td>&lt; 500 ms p99 for search queries; &lt; 100 ms p99 for autocomplete</td><td>User expectation: instant results. Studies show each 100 ms of latency reduces engagement.</td></tr>
+        <tr><td><strong>Availability</strong></td><td>99.99% uptime</td><td>Search is mission-critical. Downtime affects billions of users.</td></tr>
+        <tr><td><strong>Throughput</strong></td><td>~100,000+ queries per second (QPS)</td><td>Billions of searches per day globally.</td></tr>
+        <tr><td><strong>Index Scale</strong></td><td>Hundreds of billions of web pages indexed</td><td>The visible web contains hundreds of billions of unique URLs.</td></tr>
+        <tr><td><strong>Crawl Freshness</strong></td><td>Popular pages re-crawled within minutes; long-tail within days/weeks</td><td>News pages need near-real-time freshness; static pages are less urgent.</td></tr>
+        <tr><td><strong>Scalability</strong></td><td>Horizontally scalable at every layer</td><td>Query volume and web size grow continuously.</td></tr>
+        <tr><td><strong>Fault Tolerance</strong></td><td>No single point of failure; graceful degradation</td><td>Individual machine failures must not impact users.</td></tr>
+        <tr><td><strong>Consistency</strong></td><td>Eventual consistency acceptable</td><td>A slight delay between indexing and serving is tolerable.</td></tr>
+    </table>
 </div>
 
-<h2>3. Flow 1 — Query Processing &amp; Serving</h2>
-<div class="diagram-box">
-<svg viewBox="0 0 1100 420" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="a1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#4285F4"/></marker></defs>
-<rect x="20" y="170" width="120" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="80" y="205" text-anchor="middle" fill="#fff" font-size="14">User Browser</text>
-<rect x="190" y="170" width="120" height="60" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="250" y="200" text-anchor="middle" fill="#fff" font-size="13">Google Front</text><text x="250" y="215" text-anchor="middle" fill="#fff" font-size="13">End (GFE)</text>
-<rect x="360" y="70" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="425" y="100" text-anchor="middle" fill="#fff" font-size="13">Query Parser</text><text x="425" y="115" text-anchor="middle" fill="#fff" font-size="11">spell/synonyms</text>
-<rect x="360" y="170" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="425" y="200" text-anchor="middle" fill="#fff" font-size="13">Web Server</text><text x="425" y="215" text-anchor="middle" fill="#fff" font-size="11">blending/mixing</text>
-<rect x="360" y="270" width="130" height="60" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="425" y="300" text-anchor="middle" fill="#fff" font-size="13">Ads Server</text><text x="425" y="315" text-anchor="middle" fill="#fff" font-size="11">auction engine</text>
-<rect x="550" y="70" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="620" y="95" text-anchor="middle" fill="#fff" font-size="13">Index Server</text><text x="620" y="112" text-anchor="middle" fill="#fff" font-size="11">scatter-gather</text>
-<rect x="550" y="170" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="620" y="195" text-anchor="middle" fill="#fff" font-size="13">Doc Server</text><text x="620" y="212" text-anchor="middle" fill="#fff" font-size="11">snippets/metadata</text>
-<rect x="550" y="270" width="140" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="620" y="300" text-anchor="middle" fill="#fff" font-size="13">ML Ranker</text><text x="620" y="315" text-anchor="middle" fill="#fff" font-size="11">BERT re-ranking</text>
-<rect x="750" y="120" width="150" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="825" y="150" text-anchor="middle" fill="#fff" font-size="13">Inverted Index</text><text x="825" y="165" text-anchor="middle" fill="#fff" font-size="11">(SSTable/Bigtable)</text>
-<rect x="750" y="220" width="150" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="825" y="250" text-anchor="middle" fill="#fff" font-size="13">Doc Store</text><text x="825" y="265" text-anchor="middle" fill="#fff" font-size="11">(Colossus/GFS)</text>
-<rect x="940" y="170" width="130" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="1005" y="200" text-anchor="middle" fill="#fff" font-size="13">Knowledge</text><text x="1005" y="215" text-anchor="middle" fill="#fff" font-size="13">Graph</text>
-<line x1="140" y1="200" x2="188" y2="200" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="310" y1="190" x2="358" y2="105" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="310" y1="200" x2="358" y2="200" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="310" y1="210" x2="358" y2="295" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="490" y1="100" x2="548" y2="100" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="490" y1="200" x2="548" y2="200" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="490" y1="200" x2="548" y2="295" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="690" y1="100" x2="748" y2="145" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="690" y1="200" x2="748" y2="245" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="690" y1="200" x2="938" y2="200" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-</svg>
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- FLOW 1: WEB CRAWLING & INDEXING -->
+<!-- ============================================================ -->
+<h2 id="flow1">3. Flow 1: Web Crawling &amp; Indexing (Offline / Background)</h2>
+<p>This is the <em>write path</em> of the system. It runs continuously in the background, discovering web pages, fetching their content, and building/updating the search index.</p>
+
+<div class="diagram-card">
+    <div class="mermaid">
+graph TD
+    SEED["🌱 Seed URLs"] --> UF[("URL Frontier<br/>(Message Queue)")]
+    UF --> WC["Web Crawler<br/>Cluster"]
+    WC --> DNS["DNS Resolver<br/>(Cache + Lookup)"]
+    WC --> ROBOTS["Robots.txt<br/>Checker"]
+    WC -->|"HTTP/HTTPS<br/>GET page"| FETCH["HTML Fetcher"]
+    FETCH --> DEDUP{"Content<br/>Dedup Filter<br/>(hash check)"}
+    DEDUP -->|"Duplicate"| DROP["Drop / Skip"]
+    DEDUP -->|"Unique"| PARSE["Content Parser<br/>(extract text, links,<br/>metadata)"]
+    PARSE --> URLEXT["URL Extractor"]
+    URLEXT --> URLNORM["URL Normalizer<br/>+ Dedup"]
+    URLNORM --> UF
+    PARSE --> DS[("Document Store<br/>(Object Storage)")]
+    DS --> INDEXER["Indexer Service<br/>(tokenize, stem,<br/>stop-word removal)"]
+    INDEXER --> II[("Inverted Index<br/>(NoSQL)")]
+    INDEXER --> DM[("Document Metadata<br/>(NoSQL)")]
+    DM --> PR["PageRank<br/>Batch Computation<br/>(iterative)"]
+    PR -->|"Update scores"| DM
+
+    style SEED fill:#e8f0fe,stroke:#4285f4
+    style UF fill:#fef7e0,stroke:#fbbc05
+    style DS fill:#e6f4ea,stroke:#34a853
+    style II fill:#e6f4ea,stroke:#34a853
+    style DM fill:#e6f4ea,stroke:#34a853
+    style DROP fill:#fce8e6,stroke:#ea4335
+    </div>
 </div>
 
-<h3>Flow Steps</h3>
+<h3>Examples</h3>
+
+<div class="example-card">
+    <strong>Example 1 — Initial Crawl of a New Page:</strong><br/>
+    The URL Frontier contains <code>https://example.com/news/breaking-story</code> (discovered from a previously crawled page). A Web Crawler worker dequeues this URL, resolves its IP via the DNS Resolver, checks <code>robots.txt</code> for <code>example.com</code> (cached from earlier), and issues an HTTP GET. The HTML Fetcher retrieves the page. The Content Dedup Filter hashes the body and finds no existing match, so it passes to the Content Parser. The parser extracts the page title ("Breaking: Major Event"), body text, meta tags, and 47 outgoing links. The raw document is stored in the Document Store (Object Storage). The URL Extractor normalizes the 47 outgoing links and adds new ones to the URL Frontier. The Indexer tokenizes the body ("breaking", "major", "event", …), removes stop words, applies stemming, and writes postings to the Inverted Index. Document metadata (URL, title, crawl time, content hash) is stored in the Document Metadata table.
+</div>
+
+<div class="example-card">
+    <strong>Example 2 — Duplicate Content Detection:</strong><br/>
+    The crawler fetches <code>https://mirror-site.com/same-article</code>. After the HTML Fetcher retrieves the page, the Content Dedup Filter computes a SimHash/MinHash fingerprint and discovers that the content is near-identical to an already-indexed page from <code>original-news.com</code>. The crawler drops this page to avoid polluting the index with duplicates. The URL is marked as "duplicate" in the URL Frontier so it is deprioritized for future crawls.
+</div>
+
+<div class="example-card">
+    <strong>Example 3 — Re-crawl for Freshness:</strong><br/>
+    The URL Frontier has <code>https://news.site.com</code> scheduled for re-crawl every 5 minutes (high-priority news domain). A crawler worker fetches the page and the Content Parser detects that the content has changed since the last crawl (different content hash). The Indexer updates the Inverted Index entries for the affected terms and refreshes the Document Metadata with the new crawl timestamp. If the content hasn't changed, the system skips re-indexing but updates the <code>last_crawl_time</code>.
+</div>
+
+<div class="example-card">
+    <strong>Example 4 — PageRank Batch Computation:</strong><br/>
+    A periodic batch job (e.g., running every few hours) reads the link graph from the Document Metadata table. It runs the iterative PageRank algorithm across all documents in the index (using a distributed computation framework such as MapReduce). After convergence, the computed PageRank scores are written back into the Document Metadata table alongside each document's record. These scores will be used by the Ranking Service during query time.
+</div>
+
+<h3>Component Deep Dive</h3>
 <div class="card">
-<ol>
-<li><strong>User submits query</strong> → HTTPS GET to <code>www.google.com/search?q=...</code></li>
-<li><strong>GFE (Google Front End)</strong> terminates TLS, applies rate limiting, routes to nearest serving cluster via anycast</li>
-<li><strong>Query Parser</strong> tokenizes query, applies spell correction (did-you-mean), synonym expansion, entity detection, and locale/language normalization</li>
-<li><strong>Web Server (Superroot)</strong> fans out parsed query to Index Servers, Ads Server, Knowledge Graph, verticals (Images, News, etc.) in parallel</li>
-<li><strong>Index Server (scatter-gather)</strong> — query is sent to thousands of index shards in parallel; each shard performs inverted-index lookup + initial scoring (BM25 + static rank); top-K results returned per shard</li>
-<li><strong>Doc Server</strong> fetches document metadata, generates snippets with query-term highlighting from cached page content</li>
-<li><strong>ML Ranker</strong> applies BERT-based re-ranking on top candidates (typically top 1000 → re-rank to final top ~10-20)</li>
-<li><strong>Superroot blends</strong> organic results, ads, knowledge panel, featured snippets, "People Also Ask," images, news into final SERP</li>
-<li><strong>Response</strong> rendered as HTML (server-side) and returned within ~200ms</li>
-</ol>
+    <h4>URL Frontier (Message Queue)</h4>
+    <ul>
+        <li><strong>Role:</strong> A priority queue that holds URLs to be crawled. Manages scheduling, politeness (rate limiting per domain), and priority (news sites re-crawled more often than static pages).</li>
+        <li><strong>Protocol:</strong> Internal message queue protocol (producer/consumer pattern).</li>
+        <li><strong>Input:</strong> URLs from seed list or extracted from crawled pages.</li>
+        <li><strong>Output:</strong> Next URL(s) to crawl, dequeued by crawler workers.</li>
+        <li><strong>Politeness:</strong> Enforced via per-domain sub-queues. Each domain has a minimum interval between requests (e.g., 1 second).</li>
+        <li><strong>Priority:</strong> URLs are scored based on domain authority, freshness needs, and update frequency. Higher priority URLs are dequeued first.</li>
+        <li><strong>Why Message Queue:</strong> Decouples URL discovery from fetching. Provides buffering when crawlers are slower than URL discovery. Allows horizontal scaling of producers and consumers independently. Ensures each URL is fetched exactly once (at-least-once delivery with dedup). Alternatives considered below.</li>
+    </ul>
+
+    <h4>Web Crawler Cluster</h4>
+    <ul>
+        <li><strong>Role:</strong> A pool of distributed workers that fetch web pages. Each worker dequeues a URL from the frontier and issues an HTTP/HTTPS GET.</li>
+        <li><strong>Protocol:</strong> <span class="badge badge-http">HTTP/HTTPS GET</span> to fetch web pages over <strong>TCP</strong>.</li>
+        <li><strong>Input:</strong> URL from the URL Frontier.</li>
+        <li><strong>Output:</strong> Raw HTML content of the page (or error status if the fetch fails).</li>
+        <li><strong>Why TCP:</strong> Web crawling requires reliable delivery of full HTML content. TCP guarantees in-order, lossless delivery. UDP would lose data which is unacceptable for indexing.</li>
+    </ul>
+
+    <h4>DNS Resolver</h4>
+    <ul>
+        <li><strong>Role:</strong> Resolves domain names to IP addresses. Uses a local cache to avoid redundant DNS lookups (the same domain is crawled many times).</li>
+        <li><strong>Protocol:</strong> <span class="badge badge-http">DNS over UDP/TCP</span> (standard DNS protocol).</li>
+        <li><strong>Input:</strong> Domain name (e.g., <code>example.com</code>).</li>
+        <li><strong>Output:</strong> IP address(es) for the domain.</li>
+    </ul>
+
+    <h4>Robots.txt Checker</h4>
+    <ul>
+        <li><strong>Role:</strong> Fetches and caches the <code>robots.txt</code> file for each domain. Before crawling any URL, the system checks that the URL path is not disallowed.</li>
+        <li><strong>Protocol:</strong> <span class="badge badge-http">HTTP GET</span> <code>/robots.txt</code>.</li>
+        <li><strong>Input:</strong> URL to be crawled.</li>
+        <li><strong>Output:</strong> Allow/Disallow decision.</li>
+    </ul>
+
+    <h4>HTML Fetcher</h4>
+    <ul>
+        <li><strong>Role:</strong> Actually issues the HTTP request and retrieves the raw response. Handles redirects, retries, timeouts, and content-type checking (skip binary files).</li>
+        <li><strong>Protocol:</strong> <span class="badge badge-http">HTTP/HTTPS GET</span> over TCP.</li>
+        <li><strong>Input:</strong> URL + resolved IP.</li>
+        <li><strong>Output:</strong> Raw HTML content, HTTP status code, response headers.</li>
+    </ul>
+
+    <h4>Content Dedup Filter</h4>
+    <ul>
+        <li><strong>Role:</strong> Detects near-duplicate or exact-duplicate content to avoid indexing the same content under multiple URLs (e.g., mirror sites, content farms).</li>
+        <li><strong>Technique:</strong> SimHash or MinHash fingerprinting of the page content. Compares the fingerprint against a stored set of known fingerprints.</li>
+        <li><strong>Input:</strong> Raw HTML content.</li>
+        <li><strong>Output:</strong> Decision — unique (proceed) or duplicate (drop).</li>
+    </ul>
+
+    <h4>Content Parser</h4>
+    <ul>
+        <li><strong>Role:</strong> Parses the HTML document to extract structured data: title, body text, meta description, open graph tags, outgoing hyperlinks, images, language, etc.</li>
+        <li><strong>Input:</strong> Raw HTML.</li>
+        <li><strong>Output:</strong> Structured document object (title, body text, links list, metadata).</li>
+    </ul>
+
+    <h4>URL Extractor &amp; Normalizer</h4>
+    <ul>
+        <li><strong>Role:</strong> Extracts all <code>&lt;a href="..."&gt;</code> links from the parsed document. Normalizes URLs (lowercase, remove fragments, resolve relative paths). Deduplicates against already-known URLs.</li>
+        <li><strong>Input:</strong> List of raw URLs from parsed page.</li>
+        <li><strong>Output:</strong> Normalized, deduplicated URLs added to the URL Frontier.</li>
+    </ul>
+
+    <h4>Document Store (Object Storage)</h4>
+    <ul>
+        <li><strong>Role:</strong> Stores the raw HTML of every crawled page. This serves as the source-of-truth archive and is used for re-indexing if the indexing pipeline changes.</li>
+        <li><strong>Protocol:</strong> <span class="badge badge-http">HTTP PUT/GET</span> (object storage API).</li>
+        <li><strong>Input:</strong> Raw HTML content keyed by a content-addressed hash or URL hash.</li>
+        <li><strong>Output:</strong> Stored blob, retrievable by key.</li>
+    </ul>
+
+    <h4>Indexer Service</h4>
+    <ul>
+        <li><strong>Role:</strong> The core of the indexing pipeline. Processes a parsed document by: (1) tokenizing text into terms, (2) applying stemming (e.g., "running" → "run"), (3) removing stop words ("the", "a", "is"), (4) computing term frequencies (TF), and (5) writing postings to the Inverted Index.</li>
+        <li><strong>Protocol:</strong> <span class="badge badge-rpc">Internal RPC</span> or runs as a consumer off the Document Store message feed.</li>
+        <li><strong>Input:</strong> Parsed document (title, body text, URL, metadata).</li>
+        <li><strong>Output:</strong> Postings written to Inverted Index; metadata written to Document Metadata table.</li>
+    </ul>
+
+    <h4>Inverted Index (NoSQL)</h4>
+    <ul>
+        <li><strong>Role:</strong> The primary data structure for search. Maps each term to a postings list: a sorted list of (doc_id, term_frequency, positions[]) tuples. This enables fast lookup of all documents containing a given term.</li>
+        <li><strong>Data Model:</strong> Key = term (string), Value = postings list.</li>
+    </ul>
+
+    <h4>Document Metadata (NoSQL)</h4>
+    <ul>
+        <li><strong>Role:</strong> Stores metadata about each indexed document: URL, title, snippet-source text, PageRank score, crawl timestamp, content hash, language, etc. Accessed during ranking and snippet generation.</li>
+        <li><strong>Data Model:</strong> Key = doc_id, Value = metadata fields.</li>
+    </ul>
+
+    <h4>PageRank Batch Computation</h4>
+    <ul>
+        <li><strong>Role:</strong> A periodic offline job that computes PageRank scores for all documents. Reads the link graph (outgoing links per document), iteratively computes importance scores, and writes the results back to Document Metadata.</li>
+        <li><strong>Protocol:</strong> Distributed batch computation framework (MapReduce-style).</li>
+        <li><strong>Input:</strong> Link graph from Document Metadata.</li>
+        <li><strong>Output:</strong> PageRank score per doc_id, written back to Document Metadata.</li>
+        <li><strong>Frequency:</strong> Runs every few hours to days, depending on index size and freshness requirements.</li>
+    </ul>
 </div>
 
-<h3>Example</h3>
-<div class="card" style="background:#1e1e2e">
-<p><strong>Query:</strong> <code>"best italian restaurants san francisco"</code></p>
-<p><strong>Query Parser Output:</strong></p>
-<pre>{
-  "tokens": ["best", "italian", "restaurants", "san francisco"],
-  "entity": {"type": "cuisine", "value": "italian"},
-  "location": {"city": "San Francisco", "lat": 37.77, "lng": -122.42},
-  "intent": "local_business_search",
-  "spell_correction": null,
-  "synonyms": {"restaurants": ["eateries", "dining"]}
-}</pre>
-<p><strong>Scatter-Gather:</strong> Query sent to 10,000+ index shards → each returns top-50 doc IDs with BM25 scores → merged into global top-1000 → BERT re-ranks → top-10 organic results + local pack + ads</p>
-<p><strong>Latency breakdown:</strong> GFE 5ms + parse 10ms + index scatter-gather 80ms + doc fetch 30ms + ML re-rank 40ms + blending 15ms + render 20ms = ~200ms total</p>
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- FLOW 2: SEARCH QUERY PROCESSING -->
+<!-- ============================================================ -->
+<h2 id="flow2">4. Flow 2: Search Query Processing (Online / User-Facing)</h2>
+<p>This is the <em>read path</em>. When a user submits a search query, the system must retrieve, rank, and return results within hundreds of milliseconds.</p>
+
+<div class="diagram-card">
+    <div class="mermaid">
+graph LR
+    USER["👤 User Browser"] -->|"HTTP GET<br/>/search?q=...&page=1"| LB["Load Balancer<br/>(Layer 7)"]
+    LB --> QS["Query Service"]
+    QS --> QC[("Query Results<br/>Cache<br/>(In-Memory)")]
+    QS --> QP["Query Processor"]
+    QP --> SC["Spell Checker"]
+    QP --> TK["Tokenizer &<br/>Query Expander"]
+    TK --> II[("Inverted Index<br/>(NoSQL)")]
+    II --> RS["Ranking Service<br/>(BM25 + PageRank<br/>+ signals)"]
+    RS --> DM[("Document<br/>Metadata<br/>(NoSQL)")]
+    RS --> SG["Snippet<br/>Generator"]
+    SG --> QS
+    QS -->|"JSON Results"| USER
+
+    style USER fill:#e8f0fe,stroke:#4285f4
+    style QC fill:#fff3cd,stroke:#fbbc05
+    style II fill:#e6f4ea,stroke:#34a853
+    style DM fill:#e6f4ea,stroke:#34a853
+    style LB fill:#f3e8fd,stroke:#9334e6
+    </div>
 </div>
 
-<h3>Deep Dives</h3>
-<div class="info-grid">
+<h3>Examples</h3>
+
+<div class="example-card">
+    <strong>Example 1 — Cache Hit (Popular Query):</strong><br/>
+    A user types "weather today" and presses Enter. The browser issues <code>HTTP GET /search?q=weather+today&page=1</code>. The Load Balancer routes the request to an available Query Service instance. The Query Service hashes the query and checks the Query Results Cache. Since "weather today" is extremely popular, a cache hit occurs. The cached JSON result (with ranked URLs, titles, snippets) is immediately returned to the user. Total latency: ~50 ms.
+</div>
+
+<div class="example-card">
+    <strong>Example 2 — Cache Miss (Rare/Long-Tail Query):</strong><br/>
+    A user searches for "best ergonomic keyboard for split layout under $200 2025". The Query Service checks the cache — miss. The query is passed to the Query Processor, which tokenizes it into terms: ["best", "ergonomic", "keyboard", "split", "layout", "under", "$200", "2025"]. Stop words like "for" are removed. The Tokenizer also expands the query (synonym expansion: "ergonomic" → also check "ergonomical"). Each term is looked up in the Inverted Index, returning postings lists. The Ranking Service performs an intersection/union of postings lists, computes BM25 relevance scores, multiplies by PageRank scores (fetched from Document Metadata), and applies freshness boosts (2025 content ranked higher). The top 10 results are passed to the Snippet Generator, which extracts the best text snippet from each document that highlights the query terms. Results are returned as JSON, and the query+results are stored in the cache with a 10-minute TTL. Total latency: ~300 ms.
+</div>
+
+<div class="example-card">
+    <strong>Example 3 — Spell Correction Path:</strong><br/>
+    A user searches for "amazn prime delivery". The Query Processor sends the query to the Spell Checker, which uses an edit-distance algorithm against a dictionary of known terms and popular queries. It detects "amazn" should likely be "amazon" and returns the correction. The Query Service first executes the corrected query "amazon prime delivery" for the main results, and includes a "Did you mean: <em>amazon</em> prime delivery?" prompt in the response. The original misspelled query is also executed as a secondary query; if it returns very few results, only the corrected results are shown.
+</div>
+
+<div class="example-card">
+    <strong>Example 4 — Pagination (Page 2):</strong><br/>
+    The user clicks "Next" to see page 2 of results. The browser issues <code>HTTP GET /search?q=ergonomic+keyboard&page=2</code>. The Query Service may retrieve the full ranked list from cache (if page 1 was recently served and the full top-N results were cached) and returns results 11–20. If not cached, the full ranking pipeline re-executes and returns the appropriate slice. Caching the full top-100 results (not just top-10) avoids re-computation for pagination.
+</div>
+
+<h3>Component Deep Dive</h3>
 <div class="card">
-<h4>Inverted Index</h4>
-<p>Maps every token to a posting list: <code>token → [(docID, tf, positions), ...]</code>. Posting lists are sorted by docID for efficient intersection (zipper merge). Google stores in <strong>SSTable</strong> format on <strong>Colossus</strong> (GFS successor). Index is split into <strong>tiers</strong>: base index (high-quality pages, in-memory), extended index (long-tail, on SSD), real-time index (fresh content, in-memory). Compression: variable-byte encoding for docIDs, delta encoding for positions. Total index: ~100PB compressed across all data centers.</p>
+    <h4>Load Balancer (Layer 7)</h4>
+    <ul>
+        <li><strong>Role:</strong> Distributes incoming search requests across multiple Query Service instances. Operates at Layer 7 (application layer) so it can inspect HTTP paths to route <code>/search</code> vs. <code>/autocomplete</code> to different service pools.</li>
+        <li><strong>Algorithm:</strong> Least-connections or weighted round-robin. Least-connections preferred because query processing times vary — some queries (cache hits) are fast, others (complex rankings) are slow.</li>
+        <li><strong>Health Checks:</strong> Active health checks (periodic HTTP pings) to remove unhealthy instances from the pool.</li>
+        <li><strong>Placement:</strong> Between the user and the Query Service. Additional load balancers exist between the Query Service and the Index Server cluster (see Scaling section).</li>
+        <li><strong>Protocol:</strong> Terminates HTTPS from the client; communicates with backend services over HTTP or gRPC internally.</li>
+    </ul>
+
+    <h4>Query Service</h4>
+    <ul>
+        <li><strong>Role:</strong> The main orchestrator for search queries. Receives the HTTP request, checks the cache, coordinates the Query Processor → Inverted Index → Ranking Service → Snippet Generator pipeline, and returns formatted results.</li>
+        <li><strong>Protocol:</strong> <span class="badge badge-http">HTTP GET</span> <code>/search?q={query}&page={n}</code></li>
+        <li><strong>Input:</strong> Query string, page number, optional filters (language, date range).</li>
+        <li><strong>Output:</strong> JSON response containing an array of results, each with: title, URL, snippet, favicon URL. Also includes spell correction suggestions and total result count.</li>
+    </ul>
+
+    <h4>Query Results Cache (In-Memory)</h4>
+    <ul>
+        <li><strong>Role:</strong> Caches the results of recently executed queries. Critical for performance because a small percentage of queries ("head queries") account for the majority of traffic (Zipf distribution).</li>
+        <li><strong>Details:</strong> See full deep dive in the <a href="#cdn-cache">CDN &amp; Caching</a> section.</li>
+    </ul>
+
+    <h4>Query Processor</h4>
+    <ul>
+        <li><strong>Role:</strong> Transforms the raw query string into a structured query that can be executed against the Inverted Index. Steps: (1) tokenization, (2) lowercasing, (3) stop-word removal, (4) stemming, (5) synonym expansion, (6) spell checking.</li>
+        <li><strong>Input:</strong> Raw query string.</li>
+        <li><strong>Output:</strong> List of processed tokens + any spell correction suggestions.</li>
+    </ul>
+
+    <h4>Spell Checker</h4>
+    <ul>
+        <li><strong>Role:</strong> Uses edit-distance algorithms (Levenshtein distance), n-gram analysis, and a dictionary of popular queries/terms to detect and suggest corrections for misspelled queries.</li>
+        <li><strong>Input:</strong> Query tokens.</li>
+        <li><strong>Output:</strong> Corrected query (if applicable) + confidence score.</li>
+    </ul>
+
+    <h4>Tokenizer &amp; Query Expander</h4>
+    <ul>
+        <li><strong>Role:</strong> Splits query into tokens, applies stemming, and optionally expands the query with synonyms or related terms to improve recall (e.g., "car" → also search "automobile").</li>
+        <li><strong>Input:</strong> Processed query string.</li>
+        <li><strong>Output:</strong> Expanded list of search tokens.</li>
+    </ul>
+
+    <h4>Inverted Index (NoSQL) — Query-Time</h4>
+    <ul>
+        <li><strong>Role:</strong> Looked up with each query token. Returns the postings list for that token — a list of all documents containing the term, along with term frequency and position information.</li>
+        <li><strong>Protocol:</strong> <span class="badge badge-rpc">Internal RPC / gRPC</span> to Index Server cluster.</li>
+        <li><strong>Input:</strong> Search token(s).</li>
+        <li><strong>Output:</strong> Postings lists (arrays of doc_id + metadata per term).</li>
+    </ul>
+
+    <h4>Ranking Service</h4>
+    <ul>
+        <li><strong>Role:</strong> The brain of search. Computes a relevance score for each candidate document using a multi-signal formula:
+            <ul>
+                <li><strong>BM25:</strong> Text relevance score based on term frequency (TF) and inverse document frequency (IDF).</li>
+                <li><strong>PageRank:</strong> Page importance score from the link graph.</li>
+                <li><strong>Freshness:</strong> Boost for recently updated content.</li>
+                <li><strong>Other signals:</strong> Click-through rate, domain authority, content quality, user location/language.</li>
+            </ul>
+        </li>
+        <li><strong>Protocol:</strong> <span class="badge badge-rpc">Internal RPC</span>.</li>
+        <li><strong>Input:</strong> Candidate doc_ids from postings intersection, user query, user context.</li>
+        <li><strong>Output:</strong> Ordered list of (doc_id, score) tuples.</li>
+    </ul>
+
+    <h4>Snippet Generator</h4>
+    <ul>
+        <li><strong>Role:</strong> For each top-ranked document, extracts a short text snippet (typically 1–2 sentences) that best matches the query. Highlights query terms in bold. May use the stored document text from the Document Store or pre-computed snippet data from Document Metadata.</li>
+        <li><strong>Input:</strong> Ranked doc_ids + query tokens + document content/metadata.</li>
+        <li><strong>Output:</strong> Snippet text per result, with query terms highlighted.</li>
+    </ul>
 </div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- FLOW 3: AUTOCOMPLETE -->
+<!-- ============================================================ -->
+<h2 id="flow3">5. Flow 3: Autocomplete Suggestions (Online / User-Facing)</h2>
+<p>As the user types in the search box, the system provides real-time query suggestions to speed up the search experience and guide users toward popular/well-formed queries.</p>
+
+<div class="diagram-card">
+    <div class="mermaid">
+graph LR
+    USER["👤 User Browser<br/>(debounced keystrokes)"] -->|"HTTP GET<br/>/autocomplete?q=prefix"| LB["Load Balancer<br/>(Layer 7)"]
+    LB --> AS["Autocomplete<br/>Service"]
+    AS --> AC[("Autocomplete<br/>Cache<br/>(In-Memory)")]
+    AS --> TRIE[("Prefix Index<br/>(NoSQL / Trie)")]
+    AS --> QL[("Query Logs<br/>(NoSQL)")]
+    AS -->|"JSON Suggestions"| USER
+
+    style USER fill:#e8f0fe,stroke:#4285f4
+    style AC fill:#fff3cd,stroke:#fbbc05
+    style TRIE fill:#e6f4ea,stroke:#34a853
+    style QL fill:#e6f4ea,stroke:#34a853
+    style LB fill:#f3e8fd,stroke:#9334e6
+    </div>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-card">
+    <strong>Example 1 — Standard Autocomplete:</strong><br/>
+    The user starts typing "how to m" in the search box. After a 100 ms debounce, the browser fires <code>HTTP GET /autocomplete?q=how+to+m</code>. The Load Balancer routes to the Autocomplete Service. The service checks the Autocomplete Cache — hit! The prefix "how to m" is extremely common. The cache returns the top 8 suggestions: ["how to make pasta", "how to merge pdf files", "how to meditate", "how to make money online", …]. The JSON response is returned to the browser in ~30 ms. The browser renders the dropdown suggestions.
+</div>
+
+<div class="example-card">
+    <strong>Example 2 — Cache Miss with Trie Lookup:</strong><br/>
+    The user types "best noise cancel". The Autocomplete Cache doesn't have this prefix. The service queries the Prefix Index (a distributed Trie stored in NoSQL). The Trie traverses to the node for "best noise cancel" and retrieves the top-k completions by frequency score: ["best noise cancelling headphones", "best noise cancelling earbuds 2025", "best noise cancelling headphones under $100"]. The results are returned and also written to the Autocomplete Cache with a 1-hour TTL.
+</div>
+
+<div class="example-card">
+    <strong>Example 3 — Trending Query Boost:</strong><br/>
+    A major global event just occurred. Users start typing "earthquake". The Analytics Pipeline (which processes Query Logs) detects a sudden spike in queries starting with "earthquake" and updates the Prefix Index to boost "earthquake [location] today" to the top suggestion. Within minutes, all users typing "ear" see the trending suggestion at the top of the autocomplete list.
+</div>
+
+<h3>Component Deep Dive</h3>
 <div class="card">
-<h4>Scatter-Gather Architecture</h4>
-<p>The inverted index is horizontally sharded across thousands of machines. A query is broadcast to ALL shards in parallel (scatter). Each shard performs local BM25 scoring and returns its top-K results. The coordinator merges (gathers) all shard results using a priority queue. <strong>Hedged requests</strong>: send duplicate requests to reduce tail latency (if one shard is slow, use the backup's response). <strong>Canary requests</strong>: test query on a few shards before full fanout to detect crashes. Timeout at p99 + buffer; return partial results if some shards don't respond.</p>
+    <h4>Autocomplete Service</h4>
+    <ul>
+        <li><strong>Role:</strong> Receives prefix queries from the user's browser and returns top-k query completions ranked by popularity, freshness, and relevance.</li>
+        <li><strong>Protocol:</strong> <span class="badge badge-http">HTTP GET</span> <code>/autocomplete?q={prefix}</code></li>
+        <li><strong>Input:</strong> Prefix string (partial query typed so far).</li>
+        <li><strong>Output:</strong> JSON array of suggestion strings, e.g., <code>["suggestion1", "suggestion2", ...]</code>.</li>
+        <li><strong>Latency Budget:</strong> Must respond in &lt; 100 ms. Caching and efficient data structures (Trie) are critical.</li>
+        <li><strong>Why HTTP GET (not WebSocket):</strong> Autocomplete requests are stateless and infrequent relative to WebSocket overhead (one request per debounced keystroke, not continuous streaming). HTTP GET is simpler, cacheable by CDN/proxies, and sufficient for this use case. WebSockets would add connection management complexity without meaningful latency benefit when combined with debouncing. Polling was not considered because the request is event-driven (user keystroke), not periodic.</li>
+    </ul>
+
+    <h4>Autocomplete Cache (In-Memory)</h4>
+    <ul>
+        <li><strong>Role:</strong> Caches prefix → suggestions mappings for popular prefixes. Hit rate is very high due to Zipf distribution of prefixes.</li>
+        <li><strong>Details:</strong> See full deep dive in the <a href="#cdn-cache">CDN &amp; Caching</a> section.</li>
+    </ul>
+
+    <h4>Prefix Index (NoSQL / Trie)</h4>
+    <ul>
+        <li><strong>Role:</strong> A distributed Trie data structure that stores all known query prefixes and their completions. Each Trie node at a prefix boundary stores the top-k completions sorted by a scoring function (frequency × recency × quality).</li>
+        <li><strong>Data Model:</strong> Key = prefix string, Value = sorted list of (completion string, score) pairs.</li>
+        <li><strong>Updates:</strong> The Analytics Pipeline periodically (every few minutes) aggregates Query Logs and updates the Trie with new/trending queries and updated frequency scores.</li>
+    </ul>
+
+    <h4>Query Logs (NoSQL — Time Series)</h4>
+    <ul>
+        <li><strong>Role:</strong> Records every search query executed by users. This data feeds the Analytics Pipeline, which in turn updates the Prefix Index (autocomplete suggestions), detects trending queries, and powers search quality metrics.</li>
+        <li><strong>Protocol:</strong> Async write (fire-and-forget from Query Service). Does not block the search response.</li>
+        <li><strong>Input:</strong> Query text, timestamp, anonymized user ID, result count, click-through data.</li>
+    </ul>
+
+    <h4>Analytics Pipeline</h4>
+    <ul>
+        <li><strong>Role:</strong> A batch/streaming pipeline that processes Query Logs to compute: (1) query frequency counts, (2) trending queries, (3) autocomplete suggestion updates, (4) search quality metrics. Outputs are used to update the Prefix Index.</li>
+        <li><strong>Frequency:</strong> Near-real-time streaming for trending detection; batch (hourly/daily) for comprehensive frequency recalculation.</li>
+    </ul>
 </div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- COMBINED OVERALL FLOW -->
+<!-- ============================================================ -->
+<h2 id="combined">6. Combined Overall Flow</h2>
+<p>This diagram integrates all three flows into a single unified view of the system.</p>
+
+<div class="diagram-card">
+    <div class="mermaid">
+graph TD
+    subgraph ONLINE["🌐 Online — User-Facing"]
+        USER["👤 User Browser"] -->|"HTTP GET /search"| LB["Load Balancer<br/>(L7)"]
+        USER -->|"HTTP GET /autocomplete"| LB
+        LB --> QS["Query Service"]
+        LB --> AS["Autocomplete Service"]
+        QS --> QC[("Query Results<br/>Cache")]
+        QS --> QP["Query Processor<br/>(Tokenize, Spell Check)"]
+        QP --> II_READ[("Inverted Index<br/>(Read)")]
+        II_READ --> RS["Ranking Service<br/>(BM25 + PageRank)"]
+        RS --> DM_READ[("Document Metadata<br/>(Read)")]
+        RS --> SG["Snippet Generator"]
+        SG --> QS
+        QS -->|"JSON Results"| USER
+        AS --> AC[("Autocomplete<br/>Cache")]
+        AS --> TRIE[("Prefix Index")]
+        AS -->|"JSON Suggestions"| USER
+    end
+
+    subgraph OFFLINE["⚙️ Offline — Crawling & Indexing"]
+        SEED["Seed URLs"] --> UF[("URL Frontier<br/>(Message Queue)")]
+        UF --> WC["Web Crawler Cluster"]
+        WC -->|"HTTP GET Pages"| FETCH["HTML Fetcher"]
+        FETCH --> DEDUP["Content Dedup"]
+        DEDUP --> PARSE["Content Parser"]
+        PARSE --> URLEXT["URL Extractor"]
+        URLEXT --> UF
+        PARSE --> DS[("Document Store<br/>(Object Storage)")]
+        DS --> IX["Indexer Service"]
+        IX --> II_WRITE[("Inverted Index<br/>(Write)")]
+        IX --> DM_WRITE[("Document Metadata<br/>(Write)")]
+        DM_WRITE --> PR["PageRank<br/>Batch Job"]
+        PR --> DM_WRITE
+    end
+
+    subgraph ANALYTICS["📊 Analytics"]
+        QS -.->|"Async Log"| QLG[("Query Logs")]
+        QLG --> ANA["Analytics Pipeline"]
+        ANA -->|"Update Suggestions"| TRIE
+    end
+
+    CDN["CDN<br/>(Static Assets)"] --> USER
+
+    style USER fill:#e8f0fe,stroke:#4285f4
+    style LB fill:#f3e8fd,stroke:#9334e6
+    style QC fill:#fff3cd,stroke:#fbbc05
+    style AC fill:#fff3cd,stroke:#fbbc05
+    style CDN fill:#fff3cd,stroke:#fbbc05
+    style II_READ fill:#e6f4ea,stroke:#34a853
+    style II_WRITE fill:#e6f4ea,stroke:#34a853
+    style DM_READ fill:#e6f4ea,stroke:#34a853
+    style DM_WRITE fill:#e6f4ea,stroke:#34a853
+    style DS fill:#e6f4ea,stroke:#34a853
+    style UF fill:#fef7e0,stroke:#fbbc05
+    style QLG fill:#e6f4ea,stroke:#34a853
+    style TRIE fill:#e6f4ea,stroke:#34a853
+    </div>
+</div>
+
+<h3>Combined Flow Examples</h3>
+
+<div class="example-card">
+    <strong>Example 1 — End-to-End: From Crawl to Search Result:</strong><br/>
+    <strong>Step 1 (Offline):</strong> A news website publishes an article at <code>https://news.example.com/breaking-story</code>. The Web Crawler discovers this URL (via a re-crawl of the news site homepage), fetches the HTML, and the Indexer processes it and writes to the Inverted Index and Document Metadata. The next PageRank batch job runs and assigns this page a moderate score (new page, few inbound links yet).<br/><br/>
+    <strong>Step 2 (Autocomplete):</strong> Twenty minutes later, a user starts typing "breaking sto" in the search bar. The debounced request hits the Autocomplete Service, which looks up the Prefix Index and returns "breaking story news example" as a top suggestion (boosted by trending detection in the Analytics Pipeline, which noticed a spike in this query from Query Logs).<br/><br/>
+    <strong>Step 3 (Search):</strong> The user selects the autocomplete suggestion and submits. The Query Service checks the cache — miss (first time this exact query is searched). The Query Processor tokenizes the query, looks up the Inverted Index, the Ranking Service scores candidates (the news article ranks high due to strong term match + freshness boost), and the Snippet Generator creates a snippet. The results are returned to the user and cached. The query is logged to Query Logs asynchronously.
+</div>
+
+<div class="example-card">
+    <strong>Example 2 — CDN + Cache Optimized Path:</strong><br/>
+    A user navigates to <code>google.com</code>. The browser loads the search page HTML, CSS, JavaScript, and the Google logo from the <strong>CDN</strong> (edge server geographically close to the user) — fast static asset delivery. The user types "weather" — the autocomplete request hits the <strong>Autocomplete Cache</strong> (extremely popular prefix) and returns instantly. The user hits Enter — the search request hits the <strong>Query Results Cache</strong> (extremely popular query) and returns cached results. In this flow, neither the Inverted Index nor the Ranking Service were hit — the entire interaction was served from caches and CDN.
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- SCHEMA DESIGN -->
+<!-- ============================================================ -->
+<h2 id="schema">7. Schema Design</h2>
+
+<p>All tables in this design use NoSQL because the data is extremely large-scale (trillions of rows for the inverted index), requires high write throughput (crawling pipeline), and the query patterns are simple key-value or key-range lookups (no complex joins). SQL's ACID guarantees and join capabilities are unnecessary here and would be a bottleneck at this scale.</p>
+
+<!-- Table 1: Document Metadata -->
+<h3>7.1 Document Metadata Table <span class="badge badge-nosql">NoSQL (Wide-Column)</span></h3>
 <div class="card">
-<h4>BERT Re-Ranking</h4>
-<p>Google applies BERT (Bidirectional Encoder Representations from Transformers) to understand query-document relevance at a semantic level. Applied to the top ~1000 candidates (too expensive for all 400B pages). Uses a cross-encoder: <code>[CLS] query [SEP] document [SEP]</code> → relevance score. Distilled to smaller models for serving latency. <strong>MUM</strong> (Multitask Unified Model) extends this to be multimodal and multilingual. Running on TPU v4 pods in serving path.</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+        <tr><td><code>doc_id</code></td><td>String (hash of URL)</td><td><strong>Primary Key (Partition Key)</strong></td><td>Unique identifier for the document, generated as a hash of the canonical URL.</td></tr>
+        <tr><td><code>url</code></td><td>String</td><td></td><td>Full canonical URL of the web page.</td></tr>
+        <tr><td><code>domain</code></td><td>String</td><td></td><td>Domain name (e.g., "example.com"). Used for domain-level aggregations.</td></tr>
+        <tr><td><code>title</code></td><td>String</td><td></td><td>HTML &lt;title&gt; tag content.</td></tr>
+        <tr><td><code>snippet_text</code></td><td>String</td><td></td><td>Pre-extracted text for snippet generation (first ~500 chars of body or meta description).</td></tr>
+        <tr><td><code>content_hash</code></td><td>String</td><td></td><td>Hash of the page content for deduplication and change detection.</td></tr>
+        <tr><td><code>page_rank_score</code></td><td>Float</td><td></td><td>PageRank importance score (denormalized from PageRank computation for read performance — see note below).</td></tr>
+        <tr><td><code>crawl_timestamp</code></td><td>DateTime</td><td></td><td>When the page was last crawled.</td></tr>
+        <tr><td><code>language</code></td><td>String</td><td></td><td>Detected language of the page (e.g., "en", "es").</td></tr>
+        <tr><td><code>outgoing_links</code></td><td>List&lt;String&gt;</td><td></td><td>List of URLs this page links to. Used by PageRank computation.</td></tr>
+        <tr><td><code>incoming_link_count</code></td><td>Integer</td><td></td><td>Number of known inbound links. Cheap proxy for authority.</td></tr>
+    </table>
+
+    <h4>Why NoSQL (Wide-Column)?</h4>
+    <p>The Document Metadata table holds hundreds of billions of rows (one per indexed web page). Access patterns are simple: lookup by <code>doc_id</code> (point reads during ranking) and batch scans during PageRank computation. There are no complex joins. A wide-column NoSQL store provides high write throughput for the crawling pipeline and fast point reads for query serving. SQL would struggle with the sheer volume and the schema flexibility needed as new metadata fields are added over time.</p>
+
+    <h4>Denormalization Note</h4>
+    <p><code>page_rank_score</code> is stored directly in this table rather than in a separate PageRank table. This is <strong>denormalized</strong> to avoid a join during query-time ranking. The Ranking Service needs both document metadata (title, URL) and the PageRank score simultaneously for every candidate result. A separate table would require an additional lookup per document per query, adding unacceptable latency at scale. The trade-off is that the PageRank batch job must update this field in-place, but since PageRank runs infrequently (every few hours), this write cost is negligible.</p>
+
+    <h4>Indexes</h4>
+    <ul>
+        <li><strong>Primary Index on <code>doc_id</code></strong> — Hash index. Enables O(1) point lookups by doc_id during ranking. Hash index chosen because all lookups are exact-match (no range queries on doc_id).</li>
+        <li><strong>Secondary Index on <code>domain</code></strong> — Hash index. Used during crawling for politeness enforcement (looking up all URLs for a domain) and for domain-level analytics.</li>
+        <li><strong>Secondary Index on <code>crawl_timestamp</code></strong> — B-tree index. Used by the crawler scheduler to find pages due for re-crawling (range query: "all docs with crawl_timestamp older than X"). B-tree supports efficient range queries on timestamps.</li>
+    </ul>
+
+    <h4>Sharding Strategy</h4>
+    <p><strong>Hash sharding on <code>doc_id</code>.</strong> Since <code>doc_id</code> is itself a hash of the URL, it's uniformly distributed, ensuring even data distribution across shards. This prevents hot spots. Each shard holds a random subset of documents. During query-time, the Ranking Service knows which shard holds a given doc_id via consistent hashing, enabling targeted lookups. This is preferable to range-based sharding (which would create hot spots for popular domains) or domain-based sharding (which would create uneven shard sizes since some domains have millions of pages while others have a handful).</p>
+
+    <h4>When Read / Written</h4>
+    <ul>
+        <li><strong>Written:</strong> By the Indexer Service when a new page is crawled/indexed. By the PageRank batch job when updating scores.</li>
+        <li><strong>Read:</strong> By the Ranking Service and Snippet Generator during search query processing (to retrieve title, URL, snippet text, PageRank score for top results). By the PageRank batch job (to read the link graph). By the crawler (to check last crawl time).</li>
+    </ul>
 </div>
+
+<!-- Table 2: Inverted Index -->
+<h3>7.2 Inverted Index Table <span class="badge badge-nosql">NoSQL (Wide-Column)</span></h3>
 <div class="card">
-<h4>PageRank &amp; Static Rank</h4>
-<p>PageRank computes a static quality score for each page based on the link graph: <code>PR(A) = (1-d) + d × Σ(PR(Ti)/C(Ti))</code> where d=0.85 damping factor, Ti = pages linking to A, C(Ti) = outbound links from Ti. Computed offline via iterative MapReduce (converges in ~50-100 iterations). Combined with 200+ other signals: domain authority, content freshness, HTTPS, mobile-friendliness, Core Web Vitals, E-E-A-T signals.</p>
-</div>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+        <tr><td><code>term</code></td><td>String</td><td><strong>Primary Key (Partition Key)</strong></td><td>A single stemmed token (e.g., "run" covers "running", "runs", "ran").</td></tr>
+        <tr><td><code>postings_list</code></td><td>List&lt;Posting&gt;</td><td></td><td>Sorted list of postings. Each posting: <code>{doc_id, term_frequency, positions[]}</code>. Sorted by doc_id for efficient intersection.</td></tr>
+        <tr><td><code>document_frequency</code></td><td>Integer</td><td></td><td>Number of documents containing this term. Used for IDF calculation in BM25.</td></tr>
+    </table>
+
+    <h4>Why NoSQL (Wide-Column)?</h4>
+    <p>The Inverted Index is the most read-heavy table in the system. Each search query triggers lookups for every query token. The data model is naturally key-value (term → postings list). Postings lists can be extremely large (millions of entries for common terms like "the"). A wide-column store supports large, variable-size values and provides very high read throughput. There are no joins or relational queries needed. SQL would be a poor fit: the postings list would either require a separate row per (term, doc_id) pair (billions of rows, slow aggregation) or storing a blob (losing queryability).</p>
+
+    <h4>Index Note</h4>
+    <p>The entire table <em>is itself</em> an inverted index. The primary key on <code>term</code> uses a <strong>hash index</strong> for O(1) lookup by term. This is the core data structure that makes search fast — instead of scanning every document, we look up each query term directly.</p>
+
+    <h4>Sharding Strategy</h4>
+    <p><strong>Term-based hash sharding on <code>term</code>.</strong> Each shard holds a subset of terms and their complete postings lists. When a query arrives with tokens ["best", "keyboard"], the system looks up two different shards (one for "best", one for "keyboard") in parallel, retrieves both postings lists, and intersects them. This enables parallel lookup across terms.</p>
+    <p><strong>Why not document-based sharding?</strong> In document-based sharding, each shard would hold a complete mini-index for a subset of documents. A query would need to be broadcast to <em>every</em> shard (scatter-gather), which is less efficient for the common case. Term-based sharding requires lookups on only as many shards as there are query terms.</p>
+    <p><strong>Hot shard mitigation:</strong> Very common terms (e.g., "the", "is") create large postings lists on a single shard. These are mitigated by: (1) stop-word removal eliminates most of these terms at query time, (2) replication of hot shards across multiple nodes, (3) tiered storage where common terms' postings lists are partially loaded.</p>
+
+    <h4>When Read / Written</h4>
+    <ul>
+        <li><strong>Written:</strong> By the Indexer Service when a new document is indexed (appends to the postings list for each term in the document).</li>
+        <li><strong>Read:</strong> By the Query Service during every search query (one lookup per query token). This is the most read-heavy table in the entire system.</li>
+    </ul>
 </div>
 
-<h2>4. Flow 2 — Web Crawling &amp; Indexing Pipeline</h2>
-<div class="diagram-box">
-<svg viewBox="0 0 1100 350" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="a2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#34A853"/></marker></defs>
-<rect x="20" y="140" width="120" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="80" y="170" text-anchor="middle" fill="#fff" font-size="13">URL Frontier</text><text x="80" y="185" text-anchor="middle" fill="#fff" font-size="11">priority queue</text>
-<rect x="190" y="140" width="120" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="250" y="170" text-anchor="middle" fill="#fff" font-size="13">Crawler</text><text x="250" y="185" text-anchor="middle" fill="#fff" font-size="11">(Googlebot)</text>
-<rect x="190" y="50" width="120" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="250" y="80" text-anchor="middle" fill="#fff" font-size="13">DNS Resolver</text><text x="250" y="95" text-anchor="middle" fill="#fff" font-size="11">+ robots.txt</text>
-<rect x="360" y="140" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="425" y="170" text-anchor="middle" fill="#fff" font-size="13">Parser / Renderer</text><text x="425" y="185" text-anchor="middle" fill="#fff" font-size="11">headless Chrome</text>
-<rect x="540" y="50" width="130" height="60" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="605" y="80" text-anchor="middle" fill="#fff" font-size="13">Duplicate</text><text x="605" y="95" text-anchor="middle" fill="#fff" font-size="11">Detector (SimHash)</text>
-<rect x="540" y="140" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="605" y="170" text-anchor="middle" fill="#fff" font-size="13">Indexer</text><text x="605" y="185" text-anchor="middle" fill="#fff" font-size="11">token→posting</text>
-<rect x="540" y="230" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="605" y="260" text-anchor="middle" fill="#fff" font-size="13">Link Extractor</text><text x="605" y="275" text-anchor="middle" fill="#fff" font-size="11">→ URL Frontier</text>
-<rect x="720" y="140" width="140" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="790" y="170" text-anchor="middle" fill="#fff" font-size="13">Index Shards</text><text x="790" y="185" text-anchor="middle" fill="#fff" font-size="11">(SSTable/Colossus)</text>
-<rect x="910" y="140" width="140" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="980" y="170" text-anchor="middle" fill="#fff" font-size="13">PageRank</text><text x="980" y="185" text-anchor="middle" fill="#fff" font-size="11">(offline MapReduce)</text>
-<line x1="140" y1="170" x2="188" y2="170" stroke="#34A853" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="250" y1="140" x2="250" y2="112" stroke="#34A853" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="310" y1="170" x2="358" y2="170" stroke="#34A853" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="490" y1="155" x2="538" y2="85" stroke="#34A853" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="490" y1="170" x2="538" y2="170" stroke="#34A853" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="490" y1="185" x2="538" y2="255" stroke="#34A853" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="670" y1="170" x2="718" y2="170" stroke="#34A853" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="860" y1="170" x2="908" y2="170" stroke="#34A853" stroke-width="2" marker-end="url(#a2)"/>
-<path d="M605 290 L605 320 L50 320 L50 170 L18 170" stroke="#34A853" stroke-width="2" marker-end="url(#a2)" fill="none" stroke-dasharray="5,5"/>
-</svg>
-</div>
-
-<h3>Flow Steps</h3>
+<!-- Table 3: URL Frontier -->
+<h3>7.3 URL Frontier Table <span class="badge badge-nosql">NoSQL (Key-Value)</span></h3>
 <div class="card">
-<ol>
-<li><strong>URL Frontier</strong> maintains a priority queue of URLs to crawl, ordered by importance (PageRank, freshness), with politeness constraints (max crawl rate per domain via per-host queues)</li>
-<li><strong>Googlebot</strong> fetches pages via HTTP/2, respecting <code>robots.txt</code> (cached per domain), <code>Crawl-delay</code>, and <code>noindex</code>/<code>nofollow</code> directives</li>
-<li><strong>Renderer</strong> runs headless Chromium (WRS — Web Rendering Service) to execute JavaScript SPAs, producing final DOM</li>
-<li><strong>Duplicate Detector</strong> computes SimHash/MinHash fingerprint; near-duplicates are clustered, canonical selected</li>
-<li><strong>Indexer</strong> tokenizes document content, builds inverted index entries (term → posting list with positions, frequencies)</li>
-<li><strong>Link Extractor</strong> discovers new URLs from anchor tags, feeds back into URL Frontier (the crawl cycle)</li>
-<li><strong>Index Shards</strong> receive new/updated entries via a streaming pipeline; shards are served from SSTable files on Colossus</li>
-<li><strong>PageRank</strong> runs as offline batch job (MapReduce/Pregel) over the entire link graph, produces static quality scores</li>
-</ol>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+        <tr><td><code>url_hash</code></td><td>String</td><td><strong>Primary Key</strong></td><td>Hash of the canonical URL. Used for fast deduplication checks.</td></tr>
+        <tr><td><code>url</code></td><td>String</td><td></td><td>Full canonical URL.</td></tr>
+        <tr><td><code>domain</code></td><td>String</td><td></td><td>Domain name for politeness grouping.</td></tr>
+        <tr><td><code>priority</code></td><td>Integer</td><td></td><td>Crawl priority (higher = more important). Based on domain authority, freshness needs.</td></tr>
+        <tr><td><code>last_crawl_time</code></td><td>DateTime</td><td></td><td>Timestamp of the last successful crawl. Null if never crawled.</td></tr>
+        <tr><td><code>next_crawl_time</code></td><td>DateTime</td><td></td><td>Scheduled time for the next crawl.</td></tr>
+        <tr><td><code>crawl_interval</code></td><td>Integer (seconds)</td><td></td><td>How frequently this URL should be re-crawled.</td></tr>
+        <tr><td><code>status</code></td><td>Enum</td><td></td><td>pending | in_progress | completed | failed | duplicate</td></tr>
+        <tr><td><code>retry_count</code></td><td>Integer</td><td></td><td>Number of failed crawl attempts.</td></tr>
+    </table>
+
+    <h4>Why NoSQL (Key-Value)?</h4>
+    <p>The URL Frontier contains billions of URLs. Access patterns are: (1) dedup check by url_hash (point lookup), (2) dequeue next URL to crawl by priority + next_crawl_time (range query), (3) status updates. No joins are needed. A key-value or wide-column store handles this efficiently. In practice, this table backs the Message Queue abstraction described in Flow 1 — the message queue uses this table as persistent storage.</p>
+
+    <h4>Indexes</h4>
+    <ul>
+        <li><strong>Primary Index on <code>url_hash</code></strong> — Hash index for O(1) dedup checks.</li>
+        <li><strong>Composite Index on <code>(domain, next_crawl_time)</code></strong> — B-tree index. The crawler scheduler queries "give me the next URL to crawl for domain X where next_crawl_time ≤ now." The B-tree enables efficient range scans on <code>next_crawl_time</code> within a given domain, supporting the politeness policy.</li>
+        <li><strong>Secondary Index on <code>priority</code></strong> — B-tree index for ordering URLs by priority when selecting what to crawl next.</li>
+    </ul>
+
+    <h4>Sharding Strategy</h4>
+    <p><strong>Domain-based sharding.</strong> URLs are sharded by domain name. All URLs from <code>example.com</code> reside on the same shard. This enables the politeness policy: each shard/crawler is responsible for a set of domains and can enforce rate limits (e.g., max 1 request/second to each domain). If sharding were by url_hash, enforcing per-domain politeness would require cross-shard coordination.</p>
+    <p><strong>Handling large domains:</strong> Domains with millions of URLs (e.g., Wikipedia) may need to be split across sub-shards by URL path prefix.</p>
+
+    <h4>When Read / Written</h4>
+    <ul>
+        <li><strong>Written:</strong> By the URL Extractor when new URLs are discovered from crawled pages. By the crawler when updating status (in_progress, completed, failed).</li>
+        <li><strong>Read:</strong> By the Web Crawler when dequeuing the next URL to fetch. By the URL Dedup Filter when checking if a discovered URL is already known.</li>
+    </ul>
 </div>
 
-<h3>Example</h3>
-<div class="card" style="background:#1e1e2e">
-<p><strong>Scenario:</strong> New blog post published at <code>https://example.com/blog/new-post</code></p>
-<p><strong>Discovery:</strong> Googlebot finds URL via sitemap.xml submission (Google Search Console) or from a link on the homepage</p>
-<p><strong>Crawl:</strong> HTTP GET → 200 OK, Content-Type: text/html, 45KB body</p>
-<p><strong>Render:</strong> Page uses React SSR → WRS skips JS rendering (DOM already present). If client-side only, WRS queues for headless Chrome rendering (may take hours)</p>
-<p><strong>Index:</strong> Tokenized into ~3000 terms. Title, H1, meta description get boosted weight. Added to real-time index tier → searchable within minutes. Later merged to base index tier during compaction.</p>
-<p><strong>Recrawl schedule:</strong> High-authority sites (CNN, Wikipedia): every few minutes. Low-authority blogs: every few weeks.</p>
-</div>
-
-<h3>Deep Dives</h3>
-<div class="info-grid">
+<!-- Table 4: Query Logs -->
+<h3>7.4 Query Logs Table <span class="badge badge-nosql">NoSQL (Time-Series)</span></h3>
 <div class="card">
-<h4>URL Frontier Design</h4>
-<p>Two-level queue: <strong>front queues</strong> (prioritized by importance: PageRank score, freshness, crawl budget) and <strong>back queues</strong> (one per host for politeness). The front queues feed into a router that assigns URLs to back queues based on hostname. Each back queue has a heap-based timer ensuring minimum crawl interval per host (typically 1 request per second per domain). URL deduplication via Bloom filter (billions of URLs seen). The frontier uses <strong>Mercator-style</strong> architecture. Crawl budget allocation uses a formula: <code>budget(site) = f(PageRank, freshness_decay, update_frequency)</code>.</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+        <tr><td><code>log_id</code></td><td>String (UUID)</td><td><strong>Primary Key</strong></td><td>Unique identifier for the log entry.</td></tr>
+        <tr><td><code>query_text</code></td><td>String</td><td></td><td>The raw search query string.</td></tr>
+        <tr><td><code>timestamp</code></td><td>DateTime</td><td><strong>Sort Key</strong></td><td>When the query was executed.</td></tr>
+        <tr><td><code>result_count</code></td><td>Integer</td><td></td><td>Number of results returned.</td></tr>
+        <tr><td><code>latency_ms</code></td><td>Integer</td><td></td><td>End-to-end latency of the query.</td></tr>
+        <tr><td><code>clicked_results</code></td><td>List&lt;String&gt;</td><td></td><td>Which result URLs the user clicked (populated asynchronously from click tracking).</td></tr>
+        <tr><td><code>user_region</code></td><td>String</td><td></td><td>Anonymized geographic region of the user.</td></tr>
+    </table>
+
+    <h4>Why NoSQL (Time-Series)?</h4>
+    <p>Query logs are append-only (never updated), timestamp-ordered, and extremely high-volume (100K+ writes/second). A time-series NoSQL database is optimized for this pattern: high write throughput, efficient time-range scans, and automatic data compaction/TTL for old data. SQL databases would struggle with the write volume and the ever-growing table size. Time-series databases also support efficient rollup/aggregation queries (e.g., "count queries per minute for the last hour") which power the Analytics Pipeline.</p>
+
+    <h4>Indexes</h4>
+    <ul>
+        <li><strong>Primary Index on <code>(log_id)</code></strong> — Hash index for individual lookups (rarely used).</li>
+        <li><strong>Time-partitioned index on <code>timestamp</code></strong> — The time-series database automatically partitions data by time. This enables efficient range scans for the Analytics Pipeline (e.g., "all queries in the last hour").</li>
+        <li><strong>Inverted index on <code>query_text</code></strong> — For the Analytics Pipeline to efficiently count query frequencies. An inverted index allows "find all log entries where query_text contains 'earthquake'" without a full scan.</li>
+    </ul>
+
+    <h4>Sharding Strategy</h4>
+    <p><strong>Time-based sharding.</strong> Data is partitioned by time window (e.g., 1 hour per shard). This aligns with the access pattern: the Analytics Pipeline processes recent data, and old shards can be archived or deleted per retention policy. Time-based sharding also ensures even data distribution since query volume is relatively consistent over time.</p>
+
+    <h4>When Read / Written</h4>
+    <ul>
+        <li><strong>Written:</strong> By the Query Service asynchronously after every search query.</li>
+        <li><strong>Read:</strong> By the Analytics Pipeline for computing autocomplete suggestions, trending queries, and search quality metrics.</li>
+    </ul>
 </div>
+
+<!-- Table 5: Autocomplete / Prefix Index -->
+<h3>7.5 Prefix Index Table <span class="badge badge-nosql">NoSQL (Key-Value)</span></h3>
 <div class="card">
-<h4>Web Rendering Service (WRS)</h4>
-<p>Many modern sites rely on client-side JavaScript (React, Angular, Vue). Googlebot's WRS runs headless Chromium to execute JS and produce the final DOM. This is a <strong>two-phase indexing</strong>: first index the raw HTML (fast), then render JS and re-index (delayed, can take hours/days). WRS resource cost: rendering 1 page ≈ 5-10x the cost of a simple HTTP fetch. Google encourages SSR/SSG for SEO. WRS handles: dynamic imports, IntersectionObserver lazy loading, Web Components, service workers (skipped).</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+        <tr><td><code>prefix</code></td><td>String</td><td><strong>Primary Key</strong></td><td>The query prefix (e.g., "how to m").</td></tr>
+        <tr><td><code>suggestions</code></td><td>List&lt;Suggestion&gt;</td><td></td><td>Top-k completions. Each: <code>{query_text, score, category}</code>. Pre-sorted by score descending.</td></tr>
+        <tr><td><code>last_updated</code></td><td>DateTime</td><td></td><td>When this prefix's suggestions were last refreshed.</td></tr>
+    </table>
+
+    <h4>Why NoSQL (Key-Value)?</h4>
+    <p>Access pattern is exclusively point lookups: given a prefix, return suggestions. No joins, no range queries, no relational needs. A key-value store offers the lowest latency for this pattern. The value (suggestions list) is pre-computed and pre-sorted, so the Autocomplete Service just returns it directly without any processing.</p>
+
+    <h4>Denormalization Note</h4>
+    <p>The suggestions are <strong>heavily denormalized</strong> — they are pre-aggregated from the Query Logs table by the Analytics Pipeline. Rather than querying Query Logs in real-time (which would be far too slow for autocomplete's &lt;100 ms latency requirement), we precompute the top suggestions for every possible prefix and store them here. The trade-off is that suggestions are not perfectly real-time (updated every few minutes via the pipeline), but this staleness is acceptable for autocomplete.</p>
+
+    <h4>Indexes</h4>
+    <ul>
+        <li><strong>Primary Index on <code>prefix</code></strong> — Hash index for O(1) lookup. Since all queries are exact-match on the prefix key, a hash index is optimal. A Trie-based index (in-memory layer) can also be used on top for efficient prefix traversal when the exact prefix isn't in the table.</li>
+    </ul>
+
+    <h4>Sharding Strategy</h4>
+    <p><strong>Hash sharding on <code>prefix</code>.</strong> Prefixes are evenly distributed by hash. Popular prefixes (e.g., "how") that receive more traffic are mitigated by the Autocomplete Cache, which absorbs most reads for hot keys.</p>
+
+    <h4>When Read / Written</h4>
+    <ul>
+        <li><strong>Written:</strong> By the Analytics Pipeline after processing Query Logs (periodic batch updates every few minutes).</li>
+        <li><strong>Read:</strong> By the Autocomplete Service on every keystroke (after debounce) when the Autocomplete Cache misses.</li>
+    </ul>
 </div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- CDN & CACHING DEEP DIVE -->
+<!-- ============================================================ -->
+<h2 id="cdn-cache">8. CDN &amp; Caching Deep Dive</h2>
+
+<h3>8.1 CDN (Content Delivery Network)</h3>
 <div class="card">
-<h4>SimHash Duplicate Detection</h4>
-<p>Computing exact duplicates across 400B pages is infeasible. <strong>SimHash</strong>: produce a 64-bit fingerprint from document features (shingles of n-grams). Two documents are near-duplicates if their SimHash values differ in ≤3 bits (Hamming distance). Stored in a hash table with multi-probe lookups. Also use <strong>MinHash</strong> with LSH (Locality-Sensitive Hashing) for set similarity (Jaccard). Canonical URL selection: highest PageRank page in a duplicate cluster becomes the canonical.</p>
+    <h4>Appropriateness: ✅ Appropriate for Static Assets, ❌ Not for Search Results</h4>
+    <p>A CDN is <strong>appropriate</strong> for serving the static assets of the search page: HTML template, CSS, JavaScript bundle, the logo image, fonts, and favicons. These files rarely change and benefit enormously from edge caching close to users worldwide.</p>
+    <p>A CDN is <strong>not appropriate</strong> for search results themselves. Search results are dynamic (different per query), potentially personalized, and change frequently as the index updates. CDN caching of dynamic content would serve stale results and is not practical for this use case.</p>
+    <p><strong>CDN strategy:</strong> Static assets are pushed to the CDN with long cache headers (e.g., <code>Cache-Control: max-age=31536000</code> with content-hash in the filename for cache busting). When assets are updated, new filenames are deployed and old CDN entries expire naturally.</p>
 </div>
+
+<h3>8.2 Query Results Cache (In-Memory)</h3>
 <div class="card">
-<h4>Freshness: Caffeine Architecture</h4>
-<p>Google's <strong>Caffeine</strong> indexing system (2010+) moved from batch-based full index rebuilds to an <strong>incremental, continuously-updated</strong> index. New content flows through a streaming pipeline and becomes searchable within minutes (real-time tier). The system uses a <strong>multi-tier index</strong>: real-time (in-memory, seconds-fresh), base (SSTable, hours-fresh), and archive (rarely-accessed long-tail). Compaction merges real-time entries into base tier periodically. This gives Google a significant freshness advantage.</p>
-</div>
+    <h4>Why a Cache is Critical</h4>
+    <p>Search queries follow a Zipf distribution: a small number of "head queries" (e.g., "weather", "facebook", "youtube") account for a disproportionate share of total queries. Caching results for these queries avoids the expensive Inverted Index lookup + Ranking pipeline for the majority of traffic.</p>
+
+    <table>
+        <tr><th>Property</th><th>Choice</th><th>Rationale</th></tr>
+        <tr>
+            <td><strong>Caching Strategy</strong></td>
+            <td><strong>Cache-Aside (Lazy Loading)</strong></td>
+            <td>On a cache miss, the Query Service executes the full pipeline and writes the results to the cache. On a cache hit, results are returned directly. This is preferred over write-through because search results are generated on-read (user query), not on-write (indexing). Write-through would require the Indexer to pre-compute results for all possible queries, which is impossible. Read-through is functionally similar to cache-aside here.</td>
+        </tr>
+        <tr>
+            <td><strong>Eviction Policy</strong></td>
+            <td><strong>LRU (Least Recently Used)</strong></td>
+            <td>LRU naturally keeps the most popular queries (which are accessed frequently) in cache and evicts rare/long-tail queries. This aligns with the Zipf distribution of queries. LFU (Least Frequently Used) would also work well but is more complex to implement and can have issues with old-but-no-longer-popular queries that accumulated high counts.</td>
+        </tr>
+        <tr>
+            <td><strong>Expiration Policy</strong></td>
+            <td><strong>TTL = 5–15 minutes</strong></td>
+            <td>Search results must reflect index freshness. A 5–15 minute TTL balances serving cached results (low latency, reduced load) with freshness (index updates propagate within minutes). For trending/news queries, TTL can be reduced to 1–2 minutes. For evergreen queries (e.g., "pythagorean theorem"), TTL can be extended to 30–60 minutes.</td>
+        </tr>
+        <tr>
+            <td><strong>Cache Key</strong></td>
+            <td><strong>Hash of (normalized query + page number + locale)</strong></td>
+            <td>The cache key must account for all factors that affect results. Two users searching the same query in different locales may get different results. Page number is included so that page 1 and page 2 are cached separately.</td>
+        </tr>
+        <tr>
+            <td><strong>What is Cached</strong></td>
+            <td><strong>Top 50–100 results per query (not just top 10)</strong></td>
+            <td>Caching more results than a single page avoids re-executing the full pipeline when the user paginates. Pages 1–5 are served from a single cache entry.</td>
+        </tr>
+    </table>
+
+    <h4>How the Cache is Populated</h4>
+    <ol>
+        <li>User submits a query → Query Service checks cache (hash lookup on the cache key).</li>
+        <li><strong>Cache hit:</strong> Return cached results immediately. ~50 ms latency.</li>
+        <li><strong>Cache miss:</strong> Execute the full pipeline (Query Processor → Inverted Index → Ranking → Snippet Generation). Store results in cache with TTL. Return results. ~200–500 ms latency.</li>
+    </ol>
 </div>
 
-<h2>5. Flow 3 — Query Autocomplete &amp; Spell Correction</h2>
-<div class="diagram-box">
-<svg viewBox="0 0 950 300" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="a3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FBBC05"/></marker></defs>
-<rect x="20" y="120" width="130" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="85" y="150" text-anchor="middle" fill="#fff" font-size="13">User Input</text><text x="85" y="165" text-anchor="middle" fill="#fff" font-size="11">keystroke stream</text>
-<rect x="200" y="120" width="130" height="60" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="265" y="150" text-anchor="middle" fill="#fff" font-size="13">Debounce</text><text x="265" y="165" text-anchor="middle" fill="#fff" font-size="11">150ms client-side</text>
-<rect x="380" y="30" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="450" y="55" text-anchor="middle" fill="#fff" font-size="13">Trie Lookup</text><text x="450" y="72" text-anchor="middle" fill="#fff" font-size="11">prefix → top-K</text>
-<rect x="380" y="120" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="450" y="150" text-anchor="middle" fill="#fff" font-size="13">Personalization</text><text x="450" y="165" text-anchor="middle" fill="#fff" font-size="11">user history</text>
-<rect x="380" y="210" width="140" height="60" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="450" y="240" text-anchor="middle" fill="#fff" font-size="13">Spell Corrector</text><text x="450" y="255" text-anchor="middle" fill="#fff" font-size="11">noisy channel</text>
-<rect x="580" y="120" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="650" y="150" text-anchor="middle" fill="#fff" font-size="13">Ranking /</text><text x="650" y="165" text-anchor="middle" fill="#fff" font-size="13">Blending</text>
-<rect x="780" y="120" width="130" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="845" y="150" text-anchor="middle" fill="#fff" font-size="13">Suggestions</text><text x="845" y="165" text-anchor="middle" fill="#fff" font-size="11">dropdown UI</text>
-<line x1="150" y1="150" x2="198" y2="150" stroke="#FBBC05" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="330" y1="140" x2="378" y2="65" stroke="#FBBC05" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="330" y1="150" x2="378" y2="150" stroke="#FBBC05" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="330" y1="160" x2="378" y2="235" stroke="#FBBC05" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="520" y1="65" x2="578" y2="140" stroke="#FBBC05" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="520" y1="150" x2="578" y2="150" stroke="#FBBC05" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="520" y1="235" x2="578" y2="165" stroke="#FBBC05" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="720" y1="150" x2="778" y2="150" stroke="#FBBC05" stroke-width="2" marker-end="url(#a3)"/>
-</svg>
-</div>
-
-<h3>Flow Steps</h3>
+<h3>8.3 Autocomplete Cache (In-Memory)</h3>
 <div class="card">
-<ol>
-<li><strong>Keystroke stream</strong> from user input is debounced on the client (150ms delay to avoid excessive RPCs)</li>
-<li><strong>Prefix sent</strong> to autocomplete service via HTTPS GET: <code>/complete/search?q=ita&client=gws</code></li>
-<li><strong>Trie Lookup</strong> performs prefix match on a compressed trie built from billions of past queries, weighted by frequency + recency</li>
-<li><strong>Personalization</strong> boosts suggestions based on user's search history and location (e.g., user in SF → local results boosted)</li>
-<li><strong>Spell Corrector</strong> applies noisy channel model: <code>P(correction|query) ∝ P(query|correction) × P(correction)</code> — language model probability × edit distance probability</li>
-<li><strong>Ranking</strong> blends trie results, personalized results, trending queries, and spell corrections into final top-10 suggestions</li>
-<li><strong>Response</strong> returned as JSON within ~50ms, rendered in dropdown</li>
-</ol>
+    <table>
+        <tr><th>Property</th><th>Choice</th><th>Rationale</th></tr>
+        <tr>
+            <td><strong>Caching Strategy</strong></td>
+            <td><strong>Cache-Aside (Lazy Loading)</strong></td>
+            <td>Same as Query Results Cache. On miss, the Autocomplete Service reads from the Prefix Index and stores in cache.</td>
+        </tr>
+        <tr>
+            <td><strong>Eviction Policy</strong></td>
+            <td><strong>LRU (Least Recently Used)</strong></td>
+            <td>Popular prefixes (e.g., "how", "what", "why") are accessed constantly and remain in cache. Rare prefixes are evicted.</td>
+        </tr>
+        <tr>
+            <td><strong>Expiration Policy</strong></td>
+            <td><strong>TTL = 1 hour</strong></td>
+            <td>Autocomplete suggestions change much less frequently than search results (the Analytics Pipeline updates the Prefix Index every few minutes, but the actual top suggestions for common prefixes rarely change). A longer TTL is acceptable and improves hit rate. For trending events, the Analytics Pipeline can explicitly invalidate affected cache entries.</td>
+        </tr>
+        <tr>
+            <td><strong>Cache Key</strong></td>
+            <td><strong>Normalized prefix string + locale</strong></td>
+            <td>Simple key. Locale is included because suggestions may differ by language/region.</td>
+        </tr>
+    </table>
+
+    <h4>How the Cache is Populated</h4>
+    <ol>
+        <li>User types → debounced request → Autocomplete Service checks cache.</li>
+        <li><strong>Cache hit:</strong> Return cached suggestions. ~20 ms.</li>
+        <li><strong>Cache miss:</strong> Query Prefix Index, store result in cache, return. ~50–80 ms.</li>
+    </ol>
+    <p><strong>Cache invalidation for trending events:</strong> The Analytics Pipeline detects query spikes and can push invalidation messages (via a pub/sub channel) to the Autocomplete Cache for affected prefixes. This ensures trending suggestions appear promptly without waiting for TTL expiration.</p>
 </div>
 
-<h3>Example</h3>
-<div class="card" style="background:#1e1e2e">
-<p><strong>User types:</strong> <code>"ita"</code></p>
-<p><strong>Trie results:</strong> ["italian restaurants near me", "italy travel", "italian flag", "itachi", "itar regulations"]</p>
-<p><strong>Personalization (user in SF):</strong> Boost "italian restaurants near me" + "italian restaurants san francisco"</p>
-<p><strong>Trending:</strong> "italy election results" (trending this week)</p>
-<p><strong>Final suggestions:</strong> ["italian restaurants near me", "italian restaurants san francisco", "italy election results", "italy travel", "itachi"]</p>
-<p><strong>Latency:</strong> Client debounce 150ms + network RTT 20ms + server 15ms = suggestion appears ~185ms after keystroke pause</p>
-</div>
+<hr class="section-divider">
 
-<h3>Deep Dives</h3>
-<div class="info-grid">
+<!-- ============================================================ -->
+<!-- SCALING CONSIDERATIONS -->
+<!-- ============================================================ -->
+<h2 id="scaling">9. Scaling Considerations</h2>
 <div class="card">
-<h4>Compressed Trie Data Structure</h4>
-<p>A standard trie for billions of queries would require petabytes. Google uses a <strong>compressed (Patricia) trie</strong> that merges single-child chains. Further optimization: <strong>succinct trie</strong> representation using LOUDS (Level-Order Unary Degree Sequence) encoding — stores the trie structure in ~2 bits per node. Each leaf/node stores the top-K query completions pre-computed. The trie is sharded by first 2-3 characters of the prefix. Stored entirely in memory across the autocomplete cluster for sub-millisecond lookups.</p>
+
+    <h3>9.1 Load Balancers</h3>
+    <p>Load balancers are critical at multiple points in the architecture:</p>
+    <table>
+        <tr><th>Location</th><th>Layer</th><th>Algorithm</th><th>Purpose</th></tr>
+        <tr>
+            <td><strong>User → Query/Autocomplete Service</strong></td>
+            <td>Layer 7 (Application)</td>
+            <td>Least Connections</td>
+            <td>Routes incoming HTTP requests to healthy service instances. L7 enables path-based routing: <code>/search</code> → Query Service pool, <code>/autocomplete</code> → Autocomplete Service pool. Least connections chosen because query processing times vary significantly (cache hits are fast, full pipeline is slow).</td>
+        </tr>
+        <tr>
+            <td><strong>Query Service → Index Servers</strong></td>
+            <td>Layer 4 (Transport)</td>
+            <td>Consistent Hashing</td>
+            <td>Routes term lookups to the correct shard of the Inverted Index. Consistent hashing ensures that the same term always routes to the same shard (or its replica). Minimizes data movement when shards are added/removed.</td>
+        </tr>
+        <tr>
+            <td><strong>Global DNS-based Load Balancing</strong></td>
+            <td>DNS Level</td>
+            <td>Geographic / Latency-based</td>
+            <td>Routes users to the nearest data center. A user in Europe is routed to a European data center; a user in Asia is routed to an Asian data center. Each data center has a full copy of the index.</td>
+        </tr>
+    </table>
+
+    <h3>9.2 Horizontal Scaling by Component</h3>
+    <table>
+        <tr><th>Component</th><th>Scaling Strategy</th><th>Notes</th></tr>
+        <tr>
+            <td><strong>Query Service</strong></td>
+            <td>Stateless; add more instances behind the LB</td>
+            <td>Each instance handles requests independently. Scale based on QPS metrics.</td>
+        </tr>
+        <tr>
+            <td><strong>Autocomplete Service</strong></td>
+            <td>Stateless; add more instances behind the LB</td>
+            <td>Similar to Query Service. Very lightweight per request.</td>
+        </tr>
+        <tr>
+            <td><strong>Inverted Index (NoSQL)</strong></td>
+            <td>Add more shards; replicate hot shards</td>
+            <td>As the index grows, add shards (re-partition via consistent hashing). Popular terms get additional read replicas.</td>
+        </tr>
+        <tr>
+            <td><strong>Document Metadata (NoSQL)</strong></td>
+            <td>Add more shards</td>
+            <td>Hash sharding on doc_id ensures even distribution. Add shards as the web grows.</td>
+        </tr>
+        <tr>
+            <td><strong>Web Crawler Cluster</strong></td>
+            <td>Add more crawler workers</td>
+            <td>Each worker independently dequeues URLs. Bottleneck is usually the politeness delay, not CPU.</td>
+        </tr>
+        <tr>
+            <td><strong>URL Frontier (Message Queue)</strong></td>
+            <td>Add more partitions/shards</td>
+            <td>Partitioned by domain. Add partitions as new domains are discovered.</td>
+        </tr>
+        <tr>
+            <td><strong>In-Memory Caches</strong></td>
+            <td>Add more cache nodes (distributed cache cluster)</td>
+            <td>Use consistent hashing to distribute cache keys across nodes. Add nodes to increase total cache capacity.</td>
+        </tr>
+        <tr>
+            <td><strong>Indexer Service</strong></td>
+            <td>Add more consumer workers</td>
+            <td>Each worker independently processes documents from the Document Store queue.</td>
+        </tr>
+    </table>
+
+    <h3>9.3 Data Center Replication</h3>
+    <p>For global availability and low latency, the entire search infrastructure (index, metadata, caches) is replicated across multiple data centers worldwide. Each data center serves as an independent search cluster capable of handling all queries. Data centers are kept in sync via asynchronous replication of the Inverted Index and Document Metadata. The crawling pipeline may run in a centralized location with results pushed to all data centers.</p>
+
+    <h3>9.4 Index Partitioning Strategy</h3>
+    <p>The Inverted Index is too large for a single machine. Two partitioning strategies are commonly used:</p>
+    <ul>
+        <li><strong>Term-based partitioning (chosen):</strong> Each shard holds a subset of terms. A query for N terms requires N shard lookups (in parallel). Good for queries with few terms (typical web search queries have 2–4 terms).</li>
+        <li><strong>Document-based partitioning (alternative):</strong> Each shard holds a complete mini-index for a subset of documents. Every query must scatter to all shards and gather results. More uniform shard sizes but higher fan-out.</li>
+    </ul>
+    <p>We use <strong>a hybrid approach</strong>: term-based partitioning for the primary index, with the Ranking Service performing scatter-gather across index shards in parallel. For very large-scale deployments, a two-level partitioning (first by document tier, then by term) can be used, where higher-quality documents are in a "premium" tier that is always searched, and lower-quality documents are in a secondary tier searched only if the primary tier doesn't have enough results.</p>
+
+    <h3>9.5 Estimated Scale Numbers</h3>
+    <table>
+        <tr><th>Metric</th><th>Estimate</th></tr>
+        <tr><td>Total indexed pages</td><td>~200+ billion</td></tr>
+        <tr><td>Inverted Index size</td><td>~100+ PB (across all shards)</td></tr>
+        <tr><td>Search QPS (global)</td><td>~100,000+ QPS (billions per day)</td></tr>
+        <tr><td>Autocomplete QPS</td><td>~300,000+ QPS (3x search QPS due to multiple keystrokes per search)</td></tr>
+        <tr><td>Crawl rate</td><td>~thousands of pages per second</td></tr>
+        <tr><td>Cache hit rate (search)</td><td>~30–50% of queries</td></tr>
+        <tr><td>Cache hit rate (autocomplete)</td><td>~80–90% of prefixes</td></tr>
+    </table>
 </div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- TRADEOFFS & DEEP DIVES -->
+<!-- ============================================================ -->
+<h2 id="tradeoffs">10. Tradeoffs &amp; Deep Dives</h2>
 <div class="card">
-<h4>Noisy Channel Spell Correction</h4>
-<p>Google's spell corrector uses Peter Norvig's noisy channel model at massive scale. <strong>Language model P(correction)</strong>: trained on billions of web documents (n-gram frequencies). <strong>Error model P(query|correction)</strong>: probability of the typo given the intended word (keyboard proximity, common substitutions like "teh"→"the"). For each query term, generate candidates within edit distance 1-2 (insertions, deletions, substitutions, transpositions). Rank by: <code>argmax P(c) × P(q|c)</code>. Also uses <strong>context-dependent correction</strong>: "italaian food" → both words jointly corrected to "italian food".</p>
-</div>
+    <h3>10.1 Freshness vs. Performance</h3>
+    <p><strong>Tradeoff:</strong> Shorter cache TTLs and more frequent crawling improve result freshness but increase load on the indexing pipeline and reduce cache hit rates. Longer TTLs improve performance but results become stale.</p>
+    <p><strong>Resolution:</strong> Tiered freshness strategy. News domains are re-crawled every few minutes with short cache TTLs (1–2 min). Evergreen content (Wikipedia, documentation) is re-crawled weekly with long TTLs (30–60 min). This optimizes resources where freshness matters most.</p>
+
+    <h3>10.2 Relevance vs. Latency</h3>
+    <p><strong>Tradeoff:</strong> More sophisticated ranking (machine learning models, personalization, context awareness) improves relevance but adds latency. Simpler ranking (BM25 + PageRank only) is faster but less relevant.</p>
+    <p><strong>Resolution:</strong> Multi-stage ranking. Stage 1: Fast candidate retrieval using BM25 over the inverted index (retrieve top 1000 candidates in ~50 ms). Stage 2: Re-ranking top candidates with a more expensive ML model that considers additional signals (~100 ms). This limits the expensive computation to a small candidate set.</p>
+
+    <h3>10.3 Index Completeness vs. Index Quality</h3>
+    <p><strong>Tradeoff:</strong> Indexing every page on the internet maximizes coverage but introduces spam, low-quality content, and duplicate pages that degrade result quality and bloat the index.</p>
+    <p><strong>Resolution:</strong> Quality filtering during crawling (skip pages with low PageRank, detect and drop spam) and content deduplication (SimHash). The index is curated, not exhaustive.</p>
+
+    <h3>10.4 Term-based vs. Document-based Index Partitioning</h3>
+    <p><strong>Tradeoff:</strong> Term-based partitioning (chosen) requires only N shard lookups per N-term query but creates imbalanced shards (common terms have huge postings lists). Document-based partitioning has uniform shards but requires scatter-gather to ALL shards for every query.</p>
+    <p><strong>Resolution:</strong> Term-based with hot-shard mitigation (replication of popular terms, stop-word removal, tiered indexing).</p>
+
+    <h3>10.5 Crawl Politeness vs. Coverage Speed</h3>
+    <p><strong>Tradeoff:</strong> Aggressively crawling a website yields more pages faster but may overload the target server (causing it to block the crawler or degrade). Polite crawling respects rate limits but is slower.</p>
+    <p><strong>Resolution:</strong> Per-domain rate limiting enforced by the URL Frontier. Default: 1 request per second per domain. Domains that explicitly allow faster crawling (via <code>robots.txt</code> crawl-delay directives) can be crawled faster.</p>
+
+    <h3>10.6 Deep Dive: Message Queue for URL Frontier</h3>
+    <p>The URL Frontier uses a <strong>message queue</strong> pattern to manage the URLs to be crawled:</p>
+    <ul>
+        <li><strong>How messages are enqueued:</strong> The URL Extractor (after parsing a crawled page) publishes new URLs to the queue. Each message contains: URL, priority score, source page, and timestamp. Before enqueuing, a dedup check is performed against the URL Frontier table to avoid duplicate URLs.</li>
+        <li><strong>How messages are dequeued:</strong> Crawler workers pull messages from the queue in priority order. After successfully crawling a URL, the worker acknowledges the message (removing it from the queue). If the crawler fails or times out, the message becomes visible again after a visibility timeout for retry.</li>
+        <li><strong>Why message queue (not pub/sub):</strong> We need point-to-point delivery — each URL should be fetched by exactly one crawler. Pub/sub broadcasts messages to all subscribers, which would cause every crawler to fetch every URL (massive waste).</li>
+        <li><strong>Why message queue (not direct database polling):</strong> A message queue provides built-in features: priority ordering, visibility timeouts, dead-letter queues for repeatedly failing URLs, and backpressure handling. Database polling would require custom implementation of all these features and suffers from poll interval latency.</li>
+        <li><strong>Why not WebSocket:</strong> WebSocket is for persistent bidirectional communication with clients. The URL Frontier is a server-to-server work queue. The producer/consumer pattern of a message queue is the natural fit.</li>
+    </ul>
+
+    <h3>10.7 Deep Dive: Protocol Choices</h3>
+    <table>
+        <tr><th>Communication Path</th><th>Protocol</th><th>Why</th></tr>
+        <tr>
+            <td>User → Search/Autocomplete API</td>
+            <td>HTTPS (HTTP/2) over TCP</td>
+            <td>Standard web protocol. HTTP/2 for multiplexing and header compression. TCP for reliable delivery — search results must be delivered completely and correctly. HTTPS for security/privacy.</td>
+        </tr>
+        <tr>
+            <td>Crawler → Web Pages</td>
+            <td>HTTP/HTTPS over TCP</td>
+            <td>Standard web fetching protocol. TCP is required — partial or corrupted HTML would produce a broken index. UDP would lose data.</td>
+        </tr>
+        <tr>
+            <td>Service-to-Service (internal)</td>
+            <td>gRPC over TCP</td>
+            <td>Binary protocol (Protocol Buffers) for efficient serialization. Lower latency than HTTP/JSON for internal communication. Built-in streaming support. TCP for reliability.</td>
+        </tr>
+        <tr>
+            <td>Query Logging (async)</td>
+            <td>Fire-and-forget over UDP or async TCP</td>
+            <td>Query logs are non-critical. Losing a small percentage of logs is acceptable. UDP avoids the overhead of TCP connection management for high-volume logging. Alternatively, async TCP with buffering.</td>
+        </tr>
+    </table>
 </div>
 
-<h2>6. Combined Architecture</h2>
-<div class="diagram-box">
-<svg viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="a4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#4285F4"/></marker></defs>
-<rect x="10" y="260" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="65" y="290" text-anchor="middle" fill="#fff" font-size="12">Users</text><text x="65" y="305" text-anchor="middle" fill="#fff" font-size="10">8.5B queries/day</text>
-<rect x="160" y="200" width="120" height="50" rx="8" fill="#546e7a" stroke="#90a4ae" stroke-width="2"/><text x="220" y="230" text-anchor="middle" fill="#fff" font-size="12">CDN / Edge</text>
-<rect x="160" y="270" width="120" height="50" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="220" y="295" text-anchor="middle" fill="#fff" font-size="12">GFE + LB</text><text x="220" y="310" text-anchor="middle" fill="#fff" font-size="10">anycast routing</text>
-<rect x="160" y="340" width="120" height="50" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="220" y="365" text-anchor="middle" fill="#fff" font-size="12">Autocomplete</text>
-<rect x="330" y="60" width="130" height="50" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="395" y="90" text-anchor="middle" fill="#fff" font-size="12">Query Parser</text>
-<rect x="330" y="140" width="130" height="50" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="395" y="165" text-anchor="middle" fill="#fff" font-size="12">Superroot (WS)</text>
-<rect x="330" y="220" width="130" height="50" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="395" y="245" text-anchor="middle" fill="#fff" font-size="12">Ads Auction</text>
-<rect x="330" y="300" width="130" height="50" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="395" y="325" text-anchor="middle" fill="#fff" font-size="12">Knowledge Graph</text>
-<rect x="330" y="380" width="130" height="50" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="395" y="405" text-anchor="middle" fill="#fff" font-size="12">Verticals</text><text x="395" y="418" text-anchor="middle" fill="#fff" font-size="10">img/news/video</text>
-<rect x="520" y="80" width="130" height="50" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="585" y="105" text-anchor="middle" fill="#fff" font-size="12">Index Servers</text><text x="585" y="118" text-anchor="middle" fill="#fff" font-size="10">10K+ shards</text>
-<rect x="520" y="160" width="130" height="50" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="585" y="185" text-anchor="middle" fill="#fff" font-size="12">Doc Servers</text>
-<rect x="520" y="240" width="130" height="50" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="585" y="265" text-anchor="middle" fill="#fff" font-size="12">ML Ranker</text><text x="585" y="278" text-anchor="middle" fill="#fff" font-size="10">BERT/MUM on TPU</text>
-<rect x="700" y="80" width="130" height="50" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="765" y="105" text-anchor="middle" fill="#fff" font-size="12">Inverted Index</text><text x="765" y="118" text-anchor="middle" fill="#fff" font-size="10">100PB+ SSTable</text>
-<rect x="700" y="160" width="130" height="50" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="765" y="185" text-anchor="middle" fill="#fff" font-size="12">Doc Store</text><text x="765" y="198" text-anchor="middle" fill="#fff" font-size="10">Colossus/GFS</text>
-<rect x="700" y="240" width="130" height="50" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="765" y="265" text-anchor="middle" fill="#fff" font-size="12">Bigtable</text><text x="765" y="278" text-anchor="middle" fill="#fff" font-size="10">user data</text>
-<rect x="520" y="400" width="130" height="50" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="585" y="425" text-anchor="middle" fill="#fff" font-size="12">Crawler</text><text x="585" y="438" text-anchor="middle" fill="#fff" font-size="10">(Googlebot)</text>
-<rect x="700" y="400" width="130" height="50" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="765" y="425" text-anchor="middle" fill="#fff" font-size="12">Indexing Pipeline</text><text x="765" y="438" text-anchor="middle" fill="#fff" font-size="10">Caffeine</text>
-<rect x="880" y="400" width="130" height="50" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="945" y="425" text-anchor="middle" fill="#fff" font-size="12">PageRank</text><text x="945" y="438" text-anchor="middle" fill="#fff" font-size="10">MapReduce</text>
-<rect x="700" y="320" width="130" height="50" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="765" y="345" text-anchor="middle" fill="#fff" font-size="12">Memcache</text><text x="765" y="358" text-anchor="middle" fill="#fff" font-size="10">result cache</text>
-<line x1="120" y1="290" x2="158" y2="290" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="120" y1="280" x2="158" y2="225" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="120" y1="300" x2="158" y2="360" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="280" y1="290" x2="328" y2="165" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="395" y1="110" x2="395" y2="138" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="460" y1="160" x2="518" y2="105" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="460" y1="170" x2="518" y2="185" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="460" y1="245" x2="518" y2="265" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="650" y1="105" x2="698" y2="105" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="650" y1="185" x2="698" y2="185" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="650" y1="425" x2="698" y2="425" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="830" y1="425" x2="878" y2="425" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="765" y1="400" x2="765" y2="372" stroke="#4285F4" stroke-width="2" marker-end="url(#a4)"/>
-</svg>
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- ALTERNATIVE APPROACHES -->
+<!-- ============================================================ -->
+<h2 id="alternatives">11. Alternative Approaches</h2>
+
+<div class="alt-card">
+    <h3>Alternative 1: Vector/Embedding-Based Semantic Search (Instead of Inverted Index)</h3>
+    <p><strong>Approach:</strong> Instead of tokenizing and building an inverted index, represent every document as a high-dimensional vector embedding (using a model like BERT/transformer). At query time, convert the query to a vector and perform approximate nearest neighbor (ANN) search to find similar documents.</p>
+    <p><strong>Why not chosen as the primary approach:</strong></p>
+    <ul>
+        <li>ANN search at the scale of hundreds of billions of documents is computationally prohibitive. Inverted index lookups are O(1) per term; ANN is O(log N) at best with approximate methods and requires large amounts of RAM for the index.</li>
+        <li>Inverted indexes are well-understood, battle-tested at scale, and support exact keyword matching (important for navigational queries like "facebook login").</li>
+        <li>Semantic understanding can be added as a <em>re-ranking layer</em> on top of inverted index retrieval (hybrid approach), getting the best of both worlds without replacing the core infrastructure.</li>
+    </ul>
 </div>
 
-<h3>Architecture Example Walkthrough</h3>
-<div class="card" style="background:#1e1e2e">
-<p><strong>Full query lifecycle for:</strong> <code>"how to make sourdough bread"</code></p>
-<ol>
-<li><strong>Autocomplete:</strong> As user types "how to make sour", suggestions appear: ["how to make sourdough bread", "how to make sourdough starter", ...]</li>
-<li><strong>GFE:</strong> Routes HTTPS request to nearest DC (e.g., us-west1), terminates TLS with BoringSSL</li>
-<li><strong>Result Cache Check:</strong> Memcache lookup for this exact query → cache HIT (popular query) → return cached SERP in 30ms</li>
-<li><strong>Cache MISS path:</strong> Query Parser → tokens: [sourdough, bread, make], intent: "how-to/recipe"</li>
-<li><strong>Superroot fans out:</strong> Index Servers (organic), Ads Auction (cooking ads), Knowledge Graph (sourdough entity), Recipe vertical, Video vertical (YouTube), "People Also Ask"</li>
-<li><strong>Index Servers:</strong> Scatter to 10K+ shards → BM25 + PageRank scoring → top-1000 candidates in 80ms</li>
-<li><strong>ML Ranker:</strong> BERT cross-encoder re-ranks top-1000 → recipe pages with structured data (schema.org/Recipe) boosted</li>
-<li><strong>Blending:</strong> Featured snippet (extracted recipe summary), organic results, recipe carousel, YouTube videos, "People Also Ask", ads → assembled into SERP HTML</li>
-<li><strong>Total latency:</strong> ~220ms (cache miss) or ~30ms (cache hit)</li>
-</ol>
+<div class="alt-card">
+    <h3>Alternative 2: Document-Based Index Partitioning (Instead of Term-Based)</h3>
+    <p><strong>Approach:</strong> Each shard holds a complete mini-inverted-index for a subset of documents. Every query is broadcast to all shards (scatter), each shard returns its top results, and a coordinator merges them (gather).</p>
+    <p><strong>Why not chosen:</strong></p>
+    <ul>
+        <li>Scatter-gather to ALL shards for every query creates massive fan-out. With thousands of shards, this means thousands of network calls per query, increasing tail latency.</li>
+        <li>Term-based partitioning requires lookups on only as many shards as there are query terms (typically 2–4), which is far more efficient.</li>
+        <li>Document-based is useful when the index fits on fewer large shards, but at web scale the fan-out cost dominates.</li>
+    </ul>
 </div>
 
-<h2>7. Database Schema</h2>
+<div class="alt-card">
+    <h3>Alternative 3: WebSockets for Autocomplete (Instead of HTTP GET)</h3>
+    <p><strong>Approach:</strong> Open a persistent WebSocket connection when the user focuses the search box. Send each keystroke over the WebSocket and receive suggestions in real-time.</p>
+    <p><strong>Why not chosen:</strong></p>
+    <ul>
+        <li>WebSockets add connection management complexity (maintaining millions of concurrent connections for users who may only type a few characters).</li>
+        <li>HTTP GET with debouncing (100 ms delay) achieves similar perceived latency without persistent connections.</li>
+        <li>HTTP GET responses are cacheable by CDN edge servers and intermediate proxies. WebSocket messages are not.</li>
+        <li>Stateless HTTP is simpler to scale horizontally and load balance.</li>
+    </ul>
+</div>
+
+<div class="alt-card">
+    <h3>Alternative 4: Polling-Based Crawl Scheduling (Instead of Message Queue)</h3>
+    <p><strong>Approach:</strong> Crawler workers periodically poll a central database table for URLs due to be crawled.</p>
+    <p><strong>Why not chosen:</strong></p>
+    <ul>
+        <li>Database polling at scale (thousands of crawler workers polling every second) creates enormous read load on the database.</li>
+        <li>Message queues provide native priority ordering, visibility timeouts, and dead-letter queues — all of which would need to be custom-built on top of a database.</li>
+        <li>Message queues offer better backpressure handling when the crawl pipeline is overloaded.</li>
+    </ul>
+</div>
+
+<div class="alt-card">
+    <h3>Alternative 5: SQL Database for Document Metadata (Instead of NoSQL)</h3>
+    <p><strong>Approach:</strong> Use a relational SQL database for storing document metadata with full ACID compliance.</p>
+    <p><strong>Why not chosen:</strong></p>
+    <ul>
+        <li>Document metadata has hundreds of billions of rows. Vertical scaling of SQL is limited; horizontal scaling (sharding) in SQL is complex and loses many relational benefits (cross-shard joins).</li>
+        <li>The access pattern is simple key-value lookups (by doc_id). No complex joins, transactions, or aggregations are needed at query time.</li>
+        <li>NoSQL wide-column stores are designed for exactly this access pattern at massive scale: fast point reads, high write throughput, easy horizontal scaling.</li>
+        <li>The flexible schema of NoSQL accommodates evolving metadata fields without costly ALTER TABLE migrations.</li>
+    </ul>
+</div>
+
+<div class="alt-card">
+    <h3>Alternative 6: Pub/Sub for Trending Query Detection (Instead of Batch Analytics Pipeline)</h3>
+    <p><strong>Approach:</strong> Use a pub/sub streaming system to process query logs in real-time and detect trending queries instantly.</p>
+    <p><strong>Why partially adopted:</strong></p>
+    <ul>
+        <li>We actually use a <strong>hybrid approach</strong>: a streaming component for real-time trending detection (low-latency spike detection) combined with a batch component for comprehensive frequency recalculation (accuracy). Pure batch would miss short-lived trending events. Pure streaming would be expensive for full frequency analysis of all queries.</li>
+    </ul>
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- ADDITIONAL INFORMATION -->
+<!-- ============================================================ -->
+<h2 id="additional">12. Additional Information</h2>
 <div class="card">
-<h3>Inverted Index (SSTable on Colossus)</h3>
-<pre>
-Key: term (string, e.g., "sourdough")
-Value: PostingList {
-  doc_freq: uint32,                    // number of documents containing this term
-  postings: [                          // sorted by docID
-    {
-      doc_id: uint64,                  // globally unique document identifier
-      term_freq: uint16,              // occurrences of term in this document
-      positions: [uint32],            // word positions for phrase queries
-      field_flags: uint8              // bit flags: title|body|url|anchor|h1
-    }, ...
-  ]
-}
-Compression: delta-encoded docIDs + variable-byte encoding
-Sharding: hash(term) % num_shards (term-based sharding)
-</pre>
 
-<h3>Document Store (Bigtable/Colossus)</h3>
-<pre>
-Row Key: doc_id (uint64)  <span class="tag-pk">PK</span> <span class="tag-shard">SHARD: hash(doc_id)</span>
-Column Families:
-  "meta": {
-    url: string,
-    title: string,
-    description: string,
-    language: string,
-    content_type: string,
-    last_crawled: timestamp,
-    last_modified: timestamp,
-    page_rank: float32,
-    canonical_url: string
-  }
-  "content": {
-    raw_html: bytes (compressed),
-    rendered_text: string,
-    extracted_links: [string],
-    structured_data: json (schema.org)
-  }
-  "signals": {
-    mobile_friendly: bool,
-    https: bool,
-    core_web_vitals: {lcp: float, fid: float, cls: float},
-    spam_score: float32
-  }
-</pre>
+    <h3>12.1 Fault Tolerance &amp; Reliability</h3>
+    <ul>
+        <li><strong>Index Replication:</strong> Each shard of the Inverted Index and Document Metadata is replicated (typically 3 replicas). If one replica fails, reads are served from another. A consensus protocol ensures write consistency.</li>
+        <li><strong>Circuit Breaker:</strong> If the Inverted Index or Ranking Service is slow/unavailable, the Query Service can fall back to serving cached results (even if slightly stale) rather than returning an error.</li>
+        <li><strong>Graceful Degradation:</strong> Under extreme load, non-essential features (spell check, query expansion, snippet generation) can be shed to prioritize core result delivery.</li>
+        <li><strong>Crawler Resilience:</strong> Crawler workers are stateless and disposable. If a worker crashes mid-crawl, the URL's message in the queue becomes visible again after the visibility timeout, and another worker picks it up.</li>
+    </ul>
 
-<h3>Query Logs (for autocomplete & analytics)</h3>
-<pre>
-Table: query_log  <span class="tag-shard">SHARD: hash(query_prefix[0:2])</span>
-- query_hash: uint64      <span class="tag-pk">PK</span>
-- query_text: string       <span class="tag-idx">IDX: prefix trie</span>
-- frequency: uint64        <span class="tag-idx">IDX: for top-K ranking</span>
-- last_seen: timestamp
-- region_counts: map&lt;string, uint64&gt;  // per-region frequency
-- trend_score: float32     // recency-weighted score
-</pre>
+    <h3>12.2 Security Considerations</h3>
+    <ul>
+        <li><strong>Crawler User-Agent:</strong> The crawler identifies itself via a standard User-Agent header and respects <code>robots.txt</code> and <code>noindex</code>/<code>nofollow</code> meta tags.</li>
+        <li><strong>Malicious Content:</strong> The Content Parser includes sanitization to prevent XSS or other injection attacks from crawled content appearing in snippets.</li>
+        <li><strong>Rate Limiting:</strong> The API gateway enforces per-IP and per-user rate limits to prevent abuse (DDoS, scraping).</li>
+        <li><strong>Query Privacy:</strong> Query logs are anonymized. Personally identifiable information is stripped before storage.</li>
+    </ul>
 
-<h3>Web Graph (for PageRank)</h3>
-<pre>
-// Adjacency list stored in Colossus
-Key: source_doc_id (uint64)  <span class="tag-pk">PK</span>
-Value: {
-  outbound_links: [
-    {target_doc_id: uint64, anchor_text: string}, ...
-  ],
-  inbound_count: uint32
-}
-// Processing: Pregel/MapReduce iterative computation
-// ~100B edges in the web graph
-</pre>
+    <h3>12.3 Monitoring &amp; Observability</h3>
+    <ul>
+        <li><strong>Key Metrics:</strong> p50/p99 search latency, cache hit rate, crawl throughput (pages/second), index freshness (average age of indexed pages), query error rate.</li>
+        <li><strong>Alerting:</strong> Alerts on latency spikes, cache hit rate drops, crawler failure rates, and index staleness.</li>
+        <li><strong>Distributed Tracing:</strong> Each search request is traced end-to-end (LB → Query Service → Index → Ranking → Snippet) to identify bottlenecks.</li>
+    </ul>
+
+    <h3>12.4 PageRank Deep Dive</h3>
+    <p>PageRank models the web as a directed graph where pages are nodes and hyperlinks are edges. The algorithm assigns an importance score to each page based on the quality and quantity of pages linking to it. The intuition: a page linked to by many important pages is itself important.</p>
+    <ul>
+        <li><strong>Algorithm:</strong> Iterative. Start with uniform scores. In each iteration, each page distributes its score equally among its outgoing links. A damping factor (typically 0.85) prevents score from accumulating in "sink" nodes. Iterate until convergence.</li>
+        <li><strong>Scale:</strong> Computing PageRank over hundreds of billions of nodes requires distributed computation (MapReduce). Each iteration processes the entire link graph.</li>
+        <li><strong>Frequency:</strong> Full recomputation every few hours to days. Incremental updates for newly discovered/removed links can be applied between full runs.</li>
+    </ul>
+
+    <h3>12.5 Snippet Generation Deep Dive</h3>
+    <p>For each search result, a snippet (1–2 sentences) must be generated that best represents how the document is relevant to the query.</p>
+    <ul>
+        <li><strong>Approach:</strong> For each candidate document, score each sentence by how many query terms it contains (weighted by TF-IDF). Select the top-scoring sentence(s). Bold the query terms in the output.</li>
+        <li><strong>Source text:</strong> The snippet text is generated from pre-stored <code>snippet_text</code> in the Document Metadata table (the first ~500 characters of body text or the meta description). This avoids fetching the full document from Object Storage at query time.</li>
+        <li><strong>Fallback:</strong> If no sentence contains query terms, use the meta description. If no meta description exists, use the first sentence of the page.</li>
+    </ul>
 </div>
 
-<h2>8. Cache &amp; CDN Deep Dive</h2>
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- VENDOR SUGGESTIONS -->
+<!-- ============================================================ -->
+<h2 id="vendors">13. Vendor Suggestions</h2>
+<p>The architecture above is vendor-agnostic. Below are potential vendor choices with rationale, should a specific implementation be needed.</p>
 <div class="card">
-<h3>Multi-Layer Caching</h3>
-<table>
-<tr><th>Layer</th><th>What's Cached</th><th>TTL</th><th>Strategy</th><th>Hit Rate</th></tr>
-<tr><td>Browser Cache</td><td>Static assets (JS, CSS, images), SERP for back button</td><td>1h-1yr (immutable hashed assets)</td><td>Cache-Control headers</td><td>High for assets</td></tr>
-<tr><td>CDN / Edge</td><td>Static assets, autocomplete for popular prefixes</td><td>Minutes to hours</td><td>Anycast, edge POP</td><td>~90% for static</td></tr>
-<tr><td>Result Cache (Memcache)</td><td>Full SERP for exact query+locale</td><td>Minutes (popular) to seconds (fresh topics)</td><td>LRU eviction, write-through</td><td>~30% of queries</td></tr>
-<tr><td>Posting List Cache</td><td>Hot posting lists (frequently queried terms)</td><td>Until index update</td><td>In-memory on index servers</td><td>~80% for head terms</td></tr>
-<tr><td>Document Cache</td><td>Snippets and metadata for top documents</td><td>Hours</td><td>LRU in doc server memory</td><td>~70%</td></tr>
-</table>
-
-<h3>Cache Invalidation Strategy</h3>
-<p><strong>Result cache</strong> uses short TTLs (minutes) since rankings change frequently. For breaking news queries, TTL drops to seconds. <strong>Posting list cache</strong> is invalidated when the index shard receives updates from the Caffeine pipeline. <strong>Document cache</strong> invalidated on recrawl. Google prefers <strong>TTL-based expiration</strong> over explicit invalidation for most layers due to the massive scale (explicit invalidation across 10K+ servers is impractical).</p>
-
-<h3>CDN Architecture</h3>
-<p>Google operates its own CDN via <strong>Google Edge Network</strong> with 200+ edge PoPs worldwide. Uses <strong>QUIC</strong> (HTTP/3) for reduced connection setup latency (0-RTT). Anycast routing directs users to nearest edge. Search results themselves are NOT cached at CDN (too dynamic/personalized), but all static assets (search page JS/CSS, logo, fonts) are aggressively cached. Autocomplete responses for the top ~10K prefixes may be edge-cached.</p>
+    <table>
+        <tr><th>Component</th><th>Potential Vendors</th><th>Rationale</th></tr>
+        <tr>
+            <td><strong>NoSQL (Wide-Column) — Inverted Index, Document Metadata</strong></td>
+            <td>Apache Cassandra, Apache HBase, Google Bigtable</td>
+            <td>Cassandra: Excellent write throughput, tunable consistency, masterless architecture for high availability. HBase/Bigtable: Strong consistency, excellent for range scans (useful for postings lists), tight integration with Hadoop/MapReduce for PageRank batch jobs.</td>
+        </tr>
+        <tr>
+            <td><strong>NoSQL (Key-Value) — URL Frontier, Prefix Index</strong></td>
+            <td>Amazon DynamoDB, Aerospike, RocksDB</td>
+            <td>DynamoDB: Fully managed, auto-scaling, single-digit ms latency. Aerospike: Optimized for flash storage, extremely low latency. RocksDB: Embedded key-value store for ultra-low latency (used as the storage engine within larger systems).</td>
+        </tr>
+        <tr>
+            <td><strong>NoSQL (Time-Series) — Query Logs</strong></td>
+            <td>InfluxDB, Apache Druid, TimescaleDB</td>
+            <td>InfluxDB: Purpose-built for time-series, efficient compression. Druid: Real-time analytics on event data, supports sub-second queries on large datasets. TimescaleDB: PostgreSQL extension, familiar SQL interface for time-series.</td>
+        </tr>
+        <tr>
+            <td><strong>In-Memory Cache</strong></td>
+            <td>Redis, Memcached, Hazelcast</td>
+            <td>Redis: Rich data structures (sorted sets for ranked results), persistence options, clustering support. Memcached: Simpler, slightly faster for pure key-value caching, multi-threaded. Hazelcast: Java-native, in-memory data grid with built-in distributed computing.</td>
+        </tr>
+        <tr>
+            <td><strong>Message Queue — URL Frontier</strong></td>
+            <td>Apache Kafka, RabbitMQ, Amazon SQS</td>
+            <td>Kafka: Extremely high throughput, durable, supports priority via topic partitioning. RabbitMQ: Native priority queue support, flexible routing. SQS: Fully managed, built-in dead-letter queues and visibility timeouts.</td>
+        </tr>
+        <tr>
+            <td><strong>Object Storage — Document Store</strong></td>
+            <td>Amazon S3, Google Cloud Storage, MinIO</td>
+            <td>S3/GCS: Virtually unlimited storage, 11 nines durability, lifecycle policies for archival. MinIO: S3-compatible, self-hosted for on-premise deployments.</td>
+        </tr>
+        <tr>
+            <td><strong>CDN</strong></td>
+            <td>Cloudflare, Akamai, Amazon CloudFront, Fastly</td>
+            <td>Cloudflare: Global edge network, DDoS protection, free tier. Akamai: Largest CDN network, enterprise-grade. CloudFront: Tight integration with AWS. Fastly: Real-time purging, edge compute (VCL/Wasm).</td>
+        </tr>
+        <tr>
+            <td><strong>Batch Computation — PageRank</strong></td>
+            <td>Apache Spark, Apache Flink, Hadoop MapReduce</td>
+            <td>Spark: Fast in-memory iterative computation (ideal for PageRank). Flink: Unified batch + streaming. Hadoop MapReduce: Proven at web scale, simpler but slower.</td>
+        </tr>
+        <tr>
+            <td><strong>Load Balancer</strong></td>
+            <td>Nginx, HAProxy, Envoy, AWS ALB</td>
+            <td>Nginx: High-performance, widely used, L7 routing. HAProxy: Industry-standard, excellent for L4/L7. Envoy: Service mesh native, gRPC support, observability. ALB: Managed, integrates with AWS auto-scaling.</td>
+        </tr>
+    </table>
 </div>
 
-<h2>9. Scaling Considerations</h2>
-<div class="card">
-<h3>Horizontal Scaling</h3>
-<ul>
-<li><strong>Index sharding:</strong> 10,000+ shards across dozens of data centers, each shard holding ~40M documents. Every query fans out to ALL shards (scatter-gather). Each shard is replicated 3-5x for redundancy and load distribution.</li>
-<li><strong>Geographic distribution:</strong> Full index replica in each major region (US, Europe, Asia, etc.) — user queries served from nearest region. Index synchronization via streaming replication.</li>
-<li><strong>Crawler scaling:</strong> Thousands of Googlebot instances across multiple IPs and data centers. Distributed URL frontier prevents duplicate crawling.</li>
-</ul>
+<br/><br/>
+<p style="text-align:center; color: var(--text2); font-size: 0.9em;">
+    — End of System Design Document —<br/>
+    Google Search | System Design
+</p>
 
-<h3>Load Balancing</h3>
-<ul>
-<li><strong>DNS-level:</strong> Anycast routing to nearest Google PoP</li>
-<li><strong>GFE layer:</strong> Maglev (Google's network load balancer) distributes connections using consistent hashing — handles 1M+ connections per server</li>
-<li><strong>Cluster-level:</strong> BorgMaster assigns query workloads across machines based on CPU/memory utilization</li>
-<li><strong>Shard-level:</strong> Within a shard's replicas, round-robin with health checking and load-aware routing</li>
-</ul>
-
-<h3>Tail Latency Optimization</h3>
-<ul>
-<li><strong>Hedged requests:</strong> Send query to 2 replicas of each shard; use whichever responds first. Reduces p99 by 50%+</li>
-<li><strong>Tied requests:</strong> Cross-server cancellation — once one replica starts processing, the other cancels</li>
-<li><strong>Partial results:</strong> If some shards time out (>100ms), return results from responding shards (slight quality degradation, major latency improvement)</li>
-<li><strong>Canary queries:</strong> Test query on a subset of shards first to detect poison-pill queries that crash servers</li>
-</ul>
 </div>
 
-<h2>10. Tradeoffs</h2>
-<div class="tradeoff-grid">
-<div class="tradeoff-card pro">
-<h4>✅ Scatter-Gather (All Shards)</h4>
-<p>Every query goes to ALL shards ensuring no results are missed. Guarantees global best results. Simple conceptually — no need to determine which shards to query.</p>
-</div>
-<div class="tradeoff-card con">
-<h4>❌ Scatter-Gather Cost</h4>
-<p>Fan-out to 10K+ shards per query is extremely expensive in network and compute. Tail latency dominated by slowest shard. Mitigated by hedged requests, partial results, and heavy caching.</p>
-</div>
-<div class="tradeoff-card pro">
-<h4>✅ Multi-Tier Index (Caffeine)</h4>
-<p>Real-time tier gives seconds-fresh results for breaking news. Base tier gives comprehensive coverage. Separating tiers allows optimizing each for its use case (freshness vs. completeness).</p>
-</div>
-<div class="tradeoff-card con">
-<h4>❌ Multi-Tier Complexity</h4>
-<p>Must query multiple tiers and merge results. Duplicate handling across tiers. Index compaction from real-time to base tier requires careful orchestration. Consistency challenges during transitions.</p>
-</div>
-<div class="tradeoff-card pro">
-<h4>✅ BERT Re-Ranking (Quality)</h4>
-<p>Dramatically improves result relevance by understanding query-document semantics (not just keyword matching). Handles natural language queries, negations, prepositions correctly.</p>
-</div>
-<div class="tradeoff-card con">
-<h4>❌ BERT Re-Ranking (Cost)</h4>
-<p>Cross-encoder BERT is ~1000x more expensive than BM25 per document. Can only re-rank top ~1000 candidates, not the full index. Requires dedicated TPU serving infrastructure.</p>
-</div>
-<div class="tradeoff-card pro">
-<h4>✅ Google-Owned Infrastructure</h4>
-<p>Custom hardware (TPUs, Titan chips), custom networking (Jupiter fabric, B4 WAN), custom storage (Colossus) — all optimized for search workloads. No cloud provider dependency.</p>
-</div>
-<div class="tradeoff-card con">
-<h4>❌ Massive CapEx</h4>
-<p>Billions in infrastructure investment. Requires world-class hardware, networking, and SRE teams. Extremely high barrier to entry for competitors.</p>
-</div>
-</div>
-
-<h2>11. Alternative Approaches</h2>
-<div class="info-grid">
-<div class="card">
-<h4>Elasticsearch/Solr-Based Search</h4>
-<p>Open-source alternatives using Lucene. Suitable for enterprise search (millions of documents). Cannot scale to Google's 400B+ pages — lacks scatter-gather at that scale, no custom hardware optimization. Typically used for site search, e-commerce search, log search (ELK stack).</p>
-</div>
-<div class="card">
-<h4>Vector Search / Neural Retrieval</h4>
-<p>Embed all documents as vectors (using sentence-transformers), retrieve via ANN search (FAISS, ScaNN). Google does this as one retrieval pathway alongside traditional inverted index. Pure vector search loses exact keyword matching capability and has higher latency at scale. Hybrid approach (BM25 + vector) is state-of-the-art.</p>
-</div>
-<div class="card">
-<h4>LLM-Based Search (Perplexity Model)</h4>
-<p>Generate direct answers via LLM instead of returning links. Google's SGE (Search Generative Experience) moves in this direction. Tradeoffs: higher latency (1-3s for generation), higher compute cost per query, hallucination risk, publisher attribution challenges, ad placement disruption.</p>
-</div>
-<div class="card">
-<h4>Federated/P2P Search (YaCy)</h4>
-<p>Decentralized search where participants contribute to crawling and indexing. No single point of control or censorship. Challenges: much lower quality (no PageRank equivalent), inconsistent index, higher latency, spam vulnerability. Not viable at consumer scale.</p>
-</div>
-</div>
-
-<h2>12. Additional Information</h2>
-<div class="card">
-<h3>Google's Infrastructure Stack</h3>
-<ul>
-<li><strong>Colossus</strong> (distributed file system, successor to GFS) — stores index files, document cache, web graph</li>
-<li><strong>Bigtable</strong> (wide-column NoSQL) — document metadata, user data</li>
-<li><strong>Spanner</strong> (globally distributed relational DB) — ads data, user accounts (needs strong consistency)</li>
-<li><strong>Borg</strong> (cluster management, predecessor to Kubernetes) — schedules all search workloads</li>
-<li><strong>Maglev</strong> (network load balancer) — distributes incoming queries</li>
-<li><strong>TPU v4</strong> — custom ASIC for BERT/MUM inference in serving path</li>
-<li><strong>QUIC/HTTP3</strong> — reduced latency connection protocol (0-RTT resumption)</li>
-</ul>
-
-<h3>Key Numbers</h3>
-<table>
-<tr><td>Queries per day</td><td>~8.5 billion</td></tr>
-<tr><td>Queries per second</td><td>~100,000</td></tr>
-<tr><td>Pages indexed</td><td>400+ billion</td></tr>
-<tr><td>Index size</td><td>~100 PB (compressed)</td></tr>
-<tr><td>Average result latency</td><td>~200ms (p50)</td></tr>
-<tr><td>Crawl rate</td><td>Billions of pages per day</td></tr>
-<tr><td>Data centers</td><td>30+ worldwide</td></tr>
-<tr><td>Revenue (search ads)</td><td>~$175B/year</td></tr>
-</table>
-
-<h3>Protocols &amp; Connections</h3>
-<ul>
-<li><strong>User → GFE:</strong> HTTPS/3 (QUIC) over UDP, 0-RTT resumption, BoringSSL (Google's OpenSSL fork)</li>
-<li><strong>GFE → Backend:</strong> gRPC over HTTP/2 (Stubby, Google's internal RPC framework)</li>
-<li><strong>Crawler → Web:</strong> HTTP/1.1 and HTTP/2, respects robots.txt, user-agent: Googlebot/2.1</li>
-<li><strong>Inter-DC replication:</strong> B4 (Google's software-defined WAN), traffic engineering for index sync</li>
-<li><strong>Internal storage:</strong> Colossus chunks + Reed-Solomon erasure coding for durability</li>
-</ul>
-</div>
-</div>
+<script>
+    mermaid.initialize({ 
+        startOnLoad: true, 
+        theme: 'default',
+        flowchart: { 
+            useMaxWidth: true, 
+            htmlLabels: true,
+            curve: 'basis'
+        }
+    });
+</script>
 </body>
 </html>
