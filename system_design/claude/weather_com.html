@@ -1,226 +1,1651 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>System Design: Weather.com</title>
-<style>body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:20px;background:#f5f5f5;color:#333}.container{max-width:1200px;margin:0 auto;background:#fff;padding:40px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.1)}h1{color:#1a73e8;border-bottom:3px solid #1a73e8;padding-bottom:10px}h2{color:#2c3e50;margin-top:40px;border-left:4px solid #1a73e8;padding-left:12px}h3{color:#34495e}h4{color:#555}.diagram{background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:20px;margin:20px 0;overflow-x:auto}.example{background:#e8f5e9;border-left:4px solid #4caf50;padding:15px;margin:15px 0;border-radius:4px}.deep-dive{background:#e3f2fd;border-left:4px solid #2196f3;padding:15px;margin:15px 0;border-radius:4px}.tradeoff{background:#fff3e0;border-left:4px solid #ff9800;padding:15px;margin:15px 0;border-radius:4px}.alternative{background:#fce4ec;border-left:4px solid #e91e63;padding:15px;margin:15px 0;border-radius:4px}table{border-collapse:collapse;width:100%;margin:15px 0}th,td{border:1px solid #ddd;padding:10px 14px;text-align:left}th{background:#1a73e8;color:#fff}tr:nth-child(even){background:#f9f9f9}code{background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:.9em}.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.85em;margin:2px}.tag-pk{background:#ffeb3b;color:#333}.tag-idx{background:#80cbc4;color:#333}ul,ol{line-height:1.8}svg text{font-family:'Segoe UI',Arial,sans-serif}</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design: weather.com</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface2: #334155;
+            --border: #475569;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent2: #818cf8;
+            --green: #4ade80;
+            --orange: #fb923c;
+            --red: #f87171;
+            --yellow: #facc15;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        h2 {
+            font-size: 1.8rem;
+            color: var(--accent);
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--surface2);
+        }
+        h3 {
+            font-size: 1.3rem;
+            color: var(--accent2);
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+        h4 {
+            font-size: 1.1rem;
+            color: var(--green);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        p { margin-bottom: 1rem; }
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+        .toc {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+        }
+        .toc h3 { margin-top: 0; color: var(--accent); }
+        .toc ol { padding-left: 1.5rem; }
+        .toc li { margin-bottom: 0.3rem; }
+        .toc a { color: var(--accent); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .card-accent {
+            border-left: 4px solid var(--accent);
+        }
+        .card-green {
+            border-left: 4px solid var(--green);
+        }
+        .card-orange {
+            border-left: 4px solid var(--orange);
+        }
+        .card-red {
+            border-left: 4px solid var(--red);
+        }
+        ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.4rem; }
+        .diagram-container {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+        /* Force high-contrast arrows, lines, and labels in Mermaid diagrams */
+        .diagram-container .mermaid svg .edgePath .path,
+        .diagram-container .mermaid svg path.path {
+            stroke: #e2e8f0 !important;
+            stroke-width: 2.5px !important;
+        }
+        .diagram-container .mermaid svg .edgePath marker path,
+        .diagram-container .mermaid svg marker path {
+            fill: #e2e8f0 !important;
+            stroke: #e2e8f0 !important;
+        }
+        .diagram-container .mermaid svg .edgeLabel,
+        .diagram-container .mermaid svg .edgeLabel rect {
+            background-color: #1e293b !important;
+            fill: #1e293b !important;
+        }
+        .diagram-container .mermaid svg .edgeLabel span,
+        .diagram-container .mermaid svg .edgeLabel p,
+        .diagram-container .mermaid svg .edgeLabel div {
+            color: #94a3b8 !important;
+            background-color: #1e293b !important;
+        }
+        /* Subgraph styling */
+        .diagram-container .mermaid svg .cluster rect {
+            fill: #0f172a !important;
+            stroke: #475569 !important;
+            stroke-width: 2px !important;
+            rx: 8px !important;
+        }
+        .diagram-container .mermaid svg .cluster span,
+        .diagram-container .mermaid svg .cluster .nodeLabel {
+            color: #e2e8f0 !important;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            background: var(--surface);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th {
+            background: var(--surface2);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            color: var(--accent);
+            font-weight: 600;
+        }
+        td {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid var(--surface2);
+        }
+        code {
+            background: var(--surface2);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.9rem;
+            color: var(--orange);
+        }
+        pre {
+            background: var(--surface2);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: var(--text);
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-sql { background: #1e40af; color: #93c5fd; }
+        .badge-nosql { background: #065f46; color: #6ee7b7; }
+        .badge-ts { background: #713f12; color: #fde68a; }
+        .badge-obj { background: #581c87; color: #d8b4fe; }
+        .example-block {
+            background: var(--surface);
+            border-left: 4px solid var(--yellow);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+        }
+        .example-block strong { color: var(--yellow); }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            body { padding: 1rem; }
+            h1 { font-size: 1.8rem; }
+        }
+        .tag {
+            display: inline-block;
+            background: var(--surface2);
+            color: var(--text-muted);
+            padding: 0.1rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 0.3rem;
+        }
+        .highlight { color: var(--accent); font-weight: 600; }
+    </style>
 </head>
 <body>
-<div class="container">
-<h1>System Design: Weather.com</h1>
 
-<h2>Functional Requirements</h2>
-<ol>
-  <li><strong>Current weather</strong> – Display current temperature, humidity, wind, visibility, UV index for any location.</li>
-  <li><strong>Forecasts</strong> – Hourly (48hr), daily (10-day), and extended forecasts.</li>
-  <li><strong>Radar/maps</strong> – Interactive weather radar, precipitation, temperature, and satellite maps.</li>
-  <li><strong>Severe weather alerts</strong> – Push notifications for tornadoes, hurricanes, flood warnings.</li>
-  <li><strong>Location-based</strong> – Auto-detect user location or search by city/zip code.</li>
-  <li><strong>Historical data</strong> – Past weather data for any date/location.</li>
-  <li><strong>Air quality index (AQI)</strong> – Display air quality and pollen counts.</li>
-</ol>
+<h1>⛅ System Design: weather.com</h1>
+<p class="subtitle">A global-scale weather information platform serving millions of concurrent users with real-time weather data, forecasts, interactive maps, and severe weather alerts.</p>
 
-<h2>Non-Functional Requirements</h2>
-<ol>
-  <li><strong>High availability</strong> – 99.99%; weather data is critical during severe events.</li>
-  <li><strong>Low latency</strong> – Weather page loads in &lt;300ms.</li>
-  <li><strong>High cache hit rate</strong> – Weather data changes slowly (~15 min intervals); ideal for aggressive caching.</li>
-  <li><strong>Scalability</strong> – Handle traffic spikes during severe weather (10x normal).</li>
-  <li><strong>Global coverage</strong> – Serve weather for every location on Earth.</li>
-</ol>
-
-<h2>Flow 1: Fetching Current Weather</h2>
-<div class="diagram">
-<svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
-  <rect x="10" y="110" width="80" height="50" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
-  <text x="50" y="140" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">User</text>
-  <line x1="90" y1="135" x2="160" y2="135" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <text x="125" y="125" text-anchor="middle" fill="#555" font-size="8">GET /weather</text>
-  <rect x="160" y="110" width="70" height="50" rx="8" fill="#607d8b" stroke="#37474f" stroke-width="2"/>
-  <text x="195" y="140" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">CDN</text>
-  <line x1="230" y1="135" x2="300" y2="135" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <text x="265" y="125" text-anchor="middle" fill="#555" font-size="8">Miss</text>
-  <rect x="300" y="110" width="80" height="50" rx="8" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
-  <text x="340" y="133" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">API</text>
-  <text x="340" y="145" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">GW</text>
-  <line x1="380" y1="135" x2="450" y2="135" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <rect x="450" y="108" width="110" height="55" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
-  <text x="505" y="133" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Weather</text>
-  <text x="505" y="148" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Service</text>
-  <!-- Cache -->
-  <line x1="560" y1="128" x2="630" y2="80" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <text x="610" y="93" text-anchor="middle" fill="#555" font-size="8">1. Cache?</text>
-  <ellipse cx="685" cy="70" rx="45" ry="10" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <rect x="640" y="70" width="90" height="22" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <ellipse cx="685" cy="92" rx="45" ry="10" fill="#00796b" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="640" y1="70" x2="640" y2="92" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="730" y1="70" x2="730" y2="92" stroke="#00695c" stroke-width="1.5"/>
-  <text x="685" y="85" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Redis Cache</text>
-  <!-- Weather DB -->
-  <line x1="560" y1="142" x2="630" y2="185" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <text x="610" y="175" text-anchor="middle" fill="#555" font-size="8">2. DB</text>
-  <ellipse cx="685" cy="180" rx="45" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <rect x="640" y="180" width="90" height="22" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <ellipse cx="685" cy="202" rx="45" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="640" y1="180" x2="640" y2="202" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="730" y1="180" x2="730" y2="202" stroke="#d84315" stroke-width="1.5"/>
-  <text x="685" y="195" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Weather DB</text>
-</svg>
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+    <h3>📑 Table of Contents</h3>
+    <ol>
+        <li><a href="#functional-requirements">Functional Requirements</a></li>
+        <li><a href="#non-functional-requirements">Non-Functional Requirements</a></li>
+        <li><a href="#flow1">Flow 1: Weather Data Ingestion</a></li>
+        <li><a href="#flow2">Flow 2: Current Weather &amp; Forecast Query</a></li>
+        <li><a href="#flow3">Flow 3: Location Search</a></li>
+        <li><a href="#flow4">Flow 4: Weather Map / Radar Tiles</a></li>
+        <li><a href="#flow5">Flow 5: Severe Weather Alerts</a></li>
+        <li><a href="#combined">Combined System Architecture</a></li>
+        <li><a href="#schema">Database Schema</a></li>
+        <li><a href="#cdn-cache">CDN &amp; Cache Deep Dive</a></li>
+        <li><a href="#sse-deepdive">SSE Deep Dive</a></li>
+        <li><a href="#mq-deepdive">Message Queue Deep Dive</a></li>
+        <li><a href="#pubsub-deepdive">Pub/Sub Deep Dive</a></li>
+        <li><a href="#protocols">Protocol Choices (TCP/UDP/HTTP)</a></li>
+        <li><a href="#scaling">Scaling Considerations</a></li>
+        <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+        <li><a href="#alternatives">Alternative Approaches</a></li>
+        <li><a href="#additional">Additional Considerations</a></li>
+        <li><a href="#vendors">Vendor Recommendations</a></li>
+    </ol>
 </div>
 
-<div class="example">
-<h4>Example: Checking weather for NYC</h4>
-<p>User visits weather.com/nyc. The request first hits the <strong>CDN</strong> (CloudFront/Akamai). If the CDN has a cached response for NYC weather (TTL = 10 minutes), it returns immediately. On CDN miss, the request goes to the <strong>API Gateway</strong> → <strong>Weather Service</strong>. The service checks <strong>Redis Cache</strong> (key: <code>weather:40.71:-74.01</code> — lat/lng grid). Cache hit → return. Cache miss → query <strong>Weather DB</strong> (PostgreSQL) for the latest weather data ingested for that grid cell. Populates cache with TTL = 10 min. Returns <code>{temp: 42°F, humidity: 65%, wind: "12 mph NW", condition: "Partly Cloudy", ...}</code>.</p>
+<!-- ============================================================ -->
+<h2 id="functional-requirements">1. Functional Requirements</h2>
+<!-- ============================================================ -->
+
+<div class="card card-accent">
+    <ol>
+        <li><strong>View Current Weather:</strong> Users can view real-time weather conditions (temperature, humidity, wind speed/direction, pressure, visibility, UV index, dew point, conditions description, sunrise/sunset) for any location worldwide.</li>
+        <li><strong>View Forecasts:</strong> Users can view hourly forecasts (up to 48 hours) and daily forecasts (up to 10–15 days) for a location.</li>
+        <li><strong>Search Locations:</strong> Users can search for weather by city name, zip/postal code, airport code, or GPS coordinates. Autocomplete is supported.</li>
+        <li><strong>Auto-detect Location:</strong> The system automatically detects the user's location via browser geolocation API or IP-based geolocation.</li>
+        <li><strong>Interactive Weather Maps:</strong> Users can view interactive maps with layers for radar (precipitation), satellite imagery, temperature, wind, and other overlays.</li>
+        <li><strong>Severe Weather Alerts:</strong> Users receive real-time severe weather alerts (tornado warnings, hurricane advisories, flood watches, etc.) for their viewed or saved locations.</li>
+        <li><strong>Save Favorite Locations:</strong> Registered users can save favorite locations for quick access with a configurable default location.</li>
+        <li><strong>User Preferences:</strong> Users can set display preferences (°F/°C, mph/kph, 12h/24h time format, pressure units).</li>
+        <li><strong>Historical Weather:</strong> Users can view past weather data and climate normals for a location.</li>
+    </ol>
 </div>
 
-<h2>Flow 2: Ingesting Weather Data from Sources</h2>
-<div class="diagram">
-<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
-  <rect x="10" y="60" width="100" height="40" rx="6" fill="#795548" stroke="#4e342e" stroke-width="1.5"/>
-  <text x="60" y="84" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">NOAA / NWS</text>
-  <rect x="10" y="110" width="100" height="40" rx="6" fill="#795548" stroke="#4e342e" stroke-width="1.5"/>
-  <text x="60" y="134" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Weather Stns</text>
-  <rect x="10" y="160" width="100" height="40" rx="6" fill="#795548" stroke="#4e342e" stroke-width="1.5"/>
-  <text x="60" y="184" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Satellites</text>
-  <line x1="110" y1="80" x2="180" y2="130" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
-  <line x1="110" y1="130" x2="180" y2="130" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
-  <line x1="110" y1="180" x2="180" y2="135" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
-  <rect x="180" y="108" width="110" height="50" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
-  <text x="235" y="130" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Data Ingestion</text>
-  <text x="235" y="145" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Pipeline</text>
-  <line x1="290" y1="133" x2="360" y2="133" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
-  <rect x="360" y="110" width="100" height="50" rx="8" fill="#673ab7" stroke="#4527a0" stroke-width="2"/>
-  <text x="410" y="133" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Processing</text>
-  <text x="410" y="148" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">&amp; Forecast</text>
-  <line x1="460" y1="125" x2="530" y2="80" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
-  <ellipse cx="580" cy="70" rx="40" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <rect x="540" y="70" width="80" height="22" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <ellipse cx="580" cy="92" rx="40" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="540" y1="70" x2="540" y2="92" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="620" y1="70" x2="620" y2="92" stroke="#d84315" stroke-width="1.5"/>
-  <text x="580" y="85" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Weather DB</text>
-  <line x1="460" y1="140" x2="530" y2="180" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
-  <ellipse cx="580" cy="175" rx="40" ry="10" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <rect x="540" y="175" width="80" height="20" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <ellipse cx="580" cy="195" rx="40" ry="10" fill="#00796b" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="540" y1="175" x2="540" y2="195" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="620" y1="175" x2="620" y2="195" stroke="#00695c" stroke-width="1.5"/>
-  <text x="580" y="189" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Cache</text>
-  <!-- Alert path -->
-  <line x1="460" y1="145" x2="530" y2="240" stroke="#333" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a2)"/>
-  <rect x="530" y="225" width="100" height="35" rx="6" fill="#e91e63" stroke="#ad1457" stroke-width="1.5"/>
-  <text x="580" y="247" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Alert Service</text>
-</svg>
+<!-- ============================================================ -->
+<h2 id="non-functional-requirements">2. Non-Functional Requirements</h2>
+<!-- ============================================================ -->
+
+<div class="card card-green">
+    <table>
+        <tr><th>Requirement</th><th>Target</th><th>Rationale</th></tr>
+        <tr><td><strong>Availability</strong></td><td>99.99% uptime</td><td>Weather is critical infrastructure; people depend on it during emergencies</td></tr>
+        <tr><td><strong>Latency</strong></td><td>&lt; 200ms p99 for API responses</td><td>Users expect instant weather info; slow loads drive users to competitors</td></tr>
+        <tr><td><strong>Read Throughput</strong></td><td>Millions of reads/sec</td><td>System is overwhelmingly read-heavy (~10,000:1 read:write ratio)</td></tr>
+        <tr><td><strong>Traffic Spikes</strong></td><td>Handle 10–100x normal traffic</td><td>Severe weather events (hurricanes, tornadoes) cause massive surges</td></tr>
+        <tr><td><strong>Data Freshness</strong></td><td>Current conditions: ≤ 15 min stale; Radar: ≤ 5 min stale</td><td>Weather data must be reasonably current but does not need sub-second freshness</td></tr>
+        <tr><td><strong>Global Reach</strong></td><td>Low latency worldwide</td><td>Users globally need weather data for any location</td></tr>
+        <tr><td><strong>Consistency</strong></td><td>Eventual consistency acceptable</td><td>A few minutes of stale weather data is tolerable; availability is prioritized over strict consistency</td></tr>
+        <tr><td><strong>Scalability</strong></td><td>Horizontal scaling of all service tiers</td><td>Support growth and handle bursty traffic without re-architecture</td></tr>
+    </table>
 </div>
 
-<div class="example">
-<h4>Example: Data ingestion cycle</h4>
-<p>Every 15 minutes, the <strong>Data Ingestion Pipeline</strong> pulls data from NOAA/NWS APIs, weather station feeds, and satellite imagery. The <strong>Processing &amp; Forecast</strong> service normalizes data into a grid (0.1° lat/lng cells), runs forecast models, and writes updated weather data to the <strong>Weather DB</strong>. It also invalidates/updates the <strong>Redis Cache</strong> for affected grid cells. If severe weather is detected (tornado warning for Oklahoma City), the <strong>Alert Service</strong> sends push notifications to users in the affected area.</p>
+<!-- ============================================================ -->
+<h2 id="flow1">3. Flow 1: Weather Data Ingestion</h2>
+<!-- ============================================================ -->
+
+<p>This flow describes how external weather data (from government meteorological agencies, weather station networks, satellite feeds, and radar systems) is ingested, processed, and stored in the system.</p>
+
+<div class="diagram-container">
+    <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'lineColor': '#e2e8f0', 'textColor': '#e2e8f0', 'primaryTextColor': '#ffffff', 'secondaryTextColor': '#94a3b8', 'tertiaryTextColor': '#94a3b8', 'edgeLabelBackground': '#1e293b' }}}%%
+graph LR
+    A["🌐 External Weather<br/>Data Sources<br/>(Gov APIs, Stations,<br/>Satellites, Radar)"] -->|"Poll every 5-15 min<br/>(HTTP GET)"| B["⚙️ Data Ingestion<br/>Service"]
+    B -->|"Normalized weather<br/>messages"| C[["📨 Message Queue"]]
+    C --> D["⚙️ Data Processing<br/>Service"]
+    D -->|"Write processed<br/>weather data"| E[("🗄️ Weather Data<br/>Store<br/>(NoSQL)")]
+    D -->|"Write-through<br/>update"| F[("⚡ Distributed<br/>Cache")]
+    D -->|"Raw radar/satellite<br/>imagery"| G["🗺️ Map Tile<br/>Generator"]
+    G -->|"Store rendered<br/>tiles"| H[("📦 Object<br/>Storage")]
+    H -.->|"Invalidate stale<br/>tile URLs"| I["🌍 CDN"]
+
+    style A fill:#1e40af,stroke:#60a5fa,color:#fff,stroke-width:2px
+    style B fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style C fill:#713f12,stroke:#fbbf24,color:#fff,stroke-width:2px
+    style D fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style E fill:#581c87,stroke:#c084fc,color:#fff,stroke-width:2px
+    style F fill:#9a3412,stroke:#fb923c,color:#fff,stroke-width:2px
+    style G fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style H fill:#581c87,stroke:#c084fc,color:#fff,stroke-width:2px
+    style I fill:#155e75,stroke:#67e8f9,color:#fff,stroke-width:2px
+    </pre>
 </div>
 
-<h2>Overall Combined Flow</h2>
-<div class="diagram">
-<svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
-  <text x="10" y="20" fill="#1a73e8" font-size="12" font-weight="bold">INGESTION (every 15 min)</text>
-  <rect x="10" y="30" width="80" height="30" rx="5" fill="#795548" stroke="#4e342e" stroke-width="1"/>
-  <text x="50" y="49" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Sources</text>
-  <line x1="90" y1="45" x2="130" y2="45" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="130" y="30" width="80" height="30" rx="5" fill="#2196f3" stroke="#1565c0" stroke-width="1"/>
-  <text x="170" y="49" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Ingest</text>
-  <line x1="210" y1="45" x2="250" y2="45" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="250" y="30" width="80" height="30" rx="5" fill="#673ab7" stroke="#4527a0" stroke-width="1"/>
-  <text x="290" y="49" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Process</text>
-  <line x1="330" y1="40" x2="370" y2="40" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <ellipse cx="400" cy="36" rx="25" ry="7" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
-  <rect x="375" y="36" width="50" height="12" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
-  <ellipse cx="400" cy="48" rx="25" ry="7" fill="#e64a19" stroke="#d84315" stroke-width="1"/>
-  <line x1="375" y1="36" x2="375" y2="48" stroke="#d84315" stroke-width="1"/>
-  <line x1="425" y1="36" x2="425" y2="48" stroke="#d84315" stroke-width="1"/>
-  <text x="400" y="46" text-anchor="middle" fill="#fff" font-size="6" font-weight="bold">DB</text>
-  <line x1="330" y1="50" x2="370" y2="75" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <ellipse cx="400" cy="72" rx="25" ry="7" fill="#009688" stroke="#00695c" stroke-width="1"/>
-  <rect x="375" y="72" width="50" height="11" fill="#009688" stroke="#00695c" stroke-width="1"/>
-  <ellipse cx="400" cy="83" rx="25" ry="7" fill="#00796b" stroke="#00695c" stroke-width="1"/>
-  <line x1="375" y1="72" x2="375" y2="83" stroke="#00695c" stroke-width="1"/>
-  <line x1="425" y1="72" x2="425" y2="83" stroke="#00695c" stroke-width="1"/>
-  <text x="400" y="81" text-anchor="middle" fill="#fff" font-size="6" font-weight="bold">Cache</text>
-  <text x="10" y="130" fill="#1a73e8" font-size="12" font-weight="bold">READ PATH</text>
-  <rect x="10" y="145" width="65" height="30" rx="5" fill="#4caf50" stroke="#388e3c" stroke-width="1"/>
-  <text x="42" y="164" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">User</text>
-  <line x1="75" y1="160" x2="110" y2="160" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="110" y="145" width="55" height="30" rx="5" fill="#607d8b" stroke="#37474f" stroke-width="1"/>
-  <text x="137" y="164" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">CDN</text>
-  <line x1="165" y1="160" x2="195" y2="160" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="195" y="145" width="55" height="30" rx="5" fill="#ff9800" stroke="#f57c00" stroke-width="1"/>
-  <text x="222" y="164" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">GW</text>
-  <line x1="250" y1="160" x2="290" y2="160" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="290" y="145" width="80" height="30" rx="5" fill="#2196f3" stroke="#1565c0" stroke-width="1"/>
-  <text x="330" y="164" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Weather Svc</text>
-  <line x1="370" y1="155" x2="375" y2="83" stroke="#333" stroke-width="1" stroke-dasharray="3,2"/>
-  <line x1="370" y1="165" x2="375" y2="44" stroke="#333" stroke-width="1" stroke-dasharray="3,2"/>
-</svg>
+<h3>Flow 1 — Examples</h3>
+
+<div class="example-block">
+    <strong>Example 1 — Routine Current Conditions Update:</strong><br/>
+    Every 10 minutes, the Data Ingestion Service polls a government meteorological API (e.g., National Weather Service API) via an <code>HTTP GET</code> request for updated current conditions across thousands of observation stations. The raw JSON responses are normalized into a canonical weather format and published as individual messages to the Message Queue (one message per location update). The Data Processing Service consumes these messages, validates the data (range checks, duplicate detection), and writes the processed weather record to the Weather Data Store (NoSQL). Simultaneously, it updates the Distributed Cache with the fresh data via write-through, so the next user query for that location hits warm cache.
 </div>
 
-<div class="example"><h4>Combined Example</h4><p>Sources feed data every 15 min → Ingest → Process → Store in DB + invalidate Cache. User requests weather → CDN (10-min TTL hit) → or API GW → Weather Svc → Redis Cache → or DB → return.</p></div>
-
-<h2>Database Schema</h2>
-<h3>NoSQL (Cassandra or DynamoDB)</h3>
-<h4>1. current_weather</h4>
-<table>
-  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
-  <tr><td>grid_cell_id</td><td>VARCHAR</td><td><span class="tag tag-pk">Partition Key</span></td><td>Lat/lng grid cell (e.g., "40.7:-74.0")</td></tr>
-  <tr><td>timestamp</td><td>TIMESTAMP</td><td><span class="tag tag-pk">Clustering Key DESC</span></td><td>Observation time</td></tr>
-  <tr><td>temperature</td><td>FLOAT</td><td></td><td>Temperature (°F)</td></tr>
-  <tr><td>humidity</td><td>FLOAT</td><td></td><td>Relative humidity (%)</td></tr>
-  <tr><td>wind_speed</td><td>FLOAT</td><td></td><td>Wind speed (mph)</td></tr>
-  <tr><td>wind_direction</td><td>VARCHAR</td><td></td><td>Wind direction (N, NE, etc.)</td></tr>
-  <tr><td>condition</td><td>VARCHAR</td><td></td><td>Sunny, Cloudy, Rain, etc.</td></tr>
-  <tr><td>visibility</td><td>FLOAT</td><td></td><td>Miles</td></tr>
-  <tr><td>uv_index</td><td>INT</td><td></td><td>UV index (0-11+)</td></tr>
-  <tr><td>pressure</td><td>FLOAT</td><td></td><td>Barometric pressure</td></tr>
-</table>
-<p><strong>Why NoSQL:</strong> Weather data is write-heavy (millions of grid cells updated every 15 min), append-only (historical data preserved), and accessed by key (grid cell). Cassandra handles this well with high write throughput.</p>
-
-<h4>2. forecasts</h4>
-<table>
-  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
-  <tr><td>grid_cell_id</td><td>VARCHAR</td><td><span class="tag tag-pk">Partition Key</span></td><td>Location grid cell</td></tr>
-  <tr><td>forecast_time</td><td>TIMESTAMP</td><td><span class="tag tag-pk">Clustering Key</span></td><td>Forecasted time</td></tr>
-  <tr><td>forecast_type</td><td>VARCHAR</td><td></td><td>HOURLY, DAILY</td></tr>
-  <tr><td>high_temp</td><td>FLOAT</td><td></td><td>High temperature</td></tr>
-  <tr><td>low_temp</td><td>FLOAT</td><td></td><td>Low temperature</td></tr>
-  <tr><td>condition</td><td>VARCHAR</td><td></td><td>Expected condition</td></tr>
-  <tr><td>precipitation_chance</td><td>FLOAT</td><td></td><td>Precipitation probability (%)</td></tr>
-</table>
-
-<h2>Cache Deep Dive</h2>
-<div class="deep-dive">
-<h4>Multi-Layer Caching</h4>
-<p><strong>Layer 1 — CDN (CloudFront/Akamai):</strong> Caches API responses at edge. TTL = 10 minutes. Handles 90%+ of traffic for popular locations. Pull-based. LRU eviction.</p>
-<p><strong>Layer 2 — Redis Cache:</strong> Application-level cache. Key = grid_cell_id. TTL = 15 minutes (aligned with data update cycle). Write-through (updated by ingestion pipeline). LRU eviction.</p>
-<p><strong>Why aggressive caching works:</strong> Weather data changes slowly (every 15 min). Thousands of users requesting NYC weather get the same data. Cache hit ratio: ~98%.</p>
+<div class="example-block">
+    <strong>Example 2 — Radar Tile Generation:</strong><br/>
+    Every 2–5 minutes, the Data Ingestion Service fetches raw radar reflectivity data from a national radar network. This radar data is published to the Message Queue. The Data Processing Service routes the radar imagery to the Map Tile Generator, which slices the radar overlay into standard web map tiles (z/x/y format) at multiple zoom levels. The generated PNG tiles are stored in Object Storage, and the CDN's cached versions of the previous radar tiles are effectively replaced when the next request to the CDN for those tiles results in a cache miss (short TTL of 2–5 minutes).
 </div>
 
-<h2>Scaling Considerations</h2>
-<ul>
-  <li><strong>CDN handles traffic spikes</strong> — during Hurricane events, CDN absorbs 10x traffic at edge without hitting origin.</li>
-  <li><strong>Load Balancer:</strong> L7 LB (round-robin) in front of Weather Service.</li>
-  <li><strong>Auto-scaling:</strong> Weather Service scales based on CDN miss rate.</li>
-  <li><strong>Geo-distributed:</strong> Deploy Weather Service in multiple regions; CDN routes to nearest.</li>
-</ul>
-
-<h2>Tradeoffs and Deep Dives</h2>
-<div class="tradeoff"><h4>Grid Cell Resolution</h4><p>0.1° grid = ~11km cells. Finer grid (0.01° = 1.1km) provides more precise data but 100x more cells to store/cache. We use 0.1° for current weather and interpolate for specific coordinates.</p></div>
-
-<h2>Alternative Approaches</h2>
-<div class="alternative"><h4>On-demand API calls to weather sources</h4><p>Instead of pre-ingesting, call NOAA/NWS APIs on each user request. Simpler but: (1) external API rate limits, (2) higher latency, (3) no control over data quality. Not chosen.</p></div>
-
-<h2>Additional Information</h2>
-<h3>Radar Tile Server</h3>
-<p>Weather radar maps are served as map tiles (256×256 PNG images) at different zoom levels (Z/X/Y). Pre-rendered and stored in S3, served via CDN. Updated every 5 minutes. This is the same approach as Google Maps tiles.</p>
+<div class="example-block">
+    <strong>Example 3 — Forecast Ingestion:</strong><br/>
+    Every hour, the Data Ingestion Service fetches updated hourly and daily forecast model output from external sources. The raw forecast data is published to the Message Queue. The Data Processing Service parses the forecasts, maps them to known locations, and writes the structured forecast arrays (48 hourly data points, 10–15 daily data points) to the Weather Data Store. The corresponding cache entries are updated via write-through.
 </div>
+
+<h3>Flow 1 — Component Deep Dive</h3>
+
+<div class="card">
+    <h4>External Weather Data Sources</h4>
+    <p>Government meteorological APIs, weather station networks, satellite imagery feeds, and radar data networks. These are third-party systems that the platform does not control. Data is fetched via scheduled polling over <strong>HTTPS GET</strong> requests. Some sources may also push data via webhooks.</p>
+</div>
+
+<div class="card">
+    <h4>Data Ingestion Service</h4>
+    <ul>
+        <li><strong>Protocol:</strong> Outbound <code>HTTP GET</code> to external sources; publishes to Message Queue</li>
+        <li><strong>Input:</strong> Raw weather data in various formats (JSON, XML, GRIB2 for model data, binary for radar)</li>
+        <li><strong>Output:</strong> Normalized weather messages published to the Message Queue</li>
+        <li><strong>Responsibilities:</strong> Scheduled polling of external sources, data format normalization, deduplication of overlapping source data, health monitoring of external feeds, retry logic with exponential backoff for failed fetches</li>
+        <li><strong>Stateless:</strong> Yes — can be horizontally scaled</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h4>Message Queue (Ingestion)</h4>
+    <ul>
+        <li><strong>Role:</strong> Decouples ingestion from processing; buffers bursts of incoming data</li>
+        <li><strong>Message types:</strong> <code>current_weather_update</code>, <code>forecast_update</code>, <code>radar_data</code>, <code>satellite_data</code></li>
+        <li><strong>Guarantees:</strong> At-least-once delivery with consumer acknowledgment</li>
+        <li><em>Full deep dive in <a href="#mq-deepdive">Message Queue Deep Dive</a> section below.</em></li>
+    </ul>
+</div>
+
+<div class="card">
+    <h4>Data Processing Service</h4>
+    <ul>
+        <li><strong>Protocol:</strong> Consumes from Message Queue; writes to NoSQL via database driver protocol; writes to Cache</li>
+        <li><strong>Input:</strong> Normalized weather messages from the queue</li>
+        <li><strong>Output:</strong> Processed weather records written to Weather Data Store + Cache; radar/satellite imagery routed to Map Tile Generator</li>
+        <li><strong>Responsibilities:</strong> Data validation (range checks, sanity checks), enrichment (compute feels-like temperature, heat index), aggregation (merge data from multiple sources per location), write-through to cache, routing radar/satellite data to tile generation</li>
+        <li><strong>Stateless:</strong> Yes — horizontally scalable; partition queue consumption by location region for ordered processing</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h4>Map Tile Generator</h4>
+    <ul>
+        <li><strong>Protocol:</strong> Receives data from Data Processing Service (internal RPC); writes tiles to Object Storage via its API</li>
+        <li><strong>Input:</strong> Raw radar reflectivity data, satellite imagery, temperature grids</li>
+        <li><strong>Output:</strong> Pre-rendered map tiles in PNG format at standard zoom levels (z/x/y web map tile scheme)</li>
+        <li><strong>Responsibilities:</strong> Rasterizing weather data into map overlay tiles, generating tiles at multiple zoom levels (typically z=1 to z=12), color mapping (e.g., radar reflectivity → green/yellow/red), storing tiles with versioned/timestamped filenames</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h4>Weather Data Store (NoSQL)</h4>
+    <p>Stores current weather, forecasts, and structured weather data. <em>Full schema details in <a href="#schema">Database Schema</a> section.</em></p>
+</div>
+
+<div class="card">
+    <h4>Distributed Cache</h4>
+    <p>In-memory key-value cache for fast weather data retrieval. <em>Full deep dive in <a href="#cdn-cache">CDN &amp; Cache Deep Dive</a> section.</em></p>
+</div>
+
+<div class="card">
+    <h4>Object Storage</h4>
+    <p>Stores map tiles (radar, satellite, temperature overlays), weather icons, and other binary assets. Provides durable, highly available blob storage with HTTP-based access for CDN origin pulls.</p>
+</div>
+
+<div class="card">
+    <h4>CDN</h4>
+    <p>Edge-caches map tiles, weather API responses, and static assets globally. <em>Full deep dive in <a href="#cdn-cache">CDN &amp; Cache Deep Dive</a> section.</em></p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="flow2">4. Flow 2: Current Weather &amp; Forecast Query</h2>
+<!-- ============================================================ -->
+
+<p>This flow describes how a user retrieves current weather conditions and forecasts for a location.</p>
+
+<div class="diagram-container">
+    <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'lineColor': '#e2e8f0', 'textColor': '#e2e8f0', 'primaryTextColor': '#ffffff', 'secondaryTextColor': '#94a3b8', 'tertiaryTextColor': '#94a3b8', 'edgeLabelBackground': '#1e293b' }}}%%
+graph LR
+    A["📱 Client<br/>(Web / Mobile)"] -->|"GET /api/v1/weather<br/>?location_id=X&type=current"| B["🌍 CDN"]
+    B -->|"Cache Miss"| C["⚖️ Load<br/>Balancer"]
+    C --> D["⚙️ Weather API<br/>Service"]
+    D -->|"Lookup by<br/>location_id"| E[("⚡ Distributed<br/>Cache")]
+    E -->|"Cache Miss"| F[("🗄️ Weather Data<br/>Store<br/>(NoSQL)")]
+    F -->|"Populate cache"| E
+    E -->|"Weather JSON"| D
+    D -->|"Response"| C
+    C -->|"Response"| B
+    B -->|"Cache + Respond<br/>(TTL: 2 min)"| A
+
+    style A fill:#1e40af,stroke:#60a5fa,color:#fff,stroke-width:2px
+    style B fill:#155e75,stroke:#67e8f9,color:#fff,stroke-width:2px
+    style C fill:#713f12,stroke:#fbbf24,color:#fff,stroke-width:2px
+    style D fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style E fill:#9a3412,stroke:#fb923c,color:#fff,stroke-width:2px
+    style F fill:#581c87,stroke:#c084fc,color:#fff,stroke-width:2px
+    </pre>
+</div>
+
+<h3>Flow 2 — Examples</h3>
+
+<div class="example-block">
+    <strong>Example 1 — CDN Cache Hit (Hot Path):</strong><br/>
+    A user in New York opens weather.com and the app auto-detects their location. The client sends <code>GET /api/v1/weather?location_id=nyc_40.7128_-74.0060&type=current</code>. Since thousands of other New York users have recently requested the same data, the CDN edge server nearest to the user has a fresh cached copy (TTL has not yet expired). The CDN returns the cached JSON response directly in ~20ms without ever hitting the origin servers. The user sees current temperature, humidity, wind, and conditions instantly.
+</div>
+
+<div class="example-block">
+    <strong>Example 2 — CDN Miss, Cache Hit:</strong><br/>
+    A user searches for weather in a small town, "Leavenworth, WA." The client sends <code>GET /api/v1/weather?location_id=leavenworth_wa_47.5962_-120.6615&type=current</code>. The CDN does not have this cached (small town, less traffic). The request passes through the Load Balancer to the Weather API Service, which looks up <code>leavenworth_wa_47.5962_-120.6615</code> in the Distributed Cache. The cache has it (populated by the ingestion write-through). The API returns the data, and the CDN caches the response for 2 minutes.
+</div>
+
+<div class="example-block">
+    <strong>Example 3 — Full Cache Miss (Cold Path):</strong><br/>
+    A user queries weather for a very obscure location that was recently evicted from cache. Both CDN and Distributed Cache miss. The Weather API Service queries the Weather Data Store (NoSQL) directly by <code>location_id</code>. The result is returned, the Distributed Cache is populated (cache-aside), and the response flows back through the CDN (which also caches it). Subsequent requests for this location will hit cache.
+</div>
+
+<div class="example-block">
+    <strong>Example 4 — Forecast Query:</strong><br/>
+    A user taps "10-Day Forecast" on their weather page. The client sends <code>GET /api/v1/weather?location_id=nyc_40.7128_-74.0060&type=daily</code>. The same caching flow applies. The response contains an array of 10–15 daily forecast objects, each with high/low temperatures, precipitation chance, conditions, wind, and UV index.
+</div>
+
+<h3>Flow 2 — Component Deep Dive</h3>
+
+<div class="card">
+    <h4>Weather API Service</h4>
+    <ul>
+        <li><strong>Protocol:</strong> <code>HTTP/HTTPS</code> — RESTful API</li>
+        <li><strong>Endpoints:</strong>
+            <ul>
+                <li><code>GET /api/v1/weather?location_id={id}&type={current|hourly|daily}</code> — Retrieve weather data</li>
+                <li><code>GET /api/v1/weather?lat={lat}&lng={lng}&type={current|hourly|daily}</code> — Retrieve weather by coordinates (resolves to nearest location)</li>
+            </ul>
+        </li>
+        <li><strong>Input:</strong> <code>location_id</code> (string) and <code>type</code> (enum: current, hourly, daily)</li>
+        <li><strong>Output:</strong> JSON weather response with conditions, temperature, humidity, wind, and other metrics</li>
+        <li><strong>Response Headers:</strong> <code>Cache-Control: public, max-age=120, stale-while-revalidate=60</code></li>
+        <li><strong>Stateless:</strong> Yes — horizontally scalable behind load balancer</li>
+        <li><strong>Responsibilities:</strong> Input validation, cache lookup (cache-aside on miss), unit conversion based on user preferences (passed via query param or header), response formatting</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h4>Load Balancer (Weather API)</h4>
+    <ul>
+        <li><strong>Type:</strong> Layer 7 (Application-level) — can inspect HTTP paths and headers</li>
+        <li><strong>Algorithm:</strong> Least Connections — distributes load to least-busy instances, better than Round Robin for variable request durations</li>
+        <li><strong>Health Checks:</strong> HTTP health endpoint <code>GET /health</code> on each Weather API Service instance, checked every 5 seconds</li>
+        <li><strong>TLS Termination:</strong> TLS is terminated at the load balancer level; internal traffic between LB and services uses plain HTTP for lower overhead</li>
+    </ul>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="flow3">5. Flow 3: Location Search</h2>
+<!-- ============================================================ -->
+
+<p>This flow describes how a user searches for a location (city, zip code, airport code) with autocomplete support.</p>
+
+<div class="diagram-container">
+    <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'lineColor': '#e2e8f0', 'textColor': '#e2e8f0', 'primaryTextColor': '#ffffff', 'secondaryTextColor': '#94a3b8', 'tertiaryTextColor': '#94a3b8', 'edgeLabelBackground': '#1e293b' }}}%%
+graph LR
+    A["📱 Client<br/>(Web / Mobile)"] -->|"GET /api/v1/locations/search<br/>?q=New+Yor"| B["⚖️ Load<br/>Balancer"]
+    B --> C["⚙️ Location<br/>Service"]
+    C -->|"Check prefix<br/>in cache"| D[("⚡ Location<br/>Cache")]
+    D -->|"Cache Miss"| E[("🗄️ Location Data<br/>Store<br/>(NoSQL)")]
+    E -->|"Full-text<br/>search query"| E
+    E -->|"Populate cache"| D
+    D -->|"Matching<br/>locations"| C
+    C -->|"Ranked results<br/>JSON"| B
+    B --> A
+
+    style A fill:#1e40af,stroke:#60a5fa,color:#fff,stroke-width:2px
+    style B fill:#713f12,stroke:#fbbf24,color:#fff,stroke-width:2px
+    style C fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style D fill:#9a3412,stroke:#fb923c,color:#fff,stroke-width:2px
+    style E fill:#581c87,stroke:#c084fc,color:#fff,stroke-width:2px
+    </pre>
+</div>
+
+<h3>Flow 3 — Examples</h3>
+
+<div class="example-block">
+    <strong>Example 1 — Autocomplete City Search:</strong><br/>
+    A user types "San Fr" into the search bar. The client debounces the input (300ms) and sends <code>GET /api/v1/locations/search?q=San+Fr&limit=5</code>. The Location Service checks the Location Cache for this prefix. On a cache hit, it returns results immediately: "San Francisco, CA", "San Franciscito, Mexico", etc. Results are ranked by population (larger cities first) and relevance. The user selects "San Francisco, CA", which returns <code>location_id=san_francisco_ca_37.7749_-122.4194</code>. The client then issues a weather query using that <code>location_id</code>.
+</div>
+
+<div class="example-block">
+    <strong>Example 2 — Zip Code Search:</strong><br/>
+    A user types "90210" and presses Enter. The client sends <code>GET /api/v1/locations/search?q=90210&limit=5</code>. The Location Service recognizes this as a zip code pattern, queries the Location Data Store, and returns "Beverly Hills, CA 90210" with its <code>location_id</code> and coordinates.
+</div>
+
+<div class="example-block">
+    <strong>Example 3 — GPS Auto-detect:</strong><br/>
+    A user grants location permission. The browser provides coordinates (40.7128, -74.0060). The client sends <code>GET /api/v1/locations/reverse-geocode?lat=40.7128&lng=-74.0060</code>. The Location Service performs a geospatial nearest-neighbor query on the Location Data Store and returns "New York, NY" as the resolved location.
+</div>
+
+<h3>Flow 3 — Component Deep Dive</h3>
+
+<div class="card">
+    <h4>Location Service</h4>
+    <ul>
+        <li><strong>Protocol:</strong> <code>HTTP/HTTPS</code> — RESTful API</li>
+        <li><strong>Endpoints:</strong>
+            <ul>
+                <li><code>GET /api/v1/locations/search?q={query}&limit={n}</code> — Autocomplete location search</li>
+                <li><code>GET /api/v1/locations/reverse-geocode?lat={lat}&lng={lng}</code> — Reverse geocode coordinates to a named location</li>
+                <li><code>GET /api/v1/locations/{location_id}</code> — Get location details</li>
+            </ul>
+        </li>
+        <li><strong>Input:</strong> Search query string (or lat/lng for reverse geocode), limit</li>
+        <li><strong>Output:</strong> JSON array of matching locations with <code>location_id</code>, name, admin area, country, coordinates</li>
+        <li><strong>Stateless:</strong> Yes</li>
+        <li><strong>Responsibilities:</strong> Full-text prefix search, relevance ranking (by population, match quality), zip code pattern detection, reverse geocoding via geospatial index, caching search results by prefix</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h4>Location Data Store (NoSQL)</h4>
+    <p>Stores ~500K–1M named locations worldwide. Uses an <strong>inverted index</strong> on the <code>name</code>, <code>admin_area</code>, and <code>country</code> fields for full-text prefix search (autocomplete). Also has a <strong>geospatial index</strong> (R-tree or similar) on <code>(latitude, longitude)</code> for reverse-geocode nearest-neighbor queries. This data is mostly static (updated rarely via bulk loads), so heavy indexing is appropriate.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="flow4">6. Flow 4: Weather Map / Radar Tiles</h2>
+<!-- ============================================================ -->
+
+<p>This flow describes how users view interactive weather maps with radar, satellite, temperature, and wind overlays rendered as map tiles.</p>
+
+<div class="diagram-container">
+    <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'lineColor': '#e2e8f0', 'textColor': '#e2e8f0', 'primaryTextColor': '#ffffff', 'secondaryTextColor': '#94a3b8', 'tertiaryTextColor': '#94a3b8', 'edgeLabelBackground': '#1e293b' }}}%%
+graph LR
+    A["📱 Client<br/>(Map UI w/ Leaflet<br/>or similar)"] -->|"GET /tiles/radar/<br/>{z}/{x}/{y}.png?t=1707840000"| B["🌍 CDN"]
+    B -->|"Cache Miss<br/>(new timestamp)"| C["⚖️ Load<br/>Balancer"]
+    C --> D["⚙️ Map Tile<br/>Service"]
+    D -->|"Fetch tile"| E[("📦 Object<br/>Storage")]
+    E -->|"Tile PNG"| D
+    D -->|"Response"| C
+    C -->|"Response"| B
+    B -->|"Cache + Respond<br/>(TTL: 2-5 min)"| A
+
+    style A fill:#1e40af,stroke:#60a5fa,color:#fff,stroke-width:2px
+    style B fill:#155e75,stroke:#67e8f9,color:#fff,stroke-width:2px
+    style C fill:#713f12,stroke:#fbbf24,color:#fff,stroke-width:2px
+    style D fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style E fill:#581c87,stroke:#c084fc,color:#fff,stroke-width:2px
+    </pre>
+</div>
+
+<h3>Flow 4 — Examples</h3>
+
+<div class="example-block">
+    <strong>Example 1 — Viewing Radar Map:</strong><br/>
+    A user clicks the "Radar" tab on the weather page. The client map library (e.g., Leaflet) calculates which tiles are visible at the current zoom level and viewport. It issues multiple parallel requests like <code>GET /tiles/radar/6/17/24.png?t=1707840000</code> (where <code>t</code> is the latest radar scan timestamp). The CDN serves these tiles if cached; otherwise, the Map Tile Service fetches them from Object Storage. The client composites the radar tiles on top of a base map. As the user pans or zooms, new tiles are requested.
+</div>
+
+<div class="example-block">
+    <strong>Example 2 — Radar Animation (Time Lapse):</strong><br/>
+    A user clicks "Play" on the radar map to see rainfall movement over the last 2 hours. The client requests tiles for multiple past timestamps: <code>?t=1707832800</code>, <code>?t=1707835200</code>, ..., <code>?t=1707840000</code>. Since past radar tiles are immutable (the past doesn't change), these have longer CDN cache TTLs (up to 24 hours). The client animates through the tile sets, showing precipitation movement over time.
+</div>
+
+<div class="example-block">
+    <strong>Example 3 — Satellite Imagery:</strong><br/>
+    A user switches to the "Satellite" layer. The same tile-based flow applies but with <code>GET /tiles/satellite/{z}/{x}/{y}.png?t={timestamp}</code>. Satellite tiles are larger in file size but update less frequently (every 10–15 minutes), so they have slightly longer CDN TTLs (5 minutes).
+</div>
+
+<h3>Flow 4 — Component Deep Dive</h3>
+
+<div class="card">
+    <h4>Map Tile Service</h4>
+    <ul>
+        <li><strong>Protocol:</strong> <code>HTTP/HTTPS</code> — RESTful API following web map tile standards</li>
+        <li><strong>Endpoints:</strong>
+            <ul>
+                <li><code>GET /tiles/{layer}/{z}/{x}/{y}.png?t={timestamp}</code> — Fetch a specific map tile</li>
+                <li>Layers: <code>radar</code>, <code>satellite</code>, <code>temperature</code>, <code>wind</code>, <code>precipitation</code></li>
+            </ul>
+        </li>
+        <li><strong>Input:</strong> Layer type, zoom level (z), tile coordinates (x, y), timestamp</li>
+        <li><strong>Output:</strong> PNG image (typically 256×256 pixels per tile)</li>
+        <li><strong>Responsibilities:</strong> Fetching pre-rendered tiles from Object Storage, returning appropriate cache headers, handling tile versioning via timestamp parameter</li>
+        <li><strong>Stateless:</strong> Yes — horizontally scalable; the real work was done by the Map Tile Generator in Flow 1</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h4>Client Map UI</h4>
+    <p>Uses a JavaScript map library (such as Leaflet, Mapbox GL, or OpenLayers) to render a slippy map. The base map (streets, labels) comes from a separate tile server or third-party map provider. Weather overlay tiles are composited on top with transparency. The library handles tile coordinate calculation, lazy loading of visible tiles, zoom/pan interactions, and animation for time-lapse playback.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="flow5">7. Flow 5: Severe Weather Alerts</h2>
+<!-- ============================================================ -->
+
+<p>This flow describes how severe weather alerts are ingested from government alert feeds and delivered to users in real-time via push notifications (mobile) and Server-Sent Events (web).</p>
+
+<div class="diagram-container">
+    <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'lineColor': '#e2e8f0', 'textColor': '#e2e8f0', 'primaryTextColor': '#ffffff', 'secondaryTextColor': '#94a3b8', 'tertiaryTextColor': '#94a3b8', 'edgeLabelBackground': '#1e293b' }}}%%
+graph LR
+    A["🏛️ Government<br/>Alert Feeds"] -->|"Poll / Webhook<br/>(HTTP)"| B["⚙️ Alert Ingestion<br/>Service"]
+    B -->|"New alert<br/>message"| C[["📨 Message<br/>Queue"]]
+    C --> D["⚙️ Alert Processing<br/>Service"]
+    D -->|"Store alert"| E[("🗄️ Alert Data<br/>Store<br/>(NoSQL)")]
+    D -->|"Fan-out alert<br/>event"| F[["📡 Pub/Sub"]]
+    F --> G["⚙️ Notification<br/>Service"]
+    G -->|"Push to mobile<br/>(APNS/FCM)"| H["📱 Mobile<br/>Clients"]
+    F --> I["⚙️ SSE Connection<br/>Manager"]
+    I -->|"Push event<br/>over SSE"| J["🖥️ Web<br/>Clients"]
+
+    style A fill:#1e40af,stroke:#60a5fa,color:#fff,stroke-width:2px
+    style B fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style C fill:#713f12,stroke:#fbbf24,color:#fff,stroke-width:2px
+    style D fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style E fill:#581c87,stroke:#c084fc,color:#fff,stroke-width:2px
+    style F fill:#7f1d1d,stroke:#fca5a5,color:#fff,stroke-width:2px
+    style G fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style H fill:#1e40af,stroke:#60a5fa,color:#fff,stroke-width:2px
+    style I fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style J fill:#1e40af,stroke:#60a5fa,color:#fff,stroke-width:2px
+    </pre>
+</div>
+
+<h3>Flow 5 — Examples</h3>
+
+<div class="example-block">
+    <strong>Example 1 — Tornado Warning (Mobile Push):</strong><br/>
+    The National Weather Service issues a Tornado Warning for Oklahoma City. The Alert Ingestion Service detects the new alert via polling and publishes it to the Message Queue. The Alert Processing Service consumes the message, stores it in the Alert Data Store (NoSQL) with the affected geographic polygon and resolved <code>location_ids</code>, and publishes an alert event to the Pub/Sub system. The Notification Service subscribes to Pub/Sub, queries the User Data Store for users who have Oklahoma City saved as a favorite location and have alert notifications enabled, and sends push notifications via APNS (iPhone) and FCM (Android). A user in Oklahoma City receives a push notification: "⚠️ Tornado Warning for Oklahoma City, OK until 8:00 PM CDT. Take shelter immediately."
+</div>
+
+<div class="example-block">
+    <strong>Example 2 — Flood Watch (Web SSE):</strong><br/>
+    A user is currently viewing weather for Houston, TX on weather.com. When the page loaded, the client established an SSE connection: <code>GET /api/v1/alerts/stream?location_ids=houston_tx_29.7604_-95.3698</code>. A Flood Watch is issued for the Houston area. The Alert Processing Service publishes the event to Pub/Sub. The SSE Connection Manager receives the event, checks its in-memory map of <code>location_id → SSE connections</code>, finds the user's connection, and pushes the alert as an SSE event. The user's browser displays a real-time alert banner: "🌊 Flood Watch for Houston, TX. Effective until Friday 6:00 AM CDT."
+</div>
+
+<div class="example-block">
+    <strong>Example 3 — Alert Displayed on Page Load (Non-Real-Time):</strong><br/>
+    A user opens weather.com and views weather for Miami during hurricane season. As part of the normal weather query, the Weather API Service also checks the Alert Data Store for any active alerts affecting Miami. It finds an active Hurricane Watch and includes it in the weather API response. The client renders the alert prominently at the top of the weather page. No SSE or push was needed — the alert was fetched as part of the regular weather data request.
+</div>
+
+<h3>Flow 5 — Component Deep Dive</h3>
+
+<div class="card">
+    <h4>Alert Ingestion Service</h4>
+    <ul>
+        <li><strong>Protocol:</strong> Outbound <code>HTTP GET</code> polling government alert feeds (e.g., CAP/ATOM feeds); may also accept inbound webhooks via <code>HTTP POST</code></li>
+        <li><strong>Input:</strong> Alert data in CAP (Common Alerting Protocol) XML format</li>
+        <li><strong>Output:</strong> Normalized alert messages published to Message Queue</li>
+        <li><strong>Responsibilities:</strong> Polling alert feeds every 30–60 seconds (alerts are time-critical), parsing CAP XML, deduplication (same alert from multiple sources), detecting alert updates/cancellations</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h4>Alert Processing Service</h4>
+    <ul>
+        <li><strong>Protocol:</strong> Consumes from Message Queue; writes to NoSQL; publishes to Pub/Sub</li>
+        <li><strong>Input:</strong> Normalized alert messages</li>
+        <li><strong>Output:</strong> Stored alert records + Pub/Sub alert events</li>
+        <li><strong>Responsibilities:</strong> Resolving alert geographic polygons to affected <code>location_ids</code> (geo-intersection query), storing alert in data store, publishing to Pub/Sub for real-time delivery, handling alert lifecycle (new → updated → cancelled → expired)</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h4>Notification Service</h4>
+    <ul>
+        <li><strong>Protocol:</strong> Subscribes to Pub/Sub; outbound to APNS (Apple Push Notification Service) and FCM (Firebase Cloud Messaging) via <code>HTTP/2 POST</code></li>
+        <li><strong>Input:</strong> Alert events from Pub/Sub</li>
+        <li><strong>Output:</strong> Push notifications delivered to mobile devices</li>
+        <li><strong>Responsibilities:</strong> Determining which users should be notified (users with saved locations matching the alert area + notification preferences enabled), formatting push notification payload, rate limiting (avoid spamming users with duplicate alerts), tracking delivery status</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h4>SSE Connection Manager</h4>
+    <ul>
+        <li><strong>Protocol:</strong> <code>HTTP/HTTPS</code> — Server-Sent Events (SSE)</li>
+        <li><strong>Endpoint:</strong> <code>GET /api/v1/alerts/stream?location_ids={id1},{id2}</code></li>
+        <li><strong>Input:</strong> Alert events from Pub/Sub; SSE connection requests from web clients</li>
+        <li><strong>Output:</strong> SSE events pushed to connected web clients</li>
+        <li><em>Full deep dive in <a href="#sse-deepdive">SSE Deep Dive</a> section below.</em></li>
+    </ul>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="combined">8. Combined System Architecture</h2>
+<!-- ============================================================ -->
+
+<p>This diagram combines all five flows into one unified system architecture.</p>
+
+<div class="diagram-container">
+    <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'lineColor': '#e2e8f0', 'textColor': '#e2e8f0', 'primaryTextColor': '#ffffff', 'secondaryTextColor': '#94a3b8', 'tertiaryTextColor': '#94a3b8', 'edgeLabelBackground': '#1e293b', 'clusterBkg': '#0f172a', 'clusterBorder': '#475569' }}}%%
+graph TB
+    subgraph Clients
+        WEB["🖥️ Web Client"]
+        MOB["📱 Mobile Client"]
+    end
+
+    subgraph ExternalSources["External Data Sources"]
+        WDS["🌐 Weather Data<br/>Sources"]
+        GAF["🏛️ Government<br/>Alert Feeds"]
+    end
+
+    subgraph Ingestion["Ingestion Layer"]
+        DIS["⚙️ Data Ingestion<br/>Service"]
+        AIS["⚙️ Alert Ingestion<br/>Service"]
+    end
+
+    subgraph MQ["Message Queues"]
+        WQ[["📨 Weather Data<br/>Queue"]]
+        AQ[["📨 Alert<br/>Queue"]]
+    end
+
+    subgraph Processing["Processing Layer"]
+        DPS["⚙️ Data Processing<br/>Service"]
+        APS["⚙️ Alert Processing<br/>Service"]
+        MTG["🗺️ Map Tile<br/>Generator"]
+    end
+
+    subgraph PubSubLayer["Pub/Sub"]
+        PS[["📡 Pub/Sub<br/>System"]]
+    end
+
+    subgraph APILayer["API Layer (behind Load Balancers)"]
+        LB["⚖️ Load Balancer"]
+        WAPI["⚙️ Weather API<br/>Service"]
+        LSVC["⚙️ Location<br/>Service"]
+        MTSVC["⚙️ Map Tile<br/>Service"]
+        SSEM["⚙️ SSE Connection<br/>Manager"]
+        NSVC["⚙️ Notification<br/>Service"]
+    end
+
+    CDN["🌍 CDN"]
+
+    subgraph DataLayer["Data Layer"]
+        CACHE[("⚡ Distributed<br/>Cache")]
+        WSTORE[("🗄️ Weather Data<br/>Store (NoSQL)")]
+        LSTORE[("🗄️ Location Store<br/>(NoSQL)")]
+        ASTORE[("🗄️ Alert Store<br/>(NoSQL)")]
+        USTORE[("🗄️ User Store<br/>(SQL)")]
+        OBJSTORE[("📦 Object<br/>Storage")]
+        TSDB[("📈 Time-Series<br/>DB")]
+    end
+
+    WDS -->|"Poll"| DIS
+    GAF -->|"Poll/Webhook"| AIS
+    DIS --> WQ
+    AIS --> AQ
+    WQ --> DPS
+    AQ --> APS
+    DPS --> WSTORE
+    DPS --> CACHE
+    DPS --> MTG
+    MTG --> OBJSTORE
+    APS --> ASTORE
+    APS --> PS
+    PS --> NSVC
+    PS --> SSEM
+    NSVC -->|"Push"| MOB
+
+    WEB -->|"HTTPS"| CDN
+    MOB -->|"HTTPS"| CDN
+    CDN -->|"Cache Miss"| LB
+    LB --> WAPI
+    LB --> LSVC
+    LB --> MTSVC
+    LB --> SSEM
+    WAPI --> CACHE
+    CACHE --> WSTORE
+    WAPI --> ASTORE
+    LSVC --> LSTORE
+    MTSVC --> OBJSTORE
+    WAPI --> USTORE
+    SSEM -->|"SSE stream"| WEB
+    DPS --> TSDB
+
+    style WEB fill:#1e40af,stroke:#60a5fa,color:#fff,stroke-width:2px
+    style MOB fill:#1e40af,stroke:#60a5fa,color:#fff,stroke-width:2px
+    style CDN fill:#155e75,stroke:#67e8f9,color:#fff,stroke-width:2px
+    style LB fill:#713f12,stroke:#fbbf24,color:#fff,stroke-width:2px
+    style CACHE fill:#9a3412,stroke:#fb923c,color:#fff,stroke-width:2px
+    style WSTORE fill:#581c87,stroke:#c084fc,color:#fff,stroke-width:2px
+    style LSTORE fill:#581c87,stroke:#c084fc,color:#fff,stroke-width:2px
+    style ASTORE fill:#581c87,stroke:#c084fc,color:#fff,stroke-width:2px
+    style USTORE fill:#581c87,stroke:#c084fc,color:#fff,stroke-width:2px
+    style OBJSTORE fill:#581c87,stroke:#c084fc,color:#fff,stroke-width:2px
+    style TSDB fill:#581c87,stroke:#c084fc,color:#fff,stroke-width:2px
+    style PS fill:#7f1d1d,stroke:#fca5a5,color:#fff,stroke-width:2px
+    style WQ fill:#713f12,stroke:#fbbf24,color:#fff,stroke-width:2px
+    style AQ fill:#713f12,stroke:#fbbf24,color:#fff,stroke-width:2px
+    style DIS fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style AIS fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style DPS fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style APS fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style MTG fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style WAPI fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style LSVC fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style MTSVC fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style SSEM fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style NSVC fill:#065f46,stroke:#34d399,color:#fff,stroke-width:2px
+    style WDS fill:#1e40af,stroke:#60a5fa,color:#fff,stroke-width:2px
+    style GAF fill:#1e40af,stroke:#60a5fa,color:#fff,stroke-width:2px
+    </pre>
+</div>
+
+<h3>Combined Flow — Examples</h3>
+
+<div class="example-block">
+    <strong>Example 1 — Complete User Journey (Sunny Day):</strong><br/>
+    A user opens weather.com on their phone. (1) The browser requests the HTML/CSS/JS from the <strong>CDN</strong> (static assets cached with long TTLs). (2) The app auto-detects the user's GPS coordinates and calls the <strong>Location Service</strong> via <code>GET /api/v1/locations/reverse-geocode?lat=40.71&lng=-74.00</code> to resolve "New York, NY" with <code>location_id=nyc_40.7128_-74.0060</code>. (3) The app calls the <strong>Weather API Service</strong> via <code>GET /api/v1/weather?location_id=nyc_40.7128_-74.0060&type=current</code> — served from CDN cache. (4) The user taps "Radar Map", and the client loads radar tiles from the <strong>CDN</strong>/<strong>Map Tile Service</strong>/<strong>Object Storage</strong> chain. (5) In the background, the client opens an SSE connection to the <strong>SSE Connection Manager</strong> for real-time alerts for this location.
+</div>
+
+<div class="example-block">
+    <strong>Example 2 — Severe Weather Event End-to-End:</strong><br/>
+    Behind the scenes: (1) The <strong>Data Ingestion Service</strong> polls radar data showing an intense storm developing. Tiles are generated and stored. (2) The <strong>Alert Ingestion Service</strong> detects a new Tornado Warning from the government feed. (3) The alert is published to the <strong>Message Queue</strong>, consumed by the <strong>Alert Processing Service</strong>, stored in the <strong>Alert Store</strong>, and published to <strong>Pub/Sub</strong>. (4) The <strong>Notification Service</strong> subscribes, finds affected users, and sends push notifications to mobile users. (5) The <strong>SSE Connection Manager</strong> subscribes, matches the alert to connected web users' locations, and pushes the alert via SSE. (6) Meanwhile, thousands of users in the affected area open the app simultaneously — the <strong>CDN</strong> absorbs the traffic spike, serving cached weather data and radar tiles. The origin servers experience minimal additional load.
+</div>
+
+<div class="example-block">
+    <strong>Example 3 — Registered User with Saved Locations:</strong><br/>
+    A registered user opens the app. (1) The client loads the user's saved locations from the <strong>Weather API Service</strong>, which reads from the <strong>User Store (SQL)</strong>: "New York, NY" (default), "Miami, FL", "London, UK". (2) Weather for all three locations is fetched in parallel from the <strong>Weather API Service</strong>/<strong>Cache</strong>/<strong>Weather Data Store</strong>. (3) The user sees a dashboard with current conditions for all saved locations. (4) The SSE connection subscribes to alerts for all three <code>location_ids</code>. (5) A Winter Storm Watch is issued for New York — the SSE event fires and the client displays a real-time alert banner on the New York card.
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="schema">9. Database Schema</h2>
+<!-- ============================================================ -->
+
+<!-- ----- SQL TABLES ----- -->
+<h3><span class="badge badge-sql">SQL</span> SQL Tables</h3>
+
+<div class="card card-accent">
+    <h4>users</h4>
+    <p><strong>Why SQL:</strong> User account data requires ACID transactions for operations like registration, password changes, and email updates. Referential integrity with <code>user_saved_locations</code> and <code>user_preferences</code> is critical. User accounts are a small dataset relative to weather data — SQL handles this scale easily.</p>
+    <table>
+        <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+        <tr><td><code>user_id</code></td><td>UUID</td><td><strong>PRIMARY KEY</strong></td><td>Globally unique user identifier</td></tr>
+        <tr><td><code>email</code></td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td><td>Login credential</td></tr>
+        <tr><td><code>password_hash</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>bcrypt or argon2 hashed</td></tr>
+        <tr><td><code>display_name</code></td><td>VARCHAR(100)</td><td></td><td>Optional display name</td></tr>
+        <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Account creation time</td></tr>
+        <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last profile update</td></tr>
+    </table>
+    <p><strong>Indexes:</strong></p>
+    <ul>
+        <li><strong>Hash index on <code>email</code></strong> — Used for login lookups (<code>WHERE email = ?</code>). Hash index is chosen over B-tree because email lookups are always exact-match (equality), never range queries. Hash provides O(1) lookup.</li>
+    </ul>
+    <p><strong>Read events:</strong> User login, profile view, fetching user data for notification targeting.</p>
+    <p><strong>Write events:</strong> User registration, profile update, password change.</p>
+    <p><strong>Sharding:</strong> Not required. User table is relatively small (millions of rows). A single primary with read replicas suffices. If scaling beyond ~100M users, shard by <code>user_id</code> using consistent hashing.</p>
+</div>
+
+<div class="card card-accent">
+    <h4>user_saved_locations</h4>
+    <p><strong>Why SQL:</strong> Relational (many-to-many between users and locations). Needs ordering guarantees, uniqueness constraints (a user can't save the same location twice), and foreign key integrity with the <code>users</code> table.</p>
+    <table>
+        <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+        <tr><td><code>id</code></td><td>BIGINT</td><td><strong>PRIMARY KEY</strong>, AUTO_INCREMENT</td><td>Row identifier</td></tr>
+        <tr><td><code>user_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → users.user_id</strong>, NOT NULL</td><td>Owning user</td></tr>
+        <tr><td><code>location_id</code></td><td>VARCHAR(128)</td><td>NOT NULL</td><td>References NoSQL locations collection</td></tr>
+        <tr><td><code>display_name</code></td><td>VARCHAR(100)</td><td></td><td>Custom user label for this location</td></tr>
+        <tr><td><code>display_order</code></td><td>INT</td><td>NOT NULL, DEFAULT 0</td><td>Sort order in user's list</td></tr>
+        <tr><td><code>is_default</code></td><td>BOOLEAN</td><td>NOT NULL, DEFAULT FALSE</td><td>User's default/home location</td></tr>
+        <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+    </table>
+    <p><strong>Indexes:</strong></p>
+    <ul>
+        <li><strong>B-tree composite index on <code>(user_id, display_order)</code></strong> — Most common query is "get all saved locations for a user, ordered by display_order": <code>WHERE user_id = ? ORDER BY display_order</code>. B-tree supports both equality on <code>user_id</code> and ordered retrieval on <code>display_order</code> in a single index scan.</li>
+        <li><strong>Unique constraint on <code>(user_id, location_id)</code></strong> — Prevents duplicate saves. Implemented as a unique B-tree index.</li>
+    </ul>
+    <p><strong>Read events:</strong> User opens the app (load their saved locations dashboard).</p>
+    <p><strong>Write events:</strong> User saves a new location, removes a saved location, reorders locations, changes default location.</p>
+</div>
+
+<div class="card card-accent">
+    <h4>user_preferences</h4>
+    <p><strong>Why SQL:</strong> 1:1 relationship with users table. Simple, small rows. ACID guarantees for preference updates. Foreign key to <code>users</code>.</p>
+    <table>
+        <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+        <tr><td><code>user_id</code></td><td>UUID</td><td><strong>PRIMARY KEY</strong>, <strong>FOREIGN KEY → users.user_id</strong></td><td>1:1 with users</td></tr>
+        <tr><td><code>temp_unit</code></td><td>ENUM('F','C')</td><td>NOT NULL, DEFAULT 'F'</td><td>Fahrenheit or Celsius</td></tr>
+        <tr><td><code>wind_speed_unit</code></td><td>ENUM('mph','kph','knots')</td><td>NOT NULL, DEFAULT 'mph'</td><td></td></tr>
+        <tr><td><code>pressure_unit</code></td><td>ENUM('inHg','mb','hPa')</td><td>NOT NULL, DEFAULT 'inHg'</td><td></td></tr>
+        <tr><td><code>time_format</code></td><td>ENUM('12h','24h')</td><td>NOT NULL, DEFAULT '12h'</td><td></td></tr>
+        <tr><td><code>alerts_enabled</code></td><td>BOOLEAN</td><td>NOT NULL, DEFAULT TRUE</td><td>Whether to send push notifications for alerts</td></tr>
+    </table>
+    <p><strong>Indexes:</strong> Primary key lookup only (by <code>user_id</code>). No additional indexes needed.</p>
+    <p><strong>Read events:</strong> User opens app (to determine units for display), notification service checks <code>alerts_enabled</code> when targeting users for alert pushes.</p>
+    <p><strong>Write events:</strong> User changes unit preferences or alert settings.</p>
+</div>
+
+<!-- ----- NoSQL TABLES ----- -->
+<h3><span class="badge badge-nosql">NoSQL</span> NoSQL Tables (Document Store)</h3>
+
+<div class="card card-green">
+    <h4>locations</h4>
+    <p><strong>Why NoSQL (Document Store):</strong> Read-heavy, no complex joins needed. Schema flexibility accommodates different location types (cities, airports, points of interest) with varying attributes. Needs full-text search for autocomplete and geospatial indexing for reverse geocoding — both are natively supported by document stores. Data is mostly static (~500K–1M records), loaded in bulk.</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td><code>location_id</code></td><td>STRING</td><td><strong>Primary Key</strong> — Format: <code>{city_slug}_{admin}_{lat}_{lng}</code></td></tr>
+        <tr><td><code>name</code></td><td>STRING</td><td>City/place name, e.g., "San Francisco"</td></tr>
+        <tr><td><code>admin_area</code></td><td>STRING</td><td>State/province, e.g., "California"</td></tr>
+        <tr><td><code>country</code></td><td>STRING</td><td>e.g., "United States"</td></tr>
+        <tr><td><code>country_code</code></td><td>STRING</td><td>e.g., "US"</td></tr>
+        <tr><td><code>latitude</code></td><td>FLOAT</td><td></td></tr>
+        <tr><td><code>longitude</code></td><td>FLOAT</td><td></td></tr>
+        <tr><td><code>timezone</code></td><td>STRING</td><td>e.g., "America/Los_Angeles"</td></tr>
+        <tr><td><code>type</code></td><td>STRING</td><td>"city", "airport", "poi"</td></tr>
+        <tr><td><code>population</code></td><td>INT</td><td>For relevance ranking in search results</td></tr>
+    </table>
+    <p><strong>Indexes:</strong></p>
+    <ul>
+        <li><strong>Inverted index (full-text) on <code>(name, admin_area, country)</code></strong> — Powers the autocomplete search. Inverted index is chosen because it supports prefix matching ("San Fr" → "San Francisco"), tokenization, and relevance scoring. Far more efficient than B-tree <code>LIKE 'San Fr%'</code> queries for text search.</li>
+        <li><strong>Geospatial index (R-tree) on <code>(latitude, longitude)</code></strong> — Powers reverse-geocoding (nearest location to a given lat/lng). R-tree is chosen because it's optimized for spatial proximity queries and bounding-box searches.</li>
+    </ul>
+    <p><strong>Read events:</strong> User types in the search bar (autocomplete), user allows GPS location (reverse geocode), weather service resolves coordinates.</p>
+    <p><strong>Write events:</strong> Rare — bulk loads of location data (monthly updates), occasional additions of new locations.</p>
+</div>
+
+<div class="card card-green">
+    <h4>current_weather</h4>
+    <p><strong>Why NoSQL (Key-Value / Document Store):</strong> Access pattern is exclusively by <code>location_id</code> — a pure key-value lookup. No joins, no complex queries. Needs extremely high read throughput (millions of reads/sec during peak). Horizontal scaling via sharding is critical. Eventual consistency is acceptable.</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td><code>location_id</code></td><td>STRING</td><td><strong>Primary Key (Partition Key)</strong></td></tr>
+        <tr><td><code>temperature</code></td><td>FLOAT</td><td>In Celsius (converted to user's unit at API layer)</td></tr>
+        <tr><td><code>feels_like</code></td><td>FLOAT</td><td>Wind chill / heat index</td></tr>
+        <tr><td><code>humidity</code></td><td>INT</td><td>Percentage</td></tr>
+        <tr><td><code>wind_speed</code></td><td>FLOAT</td><td>In m/s (converted at API layer)</td></tr>
+        <tr><td><code>wind_direction</code></td><td>INT</td><td>Degrees (0-360)</td></tr>
+        <tr><td><code>wind_gust</code></td><td>FLOAT</td><td>In m/s</td></tr>
+        <tr><td><code>pressure</code></td><td>FLOAT</td><td>In hPa</td></tr>
+        <tr><td><code>visibility</code></td><td>FLOAT</td><td>In km</td></tr>
+        <tr><td><code>uv_index</code></td><td>INT</td><td>0-11+</td></tr>
+        <tr><td><code>dew_point</code></td><td>FLOAT</td><td>In Celsius</td></tr>
+        <tr><td><code>conditions_text</code></td><td>STRING</td><td>"Partly Cloudy", "Heavy Rain", etc.</td></tr>
+        <tr><td><code>conditions_icon</code></td><td>STRING</td><td>Icon identifier, e.g., "partly-cloudy-day"</td></tr>
+        <tr><td><code>cloud_cover</code></td><td>INT</td><td>Percentage</td></tr>
+        <tr><td><code>precipitation_1h</code></td><td>FLOAT</td><td>mm in last hour</td></tr>
+        <tr><td><code>sunrise</code></td><td>TIMESTAMP</td><td>Local sunrise time</td></tr>
+        <tr><td><code>sunset</code></td><td>TIMESTAMP</td><td>Local sunset time</td></tr>
+        <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>When this record was last refreshed</td></tr>
+        <tr><td><code>data_source</code></td><td>STRING</td><td>Which provider supplied this data</td></tr>
+    </table>
+    <p><strong>Denormalization Note:</strong> <code>conditions_text</code> and <code>conditions_icon</code> are stored directly in this document rather than referencing a separate conditions lookup table. This avoids an extra read/join on every single weather query — critical given millions of reads per second. The denormalized data is small (a string and an icon code) and is managed centrally by the Data Processing Service, so there is no risk of inconsistency.</p>
+    <p><strong>Indexes:</strong> Primary key only. All lookups are by <code>location_id</code>. No secondary indexes needed.</p>
+    <p><strong>Sharding:</strong> Consistent hashing on <code>location_id</code>. This distributes data evenly across shards. Chosen because the access pattern is always a single key lookup — consistent hashing ensures each key maps to exactly one shard with minimal data movement when shards are added/removed. Popular locations (major cities) will be on specific shards, which may become hot — this is mitigated by the Distributed Cache absorbing most reads before they hit the database.</p>
+    <p><strong>Read events:</strong> User views current weather for any location.</p>
+    <p><strong>Write events:</strong> Data Processing Service updates every 5–15 minutes per location (batch writes from ingestion).</p>
+</div>
+
+<div class="card card-green">
+    <h4>weather_forecast</h4>
+    <p><strong>Why NoSQL (Document Store):</strong> Nested array structure (array of 48 hourly or 10–15 daily forecast objects) maps naturally to document model. Same access pattern as <code>current_weather</code> — key-value by <code>location_id</code> + <code>forecast_type</code>. High read throughput required.</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td><code>location_id</code></td><td>STRING</td><td><strong>Partition Key</strong></td></tr>
+        <tr><td><code>forecast_type</code></td><td>STRING</td><td><strong>Sort Key</strong> — "hourly" or "daily"</td></tr>
+        <tr><td><code>forecasts</code></td><td>ARRAY</td><td>Array of forecast objects (see below)</td></tr>
+        <tr><td><code>generated_at</code></td><td>TIMESTAMP</td><td>When the forecast model was run</td></tr>
+        <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>When this record was last written</td></tr>
+    </table>
+    <p><strong>Nested forecast object (hourly):</strong> <code>{ timestamp, temperature, feels_like, humidity, wind_speed, wind_direction, precip_chance, precip_amount, conditions_text, conditions_icon }</code></p>
+    <p><strong>Nested forecast object (daily):</strong> <code>{ date, high_temp, low_temp, humidity, wind_speed, wind_direction, precip_chance, precip_amount, conditions_text, conditions_icon, sunrise, sunset, uv_index }</code></p>
+    <p><strong>Denormalization Note:</strong> Similar to <code>current_weather</code>, <code>conditions_text</code> and <code>conditions_icon</code> are embedded in each forecast object rather than referenced. This avoids 48+ additional lookups per hourly forecast request.</p>
+    <p><strong>Sharding:</strong> Consistent hashing on <code>location_id</code> (same strategy as <code>current_weather</code>). Both <code>forecast_type</code> values for a given location land on the same shard (co-located), so fetching both hourly and daily forecasts for a location requires only one shard.</p>
+    <p><strong>Read events:</strong> User views hourly or daily forecast.</p>
+    <p><strong>Write events:</strong> Data Processing Service updates hourly forecasts every hour, daily forecasts every few hours.</p>
+</div>
+
+<div class="card card-green">
+    <h4>weather_alerts</h4>
+    <p><strong>Why NoSQL (Document Store):</strong> Alert schema varies by alert type (tornado, hurricane, flood, etc. have different fields). Geospatial queries needed (find alerts affecting a geographic point). TTL-based auto-expiry for expired alerts. Moderate read volume, low write volume.</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td><code>alert_id</code></td><td>STRING</td><td><strong>Primary Key</strong></td></tr>
+        <tr><td><code>event_type</code></td><td>STRING</td><td>"tornado_warning", "flood_watch", "hurricane_advisory", etc.</td></tr>
+        <tr><td><code>severity</code></td><td>STRING</td><td>"extreme", "severe", "moderate", "minor"</td></tr>
+        <tr><td><code>certainty</code></td><td>STRING</td><td>"observed", "likely", "possible"</td></tr>
+        <tr><td><code>urgency</code></td><td>STRING</td><td>"immediate", "expected", "future"</td></tr>
+        <tr><td><code>headline</code></td><td>STRING</td><td>Short alert title</td></tr>
+        <tr><td><code>description</code></td><td>STRING</td><td>Full alert description</td></tr>
+        <tr><td><code>instruction</code></td><td>STRING</td><td>Safety instructions</td></tr>
+        <tr><td><code>affected_area</code></td><td>GEO_POLYGON</td><td>Geographic polygon of affected area</td></tr>
+        <tr><td><code>affected_location_ids</code></td><td>ARRAY[STRING]</td><td>Pre-resolved location IDs within the area</td></tr>
+        <tr><td><code>effective_time</code></td><td>TIMESTAMP</td><td>When the alert becomes effective</td></tr>
+        <tr><td><code>expiry_time</code></td><td>TIMESTAMP</td><td>When the alert expires</td></tr>
+        <tr><td><code>issued_by</code></td><td>STRING</td><td>Issuing authority</td></tr>
+        <tr><td><code>status</code></td><td>STRING</td><td>"active", "cancelled", "expired"</td></tr>
+        <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td></td></tr>
+        <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td></td></tr>
+    </table>
+    <p><strong>Denormalization Note:</strong> <code>affected_location_ids</code> is a denormalized array stored directly in the alert document. This avoids a separate many-to-many join table. It is pre-computed by the Alert Processing Service when the alert is ingested (by intersecting the alert's polygon with known locations). This denormalization is justified because: (1) the most common query is "find active alerts for location X", which uses a secondary index on this array, and (2) alerts are written infrequently but read frequently.</p>
+    <p><strong>Indexes:</strong></p>
+    <ul>
+        <li><strong>Geospatial index (R-tree) on <code>affected_area</code></strong> — For queries like "find all active alerts that contain the point (lat, lng)". Used when displaying alerts for a location that may not be in the <code>affected_location_ids</code> pre-computed list.</li>
+        <li><strong>Secondary index on <code>affected_location_ids</code></strong> — For fast lookup: "find all alerts where <code>affected_location_ids</code> contains <code>location_id = X</code>". This is the primary query path when a user views weather for a location.</li>
+        <li><strong>TTL index on <code>expiry_time</code></strong> — Automatically removes expired alerts from the collection. Reduces storage and keeps queries fast by ensuring only active alerts are in the working set.</li>
+    </ul>
+    <p><strong>Read events:</strong> User views weather for a location (check for active alerts), SSE stream checks for new alerts.</p>
+    <p><strong>Write events:</strong> Alert Processing Service inserts/updates/cancels alerts as they are received from government feeds.</p>
+</div>
+
+<!-- ----- TIME-SERIES ----- -->
+<h3><span class="badge badge-ts">Time-Series</span> Time-Series Database</h3>
+
+<div class="card card-orange">
+    <h4>historical_weather</h4>
+    <p><strong>Why Time-Series Database:</strong> Historical weather data is inherently time-ordered. Time-series databases are optimized for: (1) time-range queries ("show me temperature for NYC over the last 30 days"), (2) automatic data rollup/aggregation (minute → hourly → daily granularity over time), (3) highly efficient columnar compression for time-stamped numerical data, (4) retention policies (automatically drop data older than N years or downsample to daily granularity).</p>
+    <table>
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td><code>location_id</code></td><td>STRING</td><td><strong>Partition Key</strong> — groups all history for a location</td></tr>
+        <tr><td><code>timestamp</code></td><td>TIMESTAMP</td><td><strong>Sort Key</strong> — observation time</td></tr>
+        <tr><td><code>temperature</code></td><td>FLOAT</td><td></td></tr>
+        <tr><td><code>high_temp</code></td><td>FLOAT</td><td>Daily high (for daily granularity)</td></tr>
+        <tr><td><code>low_temp</code></td><td>FLOAT</td><td>Daily low (for daily granularity)</td></tr>
+        <tr><td><code>humidity</code></td><td>INT</td><td></td></tr>
+        <tr><td><code>wind_speed</code></td><td>FLOAT</td><td></td></tr>
+        <tr><td><code>precipitation</code></td><td>FLOAT</td><td>mm</td></tr>
+        <tr><td><code>conditions_text</code></td><td>STRING</td><td></td></tr>
+    </table>
+    <p><strong>Read events:</strong> User views historical weather or climate normals for a location.</p>
+    <p><strong>Write events:</strong> Periodic archival from <code>current_weather</code> data (hourly snapshots archived by the Data Processing Service).</p>
+</div>
+
+<!-- ----- OBJECT STORAGE ----- -->
+<h3><span class="badge badge-obj">Object Storage</span> Object Storage</h3>
+
+<div class="card">
+    <h4>Map Tiles &amp; Assets</h4>
+    <p>Stores binary/image assets that are served via CDN:</p>
+    <ul>
+        <li><strong>Radar tiles:</strong> <code>/tiles/radar/{timestamp}/{z}/{x}/{y}.png</code> — Updated every 2–5 minutes</li>
+        <li><strong>Satellite tiles:</strong> <code>/tiles/satellite/{timestamp}/{z}/{x}/{y}.png</code> — Updated every 10–15 minutes</li>
+        <li><strong>Temperature overlay tiles:</strong> <code>/tiles/temperature/{timestamp}/{z}/{x}/{y}.png</code></li>
+        <li><strong>Wind overlay tiles:</strong> <code>/tiles/wind/{timestamp}/{z}/{x}/{y}.png</code></li>
+        <li><strong>Weather icons:</strong> <code>/icons/{icon_code}.svg</code></li>
+    </ul>
+    <p>Object Storage is chosen because map tiles are immutable blobs (write once, read many), the storage is virtually unlimited, and it integrates naturally as a CDN origin.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="cdn-cache">10. CDN &amp; Cache Deep Dive</h2>
+<!-- ============================================================ -->
+
+<h3>CDN</h3>
+
+<div class="card card-accent">
+    <h4>Why CDN is Appropriate</h4>
+    <ol>
+        <li><strong>Identical responses:</strong> Weather data for a location is the same for every user requesting it. This means the CDN cache hit ratio is extremely high — one origin request serves thousands of edge-cached responses.</li>
+        <li><strong>Map tiles are static images:</strong> Radar/satellite tiles at a given timestamp and coordinate are identical for all users. This is a textbook CDN use case.</li>
+        <li><strong>Global user base:</strong> Users worldwide need weather data. CDN edge servers reduce latency by serving content from geographically nearby points of presence (PoPs).</li>
+        <li><strong>Traffic spike absorption:</strong> During severe weather events, traffic spikes 10–100x. The CDN absorbs the surge at the edge without overwhelming origin servers. This is perhaps the most important benefit.</li>
+        <li><strong>Static assets:</strong> HTML, CSS, JavaScript, weather icons, and other assets are classic CDN content.</li>
+    </ol>
+
+    <h4>CDN Caching Strategy</h4>
+    <table>
+        <tr><th>Content Type</th><th>Cache-Control Header</th><th>Effective TTL</th><th>Rationale</th></tr>
+        <tr><td>Weather API responses</td><td><code>public, max-age=120, stale-while-revalidate=60</code></td><td>2 min (3 min stale)</td><td>Weather updates every 5–15 min; 2 min cache ensures reasonable freshness while absorbing load. <code>stale-while-revalidate</code> ensures users never wait for a revalidation — they get stale data instantly while the CDN revalidates in the background.</td></tr>
+        <tr><td>Radar tiles</td><td><code>public, max-age=120</code></td><td>2 min</td><td>Radar refreshes every 2–5 min. Short TTL matches update frequency.</td></tr>
+        <tr><td>Satellite tiles</td><td><code>public, max-age=300</code></td><td>5 min</td><td>Satellite updates less frequently (10–15 min). Slightly longer TTL is acceptable.</td></tr>
+        <tr><td>Historical radar tiles</td><td><code>public, max-age=86400</code></td><td>24 hours</td><td>Past timestamps are immutable — the past doesn't change. Long TTL is safe.</td></tr>
+        <tr><td>Weather icons</td><td><code>public, max-age=86400, immutable</code></td><td>24 hours</td><td>Icons change very rarely. <code>immutable</code> prevents unnecessary revalidation.</td></tr>
+        <tr><td>Static assets (JS/CSS)</td><td><code>public, max-age=31536000, immutable</code></td><td>1 year</td><td>Content-hashed filenames (e.g., <code>app.3f8a2b.js</code>) enable long cache lifetimes. New deploys produce new filenames.</td></tr>
+    </table>
+
+    <h4>CDN Cache Invalidation</h4>
+    <p>Explicit cache invalidation is <strong>not used</strong> for weather data or map tiles. Instead, short TTLs handle freshness automatically. This is preferred because:</p>
+    <ul>
+        <li>Cache invalidation at CDN scale (potentially millions of edge URLs) is slow and expensive.</li>
+        <li>Weather data has natural update intervals that align well with TTL-based expiry.</li>
+        <li>For map tiles, timestamps are embedded in the URL (e.g., <code>?t=1707840000</code>), so new data automatically gets new URLs — no invalidation needed.</li>
+        <li>For static assets, content-hash filenames serve the same purpose.</li>
+    </ul>
+</div>
+
+<h3>Distributed Cache (In-Memory)</h3>
+
+<div class="card card-accent">
+    <h4>Why In-Memory Cache is Appropriate</h4>
+    <p>Even with CDN caching, the origin servers receive significant traffic from CDN cache misses (especially for less popular locations and immediately after data updates). An in-memory distributed cache sits between the API service and the database, absorbing most database reads. For a system with 100K+ locations and weather data updating every 5–15 minutes, the entire hot working set fits comfortably in memory (estimated &lt;10 GB).</p>
+
+    <h4>Caching Strategy: Write-Through + Cache-Aside Hybrid</h4>
+    <table>
+        <tr><th>Strategy</th><th>When Used</th><th>How It Works</th><th>Why</th></tr>
+        <tr>
+            <td><strong>Write-Through</strong></td>
+            <td>During data ingestion (Data Processing Service writes to DB and cache simultaneously)</td>
+            <td>When the Data Processing Service processes new weather data, it writes to the NoSQL database AND updates the corresponding cache entry in the same operation.</td>
+            <td>Ensures the cache is always warm with the latest data for all locations that were just updated. Prevents the "thundering herd" problem — without write-through, when the cache entry expires after an update, thousands of concurrent users would all miss cache and hit the database simultaneously. Write-through eliminates this by pre-populating cache before any user requests it.</td>
+        </tr>
+        <tr>
+            <td><strong>Cache-Aside (Lazy Loading)</strong></td>
+            <td>During user queries (Weather API Service checks cache, falls through to DB on miss)</td>
+            <td>When a user queries weather for a location not in cache, the API service reads from the database, returns the data, and populates the cache for future requests.</td>
+            <td>Handles the long tail of locations not covered by the latest ingestion batch. Self-healing: if the cache is flushed or entries are evicted, they are rebuilt automatically from the next user request. Only caches data that is actually requested, avoiding wasting memory on unused entries.</td>
+        </tr>
+    </table>
+
+    <h4>Eviction Policy: LRU (Least Recently Used)</h4>
+    <p>When the cache reaches capacity, the least recently accessed entries are evicted first.</p>
+    <ul>
+        <li><strong>Why LRU:</strong> Weather data access follows a power-law distribution. A small number of locations (major cities like NYC, London, Tokyo) account for a disproportionately large share of traffic. These popular locations will always be recently accessed and stay in cache. Rarely viewed locations (small towns, remote areas) are evicted when space is needed, and if requested again, are loaded via cache-aside.</li>
+        <li><strong>Why not LFU (Least Frequently Used):</strong> LFU can "pollute" the cache with historically popular entries that are no longer relevant (e.g., a location that was popular during a past storm but isn't anymore). LRU is more responsive to current access patterns.</li>
+        <li><strong>Why not FIFO:</strong> FIFO ignores access patterns entirely and would evict popular locations just because they were loaded earlier. Unacceptable for a workload with clear access skew.</li>
+    </ul>
+
+    <h4>Expiration Policy (TTL)</h4>
+    <table>
+        <tr><th>Data Type</th><th>TTL</th><th>Rationale</th></tr>
+        <tr><td>Current weather</td><td>5 minutes</td><td>Data updates every 5–15 min. 5 min TTL means at most 5 min stale before expiry triggers a refresh (from DB or next write-through). Short enough for freshness, long enough to absorb traffic.</td></tr>
+        <tr><td>Hourly forecast</td><td>15 minutes</td><td>Forecasts update every hour. 15 min is a good balance — not so long that users see outdated forecasts, not so short that we're constantly reloading.</td></tr>
+        <tr><td>Daily forecast</td><td>30 minutes</td><td>Daily forecasts update every few hours. 30 min TTL is appropriate.</td></tr>
+        <tr><td>Location data</td><td>24 hours</td><td>Location records rarely change. Long TTL minimizes lookups.</td></tr>
+        <tr><td>Alert data</td><td>2 minutes</td><td>Alerts are safety-critical and must be fresh. Very short TTL ensures we're not serving outdated alert information.</td></tr>
+    </table>
+    <p><strong>TTL as safety net:</strong> Even though write-through keeps cache fresh during normal operations, TTL provides a safety net: if a write-through fails silently, the stale entry will expire within the TTL window and be refreshed on the next read.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="sse-deepdive">11. SSE (Server-Sent Events) Deep Dive</h2>
+<!-- ============================================================ -->
+
+<div class="card card-red">
+    <h4>Why SSE?</h4>
+    <p>Severe weather alerts must be delivered to users in real-time on the web. SSE (Server-Sent Events) is chosen for this purpose.</p>
+
+    <h4>Why SSE over WebSocket?</h4>
+    <ul>
+        <li><strong>Unidirectional:</strong> Alert delivery is server → client only. The client does not need to send data back to the server for alerts. WebSocket's bidirectional capability would be wasted overhead.</li>
+        <li><strong>Simpler protocol:</strong> SSE is plain HTTP with a <code>text/event-stream</code> content type. No upgrade handshake, no framing, no ping/pong. Easier to implement, debug, and monitor.</li>
+        <li><strong>Built-in reconnection:</strong> The browser's <code>EventSource</code> API automatically reconnects when the connection drops, with configurable retry intervals. WebSocket requires custom reconnection logic.</li>
+        <li><strong>Last-Event-ID:</strong> SSE supports a <code>Last-Event-ID</code> header on reconnection, allowing the server to replay missed events. This is built into the protocol — WebSocket requires custom implementation.</li>
+        <li><strong>HTTP/2 compatible:</strong> SSE connections multiplex over a single TCP connection via HTTP/2, reducing connection overhead. WebSocket does not benefit from HTTP/2 multiplexing.</li>
+        <li><strong>Proxy/CDN friendly:</strong> SSE works through HTTP proxies and CDNs without special configuration. WebSocket requires proxy support for the upgrade handshake.</li>
+    </ul>
+
+    <h4>Why SSE over Long Polling?</h4>
+    <ul>
+        <li><strong>Lower latency:</strong> SSE delivers events immediately when they occur. Long polling introduces delay equal to the poll interval.</li>
+        <li><strong>More efficient:</strong> SSE reuses a single HTTP connection. Long polling repeatedly tears down and re-establishes connections, wasting bandwidth and server resources.</li>
+        <li><strong>Simpler client code:</strong> <code>new EventSource('/alerts/stream')</code> vs. a polling loop with <code>setTimeout</code> and <code>fetch</code>.</li>
+    </ul>
+
+    <h4>How the SSE Connection is Established</h4>
+    <ol>
+        <li>When the user opens weather.com and the weather page loads, the client JavaScript executes:<br/>
+            <code>const source = new EventSource('/api/v1/alerts/stream?location_ids=nyc,miami');</code></li>
+        <li>The browser sends: <code>GET /api/v1/alerts/stream?location_ids=nyc,miami</code> with <code>Accept: text/event-stream</code></li>
+        <li>The Load Balancer routes this to an SSE Connection Manager instance (using sticky sessions or a consistent hashing scheme based on client ID to ensure reconnections go to the same instance when possible).</li>
+        <li>The SSE Connection Manager:
+            <ul>
+                <li>Registers this connection in its <strong>in-memory map</strong>: <code>location_id → Set&lt;SSE Connection&gt;</code></li>
+                <li>Keeps the HTTP response open with <code>Content-Type: text/event-stream</code> and <code>Cache-Control: no-cache</code></li>
+                <li>Sends periodic heartbeat comments (<code>: heartbeat\n\n</code>) every 30 seconds to keep the connection alive through proxies and load balancers.</li>
+            </ul>
+        </li>
+        <li>When a new alert arrives via Pub/Sub, the SSE Connection Manager checks its map for connections subscribed to the affected <code>location_ids</code> and pushes the event:
+            <pre><code>event: weather-alert
+id: alert_12345
+data: {"alert_id":"alert_12345","type":"tornado_warning","severity":"extreme","headline":"Tornado Warning for Oklahoma City",...}
+
+</code></pre>
+        </li>
+    </ol>
+
+    <h4>What Stores the Connection</h4>
+    <p>Each SSE Connection Manager instance maintains an <strong>in-memory mapping</strong>:</p>
+    <pre><code>Map&lt;location_id, Set&lt;SSE Connection&gt;&gt;</code></pre>
+    <p>This map is local to each instance. It is <strong>not</strong> stored in a database or shared cache because:</p>
+    <ul>
+        <li>SSE connections are inherently tied to a specific server instance (the TCP connection is between the client and that instance).</li>
+        <li>Storing connection metadata externally would add latency and complexity without benefit — the connection can only be written to from the instance holding it.</li>
+    </ul>
+
+    <h4>How Other SSE Servers Are Found</h4>
+    <p>When a new alert is published to the <strong>Pub/Sub system</strong> (see <a href="#pubsub-deepdive">Pub/Sub Deep Dive</a>), <strong>all</strong> SSE Connection Manager instances subscribe to alert topics. Each instance receives the alert event and checks its own local connection map for affected clients. This fan-out approach means:</p>
+    <ul>
+        <li>No central registry of connections is needed.</li>
+        <li>Each instance independently filters for its own connected clients.</li>
+        <li>Adding more SSE Connection Manager instances simply means more Pub/Sub subscribers — the system scales horizontally.</li>
+    </ul>
+
+    <h4>Connection Lifecycle</h4>
+    <ul>
+        <li><strong>Open:</strong> Client navigates to weather page → SSE connection established</li>
+        <li><strong>Active:</strong> Heartbeats sent every 30s; alert events pushed when relevant</li>
+        <li><strong>Reconnect:</strong> If connection drops (network issue, server restart), <code>EventSource</code> auto-reconnects. <code>Last-Event-ID</code> header allows server to replay missed events.</li>
+        <li><strong>Close:</strong> Client navigates away from page → connection closed → server removes from in-memory map</li>
+    </ul>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="mq-deepdive">12. Message Queue Deep Dive</h2>
+<!-- ============================================================ -->
+
+<div class="card card-orange">
+    <h4>Why Message Queue?</h4>
+    <p>Message queues are used in two places in this architecture:</p>
+    <ol>
+        <li><strong>Weather Data Ingestion Pipeline:</strong> Between the Data Ingestion Service (producer) and the Data Processing Service (consumer).</li>
+        <li><strong>Alert Pipeline:</strong> Between the Alert Ingestion Service (producer) and the Alert Processing Service (consumer).</li>
+    </ol>
+    <p>A message queue is used instead of direct synchronous calls because:</p>
+    <ul>
+        <li><strong>Decoupling:</strong> The ingestion service and processing service can scale independently. If the processing service is temporarily slow or down, messages accumulate in the queue without losing data.</li>
+        <li><strong>Burst handling:</strong> External weather sources may deliver data in bursts (e.g., all stations report at the top of the hour). The queue buffers these bursts, allowing the processing service to consume at its own pace.</li>
+        <li><strong>Reliability:</strong> If the processing service crashes mid-processing, unacknowledged messages are redelivered. No data is lost.</li>
+        <li><strong>Independent scaling:</strong> During severe weather events, alert volume increases significantly. The alert queue allows the Alert Processing Service to be scaled up independently.</li>
+    </ul>
+
+    <h4>Why Not Direct HTTP Calls (Synchronous)?</h4>
+    <ul>
+        <li>If the processing service is slow or down, the ingestion service would block or fail — potentially missing time-sensitive external data fetches.</li>
+        <li>No built-in retry or buffering — the ingestion service would need to implement its own retry logic.</li>
+        <li>Tight coupling makes it difficult to scale services independently.</li>
+    </ul>
+
+    <h4>How Messages Are Put on the Queue</h4>
+    <ol>
+        <li>The <strong>Data Ingestion Service</strong> fetches raw weather data from an external source via <code>HTTP GET</code>.</li>
+        <li>It normalizes the data into a canonical message format (JSON) with fields: <code>{ message_type, location_id, data, source, timestamp }</code></li>
+        <li>It publishes the message to the appropriate queue topic/channel (e.g., <code>weather-updates</code> or <code>alerts</code>) using the queue's producer SDK.</li>
+        <li>The queue persists the message to disk for durability and acknowledges receipt to the producer.</li>
+    </ol>
+
+    <h4>How Messages Are Removed from the Queue</h4>
+    <ol>
+        <li>The <strong>Data Processing Service</strong> (or Alert Processing Service) runs as a consumer, continuously polling the queue or receiving pushed messages.</li>
+        <li>It receives a message from the queue.</li>
+        <li>It processes the message (validates data, writes to database, updates cache, etc.).</li>
+        <li>Upon successful processing, it sends an <strong>acknowledgment (ACK)</strong> back to the queue.</li>
+        <li>The queue removes the acknowledged message.</li>
+        <li>If the consumer crashes before ACKing, the message becomes visible again after a configured visibility timeout, and another consumer instance picks it up (at-least-once delivery).</li>
+    </ol>
+
+    <h4>Message Ordering</h4>
+    <p>Messages for the same <code>location_id</code> should be processed in order (to avoid writing older data over newer data). This is achieved by partitioning the queue by <code>location_id</code> — all messages for a given location go to the same partition and are consumed in order.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="pubsub-deepdive">13. Pub/Sub Deep Dive</h2>
+<!-- ============================================================ -->
+
+<div class="card card-red">
+    <h4>Why Pub/Sub (in addition to Message Queue)?</h4>
+    <p>While the Message Queue handles the ingestion pipeline (point-to-point), <strong>Pub/Sub</strong> is used for real-time alert fan-out to multiple subscribers:</p>
+    <ul>
+        <li><strong>Fan-out pattern:</strong> A single alert event must be delivered to multiple consumers simultaneously — the Notification Service (for push notifications) AND all SSE Connection Manager instances (for web push). A message queue with competing consumers would deliver each message to only one consumer. Pub/Sub delivers each message to all subscribers.</li>
+        <li><strong>Dynamic subscribers:</strong> As SSE Connection Manager instances scale up/down, they dynamically subscribe/unsubscribe to Pub/Sub topics. No reconfiguration needed.</li>
+    </ul>
+
+    <h4>Why Not Just Use Message Queue for Everything?</h4>
+    <p>Message queues use competing consumer pattern — each message is delivered to exactly one consumer. For alert fan-out, we need each alert delivered to <strong>all</strong> subscribers (Notification Service + every SSE server). Pub/Sub's topic-based fan-out is the correct pattern here.</p>
+
+    <h4>How It Works</h4>
+    <ol>
+        <li><strong>Topics:</strong> Alert events are organized into topics by geographic region (e.g., <code>alerts-us-south</code>, <code>alerts-us-northeast</code>, <code>alerts-europe</code>). This allows subscribers to only receive relevant alerts, reducing unnecessary processing.</li>
+        <li><strong>Publishing:</strong> When the Alert Processing Service processes a new alert, it determines the affected regions and publishes the alert event to the corresponding topic(s).</li>
+        <li><strong>Subscribing:</strong> Each SSE Connection Manager instance subscribes to topics covering the locations its connected clients are interested in. The Notification Service subscribes to all alert topics.</li>
+        <li><strong>Delivery:</strong> When a message is published to a topic, the Pub/Sub system delivers a copy to every active subscriber of that topic.</li>
+    </ol>
+
+    <h4>Information in Pub/Sub Messages</h4>
+    <pre><code>{
+  "alert_id": "alert_12345",
+  "event_type": "tornado_warning",
+  "severity": "extreme",
+  "headline": "Tornado Warning for Oklahoma City, OK",
+  "affected_location_ids": ["okc_35.4676_-97.5164", "edmond_ok_35.6528_-97.4781"],
+  "effective_time": "2024-02-13T18:00:00Z",
+  "expiry_time": "2024-02-13T19:00:00Z"
+}</code></pre>
+    <p>This is a lightweight payload containing just enough information for subscribers to (1) determine if the alert is relevant to their connected users and (2) send an initial notification. Full alert details can be fetched from the Alert Data Store if needed.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="protocols">14. Protocol Choices</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+    <h4>TCP — Used for All Communication</h4>
+    <p>All communication in this system uses <strong>TCP</strong> (via HTTP/HTTPS, SSE, and database protocols). TCP is chosen because:</p>
+    <ul>
+        <li><strong>Reliable delivery:</strong> Weather data, forecasts, and especially severe weather alerts must be delivered completely and correctly. TCP guarantees ordered, reliable delivery with error detection and retransmission.</li>
+        <li><strong>Weather data is not latency-critical at the millisecond level:</strong> Unlike real-time voice/video (where UDP is appropriate), weather data can tolerate the small overhead of TCP's reliability mechanisms. A few milliseconds of additional latency from TCP acknowledgments is negligible compared to the seconds a user spends reading weather data.</li>
+        <li><strong>Text/JSON payloads:</strong> All API responses are JSON text. TCP is the standard and appropriate transport for HTTP-based text data.</li>
+    </ul>
+
+    <h4>Why Not UDP?</h4>
+    <p>UDP is typically used for real-time streaming (voice, video, gaming) where occasional packet loss is acceptable. Weather data requires:</p>
+    <ul>
+        <li>Complete delivery (a partial weather response is useless).</li>
+        <li>Ordered delivery (temperature and conditions must correspond to the same observation time).</li>
+        <li>Error-free data (incorrect temperature due to bit errors is dangerous).</li>
+    </ul>
+    <p>UDP provides none of these guarantees, making it inappropriate for weather data delivery.</p>
+
+    <h4>HTTP/2</h4>
+    <p>The API layer uses <strong>HTTP/2</strong> where possible for:</p>
+    <ul>
+        <li><strong>Multiplexing:</strong> Multiple requests/responses over a single TCP connection (especially beneficial for map tile loading where many tiles are fetched in parallel).</li>
+        <li><strong>Header compression:</strong> Reduces overhead for repeated requests to the same endpoints.</li>
+        <li><strong>SSE compatibility:</strong> SSE streams multiplex efficiently over HTTP/2.</li>
+    </ul>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="scaling">15. Scaling Considerations</h2>
+<!-- ============================================================ -->
+
+<div class="card card-green">
+    <h4>1. CDN as the First Line of Defense</h4>
+    <p>The CDN absorbs an estimated <strong>80–90% of all read traffic</strong>. For a system serving millions of requests per second, this is the single most impactful scaling mechanism. Weather data is highly cacheable (same response for all users at a location), and map tiles are static images — the CDN is perfectly suited for this workload.</p>
+
+    <h4>2. Load Balancers — Placement &amp; Deep Dive</h4>
+    <p><strong>Where load balancers are placed:</strong></p>
+    <ul>
+        <li><strong>LB-1: CDN → API Layer:</strong> A primary load balancer sits between the CDN (on cache misses) and all API services. This is a Layer 7 (application-level) load balancer that can route requests based on URL path:
+            <ul>
+                <li><code>/api/v1/weather/*</code> → Weather API Service instances</li>
+                <li><code>/api/v1/locations/*</code> → Location Service instances</li>
+                <li><code>/tiles/*</code> → Map Tile Service instances</li>
+                <li><code>/api/v1/alerts/stream</code> → SSE Connection Manager instances</li>
+            </ul>
+        </li>
+        <li><strong>LB-2: Internal Load Balancing:</strong> If the Data Processing Service needs to communicate with multiple downstream stores, internal load balancers or service mesh can distribute traffic.</li>
+    </ul>
+    <p><strong>Load Balancer Configuration:</strong></p>
+    <table>
+        <tr><th>Setting</th><th>Value</th><th>Rationale</th></tr>
+        <tr><td>Algorithm</td><td>Least Connections</td><td>Better than Round Robin for requests with varying durations (e.g., SSE connections are long-lived, weather API calls are short). Distributes load based on actual busyness.</td></tr>
+        <tr><td>Health Checks</td><td>HTTP GET /health every 5s, 3 failures to mark unhealthy</td><td>Quickly detects failed instances and routes around them.</td></tr>
+        <tr><td>TLS Termination</td><td>At load balancer</td><td>Offloads TLS decryption from service instances. Internal traffic uses plain HTTP for reduced latency.</td></tr>
+        <tr><td>Connection Draining</td><td>30 seconds</td><td>During instance shutdown, existing requests are completed before the instance is removed. Critical for SSE connections.</td></tr>
+        <tr><td>Sticky Sessions</td><td>Enabled for SSE endpoint only</td><td>SSE reconnections should ideally return to the same instance (for Last-Event-ID replay). Not needed for stateless API endpoints.</td></tr>
+    </table>
+
+    <h4>3. Horizontal Scaling of API Services</h4>
+    <p>All API services (Weather API, Location, Map Tile, SSE Manager) are <strong>stateless</strong> (except SSE Manager's in-memory connection map, which is not critical state). They can be horizontally scaled by adding more instances behind the load balancer.</p>
+    <ul>
+        <li><strong>Auto-scaling triggers:</strong> CPU utilization &gt; 60%, request queue depth &gt; threshold, or p99 latency &gt; 200ms → scale up. Scale down when metrics return to normal (with a cooldown period to avoid flapping).</li>
+        <li><strong>Scale-up speed:</strong> Configured for aggressive scale-up (add 50% capacity within 1 minute) and slow scale-down (remove 10% every 5 minutes). This handles traffic spikes quickly while avoiding premature scale-down.</li>
+    </ul>
+
+    <h4>4. Database Scaling</h4>
+    <ul>
+        <li><strong>Sharding:</strong> Weather data (current_weather, weather_forecast) is sharded by <code>location_id</code> using consistent hashing across multiple NoSQL nodes. This distributes both data and query load.</li>
+        <li><strong>Read replicas:</strong> Each shard has 2–3 read replicas. The Weather API Service reads from replicas (eventual consistency is acceptable for weather data). Writes go to the primary.</li>
+        <li><strong>Write scaling:</strong> Writes are relatively low volume (batch updates from ingestion every 5–15 minutes). The primary node of each shard handles this easily.</li>
+    </ul>
+
+    <h4>5. Map Tile Scaling</h4>
+    <p>Map tiles are the highest-bandwidth content (PNG images). Scaling strategy:</p>
+    <ul>
+        <li>CDN edge caching handles the vast majority of tile requests.</li>
+        <li>Object Storage provides virtually unlimited capacity for tile storage.</li>
+        <li>Map Tile Service is a thin stateless proxy — easily horizontally scaled.</li>
+        <li>Map Tile Generator can be scaled independently for processing radar/satellite data.</li>
+    </ul>
+
+    <h4>6. Traffic Spike Handling (Severe Weather Events)</h4>
+    <ul>
+        <li><strong>CDN absorption:</strong> The CDN handles the brunt of the spike. Cached weather data (even if slightly stale) is better than no data.</li>
+        <li><strong>Auto-scaling:</strong> Aggressive scale-up policies activate within 60 seconds.</li>
+        <li><strong>Circuit breakers:</strong> If a downstream service is overwhelmed, circuit breakers prevent cascading failures. The API returns cached/stale data instead of failing.</li>
+        <li><strong>Graceful degradation:</strong> If load exceeds capacity, lower-priority features degrade first (e.g., historical data, animated radar) while current conditions and alerts remain available.</li>
+        <li><strong>Rate limiting:</strong> Per-client rate limiting (e.g., 100 requests/minute for anonymous users, 300 for authenticated) protects against abuse without impacting normal usage.</li>
+    </ul>
+
+    <h4>7. SSE Connection Scaling</h4>
+    <p>Each SSE Connection Manager can hold thousands of concurrent connections (limited by file descriptors and memory). Scaling strategy:</p>
+    <ul>
+        <li>Add more SSE Connection Manager instances as connection count grows.</li>
+        <li>Each instance subscribes to Pub/Sub independently — no coordination needed between instances.</li>
+        <li>Sticky sessions in the load balancer help reconnections, but the system works correctly even without them (the client simply re-subscribes on a different instance).</li>
+    </ul>
+
+    <h4>8. Geographic Distribution</h4>
+    <p>Deploy the full stack in multiple geographic regions (e.g., US-East, US-West, Europe, Asia). Each region has its own API services, caches, and database replicas. The CDN routes users to the nearest region. This reduces latency for global users and provides regional redundancy.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="tradeoffs">16. Tradeoffs &amp; Deep Dives</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+    <h4>1. Freshness vs. Performance</h4>
+    <p><strong>Tradeoff:</strong> Aggressive caching (CDN + distributed cache) means users might see weather data up to ~5 minutes stale.</p>
+    <p><strong>Decision:</strong> Accept staleness. Weather conditions change gradually (not second-by-second), and a 5-minute delay is imperceptible to users. The performance gain (sub-50ms responses from CDN) and scalability benefit (10x fewer origin hits) far outweigh the staleness cost. The only exception is severe weather alerts, which use SSE for real-time delivery and have a 2-minute cache TTL.</p>
+
+    <h4>2. Pre-computation vs. On-demand Computation</h4>
+    <p><strong>Tradeoff:</strong> Weather data is pre-computed and stored for ~500K+ known locations rather than computing on-the-fly from raw model data.</p>
+    <p><strong>Decision:</strong> Pre-compute. Computing weather from raw atmospheric model data (interpolation, post-processing) is CPU-intensive (seconds per request). Pre-computation during ingestion allows simple key-value lookups during user queries (milliseconds). The storage cost (~10 GB for all locations) is trivial.</p>
+
+    <h4>3. NoSQL vs. SQL for Weather Data</h4>
+    <p><strong>Tradeoff:</strong> NoSQL gives better read throughput and easier horizontal scaling but loses ACID transactions and complex query capabilities.</p>
+    <p><strong>Decision:</strong> NoSQL. Weather data access is pure key-value (lookup by <code>location_id</code>). No joins, no transactions, no complex queries. NoSQL's strengths (horizontal scaling, high throughput, flexible schema) align perfectly with this workload. SQL's strengths (ACID, joins) are not needed and would add overhead.</p>
+
+    <h4>4. Consistency vs. Availability (CAP)</h4>
+    <p><strong>Tradeoff:</strong> In a distributed system, we must choose between strong consistency and high availability during network partitions.</p>
+    <p><strong>Decision:</strong> Favor availability (AP). During a network partition, it's better to serve slightly stale weather data than to return errors. A user seeing 10-minute-old weather data is far better than seeing "Service Unavailable." Eventual consistency is acceptable because weather data has natural update intervals.</p>
+
+    <h4>5. SSE vs. WebSocket for Alerts</h4>
+    <p><strong>Tradeoff:</strong> SSE is simpler but unidirectional. WebSocket supports bidirectional communication.</p>
+    <p><strong>Decision:</strong> SSE. Alert delivery is inherently unidirectional (server → client). Adding WebSocket complexity (upgrade handshake, custom reconnection, ping/pong) for bidirectional capability we don't need is unnecessary overhead. If a future requirement emerges that needs client → server real-time communication, WebSocket can be added alongside SSE.</p>
+
+    <h4>6. Single Weather API Service vs. Separate Microservices per Data Type</h4>
+    <p><strong>Tradeoff:</strong> A single Weather API Service handles current weather, forecasts, and alerts. Alternatively, each could be a separate microservice.</p>
+    <p><strong>Decision:</strong> Single service with separate endpoints. The data access patterns are similar (key-value by <code>location_id</code>), the team is the same, and the operational overhead of managing separate services (deployment, monitoring, inter-service communication) outweighs the benefits at this scale. The backend data stores are already separate, so we can independently scale storage. If one endpoint becomes disproportionately expensive, it can be split out later.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="alternatives">17. Alternative Approaches</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+    <h4>1. GraphQL Instead of REST API</h4>
+    <p><strong>Approach:</strong> Use GraphQL to allow clients to request exactly the weather fields they need, reducing over-fetching (e.g., a widget only needs temperature and conditions, not all 20+ fields).</p>
+    <p><strong>Why not chosen:</strong></p>
+    <ul>
+        <li><strong>Cache unfriendly:</strong> Each GraphQL query can be unique, making CDN caching extremely difficult. REST endpoints with well-defined responses are trivially cacheable by URL. Given that CDN caching is our most important scaling mechanism, this is a deal-breaker.</li>
+        <li><strong>Complexity:</strong> GraphQL adds resolver complexity, query depth limiting, and N+1 query concerns. REST is simpler for a data model where the access patterns are well-known and stable.</li>
+        <li><strong>Over-fetching is minimal:</strong> Weather data responses are small (1–5 KB JSON). The overhead of "over-fetching" a few extra fields is negligible. The bandwidth saved by GraphQL does not justify the caching loss.</li>
+    </ul>
+
+    <h4>2. Full Push Architecture (All Updates via WebSocket/SSE)</h4>
+    <p><strong>Approach:</strong> Instead of request-response for weather data, push all updates to clients in real-time. When temperature changes, push the update immediately.</p>
+    <p><strong>Why not chosen:</strong></p>
+    <ul>
+        <li><strong>Connection cost:</strong> Maintaining persistent connections for millions of concurrent users is extremely expensive. Most users check weather briefly and leave — they don't need a persistent connection for the 30 seconds they're on the page.</li>
+        <li><strong>Unnecessary freshness:</strong> Weather data updates every 5–15 minutes. Pushing sub-second updates provides no value to users. Request-response with caching is far more efficient for occasional access.</li>
+        <li><strong>CDN incompatible:</strong> Push architecture bypasses CDN caching entirely, removing our most powerful scaling tool.</li>
+        <li><strong>SSE is used only for alerts</strong> where real-time delivery is genuinely critical (tornado warnings save lives).</li>
+    </ul>
+
+    <h4>3. Polling for Severe Weather Alerts</h4>
+    <p><strong>Approach:</strong> Client polls <code>GET /api/v1/alerts?location_id=X</code> every 30 seconds instead of using SSE.</p>
+    <p><strong>Why not chosen:</strong></p>
+    <ul>
+        <li><strong>Latency:</strong> With 30-second polling intervals, worst-case alert delivery latency is 30 seconds. For a Tornado Warning, 30 seconds can be the difference between life and death.</li>
+        <li><strong>Wasted resources:</strong> 95%+ of poll requests return "no new alerts." This wastes bandwidth, server resources, and client battery on mobile devices.</li>
+        <li><strong>SSE is preferred:</strong> Near-instant delivery, zero wasted requests when there are no alerts, and the browser handles reconnection automatically.</li>
+    </ul>
+
+    <h4>4. Storing Weather Data in SQL</h4>
+    <p><strong>Approach:</strong> Use a relational database for current weather and forecast data.</p>
+    <p><strong>Why not chosen:</strong></p>
+    <ul>
+        <li>Weather access is pure key-value (no joins, no transactions, no complex queries). SQL's strengths are wasted.</li>
+        <li>Horizontal scaling (sharding) is harder with SQL than NoSQL. NoSQL databases are designed for this pattern.</li>
+        <li>Forecast data has nested arrays (48 hourly objects), which maps poorly to relational tables (would require a separate <code>forecast_hours</code> table with 48 rows per location per update — millions of rows).</li>
+    </ul>
+
+    <h4>5. Computing Weather On-Demand from Raw Model Data</h4>
+    <p><strong>Approach:</strong> Instead of pre-computing and storing weather for known locations, interpolate weather on-the-fly from raw atmospheric model grids when a user requests it.</p>
+    <p><strong>Why not chosen:</strong></p>
+    <ul>
+        <li>Interpolation from raw model data is computationally expensive (10s–100s of milliseconds per request). At millions of QPS, this would require enormous compute resources.</li>
+        <li>Pre-computation converts this cost to a one-time batch operation during ingestion. The trade of storage for compute is overwhelmingly favorable.</li>
+        <li>Exception: For exact lat/lng queries where no pre-computed location exists nearby, a lightweight interpolation from the nearest 4 grid points could be done on-demand. This is a rare case handled by the cache-aside pattern.</li>
+    </ul>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="additional">18. Additional Considerations</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+    <h4>Internationalization (i18n)</h4>
+    <ul>
+        <li>Weather conditions text (<code>conditions_text</code>) is stored in English. Translation to the user's language is handled at the API layer or client layer using a translation table keyed on <code>conditions_icon</code> (which is a language-independent code).</li>
+        <li>Unit conversion (°F/°C, mph/kph) is done at the API layer based on user preferences or <code>Accept-Language</code> header defaults. Data is stored in metric (Celsius, m/s) — the canonical format.</li>
+        <li>Location names are stored in their local language with English translations where available.</li>
+    </ul>
+
+    <h4>IP-based Geolocation</h4>
+    <p>For users who don't grant GPS permission, the system falls back to IP-based geolocation. A lightweight IP geolocation database is loaded into each Weather API Service instance's memory. This provides city-level accuracy (~50km) — sufficient for weather purposes. The resolved coordinates are sent to the Location Service for reverse geocoding.</p>
+
+    <h4>API Versioning</h4>
+    <p>All API endpoints are versioned (e.g., <code>/api/v1/weather</code>). This allows the API contract to evolve without breaking existing clients. Old versions are maintained for a deprecation period.</p>
+
+    <h4>Monitoring &amp; Observability</h4>
+    <ul>
+        <li><strong>Metrics:</strong> Request rates, latency percentiles (p50, p95, p99), error rates, cache hit ratios (CDN and distributed cache), queue depth, SSE connection count.</li>
+        <li><strong>Alerting:</strong> Alert on cache hit ratio drops (indicates CDN or cache issues), latency spikes, error rate increases, queue depth growing (processing falling behind), data freshness (age of latest weather update exceeding threshold).</li>
+        <li><strong>Distributed tracing:</strong> Trace requests from CDN → LB → API → Cache → DB to identify bottlenecks.</li>
+    </ul>
+
+    <h4>Accessibility</h4>
+    <p>The web client should be fully accessible (WCAG 2.1 AA compliant). Weather information is critical for safety, so it must be accessible to users with disabilities. This includes screen reader support for weather conditions, keyboard navigation, sufficient color contrast, and alternative text for weather icons and maps.</p>
+
+    <h4>Mobile App Considerations</h4>
+    <ul>
+        <li><strong>Offline support:</strong> Cache the last-viewed weather data on-device so users can see (stale) weather information when offline.</li>
+        <li><strong>Battery efficiency:</strong> Use push notifications (APNS/FCM) for alerts rather than keeping a persistent connection. Background fetch for periodic weather updates at system-determined intervals.</li>
+        <li><strong>Data efficiency:</strong> Provide a compact API response format for mobile (optional <code>fields</code> query parameter to request only needed fields).</li>
+    </ul>
+
+    <h4>Data Source Redundancy</h4>
+    <p>The system ingests from multiple weather data sources to ensure availability. If one source goes down (e.g., a government API maintenance window), other sources continue providing data. The Data Processing Service merges data from multiple sources, preferring the most recent and most accurate observation.</p>
+
+    <h4>Security</h4>
+    <ul>
+        <li><strong>HTTPS everywhere:</strong> All client-facing endpoints use TLS 1.3.</li>
+        <li><strong>Authentication:</strong> JWT-based authentication for registered user features (saved locations, preferences). Weather data endpoints are available without authentication.</li>
+        <li><strong>Rate limiting:</strong> Per-IP and per-API-key rate limiting to prevent abuse and DDoS.</li>
+        <li><strong>Input validation:</strong> All query parameters are validated and sanitized to prevent injection attacks.</li>
+    </ul>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="vendors">19. Vendor Recommendations</h2>
+<!-- ============================================================ -->
+
+<p>While the architecture above is vendor-agnostic, here are specific vendor recommendations for each component if implementing this system:</p>
+
+<div class="card">
+    <table>
+        <tr><th>Component</th><th>Vendor</th><th>Why</th></tr>
+        <tr>
+            <td>NoSQL Database (weather data, locations, alerts)</td>
+            <td><strong>Apache Cassandra</strong> or <strong>Amazon DynamoDB</strong></td>
+            <td>Cassandra: Excellent for high-throughput key-value workloads with built-in sharding (consistent hash ring), tunable consistency, and multi-datacenter replication. DynamoDB: Fully managed alternative with single-digit millisecond latency and automatic scaling — ideal if running on AWS.</td>
+        </tr>
+        <tr>
+            <td>SQL Database (user accounts)</td>
+            <td><strong>PostgreSQL</strong></td>
+            <td>Mature, battle-tested relational database with excellent ACID compliance, rich indexing (hash, B-tree, GIN), and strong community. User account workload is modest — PostgreSQL handles it easily with read replicas for scaling.</td>
+        </tr>
+        <tr>
+            <td>Distributed Cache</td>
+            <td><strong>Redis</strong> or <strong>Memcached</strong></td>
+            <td>Redis: Supports complex data structures (hashes, sorted sets), TTL per key, and persistence options. Memcached: Simpler, slightly faster for pure key-value caching, multi-threaded. Either works; Redis is preferred for its richer feature set (e.g., atomic TTL updates during write-through).</td>
+        </tr>
+        <tr>
+            <td>Message Queue</td>
+            <td><strong>Apache Kafka</strong></td>
+            <td>High-throughput, durable, partitioned message queue. Partitioning by <code>location_id</code> ensures ordered processing per location. Log-based retention allows replaying messages if a consumer needs to reprocess. Excellent for the weather data ingestion pipeline where throughput and durability are critical.</td>
+        </tr>
+        <tr>
+            <td>Pub/Sub</td>
+            <td><strong>Apache Kafka</strong> (consumer groups) or <strong>Redis Pub/Sub</strong></td>
+            <td>Kafka can serve double duty as both message queue and pub/sub (using consumer groups for queue semantics and topic subscriptions for pub/sub). Redis Pub/Sub is simpler for the alert fan-out use case but lacks persistence (if a subscriber is down, it misses messages). Kafka is preferred for durability.</td>
+        </tr>
+        <tr>
+            <td>Object Storage</td>
+            <td><strong>Amazon S3</strong> or <strong>Google Cloud Storage</strong> or <strong>Azure Blob Storage</strong></td>
+            <td>All three provide highly durable (99.999999999%), highly available object storage with HTTP-based access and seamless CDN integration. S3 is the most mature. Choose based on your primary cloud provider.</td>
+        </tr>
+        <tr>
+            <td>CDN</td>
+            <td><strong>Cloudflare</strong> or <strong>Amazon CloudFront</strong> or <strong>Akamai</strong></td>
+            <td>Cloudflare: Global anycast network, excellent DDoS protection, competitive pricing. CloudFront: Best integration with AWS ecosystem. Akamai: Largest CDN network, most PoPs globally — best for maximum geographic coverage, which matters for a global weather service.</td>
+        </tr>
+        <tr>
+            <td>Time-Series Database</td>
+            <td><strong>InfluxDB</strong> or <strong>TimescaleDB</strong></td>
+            <td>InfluxDB: Purpose-built for time-series with built-in retention policies, downsampling, and continuous queries. TimescaleDB: PostgreSQL extension that adds time-series capabilities — useful if the team already uses PostgreSQL and wants a familiar SQL interface for historical queries.</td>
+        </tr>
+        <tr>
+            <td>Load Balancer</td>
+            <td><strong>NGINX</strong> or <strong>AWS ALB</strong> or <strong>HAProxy</strong></td>
+            <td>NGINX: High-performance Layer 7 load balancer with excellent HTTP/2 support and TLS termination. AWS ALB: Fully managed, auto-scaling, deep AWS integration. HAProxy: Battle-tested, extremely configurable, often used in high-traffic environments.</td>
+        </tr>
+        <tr>
+            <td>Search (for location autocomplete)</td>
+            <td><strong>Elasticsearch</strong> or <strong>Apache Solr</strong></td>
+            <td>Elasticsearch: Industry-standard full-text search with excellent prefix/autocomplete support via edge n-gram tokenizers, geospatial queries, and high performance. Solr: Comparable features, slightly more mature but less popular in modern stacks.</td>
+        </tr>
+    </table>
+</div>
+
+<br/><br/>
+<p style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+    — End of System Design Document —<br/>
+    weather.com | Generated February 2026
+</p>
+<br/>
+
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'dark',
+        securityLevel: 'loose',
+        themeVariables: {
+            lineColor: '#e2e8f0',
+            textColor: '#e2e8f0',
+            primaryTextColor: '#ffffff',
+            secondaryTextColor: '#94a3b8',
+            edgeLabelBackground: '#1e293b'
+        },
+        flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+            curve: 'basis'
+        }
+    });
+</script>
+
 </body>
 </html>
