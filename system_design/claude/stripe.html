@@ -1,389 +1,1412 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>System Design: Stripe</title>
-<style>
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: #e0e0e0; line-height: 1.7; }
-h1 { color: #635bff; border-bottom: 3px solid #635bff; padding-bottom: 10px; font-size: 2.2em; }
-h2 { color: #7a73ff; margin-top: 40px; font-size: 1.6em; border-left: 4px solid #7a73ff; padding-left: 12px; }
-h3 { color: #9d97ff; font-size: 1.3em; }
-h4 { color: #b8b3ff; }
-.section { background: #1a1a2e; border-radius: 10px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
-.diagram-container { background: #0d1117; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
-.example { background: #1e293b; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
-.example strong { color: #f59e0b; }
-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-th { background: #2a2a4a; color: #7a73ff; padding: 12px; text-align: left; border: 1px solid #444; }
-td { padding: 10px 12px; border: 1px solid #333; }
-tr:nth-child(even) { background: #1a1a2e; }
-tr:nth-child(odd) { background: #151528; }
-code { background: #2d2d4d; padding: 2px 8px; border-radius: 4px; color: #ff79c6; font-size: 0.95em; }
-.tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
-.tag-pk { background: #4a1a6b; color: #d4a5ff; }
-.tag-fk { background: #1a4a3b; color: #a5ffd4; }
-.tag-idx { background: #4a3a1a; color: #ffd4a5; }
-.tag-shard { background: #1a2a4a; color: #a5d4ff; }
-ul { padding-left: 25px; }
-li { margin: 5px 0; }
-.tradeoff { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-.pro { background: #0a2a1a; border: 1px solid #2a5a3a; padding: 15px; border-radius: 8px; }
-.con { background: #2a0a1a; border: 1px solid #5a2a3a; padding: 15px; border-radius: 8px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design: Stripe</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #181a20;
+            --surface2: #23262f;
+            --border: #2d3039;
+            --text: #e0e0e6;
+            --text-muted: #9498a4;
+            --accent: #635bff;
+            --accent-light: #7a73ff;
+            --green: #3ecf8e;
+            --red: #f87171;
+            --yellow: #fbbf24;
+            --cyan: #22d3ee;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 0;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 32px; }
+        h1 {
+            font-size: 2.6rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 48px; }
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #fff;
+            margin-top: 56px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--accent);
+        }
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--accent-light);
+            margin-top: 36px;
+            margin-bottom: 14px;
+        }
+        h4 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--cyan);
+            margin-top: 24px;
+            margin-bottom: 10px;
+        }
+        p { margin-bottom: 14px; color: var(--text); }
+        ul, ol { margin-left: 24px; margin-bottom: 16px; }
+        li { margin-bottom: 6px; color: var(--text); }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+        .example-card {
+            background: var(--surface2);
+            border-left: 4px solid var(--green);
+            border-radius: 0 8px 8px 0;
+            padding: 20px 24px;
+            margin: 16px 0;
+        }
+        .example-card strong { color: var(--green); }
+        .warn-card {
+            background: var(--surface2);
+            border-left: 4px solid var(--yellow);
+            border-radius: 0 8px 8px 0;
+            padding: 20px 24px;
+            margin: 16px 0;
+        }
+        .warn-card strong { color: var(--yellow); }
+        .diagram-wrapper {
+            background: linear-gradient(135deg, #13151c 0%, #1a1d28 50%, #161923 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        }
+        .diagram-wrapper .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+        /* Mermaid overrides for dark theme consistency */
+        .diagram-wrapper .mermaid svg {
+            filter: drop-shadow(0 2px 8px rgba(99, 91, 255, 0.08));
+        }
+        .diagram-wrapper .node rect,
+        .diagram-wrapper .node circle,
+        .diagram-wrapper .node polygon {
+            stroke-width: 1.5px !important;
+        }
+        .diagram-wrapper .cluster rect {
+            rx: 8 !important;
+            ry: 8 !important;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0 24px 0;
+            font-size: 0.95rem;
+        }
+        th {
+            background: var(--accent);
+            color: #fff;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        tr:nth-child(even) td { background: var(--surface); }
+        code {
+            background: var(--surface2);
+            color: var(--cyan);
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+        .toc { margin: 32px 0; }
+        .toc a {
+            color: var(--accent-light);
+            text-decoration: none;
+            display: block;
+            padding: 6px 0;
+            font-size: 1rem;
+        }
+        .toc a:hover { color: #fff; text-decoration: underline; }
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 6px;
+        }
+        .tag-sql { background: #1e3a5f; color: #60a5fa; }
+        .tag-nosql { background: #3b1f1f; color: #f87171; }
+        .tag-cache { background: #1f3b2f; color: #3ecf8e; }
+        .protocol { color: var(--yellow); font-weight: 600; }
+    </style>
 </head>
 <body>
-<h1>System Design: Stripe (Payment Processing Platform)</h1>
+<div class="container">
 
-<div class="section">
-<h2>Functional Requirements</h2>
-<ul>
-<li>Merchants can accept payments via credit/debit cards, bank transfers, and digital wallets</li>
-<li>Support one-time charges, subscriptions (recurring billing), and payment intents (multi-step checkout)</li>
-<li>Refund processing (full and partial)</li>
-<li>Webhook notifications for payment events (succeeded, failed, refunded)</li>
-<li>Multi-currency support with automatic currency conversion</li>
-<li>Fraud detection and prevention</li>
-<li>PCI-DSS compliant card data tokenization</li>
-</ul>
+<h1>⚡ System Design: Stripe</h1>
+<p class="subtitle">A vendor-agnostic design for a global payment processing platform</p>
+
+<!-- TABLE OF CONTENTS -->
+<div class="card toc">
+    <h3 style="margin-top:0">Table of Contents</h3>
+    <a href="#fr">1. Functional Requirements</a>
+    <a href="#nfr">2. Non-Functional Requirements</a>
+    <a href="#flow1">3. Flow 1 — Payment Processing</a>
+    <a href="#flow2">4. Flow 2 — Refund Processing</a>
+    <a href="#flow3">5. Flow 3 — Payout &amp; Settlement</a>
+    <a href="#flow4">6. Flow 4 — Webhook Notification Delivery</a>
+    <a href="#overall">7. Overall Combined Diagram</a>
+    <a href="#schema">8. Database Schema</a>
+    <a href="#cdn-cache">9. CDN &amp; Cache Deep Dive</a>
+    <a href="#scaling">10. Scaling Considerations</a>
+    <a href="#tradeoffs">11. Tradeoffs &amp; Deep Dives</a>
+    <a href="#alternatives">12. Alternative Approaches</a>
+    <a href="#additional">13. Additional Information</a>
+    <a href="#vendors">14. Vendor Considerations</a>
 </div>
 
-<div class="section">
-<h2>Non-Functional Requirements</h2>
-<ul>
-<li><strong>Consistency:</strong> Strong consistency — payment records must never be lost or double-charged (ACID transactions)</li>
-<li><strong>Availability:</strong> 99.999% uptime (financial system — downtime = lost revenue for merchants)</li>
-<li><strong>Latency:</strong> &lt;2 seconds for payment processing end-to-end</li>
-<li><strong>Idempotency:</strong> Every API call must be idempotent (retries must not cause double charges)</li>
-<li><strong>Security:</strong> PCI-DSS Level 1 compliance, tokenization, encryption at rest and in transit</li>
-<li><strong>Scalability:</strong> Handle millions of transactions per day across thousands of merchants</li>
-</ul>
-</div>
-
-<!-- Flow 1: Payment Processing -->
-<div class="section">
-<h2>Flow 1: Payment Processing (Charge a Card)</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1200 500" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#635bff"/></marker></defs>
-<rect x="20" y="200" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="80" y="228" text-anchor="middle" fill="white" font-size="12">Customer</text><text x="80" y="245" text-anchor="middle" fill="white" font-size="11">Browser</text>
-<rect x="180" y="200" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="245" y="228" text-anchor="middle" fill="white" font-size="12">Merchant</text><text x="245" y="245" text-anchor="middle" fill="white" font-size="11">Server</text>
-<rect x="360" y="200" width="130" height="60" rx="10" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="425" y="228" text-anchor="middle" fill="white" font-size="12">API Gateway</text><text x="425" y="245" text-anchor="middle" fill="white" font-size="11">+ Rate Limiter</text>
-<rect x="540" y="120" width="140" height="50" rx="8" fill="#635bff" stroke="#8a85ff" stroke-width="2"/><text x="610" y="150" text-anchor="middle" fill="white" font-size="12">Payment Service</text>
-<rect x="540" y="250" width="140" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="610" y="280" text-anchor="middle" fill="white" font-size="12">Fraud Engine</text>
-<rect x="540" y="360" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="610" y="390" text-anchor="middle" fill="white" font-size="12">Token Vault</text>
-<rect x="740" y="120" width="150" height="50" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="815" y="142" text-anchor="middle" fill="white" font-size="11">Payment Processor</text><text x="815" y="158" text-anchor="middle" fill="white" font-size="10">(Card Network)</text>
-<rect x="950" y="120" width="140" height="50" rx="8" fill="#8b4513" stroke="#cd853f" stroke-width="2"/><text x="1020" y="142" text-anchor="middle" fill="white" font-size="11">Issuing Bank</text><text x="1020" y="158" text-anchor="middle" fill="white" font-size="10">(Visa/MC)</text>
-<ellipse cx="815" cy="280" rx="70" ry="30" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="815" y="285" text-anchor="middle" fill="white" font-size="12">Payment DB</text>
-<rect x="740" y="360" width="150" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="815" y="390" text-anchor="middle" fill="white" font-size="12">Ledger Service</text>
-<line x1="140" y1="230" x2="178" y2="230" stroke="#635bff" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="310" y1="230" x2="358" y2="230" stroke="#635bff" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="490" y1="220" x2="538" y2="150" stroke="#635bff" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="490" y1="240" x2="538" y2="270" stroke="#635bff" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="610" y1="170" x2="610" y2="248" stroke="#ffaa00" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow1)"/>
-<line x1="610" y1="300" x2="610" y2="358" stroke="#ffaa00" stroke-width="1.5" stroke-dasharray="5,5"/>
-<line x1="680" y1="145" x2="738" y2="145" stroke="#635bff" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="890" y1="145" x2="948" y2="145" stroke="#635bff" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="680" y1="155" x2="743" y2="268" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow1)"/>
-<line x1="815" y1="310" x2="815" y2="358" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow1)"/>
-<text x="600" y="30" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Stripe: Payment Processing Flow</text>
-</svg>
-</div>
-
-<h3>Step-by-Step</h3>
+<!-- ============================================================ -->
+<!-- FUNCTIONAL REQUIREMENTS -->
+<!-- ============================================================ -->
+<h2 id="fr">1. Functional Requirements</h2>
+<div class="card">
 <ol>
-<li><strong>Tokenize card:</strong> Customer enters card in Stripe.js (iframe) → card sent directly to Stripe (never touches merchant server) → Token Vault returns <code>tok_xxx</code></li>
-<li><strong>Create PaymentIntent:</strong> Merchant server calls <code>POST /v1/payment_intents</code> with token, amount, currency, idempotency_key</li>
-<li><strong>API Gateway:</strong> Validates API key, rate limits, routes to Payment Service</li>
-<li><strong>Fraud check:</strong> Payment Service sends transaction to Fraud Engine (Radar) → ML model scores risk (0-100). If score >80, block; 50-80 review; <50 approve</li>
-<li><strong>Detokenize + Authorize:</strong> Payment Service retrieves real card from Token Vault → sends authorization request to card network (Visa/MC) via ISO 8583 protocol</li>
-<li><strong>Issuing bank responds:</strong> Approve/decline → response flows back through card network → Payment Service</li>
-<li><strong>Record:</strong> Payment Service writes to Payment DB (status: succeeded/failed) and Ledger Service (double-entry bookkeeping)</li>
-<li><strong>Webhook:</strong> Async notification sent to merchant's webhook URL with <code>payment_intent.succeeded</code> event</li>
+    <li><strong>Merchant Onboarding</strong> — Merchants can create accounts, configure API keys, set webhook URLs, and specify payout bank accounts.</li>
+    <li><strong>Payment Tokenization</strong> — Customers' raw card details are tokenized client-side so that sensitive card data never touches the merchant's servers (PCI DSS compliance).</li>
+    <li><strong>Payment Processing</strong> — Merchants can charge customers via a single API call. Supports authorization, capture, and combined auth+capture. Must be idempotent.</li>
+    <li><strong>Multiple Payment Methods</strong> — Credit/debit cards, bank transfers (ACH), and digital wallets.</li>
+    <li><strong>Multi-Currency Support</strong> — Accept payments in 135+ currencies and convert to the merchant's settlement currency.</li>
+    <li><strong>Refunds</strong> — Merchants can issue full or partial refunds on completed payments.</li>
+    <li><strong>Payouts / Settlements</strong> — Stripe periodically settles funds (minus fees) to merchant bank accounts via batch processing.</li>
+    <li><strong>Webhook Notifications</strong> — Merchants receive HTTP callbacks for payment events (payment succeeded, refund issued, payout completed, etc.) with retry semantics.</li>
+    <li><strong>Fraud Detection</strong> — Real-time ML-based fraud scoring on every payment before authorization.</li>
+    <li><strong>Transaction History &amp; Dashboard</strong> — Merchants can query their transaction history, filter by date/status/amount, and view analytics.</li>
+    <li><strong>Idempotent API</strong> — Every mutating API call accepts an <code>idempotency_key</code> to prevent duplicate charges on retries.</li>
+    <li><strong>Dispute / Chargeback Handling</strong> — Support the dispute lifecycle when a cardholder contests a charge.</li>
 </ol>
-
-<div class="example">
-<strong>Example:</strong> Customer buys $99.99 headphones on merchant site. Stripe.js tokenizes card → <code>tok_abc123</code>. Merchant calls <code>POST /v1/payment_intents { amount: 9999, currency: "usd", payment_method: "tok_abc123", idempotency_key: "order_456" }</code>. Fraud score: 12 (low risk). Authorization sent to Visa network → Chase (issuing bank) approves. PaymentIntent status → "succeeded". Webhook fires to merchant. Merchant ships headphones.
 </div>
 
-<h3>Deep Dive: Payment Service</h3>
-<ul>
-<li><strong>Protocol:</strong> HTTPS REST API (TLS 1.3)</li>
-<li><strong>HTTP Method:</strong> <code>POST /v1/payment_intents</code></li>
-<li><strong>Input:</strong> <code>{ amount: 9999, currency: "usd", payment_method: "tok_abc", confirm: true, idempotency_key: "..." }</code></li>
-<li><strong>Output:</strong> <code>{ id: "pi_xxx", status: "succeeded", amount: 9999, charges: { data: [...] } }</code></li>
-<li><strong>Idempotency:</strong> idempotency_key stored with request hash. If same key + same params → return cached response. Different params → 409 Conflict</li>
-</ul>
-
-<h3>Deep Dive: Token Vault (PCI-DSS)</h3>
-<ul>
-<li><strong>Isolation:</strong> Runs in a separate PCI-compliant environment (hardened network, restricted access, audit logging)</li>
-<li><strong>Encryption:</strong> Card numbers encrypted with AES-256 at rest, per-merchant encryption keys stored in HSM (Hardware Security Module)</li>
-<li><strong>Tokenization:</strong> <code>4242424242424242</code> → <code>tok_1Hk5xx2eZv</code>. Token is useless outside Stripe's systems</li>
-<li><strong>Why tokenization:</strong> Merchants never handle raw card data → reduces their PCI compliance burden from SAQ D (300+ requirements) to SAQ A (22 requirements)</li>
-</ul>
-
-<h3>Deep Dive: Fraud Engine (Radar)</h3>
-<ul>
-<li><strong>ML Model:</strong> Gradient Boosted Trees trained on billions of historical transactions</li>
-<li><strong>Features:</strong> IP geolocation, device fingerprint, card velocity, billing/shipping address match, transaction amount vs historical average</li>
-<li><strong>Latency:</strong> &lt;100ms inference time (model runs in-memory)</li>
-<li><strong>Rules engine:</strong> Merchants can add custom rules: "block if country != US", "review if amount > $500"</li>
-</ul>
-</div>
-
-<!-- Flow 2: Subscription/Recurring Billing -->
-<div class="section">
-<h2>Flow 2: Subscription / Recurring Billing</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffaa00"/></marker></defs>
-<rect x="30" y="160" width="130" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="95" y="195" text-anchor="middle" fill="white" font-size="13">Cron Scheduler</text>
-<rect x="210" y="160" width="140" height="60" rx="10" fill="#635bff" stroke="#8a85ff" stroke-width="2"/><text x="280" y="188" text-anchor="middle" fill="white" font-size="12">Billing Service</text><text x="280" y="205" text-anchor="middle" fill="white" font-size="11">(Invoice Gen)</text>
-<rect x="410" y="100" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="480" y="130" text-anchor="middle" fill="white" font-size="12">Proration Engine</text>
-<rect x="410" y="200" width="140" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="480" y="230" text-anchor="middle" fill="white" font-size="12">Payment Service</text>
-<rect x="410" y="300" width="140" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="480" y="330" text-anchor="middle" fill="white" font-size="12">Retry Queue</text>
-<rect x="620" y="200" width="140" height="50" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="690" y="230" text-anchor="middle" fill="white" font-size="12">Card Network</text>
-<rect x="820" y="160" width="140" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="890" y="188" text-anchor="middle" fill="white" font-size="11">Webhook Service</text>
-<line x1="160" y1="190" x2="208" y2="190" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="350" y1="175" x2="408" y2="130" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="350" y1="200" x2="408" y2="225" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="550" y1="225" x2="618" y2="225" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="480" y1="250" x2="480" y2="298" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow2)"/>
-<line x1="550" y1="330" x2="620" y2="230" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow2)"/>
-<line x1="760" y1="210" x2="818" y2="185" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<text x="500" y="30" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Stripe: Subscription Billing Flow</text>
-</svg>
-</div>
-
-<h3>Step-by-Step</h3>
+<!-- ============================================================ -->
+<!-- NON-FUNCTIONAL REQUIREMENTS -->
+<!-- ============================================================ -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
+<div class="card">
 <ol>
-<li><strong>Cron Scheduler</strong> runs every minute, queries subscriptions where <code>current_period_end <= NOW()</code></li>
-<li><strong>Billing Service</strong> generates an invoice: line items, proration adjustments, tax calculation</li>
-<li><strong>Proration Engine:</strong> If plan changed mid-cycle, calculates credit for unused time + charge for new plan</li>
-<li><strong>Payment Service</strong> charges the customer's saved payment method (stored token)</li>
-<li><strong>If payment fails:</strong> Enters smart retry queue — retry after 1 day, 3 days, 5 days (exponential backoff). Updates subscription status to "past_due"</li>
-<li><strong>Dunning:</strong> After all retries fail, subscription → "unpaid" → eventually "canceled". Customer emailed at each stage</li>
-<li><strong>Webhook:</strong> <code>invoice.paid</code>, <code>invoice.payment_failed</code>, <code>customer.subscription.updated</code></li>
+    <li><strong>High Availability (99.999%)</strong> — Payment infrastructure is mission-critical. Even seconds of downtime mean lost revenue for millions of businesses.</li>
+    <li><strong>Strong Consistency</strong> — Financial transactions require ACID semantics. A payment must never be half-processed.</li>
+    <li><strong>Low Latency</strong> — Payment authorization must complete in &lt; 2 seconds end-to-end (including card-network round trip).</li>
+    <li><strong>Idempotency</strong> — Network failures are common; every write operation must be safely retriable without side effects.</li>
+    <li><strong>PCI DSS Compliance</strong> — Card data must be encrypted at rest and in transit, and raw PANs must never be stored outside the tokenization vault.</li>
+    <li><strong>Horizontal Scalability</strong> — Must handle tens of millions of transactions per day across all merchants.</li>
+    <li><strong>Auditability</strong> — Every state change must be logged immutably for regulatory and reconciliation purposes.</li>
+    <li><strong>Security</strong> — TLS 1.3 for all external communication, mutual TLS for internal services, API key + secret authentication, HMAC-signed webhooks.</li>
+    <li><strong>Data Durability</strong> — Zero tolerance for data loss. Synchronous replication for transactional data.</li>
+    <li><strong>Fault Tolerance</strong> — Graceful degradation: if a non-critical service (e.g., analytics) is down, payments must still process.</li>
 </ol>
-
-<div class="example">
-<strong>Example:</strong> Netflix-like SaaS charges $14.99/month. On March 1st, Cron Scheduler triggers billing for subscriptions expiring today. Billing Service creates invoice for user_123: $14.99 basic plan. Payment Service charges saved Visa ending 4242. Visa approves. Invoice marked "paid". Subscription period updated to March 1 - April 1. Webhook <code>invoice.paid</code> fires. If card declined: retry March 2, March 4, March 6. After all retries fail: subscription canceled, <code>customer.subscription.deleted</code> webhook fires.
 </div>
 
-<h3>Deep Dive: Smart Retry Logic</h3>
+<!-- ============================================================ -->
+<!-- FLOW 1: PAYMENT PROCESSING -->
+<!-- ============================================================ -->
+<h2 id="flow1">3. Flow 1 — Payment Processing</h2>
+<p>This flow covers the full lifecycle from a customer entering card details to the merchant receiving a payment confirmation. It includes client-side tokenization, fraud checks, card-network authorization, and event publishing.</p>
+
+<div class="diagram-wrapper">
+<div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#2d2b55', 'primaryTextColor': '#e0e0e6', 'primaryBorderColor': '#635bff', 'lineColor': '#7a73ff', 'secondaryColor': '#1a2332', 'tertiaryColor': '#1e2a3a', 'edgeLabelBackground': '#1a1d28', 'clusterBkg': '#13151c', 'clusterBorder': '#2d3039', 'nodeTextColor': '#e0e0e6', 'textColor': '#e0e0e6' }}}%%
+flowchart TD
+    subgraph CLIENT["🖥️ Client Side"]
+        A["👤 Customer Browser"]
+        B["Merchant Frontend<br/>+ Stripe.js SDK"]
+    end
+
+    subgraph MERCHANT["🏪 Merchant"]
+        C["Merchant Backend Server"]
+    end
+
+    subgraph STRIPE_EDGE["🌐 Stripe Edge Layer"]
+        LB["Load Balancer ‹L7›"]
+        AG["API Gateway"]
+    end
+
+    subgraph STRIPE_CORE["⚙️ Stripe Core Services"]
+        TS["Tokenization Service<br/>‹PCI Vault›"]
+        PS["Payment Service"]
+        FD["Fraud Detection<br/>Service ‹ML›"]
+        PPG["Payment Processor<br/>Gateway"]
+    end
+
+    subgraph EXTERNAL["🏦 External Card Infrastructure"]
+        CN["Card Network<br/>‹Visa / Mastercard›"]
+        IB["Issuing Bank"]
+    end
+
+    subgraph DATA["💾 Data Layer"]
+        TDB[("Transaction DB<br/>‹SQL›")]
+        LDB[("Ledger DB<br/>‹SQL›")]
+        MQ["Message Queue"]
+        IC["Cache<br/>‹Merchant Config›"]
+    end
+
+    A -->|"1. Enter card details"| B
+    B -->|"2. HTTPS POST /v1/tokens<br/>raw card data over TLS"| TS
+    TS -->|"3. Return one-time token"| B
+    B -->|"4. Token + order info"| C
+    C -->|"5. HTTPS POST /v1/payment_intents<br/>{token, amount, currency,<br/>idempotency_key, merchant_api_key}"| LB
+    LB -->|"6. TLS termination + route"| AG
+    AG -->|"7. Authenticate API key + rate limit"| PS
+    PS -->|"8. Lookup merchant config"| IC
+    PS -->|"9. Fraud check ‹gRPC›"| FD
+    FD -->|"10. Risk score + decision"| PS
+    PS -->|"11. Auth request ‹gRPC›"| PPG
+    PPG -->|"12. ISO 8583 auth request"| CN
+    CN -->|"13. Forward auth"| IB
+    IB -->|"14. Approve / Decline"| CN
+    CN -->|"15. Auth response"| PPG
+    PPG -->|"16. Auth result"| PS
+    PS -->|"17. Write transaction record"| TDB
+    PS -->|"18. Write ledger entries<br/>‹double-entry›"| LDB
+    PS -->|"19. Publish payment.succeeded<br/>or payment.failed event"| MQ
+    PS -->|"20. Return PaymentIntent object"| AG
+    AG -->|"21. HTTP 200 JSON response"| LB
+    LB -->|"22. Response"| C
+</div>
+</div>
+
+<h3>Flow 1 — Examples</h3>
+
+<div class="example-card">
+<strong>Example 1 — Successful Card Payment (Happy Path):</strong><br/>
+A customer shopping on <em>acme-store.com</em> adds a $49.99 item to cart and clicks "Pay Now." The Merchant Frontend has Stripe.js loaded, which collects the card number (4242 4242 4242 4242), expiry (12/28), and CVC (123). Stripe.js sends an <span class="protocol">HTTPS POST</span> to the Tokenization Service at <code>/v1/tokens</code> with the raw card data over TLS 1.3 — the merchant's server never sees the card number. The Tokenization Service encrypts and vaults the PAN, returning a one-time token <code>tok_abc123</code> to the browser. The Merchant Frontend then sends the token and order amount to its own backend server. The Merchant Backend calls Stripe's API: <code>POST /v1/payment_intents</code> with <code>{token: "tok_abc123", amount: 4999, currency: "usd", idempotency_key: "order-7891"}</code>. The request hits the Load Balancer, which routes to the API Gateway. The API Gateway validates the merchant's API key and passes the request to the Payment Service. The Payment Service first checks the in-memory cache for the merchant's configuration (fee rate, fraud settings), then calls the Fraud Detection Service via gRPC, which returns a low risk score of 0.02 (pass). The Payment Service then calls the Payment Processor Gateway via gRPC, which translates the request to ISO 8583 format and forwards it to the Visa card network. Visa routes the auth to the customer's issuing bank (e.g., Chase), which checks the customer's balance/credit limit and approves the charge. The approval flows back: Issuing Bank → Visa → Payment Processor Gateway → Payment Service. The Payment Service writes a transaction record (status: <code>succeeded</code>) to the Transaction DB, creates double-entry ledger records (debit: customer receivable $49.99, credit: merchant payable $47.55, credit: Stripe revenue $2.44), and publishes a <code>payment_intent.succeeded</code> event to the Message Queue. The PaymentIntent object (with <code>status: "succeeded"</code>) is returned as an HTTP 200 JSON response to the Merchant Backend, which shows the customer a success page.
+</div>
+
+<div class="example-card">
+<strong>Example 2 — Declined Card (Insufficient Funds):</strong><br/>
+Same flow as above, but when the Visa network forwards the authorization to the issuing bank, the bank declines with reason code "insufficient_funds." The decline propagates back to the Payment Service, which writes a transaction record with <code>status: "failed"</code> and <code>failure_reason: "insufficient_funds"</code> to the Transaction DB. No ledger entries are created (no money moved). A <code>payment_intent.payment_failed</code> event is published to the Message Queue. The HTTP response to the Merchant Backend is an HTTP 402 with error details, and the merchant shows the customer a "Payment failed — please try another card" message.
+</div>
+
+<div class="example-card">
+<strong>Example 3 — Fraud Detected (High Risk Score):</strong><br/>
+A customer attempts a $2,500 purchase from a new IP address in a different country than their billing address. During fraud checks, the Fraud Detection Service's ML model flags the transaction with a risk score of 0.92 (above the merchant's configured threshold of 0.80). The Payment Service blocks the transaction — it never reaches the card network. A transaction record is written with <code>status: "failed"</code> and <code>failure_reason: "fraud_suspected"</code>. A <code>payment_intent.payment_failed</code> event (with reason: <code>blocked_by_fraud_detection</code>) is published. The merchant is returned an HTTP 402 with a fraud-related decline code, and the Stripe Dashboard flags this for manual review.
+</div>
+
+<div class="example-card">
+<strong>Example 4 — Idempotent Retry (Network Timeout):</strong><br/>
+The Merchant Backend sends <code>POST /v1/payment_intents</code> with <code>idempotency_key: "order-7891"</code>, but the HTTP response times out before the merchant receives it (even though the payment succeeded on Stripe's end). The Merchant Backend retries with the same <code>idempotency_key</code>. The Payment Service detects that this idempotency key already exists in the Transaction DB, does NOT re-authorize the card, and simply returns the already-stored PaymentIntent object. The customer is charged exactly once.
+</div>
+
+<h3>Flow 1 — Component Deep Dive</h3>
+
+<div class="card">
+<h4>Stripe.js SDK (Client-Side)</h4>
+<p>A JavaScript library embedded in the merchant's frontend. It creates a secure iframe for card input so that raw card data (PAN, CVC) is captured within Stripe's domain, not the merchant's. It communicates directly with the Tokenization Service over TLS 1.3. This is the cornerstone of PCI DSS compliance — the merchant is never exposed to raw card data.</p>
+
+<h4>Tokenization Service (PCI Vault)</h4>
 <ul>
-<li><strong>Retry timing:</strong> ML model predicts optimal retry time based on historical success patterns. E.g., payday (1st/15th of month) has higher success rates</li>
-<li><strong>Card updater:</strong> Before retry, check if card network has updated card details (e.g., new expiry date). Visa Account Updater (VAU) provides automatic card updates</li>
-<li><strong>Retry schedule:</strong> 4 attempts over 7 days. Each attempt at different time of day. Final attempt before cancellation</li>
+    <li><strong>Protocol:</strong> <span class="protocol">HTTPS POST</span></li>
+    <li><strong>Endpoint:</strong> <code>POST /v1/tokens</code></li>
+    <li><strong>Input:</strong> <code>{card_number, exp_month, exp_year, cvc}</code></li>
+    <li><strong>Output:</strong> <code>{id: "tok_abc123", card: {last4: "4242", brand: "visa"}, created: 1700000000}</code></li>
+    <li><strong>Details:</strong> Sits inside an isolated PCI-compliant network segment (the "vault"). Encrypts the PAN with AES-256 and stores it with a token reference. The token is single-use and expires after a short window (typically 15 minutes). HSMs (Hardware Security Modules) manage encryption keys.</li>
+</ul>
+
+<h4>Load Balancer (L7)</h4>
+<ul>
+    <li><strong>Protocol:</strong> <span class="protocol">HTTPS → HTTP (TLS termination)</span></li>
+    <li><strong>Details:</strong> Layer 7 (application-level) load balancer. Terminates TLS, performs health checks on API Gateway instances, distributes traffic via least-connections algorithm. Handles SSL certificate management. Provides DDoS protection at the edge.</li>
+</ul>
+
+<h4>API Gateway</h4>
+<ul>
+    <li><strong>Protocol:</strong> <span class="protocol">HTTPS (external) / gRPC (internal)</span></li>
+    <li><strong>Details:</strong> Acts as the single entry point for all merchant API calls. Responsibilities include: (1) API key authentication — validates the merchant's secret key against stored hashes, (2) Rate limiting — per-merchant and per-endpoint rate limits to prevent abuse, (3) Request validation — schema validation of JSON payloads, (4) Routing — maps REST endpoints to internal microservices, (5) Request logging for audit trails.</li>
+</ul>
+
+<h4>Payment Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> <span class="protocol">gRPC (internal)</span></li>
+    <li><strong>Input:</strong> Payment intent creation request with token, amount, currency, idempotency key, merchant context</li>
+    <li><strong>Output:</strong> PaymentIntent object with status, amount, charges, and metadata</li>
+    <li><strong>Details:</strong> The orchestrator of the payment flow. Steps: (1) Check idempotency key — if request already processed, return cached result; (2) Resolve the token to retrieve the vaulted card reference; (3) Fetch merchant config from cache (fee structure, fraud thresholds); (4) Call Fraud Detection Service; (5) If passed, call Payment Processor Gateway for card-network authorization; (6) Write transaction + ledger entries in a single DB transaction (ACID); (7) Publish event to message queue; (8) Return result. Uses a state machine to track payment intent lifecycle: <code>requires_payment_method → requires_confirmation → processing → succeeded | failed</code>.</li>
+</ul>
+
+<h4>Fraud Detection Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> <span class="protocol">gRPC</span></li>
+    <li><strong>Input:</strong> <code>{card_fingerprint, amount, currency, ip_address, billing_address, merchant_id, device_fingerprint}</code></li>
+    <li><strong>Output:</strong> <code>{risk_score: 0.02, decision: "allow" | "block" | "review", risk_factors: [...]}</code></li>
+    <li><strong>Details:</strong> Runs ML models (trained on billions of historical transactions) that score the transaction in real-time (&lt; 50ms). Features include: velocity checks (how many transactions from this card in the last hour), geographic anomaly detection, device fingerprint analysis, and behavioral patterns. Models are updated periodically and loaded from a feature store.</li>
+</ul>
+
+<h4>Payment Processor Gateway</h4>
+<ul>
+    <li><strong>Protocol:</strong> <span class="protocol">gRPC (internal) / ISO 8583 (to card networks)</span></li>
+    <li><strong>Input:</strong> Authorization request with card token reference, amount, currency, merchant category code</li>
+    <li><strong>Output:</strong> Authorization response with approval code or decline reason</li>
+    <li><strong>Details:</strong> Translates Stripe's internal protocol to the ISO 8583 financial messaging standard used by card networks (Visa, Mastercard, Amex). Manages connections to multiple card networks and routes based on the card's BIN (Bank Identification Number). Handles network-level retries and circuit breaking for network outages. Also supports 3D Secure (3DS) challenges when required by the issuing bank.</li>
+</ul>
+
+<h4>Transaction DB (SQL)</h4>
+<p>Stores all payment intent records with ACID guarantees. Detailed in the <a href="#schema">Schema section</a>.</p>
+
+<h4>Ledger DB (SQL)</h4>
+<p>Append-only double-entry bookkeeping ledger. Every money movement creates balanced debit/credit entries. This is the source of truth for financial reconciliation. Detailed in the <a href="#schema">Schema section</a>.</p>
+
+<h4>Message Queue</h4>
+<p>Durable, at-least-once delivery message queue. Payment events are published here and consumed by the Webhook Delivery Service (Flow 4), the Analytics pipeline, and the Settlement Service (Flow 3). Messages are persisted to disk for durability. More details in the <a href="#mq-deep-dive">Message Queue Deep Dive</a>.</p>
+
+<h4>Cache (Merchant Config)</h4>
+<p>In-memory cache storing merchant configurations (API key → merchant mapping, fee rates, fraud thresholds, webhook URLs). Detailed in the <a href="#cdn-cache">CDN &amp; Cache section</a>.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- FLOW 2: REFUND PROCESSING -->
+<!-- ============================================================ -->
+<h2 id="flow2">4. Flow 2 — Refund Processing</h2>
+<p>This flow covers a merchant issuing a full or partial refund on a previously successful payment.</p>
+
+<div class="diagram-wrapper">
+<div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#2d2b55', 'primaryTextColor': '#e0e0e6', 'primaryBorderColor': '#635bff', 'lineColor': '#7a73ff', 'secondaryColor': '#1a2332', 'tertiaryColor': '#1e2a3a', 'edgeLabelBackground': '#1a1d28', 'clusterBkg': '#13151c', 'clusterBorder': '#2d3039', 'nodeTextColor': '#e0e0e6', 'textColor': '#e0e0e6' }}}%%
+flowchart TD
+    subgraph MERCHANT["🏪 Merchant"]
+        MB["Merchant Backend Server"]
+    end
+
+    subgraph STRIPE_EDGE["🌐 Stripe Edge Layer"]
+        LB2["Load Balancer ‹L7›"]
+        AG2["API Gateway"]
+    end
+
+    subgraph STRIPE_CORE["⚙️ Stripe Core Services"]
+        RS["Refund Service"]
+        PPG2["Payment Processor<br/>Gateway"]
+    end
+
+    subgraph EXTERNAL["🏦 External Card Infrastructure"]
+        CN2["Card Network<br/>‹Visa / Mastercard›"]
+        IB2["Issuing Bank"]
+    end
+
+    subgraph DATA["💾 Data Layer"]
+        TDB2[("Transaction DB<br/>‹SQL›")]
+        LDB2[("Ledger DB<br/>‹SQL›")]
+        MQ2["Message Queue"]
+    end
+
+    MB -->|"1. HTTPS POST /v1/refunds<br/>{payment_intent_id, amount,<br/>idempotency_key}"| LB2
+    LB2 -->|"2. Route"| AG2
+    AG2 -->|"3. Auth + validate"| RS
+    RS -->|"4. Lookup original transaction"| TDB2
+    RS -->|"5. Refund request ‹gRPC›"| PPG2
+    PPG2 -->|"6. ISO 8583 refund"| CN2
+    CN2 -->|"7. Process refund"| IB2
+    IB2 -->|"8. Refund confirmed"| CN2
+    CN2 -->|"9. Refund response"| PPG2
+    PPG2 -->|"10. Refund result"| RS
+    RS -->|"11. Update transaction status<br/>‹refunded/partially_refunded›"| TDB2
+    RS -->|"12. Write refund record"| TDB2
+    RS -->|"13. Reverse ledger entries"| LDB2
+    RS -->|"14. Publish refund.succeeded event"| MQ2
+    RS -->|"15. Return Refund object"| AG2
+    AG2 -->|"16. HTTP 200 JSON"| LB2
+    LB2 -->|"17. Response"| MB
+</div>
+</div>
+
+<h3>Flow 2 — Examples</h3>
+
+<div class="example-card">
+<strong>Example 1 — Full Refund (Happy Path):</strong><br/>
+A customer contacts Acme Store to return a $49.99 item. The merchant's support agent clicks "Issue Full Refund" in their admin panel, which triggers the Merchant Backend to call <code>POST /v1/refunds</code> with <code>{payment_intent_id: "pi_xyz789", idempotency_key: "refund-order-7891"}</code> (amount is omitted, meaning full refund). The request goes through the Load Balancer → API Gateway → Refund Service. The Refund Service looks up the original transaction in the Transaction DB, confirms it exists with <code>status: "succeeded"</code> and has not been previously fully refunded. It then calls the Payment Processor Gateway via gRPC, which sends an ISO 8583 refund message to the Visa network. Visa routes the refund to the issuing bank (Chase), which credits $49.99 back to the customer's card. The confirmation flows back. The Refund Service updates the original transaction's status to <code>refunded</code>, creates a refund record (<code>refund_id: "re_abc456", amount: 4999, status: "succeeded"</code>), writes reverse ledger entries (debit: merchant payable $47.55, debit: Stripe revenue $2.44, credit: customer receivable $49.99), and publishes a <code>charge.refunded</code> event to the Message Queue. The merchant receives an HTTP 200 with the Refund object.
+</div>
+
+<div class="example-card">
+<strong>Example 2 — Partial Refund:</strong><br/>
+A customer bought two items totaling $100.00 but returns one item worth $35.00. The Merchant Backend calls <code>POST /v1/refunds</code> with <code>{payment_intent_id: "pi_xyz789", amount: 3500}</code>. The Refund Service verifies that $35.00 ≤ original amount ($100.00) minus previous refunds ($0.00). It processes a $35.00 refund through the card network. The original transaction status is updated to <code>partially_refunded</code>. Ledger entries reflect only the $35.00 reversal. A <code>charge.refunded</code> event with <code>amount: 3500</code> is published.
+</div>
+
+<div class="example-card">
+<strong>Example 3 — Refund Exceeds Refundable Amount:</strong><br/>
+A merchant accidentally tries to refund $60.00 on a $49.99 payment. The Refund Service checks the Transaction DB and calculates <code>original_amount ($49.99) - already_refunded ($0.00) = $49.99 refundable</code>. Since $60.00 > $49.99, the Refund Service immediately returns an HTTP 400 error with <code>{error: {code: "amount_too_large", message: "Refund amount ($60.00) exceeds the refundable amount ($49.99)"}}</code>. No card network call is made. No ledger entries are written.
+</div>
+
+<h3>Flow 2 — Component Deep Dive</h3>
+
+<div class="card">
+<h4>Refund Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> <span class="protocol">gRPC (internal)</span></li>
+    <li><strong>Exposed via API Gateway as:</strong> <code>POST /v1/refunds</code></li>
+    <li><strong>Input:</strong> <code>{payment_intent_id, amount (optional; full if omitted), reason (optional), idempotency_key}</code></li>
+    <li><strong>Output:</strong> <code>{id: "re_abc456", payment_intent: "pi_xyz789", amount: 4999, status: "succeeded", created: 1700000000}</code></li>
+    <li><strong>Details:</strong> Validates the refund is permitted: (1) Original transaction must exist and be in <code>succeeded</code> or <code>partially_refunded</code> state; (2) Requested refund amount + previous refunds must not exceed original charge amount; (3) Checks idempotency key for duplicate requests. Uses the same Payment Processor Gateway as the Payment Service to communicate with card networks. Writes the refund record and reverse ledger entries atomically in a single DB transaction to maintain consistency.</li>
+</ul>
+<p>All other components (Load Balancer, API Gateway, Payment Processor Gateway, Transaction DB, Ledger DB, Message Queue) behave identically to Flow 1.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- FLOW 3: PAYOUT / SETTLEMENT -->
+<!-- ============================================================ -->
+<h2 id="flow3">5. Flow 3 — Payout &amp; Settlement</h2>
+<p>This flow covers how Stripe periodically collects captured payments, deducts fees, and transfers the net amount to merchants' bank accounts. This is a batch process that typically runs daily.</p>
+
+<div class="diagram-wrapper">
+<div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#2d2b55', 'primaryTextColor': '#e0e0e6', 'primaryBorderColor': '#635bff', 'lineColor': '#7a73ff', 'secondaryColor': '#1a2332', 'tertiaryColor': '#1e2a3a', 'edgeLabelBackground': '#1a1d28', 'clusterBkg': '#13151c', 'clusterBorder': '#2d3039', 'nodeTextColor': '#e0e0e6', 'textColor': '#e0e0e6' }}}%%
+flowchart TD
+    subgraph SCHEDULER["⏰ Scheduled Job"]
+        CJ["Cron / Scheduler<br/>‹runs daily›"]
+    end
+
+    subgraph STRIPE_CORE["⚙️ Stripe Core Services"]
+        SS["Settlement Service"]
+        BIS["Bank Integration<br/>Service"]
+    end
+
+    subgraph EXTERNAL["🏦 External Banking"]
+        AB["Acquiring Bank<br/>‹ACH / Wire›"]
+        MBank["Merchant's Bank"]
+    end
+
+    subgraph DATA["💾 Data Layer"]
+        TDB3[("Transaction DB<br/>‹SQL›")]
+        LDB3[("Ledger DB<br/>‹SQL›")]
+        PDB[("Payouts DB<br/>‹SQL›")]
+        MQ3["Message Queue"]
+    end
+
+    CJ -->|"1. Trigger settlement batch"| SS
+    SS -->|"2. Query captured transactions<br/>since last settlement per merchant"| TDB3
+    SS -->|"3. Aggregate totals,<br/>deduct Stripe fees"| SS
+    SS -->|"4. Create payout records"| PDB
+    SS -->|"5. Write settlement<br/>ledger entries"| LDB3
+    SS -->|"6. Initiate bank transfer<br/>for each merchant ‹gRPC›"| BIS
+    BIS -->|"7. ACH / Wire transfer<br/>instruction"| AB
+    AB -->|"8. Transfer funds"| MBank
+    AB -->|"9. Transfer confirmation /<br/>failure notification"| BIS
+    BIS -->|"10. Update payout status"| PDB
+    BIS -->|"11. Publish payout.paid<br/>or payout.failed event"| MQ3
+</div>
+</div>
+
+<h3>Flow 3 — Examples</h3>
+
+<div class="example-card">
+<strong>Example 1 — Daily Settlement (Happy Path):</strong><br/>
+At midnight UTC, the scheduled cron job triggers the Settlement Service. For merchant Acme Store (merchant_id: "merch_acme"), the Settlement Service queries the Transaction DB: "SELECT all transactions WHERE merchant_id = 'merch_acme' AND status = 'succeeded' AND captured_at BETWEEN '2024-01-14 00:00:00' AND '2024-01-14 23:59:59' AND settled = FALSE." It finds 150 transactions totaling $12,340.00 in gross volume. It also queries refunds for the period: $340.00. Net: $12,000.00. Stripe's fee (2.9% + $0.30 per transaction): $402.30. Net payout: $11,597.70. The Settlement Service creates a payout record (<code>payout_id: "po_daily_acme_20240115", amount: 1159770, status: "pending"</code>) in the Payouts DB, writes ledger entries (debit: Stripe holding account $11,597.70, credit: merchant bank payable $11,597.70), marks the 150 transactions as <code>settled = TRUE</code>, and calls the Bank Integration Service. The Bank Integration Service constructs an ACH batch file with Acme Store's bank routing/account number and sends it to the acquiring bank. Within 1-2 business days, the funds land in Acme Store's bank account. The acquiring bank sends a confirmation, the payout status updates to <code>paid</code>, and a <code>payout.paid</code> event is published.
+</div>
+
+<div class="example-card">
+<strong>Example 2 — Payout Failure (Invalid Bank Account):</strong><br/>
+Merchant "BadBank Corp" recently changed their bank details but entered an incorrect routing number. The Settlement Service runs normally and creates a payout of $5,200.00. The Bank Integration Service sends the ACH transfer, but the acquiring bank returns an ACH return code R03 ("No Account / Unable to Locate Account"). The Bank Integration Service receives this failure notification (typically within 2-3 business days), updates the payout status to <code>failed</code> in the Payouts DB, reverses the settlement ledger entries, and publishes a <code>payout.failed</code> event. The merchant sees a "Payout failed — please verify your bank account details" notification on the Stripe Dashboard.
+</div>
+
+<h3>Flow 3 — Component Deep Dive</h3>
+
+<div class="card">
+<h4>Cron / Scheduler</h4>
+<p>A distributed cron system that triggers the settlement batch at a configurable interval (typically daily at midnight UTC). Uses leader election to ensure exactly one instance of the batch runs at a time. Supports catch-up if a scheduled run is missed.</p>
+
+<h4>Settlement Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> <span class="protocol">Internal (triggered by scheduler)</span></li>
+    <li><strong>Details:</strong> A batch-processing service that: (1) Iterates over all active merchants; (2) For each merchant, queries all captured + un-settled transactions in the settlement window; (3) Subtracts refunds in the period; (4) Calculates Stripe's fee based on the merchant's fee tier; (5) Creates a payout record; (6) Marks transactions as settled; (7) Writes ledger entries. All DB operations for a single merchant's settlement are in one atomic transaction. Processes merchants in parallel for throughput.</li>
+</ul>
+
+<h4>Bank Integration Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> <span class="protocol">gRPC (internal) / ACH/SWIFT/SEPA (external to banking networks)</span></li>
+    <li><strong>Input:</strong> Payout instruction with merchant's bank details, amount, and currency</li>
+    <li><strong>Output:</strong> Transfer status (initiated, succeeded, failed, returned)</li>
+    <li><strong>Details:</strong> Constructs and submits batch files to the acquiring bank. Supports multiple transfer protocols: ACH (US domestic, 1-2 day settlement), SWIFT (international wire, 2-5 days), SEPA (EU, 1 day). Handles asynchronous confirmations/failures from banks (which can arrive days later). Implements retry with exponential backoff for transient bank-side errors.</li>
 </ul>
 </div>
 
-<!-- Flow 3: Refund -->
-<div class="section">
-<h2>Flow 3: Refund Processing</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#66ff66"/></marker></defs>
-<rect x="30" y="110" width="120" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="90" y="145" text-anchor="middle" fill="white" font-size="13">Merchant</text>
-<rect x="200" y="110" width="130" height="60" rx="10" fill="#635bff" stroke="#8a85ff" stroke-width="2"/><text x="265" y="138" text-anchor="middle" fill="white" font-size="12">Refund Service</text><text x="265" y="155" text-anchor="middle" fill="white" font-size="11">(Idempotent)</text>
-<rect x="390" y="110" width="130" height="60" rx="10" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="455" y="145" text-anchor="middle" fill="white" font-size="12">Ledger Service</text>
-<rect x="580" y="110" width="140" height="60" rx="10" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="650" y="145" text-anchor="middle" fill="white" font-size="12">Card Network</text>
-<rect x="580" y="210" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="650" y="240" text-anchor="middle" fill="white" font-size="12">Settlement Svc</text>
-<line x1="150" y1="140" x2="198" y2="140" stroke="#66ff66" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="330" y1="140" x2="388" y2="140" stroke="#66ff66" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="520" y1="140" x2="578" y2="140" stroke="#66ff66" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="650" y1="170" x2="650" y2="208" stroke="#66ff66" stroke-width="2" marker-end="url(#arrow3)"/>
-<text x="450" y="30" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Stripe: Refund Processing Flow</text>
-</svg>
+<!-- ============================================================ -->
+<!-- FLOW 4: WEBHOOK NOTIFICATION DELIVERY -->
+<!-- ============================================================ -->
+<h2 id="flow4">6. Flow 4 — Webhook Notification Delivery</h2>
+<p>This flow covers how events generated by the system (from any other flow) are reliably delivered to merchant-configured webhook endpoints.</p>
+
+<div class="diagram-wrapper">
+<div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#2d2b55', 'primaryTextColor': '#e0e0e6', 'primaryBorderColor': '#635bff', 'lineColor': '#7a73ff', 'secondaryColor': '#1a2332', 'tertiaryColor': '#1e2a3a', 'edgeLabelBackground': '#1a1d28', 'clusterBkg': '#13151c', 'clusterBorder': '#2d3039', 'nodeTextColor': '#e0e0e6', 'textColor': '#e0e0e6' }}}%%
+flowchart TD
+    subgraph SOURCE["📡 Event Source ‹Any Flow›"]
+        PS4["Payment Service /<br/>Refund Service /<br/>Settlement Service"]
+    end
+
+    subgraph MQ_LAYER["📨 Message Queue"]
+        MQ4["Message Queue<br/>‹durable, at-least-once›"]
+    end
+
+    subgraph WEBHOOK["🔔 Webhook Delivery System"]
+        WC["Webhook Consumer<br/>‹pulls from queue›"]
+        WS["Webhook Delivery<br/>Service"]
+    end
+
+    subgraph DATA["💾 Data Layer"]
+        EDB[("Events DB<br/>‹NoSQL›")]
+        WDLOG[("Webhook Delivery<br/>Logs ‹NoSQL›")]
+        IC4["Cache<br/>‹Merchant Webhook Config›"]
+    end
+
+    subgraph MERCHANT["🏪 Merchant"]
+        ME["Merchant's Webhook<br/>Endpoint ‹HTTPS›"]
+    end
+
+    PS4 -->|"1. Publish event<br/>{type, data, merchant_id}"| MQ4
+    MQ4 -->|"2. Consume event"| WC
+    WC -->|"3. Persist event"| EDB
+    WC -->|"4. Lookup merchant<br/>webhook config"| IC4
+    WC -->|"5. Forward to delivery"| WS
+    WS -->|"6. Construct payload +<br/>HMAC-SHA256 sign with<br/>merchant webhook secret"| WS
+    WS -->|"7. HTTPS POST<br/>with signed payload"| ME
+    ME -->|"8a. HTTP 2xx ‹success›"| WS
+    WS -->|"9a. Log: delivered"| WDLOG
+    ME -->|"8b. HTTP 4xx/5xx or timeout"| WS
+    WS -->|"9b. Log: failed,<br/>schedule retry"| WDLOG
+    WS -->|"10b. Re-enqueue with<br/>backoff delay"| MQ4
 </div>
+</div>
+
+<h3>Flow 4 — Examples</h3>
+
+<div class="example-card">
+<strong>Example 1 — Successful Webhook Delivery:</strong><br/>
+After a successful payment, the Payment Service publishes a <code>payment_intent.succeeded</code> event to the Message Queue with payload <code>{type: "payment_intent.succeeded", data: {id: "pi_xyz789", amount: 4999, currency: "usd", ...}, merchant_id: "merch_acme"}</code>. The Webhook Consumer pulls this message from the queue, persists the event in the Events DB (for the merchant's event log / dashboard), and looks up Acme Store's webhook configuration from the in-memory cache: URL = <code>https://acme-store.com/webhooks/stripe</code>, secret = <code>whsec_abc123</code>, subscribed events = <code>[payment_intent.succeeded, charge.refunded]</code>. Since <code>payment_intent.succeeded</code> matches the subscription filter, the Webhook Delivery Service constructs the JSON payload, computes an HMAC-SHA256 signature using the webhook secret, and sends an <span class="protocol">HTTPS POST</span> to <code>https://acme-store.com/webhooks/stripe</code> with headers <code>Stripe-Signature: t=1700000000,v1=&lt;signature&gt;</code>. Acme Store's server receives the webhook, verifies the HMAC signature, processes the event (e.g., marks the order as "paid" in its own database), and returns HTTP 200. The Webhook Delivery Service logs the delivery as <code>status: "delivered"</code> with <code>http_status: 200</code> in the Webhook Delivery Logs.
+</div>
+
+<div class="example-card">
+<strong>Example 2 — Failed Delivery with Retry (Merchant Server Down):</strong><br/>
+Acme Store's server is temporarily down for maintenance. The Webhook Delivery Service sends the <span class="protocol">HTTPS POST</span> but receives a connection timeout after 30 seconds. It logs the attempt as <code>status: "failed", attempt_number: 1</code> in the Webhook Delivery Logs, then re-enqueues the event into the Message Queue with a visibility delay of 60 seconds (exponential backoff). After 60 seconds, the consumer picks it up again and retries. This time the server returns HTTP 503. Attempt 2 is logged as failed, and the message is re-enqueued with a 300-second delay. Attempts continue with exponential backoff (1m → 5m → 30m → 2h → 8h → 24h) up to a maximum of 15 retries over approximately 3 days. If Acme Store's server comes back up during any retry, the webhook is delivered successfully. If all 15 retries are exhausted, the event is marked as <code>status: "failed_permanently"</code> and an alert is visible on the Stripe Dashboard.
+</div>
+
+<div class="example-card">
+<strong>Example 3 — Event Not Subscribed:</strong><br/>
+A <code>payout.paid</code> event is published for merchant "merch_acme." The Webhook Consumer checks the merchant's subscription filter: <code>[payment_intent.succeeded, charge.refunded]</code>. Since <code>payout.paid</code> is not in the list, the event is persisted in the Events DB (still queryable via the API) but no webhook is dispatched. The message is acknowledged and removed from the queue.
+</div>
+
+<h3>Flow 4 — Component Deep Dive</h3>
+
+<div class="card">
+<h4>Webhook Consumer</h4>
 <ul>
-<li><strong>POST</strong> <code>/v1/refunds { charge: "ch_xxx", amount: 5000 }</code> — partial refund of $50.00</li>
-<li>Refund Service validates: refund amount ≤ charge amount - existing refunds. Creates refund record with status "pending"</li>
-<li>Ledger Service creates reverse double-entry: credit merchant account, debit Stripe's receivable</li>
-<li>Card network processes reversal → funds return to customer's card in 5-10 business days</li>
-<li>Settlement Service adjusts next payout to merchant (deducts refund amount from upcoming transfer)</li>
+    <li><strong>Protocol:</strong> Pulls messages from the Message Queue</li>
+    <li><strong>Details:</strong> A pool of worker instances that consume events from the queue. Each worker: (1) Pulls a batch of messages; (2) Persists each event to the Events DB; (3) Checks the merchant's webhook subscription filter; (4) If subscribed, forwards to the Webhook Delivery Service; (5) Acknowledges the message only after successful handoff (at-least-once delivery). Workers auto-scale based on queue depth.</li>
 </ul>
 
-<div class="example">
-<strong>Example:</strong> Merchant refunds $50 of a $99.99 charge. <code>POST /v1/refunds { charge: "ch_abc", amount: 5000 }</code>. Remaining refundable: $49.99. Ledger records: DR Merchant Revenue $50, CR Customer Payable $50. Visa processes reversal. Customer sees $50 credit in 5-7 days. Merchant's next Friday payout is reduced by $50.
+<h4>Webhook Delivery Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> <span class="protocol">HTTPS POST</span> (outbound to merchant endpoints)</li>
+    <li><strong>Input:</strong> Event payload + merchant webhook URL + merchant webhook secret</li>
+    <li><strong>Output:</strong> Delivery result (success/failure with HTTP status code)</li>
+    <li><strong>Details:</strong> (1) Serializes the event into a JSON payload; (2) Computes <code>HMAC-SHA256(timestamp + "." + payload, webhook_secret)</code> as the signature; (3) Sets headers: <code>Stripe-Signature</code>, <code>Content-Type: application/json</code>; (4) Sends POST with a 30-second timeout; (5) Expects HTTP 2xx as success; (6) Any non-2xx or timeout → failure. Implements per-merchant concurrency limits to avoid overwhelming merchant servers. Uses a connection pool for HTTP clients.</li>
+</ul>
+
+<h4>Events DB (NoSQL)</h4>
+<p>A document store optimized for high write throughput. Stores every event that occurs in the system, serving as the canonical event log. Merchants can query events via <code>GET /v1/events</code>. Detailed in the <a href="#schema">Schema section</a>.</p>
+
+<h4>Webhook Delivery Logs (NoSQL)</h4>
+<p>An append-only document store that records every delivery attempt (success and failure) for each webhook. Used for debugging, monitoring, and displaying delivery status on the Stripe Dashboard.</p>
+
+<h4 id="mq-deep-dive">Message Queue — Deep Dive</h4>
+<p>The Message Queue is the backbone of the asynchronous event-driven architecture connecting all flows to the webhook system (and other downstream consumers like analytics).</p>
+<ul>
+    <li><strong>Why a Message Queue?</strong> Payment processing must not be blocked by webhook delivery. If a merchant's server is slow or down, the payment should still succeed immediately. The queue decouples the critical payment path from the non-critical notification path.</li>
+    <li><strong>Why not Pub/Sub?</strong> A pure pub/sub model was considered. However, for webhook delivery, we need <em>guaranteed at-least-once delivery</em> with <em>per-message visibility timeouts</em> and <em>dead-letter queue (DLQ) support</em> for failed messages. A durable message queue provides these semantics natively. Pub/Sub is better when multiple independent consumers need the same message simultaneously (fan-out), but here the primary consumer is the Webhook Delivery Service. We do support a secondary analytics consumer — this is achieved by having the queue support multiple consumer groups, each maintaining its own offset.</li>
+    <li><strong>Why not direct HTTP?</strong> Direct synchronous HTTP from the Payment Service to the merchant's webhook would add latency to the payment path and create tight coupling. If the merchant's server is down, the payment would either fail or need complex in-process retry logic.</li>
+    <li><strong>Why not WebSockets?</strong> WebSockets require merchants to maintain a persistent connection to Stripe, which is impractical for server-to-server communication. Webhooks (HTTP POST) are the industry standard for server-to-server event notification because they are stateless, firewall-friendly, and require no persistent connection from the merchant.</li>
+    <li><strong>How messages are enqueued:</strong> The Payment Service (or Refund Service, Settlement Service) publishes a message by calling the queue's <code>sendMessage(topic, payload)</code> API. The message includes: <code>{event_type, merchant_id, resource_id, resource_type, data, created_at}</code>. The queue persists the message to disk before acknowledging the producer.</li>
+    <li><strong>How messages are dequeued:</strong> Webhook Consumer workers call <code>receiveMessages(topic, consumer_group, batch_size)</code>. The queue delivers messages and starts a visibility timeout (e.g., 60 seconds). If the consumer does not acknowledge (<code>ackMessage(receipt_handle)</code>) within the timeout, the message becomes visible again for re-delivery. After successful processing, the consumer ACKs and the message is removed from the active queue. Failed messages that exceed the max retry count are moved to a Dead Letter Queue for manual inspection.</li>
+    <li><strong>Ordering:</strong> Messages within the same partition key (merchant_id) are ordered. This ensures events for a single merchant are delivered in causal order.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- OVERALL COMBINED DIAGRAM -->
+<!-- ============================================================ -->
+<h2 id="overall">7. Overall Combined Diagram</h2>
+<p>This diagram combines all four flows into a single unified view showing how the system works end-to-end.</p>
+
+<div class="diagram-wrapper">
+<div class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#2d2b55', 'primaryTextColor': '#e0e0e6', 'primaryBorderColor': '#635bff', 'lineColor': '#7a73ff', 'secondaryColor': '#1a2332', 'tertiaryColor': '#1e2a3a', 'edgeLabelBackground': '#1a1d28', 'clusterBkg': '#13151c', 'clusterBorder': '#2d3039', 'nodeTextColor': '#e0e0e6', 'textColor': '#e0e0e6' }}}%%
+flowchart TD
+    subgraph CLIENT["🖥️ Client Side"]
+        CU["👤 Customer Browser"]
+        MF["Merchant Frontend<br/>+ Stripe.js SDK"]
+    end
+
+    subgraph MERCHANT_SRV["🏪 Merchant Server"]
+        MBS["Merchant Backend"]
+        MWH["Merchant Webhook<br/>Endpoint"]
+    end
+
+    subgraph STRIPE_EDGE["🌐 Stripe Edge"]
+        CDN_NODE["CDN<br/>‹Dashboard static assets›"]
+        LB_MAIN["Load Balancer ‹L7›"]
+        AGW["API Gateway"]
+    end
+
+    subgraph STRIPE_SERVICES["⚙️ Stripe Core Services"]
+        TOKEN["Tokenization<br/>Service ‹Vault›"]
+        PAY["Payment Service"]
+        FRAUD["Fraud Detection<br/>Service ‹ML›"]
+        REFUND["Refund Service"]
+        SETTLE["Settlement<br/>Service"]
+        BANK["Bank Integration<br/>Service"]
+        PPG_MAIN["Payment Processor<br/>Gateway"]
+    end
+
+    subgraph EXTERNAL["🏦 External Financial Infrastructure"]
+        CARDNET["Card Networks<br/>‹Visa / MC / Amex›"]
+        ISSUER["Issuing Bank"]
+        ACQUIRER["Acquiring Bank<br/>‹ACH / Wire›"]
+        MBANK["Merchant's Bank"]
+    end
+
+    subgraph EVENT_SYSTEM["🔔 Event & Webhook System"]
+        MQ_MAIN["Message Queue"]
+        WHC["Webhook<br/>Consumer"]
+        WHD["Webhook Delivery<br/>Service"]
+    end
+
+    subgraph SCHEDULER["⏰ Batch Scheduler"]
+        CRON["Cron / Scheduler<br/>‹daily›"]
+    end
+
+    subgraph DATASTORE["💾 Data Layer"]
+        TXDB[("Transaction DB<br/>‹SQL›")]
+        LEDGER[("Ledger DB<br/>‹SQL›")]
+        PAYDB[("Payouts DB<br/>‹SQL›")]
+        EVDB[("Events DB<br/>‹NoSQL›")]
+        WDLOGS[("Webhook Logs<br/>‹NoSQL›")]
+        CACHE["Cache"]
+    end
+
+    %% Flow 1: Payment
+    CU -->|"Card details"| MF
+    MF -->|"POST /v1/tokens ‹HTTPS›"| TOKEN
+    TOKEN -->|"Token"| MF
+    MF -->|"Token + order"| MBS
+    MBS -->|"POST /v1/payment_intents ‹HTTPS›"| LB_MAIN
+    LB_MAIN --> AGW
+    AGW -->|"Auth + route"| PAY
+    PAY -->|"Config lookup"| CACHE
+    PAY -->|"Fraud check ‹gRPC›"| FRAUD
+    PAY -->|"Auth request ‹gRPC›"| PPG_MAIN
+    PPG_MAIN -->|"ISO 8583"| CARDNET
+    CARDNET --> ISSUER
+    ISSUER --> CARDNET
+    CARDNET --> PPG_MAIN
+    PAY -->|"Write"| TXDB
+    PAY -->|"Write"| LEDGER
+    PAY -->|"Publish event"| MQ_MAIN
+
+    %% Flow 2: Refund
+    MBS -->|"POST /v1/refunds ‹HTTPS›"| LB_MAIN
+    AGW -->|"Route"| REFUND
+    REFUND -->|"Lookup + write"| TXDB
+    REFUND -->|"gRPC"| PPG_MAIN
+    REFUND -->|"Write"| LEDGER
+    REFUND -->|"Publish event"| MQ_MAIN
+
+    %% Flow 3: Payout
+    CRON -->|"Trigger"| SETTLE
+    SETTLE -->|"Query transactions"| TXDB
+    SETTLE -->|"Write payouts"| PAYDB
+    SETTLE -->|"Write"| LEDGER
+    SETTLE -->|"gRPC"| BANK
+    BANK -->|"ACH / Wire"| ACQUIRER
+    ACQUIRER -->|"Transfer"| MBANK
+    ACQUIRER -->|"Confirmation"| BANK
+    BANK -->|"Update"| PAYDB
+    BANK -->|"Publish event"| MQ_MAIN
+
+    %% Flow 4: Webhooks
+    MQ_MAIN -->|"Consume"| WHC
+    WHC -->|"Persist"| EVDB
+    WHC --> WHD
+    WHD -->|"HTTPS POST ‹signed›"| MWH
+    WHD -->|"Log"| WDLOGS
+    WHD -.->|"Retry on failure"| MQ_MAIN
+
+    %% CDN for Dashboard
+    CDN_NODE -.->|"Static assets for<br/>Merchant Dashboard"| MF
 </div>
 </div>
 
-<!-- Combined Architecture -->
-<div class="section">
-<h2>Combined Overall Architecture</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1200 650" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#635bff"/></marker></defs>
-<rect x="20" y="280" width="120" height="70" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="80" y="312" text-anchor="middle" fill="white" font-size="12">Merchant</text><text x="80" y="330" text-anchor="middle" fill="white" font-size="11">+ Stripe.js</text>
-<rect x="190" y="280" width="130" height="50" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="255" y="310" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
-<rect x="380" y="80" width="130" height="50" rx="8" fill="#635bff" stroke="#8a85ff" stroke-width="2"/><text x="445" y="110" text-anchor="middle" fill="white" font-size="12">Payment Svc</text>
-<rect x="380" y="170" width="130" height="50" rx="8" fill="#635bff" stroke="#8a85ff" stroke-width="2"/><text x="445" y="200" text-anchor="middle" fill="white" font-size="12">Billing Svc</text>
-<rect x="380" y="260" width="130" height="50" rx="8" fill="#635bff" stroke="#8a85ff" stroke-width="2"/><text x="445" y="290" text-anchor="middle" fill="white" font-size="12">Refund Svc</text>
-<rect x="380" y="350" width="130" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="445" y="380" text-anchor="middle" fill="white" font-size="12">Fraud Engine</text>
-<rect x="380" y="440" width="130" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="445" y="470" text-anchor="middle" fill="white" font-size="12">Token Vault</text>
-<rect x="380" y="530" width="130" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="445" y="560" text-anchor="middle" fill="white" font-size="12">Webhook Svc</text>
-<rect x="600" y="80" width="140" height="50" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="670" y="110" text-anchor="middle" fill="white" font-size="12">Card Networks</text>
-<rect x="600" y="170" width="140" height="50" rx="8" fill="#8b4513" stroke="#cd853f" stroke-width="2"/><text x="670" y="200" text-anchor="middle" fill="white" font-size="12">Issuing Banks</text>
-<rect x="600" y="260" width="140" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="670" y="290" text-anchor="middle" fill="white" font-size="12">Ledger Svc</text>
-<rect x="600" y="350" width="140" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="670" y="375" text-anchor="middle" fill="white" font-size="11">Settlement/Payout</text>
-<rect x="600" y="440" width="140" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="670" y="465" text-anchor="middle" fill="white" font-size="11">Kafka Event Bus</text>
-<ellipse cx="870" cy="170" rx="70" ry="30" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="870" y="175" text-anchor="middle" fill="white" font-size="12">Payment DB</text>
-<ellipse cx="870" cy="280" rx="70" ry="30" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="870" y="285" text-anchor="middle" fill="white" font-size="12">Ledger DB</text>
-<ellipse cx="870" cy="380" rx="70" ry="30" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="870" y="385" text-anchor="middle" fill="white" font-size="12">Idempotency</text>
-<rect x="830" y="440" width="100" height="40" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="880" y="465" text-anchor="middle" fill="white" font-size="11">Redis Cache</text>
-<line x1="140" y1="305" x2="188" y2="305" stroke="#635bff" stroke-width="2" marker-end="url(#arrow4)"/>
-<line x1="320" y1="290" x2="378" y2="105" stroke="#635bff" stroke-width="1.5" marker-end="url(#arrow4)"/>
-<line x1="320" y1="300" x2="378" y2="195" stroke="#635bff" stroke-width="1.5" marker-end="url(#arrow4)"/>
-<line x1="320" y1="310" x2="378" y2="285" stroke="#635bff" stroke-width="1.5" marker-end="url(#arrow4)"/>
-<line x1="510" y1="105" x2="598" y2="105" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow4)"/>
-<line x1="740" y1="105" x2="798" y2="170" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow4)"/>
-<line x1="740" y1="285" x2="798" y2="280" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow4)"/>
-<line x1="670" y1="310" x2="670" y2="348" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow4)"/>
-<line x1="670" y1="400" x2="670" y2="438" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow4)"/>
-<line x1="740" y1="460" x2="828" y2="460" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow4)"/>
-<text x="600" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Stripe: Combined Overall Architecture</text>
-</svg>
+<h3>Overall Diagram — Examples</h3>
+
+<div class="example-card">
+<strong>Example 1 — Full Lifecycle of an E-Commerce Purchase:</strong><br/>
+A customer visits an online bookstore built on Stripe. They add "System Design Interview" ($35.00) to their cart and click "Purchase." <strong>(Flow 1)</strong> Stripe.js tokenizes the card and the Merchant Backend calls <code>POST /v1/payment_intents</code>. The Payment Service runs fraud detection (passes), authorizes via Visa (approved), writes the transaction + ledger entries, publishes <code>payment_intent.succeeded</code> to the queue, and returns success. <strong>(Flow 4)</strong> The Webhook Consumer picks up the event, looks up the bookstore's webhook config, and the Webhook Delivery Service sends an HTTPS POST to <code>https://bookstore.com/stripe-webhook</code>. The bookstore's server verifies the signature, marks the order as "paid," and triggers shipping. <strong>(Later — Flow 3)</strong> At midnight, the Settlement Service aggregates all of today's successful transactions for the bookstore, deducts Stripe's 2.9% + $0.30 fee (fee = $1.32, net = $33.68), and the Bank Integration Service initiates an ACH transfer to the bookstore's bank account. Two days later, $33.68 appears in the bookstore's checking account, and a <code>payout.paid</code> webhook is sent.
 </div>
 
-<div class="example">
-<strong>Example — Full lifecycle:</strong> Merchant integrates Stripe.js → Customer enters card → tokenized to <code>tok_xxx</code> → Merchant creates PaymentIntent → API Gateway authenticates merchant API key → Payment Service checks Fraud Engine (score: 15, safe) → detokenizes card from Token Vault → sends to Visa via ISO 8583 → Chase approves → Ledger Service records double-entry (DR Stripe Receivable, CR Merchant Revenue) → Kafka publishes "payment.succeeded" event → Webhook Service delivers to merchant → Settlement Service batches and pays merchant on Friday via ACH bank transfer.
-</div>
+<div class="example-card">
+<strong>Example 2 — Purchase Followed by Refund:</strong><br/>
+A customer buys sneakers for $120.00. <strong>(Flow 1)</strong> Payment succeeds. <strong>(Flow 4)</strong> Merchant receives <code>payment_intent.succeeded</code> webhook and ships the order. Three days later, the customer requests a return. <strong>(Flow 2)</strong> The merchant calls <code>POST /v1/refunds</code> with the payment ID. The Refund Service verifies the original charge, sends a refund through Visa, updates the transaction to <code>refunded</code>, reverses ledger entries, and publishes <code>charge.refunded</code>. <strong>(Flow 4)</strong> The webhook for <code>charge.refunded</code> is delivered to the merchant, who marks the order as "returned" and updates inventory. <strong>(Flow 3)</strong> In the next settlement batch, the $120.00 refund is deducted from the merchant's gross volume, reducing their payout by the net refund amount.
 </div>
 
-<!-- Database Schema -->
-<div class="section">
-<h2>Database Schema</h2>
+<!-- ============================================================ -->
+<!-- DATABASE SCHEMA -->
+<!-- ============================================================ -->
+<h2 id="schema">8. Database Schema</h2>
 
-<h3>SQL — PostgreSQL (Core Financial Data — ACID Required)</h3>
+<h3><span class="tag tag-sql">SQL</span> transactions</h3>
+<div class="card">
 <table>
-<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
-<tr><td rowspan="7"><strong>payment_intents</strong></td><td>id</td><td>VARCHAR(30)</td><td><span class="tag tag-pk">PK</span> (pi_xxx format)</td></tr>
-<tr><td>merchant_id</td><td>VARCHAR(30)</td><td><span class="tag tag-fk">FK → merchants</span> <span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>amount</td><td>BIGINT</td><td>In smallest currency unit (cents)</td></tr>
-<tr><td>currency</td><td>VARCHAR(3)</td><td>ISO 4217 (usd, eur, gbp)</td></tr>
-<tr><td>status</td><td>ENUM</td><td>requires_payment_method, processing, succeeded, canceled</td></tr>
-<tr><td>idempotency_key</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">UNIQUE INDEX</span></td></tr>
-<tr><td>created_at</td><td>TIMESTAMP</td><td><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td rowspan="6"><strong>charges</strong></td><td>id</td><td>VARCHAR(30)</td><td><span class="tag tag-pk">PK</span> (ch_xxx)</td></tr>
-<tr><td>payment_intent_id</td><td>VARCHAR(30)</td><td><span class="tag tag-fk">FK → payment_intents</span> <span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>amount</td><td>BIGINT</td><td></td></tr>
-<tr><td>status</td><td>ENUM</td><td>succeeded, pending, failed</td></tr>
-<tr><td>card_last4</td><td>VARCHAR(4)</td><td>Denormalized for display</td></tr>
-<tr><td>failure_code</td><td>VARCHAR(50)</td><td>card_declined, insufficient_funds, etc.</td></tr>
-<tr><td rowspan="5"><strong>subscriptions</strong></td><td>id</td><td>VARCHAR(30)</td><td><span class="tag tag-pk">PK</span> (sub_xxx)</td></tr>
-<tr><td>customer_id</td><td>VARCHAR(30)</td><td><span class="tag tag-fk">FK → customers</span> <span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>plan_id</td><td>VARCHAR(30)</td><td><span class="tag tag-fk">FK → plans</span></td></tr>
-<tr><td>status</td><td>ENUM</td><td>active, past_due, canceled, trialing</td></tr>
-<tr><td>current_period_end</td><td>TIMESTAMP</td><td><span class="tag tag-idx">INDEX</span> (for billing scheduler)</td></tr>
-<tr><td rowspan="5"><strong>ledger_entries</strong></td><td>id</td><td>BIGSERIAL</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>account_id</td><td>VARCHAR(30)</td><td><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>type</td><td>ENUM</td><td>debit, credit</td></tr>
-<tr><td>amount</td><td>BIGINT</td><td></td></tr>
-<tr><td>reference_id</td><td>VARCHAR(30)</td><td>Links to charge/refund. <span class="tag tag-idx">INDEX</span></td></tr>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td>transaction_id</td><td>UUID</td><td>PK</td><td>Unique payment intent identifier</td></tr>
+    <tr><td>merchant_id</td><td>UUID</td><td>FK → merchants</td><td>Owning merchant</td></tr>
+    <tr><td>customer_id</td><td>UUID</td><td>FK → customers</td><td>Paying customer</td></tr>
+    <tr><td>payment_method_id</td><td>UUID</td><td>FK → payment_methods</td><td>Card/bank used</td></tr>
+    <tr><td>idempotency_key</td><td>VARCHAR(255)</td><td>UNIQUE</td><td>Client-provided dedup key</td></tr>
+    <tr><td>amount</td><td>BIGINT</td><td></td><td>Amount in smallest currency unit (e.g., cents)</td></tr>
+    <tr><td>currency</td><td>VARCHAR(3)</td><td></td><td>ISO 4217 currency code</td></tr>
+    <tr><td>status</td><td>ENUM</td><td></td><td>pending, authorized, succeeded, failed, refunded, partially_refunded</td></tr>
+    <tr><td>failure_reason</td><td>VARCHAR(100)</td><td></td><td>Null if succeeded, otherwise decline code</td></tr>
+    <tr><td>fraud_score</td><td>DECIMAL(4,3)</td><td></td><td>Risk score from fraud service (0.000–1.000)</td></tr>
+    <tr><td>auth_code</td><td>VARCHAR(20)</td><td></td><td>Card network authorization code</td></tr>
+    <tr><td>is_settled</td><td>BOOLEAN</td><td></td><td>Whether included in a payout</td></tr>
+    <tr><td>metadata</td><td>JSONB</td><td></td><td>Merchant-provided key-value metadata</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>When the payment intent was created</td></tr>
+    <tr><td>captured_at</td><td>TIMESTAMP</td><td></td><td>When the payment was captured (null if auth-only)</td></tr>
+    <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>Last status update</td></tr>
 </table>
+
+<p><strong>Why SQL:</strong> Financial transactions require ACID guarantees. A payment must never be partially written — either the full transaction record (with ledger entries) commits atomically, or it rolls back entirely. SQL databases provide strong consistency, serializable isolation, and foreign key constraints that are essential for financial data integrity.</p>
+
+<p><strong>Reads:</strong> (1) When a merchant views their Dashboard / calls <code>GET /v1/payment_intents</code>; (2) During refund processing to validate the original transaction; (3) During settlement to aggregate un-settled transactions.</p>
+<p><strong>Writes:</strong> (1) When a payment is processed (Flow 1 — customer pays); (2) When a refund is issued (status update to refunded/partially_refunded); (3) When settlement marks transactions as settled.</p>
+
+<h4>Indexes</h4>
+<ul>
+    <li><strong><code>(merchant_id, created_at)</code> — B-tree index:</strong> The most common query pattern is "show me my recent transactions" from the merchant dashboard, which filters by merchant and sorts by time. A B-tree index enables efficient range scans over time within a merchant partition.</li>
+    <li><strong><code>(idempotency_key)</code> — Hash index:</strong> Every incoming payment request does an exact-match lookup on the idempotency key to detect duplicates. A hash index provides O(1) lookups for this exact-match pattern.</li>
+    <li><strong><code>(merchant_id, is_settled, captured_at)</code> — B-tree index:</strong> The Settlement Service queries "all un-settled captured transactions for a merchant within a date range." This composite index directly serves this query pattern.</li>
+</ul>
 
 <h4>Sharding Strategy</h4>
-<ul>
-<li><strong>payment_intents, charges:</strong> Shard by <code>merchant_id</code> — all payments for a merchant on the same shard. Merchant dashboard queries are shard-local</li>
-<li><strong>ledger_entries:</strong> Shard by <code>account_id</code> — each merchant's ledger is co-located for balance calculations</li>
-<li><strong>subscriptions:</strong> Shard by <code>customer_id</code> — customer's subscription management is shard-local</li>
-<li><strong>Why not shard by payment_intent_id?</strong> Because "list all payments for merchant X" would require scatter-gather across all shards</li>
-</ul>
+<p><strong>Shard by <code>merchant_id</code></strong> using consistent hashing. Rationale: (1) Nearly all queries are scoped to a single merchant (dashboard queries, settlement aggregation, refund lookups). Sharding by merchant_id ensures all of a merchant's transactions are co-located on the same shard, avoiding cross-shard queries. (2) Merchant_id provides good distribution — there are millions of merchants, so data is evenly spread. (3) For very large merchants (e.g., processing billions in volume), further sub-sharding by date range can be applied (shard key: <code>merchant_id + YYYYMM</code>).</p>
+</div>
 
-<h3>Idempotency Store (Redis)</h3>
+<h3><span class="tag tag-sql">SQL</span> merchants</h3>
+<div class="card">
 <table>
-<tr><th>Key</th><th>Value</th><th>TTL</th></tr>
-<tr><td><code>idempotency:{merchant_id}:{key}</code></td><td>JSON: request hash + response</td><td>24 hours</td></tr>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td>merchant_id</td><td>UUID</td><td>PK</td><td>Unique merchant identifier</td></tr>
+    <tr><td>name</td><td>VARCHAR(255)</td><td></td><td>Business name</td></tr>
+    <tr><td>email</td><td>VARCHAR(255)</td><td>UNIQUE</td><td>Contact email</td></tr>
+    <tr><td>api_key_hash</td><td>VARCHAR(64)</td><td>UNIQUE</td><td>SHA-256 hash of the API secret key</td></tr>
+    <tr><td>publishable_key</td><td>VARCHAR(64)</td><td>UNIQUE</td><td>Public key for client-side SDK</td></tr>
+    <tr><td>webhook_url</td><td>VARCHAR(2048)</td><td></td><td>Merchant's webhook endpoint URL</td></tr>
+    <tr><td>webhook_secret</td><td>VARCHAR(64)</td><td></td><td>Secret for HMAC webhook signing</td></tr>
+    <tr><td>webhook_event_types</td><td>JSONB</td><td></td><td>Array of subscribed event types</td></tr>
+    <tr><td>default_currency</td><td>VARCHAR(3)</td><td></td><td>Merchant's settlement currency</td></tr>
+    <tr><td>fee_rate_percent</td><td>DECIMAL(5,3)</td><td></td><td>Stripe's percentage fee for this merchant</td></tr>
+    <tr><td>fee_fixed_cents</td><td>INT</td><td></td><td>Fixed per-transaction fee in cents</td></tr>
+    <tr><td>payout_schedule</td><td>VARCHAR(20)</td><td></td><td>daily, weekly, monthly</td></tr>
+    <tr><td>status</td><td>ENUM</td><td></td><td>active, suspended, pending_verification</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Account creation time</td></tr>
+    <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>Last update time</td></tr>
 </table>
 
-<h3>Denormalization</h3>
-<ul>
-<li><code>charges.card_last4</code> — denormalized from token vault to avoid cross-service lookup for display purposes</li>
-<li><code>merchants.balance</code> — denormalized running balance, updated atomically with each charge/refund via database trigger. Avoids SUM() over all ledger entries</li>
-</ul>
+<p><strong>Why SQL:</strong> Merchant data is highly relational (joins to transactions, payouts, customers) and requires consistency guarantees — e.g., you cannot allow a race condition where a merchant's fee rate is partially updated during a settlement calculation.</p>
+<p><strong>Reads:</strong> (1) On every API request (API Gateway authenticates the API key → looks up merchant); (2) On webhook delivery (lookup webhook URL/secret); (3) On settlement (lookup fee rate, payout schedule).</p>
+<p><strong>Writes:</strong> (1) Merchant signup / onboarding; (2) Merchant updates webhook config or bank details in the Dashboard.</p>
+<p><strong>Note:</strong> Merchant config is heavily read, rarely written — ideal for caching (see <a href="#cdn-cache">Cache section</a>).</p>
 
-<h3>Indexes</h3>
+<h4>Indexes</h4>
 <ul>
-<li><code>payment_intents.idempotency_key</code> — UNIQUE B-tree index for idempotency checks (critical: must be unique per merchant)</li>
-<li><code>subscriptions.current_period_end</code> — B-tree index for billing scheduler range queries (WHERE current_period_end BETWEEN...)</li>
-<li><code>charges.payment_intent_id</code> — B-tree for "list charges for a payment intent"</li>
+    <li><strong><code>(api_key_hash)</code> — Hash index:</strong> Every inbound API request authenticates by hashing the provided key and doing an exact-match lookup. Hash index gives O(1) performance.</li>
+    <li><strong><code>(email)</code> — Hash index:</strong> For login / account lookups by email.</li>
 </ul>
 </div>
 
-<!-- Cache -->
-<div class="section">
-<h2>Cache Deep Dive</h2>
+<h3><span class="tag tag-sql">SQL</span> customers</h3>
+<div class="card">
 <table>
-<tr><th>Cache</th><th>Strategy</th><th>Eviction</th><th>TTL</th><th>Purpose</th></tr>
-<tr><td>Idempotency</td><td>Write-through</td><td>TTL-based</td><td>24hr</td><td>Prevent duplicate API requests</td></tr>
-<tr><td>Merchant Config</td><td>Read-through</td><td>LRU</td><td>5min</td><td>API keys, webhook URLs, settings</td></tr>
-<tr><td>Fraud Features</td><td>Write-through</td><td>LRU</td><td>1hr</td><td>Customer risk profiles, velocity counters</td></tr>
-<tr><td>Rate Limiting</td><td>Sliding window counters</td><td>TTL-based</td><td>1min/1hr</td><td>API rate limits per merchant</td></tr>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td>customer_id</td><td>UUID</td><td>PK</td><td>Unique customer identifier</td></tr>
+    <tr><td>merchant_id</td><td>UUID</td><td>FK → merchants</td><td>Owning merchant (customers are scoped per-merchant)</td></tr>
+    <tr><td>email</td><td>VARCHAR(255)</td><td></td><td>Customer email</td></tr>
+    <tr><td>name</td><td>VARCHAR(255)</td><td></td><td>Customer name</td></tr>
+    <tr><td>default_payment_method_id</td><td>UUID</td><td>FK → payment_methods</td><td>Default card/bank for recurring charges</td></tr>
+    <tr><td>metadata</td><td>JSONB</td><td></td><td>Merchant-provided metadata</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>When the customer was created</td></tr>
+    <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>Last update</td></tr>
 </table>
 
-<h3>No CDN for Payment APIs</h3>
+<p><strong>Why SQL:</strong> Relational integrity with merchants and payment methods. Foreign key constraints ensure data consistency.</p>
+<p><strong>Reads:</strong> (1) During payment processing to resolve the customer; (2) For merchant's customer management dashboard.</p>
+<p><strong>Writes:</strong> (1) When a merchant creates a customer via <code>POST /v1/customers</code>.</p>
+
+<h4>Indexes</h4>
 <ul>
-<li>Payment API responses are <strong>never cached</strong> at CDN layer — each request must be processed fresh (financial correctness)</li>
-<li>CDN used only for: Stripe.js bundle (static JS), documentation site, dashboard static assets</li>
-<li>Stripe.js CDN TTL: 1 hour (so merchants always get latest fraud detection updates)</li>
+    <li><strong><code>(merchant_id, email)</code> — B-tree index:</strong> Merchants often look up customers by email within their own account.</li>
 </ul>
 </div>
 
-<!-- Scaling -->
-<div class="section">
-<h2>Scaling Considerations</h2>
+<h3><span class="tag tag-sql">SQL</span> payment_methods</h3>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td>payment_method_id</td><td>UUID</td><td>PK</td><td>Unique identifier</td></tr>
+    <tr><td>customer_id</td><td>UUID</td><td>FK → customers</td><td>Owning customer</td></tr>
+    <tr><td>type</td><td>ENUM</td><td></td><td>card, bank_account, wallet</td></tr>
+    <tr><td>vault_token</td><td>VARCHAR(255)</td><td></td><td>Reference to encrypted card in PCI vault</td></tr>
+    <tr><td>card_last_four</td><td>CHAR(4)</td><td></td><td>Last 4 digits for display</td></tr>
+    <tr><td>card_brand</td><td>VARCHAR(20)</td><td></td><td>visa, mastercard, amex</td></tr>
+    <tr><td>card_exp_month</td><td>SMALLINT</td><td></td><td>Expiration month</td></tr>
+    <tr><td>card_exp_year</td><td>SMALLINT</td><td></td><td>Expiration year</td></tr>
+    <tr><td>card_fingerprint</td><td>VARCHAR(64)</td><td></td><td>Hash of full card number for dedup</td></tr>
+    <tr><td>is_default</td><td>BOOLEAN</td><td></td><td>Default payment method for customer</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>When the method was added</td></tr>
+</table>
+
+<p><strong>Why SQL:</strong> Foreign key relationship with customers. <strong>Important:</strong> This table does NOT store raw card numbers (PAN). The actual encrypted card data lives in the isolated PCI-compliant Tokenization Service vault. This table only stores a reference token (<code>vault_token</code>) and non-sensitive display info (last 4 digits, brand).</p>
+<p><strong>Reads:</strong> (1) During payment processing (resolve vault_token to authorize); (2) When customer views saved cards.</p>
+<p><strong>Writes:</strong> (1) When a customer saves a card via the merchant's site.</p>
+
+<h4>Indexes</h4>
 <ul>
-<li><strong>API Gateway:</strong> L7 load balancer, rate limiting per merchant (100 req/sec default, configurable). TLS termination at edge</li>
-<li><strong>Payment Service:</strong> Stateless, horizontally scaled. Each instance can process any payment. Database provides consistency</li>
-<li><strong>Database:</strong> Primary-replica setup with synchronous replication for payment data (no data loss). Read replicas for dashboard queries</li>
-<li><strong>Kafka Event Bus:</strong> Payment events published to Kafka for async consumers (webhooks, analytics, fraud feature updates). Partitioned by merchant_id for ordering</li>
-<li><strong>Webhook delivery:</strong> Separate worker pool. Retries with exponential backoff (1hr, 6hr, 24hr, up to 3 days). Signed with HMAC-SHA256 for verification</li>
-<li><strong>Multi-region:</strong> Active-passive for payment processing (financial data must be consistent). Active-active for read-only endpoints (dashboard, analytics)</li>
+    <li><strong><code>(customer_id)</code> — B-tree index:</strong> Lookup all payment methods for a customer.</li>
+    <li><strong><code>(card_fingerprint)</code> — Hash index:</strong> Detect duplicate cards across a merchant's customers (fraud prevention).</li>
 </ul>
 </div>
 
-<!-- Tradeoffs -->
-<div class="section">
-<h2>Tradeoffs & Deep Dives</h2>
-<div class="tradeoff">
-<div class="pro"><h4>✅ Strong Consistency (PostgreSQL)</h4><ul><li>ACID guarantees — no double charges, no lost payments</li><li>Serializable isolation for concurrent refunds</li><li>Double-entry ledger always balances</li></ul></div>
-<div class="con"><h4>❌ Consistency Cost</h4><ul><li>Lower throughput than eventual consistency</li><li>Cross-shard transactions require 2PC</li><li>Primary-replica lag means read replicas slightly behind</li></ul></div>
-</div>
-<div class="tradeoff">
-<div class="pro"><h4>✅ Idempotency Keys</h4><ul><li>Safe retries — network failures don't cause double charges</li><li>Client-generated: merchant controls dedup scope</li></ul></div>
-<div class="con"><h4>❌ Idempotency Complexity</h4><ul><li>24hr TTL means very old retries might not be caught</li><li>Same key + different params = ambiguous (409 error)</li><li>Storage cost for cached responses</li></ul></div>
-</div>
+<h3><span class="tag tag-sql">SQL</span> refunds</h3>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td>refund_id</td><td>UUID</td><td>PK</td><td>Unique refund identifier</td></tr>
+    <tr><td>transaction_id</td><td>UUID</td><td>FK → transactions</td><td>Original payment being refunded</td></tr>
+    <tr><td>amount</td><td>BIGINT</td><td></td><td>Refund amount in smallest currency unit</td></tr>
+    <tr><td>currency</td><td>VARCHAR(3)</td><td></td><td>ISO 4217 currency</td></tr>
+    <tr><td>reason</td><td>VARCHAR(100)</td><td></td><td>duplicate, fraudulent, requested_by_customer</td></tr>
+    <tr><td>status</td><td>ENUM</td><td></td><td>pending, succeeded, failed</td></tr>
+    <tr><td>idempotency_key</td><td>VARCHAR(255)</td><td>UNIQUE</td><td>Dedup key for refund requests</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>When the refund was initiated</td></tr>
+    <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>Last status update</td></tr>
+</table>
 
-<h3>Message Queue Deep Dive (Kafka)</h3>
+<p><strong>Why SQL:</strong> ACID guarantees needed — refund creation + original transaction status update + ledger reversal must be atomic. Must ensure refund amount never exceeds original charge.</p>
+<p><strong>Reads:</strong> (1) During refund validation (check total refunded so far); (2) During settlement (deduct refunds from payouts); (3) Merchant dashboard.</p>
+<p><strong>Writes:</strong> (1) When a merchant issues a refund (Flow 2).</p>
+
+<h4>Indexes</h4>
 <ul>
-<li><strong>Why Kafka:</strong> Durable event log for financial events. Every payment event persisted. Consumers (webhook delivery, analytics, fraud) process independently at their own pace</li>
-<li><strong>Partitioning:</strong> By <code>merchant_id</code> — ensures events for a single merchant are ordered (important: webhook delivery order matters)</li>
-<li><strong>Consumer groups:</strong> Webhook Service, Analytics Service, Fraud Feature Service each in separate consumer groups — same event processed by all three</li>
-<li><strong>Retention:</strong> 30 days for replay/debugging. Compliance archive to S3 for 7 years</li>
+    <li><strong><code>(transaction_id)</code> — Hash index:</strong> Lookup all refunds for a given payment (used during refund validation and settlement).</li>
+    <li><strong><code>(idempotency_key)</code> — Hash index:</strong> Duplicate refund request detection.</li>
 </ul>
 </div>
 
-<!-- Alternative Approaches -->
-<div class="section">
-<h2>Alternative Approaches</h2>
+<h3><span class="tag tag-sql">SQL</span> ledger_entries</h3>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td>entry_id</td><td>UUID</td><td>PK</td><td>Unique ledger entry identifier</td></tr>
+    <tr><td>transaction_id</td><td>UUID</td><td>FK → transactions (nullable)</td><td>Linked payment (null for payout entries)</td></tr>
+    <tr><td>refund_id</td><td>UUID</td><td>FK → refunds (nullable)</td><td>Linked refund (null for non-refund entries)</td></tr>
+    <tr><td>payout_id</td><td>UUID</td><td>FK → payouts (nullable)</td><td>Linked payout (null for non-payout entries)</td></tr>
+    <tr><td>account_type</td><td>ENUM</td><td></td><td>customer_receivable, merchant_payable, stripe_revenue, stripe_holding</td></tr>
+    <tr><td>entry_type</td><td>ENUM</td><td></td><td>debit, credit</td></tr>
+    <tr><td>amount</td><td>BIGINT</td><td></td><td>Amount in smallest currency unit</td></tr>
+    <tr><td>currency</td><td>VARCHAR(3)</td><td></td><td>ISO 4217</td></tr>
+    <tr><td>description</td><td>VARCHAR(255)</td><td></td><td>Human-readable description</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Entry creation time (immutable)</td></tr>
+</table>
+
+<p><strong>Why SQL:</strong> This is the double-entry bookkeeping ledger — the foundation of financial integrity. Every money movement creates balanced debit + credit entries (total debits = total credits, always). This table is append-only (entries are never updated or deleted). SQL's ACID properties ensure that a pair of ledger entries (debit + credit) are always written atomically. This table is also subject to regulatory audits, so strong consistency is non-negotiable.</p>
+<p><strong>Why Normalization:</strong> Ledger entries are normalized (separate from transactions/refunds/payouts) because: (1) A single transaction may generate multiple ledger entries (customer receivable + merchant payable + Stripe revenue); (2) Different types of events (payments, refunds, payouts) all create entries in the same ledger; (3) Normalization enables easy reconciliation: SUM(debits) must equal SUM(credits) — this invariant check is trivial with a normalized ledger but hard with denormalized data.</p>
+<p><strong>Reads:</strong> (1) Reconciliation jobs (sum all debits vs credits — auditors check this daily); (2) Merchant balance queries; (3) Financial reporting.</p>
+<p><strong>Writes:</strong> (1) On payment success (Flow 1); (2) On refund (Flow 2 — reversal entries); (3) On payout (Flow 3 — settlement entries).</p>
+
+<h4>Indexes</h4>
 <ul>
-<li><strong>Event Sourcing for Ledger:</strong> Instead of updating balances, store all events (charge, refund, payout) and derive balance from event replay. Pros: complete audit trail, easy debugging. Cons: read performance (must replay events or maintain projections)</li>
-<li><strong>CQRS:</strong> Separate write model (PostgreSQL for transactions) from read model (Elasticsearch for merchant dashboard search/analytics). Write path optimized for consistency, read path optimized for query flexibility</li>
-<li><strong>Saga pattern for multi-step payments:</strong> Instead of distributed transactions, use compensating transactions. E.g., if card charged but ledger write fails → compensating refund issued. More resilient to partial failures</li>
-<li><strong>gRPC for inter-service communication:</strong> Instead of REST between microservices. Pros: Protocol Buffers (smaller payloads, type-safe), HTTP/2 multiplexing. Cons: harder to debug (binary protocol), less tooling</li>
+    <li><strong><code>(transaction_id)</code> — B-tree index:</strong> Look up all ledger entries for a given payment.</li>
+    <li><strong><code>(account_type, created_at)</code> — B-tree index:</strong> For reconciliation and balance queries — "what are all credits to the stripe_revenue account in the last month?"</li>
+    <li><strong><code>(payout_id)</code> — B-tree index:</strong> Look up all entries for a given payout for auditing.</li>
+</ul>
+
+<h4>Sharding Strategy</h4>
+<p><strong>Shard by <code>merchant_id</code></strong> (derived from the linked transaction/refund/payout). Same rationale as the transactions table — most reconciliation and balance queries are per-merchant. The merchant_id is not stored directly on the ledger entry (to keep the ledger clean), but the shard key is determined by looking up the merchant_id from the linked resource at write time.</p>
+</div>
+
+<h3><span class="tag tag-sql">SQL</span> payouts</h3>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td>payout_id</td><td>UUID</td><td>PK</td><td>Unique payout identifier</td></tr>
+    <tr><td>merchant_id</td><td>UUID</td><td>FK → merchants</td><td>Recipient merchant</td></tr>
+    <tr><td>amount</td><td>BIGINT</td><td></td><td>Net payout amount</td></tr>
+    <tr><td>gross_amount</td><td>BIGINT</td><td></td><td>Pre-fee gross amount</td></tr>
+    <tr><td>fees_amount</td><td>BIGINT</td><td></td><td>Total Stripe fees deducted</td></tr>
+    <tr><td>refunds_amount</td><td>BIGINT</td><td></td><td>Total refunds in the period</td></tr>
+    <tr><td>currency</td><td>VARCHAR(3)</td><td></td><td>ISO 4217</td></tr>
+    <tr><td>status</td><td>ENUM</td><td></td><td>pending, in_transit, paid, failed</td></tr>
+    <tr><td>bank_transfer_ref</td><td>VARCHAR(100)</td><td></td><td>ACH/Wire reference ID</td></tr>
+    <tr><td>failure_reason</td><td>VARCHAR(255)</td><td></td><td>Reason if transfer failed</td></tr>
+    <tr><td>period_start</td><td>TIMESTAMP</td><td></td><td>Start of settlement window</td></tr>
+    <tr><td>period_end</td><td>TIMESTAMP</td><td></td><td>End of settlement window</td></tr>
+    <tr><td>arrival_date</td><td>DATE</td><td></td><td>Expected arrival date</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>When the payout was initiated</td></tr>
+    <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>Last status update</td></tr>
+</table>
+
+<p><strong>Why SQL:</strong> Payouts represent actual money leaving Stripe to merchants — strong consistency and ACID guarantees are required. The payout amount must exactly match the calculated settlement to avoid over/under-paying merchants.</p>
+<p><strong>Denormalization:</strong> The <code>gross_amount</code>, <code>fees_amount</code>, and <code>refunds_amount</code> fields are technically derivable from the transactions and refunds tables. They are <strong>denormalized</strong> into the payouts table because: (1) The settlement job computes these values at payout creation time, and they must remain immutable (even if future transactions are added); (2) The merchant dashboard needs to display payout breakdowns instantly without re-aggregating thousands of transactions; (3) Financial audits require a snapshot of what was calculated at settlement time, not what the live data says now.</p>
+<p><strong>Reads:</strong> (1) Merchant views payout history on Dashboard; (2) Bank Integration Service checks payout status for confirmation updates.</p>
+<p><strong>Writes:</strong> (1) Settlement Service creates payout records (Flow 3); (2) Bank Integration Service updates status on bank confirmation/failure.</p>
+
+<h4>Indexes</h4>
+<ul>
+    <li><strong><code>(merchant_id, created_at)</code> — B-tree index:</strong> Merchant dashboard query: "show my recent payouts."</li>
+    <li><strong><code>(status, arrival_date)</code> — B-tree index:</strong> Bank Integration Service queries pending payouts awaiting confirmation.</li>
 </ul>
 </div>
 
-<div class="section">
-<h2>Additional Information</h2>
+<h3><span class="tag tag-nosql">NoSQL (Document Store)</span> events</h3>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td>event_id</td><td>UUID</td><td>PK</td><td>Unique event identifier</td></tr>
+    <tr><td>type</td><td>STRING</td><td></td><td>Event type (payment_intent.succeeded, charge.refunded, etc.)</td></tr>
+    <tr><td>merchant_id</td><td>UUID</td><td></td><td>Merchant this event belongs to</td></tr>
+    <tr><td>resource_type</td><td>STRING</td><td></td><td>payment_intent, refund, payout</td></tr>
+    <tr><td>resource_id</td><td>UUID</td><td></td><td>ID of the resource that generated the event</td></tr>
+    <tr><td>data</td><td>JSON</td><td></td><td>Full snapshot of the resource at event time</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Event creation time</td></tr>
+</table>
+
+<p><strong>Why NoSQL (Document Store):</strong> Events are: (1) Write-heavy with high throughput (millions of events per day); (2) Schemaless — different event types have different data payloads; (3) Append-only (never updated); (4) Read patterns are simple: list events by merchant + time range, or fetch by event_id. These characteristics align perfectly with a document store that excels at high write throughput, flexible schemas, and simple key-based reads. No JOINs or complex transactions needed.</p>
+<p><strong>Reads:</strong> (1) Merchant calls <code>GET /v1/events</code> to list recent events; (2) Webhook Consumer reads back event data for delivery payload.</p>
+<p><strong>Writes:</strong> (1) Whenever any flow publishes an event to the Message Queue and the Webhook Consumer persists it.</p>
+
+<h4>Indexes</h4>
 <ul>
-<li><strong>PCI-DSS compliance:</strong> Token Vault runs in isolated VPC. No SSH access. All access via hardware-backed API keys. Quarterly penetration testing. Annual audit by QSA (Qualified Security Assessor)</li>
-<li><strong>3D Secure (3DS):</strong> For high-risk transactions, redirects customer to bank's authentication page (SMS code, biometric). Shifts fraud liability from merchant to bank</li>
-<li><strong>Connect platform:</strong> Marketplace payments — Stripe splits funds between platform and connected merchants. Uses separate "connected accounts" with their own balance and payout schedule</li>
-<li><strong>Dispute handling:</strong> When customer files chargeback with their bank → Stripe receives dispute notification → merchant has 7 days to submit evidence → bank decides. Automated evidence collection via ML</li>
+    <li><strong><code>(merchant_id, created_at)</code> — B-tree (or LSM-tree) index:</strong> For paginated event listing by merchant.</li>
+    <li><strong><code>(type, created_at)</code> — B-tree index:</strong> For filtering events by type.</li>
+</ul>
+
+<h4>Sharding Strategy</h4>
+<p><strong>Shard by <code>merchant_id</code></strong> using consistent hashing. Events are always queried within a single merchant context, so co-locating a merchant's events on one shard avoids scatter-gather queries. High-volume merchants may produce many events, but the document store handles this via the inherent horizontal scaling of NoSQL.</p>
+</div>
+
+<h3><span class="tag tag-nosql">NoSQL (Document Store)</span> webhook_delivery_logs</h3>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td>delivery_id</td><td>UUID</td><td>PK</td><td>Unique delivery attempt ID</td></tr>
+    <tr><td>event_id</td><td>UUID</td><td></td><td>Which event this delivery is for</td></tr>
+    <tr><td>merchant_id</td><td>UUID</td><td></td><td>Target merchant</td></tr>
+    <tr><td>webhook_url</td><td>STRING</td><td></td><td>URL the POST was sent to</td></tr>
+    <tr><td>http_status</td><td>INT</td><td></td><td>Response status code (null if timeout)</td></tr>
+    <tr><td>request_headers</td><td>JSON</td><td></td><td>Headers sent</td></tr>
+    <tr><td>response_body</td><td>STRING</td><td></td><td>Truncated response body (for debugging)</td></tr>
+    <tr><td>attempt_number</td><td>INT</td><td></td><td>1, 2, 3, ... up to max retries</td></tr>
+    <tr><td>status</td><td>STRING</td><td></td><td>delivered, failed, failed_permanently</td></tr>
+    <tr><td>next_retry_at</td><td>TIMESTAMP</td><td></td><td>When the next retry is scheduled (null if delivered)</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>When this attempt was made</td></tr>
+</table>
+
+<p><strong>Why NoSQL (Document Store):</strong> Delivery logs are extremely write-heavy (every delivery attempt across all merchants generates a log), append-only, and have a flexible schema (different events may include different debug info). Queries are simple: list delivery attempts by event_id or by merchant + time. No relational integrity constraints needed.</p>
+<p><strong>Reads:</strong> (1) Merchant views webhook delivery status in Dashboard; (2) Stripe support debugging webhook failures.</p>
+<p><strong>Writes:</strong> (1) After every webhook delivery attempt (success or failure) by the Webhook Delivery Service.</p>
+
+<h4>Indexes</h4>
+<ul>
+    <li><strong><code>(event_id)</code> — Hash index:</strong> Lookup all delivery attempts for a specific event.</li>
+    <li><strong><code>(merchant_id, created_at)</code> — B-tree index:</strong> Dashboard view of recent deliveries.</li>
 </ul>
 </div>
+
+<h3><span class="tag tag-nosql">NoSQL (Document Store)</span> audit_logs</h3>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td>log_id</td><td>UUID</td><td>PK</td><td>Unique log entry ID</td></tr>
+    <tr><td>actor_type</td><td>STRING</td><td></td><td>system, merchant, admin</td></tr>
+    <tr><td>actor_id</td><td>UUID</td><td></td><td>Who performed the action</td></tr>
+    <tr><td>action</td><td>STRING</td><td></td><td>payment.created, refund.issued, config.updated, etc.</td></tr>
+    <tr><td>resource_type</td><td>STRING</td><td></td><td>Type of affected resource</td></tr>
+    <tr><td>resource_id</td><td>UUID</td><td></td><td>ID of affected resource</td></tr>
+    <tr><td>before_state</td><td>JSON</td><td></td><td>State before the change</td></tr>
+    <tr><td>after_state</td><td>JSON</td><td></td><td>State after the change</td></tr>
+    <tr><td>ip_address</td><td>STRING</td><td></td><td>Requester's IP</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>When the action occurred</td></tr>
+</table>
+
+<p><strong>Why NoSQL (Document Store):</strong> Audit logs have the same characteristics as events — very high write volume, append-only, flexible payloads (before/after state varies by resource type), and simple time-range queries. They are never updated or deleted (regulatory requirement). A document store handles this volume efficiently with its append-optimized storage engine.</p>
+<p><strong>Reads:</strong> (1) Regulatory audits; (2) Internal investigations; (3) Compliance reporting.</p>
+<p><strong>Writes:</strong> (1) On every state change in the system — payment creation, refund, config update, etc.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- CDN & CACHE DEEP DIVE -->
+<!-- ============================================================ -->
+<h2 id="cdn-cache">9. CDN &amp; Cache Deep Dive</h2>
+
+<h3>CDN</h3>
+<div class="card">
+<p><strong>Appropriate?</strong> Yes — for the <strong>Stripe Dashboard</strong> (the web application merchants use to view transactions, configure settings, view analytics). No — for the core payment API.</p>
+
+<p><strong>Why CDN for Dashboard:</strong> The Stripe Dashboard is a single-page application (SPA) that includes JavaScript bundles, CSS stylesheets, images, fonts, and documentation pages. These are static assets that benefit significantly from CDN edge caching — reducing latency for merchants worldwide and offloading traffic from origin servers.</p>
+
+<p><strong>Why NOT CDN for Payment API:</strong> Payment API responses are unique per-request (each payment has different amounts, tokens, and results), contain sensitive financial data, and require real-time consistency. CDN caching is meaningless and dangerous for dynamic, sensitive API responses.</p>
+
+<p><strong>CDN Strategy:</strong></p>
+<ul>
+    <li><strong>Content:</strong> JS bundles (hashed filenames for cache-busting), CSS, images, fonts, Stripe.js SDK, API documentation</li>
+    <li><strong>Cache-Control:</strong> <code>public, max-age=31536000, immutable</code> for hashed assets; <code>public, max-age=3600</code> for HTML pages</li>
+    <li><strong>Invalidation:</strong> Deploy-time cache-busting via filename hashes (e.g., <code>dashboard.a1b2c3d.js</code>)</li>
+</ul>
+</div>
+
+<h3>In-Memory Cache</h3>
+<div class="card">
+<p><strong>Appropriate?</strong> Yes — for frequently-read, rarely-changed reference data. NOT for transactional data (which must always be read from the source-of-truth SQL database).</p>
+
+<h4>What is cached:</h4>
+<table>
+    <tr><th>Cached Data</th><th>Caching Strategy</th><th>Eviction Policy</th><th>TTL</th><th>Why</th></tr>
+    <tr>
+        <td><strong>Merchant Config</strong><br/>(API key → merchant mapping, fee rates, fraud thresholds, webhook URLs)</td>
+        <td><strong>Write-Through</strong></td>
+        <td>LRU</td>
+        <td>5 minutes</td>
+        <td>Read on every API request (authentication + config lookup). Written rarely (only when merchant updates settings). Write-through ensures cache is always up-to-date when config changes.</td>
+    </tr>
+    <tr>
+        <td><strong>Exchange Rates</strong><br/>(currency pair → rate)</td>
+        <td><strong>Read-Through (Cache-Aside)</strong></td>
+        <td>LRU</td>
+        <td>1 minute</td>
+        <td>Checked on every multi-currency transaction. Rates change frequently but slight staleness (up to 1 min) is acceptable. Read-through lazily populates the cache on first access.</td>
+    </tr>
+    <tr>
+        <td><strong>Fraud Model Parameters</strong><br/>(ML model weights, feature config)</td>
+        <td><strong>Read-Through (Cache-Aside)</strong></td>
+        <td>LRU</td>
+        <td>10 minutes</td>
+        <td>Loaded by the Fraud Detection Service on every request. Models are updated hourly at most. Caching avoids re-loading from the model store on each request.</td>
+    </tr>
+    <tr>
+        <td><strong>Idempotency Key Results</strong><br/>(idempotency_key → response)</td>
+        <td><strong>Write-Through</strong></td>
+        <td>LRU</td>
+        <td>24 hours</td>
+        <td>On every payment request, the idempotency key is checked in cache first (fast path) before falling back to the DB. Write-through on payment completion ensures the cached result is immediately available for retries. 24-hour TTL matches the standard idempotency window.</td>
+    </tr>
+</table>
+
+<h4>Why NOT cache transactional data:</h4>
+<p>Transaction records, ledger entries, and payout statuses are NOT cached because: (1) They require strong consistency — reading a stale transaction status could lead to double-charging or incorrect refund calculations; (2) Each transaction is typically read only a few times (once at creation, once during settlement), so cache hit rates would be low; (3) The financial risk of serving stale data far outweighs the performance benefit.</p>
+
+<h4>Eviction Policy Rationale (LRU):</h4>
+<p>LRU (Least Recently Used) is chosen because: (1) Active merchants' configs will be accessed frequently and stay in cache; (2) Inactive merchants' configs naturally age out; (3) LRU is simple and effective when there's a clear "hot" working set (active merchants). LFU was considered but adds complexity without meaningful benefit since merchant access patterns already cluster around active merchants.</p>
+
+<h4>Cache Population:</h4>
+<ul>
+    <li><strong>Merchant Config (Write-Through):</strong> When a merchant is created or updates their settings via the Dashboard, the write path updates both the SQL database and the cache atomically. On cache miss (e.g., after eviction or cache restart), the first request reads from DB and populates the cache.</li>
+    <li><strong>Exchange Rates (Read-Through):</strong> A background job fetches rates from financial data providers every 30 seconds and writes them to a rates DB. The cache is populated lazily — on first request for a currency pair, the rate is fetched from the DB and cached.</li>
+    <li><strong>Idempotency Keys (Write-Through):</strong> When a payment completes, both the DB and cache are written. On subsequent requests with the same key, the cache is checked first (fast path) — if the key is found, the cached result is returned without hitting the DB.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCALING CONSIDERATIONS -->
+<!-- ============================================================ -->
+<h2 id="scaling">10. Scaling Considerations</h2>
+
+<div class="card">
+<h3>Load Balancers</h3>
+<p>Load balancers are critical for scaling Stripe. Placement:</p>
+<ol>
+    <li><strong>External L7 Load Balancer</strong> — In front of the API Gateway. This is the entry point for all merchant API traffic.
+        <ul>
+            <li><strong>Algorithm:</strong> Least-connections (payment processing times vary; least-connections ensures even load distribution vs round-robin which may overload a slow instance)</li>
+            <li><strong>Health checks:</strong> HTTP GET to <code>/health</code> on each API Gateway instance every 5 seconds. Unhealthy instances are removed from rotation within 15 seconds.</li>
+            <li><strong>TLS termination:</strong> The L7 LB terminates TLS (TLS 1.3) and forwards plaintext HTTP to the API Gateway over the internal network. This offloads the CPU-intensive TLS handshake from application servers.</li>
+            <li><strong>Sticky sessions:</strong> NOT used. Every API request is stateless and can be handled by any instance.</li>
+            <li><strong>Auto-scaling:</strong> The LB dynamically adds/removes API Gateway instances based on CPU utilization and request queue depth.</li>
+            <li><strong>DDoS protection:</strong> Rate limiting at the LB layer prevents volumetric attacks from reaching application servers.</li>
+        </ul>
+    </li>
+    <li><strong>Internal L4 Load Balancers</strong> — Between the API Gateway and each internal microservice (Payment Service, Refund Service, Fraud Service, etc.).
+        <ul>
+            <li><strong>Protocol:</strong> gRPC (HTTP/2). L4 load balancing distributes TCP connections.</li>
+            <li><strong>Algorithm:</strong> Round-robin with health checks (internal services have more uniform processing times).</li>
+            <li><strong>Service discovery:</strong> Integrates with a service registry so that as instances scale up/down, the LB automatically updates its backend pool.</li>
+        </ul>
+    </li>
+    <li><strong>Webhook Delivery Load Balancer</strong> — In front of the Webhook Delivery Service workers.
+        <ul>
+            <li><strong>Scaling trigger:</strong> Queue depth. When the Message Queue backlog exceeds a threshold (e.g., > 10,000 pending messages), additional webhook workers are spun up behind this LB.</li>
+        </ul>
+    </li>
+</ol>
+
+<h3>Horizontal Scaling by Component</h3>
+<table>
+    <tr><th>Component</th><th>Scaling Strategy</th><th>Scaling Trigger</th></tr>
+    <tr><td>API Gateway</td><td>Horizontal scale-out (stateless)</td><td>Requests/sec, CPU > 70%</td></tr>
+    <tr><td>Payment Service</td><td>Horizontal scale-out (stateless)</td><td>Requests/sec, p99 latency > 500ms</td></tr>
+    <tr><td>Fraud Detection Service</td><td>Horizontal scale-out + GPU instances for ML inference</td><td>Requests/sec, inference latency > 50ms</td></tr>
+    <tr><td>Refund Service</td><td>Horizontal scale-out (stateless)</td><td>Requests/sec</td></tr>
+    <tr><td>Settlement Service</td><td>Horizontal scale-out for parallel merchant processing</td><td>Number of merchants, batch completion time</td></tr>
+    <tr><td>Webhook Delivery Service</td><td>Horizontal scale-out</td><td>Queue depth, delivery latency</td></tr>
+    <tr><td>Transaction DB (SQL)</td><td>Sharded by merchant_id + read replicas per shard</td><td>Storage size, query latency, IOPS</td></tr>
+    <tr><td>Events DB (NoSQL)</td><td>Sharded by merchant_id, auto-partitioned</td><td>Storage size, write throughput</td></tr>
+    <tr><td>Cache</td><td>Clustered with consistent hashing for key distribution</td><td>Memory utilization, cache hit rate</td></tr>
+    <tr><td>Message Queue</td><td>Partitioned by merchant_id, add partitions for throughput</td><td>Queue depth, consumer lag</td></tr>
+</table>
+
+<h3>Read Replicas</h3>
+<p>The Transaction DB is read-heavy for the merchant dashboard (many merchants constantly checking their payments). Read replicas are deployed per shard. Dashboard queries (<code>GET /v1/payment_intents</code>) are routed to read replicas with eventual consistency (acceptable for display purposes), while writes and critical reads (idempotency checks, refund validation) always go to the primary.</p>
+
+<h3>Geographic Distribution</h3>
+<p>For global merchants, Stripe deploys regional clusters (US, EU, APAC). Each region has its own API Gateway, Payment Service instances, and cache layer. The Transaction DB uses cross-region replication for disaster recovery, with the primary shard leader in the merchant's registered region.</p>
+
+<h3>Rate Limiting</h3>
+<p>Per-merchant rate limits (e.g., 100 requests/second for regular tier, 10,000 for enterprise) are enforced at the API Gateway using a distributed token bucket algorithm backed by the in-memory cache. This prevents any single merchant from monopolizing resources.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- TRADEOFFS AND DEEP DIVES -->
+<!-- ============================================================ -->
+<h2 id="tradeoffs">11. Tradeoffs &amp; Deep Dives</h2>
+
+<div class="card">
+<h3>Tradeoff 1: Strong Consistency vs. Performance</h3>
+<p><strong>Decision:</strong> Strong consistency for all financial writes (transactions, ledger, refunds, payouts).</p>
+<p><strong>Tradeoff:</strong> This limits write throughput compared to eventual consistency. Synchronous replication and serializable isolation add latency to each write. However, for a payment system, the cost of inconsistency (double charges, missing money, audit failures) vastly exceeds the cost of slightly higher latency. We accept ~5-10ms additional write latency for ACID guarantees.</p>
+<p><strong>Mitigation:</strong> Read-heavy paths (merchant dashboard, event listing) use read replicas with eventual consistency, keeping the write path dedicated and fast.</p>
+
+<h3>Tradeoff 2: At-Least-Once vs. Exactly-Once Webhook Delivery</h3>
+<p><strong>Decision:</strong> At-least-once delivery with idempotency.</p>
+<p><strong>Tradeoff:</strong> True exactly-once delivery in a distributed system is extremely difficult (requires two-phase commit with the merchant's server, which is impractical). Instead, we guarantee at-least-once delivery: a webhook may be delivered more than once in edge cases (e.g., the merchant's server returns 200 but the acknowledgment is lost). Merchants are expected to handle duplicate webhooks idempotently using the <code>event_id</code>. This is the industry standard approach (Stripe, PayPal, and all major payment processors use this pattern).</p>
+
+<h3>Tradeoff 3: Synchronous Fraud Check vs. Latency</h3>
+<p><strong>Decision:</strong> Synchronous (blocking) fraud check before authorization.</p>
+<p><strong>Tradeoff:</strong> Adding a fraud check in the critical payment path increases latency by ~30-50ms. An asynchronous approach (authorize first, check fraud after) would be faster but would mean money has already been authorized before fraud is detected, requiring a void/reversal — which is more complex, costs more, and creates a worse customer experience. The 30-50ms tradeoff is well worth the fraud prevention benefit.</p>
+
+<h3>Tradeoff 4: Denormalization of Payout Amounts</h3>
+<p><strong>Decision:</strong> Denormalize <code>gross_amount</code>, <code>fees_amount</code>, <code>refunds_amount</code> into the payouts table.</p>
+<p><strong>Tradeoff:</strong> Data redundancy — these values could be computed from the transactions and refunds tables. However, denormalization is justified because: (1) Payout amounts must be immutable snapshots (the historical record of what was paid cannot change if future transactions are modified); (2) Dashboard performance — displaying payout breakdowns without re-aggregating thousands of transactions; (3) Audit compliance — auditors need to see exactly what was calculated at settlement time.</p>
+
+<h3>Tradeoff 5: Microservices vs. Monolith</h3>
+<p><strong>Decision:</strong> Microservices architecture.</p>
+<p><strong>Tradeoff:</strong> Microservices add operational complexity (service discovery, distributed tracing, inter-service communication overhead). A monolith would be simpler to deploy and debug. However, for Stripe's scale: (1) Different services have different scaling profiles (fraud detection needs GPU scaling, webhook delivery needs queue-depth scaling); (2) Independent deployability — updating fraud models shouldn't require re-deploying the payment service; (3) Fault isolation — if the webhook service is overwhelmed, payments still process. The operational complexity is managed through service mesh, centralized logging, and distributed tracing.</p>
+
+<h3>Deep Dive: Idempotency Implementation</h3>
+<p>Every mutating API endpoint accepts an <code>idempotency_key</code> header. The implementation:</p>
+<ol>
+    <li>On request arrival, the Payment Service checks the cache for the idempotency key (fast path).</li>
+    <li>Cache miss → check the Transaction DB's <code>idempotency_key</code> column (hash-indexed for O(1) lookup).</li>
+    <li>If the key exists and the previous request completed → return the stored response (no side effects).</li>
+    <li>If the key exists but the previous request is still in-progress → return HTTP 409 Conflict (prevent concurrent duplicate processing).</li>
+    <li>If the key does not exist → proceed with normal processing. On completion, store the response keyed by the idempotency key in both DB and cache.</li>
+    <li>Idempotency keys expire after 24 hours (matching Stripe's real behavior).</li>
+</ol>
+
+<h3>Deep Dive: Double-Entry Bookkeeping</h3>
+<p>Every money movement in the system creates balanced ledger entries. For a $100 payment with 2.9% + $0.30 fee:</p>
+<table>
+    <tr><th>Entry</th><th>Account</th><th>Debit</th><th>Credit</th></tr>
+    <tr><td>1</td><td>Customer Receivable</td><td>$100.00</td><td></td></tr>
+    <tr><td>2</td><td>Merchant Payable</td><td></td><td>$96.80</td></tr>
+    <tr><td>3</td><td>Stripe Revenue</td><td></td><td>$3.20</td></tr>
+</table>
+<p>Total debits ($100.00) = Total credits ($96.80 + $3.20 = $100.00). This invariant is verified by a reconciliation job that runs hourly. Any imbalance triggers an immediate alert. The ledger is append-only — corrections are made by adding compensating entries, never by modifying existing entries.</p>
+
+<h3>Deep Dive: Card Network Communication (ISO 8583)</h3>
+<p>The Payment Processor Gateway communicates with card networks (Visa, Mastercard) using the <strong>ISO 8583</strong> protocol — the international standard for financial transaction messaging. This is a binary protocol over <strong>TCP</strong> persistent connections.</p>
+<p><strong>Why TCP:</strong> Financial authorization messages require guaranteed delivery and ordering. A dropped or out-of-order auth message could result in a charge without an authorization code (or vice versa). TCP provides reliable, ordered delivery. UDP is unsuitable because packet loss is unacceptable for financial transactions.</p>
+<p><strong>Connection management:</strong> The Payment Processor Gateway maintains a pool of persistent TCP connections to each card network. Connections are kept alive with heartbeat messages. If a connection drops, it is re-established with exponential backoff. Circuit breakers prevent cascading failures if a card network is temporarily unreachable.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- ALTERNATIVE APPROACHES -->
+<!-- ============================================================ -->
+<h2 id="alternatives">12. Alternative Approaches</h2>
+
+<div class="card">
+<h3>Alternative 1: Monolithic Architecture</h3>
+<p><strong>Approach:</strong> A single monolithic application handling payments, refunds, webhooks, and settlements.</p>
+<p><strong>Why not chosen:</strong> A monolith cannot independently scale components with different resource profiles. Fraud detection needs GPUs and scales based on ML inference load; webhook delivery scales based on queue depth; the settlement batch needs large memory for aggregation. A monolith forces all components to scale together, wasting resources. Additionally, a bug in webhook delivery could crash the entire payment processing system — fault isolation is critical for a payment platform.</p>
+
+<h3>Alternative 2: Event Sourcing for Transactions</h3>
+<p><strong>Approach:</strong> Instead of mutable transaction records (with status updates), use an event-sourced model where the transaction state is derived by replaying a sequence of events (PaymentCreated → FraudChecked → Authorized → Captured).</p>
+<p><strong>Why not chosen:</strong> Event sourcing provides excellent auditability and the ability to "time-travel" to any state. However: (1) Rebuilding current state from events adds latency to every read (or requires maintaining projections, which adds complexity); (2) The ledger already provides a full audit trail of financial state changes; (3) The complexity of event replay, projection management, and eventual consistency in an event-sourced system is significant. The traditional state machine approach (with the audit log table) provides similar auditability with simpler implementation and lower read latency.</p>
+
+<h3>Alternative 3: Polling Instead of Webhooks</h3>
+<p><strong>Approach:</strong> Instead of Stripe pushing events to merchants via webhooks, merchants poll Stripe's API (<code>GET /v1/events?since=...</code>) to check for new events.</p>
+<p><strong>Why not chosen:</strong> Polling is simpler to implement (no retry logic, no delivery failures) and some merchants do use the Events API as a fallback. However: (1) Polling introduces latency — a merchant polling every 30 seconds has up to 30 seconds of delay; (2) Millions of merchants polling every few seconds would create enormous read load on the Events DB; (3) Most merchants need near-real-time notification (e.g., to fulfill orders immediately after payment). Webhooks deliver events within seconds and scale better because Stripe controls the push rate. <strong>Note:</strong> Stripe offers both — webhooks for real-time push and the Events API for pull-based recovery/verification.</p>
+
+<h3>Alternative 4: WebSockets for Real-Time Merchant Updates</h3>
+<p><strong>Approach:</strong> Maintain persistent WebSocket connections to merchant servers for real-time bidirectional communication instead of webhooks.</p>
+<p><strong>Why not chosen:</strong> (1) WebSockets require persistent connections — millions of merchants would mean millions of persistent connections, requiring significant infrastructure to maintain; (2) Merchant servers are typically behind firewalls and reverse proxies that may not support WebSocket upgrades; (3) WebSockets are stateful, making horizontal scaling harder (need sticky routing or a connection registry); (4) If the connection drops, events are lost unless a separate replay mechanism is built (essentially recreating message queue semantics). HTTP webhooks are stateless, firewall-friendly, and universally supported. <strong>Note:</strong> WebSockets are used for the Stripe Dashboard (to push real-time updates to the browser), but not for server-to-server communication.</p>
+
+<h3>Alternative 5: NoSQL for Transaction Data</h3>
+<p><strong>Approach:</strong> Use a NoSQL database for transactions to get higher write throughput.</p>
+<p><strong>Why not chosen:</strong> While NoSQL offers superior write throughput and horizontal scaling, transactions require: (1) ACID compliance — a payment write (transaction + ledger entries) must be atomic; (2) Foreign key constraints — a refund must reference a valid transaction; (3) Complex queries — settlement requires SUM aggregations with WHERE filters across multiple columns. SQL databases provide all of these natively. The write throughput limitation of SQL is addressed through sharding (splitting by merchant_id), which effectively makes each shard a high-throughput SQL database. The read scalability limitation is addressed through read replicas.</p>
+
+<h3>Alternative 6: Synchronous Payout Processing (Real-Time)</h3>
+<p><strong>Approach:</strong> Instead of daily batch payouts, process payouts in real-time immediately after each payment captures.</p>
+<p><strong>Why not chosen:</strong> (1) Real-time payouts via ACH are not supported — ACH is a batch protocol with 1-2 day settlement; (2) Per-transaction bank transfers would incur massive banking fees; (3) Aggregating into daily batches reduces operational costs and banking fees by orders of magnitude; (4) However, "Instant Payouts" (via card networks, not ACH) is offered as a premium feature for merchants who need faster access to funds, with an additional fee.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- ADDITIONAL INFORMATION -->
+<!-- ============================================================ -->
+<h2 id="additional">13. Additional Information</h2>
+
+<div class="card">
+<h3>PCI DSS Compliance Architecture</h3>
+<p>The system is designed with PCI DSS Level 1 compliance in mind. The critical architectural decision is the <strong>isolation of cardholder data</strong>:</p>
+<ul>
+    <li>Raw card data (PAN, CVC) is ONLY handled by the Tokenization Service, which runs in an isolated network segment (the "CDE" — Cardholder Data Environment).</li>
+    <li>The CDE has separate firewall rules, access controls, logging, and monitoring from the rest of the infrastructure.</li>
+    <li>HSMs (Hardware Security Modules) manage encryption keys — keys never exist in software.</li>
+    <li>The Merchant Backend NEVER sees raw card data — only tokens.</li>
+    <li>CVC is used for authorization but NEVER stored (even encrypted) — this is a PCI DSS requirement.</li>
+</ul>
+
+<h3>Disaster Recovery</h3>
+<ul>
+    <li><strong>RPO (Recovery Point Objective):</strong> 0 seconds for transactional data (synchronous replication across availability zones).</li>
+    <li><strong>RTO (Recovery Time Objective):</strong> &lt; 30 seconds (automatic failover to standby replicas).</li>
+    <li><strong>Cross-region replication:</strong> Asynchronous replication to a secondary region for catastrophic datacenter failure scenarios.</li>
+    <li><strong>Transaction DB:</strong> Primary-standby with synchronous replication within the same region. Automatic promotion of standby on primary failure.</li>
+</ul>
+
+<h3>Observability</h3>
+<ul>
+    <li><strong>Distributed tracing:</strong> Every API request gets a unique trace ID that propagates through all internal service calls. This enables end-to-end latency debugging (e.g., "this payment took 3 seconds because the fraud service was slow").</li>
+    <li><strong>Metrics:</strong> Real-time dashboards for payment success rate, p99 latency, fraud detection accuracy, webhook delivery rate, queue depth, and cache hit rate.</li>
+    <li><strong>Alerting:</strong> Automated alerts for: payment success rate dropping below 99.9%, p99 latency exceeding 2 seconds, queue depth exceeding 100K, any ledger imbalance detected.</li>
+</ul>
+
+<h3>3D Secure (3DS) / Strong Customer Authentication (SCA)</h3>
+<p>For EU transactions (PSD2 regulation), 3D Secure is required. The flow adds a step: after the initial authorization attempt, if the issuing bank requires 3DS, the Payment Service returns <code>status: "requires_action"</code> with a <code>redirect_url</code>. The customer's browser is redirected to the bank's 3DS page to authenticate (e.g., SMS OTP). After authentication, the bank redirects back to the merchant, and the Merchant Backend calls <code>POST /v1/payment_intents/{id}/confirm</code> to complete the payment.</p>
+
+<h3>Subscriptions &amp; Recurring Payments</h3>
+<p>While not a separate flow in this design, recurring payments (subscriptions) are implemented as a scheduled job that: (1) Queries the subscriptions table for due invoices; (2) For each due invoice, creates a PaymentIntent using the customer's saved payment method (stored in payment_methods table); (3) Processes the payment through Flow 1. Failed recurring payments trigger webhook notifications and retry logic (typically 3 retries over 7 days before marking the subscription as past_due).</p>
+
+<h3>Multi-Tenancy Isolation</h3>
+<p>Every database query includes <code>merchant_id</code> in the WHERE clause, ensuring strict tenant isolation. This is enforced at the application layer (the Payment Service always scopes queries to the authenticated merchant) and at the database layer (row-level security policies). A merchant can NEVER access another merchant's transactions, customers, or events.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- VENDOR CONSIDERATIONS -->
+<!-- ============================================================ -->
+<h2 id="vendors">14. Vendor Considerations</h2>
+
+<div class="card">
+<p>The design above is vendor-agnostic. Below are potential vendor choices for each infrastructure component, with rationale:</p>
+
+<table>
+    <tr><th>Component</th><th>Vendor Options</th><th>Rationale</th></tr>
+    <tr>
+        <td><strong>SQL Database (Transactions, Ledger, Payouts, Merchants)</strong></td>
+        <td>PostgreSQL, CockroachDB, Google Spanner, Amazon Aurora</td>
+        <td>PostgreSQL is the industry standard for ACID-compliant workloads and supports JSONB for metadata. CockroachDB and Spanner add distributed SQL with global consistency — ideal if cross-region strong consistency is needed without manual sharding. Aurora provides PostgreSQL compatibility with automated scaling and replication.</td>
+    </tr>
+    <tr>
+        <td><strong>NoSQL Document Store (Events, Webhook Logs, Audit Logs)</strong></td>
+        <td>MongoDB, Amazon DynamoDB, Apache Cassandra</td>
+        <td>MongoDB excels at flexible schema documents and horizontal scaling. DynamoDB provides single-digit millisecond reads with automatic partitioning. Cassandra offers excellent write throughput for append-heavy workloads (audit logs). For events and logs, DynamoDB or Cassandra's write-optimized storage is ideal.</td>
+    </tr>
+    <tr>
+        <td><strong>In-Memory Cache</strong></td>
+        <td>Redis, Memcached, Hazelcast</td>
+        <td>Redis is the most popular choice due to support for complex data structures (hashes for merchant config), TTL-based expiration, clustering, and persistence options. Memcached is simpler but lacks data structures and persistence. Redis is preferred for its versatility.</td>
+    </tr>
+    <tr>
+        <td><strong>Message Queue</strong></td>
+        <td>Apache Kafka, Amazon SQS, RabbitMQ, Apache Pulsar</td>
+        <td>Kafka excels at high-throughput, durable, ordered event streaming with consumer groups — ideal for the payment event pipeline where multiple consumers (webhooks, analytics, settlement) need the same events. SQS is simpler but lacks ordering guarantees. RabbitMQ offers rich routing but is harder to scale horizontally. Pulsar combines Kafka's streaming with multi-tenancy support.</td>
+    </tr>
+    <tr>
+        <td><strong>CDN</strong></td>
+        <td>Cloudflare, AWS CloudFront, Fastly, Akamai</td>
+        <td>Cloudflare offers the largest edge network with integrated DDoS protection and Workers for edge compute. CloudFront integrates natively with AWS infrastructure. Fastly provides real-time log streaming and instant purges. For a global payment platform, Cloudflare or Akamai's global reach is advantageous.</td>
+    </tr>
+    <tr>
+        <td><strong>Object Storage (for PCI audit log archives)</strong></td>
+        <td>Amazon S3, Google Cloud Storage, Azure Blob Storage</td>
+        <td>For long-term archival of audit logs and compliance records (required to retain 7+ years). S3 with Glacier tiers provides cost-effective archival with compliance features (object lock, versioning). All three options are suitable; choice depends on primary cloud provider.</td>
+    </tr>
+    <tr>
+        <td><strong>Container Orchestration</strong></td>
+        <td>Kubernetes, Amazon ECS, Nomad</td>
+        <td>Kubernetes provides the richest ecosystem for microservice deployment, auto-scaling, health checks, and rolling updates. Critical for managing the 8+ microservices in this architecture.</td>
+    </tr>
+    <tr>
+        <td><strong>Service Mesh</strong></td>
+        <td>Istio, Linkerd, Consul Connect</td>
+        <td>Manages inter-service communication (mutual TLS, load balancing, circuit breaking, retries) at the infrastructure level. Linkerd is simpler and lighter-weight; Istio is more feature-rich but operationally heavier.</td>
+    </tr>
+</table>
+</div>
+
+</div>
+
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'dark',
+        flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+            curve: 'basis',
+            nodeSpacing: 60,
+            rankSpacing: 60
+        },
+        themeVariables: {
+            darkMode: true,
+            background: '#13151c',
+            primaryColor: '#2d2b55',
+            primaryTextColor: '#e0e0e6',
+            primaryBorderColor: '#635bff',
+            lineColor: '#7a73ff',
+            secondaryColor: '#1a2332',
+            tertiaryColor: '#1e2a3a',
+            textColor: '#e0e0e6',
+            mainBkg: '#2d2b55',
+            nodeBorder: '#635bff',
+            clusterBkg: '#13151c',
+            clusterBorder: '#2d3039',
+            edgeLabelBackground: '#1a1d28',
+            fontSize: '14px'
+        },
+        securityLevel: 'loose'
+    });
+</script>
 </body>
 </html>
