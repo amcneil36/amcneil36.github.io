@@ -1,407 +1,903 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>System Design: Rate Limiter</title>
-<style>
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #e0e0e0; margin: 0; padding: 20px; line-height: 1.7; }
-  h1 { color: #ff5722; font-size: 2.2em; border-bottom: 3px solid #ff5722; padding-bottom: 10px; }
-  h2 { color: #ff7043; margin-top: 40px; }
-  h3 { color: #ff8a65; }
-  h4 { color: #ffab91; }
-  .section { background: #1a1a1a; padding: 25px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #ff5722; }
-  .subsection { background: #222; padding: 15px; border-radius: 8px; margin: 15px 0; }
-  .diagram-container { background: #1e1e1e; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; overflow-x: auto; }
-  .tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.85em; margin: 2px 4px; }
-  .tag-pk { background: #4a9eff33; color: #4a9eff; border: 1px solid #4a9eff66; }
-  .tag-fk { background: #ff4a4a33; color: #ff4a4a; border: 1px solid #ff4a4a66; }
-  .tag-idx { background: #4aff4a33; color: #4aff4a; border: 1px solid #4aff4a66; }
-  .tag-shard { background: #ffa54a33; color: #ffa54a; border: 1px solid #ffa54a66; }
-  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-  th, td { padding: 12px; text-align: left; border: 1px solid #333; }
-  th { background: #2a2a2a; color: #ff7043; }
-  tr:nth-child(even) { background: #1a1a1a; }
-  code { background: #2a2a2a; padding: 2px 8px; border-radius: 4px; color: #ff8a65; font-family: 'Fira Code', monospace; }
-  pre { background: #1a1a1a; padding: 20px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; }
-  .example { background: #0d2818; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #4aff4a; }
-  .tradeoff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-  .tradeoff-pro { background: #0d2818; padding: 15px; border-radius: 8px; border-left: 3px solid #4aff4a; }
-  .tradeoff-con { background: #2d1018; padding: 15px; border-radius: 8px; border-left: 3px solid #ff4a4a; }
-  ul, ol { padding-left: 25px; }
-  li { margin: 6px 0; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design: Rate Limiter</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card-bg: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #58a6ff;
+            --accent2: #3fb950;
+            --accent3: #d2a8ff;
+            --accent4: #f0883e;
+            --red: #f85149;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2.4rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        h2 {
+            font-size: 1.7rem;
+            color: var(--accent);
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border);
+        }
+        h3 {
+            font-size: 1.3rem;
+            color: var(--accent3);
+            margin: 1.8rem 0 0.8rem;
+        }
+        h4 {
+            font-size: 1.1rem;
+            color: var(--accent4);
+            margin: 1.3rem 0 0.6rem;
+        }
+        p, li { color: var(--text); margin-bottom: 0.5rem; }
+        ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        .diagram-container {
+            background: #fff;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1.2rem 0;
+            overflow-x: auto;
+        }
+        .example {
+            background: #0d2137;
+            border-left: 4px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.2rem;
+            margin: 1rem 0;
+        }
+        .example strong { color: var(--accent); }
+        .warn {
+            background: #2d1b00;
+            border-left: 4px solid var(--accent4);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.2rem;
+            margin: 1rem 0;
+        }
+        .warn strong { color: var(--accent4); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            text-align: left;
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border);
+        }
+        th {
+            background: #21262d;
+            color: var(--accent);
+        }
+        td { background: var(--card-bg); }
+        code {
+            background: #21262d;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.92em;
+            color: var(--accent3);
+        }
+        .tag {
+            display: inline-block;
+            padding: 0.15rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+        .tag-sql { background: #0e4429; color: var(--accent2); }
+        .tag-nosql { background: #3d1d00; color: var(--accent4); }
+        .tag-cache { background: #1a1040; color: var(--accent3); }
+        hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+    </style>
 </head>
 <body>
 
-<h1>🚦 System Design: Rate Limiter</h1>
+<h1>System Design: Rate Limiter</h1>
+<p style="color:var(--muted)">A distributed rate limiting system that controls the rate of traffic sent to or received from a service, protecting backend services from abuse and ensuring fair usage.</p>
 
-<div class="section">
-<h2>📋 Functional Requirements</h2>
-<ul>
-  <li>Limit the number of requests a client can make within a time window</li>
-  <li>Support multiple rate limiting strategies (per-user, per-IP, per-endpoint, global)</li>
-  <li>Return informative headers: remaining quota, retry-after time</li>
-  <li>Support configurable rules per API endpoint and client tier (free vs paid)</li>
-</ul>
-</div>
+<hr>
 
-<div class="section">
-<h2>🔒 Non-Functional Requirements</h2>
-<ul>
-  <li><strong>Ultra-low latency:</strong> &lt;1ms overhead per request — rate limiter sits on the critical path</li>
-  <li><strong>High throughput:</strong> Handle millions of requests/second across all services</li>
-  <li><strong>Distributed:</strong> Consistent rate limiting across multiple API server instances</li>
-  <li><strong>Fault tolerant:</strong> If rate limiter fails, traffic should pass through (fail-open) — never block legitimate traffic</li>
-  <li><strong>Accurate:</strong> Minimal over/under-counting in distributed environment</li>
-</ul>
-</div>
-
-<h2>🔄 Flow 1 — Request Rate Checking (Token Bucket)</h2>
-
-<div class="diagram-container">
-<svg viewBox="0 0 1050 350" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="140" width="110" height="55" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="75" y="172" text-anchor="middle" fill="white" font-size="13">Client</text>
-  <line x1="130" y1="167" x2="195" y2="167" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="205" y="140" width="130" height="55" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="270" y="163" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
-  <text x="270" y="180" text-anchor="middle" fill="white" font-size="10">(Rate Limit Check)</text>
-  <line x1="335" y1="155" x2="400" y2="105" stroke="#aaa" marker-end="url(#ah1)"/>
-  <line x1="335" y1="180" x2="400" y2="230" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="410" y="80" width="150" height="50" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
-  <text x="485" y="103" text-anchor="middle" fill="white" font-size="11">Redis Cluster</text>
-  <text x="485" y="118" text-anchor="middle" fill="white" font-size="10">(Token Counters)</text>
-  <rect x="410" y="210" width="150" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="485" y="233" text-anchor="middle" fill="white" font-size="11">Rule Config Store</text>
-  <text x="485" y="248" text-anchor="middle" fill="white" font-size="10">(Rate Limit Rules)</text>
-  <!-- Allowed path -->
-  <line x1="560" y1="105" x2="640" y2="105" stroke="#4aff4a" marker-end="url(#ah1)"/>
-  <text x="600" y="95" fill="#4aff4a" font-size="10">ALLOWED</text>
-  <rect x="650" y="80" width="140" height="50" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="720" y="103" text-anchor="middle" fill="white" font-size="11">Backend Service</text>
-  <text x="720" y="118" text-anchor="middle" fill="white" font-size="10">(Process Request)</text>
-  <!-- Blocked path -->
-  <line x1="560" y1="105" x2="640" y2="180" stroke="#ff4a4a" marker-end="url(#ah1)"/>
-  <text x="620" y="155" fill="#ff4a4a" font-size="10">BLOCKED</text>
-  <rect x="650" y="160" width="140" height="50" rx="10" fill="#8a1a1a" stroke="#ff4a4a" stroke-width="2"/>
-  <text x="720" y="183" text-anchor="middle" fill="white" font-size="11">HTTP 429</text>
-  <text x="720" y="198" text-anchor="middle" fill="white" font-size="10">(Too Many Requests)</text>
-</svg>
-</div>
-
-<div class="section">
-<h3>Step-by-Step</h3>
+<!-- ============================================================ -->
+<h2>1. Functional Requirements</h2>
+<!-- ============================================================ -->
+<div class="card">
 <ol>
-  <li><strong>Request arrives:</strong> Client sends <code>GET /api/v1/search?q=...</code> with auth token</li>
-  <li><strong>Identify client:</strong> Extract rate limit key: user_id (from JWT token), IP address, API key, or combination</li>
-  <li><strong>Load rules:</strong> Look up rate limit rules for this endpoint + client tier from config: "GET /api/search: 100 req/min for free tier, 1000 req/min for paid"</li>
-  <li><strong>Check Redis:</strong> Execute Lua script atomically — check current token count for key <code>rl:{user_id}:{endpoint}</code>. If tokens available → decrement and pass. If no tokens → reject</li>
-  <li><strong>Allowed:</strong> Request proceeds to backend service. Response headers: <code>X-RateLimit-Remaining: 87</code>, <code>X-RateLimit-Limit: 100</code>, <code>X-RateLimit-Reset: 1707500100</code></li>
-  <li><strong>Blocked:</strong> Return HTTP 429 with headers: <code>Retry-After: 23</code> (seconds until window resets), <code>X-RateLimit-Remaining: 0</code></li>
+    <li><strong>Limit requests</strong> — Given a client identifier (user ID, IP address, API key), the system must enforce a maximum number of allowed requests within a configurable time window.</li>
+    <li><strong>Return clear feedback</strong> — When a request is rate-limited, return an HTTP <code>429 Too Many Requests</code> response with headers indicating the limit, remaining quota, and retry-after time.</li>
+    <li><strong>Support multiple limiting rules</strong> — Different rate limits for different API endpoints, user tiers (free vs. premium), and client identifiers (per-user, per-IP, per-API-key).</li>
+    <li><strong>Allow rule configuration</strong> — Operators can create, update, and delete rate limiting rules via an admin interface or API without redeploying the system.</li>
+    <li><strong>Pass-through allowed requests</strong> — Requests that pass the rate limit check are forwarded to the downstream application service with minimal additional latency.</li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2>2. Non-Functional Requirements</h2>
+<!-- ============================================================ -->
+<div class="card">
+<ol>
+    <li><strong>Low latency</strong> — The rate-limit check must add ≤ 5 ms of p99 overhead to each request. This is on the critical path of every API call.</li>
+    <li><strong>High availability</strong> — The rate limiter must be at least 99.99% available. If the rate limiter is unreachable, the system should <em>fail open</em> (allow the request) rather than block legitimate traffic.</li>
+    <li><strong>Scalability</strong> — Handle 1M+ requests/second across all clients. Must scale horizontally as traffic grows.</li>
+    <li><strong>Distributed consistency (approximate)</strong> — In a multi-node deployment, slight over-counting is acceptable (soft rate limiting) to avoid coordination overhead. Exact counts across distributed nodes are not required.</li>
+    <li><strong>Fault tolerance</strong> — If an in-memory cache node goes down, the system must recover gracefully without permanently blocking or permanently allowing traffic.</li>
+    <li><strong>Observability</strong> — Emit metrics for total requests, allowed requests, throttled requests, and latency per rule. Support alerting when throttle rates exceed thresholds.</li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2>3. Core Algorithm: Sliding Window Counter</h2>
+<!-- ============================================================ -->
+<div class="card">
+<p>Before diving into the architecture, it's important to understand the rate limiting algorithm selected. We use the <strong>Sliding Window Counter</strong> algorithm, which is a hybrid of the Fixed Window Counter and Sliding Window Log algorithms.</p>
+
+<h4>How It Works</h4>
+<ol>
+    <li>Time is divided into fixed windows (e.g., 1-minute buckets).</li>
+    <li>For each window, we maintain a counter of requests per client.</li>
+    <li>When a request arrives at time <code>t</code>, we compute a <em>weighted</em> count:
+        <br><code>weighted_count = (prev_window_count × overlap%) + current_window_count</code>
+        <br>Where <code>overlap%</code> is the fraction of the previous window that falls into the current sliding window.</li>
+    <li>If <code>weighted_count &lt; limit</code>, the request is allowed and the current window counter is incremented.</li>
+    <li>If <code>weighted_count ≥ limit</code>, the request is denied with a 429.</li>
 </ol>
 
-<div class="example">
-<strong>Example:</strong> Free-tier user makes 100th request to /api/search in current minute → Redis: token count = 1 → allowed, count → 0 → Next request: count = 0 → HTTP 429 Too Many Requests, Retry-After: 23 seconds → User waits 23s → Window resets → Token bucket refilled to 100
-</div>
-</div>
-
-<div class="section">
-<h3>🔍 Rate Limiting Algorithms Deep Dive</h3>
-
-<div class="subsection">
-<h4>1. Token Bucket</h4>
-<p>Bucket holds <code>max_tokens</code>. Tokens added at rate <code>r</code> per second (refill rate). Each request consumes 1 token. If bucket empty → reject. Allows short bursts up to max_tokens.</p>
-<pre>
--- Redis Lua script (atomic)
-local key = KEYS[1]
-local max_tokens = tonumber(ARGV[1])
-local refill_rate = tonumber(ARGV[2])  -- tokens per second
-local now = tonumber(ARGV[3])
-
-local data = redis.call('HMGET', key, 'tokens', 'last_refill')
-local tokens = tonumber(data[1]) or max_tokens
-local last_refill = tonumber(data[2]) or now
-
--- Refill tokens based on elapsed time
-local elapsed = now - last_refill
-local new_tokens = math.min(max_tokens, tokens + elapsed * refill_rate)
-
-if new_tokens >= 1 then
-    redis.call('HMSET', key, 'tokens', new_tokens - 1, 'last_refill', now)
-    redis.call('EXPIRE', key, math.ceil(max_tokens / refill_rate) * 2)
-    return 1  -- ALLOWED
-else
-    redis.call('HMSET', key, 'tokens', new_tokens, 'last_refill', now)
-    return 0  -- REJECTED
-end
-</pre>
-<p><strong>Pros:</strong> Allows bursts, smooth rate limiting. <strong>Cons:</strong> Two parameters to tune (bucket size + refill rate).</p>
+<h4>Why Sliding Window Counter Over Alternatives</h4>
+<table>
+<tr><th>Algorithm</th><th>Pros</th><th>Cons</th><th>Why Not Chosen</th></tr>
+<tr><td>Token Bucket</td><td>Allows bursts; smooth rate</td><td>Harder to implement atomically in distributed cache; requires storing last refill timestamp + token count</td><td>More state per key; slightly more complex atomic operations</td></tr>
+<tr><td>Leaking Bucket</td><td>Smooth output rate</td><td>Bursts are not handled; stale requests queued</td><td>Queuing semantics don't fit a pass/deny rate limiter</td></tr>
+<tr><td>Fixed Window Counter</td><td>Simple; low memory</td><td>Boundary spike problem — 2× the rate at window edges</td><td>Inaccurate at window boundaries</td></tr>
+<tr><td>Sliding Window Log</td><td>Perfectly accurate</td><td>Stores every timestamp; O(n) memory per client</td><td>Too much memory at scale</td></tr>
+<tr><td><strong>Sliding Window Counter</strong></td><td><strong>Low memory (2 counters); smooths boundary spikes; simple atomic ops</strong></td><td>Approximate (not exact)</td><td><strong>Selected — best balance of accuracy, memory, and simplicity</strong></td></tr>
+</table>
 </div>
 
-<div class="subsection">
-<h4>2. Sliding Window Log</h4>
-<p>Store timestamp of every request in a sorted set. Count requests in last N seconds. Most accurate but memory-intensive.</p>
-<pre>
--- Redis implementation
-ZADD rl:{user_id} {timestamp} {request_id}  -- add request
-ZREMRANGEBYSCORE rl:{user_id} 0 {timestamp - window_size}  -- remove old
-ZCARD rl:{user_id}  -- count requests in window
--- If count >= limit → reject
-</pre>
-<p><strong>Pros:</strong> Exact counting, no boundary issues. <strong>Cons:</strong> O(n) memory per user (stores all timestamps), expensive for high-rate endpoints.</p>
-</div>
+<!-- ============================================================ -->
+<h2>4. System Design Diagrams & Flows</h2>
+<!-- ============================================================ -->
 
-<div class="subsection">
-<h4>3. Sliding Window Counter</h4>
-<p>Hybrid of fixed window and sliding log. Use counters for current and previous window, weight by overlap percentage.</p>
-<pre>
-count = prev_window_count * (1 - elapsed_pct) + curr_window_count
--- Example: 60s window, 45s into current window
--- prev_window had 80 requests, current has 30
--- estimated count = 80 * 0.25 + 30 = 50
-</pre>
-<p><strong>Pros:</strong> Memory-efficient (two counters per key), good approximation. <strong>Cons:</strong> Approximate — can allow slight over-limit during transition.</p>
-</div>
-
-<div class="subsection">
-<h4>4. Fixed Window Counter</h4>
-<p>Simple: increment counter for current minute/second. Reset at window boundary.</p>
-<pre>
-key = "rl:{user_id}:{minute_timestamp}"
-count = INCR key
-if count == 1: EXPIRE key 60  -- auto-cleanup
-if count > limit: reject
-</pre>
-<p><strong>Pros:</strong> Simplest, lowest overhead. <strong>Cons:</strong> Boundary problem — user can send 2x limit by timing requests at window boundary (100 at 0:59, 100 at 1:00).</p>
-</div>
-
-<div class="subsection">
-<h4>5. Leaky Bucket</h4>
-<p>Requests enter a FIFO queue (bucket). Queue processed at fixed rate. If queue full → reject. Produces perfectly smooth output rate.</p>
-<p><strong>Pros:</strong> Perfectly smooth traffic (no bursts). <strong>Cons:</strong> Cannot handle legitimate traffic bursts, adds latency (queuing), more complex to implement.</p>
-</div>
-</div>
-
-<h2>🔄 Flow 2 — Distributed Rate Limiting</h2>
+<!-- ===================== FLOW 1 ===================== -->
+<h3>Flow 1: Request Allowed (Under Rate Limit)</h3>
+<p>A client sends a request. The rate limiter checks the counter, determines the client is under the limit, increments the counter, and forwards the request to the application service.</p>
 
 <div class="diagram-container">
-<svg viewBox="0 0 1050 400" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="60" width="100" height="45" rx="8" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="70" y="87" text-anchor="middle" fill="white" font-size="11">Client A</text>
-  <rect x="20" y="120" width="100" height="45" rx="8" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="70" y="147" text-anchor="middle" fill="white" font-size="11">Client B</text>
-  <rect x="20" y="180" width="100" height="45" rx="8" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="70" y="207" text-anchor="middle" fill="white" font-size="11">Client C</text>
-  <!-- LB -->
-  <line x1="120" y1="83" x2="190" y2="130" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="120" y1="142" x2="190" y2="135" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="120" y1="202" x2="190" y2="140" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="200" y="110" width="110" height="50" rx="8" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="255" y="140" text-anchor="middle" fill="white" font-size="11">Load Balancer</text>
-  <!-- API Servers -->
-  <line x1="310" y1="125" x2="380" y2="75" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="310" y1="135" x2="380" y2="135" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="310" y1="145" x2="380" y2="195" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="390" y="55" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="455" y="80" text-anchor="middle" fill="white" font-size="10">API Server 1</text>
-  <rect x="390" y="115" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="455" y="140" text-anchor="middle" fill="white" font-size="10">API Server 2</text>
-  <rect x="390" y="175" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="455" y="200" text-anchor="middle" fill="white" font-size="10">API Server 3</text>
-  <!-- Redis cluster -->
-  <line x1="520" y1="75" x2="600" y2="130" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="520" y1="135" x2="600" y2="135" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="520" y1="195" x2="600" y2="140" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="610" y="80" width="130" height="40" rx="8" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
-  <text x="675" y="105" text-anchor="middle" fill="white" font-size="10">Redis Primary</text>
-  <rect x="610" y="130" width="130" height="40" rx="8" fill="#1a8a7a" stroke="#4afff0" stroke-width="1.5"/>
-  <text x="675" y="155" text-anchor="middle" fill="white" font-size="10">Redis Replica 1</text>
-  <rect x="610" y="180" width="130" height="40" rx="8" fill="#1a8a7a" stroke="#4afff0" stroke-width="1.5"/>
-  <text x="675" y="205" text-anchor="middle" fill="white" font-size="10">Redis Replica 2</text>
-  <!-- Sync arrows -->
-  <line x1="675" y1="120" x2="675" y2="128" stroke="#4afff0" marker-end="url(#ah2)"/>
-  <line x1="675" y1="170" x2="675" y2="178" stroke="#4afff0" marker-end="url(#ah2)"/>
-</svg>
+<div class="mermaid">
+flowchart LR
+    Client["🖥️ Client"]
+    LB["⚖️ Load Balancer"]
+    RL["🛡️ Rate Limiter\nMiddleware"]
+    Cache[("🗄️ In-Memory\nCache\n(Counters)")]
+    App["📦 Application\nService"]
+
+    Client -- "1. HTTP Request\n(API key / IP in headers)" --> LB
+    LB -- "2. Forward request" --> RL
+    RL -- "3. GET counter\nfor client+endpoint+window" --> Cache
+    Cache -- "4. Return counter\n(e.g., 42)" --> RL
+    RL -- "5. 42 < 100 limit ✅\nINCR counter → 43" --> Cache
+    RL -- "6. Forward request" --> App
+    App -- "7. HTTP 200 OK\n+ rate limit headers" --> Client
+
+    style Client fill:#1a1a2e,stroke:#58a6ff,color:#e6edf3
+    style LB fill:#1a1a2e,stroke:#58a6ff,color:#e6edf3
+    style RL fill:#0e4429,stroke:#3fb950,color:#e6edf3
+    style Cache fill:#3d1d00,stroke:#f0883e,color:#e6edf3
+    style App fill:#1a1a2e,stroke:#58a6ff,color:#e6edf3
 </div>
-
-<div class="section">
-<h3>Challenge: Consistency Across Multiple Servers</h3>
-<p>Without centralized state, each API server would track its own counters — user could send N requests to each of K servers, effectively getting K×N requests through.</p>
-<h4>Solution: Centralized Redis</h4>
-<p>All API servers check/update the same Redis key atomically (Lua scripts). Single source of truth. Adds network hop (~0.5ms) but ensures global consistency.</p>
-
-<h4>Alternative: Local Rate Limiter + Sync</h4>
-<p>Each server maintains local counter. Periodically syncs to central store. Allows slight over-limit (N × K instead of N). Good enough for most use cases. Used when Redis latency is unacceptable.</p>
-
-<h4>Sticky Sessions Alternative</h4>
-<p>Route same client to same server (consistent hashing on client ID). Local counter is sufficient. Drawback: uneven load distribution, failure of one server drops all its clients' state.</p>
-</div>
-
-<h2>🏗️ Combined Architecture</h2>
-
-<div class="diagram-container">
-<svg viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ahc" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="80" width="100" height="40" rx="8" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="70" y="105" text-anchor="middle" fill="white" font-size="11">Clients</text>
-  <line x1="120" y1="100" x2="185" y2="100" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="195" y="75" width="120" height="50" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="255" y="98" text-anchor="middle" fill="white" font-size="11">API Gateway</text>
-  <text x="255" y="113" text-anchor="middle" fill="white" font-size="9">(Rate Limit Middleware)</text>
-  <line x1="315" y1="100" x2="385" y2="60" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="315" y1="100" x2="385" y2="100" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="315" y1="100" x2="385" y2="140" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="395" y="40" width="130" height="40" rx="8" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
-  <text x="460" y="65" text-anchor="middle" fill="white" font-size="10">Redis (Counters)</text>
-  <rect x="395" y="85" width="130" height="40" rx="8" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
-  <text x="460" y="110" text-anchor="middle" fill="white" font-size="10">Config Store (Rules)</text>
-  <rect x="395" y="130" width="130" height="40" rx="8" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="460" y="155" text-anchor="middle" fill="white" font-size="10">Kafka (Analytics)</text>
-  <line x1="525" y1="60" x2="600" y2="100" stroke="#4aff4a" marker-end="url(#ahc)"/>
-  <text x="575" y="72" fill="#4aff4a" font-size="9">PASS</text>
-  <rect x="610" y="80" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="675" y="105" text-anchor="middle" fill="white" font-size="10">Backend Services</text>
-</svg>
 </div>
 
 <div class="example">
-<strong>End-to-End:</strong> Request hits API Gateway → Middleware extracts user_id from JWT → Loads rules from config cache: "100 req/min for /search, free tier" → Redis Lua script: atomic token bucket check (0.3ms) → Tokens available → Decrement → Set response headers (X-RateLimit-*) → Forward to backend → Kafka event for analytics ("user X consumed 1 token for /search"). If rate exceeded → 429 with Retry-After header → Client implements exponential backoff
+    <strong>Example 1 — Typical API Call:</strong> A mobile app sends <code>GET /api/v1/feed</code> with header <code>X-API-Key: user_abc123</code>. The load balancer forwards it to a Rate Limiter node. The Rate Limiter looks up the key <code>user_abc123:/api/v1/feed:window_202602131510</code> in the in-memory cache and finds the counter is 42. The rule for this endpoint says 100 requests/minute. Since 42 &lt; 100, the Rate Limiter atomically increments the counter to 43, sets a TTL of 2 minutes on the key (to cover the current + next window), and forwards the request to the Application Service. The Application Service returns the feed data with a <code>200 OK</code>, and the Rate Limiter injects headers: <code>X-RateLimit-Limit: 100</code>, <code>X-RateLimit-Remaining: 57</code>, <code>X-RateLimit-Reset: 1739456460</code>.
+</div>
+<div class="example">
+    <strong>Example 2 — First Request in a New Window:</strong> A web client sends <code>POST /api/v1/comments</code> with <code>X-API-Key: user_xyz789</code>. The Rate Limiter queries the cache for the key <code>user_xyz789:/api/v1/comments:window_202602131515</code> and gets a cache miss (no counter exists yet). This means the counter is 0. The rule allows 30 requests/minute. Since 0 &lt; 30, the Rate Limiter creates the key with value 1 and a TTL of 2 minutes, then forwards the request to the Application Service, which returns <code>201 Created</code>.
 </div>
 
-<h2>🗄️ Database Schema</h2>
+<h4>Deep Dive: Flow 1 Components</h4>
 
-<div class="section">
-<h3>Redis — Rate Limit State</h3>
-<pre>
-# Token Bucket state (per user per endpoint)
-HSET rl:token:{user_id}:{endpoint_hash}
-  tokens   {remaining_float}
-  last_ts  {last_refill_timestamp}
-EXPIRE rl:token:{user_id}:{endpoint_hash} 120  # auto-cleanup
-
-# Fixed Window counter
-SET rl:fixed:{user_id}:{endpoint}:{minute} {count}
-EXPIRE rl:fixed:{user_id}:{endpoint}:{minute} 60
-
-# Sliding Window Log (sorted set)
-ZADD rl:log:{user_id}:{endpoint} {timestamp} {request_uuid}
-</pre>
-
-<h3>Config Store — Rate Limit Rules</h3>
-<pre>
-{
-  "rules": [
-    {
-      "endpoint": "/api/v1/search",
-      "method": "GET",
-      "limits": {
-        "free": { "requests": 100, "window_seconds": 60, "algorithm": "token_bucket", "burst": 20 },
-        "paid": { "requests": 1000, "window_seconds": 60, "algorithm": "token_bucket", "burst": 100 },
-        "enterprise": { "requests": 10000, "window_seconds": 60, "algorithm": "sliding_window" }
-      }
-    },
-    {
-      "endpoint": "/api/v1/data",
-      "method": "POST",
-      "limits": {
-        "free": { "requests": 10, "window_seconds": 60 },
-        "global": { "requests": 100000, "window_seconds": 1, "note": "global rate limit across all users" }
-      }
-    }
-  ]
-}
-</pre>
-<p>Rules stored in a config service (e.g., etcd, Consul, or simple DB). Cached in-memory at API Gateway with 1-min refresh. Changes propagated via push notification or polling.</p>
+<div class="card">
+<h4>Client</h4>
+<p>Any consumer of the API — mobile app (iOS/Android), web browser, third-party integration, or internal microservice. The client sends standard HTTP requests and must include an identifier (API key, OAuth token, or rely on source IP). The client should respect <code>429</code> responses and implement exponential backoff with jitter.</p>
 </div>
 
-<h2>💾 Cache Deep Dive</h2>
-
-<div class="section">
-<p><strong>Redis IS the cache</strong> — rate limit state lives entirely in Redis. No separate caching layer needed. If Redis goes down, rate limiter fails open (allows all traffic) to prevent blocking legitimate users.</p>
-<p><strong>Redis Cluster:</strong> Shard by rate limit key (user_id hash) across cluster nodes. Each key always lands on same node → no cross-node coordination needed for single-user rate limits.</p>
-<p><strong>Global rate limits:</strong> Single key (e.g., <code>rl:global:/api/data</code>) — hot key problem. Solution: shard into N sub-counters (<code>rl:global:/api/data:{0..9}</code>), each server increments random sub-counter, sum for total.</p>
-</div>
-
-<h2>⚖️ Tradeoffs</h2>
-
-<div class="section">
-<div class="tradeoff-grid">
-  <div class="tradeoff-pro">
-    <h4>✅ Token Bucket</h4>
-    <p>Allows controlled bursts, smooth limiting, widely understood, efficient (2 values per key in Redis)</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Token Bucket</h4>
-    <p>Two parameters to tune (rate + burst). Burst can surprise — user may send 100 requests instantly then wait. Hard to explain to API consumers vs simple "100 per minute"</p>
-  </div>
-  <div class="tradeoff-pro">
-    <h4>✅ Centralized Redis</h4>
-    <p>Globally consistent counters, atomic operations, sub-millisecond latency, battle-tested</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Centralized Redis</h4>
-    <p>SPOF (mitigated by fail-open), added network hop, Redis cluster management complexity, costs scale with traffic volume</p>
-  </div>
-  <div class="tradeoff-pro">
-    <h4>✅ Fail-Open</h4>
-    <p>Never blocks legitimate traffic due to rate limiter infrastructure failure</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Fail-Open</h4>
-    <p>During Redis outage, NO rate limiting — vulnerable to DDoS. Must have secondary defense (WAF, IP blocking at network level)</p>
-  </div>
-</div>
-</div>
-
-<h2>🔄 Alternative Approaches</h2>
-
-<div class="section">
-<div class="subsection">
-<h4>Local In-Memory Rate Limiter</h4>
-<p>No Redis — each server maintains its own counters in memory (e.g., Go's <code>rate.Limiter</code>, Java Guava RateLimiter). Pro: zero network overhead, ultra-fast. Con: not globally consistent — user routed to different servers effectively gets N×limit. Works with sticky sessions.</p>
-</div>
-<div class="subsection">
-<h4>Service Mesh Rate Limiting (Envoy/Istio)</h4>
-<p>Rate limiting at the sidecar proxy level. Envoy has built-in rate limit service integration. Advantages: language-agnostic, consistent across microservices, centralized policy. Disadvantage: added sidecar overhead, Envoy rate limit service is another dependency.</p>
-</div>
-<div class="subsection">
-<h4>API Gateway Rate Limiting (Kong/AWS API Gateway)</h4>
-<p>Managed rate limiting at the gateway layer. AWS API Gateway: configurable per-method, per-API key. Kong: plugin-based with Redis backend. Pro: no custom code. Con: less flexibility, vendor lock-in, may not support custom algorithms.</p>
-</div>
-</div>
-
-<h2>📚 Additional Information</h2>
-
-<div class="section">
-<h3>HTTP Response Headers (RFC 6585 / RFC 7231)</h3>
-<pre>
-HTTP/1.1 429 Too Many Requests
-Content-Type: application/json
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 0
-X-RateLimit-Reset: 1707500100    # Unix timestamp when window resets
-Retry-After: 23                   # Seconds until client should retry
-
-{ "error": "rate_limit_exceeded", "message": "Rate limit of 100 requests per minute exceeded" }
-</pre>
-
-<h3>Client-Side Best Practices</h3>
+<div class="card">
+<h4>Load Balancer</h4>
+<p>Distributes incoming traffic across multiple Rate Limiter instances. Uses <strong>round-robin</strong> or <strong>least-connections</strong> strategy. Operates at Layer 7 (HTTP) so it can inspect headers for health checks and routing. The load balancer itself does not perform rate limiting — its sole job is traffic distribution and health monitoring of Rate Limiter nodes.</p>
 <ul>
-  <li><strong>Exponential backoff:</strong> On 429, wait 1s → 2s → 4s → 8s before retrying (with jitter)</li>
-  <li><strong>Respect Retry-After:</strong> Don't retry before the indicated time</li>
-  <li><strong>Track remaining quota:</strong> Use X-RateLimit-Remaining to proactively slow down before hitting limit</li>
-  <li><strong>Circuit breaker:</strong> After N consecutive 429s, stop requesting for longer period</li>
+    <li><strong>Protocol:</strong> HTTP/HTTPS (terminates TLS)</li>
+    <li><strong>Input:</strong> Raw HTTP requests from the internet</li>
+    <li><strong>Output:</strong> HTTP requests forwarded to a healthy Rate Limiter node</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Rate Limiter Middleware</h4>
+<p>The core component. Deployed as a middleware layer (sidecar or inline proxy) that sits between the load balancer and the application service. It is stateless — all state lives in the in-memory cache.</p>
+<ul>
+    <li><strong>Protocol:</strong> HTTP (receives requests, forwards them)</li>
+    <li><strong>Input:</strong> HTTP request with client identifier (from header, token, or IP)</li>
+    <li><strong>Output (allowed):</strong> Forwards the original HTTP request to the Application Service with rate-limit headers appended</li>
+    <li><strong>Output (denied):</strong> Returns HTTP <code>429 Too Many Requests</code> directly to the client</li>
+    <li><strong>Rate limit headers returned:</strong></li>
+</ul>
+<table>
+<tr><th>Header</th><th>Description</th></tr>
+<tr><td><code>X-RateLimit-Limit</code></td><td>Maximum requests allowed in the window</td></tr>
+<tr><td><code>X-RateLimit-Remaining</code></td><td>Remaining requests in the current window</td></tr>
+<tr><td><code>X-RateLimit-Reset</code></td><td>Unix epoch timestamp when the window resets</td></tr>
+<tr><td><code>Retry-After</code></td><td>Seconds until the client should retry (on 429 only)</td></tr>
+</table>
+<p><strong>Algorithm execution:</strong> On each request, the middleware (1) extracts the client identifier, (2) determines which rule applies (looked up from a local in-memory rules cache, synced periodically from the Rules DB), (3) computes the sliding window counter from the cache, (4) decides allow/deny, (5) atomically updates the counter via a cache script (using atomic increment operations).</p>
+</div>
+
+<div class="card">
+<h4>In-Memory Cache (Counters)</h4>
+<p>A distributed in-memory key-value store that holds the request counters. This is the single most critical component for performance. Chosen because:</p>
+<ul>
+    <li>Sub-millisecond read/write latency</li>
+    <li>Supports atomic increment operations (INCR) — critical for avoiding race conditions</li>
+    <li>Supports TTL (time-to-live) on keys, so expired window counters are automatically cleaned up</li>
+    <li>Supports Lua-like scripting for executing the sliding window check + increment atomically</li>
+</ul>
+<p><strong>Key format:</strong> <code>{client_id}:{endpoint}:{window_timestamp}</code></p>
+<p><strong>Value:</strong> Integer counter</p>
+<p><strong>TTL:</strong> 2× window size (e.g., 2 minutes for a 1-minute window) to ensure both the current and previous window counters are available for the sliding window calculation.</p>
+</div>
+
+<div class="card">
+<h4>Application Service</h4>
+<p>The downstream backend service that processes the actual business logic. The Rate Limiter is transparent to the Application Service — it receives only allowed requests. The Application Service does not need to be aware of rate limiting.</p>
+<ul>
+    <li><strong>Protocol:</strong> HTTP</li>
+    <li><strong>Input:</strong> Standard HTTP requests (GET, POST, PUT, DELETE, etc. depending on the endpoint)</li>
+    <li><strong>Output:</strong> Standard HTTP responses (200, 201, 400, 500, etc.)</li>
+</ul>
+</div>
+
+<hr>
+
+<!-- ===================== FLOW 2 ===================== -->
+<h3>Flow 2: Request Denied (Rate Limit Exceeded)</h3>
+<p>A client sends a request. The rate limiter checks the counter, determines the client has exceeded the limit, and immediately returns a 429 without forwarding to the application service.</p>
+
+<div class="diagram-container">
+<div class="mermaid">
+flowchart LR
+    Client["🖥️ Client"]
+    LB["⚖️ Load Balancer"]
+    RL["🛡️ Rate Limiter\nMiddleware"]
+    Cache[("🗄️ In-Memory\nCache\n(Counters)")]
+
+    Client -- "1. HTTP Request\n(API key / IP in headers)" --> LB
+    LB -- "2. Forward request" --> RL
+    RL -- "3. GET counter\nfor client+endpoint+window" --> Cache
+    Cache -- "4. Return counter\n(e.g., 102)" --> RL
+    RL -- "5. 102 ≥ 100 limit ❌\nDo NOT increment" --> RL
+    RL -- "6. HTTP 429\nToo Many Requests\n+ Retry-After header" --> Client
+
+    style Client fill:#1a1a2e,stroke:#58a6ff,color:#e6edf3
+    style LB fill:#1a1a2e,stroke:#58a6ff,color:#e6edf3
+    style RL fill:#3b0e0e,stroke:#f85149,color:#e6edf3
+    style Cache fill:#3d1d00,stroke:#f0883e,color:#e6edf3
+</div>
+</div>
+
+<div class="example">
+    <strong>Example 1 — Abusive Client:</strong> A script is hammering <code>POST /api/v1/login</code> from IP <code>203.0.113.50</code> in a brute-force attack. The Rate Limiter looks up <code>203.0.113.50:/api/v1/login:window_202602131512</code> in the cache and finds a counter of 102. The login endpoint rule allows only 10 requests/minute per IP. Since 102 ≥ 10, the Rate Limiter immediately returns <code>429 Too Many Requests</code> with body <code>{"error": "Rate limit exceeded", "retry_after": 38}</code> and header <code>Retry-After: 38</code>. The request is <strong>never forwarded</strong> to the Application Service, protecting the login service from the attack.
+</div>
+<div class="example">
+    <strong>Example 2 — Legitimate User on Free Tier:</strong> A free-tier user <code>user_free_001</code> is making rapid API calls to <code>GET /api/v1/search</code> (building a data scraper). After the 50th call in the minute (the free-tier limit), the 51st request triggers a 429. The response includes <code>X-RateLimit-Limit: 50</code>, <code>X-RateLimit-Remaining: 0</code>, and <code>Retry-After: 22</code>. The user's well-behaved client implements backoff and waits 22 seconds before retrying.
+</div>
+
+<h4>Deep Dive: Flow 2 Components</h4>
+<div class="card">
+<p>The components are the same as Flow 1. The key difference is behavioral:</p>
+<ul>
+    <li>The <strong>Rate Limiter Middleware</strong> short-circuits the request. It does <strong>not</strong> forward to the Application Service. This is critical for DDoS/abuse protection — throttled requests consume minimal backend resources.</li>
+    <li>The <strong>In-Memory Cache</strong> counter is <strong>not incremented</strong> on a denied request. This prevents the counter from inflating due to rejected requests, which would extend the client's lockout period unfairly.</li>
+    <li>The <strong>Application Service</strong> is never contacted in this flow — it is completely shielded.</li>
+</ul>
+</div>
+
+<hr>
+
+<!-- ===================== FLOW 3 ===================== -->
+<h3>Flow 3: Rule Configuration (Admin Updates Rate Limit Rules)</h3>
+<p>An administrator creates or updates rate limiting rules. The rules are persisted to a database and propagated to all Rate Limiter nodes.</p>
+
+<div class="diagram-container">
+<div class="mermaid">
+flowchart LR
+    Admin["👤 Admin"]
+    RuleAPI["⚙️ Rules\nConfig Service"]
+    RulesDB[("📀 Rules DB\n(SQL)")]
+    RL1["🛡️ Rate Limiter\nNode 1"]
+    RL2["🛡️ Rate Limiter\nNode 2"]
+    RL3["🛡️ Rate Limiter\nNode N"]
+
+    Admin -- "1. HTTP POST/PUT\nCreate/update rule" --> RuleAPI
+    RuleAPI -- "2. Write rule to DB" --> RulesDB
+    RuleAPI -- "3. HTTP 200 OK\n(rule saved)" --> Admin
+
+    RulesDB -. "4. Poll every 30s\n(or push via pub/sub)" .-> RL1
+    RulesDB -. "4. Poll every 30s\n(or push via pub/sub)" .-> RL2
+    RulesDB -. "4. Poll every 30s\n(or push via pub/sub)" .-> RL3
+
+    style Admin fill:#1a1a2e,stroke:#58a6ff,color:#e6edf3
+    style RuleAPI fill:#1a1040,stroke:#d2a8ff,color:#e6edf3
+    style RulesDB fill:#0e4429,stroke:#3fb950,color:#e6edf3
+    style RL1 fill:#0e4429,stroke:#3fb950,color:#e6edf3
+    style RL2 fill:#0e4429,stroke:#3fb950,color:#e6edf3
+    style RL3 fill:#0e4429,stroke:#3fb950,color:#e6edf3
+</div>
+</div>
+
+<div class="example">
+    <strong>Example 1 — Creating a New Rule:</strong> An admin sends <code>POST /admin/rules</code> with body <code>{"endpoint": "/api/v1/upload", "client_type": "per_user", "limit": 20, "window_seconds": 60, "tier": "free"}</code>. The Rules Config Service validates the rule (e.g., limit > 0, valid endpoint pattern) and writes it to the Rules DB. It returns <code>201 Created</code>. Within 30 seconds, all Rate Limiter nodes poll the Rules DB and pick up the new rule, storing it in their local in-memory rules cache. The next request to <code>/api/v1/upload</code> from a free-tier user will be evaluated against the new 20 req/min limit.
+</div>
+<div class="example">
+    <strong>Example 2 — Emergency Tightening:</strong> During a DDoS attack, an admin urgently sends <code>PUT /admin/rules/rule_login_001</code> to lower the login rate limit from 10 req/min to 3 req/min. The Rules Config Service updates the rule in the DB. To speed propagation, it also publishes an invalidation event to a pub/sub topic. All Rate Limiter nodes subscribe to this topic and immediately refresh their local rules cache, applying the tighter limit within seconds rather than waiting for the next poll cycle.
+</div>
+
+<h4>Deep Dive: Flow 3 Components</h4>
+
+<div class="card">
+<h4>Rules Config Service</h4>
+<p>A lightweight admin-facing microservice for CRUD operations on rate limit rules. Protected by authentication/authorization (only admins can modify rules).</p>
+<ul>
+    <li><strong>Protocol:</strong> HTTP REST</li>
+    <li><strong>Endpoints:</strong></li>
+</ul>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Input</th><th>Output</th></tr>
+<tr><td><code>POST</code></td><td><code>/admin/rules</code></td><td>Create a new rule</td><td>JSON body with endpoint, client_type, limit, window_seconds, tier</td><td><code>201 Created</code> + rule JSON</td></tr>
+<tr><td><code>PUT</code></td><td><code>/admin/rules/{rule_id}</code></td><td>Update an existing rule</td><td>JSON body with updated fields</td><td><code>200 OK</code> + rule JSON</td></tr>
+<tr><td><code>DELETE</code></td><td><code>/admin/rules/{rule_id}</code></td><td>Delete a rule</td><td>Rule ID in URL</td><td><code>204 No Content</code></td></tr>
+<tr><td><code>GET</code></td><td><code>/admin/rules</code></td><td>List all rules</td><td>Optional filters (endpoint, tier)</td><td><code>200 OK</code> + array of rules</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h4>Rules DB (SQL)</h4>
+<p>Stores the rate limiting rules. SQL is chosen because rules are structured, relational, and small in volume (hundreds to thousands of rules, not millions). ACID properties ensure rule updates are consistent.</p>
+</div>
+
+<div class="card">
+<h4>Rule Propagation: Polling + Pub/Sub Hybrid</h4>
+<p>Each Rate Limiter node maintains a <strong>local in-memory rules cache</strong> to avoid hitting the Rules DB on every request. Propagation uses a dual strategy:</p>
+<ul>
+    <li><strong>Polling (primary):</strong> Every 30 seconds, each Rate Limiter node queries the Rules DB for all active rules and refreshes its local cache. This is simple, reliable, and tolerates pub/sub outages.</li>
+    <li><strong>Pub/Sub (fast path):</strong> On rule changes, the Rules Config Service publishes an invalidation event to a pub/sub topic. Rate Limiter nodes subscribe and immediately refresh. This reduces propagation delay from 30s to near-instant for urgent changes.</li>
+</ul>
+<p><strong>Why not pub/sub only?</strong> Pub/sub messages can be lost. Polling provides a reliable fallback that guarantees eventual consistency even if pub/sub fails.</p>
+<p><strong>Why not polling only?</strong> 30-second propagation delay is too slow for emergency rule changes (e.g., during an active DDoS).</p>
+</div>
+
+<hr>
+
+<!-- ===================== FLOW 4 ===================== -->
+<h3>Flow 4: Rate Limiter Fails (Fail-Open Behavior)</h3>
+<p>The in-memory cache becomes unreachable. The Rate Limiter cannot check counters and fails open, allowing the request through.</p>
+
+<div class="diagram-container">
+<div class="mermaid">
+flowchart LR
+    Client["🖥️ Client"]
+    LB["⚖️ Load Balancer"]
+    RL["🛡️ Rate Limiter\nMiddleware"]
+    Cache[("🗄️ In-Memory\nCache\n(Counters)\n❌ DOWN")]
+    App["📦 Application\nService"]
+    Metrics["📊 Metrics /\nAlerting"]
+
+    Client -- "1. HTTP Request" --> LB
+    LB -- "2. Forward request" --> RL
+    RL -- "3. GET counter" --> Cache
+    Cache -- "4. TIMEOUT / ERROR" --> RL
+    RL -- "5. Fail open → allow\n(emit alert metric)" --> App
+    RL -. "5b. Emit cache_down alert" .-> Metrics
+    App -- "6. HTTP 200 OK" --> Client
+
+    style Client fill:#1a1a2e,stroke:#58a6ff,color:#e6edf3
+    style LB fill:#1a1a2e,stroke:#58a6ff,color:#e6edf3
+    style RL fill:#3b2e00,stroke:#f0883e,color:#e6edf3
+    style Cache fill:#3b0e0e,stroke:#f85149,color:#e6edf3
+    style App fill:#1a1a2e,stroke:#58a6ff,color:#e6edf3
+    style Metrics fill:#1a1040,stroke:#d2a8ff,color:#e6edf3
+</div>
+</div>
+
+<div class="example">
+    <strong>Example 1 — Cache Node Crash:</strong> A cache node crashes due to an OOM error. The Rate Limiter's connection to the cache times out after 50ms. Since the rate limiter is configured to <strong>fail open</strong>, it allows the request through to the Application Service and emits a <code>rate_limiter.cache_unreachable</code> metric. The on-call engineer receives a PagerDuty alert within 60 seconds. During the outage window (~2-5 minutes until the cache recovers or a replica takes over), all requests are allowed through. This is preferred over fail-closed because blocking all users due to an infrastructure issue would be worse than temporarily losing rate limiting protection.
+</div>
+<div class="example">
+    <strong>Example 2 — Network Partition:</strong> A network partition isolates two Rate Limiter nodes from the cache cluster, but the Application Service is still reachable. These two nodes fail open and forward all requests. Meanwhile, other Rate Limiter nodes that can still reach the cache continue rate limiting normally. The load balancer detects the degraded nodes via health checks and may optionally shift traffic to healthy nodes.
+</div>
+
+<h4>Deep Dive: Fail-Open vs. Fail-Closed</h4>
+<div class="card">
+<table>
+<tr><th>Strategy</th><th>Behavior</th><th>Risk</th></tr>
+<tr><td><strong>Fail Open (chosen)</strong></td><td>If the cache is unreachable, allow the request through</td><td>Temporarily no rate limiting; abuse possible during outage</td></tr>
+<tr><td>Fail Closed</td><td>If the cache is unreachable, deny the request with 503</td><td>All legitimate users are blocked; total service outage</td></tr>
+</table>
+<p><strong>Rationale for Fail Open:</strong> Rate limiting is a protective mechanism, not a core business function. Losing rate limiting for a few minutes is recoverable; blocking all users is a customer-facing outage. The risk of temporary abuse is mitigated by the Application Service's own defenses (authentication, input validation, circuit breakers) and rapid alerting for cache recovery.</p>
+</div>
+
+<hr>
+
+<!-- ===================== COMBINED DIAGRAM ===================== -->
+<h3>Combined Overall System Diagram</h3>
+<p>This diagram unifies all flows into a single view of the complete rate limiting system.</p>
+
+<div class="diagram-container">
+<div class="mermaid">
+flowchart TB
+    Client["🖥️ Client\n(Mobile / Web / API)"]
+    LB["⚖️ Load Balancer\n(Layer 7)"]
+    RL["🛡️ Rate Limiter Middleware\n(Stateless, Horizontally Scaled)"]
+    Cache[("🗄️ In-Memory Cache\n(Distributed)\nCounters + TTL")]
+    App["📦 Application Service\n(Backend APIs)"]
+    Admin["👤 Admin"]
+    RuleAPI["⚙️ Rules Config Service"]
+    RulesDB[("📀 Rules DB\n(SQL)")]
+    PubSub["📢 Pub/Sub\n(Rule Invalidation)"]
+    Metrics["📊 Metrics &\nAlerting System"]
+
+    Client -- "HTTP Request" --> LB
+    LB -- "Forward" --> RL
+
+    RL -- "Check / Increment\ncounter (atomic)" --> Cache
+    RL -- "If allowed\nforward request" --> App
+    RL -- "If denied\nHTTP 429" --> Client
+    App -- "HTTP Response\n+ rate limit headers" --> Client
+
+    RL -. "Read rules\n(poll every 30s)" .-> RulesDB
+    RL -. "Subscribe to\nrule changes" .-> PubSub
+    RL -. "Emit metrics\n(allowed, denied, latency)" .-> Metrics
+
+    Admin -- "POST/PUT/DELETE\nrule CRUD" --> RuleAPI
+    RuleAPI -- "Write rules" --> RulesDB
+    RuleAPI -- "Publish invalidation" --> PubSub
+
+    style Client fill:#1a1a2e,stroke:#58a6ff,color:#e6edf3
+    style LB fill:#1a1a2e,stroke:#58a6ff,color:#e6edf3
+    style RL fill:#0e4429,stroke:#3fb950,color:#e6edf3
+    style Cache fill:#3d1d00,stroke:#f0883e,color:#e6edf3
+    style App fill:#1a1a2e,stroke:#58a6ff,color:#e6edf3
+    style Admin fill:#1a1a2e,stroke:#58a6ff,color:#e6edf3
+    style RuleAPI fill:#1a1040,stroke:#d2a8ff,color:#e6edf3
+    style RulesDB fill:#0e4429,stroke:#3fb950,color:#e6edf3
+    style PubSub fill:#3d1d00,stroke:#f0883e,color:#e6edf3
+    style Metrics fill:#1a1040,stroke:#d2a8ff,color:#e6edf3
+</div>
+</div>
+
+<div class="example">
+    <strong>Example — End-to-End Happy Path:</strong> An admin has previously configured a rule: <code>{"endpoint": "/api/v1/posts", "limit": 200, "window_seconds": 60, "tier": "premium"}</code> via <code>POST /admin/rules</code> to the Rules Config Service. This was written to the Rules DB and propagated to all Rate Limiter nodes via pub/sub + polling. Now, premium user <code>user_prem_42</code> sends <code>GET /api/v1/posts</code>. The Load Balancer routes it to Rate Limiter Node 3. Node 3 looks up the local rules cache and finds the 200 req/min rule for premium users on <code>/api/v1/posts</code>. It queries the in-memory cache for key <code>user_prem_42:/api/v1/posts:window_202602131515</code>, gets counter 88. Since 88 &lt; 200, it atomically increments to 89, forwards the request to the Application Service, gets the posts response, injects <code>X-RateLimit-Remaining: 111</code>, and returns the response to the client. Metrics are emitted: <code>rate_limiter.allowed{endpoint="/api/v1/posts", tier="premium"} += 1</code>.
+</div>
+
+<div class="example">
+    <strong>Example — End-to-End Throttle + Admin Response:</strong> A free-tier user <code>user_free_99</code> is aggressively polling <code>GET /api/v1/notifications</code> every second. The first 30 requests pass. On request 31, the Rate Limiter finds counter=30, which equals the free-tier limit of 30 req/min. It returns <code>429 Too Many Requests</code> with <code>Retry-After: 45</code>. The Metrics system shows a spike in <code>rate_limiter.denied{endpoint="/api/v1/notifications"}</code>. An admin notices and further tightens the limit by sending <code>PUT /admin/rules/rule_notif_free</code> to lower it to 15 req/min. The Rules Config Service writes to the DB and publishes a pub/sub event. Within seconds, all Rate Limiter nodes apply the new rule.
+</div>
+
+<div class="example">
+    <strong>Example — Cache Failure Scenario:</strong> The in-memory cache cluster experiences a network blip. Rate Limiter nodes get timeouts on cache reads. They fail open — all requests are forwarded to the Application Service. The Rate Limiter emits <code>rate_limiter.cache_error += 1</code> per failed check. The alerting system triggers a P1 alert. Engineers investigate and restore the cache within 3 minutes. During those 3 minutes, ~180,000 extra requests (at 1,000 req/s) passed through unthrottled, but the Application Service handled them because it has its own autoscaling and circuit breakers.
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>5. Database Schema</h2>
+<!-- ============================================================ -->
+
+<h3>5.1 Rate Limit Rules Table <span class="tag tag-sql">SQL</span></h3>
+<div class="card">
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+<tr><td><code>rule_id</code></td><td>UUID</td><td>🔑 Primary Key</td><td>Unique identifier for the rule</td></tr>
+<tr><td><code>endpoint_pattern</code></td><td>VARCHAR(255)</td><td>NOT NULL, INDEXED</td><td>URL pattern this rule applies to (e.g., <code>/api/v1/login</code>, <code>/api/v1/*</code>)</td></tr>
+<tr><td><code>client_type</code></td><td>ENUM('per_user', 'per_ip', 'per_api_key', 'global')</td><td>NOT NULL</td><td>What dimension to rate limit on</td></tr>
+<tr><td><code>tier</code></td><td>VARCHAR(50)</td><td>NOT NULL, DEFAULT 'default'</td><td>User tier this rule applies to (e.g., 'free', 'premium', 'default')</td></tr>
+<tr><td><code>max_requests</code></td><td>INT</td><td>NOT NULL, CHECK > 0</td><td>Maximum number of requests allowed in the window</td></tr>
+<tr><td><code>window_seconds</code></td><td>INT</td><td>NOT NULL, CHECK > 0</td><td>Time window in seconds (e.g., 60 for 1 minute)</td></tr>
+<tr><td><code>is_active</code></td><td>BOOLEAN</td><td>NOT NULL, DEFAULT TRUE</td><td>Whether the rule is currently active</td></tr>
+<tr><td><code>priority</code></td><td>INT</td><td>NOT NULL, DEFAULT 0</td><td>Higher priority rules are evaluated first when multiple rules match</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>When the rule was created</td></tr>
+<tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>When the rule was last updated</td></tr>
+</table>
+
+<h4>Why SQL?</h4>
+<ul>
+    <li><strong>Small dataset:</strong> Typically hundreds to low thousands of rules. SQL handles this trivially.</li>
+    <li><strong>ACID compliance:</strong> Rule updates must be atomic and consistent — partial rule updates could create security holes.</li>
+    <li><strong>Complex queries:</strong> Admins may need to query rules by endpoint, tier, active status with filtering, sorting, and pagination — SQL excels at this.</li>
+    <li><strong>Low write volume:</strong> Rules change infrequently (admin-driven). No need for NoSQL write scalability.</li>
 </ul>
 
-<h3>Multi-Tier Rate Limiting</h3>
-<p>Production systems apply rate limits at multiple levels: (1) Per-IP at network edge (DDoS protection — millions/sec), (2) Per-API-key at API Gateway (business limits — thousands/min), (3) Per-endpoint per-user (fine-grained — tens/sec), (4) Global per-service (backend protection — total capacity). Each tier uses appropriate algorithm and storage.</p>
+<h4>Indexes</h4>
+<table>
+<tr><th>Index</th><th>Column(s)</th><th>Type</th><th>Reason</th></tr>
+<tr><td>Primary</td><td><code>rule_id</code></td><td>B-Tree (default PK index)</td><td>Fast lookups by rule ID for updates/deletes</td></tr>
+<tr><td>Composite</td><td><code>(endpoint_pattern, tier, is_active)</code></td><td>B-Tree</td><td>The Rate Limiter queries rules by endpoint + tier. This composite index serves the query <code>SELECT * FROM rate_limit_rules WHERE endpoint_pattern = ? AND tier = ? AND is_active = TRUE ORDER BY priority DESC</code> efficiently.</td></tr>
+<tr><td>Partial Index</td><td><code>updated_at WHERE is_active = TRUE</code></td><td>B-Tree</td><td>Rate Limiter nodes poll with <code>WHERE updated_at > last_sync_time AND is_active = TRUE</code>. This partial index avoids scanning inactive rules.</td></tr>
+</table>
 
-<h3>Race Condition: Check-Then-Act</h3>
-<p>Naive implementation: <code>GET count</code> → <code>if count < limit</code> → <code>INCR count</code>. Race condition: two concurrent requests both read count=99 (limit 100), both proceed. Solution: Redis Lua scripts execute atomically — read + check + increment in single operation. Or use <code>INCR</code> first, then check: <code>INCR key</code> returns new value — if > limit, the request that pushed it over gets rejected.</p>
+<h4>Read/Write Events</h4>
+<ul>
+    <li><strong>Written to:</strong> When an admin creates, updates, or deletes a rule via the Rules Config Service.</li>
+    <li><strong>Read from:</strong> (1) Rate Limiter nodes polling every 30 seconds. (2) Rate Limiter nodes on pub/sub invalidation events. (3) Admin listing/viewing rules.</li>
+</ul>
+
+<h4>Sharding</h4>
+<p>Not needed. The rules table will have at most a few thousand rows and is read-heavy with infrequent writes. A single SQL instance with a read replica is more than sufficient. Sharding would add unnecessary complexity.</p>
 </div>
 
+<h3>5.2 Rate Limit Counters <span class="tag tag-cache">In-Memory Cache (NoSQL Key-Value)</span></h3>
+<div class="card">
+<table>
+<tr><th>Field</th><th>Type</th><th>Description</th></tr>
+<tr><td><code>key</code></td><td>STRING</td><td>🔑 Composite key: <code>{client_id}:{endpoint}:{window_start_epoch}</code><br>Example: <code>user_abc123:/api/v1/feed:1739456400</code></td></tr>
+<tr><td><code>value</code></td><td>INTEGER</td><td>Number of requests in this window</td></tr>
+<tr><td><code>TTL</code></td><td>SECONDS</td><td>Auto-expiration: 2 × window_seconds. Ensures both current and previous window counters exist for the sliding window calculation.</td></tr>
+</table>
+
+<h4>Why In-Memory Cache (NoSQL Key-Value)?</h4>
+<ul>
+    <li><strong>Speed:</strong> Counters are on the hot path of every request. In-memory stores provide sub-millisecond latency (typically 0.1-0.5ms), which is essential for the ≤5ms overhead requirement.</li>
+    <li><strong>Atomic operations:</strong> Supports atomic increment (INCR), which eliminates race conditions when multiple Rate Limiter nodes update the same counter simultaneously.</li>
+    <li><strong>TTL support:</strong> Keys auto-expire, so there's zero cleanup overhead. No need for batch deletion jobs.</li>
+    <li><strong>High throughput:</strong> Capable of handling 1M+ operations/second on a modestly-sized cluster.</li>
+    <li><strong>Why not SQL?</strong> SQL disk I/O and transaction overhead would add 5-20ms per request — far too slow.</li>
+    <li><strong>Why not a regular NoSQL DB?</strong> Even SSD-backed NoSQL databases have 1-5ms latency. In-memory is 10-50× faster.</li>
+</ul>
+
+<h4>Sharding Strategy</h4>
+<p><strong>Strategy:</strong> Hash-based sharding on the key (<code>{client_id}:{endpoint}:{window_start_epoch}</code>).</p>
+<p><strong>Why hash-based:</strong> Rate limit keys are accessed individually (no range scans needed). Hashing distributes load evenly across cache nodes, preventing hotspots. A consistent hashing ring is used so that adding/removing cache nodes only remaps ~1/N of the keys, minimizing cache misses during scaling events.</p>
+<p><strong>Why shard?</strong> At 1M req/s with a 1-minute window, we could have up to 60M active keys. A single cache node can hold ~10-25M keys comfortably in RAM. Sharding across 4-8 nodes provides both memory capacity and throughput headroom.</p>
+
+<h4>Read/Write Events</h4>
+<ul>
+    <li><strong>Read + Write:</strong> On every incoming API request, the Rate Limiter reads the counter (GET) and, if allowed, increments it (INCR). These happen atomically via a cache script.</li>
+    <li><strong>Auto-delete:</strong> Keys expire via TTL — no explicit delete operations needed.</li>
+</ul>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>6. CDN & Caching Deep Dive</h2>
+<!-- ============================================================ -->
+
+<h3>6.1 CDN</h3>
+<div class="card">
+<p><strong>Not appropriate for this system.</strong> A CDN caches static content (images, videos, JS/CSS files) at edge locations. Rate limiting is a <em>per-request, real-time, stateful decision</em> that depends on the client's recent request history. This cannot be cached at a CDN edge because:</p>
+<ul>
+    <li>Each request needs to be evaluated against the latest counter, which changes on every request.</li>
+    <li>CDNs are designed for cacheable, idempotent GET requests — not for stateful rate-limit checks.</li>
+    <li>However, a CDN in <em>front</em> of the system could reduce the load reaching the rate limiter by serving cached static assets, reducing the total request volume the Rate Limiter must handle.</li>
+</ul>
+</div>
+
+<h3>6.2 In-Memory Cache (Counter Store)</h3>
+<div class="card">
+<p>The in-memory cache IS the primary data store for counters (not a cache in front of a database). It is the source of truth for request counts. This is acceptable because counters are ephemeral — if they're lost (cache crash), the worst case is that rate limiting is temporarily inactive (fail-open), which is acceptable per our non-functional requirements.</p>
+
+<h4>Caching Strategy</h4>
+<table>
+<tr><th>Aspect</th><th>Strategy</th><th>Rationale</th></tr>
+<tr><td><strong>Write strategy</strong></td><td><strong>Write-through (direct write)</strong></td><td>The cache IS the primary store. Every allowed request directly increments the cache counter. There is no backing database for counters — the cache is the system of record. "Write-through" here means every write is synchronous and immediately visible.</td></tr>
+<tr><td><strong>Eviction policy</strong></td><td><strong>TTL-based expiration (no LRU needed)</strong></td><td>Every key has a TTL = 2 × window_seconds. Keys auto-expire once the sliding window moves past them. This means keys are evicted deterministically based on time, not capacity. We size the cache cluster to have enough memory for all active keys, so LRU eviction should never trigger. If it does (capacity miscalculation), LRU is used as a safety net — evicting the least-recently-used counter means we lose a stale counter for a client who hasn't been active recently, which is low impact.</td></tr>
+<tr><td><strong>Expiration policy</strong></td><td><strong>TTL = 2 × window_seconds</strong></td><td>The sliding window algorithm needs the current window's count and the previous window's count. Setting TTL to 2× the window ensures both are available. For a 60-second window, TTL = 120 seconds. After 120 seconds, the key is guaranteed to be outside any sliding window calculation and can safely expire.</td></tr>
+</table>
+</div>
+
+<h3>6.3 Local Rules Cache (on Rate Limiter Nodes)</h3>
+<div class="card">
+<p>Each Rate Limiter node maintains a <strong>local in-memory rules cache</strong> to avoid querying the Rules DB on every request.</p>
+<table>
+<tr><th>Aspect</th><th>Strategy</th><th>Rationale</th></tr>
+<tr><td><strong>Population</strong></td><td>On startup: full load from Rules DB. Ongoing: poll every 30 seconds + pub/sub invalidation events.</td><td>Ensures rules are always available locally without network hops on the hot path.</td></tr>
+<tr><td><strong>Write strategy</strong></td><td><strong>Cache-aside / refresh-ahead</strong></td><td>The Rules Config Service writes to the DB (source of truth). The Rate Limiter pulls updates. The cache is a read-only local copy.</td></tr>
+<tr><td><strong>Eviction policy</strong></td><td><strong>Replace-all on refresh</strong></td><td>On each poll, the entire rules set is replaced. Rules are small (a few KB total) and few in number, so this is cheap. No partial eviction needed.</td></tr>
+<tr><td><strong>Expiration policy</strong></td><td><strong>30-second soft TTL</strong></td><td>If a poll fails, the stale rules remain in use (stale data is better than no data). An alert is fired if staleness exceeds 5 minutes.</td></tr>
+</table>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>7. Scaling Considerations</h2>
+<!-- ============================================================ -->
+<div class="card">
+
+<h4>7.1 Load Balancers</h4>
+<p>Load balancers are critical at two points in the architecture:</p>
+<table>
+<tr><th>Position</th><th>Purpose</th><th>Strategy</th></tr>
+<tr><td><strong>LB1: Client → Rate Limiter</strong></td><td>Distributes incoming traffic across Rate Limiter instances</td><td>Layer 7 (HTTP) load balancer. Uses <strong>round-robin</strong> because Rate Limiter nodes are stateless (all state is in the shared cache). Round-robin ensures even distribution. Health checks ping <code>/health</code> on each node every 10 seconds; unhealthy nodes are removed from the pool within 30 seconds.</td></tr>
+<tr><td><strong>LB2: Rate Limiter → Application Service</strong></td><td>Distributes allowed requests across Application Service instances</td><td>Layer 7 load balancer. Can use <strong>least-connections</strong> if Application Service requests have variable latency. Health checks are endpoint-specific.</td></tr>
+</table>
+
+<p><strong>Deep Dive on LB1 (Client → Rate Limiter):</strong></p>
+<ul>
+    <li><strong>TLS Termination:</strong> The load balancer terminates TLS so Rate Limiter nodes handle plaintext HTTP internally, reducing CPU overhead.</li>
+    <li><strong>Sticky sessions:</strong> NOT used. Rate Limiter nodes are stateless (the shared cache provides state). Any node can serve any client's request.</li>
+    <li><strong>Scaling the LB itself:</strong> Use an active-passive or active-active pair of load balancers with VRRP (Virtual Router Redundancy Protocol) for failover. For very high traffic, DNS-based load balancing can distribute across multiple LB clusters in different availability zones.</li>
+    <li><strong>Connection pooling:</strong> The LB maintains persistent connections to Rate Limiter nodes (HTTP keep-alive) to avoid TCP handshake overhead on every request.</li>
+</ul>
+
+<h4>7.2 Rate Limiter Horizontal Scaling</h4>
+<ul>
+    <li>Rate Limiter nodes are <strong>completely stateless</strong>. Adding more nodes is as simple as launching new instances and registering them with the load balancer.</li>
+    <li>Auto-scaling based on CPU utilization (target: 60%) and request rate metrics.</li>
+    <li>Each node can handle ~10,000-50,000 req/s depending on hardware. For 1M req/s, plan for 20-100 nodes with headroom.</li>
+</ul>
+
+<h4>7.3 In-Memory Cache Scaling</h4>
+<ul>
+    <li><strong>Vertical scaling:</strong> Increase RAM per node to hold more keys.</li>
+    <li><strong>Horizontal scaling:</strong> Add more shards to the consistent hash ring. During resharding, some keys will be remapped (cache miss), causing a brief period of inaccurate counts — acceptable given our approximate consistency requirement.</li>
+    <li><strong>Replication:</strong> Each shard has 1-2 read replicas for fault tolerance. If a primary goes down, a replica is promoted. Counter writes go to the primary; reads can optionally go to replicas (with slight staleness risk).</li>
+</ul>
+
+<h4>7.4 Rules DB Scaling</h4>
+<ul>
+    <li>A single SQL instance with a read replica is sufficient for the rules table. The dataset is small (KBs) and write volume is negligible.</li>
+    <li>Read replicas absorb the periodic poll reads from all Rate Limiter nodes.</li>
+</ul>
+
+<h4>7.5 Multi-Region Deployment</h4>
+<ul>
+    <li>For global services, deploy Rate Limiter clusters in each region with region-local cache shards.</li>
+    <li><strong>Trade-off:</strong> Per-region rate limiting means a client could get <code>limit × number_of_regions</code> total requests if they target multiple regions. This is usually acceptable and can be mitigated by a global aggregation layer (at the cost of cross-region latency).</li>
+    <li>Rules DB uses a single-leader, multi-follower replication across regions. Writes go to the leader region; reads go to local followers.</li>
+</ul>
+
+<h4>7.6 Capacity Estimation</h4>
+<table>
+<tr><th>Metric</th><th>Estimate</th><th>Calculation</th></tr>
+<tr><td>Peak request rate</td><td>1M req/s</td><td>Given requirement</td></tr>
+<tr><td>Active keys (1-min window)</td><td>~60M</td><td>1M req/s × 60s (worst case: unique client+endpoint per request)</td></tr>
+<tr><td>Memory per key</td><td>~200 bytes</td><td>Key string (~100 bytes) + value (8 bytes) + overhead (~92 bytes)</td></tr>
+<tr><td>Total cache memory</td><td>~12 GB</td><td>60M × 200 bytes (× 2 for prev+current windows = ~24 GB)</td></tr>
+<tr><td>Cache nodes needed</td><td>4-8 nodes</td><td>24 GB / 8 GB usable RAM per node = 3 nodes + replication + headroom</td></tr>
+</table>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>8. Tradeoffs & Deep Dives</h2>
+<!-- ============================================================ -->
+<div class="card">
+
+<h4>8.1 Accuracy vs. Performance (Approximate Counting)</h4>
+<p>In a distributed cache with multiple shards, the sliding window counter is inherently approximate. Two Rate Limiter nodes might read counter=99 simultaneously, both allow, and the actual count becomes 101 (1 over the limit). This is acceptable because:</p>
+<ul>
+    <li>Atomic increment ensures the counter is eventually correct — the overcount is at most <code>number_of_concurrent_requests_in_flight</code>, which is bounded.</li>
+    <li>For security-critical endpoints (login), we can set the limit slightly lower than the true desired limit to account for this margin.</li>
+    <li>Achieving exactly-once counting would require distributed locks or serialization, adding 10-50ms latency per request — unacceptable.</li>
+</ul>
+
+<h4>8.2 Fail Open vs. Fail Closed</h4>
+<p>As discussed in Flow 4, we chose <strong>fail open</strong>. The trade-off: during a cache outage (typically 1-5 minutes), rate limiting is inactive, and abusive clients can flood the backend. Mitigation: the Application Service should have its own defenses (connection limits, circuit breakers, auto-scaling), and the alerting system should trigger rapid cache recovery.</p>
+
+<h4>8.3 Local vs. Global Rate Limiting</h4>
+<table>
+<tr><th>Approach</th><th>Description</th><th>Trade-off</th></tr>
+<tr><td><strong>Global (chosen)</strong></td><td>All Rate Limiter nodes share a centralized distributed cache for counters</td><td>Accurate cross-node counts, but depends on the cache being reachable (network hop on every request)</td></tr>
+<tr><td>Local</td><td>Each Rate Limiter node maintains its own counters in-process</td><td>Zero network overhead for counter checks, but each node only sees its share of traffic. If you have N nodes, the effective limit becomes N × configured_limit unless you divide the limit by N (which requires knowing N and handling scaling events).</td></tr>
+</table>
+<p><strong>Why global:</strong> Accuracy is important for rate limiting. If a client is making 100 req/s and you have 10 Rate Limiter nodes, each node sees ~10 req/s. A local approach with limit=100 per node would effectively allow 1,000 req/s. Dividing the limit by N is fragile during auto-scaling.</p>
+
+<h4>8.4 Middleware vs. Standalone Service</h4>
+<table>
+<tr><th>Approach</th><th>Description</th><th>Trade-off</th></tr>
+<tr><td><strong>Middleware (chosen)</strong></td><td>Rate limiter runs as an inline proxy/middleware between the LB and the Application Service</td><td>Simple deployment, low latency (no extra network hop to a separate service), easy to fail open</td></tr>
+<tr><td>Sidecar</td><td>Rate limiter runs as a sidecar container alongside each Application Service pod</td><td>Coupled to application deployment; scales with the application automatically, but harder to manage independently</td></tr>
+<tr><td>Standalone service</td><td>Rate limiter is a separate service called by the Application Service</td><td>Clean separation, but adds a network hop and creates a single point of failure</td></tr>
+</table>
+
+<h4>8.5 Sliding Window Counter vs. Token Bucket</h4>
+<p>Both are excellent choices. The token bucket is better for allowing controlled bursts (a client that hasn't made requests for a while accumulates tokens). The sliding window counter is simpler to implement atomically in a distributed cache (just two INCR operations vs. managing token count + last_refill_time atomically). We chose sliding window counter for implementation simplicity at scale, but token bucket would also be a valid design.</p>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>9. Alternative Approaches</h2>
+<!-- ============================================================ -->
+<div class="card">
+
+<h4>9.1 API Gateway-Based Rate Limiting</h4>
+<p><strong>Approach:</strong> Instead of building a custom rate limiter, use the rate limiting feature built into an API gateway (e.g., Kong, NGINX, Envoy).</p>
+<p><strong>Why not chosen:</strong> API gateway rate limiting is often limited in customization (e.g., hard to implement per-tier limits, complex rule matching, or the sliding window algorithm). It tightly couples rate limiting to the gateway vendor. For a system at our scale (1M+ req/s), a purpose-built solution gives us full control over the algorithm, sharding, fail-open behavior, and observability. However, for smaller systems, API gateway rate limiting is a pragmatic choice.</p>
+
+<h4>9.2 Client-Side Rate Limiting</h4>
+<p><strong>Approach:</strong> The client itself enforces rate limits (e.g., the mobile app throttles its own requests).</p>
+<p><strong>Why not chosen:</strong> Client-side rate limiting is unenforceable — malicious clients can simply bypass it. It's useful as a complementary strategy (to reduce wasted requests from well-behaved clients) but cannot replace server-side enforcement.</p>
+
+<h4>9.3 Database-Backed Counters (SQL/NoSQL)</h4>
+<p><strong>Approach:</strong> Store counters in a persistent database instead of an in-memory cache.</p>
+<p><strong>Why not chosen:</strong> Even the fastest SSDs add 1-5ms per read/write. At 1M req/s, this would require enormous database capacity, and the latency overhead would violate our ≤5ms requirement. Counters are ephemeral (TTL-based) and don't need durability — in-memory is the right fit.</p>
+
+<h4>9.4 Token Bucket with Distributed Locks</h4>
+<p><strong>Approach:</strong> Implement a token bucket algorithm with distributed locks (e.g., lock the client's bucket, read token count, refill if needed, deduct token, unlock).</p>
+<p><strong>Why not chosen:</strong> Distributed locks add 2-10ms of overhead (lock acquisition + release) and introduce contention under high concurrency. If the lock holder crashes, other requests are blocked until the lock expires. The atomic increment approach of the sliding window counter avoids locks entirely.</p>
+
+<h4>9.5 Application-Level Rate Limiting (In-Process)</h4>
+<p><strong>Approach:</strong> Each Application Service instance maintains its own in-process rate limiter (e.g., a Guava RateLimiter or similar library).</p>
+<p><strong>Why not chosen:</strong> Same problem as "Local" rate limiting in Section 8.3 — each instance only sees a fraction of the traffic, so the effective limit is multiplied by the number of instances. Also couples rate limiting logic to the application code, making it harder to manage centrally.</p>
+
+<h4>9.6 Using a Message Queue for Deferred Rate Limiting</h4>
+<p><strong>Approach:</strong> Instead of checking limits synchronously, accept all requests into a message queue and process them at a controlled rate.</p>
+<p><strong>Why not chosen:</strong> This is a fundamentally different pattern — it's request queuing (leaky bucket at the system level), not rate limiting. It adds latency (queue wait time) to all requests, even those under the limit. It's appropriate for background job processing but not for real-time API rate limiting where low latency is critical.</p>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>10. Pub/Sub Deep Dive (Rule Propagation)</h2>
+<!-- ============================================================ -->
+<div class="card">
+<h4>Why Pub/Sub?</h4>
+<p>Used specifically for <strong>rule invalidation/propagation</strong>, not for the main rate-limiting flow. When an admin updates a rule, all Rate Limiter nodes need to know immediately (not wait 30 seconds for the next poll).</p>
+
+<h4>How It Works</h4>
+<ol>
+    <li>The Rules Config Service publishes a message to a topic called <code>rate_limit_rule_changes</code> with payload <code>{"event": "rule_updated", "rule_id": "rule_login_001", "timestamp": 1739456500}</code>.</li>
+    <li>Each Rate Limiter node subscribes to this topic at startup.</li>
+    <li>On receiving a message, the Rate Limiter node queries the Rules DB for the updated rule and refreshes its local cache.</li>
+    <li>If the pub/sub message is lost (at-most-once delivery), the 30-second polling fallback ensures the node picks up the change eventually.</li>
+</ol>
+
+<h4>Why Not Alternatives?</h4>
+<table>
+<tr><th>Alternative</th><th>Why Not</th></tr>
+<tr><td>WebSockets from Rules Config Service to each Rate Limiter node</td><td>The Rules Config Service would need to maintain persistent connections to potentially hundreds of Rate Limiter nodes. This doesn't scale well and adds complexity. Pub/Sub decouples the publisher from subscribers.</td></tr>
+<tr><td>Long polling from Rate Limiter nodes to Rules DB</td><td>Puts load on the DB (each node holds an open connection). Pub/Sub is more efficient for fan-out to many subscribers.</td></tr>
+<tr><td>Message queue (point-to-point)</td><td>Rule updates need to go to ALL nodes (fan-out), not just one consumer. A message queue with competing consumers would only deliver to one node. Pub/Sub's topic model delivers to all subscribers.</td></tr>
+</table>
+
+<h4>Delivery Guarantee</h4>
+<p><strong>At-most-once</strong> is acceptable here because the polling fallback guarantees eventual delivery. At-least-once or exactly-once delivery would add unnecessary overhead for what is essentially a cache invalidation signal.</p>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>11. Protocol Choices</h2>
+<!-- ============================================================ -->
+<div class="card">
+<table>
+<tr><th>Communication Path</th><th>Protocol</th><th>Why</th></tr>
+<tr><td>Client → Load Balancer</td><td>HTTPS (TLS over TCP)</td><td>Standard for public-facing APIs. TCP provides reliable delivery; TLS provides encryption.</td></tr>
+<tr><td>Load Balancer → Rate Limiter</td><td>HTTP (TCP)</td><td>Internal network; TLS termination at the LB means internal traffic can use plaintext HTTP. TCP ensures reliable delivery.</td></tr>
+<tr><td>Rate Limiter → In-Memory Cache</td><td>TCP (cache-specific binary protocol)</td><td>Most in-memory caches use a custom binary protocol over TCP for minimal overhead. TCP ensures reliable delivery (critical for counter accuracy).</td></tr>
+<tr><td>Rate Limiter → Application Service</td><td>HTTP (TCP)</td><td>Standard HTTP forwarding of the original request.</td></tr>
+<tr><td>Admin → Rules Config Service</td><td>HTTPS (TLS over TCP)</td><td>Admin API should be encrypted and authenticated.</td></tr>
+<tr><td>Rules Config Service → Rules DB</td><td>TCP (SQL wire protocol)</td><td>Standard SQL database connection.</td></tr>
+<tr><td>Rules Config Service → Pub/Sub</td><td>TCP</td><td>Standard pub/sub client protocol over TCP for reliable message delivery.</td></tr>
+</table>
+<p><strong>Why not UDP anywhere?</strong> Rate limiting requires reliable delivery. A lost counter increment (UDP packet drop) would mean an undercount, allowing more requests than the limit. A lost rule update could leave a node with stale rules. TCP's reliability guarantee is worth the small overhead.</p>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>12. Additional Considerations</h2>
+<!-- ============================================================ -->
+<div class="card">
+
+<h4>12.1 Rate Limit Key Design</h4>
+<p>The key design is crucial for correct rate limiting:</p>
+<ul>
+    <li><code>{client_id}:{endpoint}:{window_start}</code> — limits per client per endpoint</li>
+    <li><code>{client_id}:*:{window_start}</code> — global limit per client (across all endpoints)</li>
+    <li><code>global:{endpoint}:{window_start}</code> — global limit per endpoint (across all clients, for endpoint-level protection)</li>
+</ul>
+<p>Multiple rules can be evaluated simultaneously (e.g., a request must pass both the per-user limit AND the global endpoint limit).</p>
+
+<h4>12.2 Race Condition Handling</h4>
+<p>The atomic script executed in the cache is critical:</p>
+<pre><code>-- Pseudocode for the atomic cache operation
+function check_rate_limit(key_current, key_prev, limit, window_size, elapsed):
+    prev_count = GET(key_prev) or 0
+    curr_count = GET(key_current) or 0
+    overlap = (window_size - elapsed) / window_size
+    weighted = prev_count * overlap + curr_count
+    if weighted < limit:
+        INCR(key_current)
+        EXPIRE(key_current, 2 * window_size)
+        return ALLOWED, limit - weighted - 1
+    else:
+        return DENIED, 0
+</code></pre>
+<p>This script runs atomically in the cache, ensuring no race condition between the read and the increment.</p>
+
+<h4>12.3 Monitoring & Alerting</h4>
+<p>Key metrics to emit:</p>
+<ul>
+    <li><code>rate_limiter.requests.total</code> — total requests processed</li>
+    <li><code>rate_limiter.requests.allowed</code> — requests that passed</li>
+    <li><code>rate_limiter.requests.denied</code> — requests that were throttled (429)</li>
+    <li><code>rate_limiter.latency.p99</code> — p99 latency of the rate limit check</li>
+    <li><code>rate_limiter.cache.errors</code> — cache connection failures (triggers fail-open alert)</li>
+    <li><code>rate_limiter.rules.staleness_seconds</code> — how old the local rules cache is</li>
+</ul>
+
+<h4>12.4 Graceful Degradation</h4>
+<ul>
+    <li>If cache latency spikes above 10ms, short-circuit and fail open (don't let cache slowness slow down all requests).</li>
+    <li>Circuit breaker pattern on the cache connection: if 50% of requests in a 10-second window fail, open the circuit (fail open on all requests) for 30 seconds, then half-open to test recovery.</li>
+</ul>
+
+<h4>12.5 Client Identification Strategy</h4>
+<table>
+<tr><th>Method</th><th>Pros</th><th>Cons</th></tr>
+<tr><td>API Key (header)</td><td>Unique per user/app; tamper-resistant</td><td>Requires key management</td></tr>
+<tr><td>OAuth Token (JWT)</td><td>Standard auth; carries user identity</td><td>Must decode JWT (small CPU cost)</td></tr>
+<tr><td>IP Address</td><td>No auth required; works for unauthenticated endpoints</td><td>Shared IPs (NAT/VPN) penalize multiple users; easily spoofable with proxies</td></tr>
+<tr><td>Combination</td><td>Use authenticated identity when available, fall back to IP</td><td>More complex rule matching</td></tr>
+</table>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>13. Vendor Recommendations</h2>
+<!-- ============================================================ -->
+<div class="card">
+<p>The design above is vendor-agnostic. Below are potential vendor choices for each component:</p>
+
+<table>
+<tr><th>Component</th><th>Vendor Options</th><th>Why</th></tr>
+<tr><td><strong>In-Memory Cache</strong></td><td>Redis, Memcached, Dragonfly, KeyDB</td><td><strong>Redis</strong> is the most popular choice due to its support for atomic Lua scripting (essential for the sliding window check+increment), TTL, and clustering. Dragonfly and KeyDB are Redis-compatible alternatives with better multi-threaded performance. Memcached is simpler but lacks scripting support — you'd need to implement the atomic check-and-increment differently (CAS loops).</td></tr>
+<tr><td><strong>SQL Database (Rules)</strong></td><td>PostgreSQL, MySQL, CockroachDB</td><td><strong>PostgreSQL</strong> is recommended for its robustness, partial index support (useful for the <code>updated_at WHERE is_active = TRUE</code> index), and strong ACID compliance. CockroachDB if multi-region distributed SQL is desired.</td></tr>
+<tr><td><strong>Pub/Sub</strong></td><td>Redis Pub/Sub, Apache Kafka, Google Pub/Sub, AWS SNS, NATS</td><td><strong>Redis Pub/Sub</strong> is the simplest option since Redis is already in the stack for counters (reuse the same cluster). If higher durability is needed, Kafka provides persistent, replayable messages. NATS is lightweight and high-performance for this use case.</td></tr>
+<tr><td><strong>Load Balancer</strong></td><td>NGINX, HAProxy, Envoy, AWS ALB, Google Cloud Load Balancer</td><td><strong>NGINX</strong> or <strong>Envoy</strong> for self-hosted deployments (high performance, flexible configuration). Cloud LBs (ALB, GCP LB) for cloud-native deployments with managed scaling and health checks.</td></tr>
+<tr><td><strong>Metrics/Alerting</strong></td><td>Prometheus + Grafana, Datadog, New Relic</td><td><strong>Prometheus + Grafana</strong> for self-hosted observability (open source, well-suited for high-cardinality metrics). Datadog for fully managed solution with built-in alerting.</td></tr>
+</table>
+</div>
+
+<hr>
+<p style="color:var(--muted); text-align:center; margin-top:3rem;">End of System Design: Rate Limiter</p>
+
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+    });
+</script>
 </body>
 </html>
