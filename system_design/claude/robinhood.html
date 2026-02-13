@@ -1,324 +1,1217 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>System Design: Robinhood</title>
-<style>body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:20px;background:#f5f5f5;color:#333}.container{max-width:1200px;margin:0 auto;background:#fff;padding:40px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.1)}h1{color:#1a73e8;border-bottom:3px solid #1a73e8;padding-bottom:10px}h2{color:#2c3e50;margin-top:40px;border-left:4px solid #1a73e8;padding-left:12px}h3{color:#34495e}h4{color:#555}.diagram{background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:20px;margin:20px 0;overflow-x:auto}.example{background:#e8f5e9;border-left:4px solid #4caf50;padding:15px;margin:15px 0;border-radius:4px}.deep-dive{background:#e3f2fd;border-left:4px solid #2196f3;padding:15px;margin:15px 0;border-radius:4px}.tradeoff{background:#fff3e0;border-left:4px solid #ff9800;padding:15px;margin:15px 0;border-radius:4px}.alternative{background:#fce4ec;border-left:4px solid #e91e63;padding:15px;margin:15px 0;border-radius:4px}table{border-collapse:collapse;width:100%;margin:15px 0}th,td{border:1px solid #ddd;padding:10px 14px;text-align:left}th{background:#1a73e8;color:#fff}tr:nth-child(even){background:#f9f9f9}code{background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:.9em}.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.85em;margin:2px}.tag-pk{background:#ffeb3b;color:#333}.tag-fk{background:#ce93d8;color:#333}.tag-idx{background:#80cbc4;color:#333}ul,ol{line-height:1.8}svg text{font-family:'Segoe UI',Arial,sans-serif}</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: '#0A0A1A',
+      primaryColor: '#7B2FFF',
+      primaryTextColor: '#ffffff',
+      primaryBorderColor: '#9D5CFF',
+      secondaryColor: '#FF2D78',
+      secondaryTextColor: '#ffffff',
+      secondaryBorderColor: '#FF5C9A',
+      tertiaryColor: '#00E5FF',
+      tertiaryTextColor: '#000000',
+      lineColor: '#B388FF',
+      textColor: '#E0E0E0',
+      mainBkg: '#7B2FFF',
+      nodeBorder: '#9D5CFF',
+      clusterBkg: '#12122A',
+      clusterBorder: '#7B2FFF55',
+      titleColor: '#ffffff',
+      edgeLabelBackground: '#16213E',
+      nodeTextColor: '#ffffff',
+      fontFamily: 'Segoe UI, system-ui, sans-serif',
+      fontSize: '14px'
+    },
+    flowchart: {
+      curve: 'basis',
+      padding: 20,
+      nodeSpacing: 50,
+      rankSpacing: 70,
+      htmlLabels: true,
+      defaultRenderer: 'dagre-wrapper'
+    }
+  });
+</script>
+<style>
+  :root { --bg: #0f1117; --card: #1a1d2e; --border: #2a2d3e; --accent: #00c805; --accent2: #5ac8fa; --text: #e0e0e0; --muted: #8a8f98; --warn: #ff6b6b; --heading: #ffffff; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; padding: 2rem; max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 2.4rem; color: var(--accent); border-bottom: 3px solid var(--accent); padding-bottom: .5rem; margin-bottom: 1.5rem; }
+  h2 { font-size: 1.8rem; color: var(--heading); margin-top: 2.5rem; margin-bottom: 1rem; border-left: 4px solid var(--accent); padding-left: .75rem; }
+  h3 { font-size: 1.35rem; color: var(--accent2); margin-top: 1.8rem; margin-bottom: .75rem; }
+  h4 { font-size: 1.1rem; color: var(--accent); margin-top: 1.2rem; margin-bottom: .5rem; }
+  p, li { margin-bottom: .5rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem 0; }
+  th, td { border: 1px solid var(--border); padding: .6rem .8rem; text-align: left; }
+  th { background: var(--card); color: var(--accent); font-weight: 600; }
+  td { background: #12141f; }
+  code { background: var(--card); color: var(--accent2); padding: 2px 6px; border-radius: 4px; font-size: .92em; }
+  pre { background: var(--card); padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; border: 1px solid var(--border); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin: 1.2rem 0; }
+  .example { background: #1c2333; border-left: 4px solid var(--accent2); padding: 1rem 1.2rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+  .example strong { color: var(--accent2); }
+  .warn { background: #2a1a1a; border-left: 4px solid var(--warn); padding: 1rem 1.2rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+  .warn strong { color: var(--warn); }
+  .diagram-container {
+    background: linear-gradient(135deg, #0A0A1A 0%, #10102A 50%, #0D0D20 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+    border: 1px solid #7B2FFF33;
+    box-shadow: 0 0 30px rgba(123, 47, 255, 0.08), 0 0 60px rgba(255, 45, 120, 0.04);
+  }
+  .mermaid { font-size: 14px; }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem 2rem; margin: 1.5rem 0; }
+  .toc a { color: var(--accent2); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; color: var(--accent); }
+  .toc li { margin-bottom: .35rem; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: .8em; font-weight: 600; margin-left: 6px; }
+  .badge-sql { background: #1a3a2a; color: #00c805; }
+  .badge-nosql { background: #1a2a3a; color: #5ac8fa; }
+  .badge-ts { background: #3a2a1a; color: #ffb347; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+</style>
 </head>
 <body>
-<div class="container">
-<h1>System Design: Robinhood</h1>
 
-<h2>Functional Requirements</h2>
+<h1>🏛️ System Design: Robinhood</h1>
+<p style="color:var(--muted); font-size:1.05rem;">A commission-free stock brokerage platform enabling users to trade stocks, ETFs, options, and cryptocurrencies with real-time market data and instant order execution.</p>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+<h3 style="margin-top:0;">Table of Contents</h3>
 <ol>
-  <li><strong>Buy/sell stocks</strong> – Users can place market, limit, and stop orders for stocks, ETFs, options, and crypto.</li>
-  <li><strong>Real-time portfolio</strong> – Display portfolio value with live price updates.</li>
-  <li><strong>Real-time stock prices</strong> – Stream live prices for watchlist and portfolio stocks.</li>
-  <li><strong>Order management</strong> – View pending orders, order history, and order status (pending, filled, cancelled).</li>
-  <li><strong>Account management</strong> – Deposit/withdraw funds, view balance, buying power.</li>
-  <li><strong>Fractional shares</strong> – Buy a fraction of a share (e.g., $10 worth of AAPL).</li>
-  <li><strong>News &amp; research</strong> – Show stock-related news, analyst ratings, and company info.</li>
-  <li><strong>Notifications</strong> – Price alerts, order fills, account activity.</li>
+  <li><a href="#fr">Functional Requirements</a></li>
+  <li><a href="#nfr">Non-Functional Requirements</a></li>
+  <li><a href="#flow1">Flow 1 — Real-Time Market Data Feed</a></li>
+  <li><a href="#flow2">Flow 2 — Place an Order (Buy / Sell)</a></li>
+  <li><a href="#flow3">Flow 3 — View Portfolio</a></li>
+  <li><a href="#flow4">Flow 4 — Deposit / Withdraw Funds</a></li>
+  <li><a href="#combined">Combined Overall Flow Diagram</a></li>
+  <li><a href="#schema">Database Schema</a></li>
+  <li><a href="#cdn-cache">CDN &amp; Cache Deep Dive</a></li>
+  <li><a href="#websocket">WebSocket Deep Dive</a></li>
+  <li><a href="#mq">Message Queue Deep Dive</a></li>
+  <li><a href="#pubsub">Pub/Sub Deep Dive</a></li>
+  <li><a href="#scaling">Scaling Considerations</a></li>
+  <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+  <li><a href="#alternatives">Alternative Approaches</a></li>
+  <li><a href="#additional">Additional Information</a></li>
+  <li><a href="#vendors">Vendor Suggestions</a></li>
 </ol>
+</div>
 
-<h2>Non-Functional Requirements</h2>
+<!-- ===== 1. FUNCTIONAL REQUIREMENTS ===== -->
+<h2 id="fr">1. Functional Requirements</h2>
+<div class="card">
 <ol>
-  <li><strong>Strong consistency</strong> – Order execution and account balances require ACID guarantees. No double-spending.</li>
-  <li><strong>Low latency</strong> – Order placement &lt;100ms; price updates &lt;200ms.</li>
-  <li><strong>High availability</strong> – 99.99% during market hours; any downtime means missed trades.</li>
-  <li><strong>Regulatory compliance</strong> – SEC/FINRA compliance; audit trails for all transactions.</li>
-  <li><strong>Scalability</strong> – Handle millions of concurrent users during volatile market events.</li>
+  <li><strong>User Registration &amp; Authentication</strong> — Users can sign up, log in with multi-factor authentication, and complete KYC (Know Your Customer) identity verification.</li>
+  <li><strong>Bank Linking &amp; Fund Transfers</strong> — Users can link bank accounts and deposit/withdraw funds via ACH transfers.</li>
+  <li><strong>Stock Search &amp; Discovery</strong> — Users can search for stocks, ETFs, options, and cryptocurrencies by ticker symbol or company name.</li>
+  <li><strong>Real-Time Market Data</strong> — Users see live bid/ask prices, charts (1D, 1W, 1M, 3M, 1Y, 5Y), and trading volume in real time.</li>
+  <li><strong>Place Orders</strong> — Users can place market orders, limit orders, stop orders, and stop-limit orders for both buying and selling.</li>
+  <li><strong>Portfolio View</strong> — Users can view their current holdings, unrealized P&amp;L, total portfolio value, and daily change in real time.</li>
+  <li><strong>Watchlists</strong> — Users can create, edit, and manage watchlists of stocks they want to monitor.</li>
+  <li><strong>Order History</strong> — Users can view their complete order history including pending, filled, cancelled, and rejected orders.</li>
+  <li><strong>Notifications</strong> — Users receive push notifications for order fills, price alerts, dividends, and account activity.</li>
+  <li><strong>Transaction History</strong> — Users can view all deposits, withdrawals, and dividend payments.</li>
 </ol>
+</div>
 
-<h2>Flow 1: Placing a Stock Order</h2>
-<div class="diagram">
-<svg viewBox="0 0 1100 450" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
-  <rect x="10" y="170" width="80" height="50" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
-  <text x="50" y="200" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">User</text>
-  <line x1="90" y1="195" x2="150" y2="195" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <text x="120" y="185" text-anchor="middle" fill="#555" font-size="8">POST /order</text>
-  <rect x="150" y="170" width="80" height="50" rx="8" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
-  <text x="190" y="193" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">API</text>
-  <text x="190" y="205" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">GW</text>
-  <line x1="230" y1="195" x2="300" y2="195" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <rect x="300" y="165" width="110" height="60" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
-  <text x="355" y="193" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Order</text>
-  <text x="355" y="208" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Service</text>
-  <!-- Risk Check -->
-  <line x1="355" y1="165" x2="355" y2="90" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <rect x="305" y="40" width="100" height="50" rx="8" fill="#e91e63" stroke="#ad1457" stroke-width="2"/>
-  <text x="355" y="63" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Risk &amp;</text>
-  <text x="355" y="78" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Validation</text>
-  <!-- Account DB -->
-  <line x1="405" y1="65" x2="480" y2="65" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <ellipse cx="530" cy="58" rx="40" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <rect x="490" y="58" width="80" height="22" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <ellipse cx="530" cy="80" rx="40" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="490" y1="58" x2="490" y2="80" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="570" y1="58" x2="570" y2="80" stroke="#d84315" stroke-width="1.5"/>
-  <text x="530" y="73" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Account DB</text>
-  <!-- Order Queue -->
-  <line x1="410" y1="195" x2="490" y2="195" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <rect x="490" y="170" width="100" height="50" rx="8" fill="#9c27b0" stroke="#6a1b9a" stroke-width="2"/>
-  <text x="540" y="193" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Order</text>
-  <text x="540" y="208" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Queue</text>
-  <!-- Matching Engine -->
-  <line x1="590" y1="195" x2="670" y2="195" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <rect x="670" y="165" width="120" height="60" rx="8" fill="#673ab7" stroke="#4527a0" stroke-width="2"/>
-  <text x="730" y="193" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Order Router /</text>
-  <text x="730" y="208" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Matching Engine</text>
-  <!-- To Exchange -->
-  <line x1="790" y1="195" x2="870" y2="195" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <text x="830" y="185" text-anchor="middle" fill="#555" font-size="8">FIX/TCP</text>
-  <rect x="870" y="170" width="100" height="50" rx="8" fill="#795548" stroke="#4e342e" stroke-width="2"/>
-  <text x="920" y="200" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Exchange</text>
-  <!-- Order DB -->
-  <line x1="355" y1="225" x2="355" y2="300" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <ellipse cx="355" cy="310" rx="45" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <rect x="310" y="310" width="90" height="25" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <ellipse cx="355" cy="335" rx="45" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="310" y1="310" x2="310" y2="335" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="400" y1="310" x2="400" y2="335" stroke="#d84315" stroke-width="1.5"/>
-  <text x="355" y="327" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Order DB</text>
-  <!-- Fill callback -->
-  <line x1="920" y1="220" x2="920" y2="310" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <text x="920" y="270" text-anchor="start" fill="#555" font-size="8"> Fill report</text>
-  <rect x="870" y="310" width="100" height="40" rx="6" fill="#00bcd4" stroke="#00838f" stroke-width="1.5"/>
-  <text x="920" y="335" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Settlement Svc</text>
-  <!-- Settlement to Account DB -->
-  <line x1="870" y1="330" x2="570" y2="80" stroke="#333" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a1)"/>
-  <text x="720" y="200" text-anchor="middle" fill="#555" font-size="7"></text>
-  <!-- Notification -->
-  <line x1="730" y1="225" x2="730" y2="300" stroke="#333" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a1)"/>
-  <rect x="685" y="300" width="90" height="35" rx="6" fill="#e91e63" stroke="#ad1457" stroke-width="1.5"/>
-  <text x="730" y="322" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Notif Svc</text>
-</svg>
+<!-- ===== 2. NON-FUNCTIONAL REQUIREMENTS ===== -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
+<div class="card">
+<table>
+<tr><th>Requirement</th><th>Target</th><th>Rationale</th></tr>
+<tr><td><strong>Latency</strong></td><td>&lt; 200 ms for order placement; &lt; 50 ms for price tick delivery</td><td>Trading is time-sensitive; stale prices or slow orders cost users money.</td></tr>
+<tr><td><strong>Availability</strong></td><td>99.99 % uptime</td><td>Financial platform — downtime during market hours is unacceptable and may have regulatory consequences.</td></tr>
+<tr><td><strong>Consistency</strong></td><td>Strong consistency for all financial data (orders, balances, holdings)</td><td>Double-spends or phantom balances are catastrophic; ACID guarantees are mandatory.</td></tr>
+<tr><td><strong>Eventual Consistency</strong></td><td>Acceptable for non-financial reads (watchlists, notifications, price ticks)</td><td>Small staleness is tolerable when no money is at stake.</td></tr>
+<tr><td><strong>Scalability</strong></td><td>10 M+ concurrent users during peak market hours</td><td>Market open (9:30 AM ET) and volatile events cause massive traffic spikes.</td></tr>
+<tr><td><strong>Durability</strong></td><td>Zero data loss for orders and transactions</td><td>Regulatory and fiduciary obligation to never lose a financial record.</td></tr>
+<tr><td><strong>Security</strong></td><td>TLS 1.3 everywhere, encryption at rest, 2FA, SOC 2 / SEC / FINRA compliance</td><td>Handles PII and financial data; regulatory requirements.</td></tr>
+<tr><td><strong>Auditability</strong></td><td>Complete immutable audit log of every state change</td><td>SEC/FINRA require brokerages to retain records for 6+ years.</td></tr>
+<tr><td><strong>Idempotency</strong></td><td>All order-mutating endpoints must be idempotent</td><td>Network retries must never cause duplicate order submissions.</td></tr>
+</table>
+</div>
+
+<!-- ===== 3. FLOW 1 — REAL-TIME MARKET DATA FEED ===== -->
+<h2 id="flow1">3. Flow 1 — Real-Time Market Data Feed</h2>
+<p>This flow covers how live stock prices travel from external exchanges to the user's screen.</p>
+
+<div class="diagram-container">
+<pre class="mermaid">
+flowchart LR
+    EX["🏦 External Exchanges\nand Data Providers"]
+    MDIS["Market Data\nIngestion Service"]
+    PS[(Pub-Sub)]
+    PRICE["Price Service\n(WebSocket Servers)"]
+    CACHE[("In-Memory\nPrice Cache")]
+    TSDB[("Time-Series\nDatabase")]
+    CLIENT["📱 Client\n(Mobile / Web)"]
+
+    EX -- "FIX / proprietary\nTCP feed" --> MDIS
+    MDIS -- "Publish price ticks\nper ticker topic" --> PS
+    PS -- "Fan-out to\nsubscribed instances" --> PRICE
+    PRICE -- "Write-through" --> CACHE
+    MDIS -- "Batch write\n(append-only)" --> TSDB
+    PRICE -- "WSS push\n(real-time ticks)" --> CLIENT
+    CLIENT -. "WSS subscribe\n(ticker list)" .-> PRICE
+
+    classDef external fill:#FF2D78,stroke:#FF5C9A,color:#fff,stroke-width:2px
+    classDef service fill:#7B2FFF,stroke:#9D5CFF,color:#fff,stroke-width:2px
+    classDef cache fill:#00FF88,stroke:#00CC6A,color:#000,stroke-width:2px
+    classDef db fill:#0066FF,stroke:#3388FF,color:#fff,stroke-width:2px
+    classDef client fill:#FFB800,stroke:#FFCC44,color:#000,stroke-width:2px
+    classDef messaging fill:#00E5FF,stroke:#00B8D4,color:#000,stroke-width:2px
+
+    class EX external
+    class MDIS,PRICE service
+    class PS messaging
+    class CACHE cache
+    class TSDB db
+    class CLIENT client
+</pre>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Normal price update:</strong> A user opens the Robinhood app and navigates to the AAPL stock page. The client establishes a WSS (WebSocket Secure) connection to the Price Service and sends a subscribe message for ticker <code>AAPL</code>. Meanwhile, the Market Data Ingestion Service is continuously receiving price ticks from external exchange data feeds over a TCP-based FIX protocol connection. When a new AAPL tick arrives (e.g., $187.42), the Ingestion Service publishes it to the <code>AAPL</code> topic on the Pub/Sub system. The Price Service instance that has this user's WebSocket connection is subscribed to the <code>AAPL</code> topic, receives the tick, writes it through to the in-memory price cache, and pushes it over the WebSocket to the client. The client renders the updated price on screen within ~50 ms of the exchange publishing it.
 </div>
 
 <div class="example">
-<h4>Example 1: Market buy order</h4>
-<p>Alice taps "Buy" on AAPL, enters 10 shares, selects "Market Order", and taps "Submit". Client sends <strong>POST /api/v1/orders</strong> with <code>{symbol: "AAPL", side: "BUY", type: "MARKET", quantity: 10}</code>. API Gateway → <strong>Order Service</strong>. The <strong>Risk &amp; Validation</strong> module checks: (1) Alice has sufficient buying power ($1,785.20 needed at $178.52/share — checked against <strong>Account DB</strong>), (2) order is within daily limits, (3) market is open. Validation passes. Order is saved to <strong>Order DB</strong> with status=PENDING and buying power is held (reserved). The order is queued in the <strong>Order Queue</strong> (Kafka). The <strong>Order Router</strong> sends the order to the <strong>NYSE/NASDAQ</strong> via FIX protocol over TCP. The exchange fills the order at $178.50. A fill report comes back → <strong>Settlement Service</strong> updates Alice's account: deducts $1,785.00, credits 10 shares of AAPL. Order status → FILLED. <strong>Notification Service</strong> sends push: "Your order for 10 shares of AAPL was filled at $178.50."</p>
+<strong>Example 2 — Historical chart load:</strong> The same user swipes to the 1-year chart view for AAPL. The client sends an HTTP GET request to the Price Service: <code>GET /api/v1/prices/AAPL/history?range=1Y&interval=1D</code>. The Price Service queries the Time-Series Database for AAPL daily OHLCV (open, high, low, close, volume) data for the past year and returns the JSON array to the client, which renders the chart.
 </div>
 
 <div class="example">
-<h4>Example 2: Limit order (not immediately filled)</h4>
-<p>Bob places a limit order: Buy TSLA at $240 (current price: $248). The order passes validation (buying power reserved). It's sent to the exchange, which places it on the order book. The order remains PENDING. Hours later, TSLA drops to $240 and the order fills. The exchange sends a fill report → Settlement updates Bob's account. Push notification sent.</p>
+<strong>Example 3 — Reconnection after network drop:</strong> The user's phone loses Wi-Fi momentarily. The WebSocket connection drops. The client detects the disconnect via a missed heartbeat, waits using exponential backoff (1s, 2s, 4s…), reconnects via WSS, re-authenticates with the JWT token, and re-subscribes to <code>AAPL</code>. The Price Service sends the latest cached price immediately upon re-subscription so the user sees the current price without waiting for the next tick.
 </div>
 
-<h3>Deep Dive: Components</h3>
-<div class="deep-dive">
-<h4>Order Service</h4>
-<p><strong>Protocol:</strong> HTTPS POST (REST). Input: <code>{symbol, side, type, quantity, limit_price?}</code>. Output: <code>{order_id, status, estimated_price}</code>.</p>
-<p>Implements <strong>idempotency</strong> via client-provided idempotency keys to prevent duplicate orders from network retries.</p>
-</div>
+<h3>Component Deep Dive</h3>
 
-<div class="deep-dive">
-<h4>Risk &amp; Validation</h4>
-<p>Pre-trade risk checks: buying power verification (with reserved funds), pattern day trader rules, position limits, market hours check, symbol trading halt check. Uses <strong>strong consistency</strong> — reads the latest account balance from the primary DB (not a replica) to prevent double-spending.</p>
-</div>
+<h4>External Exchanges &amp; Data Providers</h4>
+<p>Third-party data sources (e.g., NYSE, NASDAQ consolidated feeds) that emit real-time price ticks. Communication uses the <strong>FIX (Financial Information eXchange) protocol over TCP</strong> — the industry-standard protocol for securities trading communication. TCP is chosen because every price tick must arrive reliably and in order; dropped or reordered packets would produce incorrect market data.</p>
 
-<div class="deep-dive">
-<h4>Order Router / Matching Engine</h4>
-<p>Routes orders to the best exchange (NYSE, NASDAQ, dark pools) based on price improvement and execution quality (NBBO — National Best Bid and Offer). Communicates via <strong>FIX protocol over TCP</strong> — the standard for electronic trading. Uses persistent TCP connections with heartbeats for reliability.</p>
-</div>
-
-<div class="deep-dive">
-<h4>Settlement Service</h4>
-<p>Processes fill reports from exchanges. In an atomic transaction: deducts cash from buyer's account, credits shares; deducts shares from seller's account, credits cash. Writes to the <strong>Account DB</strong> and <strong>Transaction Ledger</strong> (append-only audit log). Standard settlement is T+1 (trade date + 1 business day), but Robinhood provides instant access to funds.</p>
-</div>
-
-<h2>Flow 2: Real-Time Portfolio View</h2>
-<div class="diagram">
-<svg viewBox="0 0 850 250" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
-  <rect x="10" y="90" width="80" height="50" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
-  <text x="50" y="120" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">User</text>
-  <line x1="90" y1="115" x2="160" y2="115" stroke="#333" stroke-width="2" marker-end="url(#a2)"/>
-  <text x="125" y="105" text-anchor="middle" fill="#555" font-size="8">WebSocket</text>
-  <rect x="160" y="85" width="100" height="60" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
-  <text x="210" y="110" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Portfolio</text>
-  <text x="210" y="125" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Service</text>
-  <line x1="260" y1="105" x2="340" y2="60" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
-  <text x="310" y="70" text-anchor="middle" fill="#555" font-size="8">Holdings</text>
-  <ellipse cx="390" cy="50" rx="40" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <rect x="350" y="50" width="80" height="20" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <ellipse cx="390" cy="70" rx="40" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="350" y1="50" x2="350" y2="70" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="430" y1="50" x2="430" y2="70" stroke="#d84315" stroke-width="1.5"/>
-  <text x="390" y="64" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Account DB</text>
-  <line x1="260" y1="125" x2="340" y2="165" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
-  <text x="310" y="160" text-anchor="middle" fill="#555" font-size="8">Live prices</text>
-  <ellipse cx="390" cy="160" rx="40" ry="10" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <rect x="350" y="160" width="80" height="20" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <ellipse cx="390" cy="180" rx="40" ry="10" fill="#00796b" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="350" y1="160" x2="350" y2="180" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="430" y1="160" x2="430" y2="180" stroke="#00695c" stroke-width="1.5"/>
-  <text x="390" y="174" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Price Cache</text>
-</svg>
-</div>
-
-<div class="example">
-<h4>Example: Portfolio dashboard</h4>
-<p>Alice opens Robinhood. The app establishes a WebSocket connection. The <strong>Portfolio Service</strong> fetches Alice's holdings from the <strong>Account DB</strong> (AAPL: 10 shares, TSLA: 5 shares) and current prices from the <strong>Price Cache</strong> (Redis). Calculates total portfolio value: (10 × $178.50) + (5 × $248.00) = $3,025.00. Streams live price updates via WebSocket — as AAPL changes to $179.00, the portfolio value updates to $3,030.00 in real time.</p>
-</div>
-
-<h2>Overall Combined Flow</h2>
-<div class="diagram">
-<svg viewBox="0 0 1050 350" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
-  <rect x="5" y="140" width="70" height="40" rx="6" fill="#4caf50" stroke="#388e3c" stroke-width="1.5"/>
-  <text x="40" y="164" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Client</text>
-  <line x1="75" y1="160" x2="120" y2="160" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <rect x="120" y="140" width="65" height="40" rx="6" fill="#ff9800" stroke="#f57c00" stroke-width="1.5"/>
-  <text x="152" y="164" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">API GW</text>
-  <line x1="185" y1="155" x2="230" y2="100" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <line x1="185" y1="165" x2="230" y2="215" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="230" y="80" width="85" height="40" rx="6" fill="#2196f3" stroke="#1565c0" stroke-width="1.5"/>
-  <text x="272" y="104" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Order Svc</text>
-  <rect x="230" y="200" width="85" height="40" rx="6" fill="#2196f3" stroke="#1565c0" stroke-width="1.5"/>
-  <text x="272" y="224" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Portfolio Svc</text>
-  <line x1="315" y1="100" x2="360" y2="55" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="360" y="35" width="75" height="35" rx="5" fill="#e91e63" stroke="#ad1457" stroke-width="1"/>
-  <text x="397" y="57" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Risk Chk</text>
-  <line x1="315" y1="100" x2="360" y2="100" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="360" y="80" width="80" height="40" rx="6" fill="#9c27b0" stroke="#6a1b9a" stroke-width="1.5"/>
-  <text x="400" y="104" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Order Q</text>
-  <line x1="440" y1="100" x2="490" y2="100" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="490" y="80" width="80" height="40" rx="6" fill="#673ab7" stroke="#4527a0" stroke-width="1.5"/>
-  <text x="530" y="104" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Router</text>
-  <line x1="570" y1="100" x2="620" y2="100" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="620" y="80" width="80" height="40" rx="6" fill="#795548" stroke="#4e342e" stroke-width="1.5"/>
-  <text x="660" y="104" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Exchange</text>
-  <line x1="660" y1="120" x2="660" y2="165" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="620" y="165" width="80" height="35" rx="5" fill="#00bcd4" stroke="#00838f" stroke-width="1"/>
-  <text x="660" y="187" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Settlement</text>
-  <line x1="620" y1="182" x2="540" y2="182" stroke="#333" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a3)"/>
-  <ellipse cx="500" cy="178" rx="35" ry="8" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
-  <rect x="465" y="178" width="70" height="14" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
-  <ellipse cx="500" cy="192" rx="35" ry="8" fill="#e64a19" stroke="#d84315" stroke-width="1"/>
-  <line x1="465" y1="178" x2="465" y2="192" stroke="#d84315" stroke-width="1"/>
-  <line x1="535" y1="178" x2="535" y2="192" stroke="#d84315" stroke-width="1"/>
-  <text x="500" y="189" text-anchor="middle" fill="#fff" font-size="6" font-weight="bold">Account DB</text>
-  <!-- Market data path -->
-  <rect x="5" y="280" width="80" height="35" rx="5" fill="#795548" stroke="#4e342e" stroke-width="1"/>
-  <text x="45" y="302" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Exchanges</text>
-  <line x1="85" y1="297" x2="130" y2="297" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="130" y="280" width="80" height="35" rx="5" fill="#2196f3" stroke="#1565c0" stroke-width="1"/>
-  <text x="170" y="302" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Ingester</text>
-  <line x1="210" y1="297" x2="260" y2="297" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="260" y="280" width="70" height="35" rx="5" fill="#9c27b0" stroke="#6a1b9a" stroke-width="1"/>
-  <text x="295" y="302" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Kafka</text>
-  <line x1="330" y1="290" x2="380" y2="260" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <ellipse cx="415" cy="253" rx="30" ry="7" fill="#009688" stroke="#00695c" stroke-width="1"/>
-  <rect x="385" y="253" width="60" height="13" fill="#009688" stroke="#00695c" stroke-width="1"/>
-  <ellipse cx="415" cy="266" rx="30" ry="7" fill="#00796b" stroke="#00695c" stroke-width="1"/>
-  <line x1="385" y1="253" x2="385" y2="266" stroke="#00695c" stroke-width="1"/>
-  <line x1="445" y1="253" x2="445" y2="266" stroke="#00695c" stroke-width="1"/>
-  <text x="415" y="263" text-anchor="middle" fill="#fff" font-size="6" font-weight="bold">Price$</text>
-  <line x1="330" y1="297" x2="380" y2="297" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="380" y="283" width="80" height="30" rx="5" fill="#e91e63" stroke="#ad1457" stroke-width="1"/>
-  <text x="420" y="302" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">WS Hub</text>
-  <line x1="420" y1="283" x2="272" y2="240" stroke="#333" stroke-width="1" stroke-dasharray="3,2"/>
-</svg>
-</div>
-
-<div class="example">
-<h4>Combined Example</h4>
-<p><strong>Trading:</strong> Client → POST /order → API GW → Order Svc → Risk Check (buying power in Account DB) → Order Queue → Router → FIX/TCP → Exchange → Fill → Settlement → Update Account DB → Push Notification.
-<br/><strong>Market Data:</strong> Exchanges → Ingester → Kafka → Price Cache (Redis) + WebSocket Hub → streams to Portfolio Svc and directly to clients.</p>
-</div>
-
-<h2>Database Schema</h2>
-<h3>SQL (PostgreSQL — ACID required for financial data)</h3>
-<h4>1. accounts</h4>
-<table>
-  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
-  <tr><td>account_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td><td>Unique account ID</td></tr>
-  <tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → users</span> <span class="tag tag-idx">Unique</span></td><td>Account owner</td></tr>
-  <tr><td>cash_balance</td><td>DECIMAL(15,2)</td><td></td><td>Available cash</td></tr>
-  <tr><td>buying_power</td><td>DECIMAL(15,2)</td><td></td><td>Cash - reserved for pending orders</td></tr>
-  <tr><td>account_type</td><td>ENUM</td><td></td><td>INDIVIDUAL, MARGIN, IRA</td></tr>
-  <tr><td>status</td><td>ENUM</td><td></td><td>ACTIVE, FROZEN, CLOSED</td></tr>
-</table>
-<p><strong>Why SQL:</strong> Financial data requires ACID. cash_balance and buying_power must be updated atomically to prevent double-spending. Uses <code>SELECT ... FOR UPDATE</code> for row-level locking during order placement.</p>
-
-<h4>2. orders</h4>
-<table>
-  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
-  <tr><td>order_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td><td>Unique order ID</td></tr>
-  <tr><td>account_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK</span> <span class="tag tag-idx">B-tree</span></td><td>Account placing the order</td></tr>
-  <tr><td>symbol</td><td>VARCHAR(10)</td><td><span class="tag tag-idx">B-tree</span></td><td>Ticker symbol</td></tr>
-  <tr><td>side</td><td>ENUM('BUY','SELL')</td><td></td><td>Order side</td></tr>
-  <tr><td>type</td><td>ENUM('MARKET','LIMIT','STOP')</td><td></td><td>Order type</td></tr>
-  <tr><td>quantity</td><td>DECIMAL(15,6)</td><td></td><td>Shares (supports fractional)</td></tr>
-  <tr><td>limit_price</td><td>DECIMAL(10,2)</td><td></td><td>Limit price (nullable for market orders)</td></tr>
-  <tr><td>filled_price</td><td>DECIMAL(10,2)</td><td></td><td>Actual execution price</td></tr>
-  <tr><td>status</td><td>ENUM</td><td><span class="tag tag-idx">B-tree</span></td><td>PENDING, FILLED, PARTIALLY_FILLED, CANCELLED</td></tr>
-  <tr><td>idempotency_key</td><td>VARCHAR(64)</td><td><span class="tag tag-idx">Unique Hash</span></td><td>Prevents duplicate orders</td></tr>
-  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Order creation time</td></tr>
-  <tr><td>filled_at</td><td>TIMESTAMP</td><td></td><td>Execution time</td></tr>
-</table>
-<p><strong>Index:</strong> Hash index on <code>idempotency_key</code> for O(1) duplicate detection. B-tree on <code>(account_id, created_at DESC)</code> for order history queries. B-tree on <code>status</code> for finding pending orders.</p>
-<p><strong>Sharding:</strong> By <code>account_id</code> — all orders for an account are on the same shard, enabling efficient history queries and atomic balance updates in the same transaction.</p>
-
-<h4>3. holdings</h4>
-<table>
-  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
-  <tr><td>account_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span> <span class="tag tag-fk">FK</span></td><td>Account</td></tr>
-  <tr><td>symbol</td><td>VARCHAR(10)</td><td><span class="tag tag-pk">PK</span></td><td>Ticker</td></tr>
-  <tr><td>quantity</td><td>DECIMAL(15,6)</td><td></td><td>Shares held</td></tr>
-  <tr><td>avg_cost</td><td>DECIMAL(10,2)</td><td></td><td>Average cost basis per share</td></tr>
-</table>
-
-<h4>4. transaction_ledger (append-only audit log)</h4>
-<table>
-  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
-  <tr><td>ledger_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td><td>Auto-increment</td></tr>
-  <tr><td>account_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK</span></td><td>Account</td></tr>
-  <tr><td>transaction_type</td><td>ENUM</td><td></td><td>BUY, SELL, DEPOSIT, WITHDRAWAL, DIVIDEND</td></tr>
-  <tr><td>amount</td><td>DECIMAL(15,2)</td><td></td><td>Dollar amount</td></tr>
-  <tr><td>symbol</td><td>VARCHAR(10)</td><td></td><td>Ticker (nullable for deposits)</td></tr>
-  <tr><td>quantity</td><td>DECIMAL(15,6)</td><td></td><td>Shares (nullable for deposits)</td></tr>
-  <tr><td>timestamp</td><td>TIMESTAMP</td><td></td><td>Transaction time</td></tr>
-</table>
-<p><strong>Append-only:</strong> Never updated or deleted. Required for regulatory compliance (SEC audit trail). Immutable ledger.</p>
-
-<h2>Cache Deep Dive</h2>
-<div class="deep-dive">
-<h4>Price Cache (Redis)</h4>
-<p>Same as stock ticker design: updated on every price tick from Kafka. Used for portfolio value calculation.</p>
-<p><strong>Strategy:</strong> Write-through. No TTL during market hours.</p>
-</div>
-<div class="deep-dive">
-<h4>CDN</h4>
-<p><strong>Not appropriate for trading data</strong> (real-time, personalized). <strong>Appropriate for</strong>: static content (company logos, news articles), app bundles.</p>
-</div>
-
-<h2>Scaling Considerations</h2>
+<h4>Market Data Ingestion Service</h4>
+<p>A stateless service that maintains persistent TCP connections to external data feeds. It normalizes heterogeneous feed formats into a unified internal price-tick schema and publishes each tick to the Pub/Sub system. It also performs batch writes of tick data to the Time-Series Database for historical chart queries.</p>
 <ul>
-  <li><strong>Load Balancer:</strong> L7 LB with round-robin for API GW. L4 LB for WebSocket connections.</li>
-  <li><strong>Order Service:</strong> Stateless, horizontally scalable. During volatile events (GME squeeze), auto-scale to 10x normal capacity.</li>
-  <li><strong>Database:</strong> Primary-replica for reads. Sharding by account_id for writes. Read replicas for portfolio queries (eventual consistency acceptable for display, not for trading).</li>
+  <li><strong>Protocol (inbound):</strong> FIX over TCP from exchanges</li>
+  <li><strong>Protocol (outbound):</strong> Pub/Sub publish; batch write to Time-Series DB</li>
+  <li><strong>Input:</strong> Raw price ticks in exchange-specific format</li>
+  <li><strong>Output:</strong> Normalized <code>{ ticker, timestamp, bid, ask, last, volume }</code></li>
 </ul>
 
-<h2>Tradeoffs and Deep Dives</h2>
-<div class="tradeoff">
-<h4>Strong Consistency vs. Availability for Orders</h4>
-<p>Order placement uses strong consistency (read from primary, row-level locks). This means slightly higher latency (~10ms) but prevents double-spending. We can't use eventual consistency here — a user could place two orders exceeding their balance if we read from a stale replica.</p>
+<h4>Pub/Sub System</h4>
+<p>A publish-subscribe messaging system with topics organized per ticker symbol (e.g., topic <code>prices.AAPL</code>, <code>prices.TSLA</code>). Provides fan-out delivery: one published tick is delivered to all subscribed Price Service instances. Messages are ephemeral — if a subscriber misses a tick, the next tick supersedes it (unlike a message queue where every message must be consumed).</p>
+
+<h4>Price Service (WebSocket Servers)</h4>
+<p>Stateful servers that maintain persistent WSS connections to clients. Each instance subscribes to Pub/Sub topics matching the tickers its connected clients care about. When a tick arrives, it pushes the update to every connected client subscribed to that ticker.</p>
+<ul>
+  <li><strong>Protocol (client-facing):</strong> WSS (WebSocket Secure over TLS 1.3)</li>
+  <li><strong>Protocol (internal):</strong> Pub/Sub consumer</li>
+  <li><strong>REST endpoint for historical data:</strong> <code>GET /api/v1/prices/{ticker}/history?range={range}&interval={interval}</code></li>
+  <li><strong>Input (WebSocket):</strong> Subscribe/unsubscribe messages from client with ticker list</li>
+  <li><strong>Output (WebSocket):</strong> <code>{ ticker, timestamp, bid, ask, last, volume, change, changePercent }</code></li>
+  <li><strong>REST Output:</strong> Array of <code>{ date, open, high, low, close, volume }</code></li>
+</ul>
+
+<h4>In-Memory Price Cache</h4>
+<p>Stores the latest tick for every active ticker. Used for: (a) immediate price lookup when a client first subscribes (no need to wait for next tick), (b) portfolio valuation by the Portfolio Service, (c) order validation by the Order Service. See <a href="#cdn-cache">CDN &amp; Cache Deep Dive</a> for strategies and policies.</p>
+
+<h4>Time-Series Database</h4>
+<p>Optimized for append-only writes and time-range queries. Stores historical OHLCV data partitioned by ticker and time. Used for chart rendering. See <a href="#schema">Schema section</a> for details.</p>
+
+<h4>Client (Mobile / Web)</h4>
+<p>The Robinhood iOS, Android, or web application. Establishes a single multiplexed WSS connection to the Price Service. Renders live prices, sparkline charts, and detailed OHLCV charts.</p>
+
+<hr>
+
+<!-- ===== 4. FLOW 2 — PLACE AN ORDER ===== -->
+<h2 id="flow2">4. Flow 2 — Place an Order (Buy / Sell)</h2>
+<p>This flow covers the lifecycle of an order from user submission through execution by a market maker.</p>
+
+<div class="diagram-container">
+<pre class="mermaid">
+flowchart LR
+    CLIENT["📱 Client"]
+    LB["Load\nBalancer"]
+    GW["API Gateway"]
+    OS["Order Service"]
+    DB_ORD[("SQL DB\n(Orders)")]
+    DB_ACC[("SQL DB\n(Accounts)")]
+    DB_HOLD[("SQL DB\n(Holdings)")]
+    MQ["Message\nQueue"]
+    OP["Order\nProcessor"]
+    MM["🏦 External\nMarket Maker"]
+    NS["Notification\nService"]
+    AUDIT[("Audit Log")]
+
+    CLIENT -- "HTTPS POST\n/orders" --> LB
+    LB --> GW
+    GW -- "Auth + Rate Limit\n+ Idempotency Check" --> OS
+    OS -- "1. Validate balance\n(read)" --> DB_ACC
+    OS -- "2. Write order\nstatus=PENDING" --> DB_ORD
+    OS -- "3. Enqueue order" --> MQ
+    OS -- "Return 202\nAccepted" --> CLIENT
+    MQ -- "Dequeue" --> OP
+    OP -- "Route order\n(FIX over TCP)" --> MM
+    MM -- "Execution report\n(FIX)" --> OP
+    OP -- "4. Update order\nstatus=FILLED" --> DB_ORD
+    OP -- "5. Debit-credit\nbalance" --> DB_ACC
+    OP -- "6. Update\nholdings" --> DB_HOLD
+    OP -- "7. Append" --> AUDIT
+    OP -- "8. Send fill\nnotification" --> NS
+    NS -- "Push notification" --> CLIENT
+
+    classDef external fill:#FF2D78,stroke:#FF5C9A,color:#fff,stroke-width:2px
+    classDef service fill:#7B2FFF,stroke:#9D5CFF,color:#fff,stroke-width:2px
+    classDef infra fill:#E040FB,stroke:#EA80FC,color:#fff,stroke-width:2px
+    classDef cache fill:#00FF88,stroke:#00CC6A,color:#000,stroke-width:2px
+    classDef db fill:#0066FF,stroke:#3388FF,color:#fff,stroke-width:2px
+    classDef client fill:#FFB800,stroke:#FFCC44,color:#000,stroke-width:2px
+    classDef messaging fill:#00E5FF,stroke:#00B8D4,color:#000,stroke-width:2px
+
+    class CLIENT client
+    class LB,GW infra
+    class OS,OP,NS service
+    class DB_ORD,DB_ACC,DB_HOLD,AUDIT db
+    class MQ messaging
+    class MM external
+</pre>
 </div>
 
-<h2>Alternative Approaches</h2>
-<div class="alternative">
-<h4>Event Sourcing for Account Balance</h4>
-<p>Instead of updating the balance directly, record all events (deposits, fills, withdrawals) and compute the balance by replaying events. More complex but provides a complete audit trail. Hybrid approach: use event sourcing for the ledger but maintain a materialized view of the current balance for fast queries.</p>
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Market buy order (happy path):</strong> User taps "Buy" on AAPL and enters a market order for 10 shares. The client sends <code>HTTPS POST /api/v1/orders</code> with body <code>{ ticker: "AAPL", side: "buy", type: "market", quantity: 10, idempotencyKey: "uuid-abc-123" }</code>. The request hits the Load Balancer → API Gateway (which validates the JWT, checks rate limits, and verifies the idempotency key hasn't been used). The Order Service reads the user's account balance from the SQL Accounts table, confirms sufficient buying power (~$1,874 needed based on current price × quantity + buffer), writes the order to the SQL Orders table with status <code>PENDING</code>, and enqueues the order on the Message Queue. The service returns <code>HTTP 202 Accepted</code> with the <code>order_id</code>. The Order Processor dequeues the message, formats a FIX NewOrderSingle message, and sends it to the market maker over a persistent TCP connection. The market maker fills the order at $187.42/share and sends back a FIX ExecutionReport. The Order Processor updates the order to <code>FILLED</code> (filled_quantity=10, filled_avg_price=187.42), debits the account balance by $1,874.20, inserts/updates the AAPL holding (quantity +10, recalculates avg_cost_basis), appends to the audit log, and triggers a push notification: "Your order to buy 10 shares of AAPL at $187.42 has been filled."
 </div>
 
-<h2>Additional Information</h2>
-<h3>Circuit Breakers</h3>
-<p>If the exchange connection drops, the Order Router activates a circuit breaker — new orders are queued and retried when the connection recovers. Prevents cascading failures.</p>
-<h3>Fractional Shares</h3>
-<p>Robinhood handles fractional shares internally. When Alice buys $10 of AAPL ($178/share), Robinhood buys whole shares in bulk and allocates fractional ownership. Stored as <code>quantity: 0.056180</code> in the holdings table.</p>
+<div class="example">
+<strong>Example 2 — Limit order not immediately filled:</strong> User places a limit buy for 5 shares of TSLA at $200 (current price is $215). The Order Service validates the balance, writes the order with status <code>PENDING</code>, and enqueues it. The Order Processor sends the limit order to the market maker. Because the limit price ($200) is below the current ask ($215), the order sits open at the market maker. The order status is updated to <code>SUBMITTED</code>. If TSLA later drops to $200, the market maker fills it and sends the execution report. The Order Processor then follows the same fill processing path. If the user cancels before the fill, the client sends <code>HTTPS DELETE /api/v1/orders/{orderId}</code>, the Order Service sends a FIX OrderCancelRequest, and upon confirmation, updates the status to <code>CANCELLED</code>.
 </div>
+
+<div class="example">
+<strong>Example 3 — Insufficient funds:</strong> User tries to buy 1,000 shares of AAPL but only has $5,000 in buying power. The Order Service reads the account balance, determines the estimated cost (~$187,420) exceeds buying power ($5,000), and immediately returns <code>HTTP 422 Unprocessable Entity</code> with error <code>{ code: "INSUFFICIENT_FUNDS", message: "Buying power of $5,000 is insufficient for this order." }</code>. No order is written to the database. No message is enqueued.
+</div>
+
+<div class="example">
+<strong>Example 4 — Partial fill:</strong> User places a market buy for 500 shares of a thinly-traded small-cap stock. The market maker can only fill 200 shares immediately at $12.50 and sends a partial execution report. The Order Processor updates the order: status → <code>PARTIAL_FILL</code>, filled_quantity → 200, filled_avg_price → $12.50. The account is debited $2,500, holdings are updated with 200 shares. Later, another 300 shares are filled at $12.55. The processor updates: status → <code>FILLED</code>, filled_quantity → 500, filled_avg_price → $12.52 (weighted average). The account is debited the remaining $3,765.
+</div>
+
+<div class="example">
+<strong>Example 5 — Duplicate request (idempotency):</strong> Due to a network timeout, the client retries the same order with the same <code>idempotencyKey: "uuid-abc-123"</code>. The API Gateway checks the idempotency store, finds this key was already processed, and returns the original <code>HTTP 202 Accepted</code> response with the same <code>order_id</code>. No duplicate order is created.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Load Balancer</h4>
+<p>Layer 7 (HTTP-aware) load balancer that terminates TLS, distributes requests across API Gateway instances using round-robin. Performs health checks every 5 seconds. See <a href="#scaling">Scaling Considerations</a> for placement details.</p>
+
+<h4>API Gateway</h4>
+<p>Entry point for all REST API traffic. Responsibilities: JWT-based authentication, per-user rate limiting (e.g., 100 orders/minute), idempotency key deduplication (stores keys in cache with 24-hour TTL), request routing to downstream services, and request/response logging.</p>
+<ul>
+  <li><strong>Protocol:</strong> HTTPS (TLS 1.3)</li>
+</ul>
+
+<h4>Order Service</h4>
+<p>Core service handling order lifecycle management. Stateless — all state is in the database.</p>
+<ul>
+  <li><strong>Protocol:</strong> HTTPS</li>
+  <li><strong>Endpoints:</strong></li>
+</ul>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Input</th><th>Output</th><th>Description</th></tr>
+<tr><td><code>POST</code></td><td><code>/api/v1/orders</code></td><td><code>{ ticker, side, type, quantity, price?, stopPrice?, idempotencyKey }</code></td><td><code>{ orderId, status, createdAt }</code> — HTTP 202</td><td>Place a new order</td></tr>
+<tr><td><code>GET</code></td><td><code>/api/v1/orders</code></td><td>Query: <code>?status=&page=&limit=</code></td><td>Paginated array of orders</td><td>List user's orders</td></tr>
+<tr><td><code>GET</code></td><td><code>/api/v1/orders/{orderId}</code></td><td>Path param: orderId</td><td>Single order object</td><td>Get order detail</td></tr>
+<tr><td><code>DELETE</code></td><td><code>/api/v1/orders/{orderId}</code></td><td>Path param: orderId</td><td><code>{ orderId, status: "CANCELLING" }</code></td><td>Cancel a pending/submitted order</td></tr>
+</table>
+
+<h4>SQL Databases (Orders, Accounts, Holdings)</h4>
+<p>All financial tables live in SQL databases with ACID guarantees. The Order Processor's post-execution updates (update order status + debit account + update holdings) are wrapped in a <strong>single database transaction</strong> to prevent inconsistent state. See <a href="#schema">Schema section</a> for full details.</p>
+
+<h4>Message Queue</h4>
+<p>Durable, at-least-once delivery queue that decouples order submission from order execution. See <a href="#mq">Message Queue Deep Dive</a>.</p>
+
+<h4>Order Processor</h4>
+<p>Consumes messages from the queue and communicates with the external market maker via the <strong>FIX protocol over persistent TCP connections</strong>. Handles execution reports (fills, partial fills, rejections) and updates all relevant database tables within a transaction. Implements retry logic with exponential backoff for transient failures and routes to a dead-letter queue for permanent failures.</p>
+<ul>
+  <li><strong>Protocol (to market maker):</strong> FIX 4.4 over TCP</li>
+  <li><strong>Protocol (internal):</strong> Message Queue consumer</li>
+</ul>
+
+<h4>External Market Maker</h4>
+<p>Third-party entities (e.g., Citadel Securities, Virtu Financial) that execute orders via Payment for Order Flow (PFOF). Robinhood routes orders to the market maker that provides the best execution price (SEC Rule 606 compliance). Communication is bidirectional FIX over TCP.</p>
+
+<h4>Notification Service</h4>
+<p>Sends push notifications to iOS (APNs) and Android (FCM) devices. Receives events from the Order Processor and formats user-facing messages.</p>
+<ul>
+  <li><strong>Protocol:</strong> Internal HTTP or Message Queue consumer</li>
+  <li><strong>Output:</strong> Push notification to device</li>
+</ul>
+
+<h4>Audit Log</h4>
+<p>Append-only, immutable log of every order state change, balance mutation, and system action. Stored in a separate write-optimized database. Required by SEC/FINRA for regulatory compliance. Records can never be modified or deleted.</p>
+
+<hr>
+
+<!-- ===== 5. FLOW 3 — VIEW PORTFOLIO ===== -->
+<h2 id="flow3">5. Flow 3 — View Portfolio</h2>
+
+<div class="diagram-container">
+<pre class="mermaid">
+flowchart LR
+    CLIENT["📱 Client"]
+    LB["Load\nBalancer"]
+    GW["API Gateway"]
+    PS["Portfolio\nService"]
+    CACHE[("In-Memory\nPrice Cache")]
+    DB_HOLD[("SQL DB\n(Holdings)")]
+    PCACHE[("Portfolio\nCache")]
+
+    CLIENT -- "HTTPS GET\n/portfolio" --> LB
+    LB --> GW
+    GW --> PS
+    PS -- "1. Check\nportfolio cache" --> PCACHE
+    PCACHE -. "Cache MISS" .-> PS
+    PS -- "2. Fetch\nholdings" --> DB_HOLD
+    PS -- "3. Fetch latest\nprices" --> CACHE
+    PS -- "4. Compute\nPnL" --> PS
+    PS -- "5. Cache result\n(TTL 10s)" --> PCACHE
+    PS -- "Return portfolio\nJSON" --> CLIENT
+
+    classDef external fill:#FF2D78,stroke:#FF5C9A,color:#fff,stroke-width:2px
+    classDef service fill:#7B2FFF,stroke:#9D5CFF,color:#fff,stroke-width:2px
+    classDef infra fill:#E040FB,stroke:#EA80FC,color:#fff,stroke-width:2px
+    classDef cache fill:#00FF88,stroke:#00CC6A,color:#000,stroke-width:2px
+    classDef db fill:#0066FF,stroke:#3388FF,color:#fff,stroke-width:2px
+    classDef client fill:#FFB800,stroke:#FFCC44,color:#000,stroke-width:2px
+
+    class CLIENT client
+    class LB,GW infra
+    class PS service
+    class CACHE,PCACHE cache
+    class DB_HOLD db
+</pre>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Portfolio load (cache miss):</strong> User opens the app and navigates to the Portfolio tab. The client sends <code>HTTPS GET /api/v1/portfolio</code>. The Portfolio Service first checks the Portfolio Cache for the user's cached portfolio — cache MISS. It then queries the SQL Holdings table for all of the user's holdings (e.g., 10 AAPL @ avg cost $150, 5 TSLA @ avg cost $200). It fetches the latest prices from the In-Memory Price Cache (AAPL=$187.42, TSLA=$215.30). It computes: AAPL unrealized P&L = (187.42 − 150) × 10 = +$374.20; TSLA unrealized P&L = (215.30 − 200) × 5 = +$76.50; total portfolio value = $1,874.20 + $1,076.50 = $2,950.70; total P&L = +$450.70. The result is cached in the Portfolio Cache with a 10-second TTL and returned to the client as JSON.
+</div>
+
+<div class="example">
+<strong>Example 2 — Portfolio load (cache hit):</strong> Another request arrives within 10 seconds. The Portfolio Service finds the cached result, returns it immediately. Latency is ~5 ms vs ~50 ms for a cache miss.
+</div>
+
+<div class="example">
+<strong>Example 3 — Real-time P&L updates:</strong> While viewing the portfolio, the client is also connected via WebSocket to the Price Service (from Flow 1). As new price ticks arrive for the user's holdings, the client recalculates and re-renders the P&L locally in real time — no additional server calls needed. The server-computed portfolio (from the GET call) serves as the baseline, and client-side ticks provide real-time deltas.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Portfolio Service</h4>
+<p>Stateless service that aggregates holdings and current prices to compute portfolio valuations.</p>
+<ul>
+  <li><strong>Protocol:</strong> HTTPS</li>
+</ul>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Input</th><th>Output</th></tr>
+<tr><td><code>GET</code></td><td><code>/api/v1/portfolio</code></td><td>Auth header (JWT with user_id)</td><td><code>{ totalValue, totalPnL, dailyChange, dailyChangePercent, holdings: [{ ticker, quantity, avgCost, currentPrice, marketValue, unrealizedPnL, unrealizedPnLPercent }] }</code></td></tr>
+<tr><td><code>GET</code></td><td><code>/api/v1/portfolio/history?range=1D</code></td><td>Auth header + query param</td><td>Array of <code>{ timestamp, portfolioValue }</code> for chart rendering</td></tr>
+</table>
+
+<h4>Portfolio Cache</h4>
+<p>In-memory cache storing precomputed portfolio summaries. See <a href="#cdn-cache">CDN &amp; Cache Deep Dive</a>.</p>
+
+<hr>
+
+<!-- ===== 6. FLOW 4 — DEPOSIT / WITHDRAW FUNDS ===== -->
+<h2 id="flow4">6. Flow 4 — Deposit / Withdraw Funds</h2>
+
+<div class="diagram-container">
+<pre class="mermaid">
+flowchart LR
+    CLIENT["📱 Client"]
+    LB["Load\nBalancer"]
+    GW["API Gateway"]
+    AS["Account\nService"]
+    DB_ACC[("SQL DB\n(Accounts)")]
+    DB_TXN[("SQL DB\n(Transactions)")]
+    BANK["🏦 Banking\nPartner (ACH)"]
+    NS["Notification\nService"]
+    AUDIT[("Audit Log")]
+
+    CLIENT -- "HTTPS POST\n/transfers" --> LB
+    LB --> GW
+    GW --> AS
+    AS -- "1. Write txn\nstatus=PENDING" --> DB_TXN
+    AS -- "2. Initiate ACH\ntransfer" --> BANK
+    AS -- "Return 202\nAccepted" --> CLIENT
+    BANK -- "3. ACH callback\n(1-3 business days)" --> AS
+    AS -- "4. Update txn\nstatus=COMPLETED" --> DB_TXN
+    AS -- "5. Credit-debit\nbalance" --> DB_ACC
+    AS -- "6. Append" --> AUDIT
+    AS -- "7. Send\nnotification" --> NS
+    NS -- "Push" --> CLIENT
+
+    classDef external fill:#FF2D78,stroke:#FF5C9A,color:#fff,stroke-width:2px
+    classDef service fill:#7B2FFF,stroke:#9D5CFF,color:#fff,stroke-width:2px
+    classDef infra fill:#E040FB,stroke:#EA80FC,color:#fff,stroke-width:2px
+    classDef cache fill:#00FF88,stroke:#00CC6A,color:#000,stroke-width:2px
+    classDef db fill:#0066FF,stroke:#3388FF,color:#fff,stroke-width:2px
+    classDef client fill:#FFB800,stroke:#FFCC44,color:#000,stroke-width:2px
+
+    class CLIENT client
+    class LB,GW infra
+    class AS,NS service
+    class DB_ACC,DB_TXN,AUDIT db
+    class BANK external
+</pre>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Deposit (happy path):</strong> User taps "Transfer" → "Deposit" → enters $1,000 from their linked Chase checking account. The client sends <code>HTTPS POST /api/v1/transfers</code> with <code>{ type: "deposit", amount: 1000, sourceAccountId: "linked-bank-uuid" }</code>. The Account Service writes a transaction record to the SQL Transactions table with status <code>PENDING</code> and initiates an ACH credit pull with the banking partner. The user receives <code>HTTP 202 Accepted</code>. After 1–3 business days, the banking partner sends an ACH callback confirming the transfer completed. The Account Service updates the transaction to <code>COMPLETED</code>, credits the user's cash balance by $1,000, appends to the audit log, and sends a push notification: "Your $1,000 deposit has arrived!"
+</div>
+
+<div class="example">
+<strong>Example 2 — Instant deposit (buying power advance):</strong> Robinhood offers "instant deposits" up to a limit. When the user deposits $1,000, the Account Service immediately increases <code>buying_power</code> by $1,000 (even though the ACH hasn't settled) and writes the transaction as <code>PENDING</code>. This lets the user trade immediately. When the ACH settles days later, the <code>cash_balance</code> is updated and the pending transaction moves to <code>COMPLETED</code>. If the ACH fails (e.g., insufficient bank funds), the Account Service reverses the buying-power advance and marks the transaction as <code>FAILED</code>.
+</div>
+
+<div class="example">
+<strong>Example 3 — Withdrawal:</strong> User requests a $500 withdrawal to their bank. The Account Service verifies that $500 is available in <code>cash_balance</code> (unsettled funds from recent sales cannot be withdrawn due to T+1 settlement rules). It debits the balance, writes a <code>PENDING</code> transaction, and initiates an ACH credit push to the user's bank. Upon settlement callback, the transaction is marked <code>COMPLETED</code> and the user is notified.
+</div>
+
+<div class="example">
+<strong>Example 4 — Withdrawal exceeds available balance:</strong> User tries to withdraw $5,000 but only $2,000 is settled cash. The Account Service returns <code>HTTP 422</code> with <code>{ code: "INSUFFICIENT_SETTLED_FUNDS", message: "Only $2,000 of settled funds available for withdrawal." }</code>.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Account Service</h4>
+<p>Manages user financial accounts, balances, and fund transfers.</p>
+<ul><li><strong>Protocol:</strong> HTTPS</li></ul>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Input</th><th>Output</th></tr>
+<tr><td><code>POST</code></td><td><code>/api/v1/transfers</code></td><td><code>{ type, amount, sourceAccountId }</code></td><td><code>{ transferId, status, estimatedArrival }</code> — HTTP 202</td></tr>
+<tr><td><code>GET</code></td><td><code>/api/v1/transfers</code></td><td>Query: <code>?type=&status=&page=&limit=</code></td><td>Paginated transfers list</td></tr>
+<tr><td><code>GET</code></td><td><code>/api/v1/account</code></td><td>Auth header</td><td><code>{ cashBalance, buyingPower, accountType, status }</code></td></tr>
+</table>
+
+<h4>Banking Partner (ACH)</h4>
+<p>External partner providing ACH (Automated Clearing House) transfer capabilities. ACH is a batch processing network — transfers settle in 1–3 business days. Communication uses HTTPS with webhook callbacks for settlement notifications. The banking partner sends a callback to a dedicated webhook endpoint: <code>POST /api/v1/webhooks/ach</code>.</p>
+
+<hr>
+
+<!-- ===== 7. COMBINED OVERALL FLOW ===== -->
+<h2 id="combined">7. Combined Overall Flow Diagram</h2>
+<p>This diagram combines all four flows into a single unified view of the system architecture.</p>
+
+<div class="diagram-container">
+<pre class="mermaid">
+flowchart TB
+    subgraph Clients["  👤 Clients  "]
+        MOB["📱 Mobile App"]
+        WEB["🌐 Web App"]
+    end
+
+    subgraph ExternalSystems["  🌍 External Systems  "]
+        EX["🏦 Exchanges\nand Data Feeds"]
+        MM["🏦 Market\nMakers"]
+        BANK["🏦 Banking\nPartner (ACH)"]
+    end
+
+    subgraph LoadBalancing["  ⚖️ Load Balancing Layer  "]
+        LB_HTTP["L7 Load Balancer\n(HTTP)"]
+        LB_WS["L4 Load Balancer\n(WebSocket)"]
+    end
+
+    subgraph Gateway["  🔐 API Gateway Layer  "]
+        GW["API Gateway\nAuth - Rate Limit - Idempotency"]
+    end
+
+    subgraph Services["  ⚙️ Application Services  "]
+        OS["Order\nService"]
+        PS_PORT["Portfolio\nService"]
+        AS["Account\nService"]
+        WLS["Watchlist\nService"]
+        NS["Notification\nService"]
+        SEARCH["Search\nService"]
+    end
+
+    subgraph RealTimeLayer["  📡 Real-Time Data Layer  "]
+        MDIS["Market Data\nIngestion Service"]
+        PUBSUB[("Pub-Sub")]
+        PRICE["Price Service\n(WebSocket Servers)"]
+    end
+
+    subgraph Messaging["  📨 Async Messaging  "]
+        MQ[("Message\nQueue")]
+        OP["Order\nProcessor"]
+    end
+
+    subgraph DataStores["  💾 Data Stores  "]
+        SQL_ORD[("SQL\nOrders")]
+        SQL_ACC[("SQL\nAccounts")]
+        SQL_HOLD[("SQL\nHoldings")]
+        SQL_TXN[("SQL\nTransactions")]
+        TSDB[("Time-Series\nDB")]
+        NOSQL_WL[("NoSQL\nWatchlists")]
+        NOSQL_NOTIF[("NoSQL\nNotifications")]
+    end
+
+    subgraph Caching["  ⚡ Caching Layer  "]
+        PCACHE[("Price\nCache")]
+        PORTCACHE[("Portfolio\nCache")]
+    end
+
+    CDN["CDN\n(Static Assets)"]
+    AUDIT[("Audit\nLog")]
+
+    %% Client connections
+    MOB -- "HTTPS" --> LB_HTTP
+    WEB -- "HTTPS" --> LB_HTTP
+    MOB -- "WSS" --> LB_WS
+    WEB -- "WSS" --> LB_WS
+    MOB -. "Static assets" .-> CDN
+    WEB -. "Static assets" .-> CDN
+
+    LB_HTTP --> GW
+    LB_WS --> PRICE
+
+    %% Gateway to services
+    GW --> OS
+    GW --> PS_PORT
+    GW --> AS
+    GW --> WLS
+    GW --> SEARCH
+
+    %% Real-time data flow
+    EX -- "FIX/TCP" --> MDIS
+    MDIS --> PUBSUB
+    MDIS --> TSDB
+    PUBSUB --> PRICE
+    PRICE --> PCACHE
+
+    %% Order flow
+    OS --> SQL_ORD
+    OS --> SQL_ACC
+    OS --> MQ
+    MQ --> OP
+    OP -- "FIX/TCP" --> MM
+    MM -- "FIX/TCP" --> OP
+    OP --> SQL_ORD
+    OP --> SQL_ACC
+    OP --> SQL_HOLD
+    OP --> AUDIT
+    OP --> NS
+
+    %% Portfolio flow
+    PS_PORT --> SQL_HOLD
+    PS_PORT --> PCACHE
+    PS_PORT --> PORTCACHE
+
+    %% Account flow
+    AS --> SQL_ACC
+    AS --> SQL_TXN
+    AS -- "HTTPS" --> BANK
+    BANK -- "Webhook" --> AS
+
+    %% Watchlist
+    WLS --> NOSQL_WL
+
+    %% Notifications
+    NS --> NOSQL_NOTIF
+    NS -- "Push" --> MOB
+    NS -- "Push" --> WEB
+
+    %% Search
+    SEARCH --> PCACHE
+
+    classDef external fill:#FF2D78,stroke:#FF5C9A,color:#fff,stroke-width:2px
+    classDef service fill:#7B2FFF,stroke:#9D5CFF,color:#fff,stroke-width:2px
+    classDef infra fill:#E040FB,stroke:#EA80FC,color:#fff,stroke-width:2px
+    classDef cache fill:#00FF88,stroke:#00CC6A,color:#000,stroke-width:2px
+    classDef db fill:#0066FF,stroke:#3388FF,color:#fff,stroke-width:2px
+    classDef client fill:#FFB800,stroke:#FFCC44,color:#000,stroke-width:2px
+    classDef messaging fill:#00E5FF,stroke:#00B8D4,color:#000,stroke-width:2px
+    classDef cdn fill:#FF6D00,stroke:#FF9100,color:#fff,stroke-width:2px
+
+    class MOB,WEB client
+    class EX,MM,BANK external
+    class LB_HTTP,LB_WS,GW infra
+    class OS,PS_PORT,AS,WLS,NS,SEARCH,MDIS,PRICE,OP service
+    class PUBSUB,MQ messaging
+    class SQL_ORD,SQL_ACC,SQL_HOLD,SQL_TXN,TSDB,NOSQL_WL,NOSQL_NOTIF,AUDIT db
+    class PCACHE,PORTCACHE cache
+    class CDN cdn
+</pre>
+</div>
+
+<h3>Examples (End-to-End)</h3>
+
+<div class="example">
+<strong>Example 1 — Full buy flow from app open to order fill:</strong> The user opens the Robinhood mobile app. Static assets (JS bundle, images) are served from the <strong>CDN</strong>. The app establishes a <strong>WSS connection</strong> through the <strong>L4 Load Balancer</strong> to a <strong>Price Service</strong> WebSocket server. The user searches for "AAPL" — an <strong>HTTPS GET</strong> request goes through the <strong>L7 Load Balancer → API Gateway → Search Service</strong>, which queries the <strong>Price Cache</strong> for the latest AAPL price and returns results. The user taps on AAPL; the client subscribes to the <code>AAPL</code> ticker over the WebSocket. Meanwhile, the <strong>Market Data Ingestion Service</strong> continuously receives ticks from <strong>exchanges</strong> via FIX/TCP, publishes to <strong>Pub/Sub</strong>, and the user's Price Service instance pushes live AAPL prices. The user taps "Buy" and submits a market order for 10 shares. The <strong>HTTPS POST</strong> flows through <strong>L7 LB → API Gateway → Order Service</strong>, which validates the balance via <strong>SQL Accounts</strong>, writes to <strong>SQL Orders</strong>, enqueues to the <strong>Message Queue</strong>, and returns HTTP 202. The <strong>Order Processor</strong> dequeues, routes to the <strong>Market Maker</strong> via FIX/TCP, receives a fill, updates <strong>SQL Orders/Accounts/Holdings</strong> and <strong>Audit Log</strong> in a transaction, and fires a notification via the <strong>Notification Service</strong>. The user sees a push notification and their portfolio updates in real time.
+</div>
+
+<div class="example">
+<strong>Example 2 — Deposit then buy:</strong> A new user opens the app, links their bank account, and initiates a $5,000 deposit via <strong>HTTPS POST</strong> through the <strong>Account Service</strong> → <strong>Banking Partner</strong>. Instant buying power is granted immediately. The user searches for TSLA, sees real-time price via <strong>WebSocket</strong>, and places a limit buy at $200 for 20 shares. The order flows through the <strong>Order Service → Message Queue → Order Processor → Market Maker</strong>. Since the current price ($215) is above the limit ($200), the order sits open. Two days later, TSLA drops to $200. The market maker fills the order, and the Order Processor completes the transaction. By this time, the ACH deposit has also settled, converting the buying-power advance into actual cash balance.
+</div>
+
+<hr>
+
+<!-- ===== 8. DATABASE SCHEMA ===== -->
+<h2 id="schema">8. Database Schema</h2>
+
+<!-- SQL TABLES -->
+<h3>SQL Tables</h3>
+<p>All financial-critical tables use SQL databases for ACID transaction guarantees. When real money is involved, we cannot tolerate eventual consistency, partial writes, or lost transactions.</p>
+
+<h4>8.1 <code>users</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td><strong>PRIMARY KEY</strong></td><td>Globally unique user identifier</td></tr>
+<tr><td><code>email</code></td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td><td>Login identifier</td></tr>
+<tr><td><code>password_hash</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>bcrypt hash</td></tr>
+<tr><td><code>full_name</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Legal name for KYC</td></tr>
+<tr><td><code>phone_number</code></td><td>VARCHAR(20)</td><td>UNIQUE</td><td>For 2FA</td></tr>
+<tr><td><code>kyc_status</code></td><td>ENUM</td><td>NOT NULL</td><td>pending | verified | rejected</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+</table>
+<p><strong>Index:</strong> <code>Hash index on email</code> — email lookups happen on every login; hash index provides O(1) exact-match lookups.</p>
+<p><strong>Why SQL:</strong> User data is highly relational (joins with accounts, orders, holdings). KYC status changes must be transactional. Schema is rigid and well-defined.</p>
+<p><strong>Read:</strong> On every login and authentication. <strong>Write:</strong> On registration, profile update, KYC status change.</p>
+
+<h4>8.2 <code>accounts</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>account_id</code></td><td>UUID</td><td><strong>PRIMARY KEY</strong></td><td></td></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → users.user_id</strong>, UNIQUE</td><td>One account per user (initially)</td></tr>
+<tr><td><code>cash_balance</code></td><td>DECIMAL(15,2)</td><td>NOT NULL, DEFAULT 0</td><td>Settled cash</td></tr>
+<tr><td><code>buying_power</code></td><td>DECIMAL(15,2)</td><td>NOT NULL, DEFAULT 0</td><td>Includes instant deposit advances</td></tr>
+<tr><td><code>account_type</code></td><td>ENUM</td><td>NOT NULL</td><td>individual | margin</td></tr>
+<tr><td><code>status</code></td><td>ENUM</td><td>NOT NULL</td><td>active | suspended | closed</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+</table>
+<p><strong>Index:</strong> <code>Hash index on user_id</code> — every order placement and portfolio view requires a balance lookup by user.</p>
+<p><strong>Why SQL:</strong> Balance mutations are the most critical operation in the system. ACID guarantees prevent double-spending. The Order Processor uses <code>SELECT ... FOR UPDATE</code> (pessimistic locking) on the balance row during order execution to prevent race conditions.</p>
+<p><strong>Read:</strong> On every order validation, portfolio view, transfer request. <strong>Write:</strong> On order fill, deposit/withdrawal completion.</p>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code>. Each user's financial operations are independent of other users, so a user-based shard key ensures all of a user's data is co-located (balance check + debit in the same shard = same transaction). Consistent hashing distributes users across shards evenly.</p>
+
+<h4>8.3 <code>orders</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>order_id</code></td><td>UUID</td><td><strong>PRIMARY KEY</strong></td><td></td></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → users.user_id</strong>, NOT NULL</td><td></td></tr>
+<tr><td><code>account_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → accounts.account_id</strong>, NOT NULL</td><td></td></tr>
+<tr><td><code>ticker_symbol</code></td><td>VARCHAR(10)</td><td>NOT NULL</td><td>e.g., AAPL, TSLA</td></tr>
+<tr><td><code>order_type</code></td><td>ENUM</td><td>NOT NULL</td><td>market | limit | stop | stop_limit</td></tr>
+<tr><td><code>side</code></td><td>ENUM</td><td>NOT NULL</td><td>buy | sell</td></tr>
+<tr><td><code>quantity</code></td><td>DECIMAL(15,6)</td><td>NOT NULL</td><td>Supports fractional shares</td></tr>
+<tr><td><code>price</code></td><td>DECIMAL(15,4)</td><td>NULLABLE</td><td>Limit price (NULL for market orders)</td></tr>
+<tr><td><code>stop_price</code></td><td>DECIMAL(15,4)</td><td>NULLABLE</td><td>Stop trigger price</td></tr>
+<tr><td><code>status</code></td><td>ENUM</td><td>NOT NULL</td><td>pending | submitted | partial_fill | filled | cancelled | rejected</td></tr>
+<tr><td><code>filled_quantity</code></td><td>DECIMAL(15,6)</td><td>DEFAULT 0</td><td><strong>Denormalized</strong> — sum of execution quantities</td></tr>
+<tr><td><code>filled_avg_price</code></td><td>DECIMAL(15,4)</td><td>NULLABLE</td><td><strong>Denormalized</strong> — weighted avg of execution prices</td></tr>
+<tr><td><code>idempotency_key</code></td><td>VARCHAR(64)</td><td>UNIQUE</td><td>Client-generated; prevents duplicate orders</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>executed_at</code></td><td>TIMESTAMP</td><td>NULLABLE</td><td>When fully filled</td></tr>
+</table>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><code>B-tree composite index on (user_id, created_at DESC)</code> — Order history queries are always filtered by user and sorted by time. B-tree supports range scans and ordering efficiently.</li>
+  <li><code>B-tree composite index on (user_id, status)</code> — "Show me my open orders" is a frequent query. Filtering by user + status benefits from a composite index.</li>
+  <li><code>Hash index on idempotency_key</code> — O(1) lookup for deduplication on order submission.</li>
+</ul>
+<p><strong>Denormalization note:</strong> <code>filled_quantity</code> and <code>filled_avg_price</code> are denormalized from the <code>order_executions</code> table. This avoids an expensive aggregate query (SUM, AVG across executions) every time a user views their order status — which happens frequently on the orders list screen. The trade-off is that the Order Processor must update these fields atomically within the same transaction that inserts the execution record. This is acceptable because writes (fills) are far less frequent than reads (order status checks).</p>
+<p><strong>Why SQL:</strong> Orders require strong consistency, complex status transitions, and participate in multi-table transactions (order + account + holdings updated together).</p>
+<p><strong>Read:</strong> On order history view, order detail view, portfolio computation. <strong>Write:</strong> On order placement, status update (fill, cancel, reject).</p>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code>. Users query their own orders. Co-locating orders with accounts on the same shard enables the order-fill transaction (update order + debit balance) to execute within a single shard, avoiding distributed transactions.</p>
+
+<h4>8.4 <code>order_executions</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>execution_id</code></td><td>UUID</td><td><strong>PRIMARY KEY</strong></td><td></td></tr>
+<tr><td><code>order_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → orders.order_id</strong>, NOT NULL</td><td></td></tr>
+<tr><td><code>quantity</code></td><td>DECIMAL(15,6)</td><td>NOT NULL</td><td>Shares filled in this execution</td></tr>
+<tr><td><code>price</code></td><td>DECIMAL(15,4)</td><td>NOT NULL</td><td>Execution price</td></tr>
+<tr><td><code>fee</code></td><td>DECIMAL(10,4)</td><td>DEFAULT 0</td><td>Regulatory fees (TAF, SEC)</td></tr>
+<tr><td><code>market_maker_ref</code></td><td>VARCHAR(64)</td><td></td><td>Market maker's execution ID</td></tr>
+<tr><td><code>executed_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+</table>
+<p><strong>Index:</strong> <code>B-tree index on order_id</code> — Executions are always queried by their parent order. B-tree allows efficient lookup of all executions for a given order.</p>
+<p><strong>Normalization note:</strong> Executions are normalized (separate from orders) because one order can have multiple partial fills. Each execution is an immutable fact record — "at this time, this many shares were filled at this price." This is critical for audit compliance and accurate cost-basis calculation.</p>
+<p><strong>Why SQL:</strong> Execution records are part of the financial audit trail and participate in transactions with the orders table.</p>
+<p><strong>Read:</strong> On detailed order view (to show fill breakdown), regulatory audit. <strong>Write:</strong> On each fill received from market maker.</p>
+
+<h4>8.5 <code>holdings</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>holding_id</code></td><td>UUID</td><td><strong>PRIMARY KEY</strong></td><td></td></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → users.user_id</strong>, NOT NULL</td><td></td></tr>
+<tr><td><code>account_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → accounts.account_id</strong>, NOT NULL</td><td></td></tr>
+<tr><td><code>ticker_symbol</code></td><td>VARCHAR(10)</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>quantity</code></td><td>DECIMAL(15,6)</td><td>NOT NULL</td><td>Current shares held</td></tr>
+<tr><td><code>avg_cost_basis</code></td><td>DECIMAL(15,4)</td><td>NOT NULL</td><td><strong>Denormalized</strong> — computed from executions</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+</table>
+<p><strong>Unique constraint:</strong> <code>(user_id, ticker_symbol)</code> — a user can hold each ticker only once (quantities are aggregated).</p>
+<p><strong>Index:</strong> <code>B-tree index on user_id</code> — Portfolio view fetches all holdings for a user. B-tree allows efficient range scan of all holdings for a given user_id.</p>
+<p><strong>Denormalization note:</strong> <code>avg_cost_basis</code> is denormalized. Computing it from scratch would require joining order_executions, filtering by ticker, and calculating a weighted average across all historical purchases — an expensive operation to perform on every portfolio load. Instead, the Order Processor recalculates and updates <code>avg_cost_basis</code> incrementally on each fill using the formula: <code>new_avg = ((old_avg × old_qty) + (fill_price × fill_qty)) / (old_qty + fill_qty)</code>. This is updated within the same ACID transaction as the fill.</p>
+<p><strong>Why SQL:</strong> Holdings participate in the fill transaction (order fill → update holding quantity + cost basis → debit balance). Must be ACID-compliant.</p>
+<p><strong>Read:</strong> On portfolio view. <strong>Write:</strong> On order fill (buy → increase quantity; sell → decrease quantity).</p>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code>. Co-located with accounts and orders on the same shard.</p>
+
+<h4>8.6 <code>transactions</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>transaction_id</code></td><td>UUID</td><td><strong>PRIMARY KEY</strong></td><td></td></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → users.user_id</strong>, NOT NULL</td><td></td></tr>
+<tr><td><code>account_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → accounts.account_id</strong>, NOT NULL</td><td></td></tr>
+<tr><td><code>type</code></td><td>ENUM</td><td>NOT NULL</td><td>deposit | withdrawal</td></tr>
+<tr><td><code>amount</code></td><td>DECIMAL(15,2)</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>status</code></td><td>ENUM</td><td>NOT NULL</td><td>pending | completed | failed | reversed</td></tr>
+<tr><td><code>external_ref_id</code></td><td>VARCHAR(64)</td><td></td><td>ACH reference from banking partner</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>completed_at</code></td><td>TIMESTAMP</td><td>NULLABLE</td><td></td></tr>
+</table>
+<p><strong>Index:</strong> <code>B-tree composite index on (user_id, created_at DESC)</code> — Transaction history is paginated by user and sorted by time.</p>
+<p><strong>Why SQL:</strong> Fund transfers involve balance mutations that must be ACID-compliant. A failed deposit reversal must atomically roll back the balance.</p>
+<p><strong>Read:</strong> On transaction history view. <strong>Write:</strong> On deposit/withdrawal initiation and settlement callback.</p>
+
+<hr>
+
+<h3>NoSQL Tables</h3>
+
+<h4>8.7 <code>price_ticks</code> <span class="badge badge-ts">Time-Series DB</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>ticker_symbol</code></td><td>STRING</td><td><strong>Partition Key</strong></td><td></td></tr>
+<tr><td><code>timestamp</code></td><td>TIMESTAMP</td><td><strong>Sort Key</strong></td><td></td></tr>
+<tr><td><code>open</code></td><td>DECIMAL</td><td></td><td>Candle open</td></tr>
+<tr><td><code>high</code></td><td>DECIMAL</td><td></td><td>Candle high</td></tr>
+<tr><td><code>low</code></td><td>DECIMAL</td><td></td><td>Candle low</td></tr>
+<tr><td><code>close</code></td><td>DECIMAL</td><td></td><td>Candle close</td></tr>
+<tr><td><code>volume</code></td><td>BIGINT</td><td></td><td>Shares traded</td></tr>
+</table>
+<p><strong>Why Time-Series DB:</strong> Price ticks are time-ordered, append-only, and queried by time range ("give me 1 year of daily AAPL candles"). Time-series databases are purpose-built for this pattern with columnar storage, automatic downsampling (raw ticks → 1min → 5min → 1D candles), and efficient time-range partitioning. SQL would work but would be far less efficient for these specific access patterns at the volume of ticks generated across thousands of tickers.</p>
+<p><strong>Sharding:</strong> Partitioned by <code>ticker_symbol</code>. Each ticker's time series is independent and queried independently. Hot tickers (AAPL, TSLA, SPY) may need dedicated partitions.</p>
+<p><strong>Read:</strong> On chart view for any timeframe. <strong>Write:</strong> Continuous append from Market Data Ingestion Service.</p>
+
+<h4>8.8 <code>watchlists</code> <span class="badge badge-nosql">NoSQL (Document)</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>user_id</code></td><td>STRING</td><td><strong>Partition Key</strong></td><td></td></tr>
+<tr><td><code>watchlist_id</code></td><td>STRING</td><td><strong>Sort Key</strong></td><td></td></tr>
+<tr><td><code>name</code></td><td>STRING</td><td></td><td>e.g., "Tech Stocks"</td></tr>
+<tr><td><code>tickers</code></td><td>LIST&lt;STRING&gt;</td><td></td><td>["AAPL", "TSLA", "GOOG"]</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td></td><td></td></tr>
+<tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<p><strong>Why NoSQL (Document):</strong> Watchlists have a flexible, denormalized structure (embedded array of tickers). No joins are needed — a watchlist is always fetched as a single document. Eventual consistency is acceptable (if a ticker addition takes 100 ms to propagate, there's no financial impact). Horizontal scaling is trivial with user-based partitioning.</p>
+<p><strong>Read:</strong> On app open (home screen shows watchlist), on watchlist page. <strong>Write:</strong> On add/remove ticker from watchlist, create/delete watchlist.</p>
+
+<h4>8.9 <code>notifications</code> <span class="badge badge-nosql">NoSQL (Document)</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>user_id</code></td><td>STRING</td><td><strong>Partition Key</strong></td><td></td></tr>
+<tr><td><code>notification_id</code></td><td>STRING</td><td><strong>Sort Key</strong></td><td>ULID (time-sortable)</td></tr>
+<tr><td><code>type</code></td><td>STRING</td><td></td><td>order_filled | price_alert | deposit_completed | dividend | etc.</td></tr>
+<tr><td><code>title</code></td><td>STRING</td><td></td><td>Notification headline</td></tr>
+<tr><td><code>body</code></td><td>STRING</td><td></td><td>Notification message</td></tr>
+<tr><td><code>payload</code></td><td>JSON</td><td></td><td>Flexible metadata (orderId, ticker, amount, etc.)</td></tr>
+<tr><td><code>is_read</code></td><td>BOOLEAN</td><td></td><td>DEFAULT false</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<p><strong>Why NoSQL (Document):</strong> High write throughput (many events generate notifications), flexible <code>payload</code> schema varies by notification type, no joins needed, eventual consistency is acceptable. Access pattern is simple: "get all notifications for user X sorted by time" — a partition key + sort key query.</p>
+<p><strong>Read:</strong> On notification feed view. <strong>Write:</strong> On order fill, price alert trigger, deposit completion, etc.</p>
+
+<hr>
+
+<!-- ===== 9. CDN & CACHE ===== -->
+<h2 id="cdn-cache">9. CDN &amp; Cache Deep Dive</h2>
+
+<h3>CDN (Content Delivery Network)</h3>
+<div class="card">
+<p><strong>Appropriate?</strong> ✅ Yes — for static assets only.</p>
+<p><strong>What it serves:</strong> JavaScript/CSS bundles for the web app, app icons, company logos, stock icons, educational articles, and legal/disclaimer pages.</p>
+<p><strong>What it does NOT serve:</strong> Real-time prices, portfolio data, order data, or any dynamic/personalized content. These are time-sensitive and user-specific, making CDN caching inappropriate or even dangerous (stale prices could lead to bad trading decisions).</p>
+<p><strong>Strategy:</strong> Static assets are deployed to the CDN on each release with content-hashed filenames (e.g., <code>app.3f8a2c.js</code>) and a long <code>Cache-Control: max-age=31536000</code> (1 year). When a new version is released, the filename hash changes, effectively busting the cache. Infrequently updated content (logos, legal pages) uses a moderate TTL with <code>ETag</code>-based revalidation.</p>
+</div>
+
+<h3>In-Memory Price Cache</h3>
+<div class="card">
+<table>
+<tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+<tr><td><strong>Caching Strategy</strong></td><td>Write-Through</td><td>Every price tick from Pub/Sub writes to the cache and propagates to downstream queries simultaneously. This ensures the cache is always fresh and is the source of truth for "latest price." Write-through is chosen over write-behind because price staleness (even by a few seconds) can affect order validation and portfolio display.</td></tr>
+<tr><td><strong>What populates it</strong></td><td>Price Service instances writing each tick as it arrives from Pub/Sub</td><td></td></tr>
+<tr><td><strong>Eviction Policy</strong></td><td>LRU (Least Recently Used)</td><td>Tickers that nobody is currently viewing (e.g., obscure penny stocks) are evicted first. Active tickers (AAPL, TSLA, SPY) stay hot due to frequent reads.</td></tr>
+<tr><td><strong>Expiration Policy</strong></td><td>TTL = 5 seconds during market hours; TTL = 24 hours outside market hours</td><td>During trading, prices change every millisecond, but a 5-second TTL is a safety net in case a ticker stops receiving ticks (data feed issue). After market close, prices are static until the next trading day, so a long TTL is safe.</td></tr>
+<tr><td><strong>Data Stored</strong></td><td>Key: <code>ticker_symbol</code> → Value: <code>{ bid, ask, last, volume, change, changePercent, timestamp }</code></td><td></td></tr>
+</table>
+</div>
+
+<h3>Portfolio Cache</h3>
+<div class="card">
+<table>
+<tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+<tr><td><strong>Caching Strategy</strong></td><td>Cache-Aside (Lazy Population)</td><td>The Portfolio Service checks the cache first; on a miss, it computes the portfolio from the SQL Holdings table + Price Cache, stores the result, and returns it. Cache-aside is preferred over write-through here because portfolio computation is triggered by user reads, not writes. Writing through on every price tick would be wasteful — most users aren't viewing their portfolio at any given moment.</td></tr>
+<tr><td><strong>What populates it</strong></td><td>Portfolio Service on cache miss (user requests portfolio)</td><td></td></tr>
+<tr><td><strong>Cache Invalidation</strong></td><td>Evicted on order fill (the Order Processor deletes the user's portfolio cache entry after updating holdings)</td><td>Ensures the next portfolio load reflects the new holding.</td></tr>
+<tr><td><strong>Eviction Policy</strong></td><td>LRU</td><td>Users who haven't opened their portfolio recently are evicted to free memory for active users.</td></tr>
+<tr><td><strong>Expiration Policy</strong></td><td>TTL = 10 seconds</td><td>Prices change constantly, so cached portfolio valuations become stale quickly. A 10-second TTL balances freshness vs. database load. The client supplements with real-time WebSocket ticks for sub-second visual updates.</td></tr>
+<tr><td><strong>Data Stored</strong></td><td>Key: <code>user_id</code> → Value: <code>{ totalValue, totalPnL, dailyChange, holdings: [...] }</code></td><td></td></tr>
+</table>
+</div>
+
+<hr>
+
+<!-- ===== 10. WEBSOCKET DEEP DIVE ===== -->
+<h2 id="websocket">10. WebSocket Deep Dive</h2>
+<div class="card">
+<h4>Why WebSocket?</h4>
+<p>Stock prices update multiple times per second. The alternatives are:</p>
+<ul>
+  <li><strong>HTTP Polling:</strong> Client polls every N seconds. Even at 1-second intervals, this means massive unnecessary request overhead (millions of users × 1 req/sec = millions of requests/sec), most returning "no change." Unacceptable latency for live trading.</li>
+  <li><strong>HTTP Long Polling:</strong> Reduces empty responses but still has the overhead of establishing a new HTTP connection for each update. Connection setup latency adds up.</li>
+  <li><strong>Server-Sent Events (SSE):</strong> Unidirectional (server → client only). We need bidirectional communication because the client must send subscribe/unsubscribe messages to dynamically change which tickers it wants updates for. SSE would require a separate HTTP channel for client-to-server messages.</li>
+  <li><strong>WebSocket (chosen):</strong> Full-duplex, persistent connection with minimal framing overhead (~2 bytes per frame vs ~800 bytes per HTTP request). Client can subscribe/unsubscribe dynamically. Server can push updates instantly. The best fit for real-time financial data streaming.</li>
+</ul>
+
+<h4>Connection Lifecycle</h4>
+<ol>
+  <li><strong>Handshake:</strong> Client initiates an HTTPS GET with <code>Upgrade: websocket</code> header, passing the JWT token in a query parameter or cookie. The L4 Load Balancer routes to a Price Service instance.</li>
+  <li><strong>Authentication:</strong> The Price Service validates the JWT during the upgrade handshake. If invalid, the connection is rejected with HTTP 401.</li>
+  <li><strong>Registration:</strong> On successful connection, the Price Service registers the connection in the <strong>WebSocket Connection Manager</strong> — a distributed in-memory store mapping: <code>{ userId → serverId, connectionId, subscribedTickers[] }</code>. This store is necessary so other services (e.g., Notification Service) can find which server a user is connected to.</li>
+  <li><strong>Subscription:</strong> The client sends a JSON message: <code>{ action: "subscribe", tickers: ["AAPL", "TSLA"] }</code>. The Price Service instance checks if it's already subscribed to those Pub/Sub topics; if not, it subscribes. It sends the latest cached price immediately so the client doesn't wait for the next tick.</li>
+  <li><strong>Price Streaming:</strong> As ticks arrive from Pub/Sub, the server pushes them to all clients subscribed to that ticker on this server instance.</li>
+  <li><strong>Heartbeat:</strong> The server sends a WebSocket <code>ping</code> frame every 30 seconds. If no <code>pong</code> is received within 10 seconds, the connection is considered dead and cleaned up.</li>
+  <li><strong>Disconnection:</strong> On disconnect (client closes app, network drop, or missed heartbeat), the server removes the connection from the Connection Manager and unsubscribes from Pub/Sub topics that no longer have any connected clients.</li>
+  <li><strong>Reconnection:</strong> The client implements exponential backoff (1s → 2s → 4s → 8s, max 30s). On reconnect, it re-authenticates and re-subscribes to the same ticker list.</li>
+</ol>
+
+<h4>Finding Other WebSocket Servers</h4>
+<p>The WebSocket Connection Manager is a distributed hash map (stored in the in-memory cache cluster) mapping <code>user_id → server_id</code>. When the Notification Service needs to push a real-time notification to a user, it queries the Connection Manager for the user's server, then sends an internal HTTP request to that server, which pushes the message over the user's WebSocket connection. If the user is not connected, the notification falls back to a mobile push notification.</p>
+</div>
+
+<hr>
+
+<!-- ===== 11. MESSAGE QUEUE DEEP DIVE ===== -->
+<h2 id="mq">11. Message Queue Deep Dive</h2>
+<div class="card">
+<h4>Why a Message Queue?</h4>
+<p>The Message Queue sits between the Order Service and the Order Processor. Alternatives considered:</p>
+<ul>
+  <li><strong>Synchronous HTTP call from Order Service directly to Market Maker:</strong> If the market maker is slow or down, the user's HTTP request hangs or fails. The order might be lost if the Order Service crashes mid-request. No backpressure handling during volatile markets when order volume spikes 10-100x.</li>
+  <li><strong>Pub/Sub:</strong> Pub/Sub is fan-out (one message → many consumers). Orders must be processed <em>exactly once</em> by one processor, not broadcast to multiple. Using Pub/Sub would require a competing-consumer group, which is essentially a message queue pattern.</li>
+  <li><strong>Message Queue (chosen):</strong> Durable (orders survive service crashes), provides at-least-once delivery guarantees, enables backpressure (queue absorbs spikes and processors drain at their own pace), supports dead-letter queues for failed messages, and ensures exactly-one-consumer semantics (each order is processed by one processor instance).</li>
+</ul>
+
+<h4>How Messages Flow</h4>
+<ol>
+  <li><strong>Producing (Enqueue):</strong> The Order Service creates a message with the full order payload: <code>{ orderId, userId, accountId, ticker, side, type, quantity, price, stopPrice, timestamp }</code>. It publishes this to the order queue. The publish is done <em>after</em> the order is written to the SQL Orders table with status <code>PENDING</code> — this ensures the order is durable even if the queue publish fails (the order can be retried from the DB via a reconciliation job).</li>
+  <li><strong>Consuming (Dequeue):</strong> Order Processor instances consume messages from the queue. The queue provides visibility timeout: once a message is dequeued, it becomes invisible to other consumers for N seconds. If the processor doesn't acknowledge within N seconds (e.g., it crashed), the message becomes visible again and another processor picks it up.</li>
+  <li><strong>Processing:</strong> The processor routes the order to the market maker via FIX/TCP, waits for the execution report, and performs the fill transaction (update order + update balance + update holdings + audit log).</li>
+  <li><strong>Acknowledgement:</strong> After the fill transaction commits successfully, the processor acknowledges (deletes) the message from the queue.</li>
+  <li><strong>Dead-Letter Queue (DLQ):</strong> If a message fails processing after 3 retries (e.g., invalid ticker, permanent market maker rejection), it is moved to a DLQ. An alerting system notifies the operations team. A separate reconciliation service processes DLQ messages manually or automatically.</li>
+</ol>
+
+<h4>Ordering Guarantees</h4>
+<p>Order messages are produced to a FIFO queue partitioned by <code>user_id</code>. This ensures that if a user places multiple orders rapidly, they are processed in order (preventing a scenario where a sell executes before the buy it depends on). Different users' orders can be processed in parallel across partitions.</p>
+</div>
+
+<hr>
+
+<!-- ===== 12. PUB/SUB DEEP DIVE ===== -->
+<h2 id="pubsub">12. Pub/Sub Deep Dive</h2>
+<div class="card">
+<h4>Why Pub/Sub?</h4>
+<p>Market data distribution requires a fan-out pattern: one price tick must be delivered to <em>many</em> Price Service instances (each serving thousands of clients). Alternatives:</p>
+<ul>
+  <li><strong>Direct push from Ingestion Service to each Price Service:</strong> The Ingestion Service would need to know all Price Service instances and which tickers each one cares about. This creates tight coupling and doesn't scale as instances autoscale up/down.</li>
+  <li><strong>Message Queue:</strong> Competing consumers — only one instance would get each tick, leaving other instances' clients without updates. Not a fan-out pattern.</li>
+  <li><strong>Pub/Sub (chosen):</strong> Decouples publishers from subscribers. Ingestion Service publishes to a topic; all subscribed Price Service instances receive the tick. As instances scale, they simply subscribe/unsubscribe. No coordination needed between publisher and subscribers.</li>
+</ul>
+
+<h4>Topic Structure</h4>
+<p>Topics are organized by ticker symbol: <code>prices.AAPL</code>, <code>prices.TSLA</code>, <code>prices.SPY</code>, etc. This granularity allows Price Service instances to subscribe only to tickers that their connected clients care about, minimizing unnecessary data transfer.</p>
+
+<h4>How It Works</h4>
+<ol>
+  <li><strong>Publish:</strong> The Market Data Ingestion Service receives a raw tick from the exchange feed, normalizes it, and publishes to the appropriate topic (e.g., <code>prices.AAPL</code>). Message format: <code>{ ticker, timestamp, bid, ask, last, volume }</code>.</li>
+  <li><strong>Subscribe:</strong> When a Price Service instance receives a WebSocket subscribe message for a ticker it isn't already tracking, it subscribes to the corresponding Pub/Sub topic.</li>
+  <li><strong>Deliver:</strong> The Pub/Sub system pushes the message to all active subscriptions on that topic. Each Price Service instance receives the tick independently.</li>
+  <li><strong>Unsubscribe:</strong> When the last client on a Price Service instance unsubscribes from a ticker, the instance unsubscribes from that Pub/Sub topic to stop receiving unnecessary messages.</li>
+</ol>
+
+<h4>Message Durability</h4>
+<p>Price tick messages are <strong>ephemeral</strong> — they do not need to be persisted in the Pub/Sub system. If a subscriber misses a tick, the next tick (arriving milliseconds later) supersedes it. This is fundamentally different from the order Message Queue, where every message must be processed exactly once. The Pub/Sub system can be configured with no retention or minimal retention (a few seconds).</p>
+</div>
+
+<hr>
+
+<!-- ===== 13. SCALING CONSIDERATIONS ===== -->
+<h2 id="scaling">13. Scaling Considerations</h2>
+<div class="card">
+
+<h4>Traffic Patterns</h4>
+<p>Robinhood has extreme traffic spikes correlated with market events:</p>
+<ul>
+  <li><strong>Market open (9:30 AM ET):</strong> 10-50x normal traffic within the first 5 minutes.</li>
+  <li><strong>Market close (4:00 PM ET):</strong> 5-10x spike.</li>
+  <li><strong>Breaking news / volatile events:</strong> Unpredictable 100x spikes (e.g., meme stock events like GameStop in Jan 2021).</li>
+  <li><strong>Evenings / weekends:</strong> Minimal traffic (portfolio views, watchlist management only).</li>
+</ul>
+
+<h4>Load Balancer Placement</h4>
+<table>
+<tr><th>Location</th><th>Type</th><th>Strategy</th><th>Purpose</th></tr>
+<tr><td>Between Clients ↔ API Gateway</td><td>Layer 7 (HTTP)</td><td>Round-Robin with health checks</td><td>Distribute REST API traffic across API Gateway instances. TLS termination. Can perform path-based routing (e.g., /api/v1/orders → Order Service cluster).</td></tr>
+<tr><td>Between Clients ↔ Price Service</td><td>Layer 4 (TCP)</td><td>Least-connections with sticky sessions (IP hash)</td><td>WebSocket connections are stateful and long-lived. L4 balancer routes the initial TCP connection; sticky sessions ensure subsequent packets go to the same server. Least-connections prevents any single server from being overloaded.</td></tr>
+<tr><td>Between API Gateway ↔ Services</td><td>Layer 7 (HTTP)</td><td>Round-Robin</td><td>Distribute requests to stateless service instances (Order Service, Portfolio Service, Account Service, etc.).</td></tr>
+</table>
+
+<h4>Horizontal Scaling Strategy</h4>
+<table>
+<tr><th>Component</th><th>Scaling Approach</th></tr>
+<tr><td>API Gateway</td><td>Stateless — scale out behind L7 LB. Auto-scale based on request rate.</td></tr>
+<tr><td>Order Service</td><td>Stateless — scale out. Auto-scale based on CPU and request rate.</td></tr>
+<tr><td>Order Processor</td><td>Scale out consumer instances. Each instance processes messages from the queue. More instances = higher throughput. Auto-scale based on queue depth.</td></tr>
+<tr><td>Portfolio Service</td><td>Stateless — scale out. Auto-scale based on request rate. Read replicas of SQL DB handle read load.</td></tr>
+<tr><td>Price Service (WebSocket)</td><td>Scale out, but each instance is stateful (holds connections). New instances register with the Connection Manager. Auto-scale based on active connection count.</td></tr>
+<tr><td>Market Data Ingestion</td><td>Partition by exchange/ticker range across instances. Scale based on number of data feeds.</td></tr>
+<tr><td>SQL Database</td><td>Vertical scaling + read replicas for read-heavy queries. Horizontal sharding by user_id for orders/holdings/accounts. See sharding notes in Schema section.</td></tr>
+<tr><td>Time-Series DB</td><td>Shard by ticker_symbol. Hot tickers on dedicated nodes. Auto-compaction for old data.</td></tr>
+<tr><td>In-Memory Cache</td><td>Cluster mode with consistent hashing. Add nodes to scale capacity. Price Cache is read-heavy so multiple replicas help.</td></tr>
+<tr><td>Message Queue</td><td>Add partitions for order queue. More partitions = more consumer parallelism.</td></tr>
+<tr><td>Pub/Sub</td><td>Partitions per topic. Broker scaling based on message throughput.</td></tr>
+</table>
+
+<h4>Pre-scaling for Predictable Events</h4>
+<p>Market open at 9:30 AM ET is predictable. The system should pre-scale at 9:00 AM ET (spin up additional instances of all services) rather than waiting for auto-scaling to react. This avoids the cold-start latency of spinning up new instances under load.</p>
+
+<h4>Rate Limiting &amp; Circuit Breakers</h4>
+<ul>
+  <li><strong>API Gateway rate limits:</strong> Per-user: 100 orders/min, 1000 API calls/min. Per-IP: 5000 requests/min (protects against DDoS). Returns <code>HTTP 429 Too Many Requests</code> when exceeded.</li>
+  <li><strong>Circuit breaker on Market Maker connection:</strong> If the market maker's FIX connection fails 5 times in 60 seconds, the circuit opens and orders are queued (not lost) until the connection recovers.</li>
+  <li><strong>Circuit breaker on Banking Partner:</strong> If ACH API errors exceed a threshold, deposit/withdrawal processing is paused and users are notified of delays.</li>
+</ul>
+</div>
+
+<hr>
+
+<!-- ===== 14. TRADEOFFS & DEEP DIVES ===== -->
+<h2 id="tradeoffs">14. Tradeoffs &amp; Deep Dives</h2>
+<div class="card">
+
+<h4>1. Strong Consistency vs. Availability for Financial Data</h4>
+<p><strong>Chosen:</strong> Strong consistency (CP in CAP theorem) for all financial tables (orders, accounts, holdings, transactions).</p>
+<p><strong>Trade-off:</strong> During a network partition or database node failure, writes may be temporarily rejected rather than allowing inconsistent data. A user might see a brief "Service temporarily unavailable" error when placing an order during a partition, rather than a successful response that later turns out to be a phantom order.</p>
+<p><strong>Why:</strong> In finance, consistency is non-negotiable. A double-spend (two orders executing against the same insufficient balance) is a financial and regulatory disaster. Better to briefly refuse service than to create inconsistent financial state.</p>
+
+<h4>2. Eventual Consistency for Non-Financial Data</h4>
+<p><strong>Chosen:</strong> Eventual consistency for watchlists, notifications, price ticks.</p>
+<p><strong>Why:</strong> These don't involve money movement. If a notification arrives 200 ms late or a watchlist update takes a moment to propagate, there's no financial harm. This allows these components to prioritize availability and horizontal scalability.</p>
+
+<h4>3. Asynchronous Order Processing (Message Queue) vs. Synchronous</h4>
+<p><strong>Chosen:</strong> Asynchronous via message queue. User receives HTTP 202, not HTTP 200.</p>
+<p><strong>Trade-off:</strong> The user doesn't know the exact fill price at the moment they submit the order. They must wait for the push notification. This is a UX trade-off — but it's how all brokerages work for market orders (price is determined at execution time, not submission time).</p>
+<p><strong>Why:</strong> Decoupling allows the Order Service to respond fast (<100 ms), handle spikes via queue buffering, and tolerate market maker latency or downtime without blocking the user.</p>
+
+<h4>4. Denormalization in Holdings and Orders</h4>
+<p><strong>Trade-off:</strong> Denormalized fields (<code>avg_cost_basis</code>, <code>filled_quantity</code>, <code>filled_avg_price</code>) must be maintained by application logic during writes, increasing code complexity and risk of inconsistency if a bug is introduced.</p>
+<p><strong>Why:</strong> Portfolio view is extremely read-heavy (every user checks their portfolio multiple times per day). Computing cost basis from all historical executions on every read would be O(N) joins where N grows forever. The denormalized fields enable O(1) reads. The write complexity is contained in the Order Processor's fill-handling transaction, which is already a carefully engineered critical path.</p>
+
+<h4>5. User-Based Sharding</h4>
+<p><strong>Trade-off:</strong> Queries that span multiple users (e.g., "show me all AAPL orders across all users" for an admin dashboard or regulatory report) require scatter-gather across all shards. This is slow.</p>
+<p><strong>Why:</strong> User-facing operations (place order, view portfolio, view order history) always filter by <code>user_id</code>. User-based sharding ensures these operations hit a single shard. Admin/regulatory queries are infrequent, can tolerate higher latency, and can be served from a separate analytics replica.</p>
+
+<h4>6. FIX Protocol over TCP for Market Maker Communication</h4>
+<p><strong>Why FIX:</strong> FIX is the universal standard for securities trading communication. All market makers, exchanges, and brokerages speak FIX. Using a proprietary protocol would require each market maker to build custom integrations.</p>
+<p><strong>Why TCP:</strong> Every order and execution report must arrive reliably and in order. A dropped or reordered packet could mean a lost order or misattributed fill. TCP provides reliable, ordered delivery. UDP's speed advantage is irrelevant here — correctness trumps latency for financial transactions.</p>
+
+<h4>7. WebSocket Connection Limits</h4>
+<p><strong>Challenge:</strong> Each WebSocket server can handle ~50,000–100,000 concurrent connections (limited by file descriptors and memory). With 10 million concurrent users, we need 100-200 Price Service instances.</p>
+<p><strong>Mitigation:</strong> Horizontal scaling of WebSocket servers + L4 load balancer with least-connections routing. Connection Manager enables inter-server communication.</p>
+</div>
+
+<hr>
+
+<!-- ===== 15. ALTERNATIVE APPROACHES ===== -->
+<h2 id="alternatives">15. Alternative Approaches</h2>
+<div class="card">
+
+<h4>1. Server-Sent Events (SSE) Instead of WebSocket</h4>
+<p><strong>What:</strong> Use SSE for price streaming and a separate REST endpoint for subscribe/unsubscribe.</p>
+<p><strong>Why not:</strong> SSE is unidirectional (server → client). The client would need to send HTTP requests to subscribe/unsubscribe from tickers, adding latency and request overhead for what is a frequent, lightweight operation. WebSocket's bidirectional channel handles this more elegantly. Additionally, SSE has poor support in some mobile WebView environments and lacks binary frame support (useful for compact price tick encoding).</p>
+
+<h4>2. HTTP Long Polling Instead of WebSocket</h4>
+<p><strong>What:</strong> Client sends a GET request that blocks until a new price is available, then immediately sends another.</p>
+<p><strong>Why not:</strong> Each reconnection incurs TCP + TLS handshake overhead (~50-100 ms). For data that updates multiple times per second, the reconnection overhead dominates. Also, each poll ties up a server thread/connection, making it much less scalable than WebSocket multiplexing.</p>
+
+<h4>3. CQRS (Command Query Responsibility Segregation)</h4>
+<p><strong>What:</strong> Separate the write model (order placement, fills) from the read model (order history, portfolio view) with different databases optimized for each.</p>
+<p><strong>Why not chosen (for now):</strong> CQRS adds significant complexity — you need event sourcing or change data capture to keep the read model in sync with the write model. For our scale, SQL read replicas provide sufficient read scalability without the operational overhead of maintaining separate read/write data stores. CQRS is a valid evolution if read traffic grows to a point where read replicas are insufficient.</p>
+
+<h4>4. Event Sourcing for Orders</h4>
+<p><strong>What:</strong> Instead of mutable order status in a row, store an append-only log of order events (OrderPlaced, OrderSubmitted, OrderPartiallyFilled, OrderFilled, etc.) and reconstruct current state by replaying events.</p>
+<p><strong>Why not chosen:</strong> Excellent for auditability, but adds substantial complexity to every read operation (reconstruct state from events) and requires careful snapshot management for performance. We achieve auditability through the separate Audit Log (append-only) while keeping the orders table simple and queryable. If audit/compliance requirements grow more complex, event sourcing would be a good evolution.</p>
+
+<h4>5. gRPC Between Internal Services</h4>
+<p><strong>What:</strong> Use gRPC instead of REST for service-to-service communication.</p>
+<p><strong>Why not chosen (initially):</strong> gRPC offers lower latency (binary protobuf encoding, HTTP/2 multiplexing, persistent connections) compared to REST/JSON. However, REST is more debuggable (human-readable JSON, curl-able endpoints), has better tooling for API gateways, and is easier for developer onboarding. For a system where inter-service latency is not the bottleneck (market maker latency and database latency dominate), REST is sufficient. gRPC is a strong candidate for future optimization, especially for the hot path between Portfolio Service → Price Cache where low-latency bulk lookups would benefit from protobuf encoding.</p>
+
+<h4>6. Single Monolithic Database vs. Microservice Databases</h4>
+<p><strong>What:</strong> Use one large SQL database for all tables instead of separate databases per service.</p>
+<p><strong>Why not:</strong> A single database creates a scaling bottleneck and a single point of failure. It also couples services — a schema migration in the orders table could lock the accounts table. With separate databases per service (database-per-service pattern), each service owns its data, can scale independently, and schema changes are isolated. The trade-off is that cross-service queries require API calls instead of JOINs, but our access patterns are already service-aligned (e.g., Portfolio Service only needs holdings + prices, not orders).</p>
+
+<h4>7. NoSQL for Orders Instead of SQL</h4>
+<p><strong>What:</strong> Use a NoSQL document database for orders to gain horizontal scalability.</p>
+<p><strong>Why not:</strong> Orders participate in multi-table ACID transactions (update order + debit balance + update holdings). NoSQL databases generally don't support multi-document transactions, or their transaction support is limited. The order fill path <em>must</em> be atomic — if the balance debit succeeds but the holding update fails, we have inconsistent financial state. SQL databases provide this guarantee natively. The scalability concern is addressed through sharding by user_id within SQL.</p>
+
+</div>
+
+<hr>
+
+<!-- ===== 16. ADDITIONAL INFORMATION ===== -->
+<h2 id="additional">16. Additional Information</h2>
+<div class="card">
+
+<h4>Idempotency Design</h4>
+<p>Order placement is the most critical idempotent operation. The client generates a UUID <code>idempotencyKey</code> before sending the request. The API Gateway stores <code>{ idempotencyKey → response }</code> in the cache with a 24-hour TTL. If the same key is seen again (due to client retry), the cached response is returned immediately without re-processing. The <code>idempotency_key</code> column in the orders table has a UNIQUE constraint as a database-level safety net.</p>
+
+<h4>Settlement &amp; T+1 Rules</h4>
+<p>US equities settle on a T+1 basis (trade date + 1 business day). This means:</p>
+<ul>
+  <li>When a user <em>sells</em> stock, the cash from the sale isn't fully "settled" until the next business day.</li>
+  <li>Unsettled funds can be used to buy more stock (re-investment) but cannot be withdrawn.</li>
+  <li>The Account Service must track both <code>cash_balance</code> (settled) and <code>buying_power</code> (includes unsettled) separately.</li>
+  <li>A background job runs daily to move unsettled funds to settled after the settlement window passes.</li>
+</ul>
+
+<h4>Fractional Shares</h4>
+<p>Robinhood supports fractional shares (e.g., buying $10 worth of a $3,000 stock like AMZN). This is why quantity fields use <code>DECIMAL(15,6)</code> — up to 6 decimal places of precision. Fractional orders are typically executed as part of a batch: the brokerage accumulates fractional orders from multiple users, buys whole shares from the market maker, and allocates fractional portions to each user's account.</p>
+
+<h4>Regulatory Compliance</h4>
+<ul>
+  <li><strong>SEC Rule 606:</strong> Quarterly disclosure of order routing practices (which market makers received orders).</li>
+  <li><strong>FINRA Rule 4511:</strong> Books and records must be retained for 6 years.</li>
+  <li><strong>Pattern Day Trader (PDT) Rule:</strong> If a user with &lt; $25,000 in their account makes 4+ day trades within 5 business days, they're flagged as a PDT and restricted. The Order Service must track this.</li>
+  <li><strong>Best Execution:</strong> Orders must be routed to the venue providing the best price for the customer. The Order Processor evaluates market maker quotes before routing.</li>
+</ul>
+
+<h4>Disaster Recovery</h4>
+<ul>
+  <li><strong>SQL Databases:</strong> Synchronous replication to a standby in another availability zone. Automatic failover with &lt; 30 seconds of downtime. Daily backups with point-in-time recovery.</li>
+  <li><strong>Message Queue:</strong> Messages are replicated across 3 nodes before being acknowledged as written. If a node fails, no messages are lost.</li>
+  <li><strong>WebSocket Servers:</strong> Stateless from a data perspective (connection state is ephemeral). If a server fails, clients reconnect to another server automatically.</li>
+  <li><strong>Market Data Ingestion:</strong> Active-passive redundancy. A standby instance takes over within seconds if the primary fails.</li>
+</ul>
+
+<h4>Monitoring &amp; Alerting</h4>
+<ul>
+  <li><strong>Order latency:</strong> P50, P95, P99 of time from order submission to fill confirmation. Alert if P99 > 2 seconds.</li>
+  <li><strong>Price feed lag:</strong> Delta between exchange timestamp and cache write timestamp. Alert if > 500 ms.</li>
+  <li><strong>Queue depth:</strong> Number of messages in the order queue. Alert if depth > 10,000 (indicates processors can't keep up).</li>
+  <li><strong>WebSocket connection count:</strong> Per-server and total. Alert if approaching capacity (80% of max).</li>
+  <li><strong>Failed order rate:</strong> Percentage of orders that fail at any stage. Alert if > 1%.</li>
+  <li><strong>Balance reconciliation:</strong> Nightly job compares sum of all executions against account balances. Alert on any discrepancy, no matter how small.</li>
+</ul>
+
+<h4>Security Measures</h4>
+<ul>
+  <li><strong>Authentication:</strong> JWT tokens with short expiry (15 min access token, 7 day refresh token). Multi-factor authentication (SMS or authenticator app) required for sensitive operations (withdrawals, password changes).</li>
+  <li><strong>Encryption in transit:</strong> TLS 1.3 for all HTTPS and WSS connections. Mutual TLS (mTLS) for inter-service communication.</li>
+  <li><strong>Encryption at rest:</strong> AES-256 for all databases and backups.</li>
+  <li><strong>Input validation:</strong> All API inputs validated for type, range, and format. Order quantities must be positive, prices must be positive, tickers must match a known security list.</li>
+  <li><strong>Account lockout:</strong> After 5 failed login attempts, the account is temporarily locked for 15 minutes. Progressively longer lockouts on repeated failures.</li>
+</ul>
+
+</div>
+
+<hr>
+
+<!-- ===== 17. VENDOR SUGGESTIONS ===== -->
+<h2 id="vendors">17. Vendor Suggestions</h2>
+<div class="card">
+<p>The architecture above is vendor-agnostic. Below are potential vendor choices with rationale:</p>
+
+<table>
+<tr><th>Component</th><th>Vendor Options</th><th>Rationale</th></tr>
+<tr>
+  <td><strong>SQL Database</strong></td>
+  <td>PostgreSQL, CockroachDB, Amazon Aurora, Google Cloud Spanner</td>
+  <td><strong>PostgreSQL</strong> is the most mature open-source option with excellent ACID compliance, rich indexing (B-tree, hash, partial), and strong ecosystem. <strong>CockroachDB</strong> adds distributed SQL with automatic sharding — ideal if you want SQL semantics at global scale without manual shard management. <strong>Cloud Spanner</strong> offers globally consistent distributed SQL but at premium cost.</td>
+</tr>
+<tr>
+  <td><strong>Time-Series Database</strong></td>
+  <td>TimescaleDB, InfluxDB, QuestDB</td>
+  <td><strong>TimescaleDB</strong> is built on PostgreSQL, allowing the team to use familiar SQL for time-series queries while getting automatic partitioning (hypertables) and continuous aggregates (auto-downsampling from ticks → candles). <strong>InfluxDB</strong> is purpose-built for time-series with its own query language (Flux) and excellent write performance.</td>
+</tr>
+<tr>
+  <td><strong>NoSQL Document Database</strong></td>
+  <td>MongoDB, Amazon DynamoDB, Azure Cosmos DB</td>
+  <td><strong>DynamoDB</strong> offers single-digit-millisecond latency at any scale with a simple partition-key/sort-key model — perfect for watchlists and notifications. <strong>MongoDB</strong> provides a flexible document model with richer query capabilities if needed. <strong>Cosmos DB</strong> offers multi-model and global distribution.</td>
+</tr>
+<tr>
+  <td><strong>In-Memory Cache</strong></td>
+  <td>Redis, Memcached, Dragonfly</td>
+  <td><strong>Redis</strong> is the de facto standard with rich data structures (strings for price cache, hashes for connection manager, sorted sets for leaderboards), pub/sub capabilities, and cluster mode for horizontal scaling. <strong>Dragonfly</strong> is a Redis-compatible drop-in with higher throughput on modern hardware.</td>
+</tr>
+<tr>
+  <td><strong>Message Queue</strong></td>
+  <td>Apache Kafka, RabbitMQ, Amazon SQS (FIFO)</td>
+  <td><strong>Kafka</strong> provides durable, partitioned, ordered message streaming with exactly-once semantics — critical for order processing. Its log-based design also enables replayability for debugging and reconciliation. <strong>SQS FIFO</strong> is simpler to operate (fully managed) but with lower throughput limits. <strong>RabbitMQ</strong> is excellent for traditional queue patterns but less suited for the ordered partitioned pattern we need.</td>
+</tr>
+<tr>
+  <td><strong>Pub/Sub</strong></td>
+  <td>Apache Kafka, Google Pub/Sub, Amazon SNS + SQS, NATS</td>
+  <td><strong>Kafka</strong> can serve double duty as both message queue (for orders) and pub/sub (for price distribution via consumer groups). Using one technology for both reduces operational overhead. <strong>NATS</strong> is lightweight and extremely fast for ephemeral messaging like price ticks where durability isn't needed.</td>
+</tr>
+<tr>
+  <td><strong>CDN</strong></td>
+  <td>Cloudflare, Amazon CloudFront, Fastly, Akamai</td>
+  <td><strong>Cloudflare</strong> offers a global edge network with DDoS protection included — important for a financial platform. <strong>CloudFront</strong> integrates well if already on AWS. <strong>Fastly</strong> has sub-second cache purging, useful if static content needs rapid updates.</td>
+</tr>
+<tr>
+  <td><strong>Object Storage</strong></td>
+  <td>Amazon S3, Google Cloud Storage, Azure Blob Storage</td>
+  <td>Used for storing audit logs (long-term archival), regulatory reports, and static assets before CDN distribution. <strong>S3</strong> is the industry standard with lifecycle policies for transitioning old data to cheaper tiers (Glacier for 6+ year regulatory retention).</td>
+</tr>
+<tr>
+  <td><strong>Load Balancer</strong></td>
+  <td>AWS ALB/NLB, NGINX, HAProxy, Envoy</td>
+  <td><strong>AWS ALB</strong> (L7) for HTTP routing + <strong>NLB</strong> (L4) for WebSocket connections is a common pairing in AWS environments. <strong>Envoy</strong> is the standard for service mesh architectures with excellent observability. <strong>NGINX</strong> and <strong>HAProxy</strong> are proven, high-performance options for self-hosted environments.</td>
+</tr>
+</table>
+</div>
+
+<hr>
+
+<footer style="text-align:center; color:var(--muted); padding: 2rem 0; font-size: 0.9rem;">
+  <p>System Design Document — Robinhood</p>
+  <p>Generated for interview preparation purposes</p>
+</footer>
+
 </body>
 </html>
