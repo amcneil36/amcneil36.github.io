@@ -4,340 +4,1152 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>System Design: Uber</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <style>
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: #e0e0e0; line-height: 1.7; }
-h1 { color: #00c9ff; border-bottom: 3px solid #00c9ff; padding-bottom: 10px; font-size: 2.2em; }
-h2 { color: #33d6ff; margin-top: 40px; font-size: 1.6em; border-left: 4px solid #33d6ff; padding-left: 12px; }
-h3 { color: #66e3ff; font-size: 1.3em; }
-.section { background: #1a1a2e; border-radius: 10px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
-.diagram-container { background: #0d1117; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
-.example { background: #1e293b; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
-.example strong { color: #f59e0b; }
-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-th { background: #2a2a4a; color: #33d6ff; padding: 12px; text-align: left; border: 1px solid #444; }
-td { padding: 10px 12px; border: 1px solid #333; }
-tr:nth-child(even) { background: #1a1a2e; }
-tr:nth-child(odd) { background: #151528; }
-code { background: #2d2d4d; padding: 2px 8px; border-radius: 4px; color: #ff79c6; font-size: 0.95em; }
-.tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
-.tag-pk { background: #4a1a6b; color: #d4a5ff; }
-.tag-fk { background: #1a4a3b; color: #a5ffd4; }
-.tag-idx { background: #4a3a1a; color: #ffd4a5; }
-ul { padding-left: 25px; }
-li { margin: 5px 0; }
-.tradeoff { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-.pro { background: #0a2a1a; border: 1px solid #2a5a3a; padding: 15px; border-radius: 8px; }
-.con { background: #2a0a1a; border: 1px solid #5a2a3a; padding: 15px; border-radius: 8px; }
+  :root { --bg: #fdfdfd; --fg: #1a1a1a; --accent: #2563eb; --border: #e5e7eb; --code-bg: #f3f4f6; --section-bg: #f9fafb; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--fg); background: var(--bg); line-height: 1.7; max-width: 1100px; margin: 0 auto; padding: 2rem 2.5rem 4rem; }
+  h1 { font-size: 2.2rem; margin-bottom: .3rem; }
+  h2 { font-size: 1.6rem; margin-top: 2.8rem; margin-bottom: .8rem; border-bottom: 2px solid var(--accent); padding-bottom: .3rem; }
+  h3 { font-size: 1.25rem; margin-top: 1.8rem; margin-bottom: .5rem; color: var(--accent); }
+  h4 { font-size: 1.05rem; margin-top: 1.3rem; margin-bottom: .4rem; }
+  p, li { margin-bottom: .55rem; }
+  ul, ol { padding-left: 1.6rem; }
+  code { background: var(--code-bg); padding: .15rem .35rem; border-radius: 4px; font-size: .92em; }
+  pre { background: var(--code-bg); padding: 1rem 1.2rem; border-radius: 8px; overflow-x: auto; margin: .8rem 0 1.2rem; font-size: .9em; line-height: 1.55; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+  th, td { border: 1px solid var(--border); padding: .55rem .75rem; text-align: left; font-size: .93rem; }
+  th { background: var(--section-bg); font-weight: 600; }
+  .mermaid { margin: 1.2rem 0; }
+  .example-box { background: #eff6ff; border-left: 4px solid var(--accent); padding: 1rem 1.2rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+  .example-box strong { color: var(--accent); }
+  .warn { background: #fef9c3; border-left: 4px solid #ca8a04; padding: .8rem 1rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+  .toc { background: var(--section-bg); border: 1px solid var(--border); padding: 1.2rem 1.5rem; border-radius: 10px; margin: 1.5rem 0 2rem; }
+  .toc a { text-decoration: none; color: var(--accent); }
+  .toc a:hover { text-decoration: underline; }
+  .toc ol { margin-bottom: 0; }
+  .toc li { margin-bottom: .3rem; }
+  .subtitle { color: #6b7280; font-size: 1.05rem; margin-bottom: 2rem; }
 </style>
 </head>
 <body>
-<h1>System Design: Uber (Ride-Sharing Platform)</h1>
 
-<div class="section">
-<h2>Functional Requirements</h2>
-<ul>
-<li>Riders request rides by specifying pickup and destination locations</li>
-<li>Match riders with nearby available drivers in real-time</li>
-<li>Real-time driver location tracking (GPS updates every 3-4 seconds)</li>
-<li>Dynamic pricing (surge pricing based on supply/demand)</li>
-<li>ETA calculation for pickup and trip duration</li>
-<li>Payment processing (ride fare calculation, driver payout)</li>
-<li>Trip history and ratings for riders and drivers</li>
-</ul>
-</div>
+<h1>System Design: Uber</h1>
+<p class="subtitle">A comprehensive ride-hailing platform design</p>
 
-<div class="section">
-<h2>Non-Functional Requirements</h2>
-<ul>
-<li><strong>Low Latency:</strong> Matching rider to driver in &lt;10 seconds</li>
-<li><strong>Real-time:</strong> Location updates processed within 1-2 seconds</li>
-<li><strong>High Availability:</strong> 99.99% — outage means people stranded</li>
-<li><strong>Scalability:</strong> Millions of concurrent rides, millions of driver location updates/sec</li>
-<li><strong>Consistency:</strong> Strong consistency for ride matching (a driver can't be matched to two riders)</li>
-<li><strong>Location accuracy:</strong> GPS precision within 5-10 meters</li>
-</ul>
-</div>
-
-<!-- Flow 1: Ride Request & Matching -->
-<div class="section">
-<h2>Flow 1: Ride Request & Driver Matching</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1150 500" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00c9ff"/></marker></defs>
-<rect x="20" y="200" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="80" y="235" text-anchor="middle" fill="white" font-size="13">Rider App</text>
-<rect x="190" y="200" width="130" height="60" rx="10" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="255" y="228" text-anchor="middle" fill="white" font-size="12">API Gateway /</text><text x="255" y="245" text-anchor="middle" fill="white" font-size="12">Load Balancer</text>
-<rect x="380" y="200" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="445" y="235" text-anchor="middle" fill="white" font-size="13">Trip Service</text>
-<rect x="580" y="100" width="150" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="655" y="130" text-anchor="middle" fill="white" font-size="12">Matching Engine</text>
-<rect x="580" y="200" width="150" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="655" y="225" text-anchor="middle" fill="white" font-size="11">Location Service</text><text x="655" y="240" text-anchor="middle" fill="white" font-size="10">(Geospatial Index)</text>
-<rect x="580" y="310" width="150" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="655" y="340" text-anchor="middle" fill="white" font-size="12">Pricing Service</text>
-<rect x="580" y="410" width="150" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="655" y="440" text-anchor="middle" fill="white" font-size="12">ETA Service</text>
-<rect x="810" y="100" width="130" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="875" y="128" text-anchor="middle" fill="white" font-size="11">Driver Supply</text><text x="875" y="142" text-anchor="middle" fill="white" font-size="10">Index (Redis)</text>
-<rect x="810" y="200" width="130" height="50" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="875" y="230" text-anchor="middle" fill="white" font-size="12">Map Service</text>
-<rect x="810" y="310" width="130" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="875" y="340" text-anchor="middle" fill="white" font-size="13">Driver App</text>
-<ellipse cx="1030" cy="125" rx="60" ry="25" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="1030" y="130" text-anchor="middle" fill="white" font-size="11">Trip DB</text>
-<line x1="140" y1="230" x2="188" y2="230" stroke="#00c9ff" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="320" y1="230" x2="378" y2="230" stroke="#00c9ff" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="510" y1="215" x2="578" y2="130" stroke="#00c9ff" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="510" y1="230" x2="578" y2="225" stroke="#00c9ff" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="510" y1="245" x2="578" y2="330" stroke="#00c9ff" stroke-width="1.5" marker-end="url(#arrow1)"/>
-<line x1="510" y1="250" x2="578" y2="430" stroke="#00c9ff" stroke-width="1.5" marker-end="url(#arrow1)"/>
-<line x1="730" y1="125" x2="808" y2="125" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="730" y1="225" x2="808" y2="225" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="730" y1="130" x2="808" y2="330" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow1)"/>
-<line x1="940" y1="125" x2="968" y2="125" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow1)"/>
-<text x="575" y="30" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Uber: Ride Request & Matching Flow</text>
-</svg>
-</div>
-
-<h3>Step-by-Step</h3>
+<!-- ============================================================ -->
+<!-- TABLE OF CONTENTS                                            -->
+<!-- ============================================================ -->
+<div class="toc">
+<strong>Table of Contents</strong>
 <ol>
-<li><strong>Rider requests ride:</strong> <code>POST /v1/trips { pickup: {lat, lng}, destination: {lat, lng}, ride_type: "UberX" }</code></li>
-<li><strong>Pricing Service:</strong> Calculates fare estimate using distance, time, surge multiplier (based on supply/demand ratio in geohash region)</li>
-<li><strong>ETA Service:</strong> Calculates pickup ETA and trip ETA using road network graph + real-time traffic data</li>
-<li><strong>Rider confirms price</strong> → Trip Service creates trip with status "matching"</li>
-<li><strong>Matching Engine:</strong> Queries Location Service for nearby available drivers within expanding radius (start 2km, expand to 5km)</li>
-<li><strong>Location Service (Geospatial Index):</strong> Uses geohash + Redis to find drivers. <code>GEORADIUS drivers:active {lat} {lng} 2km</code></li>
-<li><strong>Matching Engine ranks candidates:</strong> Score = f(distance, ETA to pickup, driver rating, acceptance rate, vehicle type match)</li>
-<li><strong>Best driver sent ride request</strong> via push notification. Driver has 15 seconds to accept</li>
-<li><strong>If accepted:</strong> Trip status → "driver_assigned". Driver location shared with rider in real-time</li>
-<li><strong>If declined/timeout:</strong> Next best driver gets the request (cascade)</li>
+  <li><a href="#fr">Functional Requirements</a></li>
+  <li><a href="#nfr">Non-Functional Requirements</a></li>
+  <li><a href="#flow1">Flow 1 — Driver Location Update</a></li>
+  <li><a href="#flow2">Flow 2 — Ride Request &amp; Matching</a></li>
+  <li><a href="#flow3">Flow 3 — Real-time Ride Tracking</a></li>
+  <li><a href="#flow4">Flow 4 — Ride Completion &amp; Payment</a></li>
+  <li><a href="#flow5">Flow 5 — Rating</a></li>
+  <li><a href="#combined">Combined Overall Diagram</a></li>
+  <li><a href="#schema">Database Schema</a></li>
+  <li><a href="#caching">CDN &amp; Caching Deep Dive</a></li>
+  <li><a href="#websocket">WebSocket Deep Dive</a></li>
+  <li><a href="#mq">Message Queue Deep Dive</a></li>
+  <li><a href="#geo">Geospatial Indexing Deep Dive</a></li>
+  <li><a href="#lb">Load Balancer Deep Dive</a></li>
+  <li><a href="#scaling">Scaling Considerations</a></li>
+  <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+  <li><a href="#alternatives">Alternative Approaches</a></li>
+  <li><a href="#additional">Additional Considerations</a></li>
+  <li><a href="#vendors">Vendor Recommendations</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- 1. FUNCTIONAL REQUIREMENTS                                   -->
+<!-- ============================================================ -->
+<h2 id="fr">1. Functional Requirements</h2>
+<ol>
+  <li><strong>Ride Request:</strong> Riders can request a ride by specifying a pickup location and a dropoff location.</li>
+  <li><strong>Fare Estimation:</strong> The system provides a fare estimate before the rider confirms the ride.</li>
+  <li><strong>Driver Matching:</strong> The system matches the rider with a nearby available driver.</li>
+  <li><strong>Accept / Reject:</strong> Drivers can accept or reject an incoming ride request; on timeout or rejection, the system cascades to the next best driver.</li>
+  <li><strong>Real-time Tracking:</strong> Both rider and driver see each other's real-time location during the ride lifecycle (driver en-route → pickup → in-progress).</li>
+  <li><strong>ETA Calculation:</strong> The system continuously updates the estimated time of arrival for pickup and dropoff.</li>
+  <li><strong>Fare Calculation:</strong> After the ride completes, the system calculates the final fare based on distance, time, and surge multiplier.</li>
+  <li><strong>Payment Processing:</strong> The system charges the rider and credits the driver after ride completion.</li>
+  <li><strong>Surge Pricing:</strong> Dynamic pricing adjusts fares in real-time based on supply/demand ratio in each geographic zone.</li>
+  <li><strong>Ratings:</strong> Riders and drivers can rate each other after a ride.</li>
+  <li><strong>Ride History:</strong> Both riders and drivers can view their past rides.</li>
+  <li><strong>Driver Online/Offline:</strong> Drivers can toggle their availability status.</li>
 </ol>
 
-<div class="example">
-<strong>Example:</strong> Rider at (37.7749, -122.4194) requests UberX to SFO airport. Pricing: base $2.50 + $1.75/mile × 13 miles + $0.35/min × 25 min = ~$34 (no surge). ETA Service: 5 min pickup ETA. Matching Engine finds 8 available drivers within 2km via Redis GEORADIUS. Ranks by ETA to pickup: Driver A (3 min, 4.92★), Driver B (4 min, 4.85★). Driver A gets request → accepts in 6 seconds → trip status "driver_assigned" → rider sees Driver A's live location.
-</div>
-
-<h3>Deep Dive: Geospatial Index (Location Service)</h3>
-<ul>
-<li><strong>Geohash:</strong> Encode lat/lng into string prefix. "9q8yy" = San Francisco area. Adjacent geohashes share prefix. Enables range queries</li>
-<li><strong>Redis GEOADD/GEORADIUS:</strong> Store driver locations: <code>GEOADD drivers:active {lng} {lat} driver_123</code>. Query nearby: <code>GEORADIUS drivers:active -122.4194 37.7749 2 km WITHCOORD COUNT 20</code></li>
-<li><strong>Update frequency:</strong> Drivers send GPS location every 4 seconds. Location Service updates Redis geospatial index</li>
-<li><strong>Cell-based partitioning:</strong> World divided into S2 cells (Google S2 geometry). Each cell managed by specific server. Rider's request routed to cell containing pickup location</li>
-<li><strong>Why not PostGIS:</strong> Too slow for millions of updates/sec. Redis geospatial commands are O(N+logN) and in-memory — sub-millisecond</li>
-</ul>
-
-<h3>Deep Dive: Matching Engine</h3>
-<ul>
-<li><strong>Algorithm:</strong> Batched matching every 2 seconds. Collect all pending ride requests and available drivers → solve assignment problem (minimize total ETA) → Hungarian algorithm or greedy assignment</li>
-<li><strong>Why batched:</strong> Individual matching (first-come-first-served) can be suboptimal. Batching finds globally optimal driver-rider pairs</li>
-<li><strong>Constraints:</strong> Driver must be available, vehicle type matches, driver not in restricted zone, driver rating above threshold</li>
-</ul>
-</div>
-
-<!-- Flow 2: Driver Location Tracking -->
-<div class="section">
-<h2>Flow 2: Real-time Driver Location Tracking</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffaa00"/></marker></defs>
-<rect x="20" y="140" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="80" y="175" text-anchor="middle" fill="white" font-size="13">Driver App</text>
-<rect x="190" y="140" width="130" height="60" rx="10" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="255" y="168" text-anchor="middle" fill="white" font-size="11">Kafka / gRPC</text><text x="255" y="185" text-anchor="middle" fill="white" font-size="10">(Location Stream)</text>
-<rect x="380" y="80" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="450" y="110" text-anchor="middle" fill="white" font-size="12">Location Svc</text>
-<rect x="380" y="200" width="140" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="450" y="228" text-anchor="middle" fill="white" font-size="11">Trip Tracking Svc</text>
-<rect x="600" y="80" width="120" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="660" y="108" text-anchor="middle" fill="white" font-size="11">Geospatial Index</text><text x="660" y="122" text-anchor="middle" fill="white" font-size="10">(Redis)</text>
-<rect x="600" y="200" width="120" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="660" y="228" text-anchor="middle" fill="white" font-size="11">WebSocket Hub</text>
-<rect x="800" y="200" width="120" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="860" y="230" text-anchor="middle" fill="white" font-size="12">Rider App</text>
-<line x1="140" y1="170" x2="188" y2="170" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="320" y1="160" x2="378" y2="110" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="320" y1="180" x2="378" y2="225" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="520" y1="105" x2="598" y2="105" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="520" y1="225" x2="598" y2="225" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="720" y1="225" x2="798" y2="225" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<text x="500" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Uber: Real-time Location Tracking</text>
-</svg>
-</div>
-
-<h3>Step-by-Step</h3>
+<!-- ============================================================ -->
+<!-- 2. NON-FUNCTIONAL REQUIREMENTS                               -->
+<!-- ============================================================ -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
 <ol>
-<li><strong>Driver App</strong> sends GPS coordinates every 4 seconds: <code>{ driver_id, lat, lng, heading, speed, timestamp }</code></li>
-<li><strong>Location stream</strong> via gRPC (bidirectional streaming) to Location Service</li>
-<li><strong>Location Service:</strong> Updates Redis geospatial index for matching. Also writes to Kafka for analytics/logging</li>
-<li><strong>Trip Tracking Service:</strong> For active trips, forwards driver location to matched rider via WebSocket Hub</li>
-<li><strong>WebSocket Hub:</strong> Maintains persistent WebSocket connections with rider apps. Pushes real-time location updates</li>
-<li><strong>Rider sees driver moving</strong> on map in real-time (location update every 4 seconds)</li>
+  <li><strong>Low Latency:</strong> Matching must complete within a few seconds; location updates must be near-instantaneous (&lt;200 ms end-to-end).</li>
+  <li><strong>High Availability:</strong> 99.99 % uptime — riders should always be able to request rides.</li>
+  <li><strong>Scalability:</strong> Support millions of concurrent riders and drivers across many cities worldwide.</li>
+  <li><strong>Real-time:</strong> Location tracking and ride status must be truly real-time (sub-second latency).</li>
+  <li><strong>Consistency for Payments:</strong> Financial transactions must be strongly consistent — no double charges, no lost payments.</li>
+  <li><strong>Durability:</strong> Ride records and payment records must never be lost.</li>
+  <li><strong>Fault Tolerance:</strong> The system should gracefully degrade — if one service is down, unrelated features still work.</li>
+  <li><strong>Geographic Partitioning:</strong> The system should efficiently serve users across many cities/countries with data locality.</li>
 </ol>
 
-<div class="example">
-<strong>Example:</strong> Driver sends location (37.7850, -122.4090) → Location Service updates Redis: <code>GEOADD drivers:active -122.4090 37.7850 driver_456</code> (O(logN), ~0.1ms). Trip Tracking Service sees driver_456 is on active trip_789 → forwards location to WebSocket Hub → Hub pushes to rider's WebSocket connection → rider sees car icon move on map. 4 seconds later, next update arrives: (37.7855, -122.4085).
+<!-- ============================================================ -->
+<!-- 3. FLOW 1 — DRIVER LOCATION UPDATE                          -->
+<!-- ============================================================ -->
+<h2 id="flow1">3. Flow 1 — Driver Location Update</h2>
+
+<h3>Diagram</h3>
+<div class="mermaid">
+flowchart LR
+    DA["Driver App<br/>(iPhone / Android)"] -->|"WebSocket<br/>lat, lng, timestamp<br/>every 3-5 s"| LB4["Load Balancer<br/>(L4, sticky sessions)"]
+    LB4 --> WSG["WebSocket Gateway"]
+    WSG --> LS["Location Service"]
+    LS --> SPI[("In-Memory<br/>Spatial Index<br/>(Geohash)")]
+    LS -->|"Async persist"| NLOC[("NoSQL<br/>driver_locations")]
+    LS --> CR[("Connection<br/>Registry<br/>(In-Memory Store)")]
 </div>
 
-<h3>Deep Dive: WebSocket for Live Tracking</h3>
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Normal update:</strong> Driver John is online and cruising downtown San Francisco. Every 4 seconds his driver app sends a WebSocket frame containing <code>{ driver_id: "d-123", lat: 37.7749, lng: -122.4194, ts: 1707840000 }</code> through the Layer-4 load balancer (sticky session ensures the same WebSocket Gateway server). The Location Service receives the update, computes geohash <code>9q8yyk</code>, updates John's entry in the in-memory spatial index, and asynchronously writes the record to the NoSQL <code>driver_locations</code> table. The Connection Registry already has John's entry mapping <code>d-123 → {gateway_server: ws-07, conn_id: c-9981}</code>.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Driver goes offline:</strong> Driver John taps "Go Offline." His app sends a status update via WebSocket. The Location Service removes John from the in-memory spatial index (he will no longer appear in nearby-driver queries) and updates his status in the NoSQL table to <code>offline</code>. The WebSocket Gateway closes the connection and the Connection Registry entry for <code>d-123</code> is removed.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Stale connection detected:</strong> John drives into a tunnel and loses signal. The WebSocket Gateway's heartbeat mechanism detects no ping response after 30 seconds. The gateway marks John's connection as stale, removes his entry from the Connection Registry, and the Location Service marks him as <code>temporarily_unavailable</code> in the spatial index. When John regains signal, his app re-establishes the WebSocket connection, and a fresh entry is created.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Driver App (iPhone / Android)</h4>
+<p>Native mobile app with a background location service that uses the device GPS. Sends location frames over an established WebSocket connection at a configurable interval (default 3–5 seconds). Uses exponential backoff for reconnection on disconnects.</p>
+
+<h4>Load Balancer (Layer 4, Sticky Sessions)</h4>
+<p>A Layer-4 (TCP-level) load balancer sits in front of the WebSocket Gateway fleet. It uses <strong>sticky sessions</strong> (IP hash or connection-ID hash) to ensure that once a WebSocket connection is established, all subsequent frames from that client are routed to the same gateway server. This is critical because WebSocket is a stateful protocol — the connection lives on a specific server.</p>
+
+<h4>WebSocket Gateway</h4>
+<p>A horizontally scalable fleet of servers that terminate WebSocket connections. Each server can hold tens of thousands of concurrent connections. Responsibilities: authenticate the connection (JWT token on handshake), forward location payloads to the Location Service, forward ride-related messages, and maintain heartbeats (ping/pong every 15 seconds). Connection metadata is registered in the Connection Registry.</p>
+
+<h4>Location Service</h4>
+<p><strong>Protocol:</strong> Internal gRPC (low latency, binary, strongly typed).<br/>
+<strong>Input:</strong> <code>{ driver_id, lat, lng, timestamp, status }</code><br/>
+<strong>Output:</strong> Acknowledgment.<br/>
+Also exposes an internal API for geospatial queries:<br/>
+<strong>gRPC <code>GetNearbyDrivers</code></strong><br/>
+<strong>Input:</strong> <code>{ lat, lng, radius_km, vehicle_type?, limit }</code><br/>
+<strong>Output:</strong> <code>[ { driver_id, lat, lng, distance_km, eta_seconds } ]</code><br/>
+Maintains an in-memory spatial index (geohash-based) for fast nearby lookups. Asynchronously persists location to the NoSQL store for durability and analytics.</p>
+
+<h4>In-Memory Spatial Index (Geohash)</h4>
+<p>A distributed, in-memory data structure that maps geohash prefixes to sets of driver IDs. To find drivers near a point, the system computes the geohash of the point and queries the same cell and all 8 adjacent cells. This yields O(1) lookups per cell. See the <a href="#geo">Geospatial Indexing Deep Dive</a> for full details.</p>
+
+<h4>NoSQL — driver_locations</h4>
+<p>A wide-column or key-value NoSQL store holding the latest and recent historical locations for each driver. Chosen for high write throughput (millions of drivers × an update every 3–5 seconds = potentially millions of writes/sec). No complex joins or transactions needed. See <a href="#schema">Schema</a> for details.</p>
+
+<h4>Connection Registry (In-Memory Store)</h4>
+<p>A distributed in-memory key-value store that maps <code>user_id → { gateway_server_id, connection_id, connected_at }</code>. Used to route messages to the correct WebSocket Gateway server when another service needs to push a message to a specific user. Entries are created on connection and deleted on disconnect. TTL-based expiration ensures stale entries are cleaned up.</p>
+
+<!-- ============================================================ -->
+<!-- 4. FLOW 2 — RIDE REQUEST & MATCHING                         -->
+<!-- ============================================================ -->
+<h2 id="flow2">4. Flow 2 — Ride Request &amp; Matching</h2>
+
+<h3>Diagram</h3>
+<div class="mermaid">
+flowchart TD
+    RA["Rider App"] -->|"HTTP POST /rides/estimate<br/>{pickup, dropoff}"| LB7["Load Balancer<br/>(L7)"]
+    LB7 --> AG["API Gateway"]
+    AG --> FS["Fare Service"]
+    FS -->|"estimate: $18.50"| AG
+    AG -->|"estimate response"| RA
+
+    RA -->|"HTTP POST /rides<br/>{pickup, dropoff, vehicle_type}"| LB7
+    LB7 --> AG2["API Gateway"]
+    AG2 --> RS["Ride Service"]
+    RS -->|"create ride<br/>status: requested"| SQLDB[("SQL Database<br/>(rides)")]
+    RS --> MS["Matching Service"]
+    MS -->|"GetNearbyDrivers"| LS["Location Service"]
+    LS --> SPI[("In-Memory<br/>Spatial Index")]
+    LS -->|"nearby drivers list"| MS
+    MS -->|"ride request via<br/>WebSocket push"| WSG["WebSocket Gateway"]
+    WSG --> CR[("Connection<br/>Registry")]
+    WSG -->|"push to driver"| DA["Driver App"]
+
+    DA -->|"accept via WebSocket"| WSG
+    WSG --> MS
+    MS -->|"update ride<br/>status: matched"| RS
+    RS --> SQLDB
+    RS -->|"notify rider via<br/>WebSocket push"| WSG2["WebSocket Gateway"]
+    WSG2 --> RA2["Rider App<br/>(ride confirmed)"]
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Happy path:</strong> Rider Alice opens the Uber app, types "123 Main St" as pickup and "456 Oak Ave" as dropoff. The app fires an <code>HTTP POST /rides/estimate</code> to the API Gateway with <code>{ pickup: {lat: 37.78, lng: -122.41}, dropoff: {lat: 37.77, lng: -122.39}, vehicle_type: "UberX" }</code>. The Fare Service calculates base fare ($2.50) + distance ($1.75/mi × 3.2 mi) + time ($0.35/min × 12 min) = $12.30, with no surge. The estimate is returned to Alice. She confirms the ride. The app sends <code>HTTP POST /rides</code>. The Ride Service creates a ride record (<code>status: requested</code>), then calls the Matching Service. The Matching Service queries the Location Service for available drivers within 3 km: John (0.5 km, ETA 3 min), Sarah (1.1 km, ETA 5 min), Bob (2.7 km, ETA 9 min). The Matching Service sends a ride request to John via WebSocket. John sees the request with pickup address, dropoff address, and estimated fare. John taps "Accept" within 8 seconds. The Matching Service updates the ride to <code>status: matched</code> with <code>driver_id: d-123</code>. Alice's app receives a WebSocket push: "John is on his way — ETA 3 minutes" along with John's car details (Silver Toyota Camry, plate ABC-1234).
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Driver rejects:</strong> Same scenario, but John taps "Reject." The Matching Service immediately cascades the request to Sarah (next closest). Sarah accepts. Alice is notified with Sarah's details and a 5-minute ETA. The total matching time was ~12 seconds (8 seconds waiting on John + 4 seconds for Sarah's acceptance).
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Driver timeout &amp; cascade:</strong> John neither accepts nor rejects. The Matching Service has a 15-second timeout. After 15 seconds with no response, it automatically cascades to Sarah. If Sarah also times out, it cascades to Bob. If all three time out, the search radius is expanded from 3 km to 5 km and the process repeats with a new batch of drivers.
+</div>
+
+<div class="example-box">
+<strong>Example 4 — No drivers available:</strong> The Matching Service queries the Location Service and finds zero available drivers within 5 km (expanded radius). The Ride Service updates the ride to <code>status: no_drivers</code> and the rider app displays "No drivers available right now. We'll notify you when one becomes available." Optionally, the system can set a watcher that triggers a push notification to Alice when a driver becomes available in her area.
+</div>
+
+<div class="example-box">
+<strong>Example 5 — Surge pricing active:</strong> It's Friday at 6 PM and demand in downtown is 3× the number of available drivers. The Fare Service detects a surge multiplier of 1.8× for Alice's pickup zone. The estimate is $12.30 × 1.8 = $22.14. Alice sees a surge warning ("Prices are higher due to increased demand — 1.8× surge") and must explicitly confirm the higher fare before the ride request is created.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Rider App</h4>
+<p>Native mobile app. Sends HTTP REST requests for ride operations and establishes a WebSocket connection upon ride confirmation to receive real-time updates (driver location, ETA, status changes).</p>
+
+<h4>API Gateway</h4>
+<p>Entry point for all HTTP traffic. Responsibilities: TLS termination, authentication (validates JWT), rate limiting (per-user and per-IP), request routing to downstream microservices, request/response transformation. Deployed behind a Layer-7 load balancer.</p>
+
+<h4>Load Balancer (Layer 7)</h4>
+<p>An HTTP-aware load balancer that distributes requests across API Gateway instances using round-robin or least-connections. Performs health checks, SSL termination, and can do path-based routing.</p>
+
+<h4>Fare Service</h4>
+<p><strong>Protocol:</strong> Internal gRPC (called by Ride Service and API Gateway).<br/>
+<strong>Estimate endpoint —</strong><br/>
+<strong>Input:</strong> <code>{ pickup: {lat, lng}, dropoff: {lat, lng}, vehicle_type }</code><br/>
+<strong>Output:</strong> <code>{ estimated_fare, surge_multiplier, currency, breakdown: {base, distance, time, surge} }</code><br/>
+<strong>Final calculation endpoint —</strong><br/>
+<strong>Input:</strong> <code>{ ride_id, actual_distance_km, actual_duration_min, surge_multiplier }</code><br/>
+<strong>Output:</strong> <code>{ final_fare, currency, breakdown }</code><br/>
+The Fare Service also owns surge pricing logic: it periodically (every 1–2 min) recomputes supply/demand ratio per geographic zone and caches the multipliers in the in-memory cache.</p>
+
+<h4>Ride Service</h4>
+<p><strong>Protocol:</strong> HTTP REST (external-facing, via API Gateway) + internal gRPC.<br/>
+<strong><code>POST /rides/estimate</code></strong> — Get fare estimate.<br/>
+<strong><code>POST /rides</code></strong> — Create a new ride request. Input: <code>{ rider_id, pickup, dropoff, vehicle_type, payment_method_id }</code>. Output: <code>{ ride_id, status, estimated_fare }</code>.<br/>
+<strong><code>GET /rides/{ride_id}</code></strong> — Get ride details.<br/>
+<strong><code>PATCH /rides/{ride_id}</code></strong> — Update ride status (used internally by Matching Service and by driver for ending ride).<br/>
+<strong><code>GET /rides?rider_id={id}</code></strong> — Get ride history for a rider.<br/>
+Manages the ride state machine: <code>requested → matched → driver_arriving → in_progress → completed | cancelled</code>. Writes ride records to the SQL database.</p>
+
+<h4>Matching Service</h4>
+<p><strong>Protocol:</strong> Internal gRPC.<br/>
+<strong>Input:</strong> <code>{ ride_id, pickup: {lat, lng}, vehicle_type }</code><br/>
+<strong>Output:</strong> <code>{ matched_driver_id, eta_seconds }</code> or <code>{ status: no_match }</code><br/>
+Implements the matching algorithm: (1) query Location Service for nearby available drivers, (2) rank by ETA and distance, (3) send ride request to top candidate via WebSocket push, (4) wait for accept/reject/timeout, (5) cascade to next candidate on failure. Uses a configurable timeout (default 15 seconds) and maximum cascade depth (default 5 drivers). Can expand search radius on exhaustion.</p>
+
+<!-- ============================================================ -->
+<!-- 5. FLOW 3 — REAL-TIME RIDE TRACKING                         -->
+<!-- ============================================================ -->
+<h2 id="flow3">5. Flow 3 — Real-time Ride Tracking</h2>
+
+<h3>Diagram</h3>
+<div class="mermaid">
+flowchart LR
+    DA["Driver App"] -->|"WebSocket<br/>location update<br/>every 3-5 s"| LB4["Load Balancer<br/>(L4)"]
+    LB4 --> WSG["WebSocket<br/>Gateway"]
+    WSG --> LS["Location Service"]
+    LS --> SPI[("In-Memory<br/>Spatial Index")]
+    LS -->|"lookup rider's<br/>connection"| CR[("Connection<br/>Registry")]
+    LS -->|"forward driver<br/>location + ETA"| WSG2["WebSocket<br/>Gateway<br/>(rider's server)"]
+    WSG2 -->|"push to rider"| RA["Rider App"]
+
+    LS --> ETA["ETA / Routing<br/>Service"]
+    ETA -->|"updated ETA"| LS
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Driver en-route to pickup:</strong> John has accepted Alice's ride and is driving toward 123 Main St. Every 4 seconds, John's app sends his updated GPS coordinates via WebSocket. The Location Service receives the update, refreshes the spatial index, looks up Alice's ride to find her <code>rider_id</code>, queries the Connection Registry to find which WebSocket Gateway server holds Alice's connection (<code>ws-03, conn: c-4412</code>), and forwards John's location + updated ETA to that server. Alice's app renders John's car icon moving on the map with the ETA counting down: "3 min away… 2 min… 1 min… Arriving now."
+</div>
+
+<div class="example-box">
+<strong>Example 2 — During the ride:</strong> Alice is in the car. John's location updates continue to flow to Alice's app so she can track the route. The ETA/Routing Service calculates remaining time to the dropoff location based on the current position, traffic, and route. Alice sees "12 min to destination" updating in real-time. If John takes a different route, the ETA recalculates automatically.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Temporary signal loss:</strong> John enters a short tunnel. Location updates stop for 15 seconds. Alice's app shows the last known position with a "Waiting for GPS signal…" indicator. When John exits the tunnel, the next location update arrives and the map snaps to John's current position, recalculating ETA.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>ETA / Routing Service</h4>
+<p><strong>Protocol:</strong> Internal gRPC.<br/>
+<strong>Input:</strong> <code>{ origin: {lat, lng}, destination: {lat, lng} }</code><br/>
+<strong>Output:</strong> <code>{ eta_seconds, distance_km, route_polyline }</code><br/>
+Uses road network graph data and real-time traffic information to compute shortest/fastest paths. This may leverage an external mapping API or an internal road graph with Dijkstra/A* algorithms. Caches popular routes for performance.</p>
+
+<h4>Location-to-Rider Forwarding</h4>
+<p>When the Location Service processes a driver's location update during an active ride, it identifies the associated rider by looking up the ride record (cached in memory for active rides). It then queries the Connection Registry for the rider's WebSocket connection location and forwards the update through the appropriate WebSocket Gateway server. This ensures the rider gets near-real-time location updates without polling.</p>
+
+<!-- ============================================================ -->
+<!-- 6. FLOW 4 — RIDE COMPLETION & PAYMENT                       -->
+<!-- ============================================================ -->
+<h2 id="flow4">6. Flow 4 — Ride Completion &amp; Payment</h2>
+
+<h3>Diagram</h3>
+<div class="mermaid">
+flowchart TD
+    DA["Driver App"] -->|"HTTP POST<br/>/rides/{id}/complete"| LB7["Load Balancer<br/>(L7)"]
+    LB7 --> AG["API Gateway"]
+    AG --> RS["Ride Service"]
+    RS -->|"get final fare"| FS["Fare Service"]
+    FS -->|"final fare: $18.50"| RS
+    RS -->|"update ride<br/>status: completed<br/>fare_final: $18.50"| SQLDB[("SQL Database<br/>(rides)")]
+    RS -->|"enqueue payment job"| MQ["Message Queue"]
+    MQ --> PS["Payment Service"]
+    PS -->|"charge rider"| PG["Payment Gateway<br/>(external)"]
+    PG -->|"success"| PS
+    PS -->|"record payment"| SQLDB2[("SQL Database<br/>(payments)")]
+    PS -->|"credit driver<br/>account"| SQLDB3[("SQL Database<br/>(driver_earnings)")]
+    RS -->|"enqueue notification"| MQ2["Message Queue"]
+    MQ2 --> NS["Notification Service"]
+    NS -->|"push notification:<br/>ride complete, fare $18.50"| RA["Rider App"]
+    NS -->|"push notification:<br/>earned $14.80"| DA2["Driver App"]
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Successful payment:</strong> Alice arrives at 456 Oak Ave. John taps "End Ride" in his app, triggering <code>HTTP POST /rides/r-5678/complete</code>. The Ride Service calls the Fare Service with actual distance (5.2 km) and duration (18 min). The Fare Service computes: base $2.50 + distance ($1.75/mi × 3.23 mi = $5.65) + time ($0.35/min × 18 min = $6.30) + booking fee $2.00 = $16.45 (no surge). The Ride Service updates the ride record to <code>status: completed, fare_final: $16.45</code> and enqueues a payment job on the message queue. The Payment Service dequeues the job, charges Alice's Visa ending in 4242 for $16.45 via the external payment gateway, records the payment (<code>status: completed</code>), and credits John's driver account $13.16 (80% after platform commission). Both receive push notifications: Alice sees "Your ride cost $16.45" and John sees "You earned $13.16."
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Surge pricing ride:</strong> Same scenario, but with a 2.0× surge multiplier active at the time the ride was requested. The Fare Service applies the surge: $16.45 × 2.0 = $32.90. Alice was shown and confirmed this surge rate at booking time. Payment processes as above with the higher amount.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Payment failure:</strong> The Payment Service attempts to charge Alice's card but receives a "card declined" response from the payment gateway. The message remains in the queue (not acknowledged). The Payment Service retries with exponential backoff: retry at 5 s, 30 s, 2 min. After 3 failed attempts, the payment is marked as <code>status: failed</code>, the ride record is flagged, and Alice receives a push notification: "Payment failed — please update your payment method." The ride is not reversed; it enters a <code>payment_pending</code> state until resolved.
+</div>
+
+<div class="example-box">
+<strong>Example 4 — Rider cancellation (during ride):</strong> If Alice cancels mid-ride (unusual but possible), the driver taps "Rider cancelled." The Ride Service calculates a partial fare for distance/time already traveled. A cancellation fee may apply. Payment proceeds as normal for the partial amount.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Payment Service</h4>
+<p><strong>Protocol:</strong> Consumes from message queue (async). Also has internal gRPC API for status queries.<br/>
+<strong>Input (from queue):</strong> <code>{ ride_id, rider_id, driver_id, amount, currency, payment_method_id, idempotency_key }</code><br/>
+<strong>Output:</strong> Payment record written to SQL.<br/>
+Uses an <strong>idempotency key</strong> (the <code>ride_id</code>) to prevent double-charging on retries. Communicates with the external payment gateway via HTTPS. Records both the charge to the rider and the credit to the driver's earnings ledger. Supports refunds via a separate <code>POST /refunds</code> API.</p>
+
+<h4>Notification Service</h4>
+<p><strong>Protocol:</strong> Consumes from message queue (async).<br/>
+<strong>Input (from queue):</strong> <code>{ user_id, type, title, body, data }</code><br/>
+<strong>Output:</strong> Push notification delivered via APNs (iOS) or FCM (Android).<br/>
+Handles all push notifications: ride matched, driver arriving, ride completed, payment receipt, rating prompt. De-duplicates notifications using a short-lived cache of recently sent notification IDs.</p>
+
+<h4>Message Queue (for Payment &amp; Notifications)</h4>
+<p>Provides reliable, durable, at-least-once delivery. Payment messages are on a dedicated queue with higher priority and retry guarantees. Notification messages are on a separate queue. Each consumer acknowledges only after successful processing. Dead-letter queue captures messages that fail after maximum retries. See <a href="#mq">Message Queue Deep Dive</a> for more details.</p>
+
+<!-- ============================================================ -->
+<!-- 7. FLOW 5 — RATING                                          -->
+<!-- ============================================================ -->
+<h2 id="flow5">7. Flow 5 — Rating</h2>
+
+<h3>Diagram</h3>
+<div class="mermaid">
+flowchart TD
+    RA["Rider App"] -->|"HTTP POST /ratings<br/>{ride_id, score, comment}"| LB7["Load Balancer<br/>(L7)"]
+    LB7 --> AG["API Gateway"]
+    AG --> RATS["Rating Service"]
+    RATS -->|"write rating"| SQLDB[("SQL Database<br/>(ratings)")]
+    RATS -->|"update avg rating"| SQLDB2[("SQL Database<br/>(driver_profiles /<br/>rider_profiles)")]
+    RATS -->|"if score ≤ 2,<br/>enqueue review"| MQ["Message Queue"]
+    MQ --> MOD["Moderation /<br/>Support Service"]
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Rider rates driver:</strong> After the ride, Alice's app shows a rating prompt. She gives John 5 stars and writes "Great driver, smooth ride." The app sends <code>HTTP POST /ratings</code> with <code>{ ride_id: "r-5678", ratee_id: "d-123", score: 5, comment: "Great driver, smooth ride" }</code>. The Rating Service writes the rating to the <code>ratings</code> table and updates John's rolling average in <code>driver_profiles</code> from 4.85 to 4.86 (weighted rolling average over last 500 rides).
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Driver rates rider:</strong> John rates Alice 4 stars with no comment. The Rating Service writes the rating and updates Alice's rider profile average rating. This rating affects whether future drivers see Alice as a high-rated rider.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Low rating triggers review:</strong> Rider Bob gives driver Mike 1 star with comment "Rude and unsafe driving." The Rating Service writes the rating and, because the score is ≤ 2, enqueues a review message on the message queue. The Moderation/Support Service picks this up for human review. If Mike's average drops below 4.2, the system may automatically flag his account for quality review.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Rating Service</h4>
+<p><strong>Protocol:</strong> HTTP REST (external, via API Gateway).<br/>
+<strong><code>POST /ratings</code></strong><br/>
+<strong>Input:</strong> <code>{ ride_id, ratee_id, score (1-5), comment? }</code><br/>
+<strong>Output:</strong> <code>{ rating_id, status: "created" }</code><br/>
+<strong><code>GET /ratings?user_id={id}</code></strong> — Get ratings for a user.<br/>
+Business rules: (1) Each participant can rate the other only once per ride. (2) Rating window is 24 hours after ride completion. (3) Scores ≤ 2 trigger automatic review. (4) Average is computed as a weighted rolling average over the last N rides (e.g., 500).</p>
+
+<!-- ============================================================ -->
+<!-- 8. COMBINED OVERALL DIAGRAM                                  -->
+<!-- ============================================================ -->
+<h2 id="combined">8. Combined Overall Diagram</h2>
+
+<div class="mermaid">
+flowchart TD
+    subgraph Clients
+        RA["Rider App"]
+        DA["Driver App"]
+    end
+
+    subgraph "Load Balancers"
+        LB7["L7 Load Balancer<br/>(HTTP)"]
+        LB4["L4 Load Balancer<br/>(WebSocket, sticky)"]
+    end
+
+    RA -->|"HTTP REST"| LB7
+    DA -->|"HTTP REST"| LB7
+    RA -->|"WebSocket"| LB4
+    DA -->|"WebSocket"| LB4
+
+    LB7 --> AG["API Gateway<br/>(Auth, Rate Limit, Routing)"]
+    LB4 --> WSG["WebSocket Gateway"]
+
+    subgraph "Core Services"
+        RS["Ride Service"]
+        MS["Matching Service"]
+        LS["Location Service"]
+        FS["Fare Service"]
+        PS["Payment Service"]
+        NS["Notification Service"]
+        RATS["Rating Service"]
+        ETA["ETA / Routing<br/>Service"]
+    end
+
+    AG --> RS
+    AG --> FS
+    AG --> RATS
+    RS --> MS
+    RS --> FS
+    MS --> LS
+    LS --> ETA
+    WSG --> LS
+    WSG --> MS
+
+    subgraph "Async Processing"
+        MQ["Message Queue"]
+    end
+
+    RS --> MQ
+    MQ --> PS
+    MQ --> NS
+
+    subgraph "Data Stores"
+        SQLDB[("SQL Database<br/>(users, rides,<br/>payments, ratings)")]
+        NOSQL[("NoSQL<br/>(driver_locations)")]
+        SPI[("In-Memory<br/>Spatial Index")]
+        CACHE[("In-Memory<br/>Cache")]
+        CR[("Connection<br/>Registry")]
+    end
+
+    RS --> SQLDB
+    PS --> SQLDB
+    RATS --> SQLDB
+    LS --> NOSQL
+    LS --> SPI
+    FS --> CACHE
+    WSG --> CR
+    MS --> CR
+
+    NS -->|"APNs / FCM"| RA
+    NS -->|"APNs / FCM"| DA
+    PS --> PG["Payment Gateway<br/>(external)"]
+</div>
+
+<h3>Combined Flow Examples</h3>
+
+<div class="example-box">
+<strong>End-to-end Example — Full ride lifecycle:</strong><br/><br/>
+<strong>1. Setup:</strong> Driver John goes online. His app establishes a WebSocket connection through the L4 Load Balancer to WebSocket Gateway server <code>ws-07</code>. The Connection Registry stores <code>d-123 → ws-07</code>. John's app begins sending GPS coordinates every 4 seconds. The Location Service stores John at geohash <code>9q8yyk</code> in the spatial index.<br/><br/>
+<strong>2. Ride Request:</strong> Rider Alice enters pickup/dropoff and calls <code>POST /rides/estimate</code> through L7 LB → API Gateway → Fare Service. She sees $16.45 and confirms. <code>POST /rides</code> creates ride <code>r-5678</code> (status: <code>requested</code>) in SQL. The Matching Service queries the Location Service, finds John 0.5 km away, and pushes a ride request to John via WebSocket (Connection Registry lookup → ws-07 → John's app).<br/><br/>
+<strong>3. Match:</strong> John accepts within 8 seconds. The ride updates to <code>status: matched</code>. Alice's app is notified via WebSocket push with John's details and ETA 3 min. Alice's app also establishes a WebSocket connection for real-time tracking.<br/><br/>
+<strong>4. Tracking (en-route):</strong> John drives toward Alice. Every 4 seconds, his location flows: Driver App → L4 LB → WebSocket Gateway → Location Service → Connection Registry (Alice's connection lookup) → WebSocket Gateway → Rider App. Alice sees John approaching on the map.<br/><br/>
+<strong>5. Pickup &amp; Ride:</strong> John arrives. He taps "Start Ride." Status updates to <code>in_progress</code>. Tracking continues during the ride with ETA to destination.<br/><br/>
+<strong>6. Completion:</strong> Alice arrives. John taps "End Ride" → <code>POST /rides/r-5678/complete</code> → L7 LB → API Gateway → Ride Service → Fare Service (final fare $16.45) → SQL update (status: <code>completed</code>) → Message Queue (payment job + notification jobs).<br/><br/>
+<strong>7. Payment:</strong> Payment Service dequeues the payment job → charges Alice's Visa $16.45 via Payment Gateway → records payment in SQL → credits John $13.16.<br/><br/>
+<strong>8. Notification:</strong> Notification Service dequeues notification jobs → pushes "Ride completed — $16.45" to Alice's phone and "You earned $13.16" to John's phone via APNs/FCM.<br/><br/>
+<strong>9. Rating:</strong> Alice rates John 5 stars via <code>POST /ratings</code> → L7 LB → API Gateway → Rating Service → SQL (ratings + update driver_profiles avg). John rates Alice 5 stars similarly.<br/><br/>
+<strong>10. Cleanup:</strong> Alice's WebSocket connection closes. John remains online, available for the next ride.
+</div>
+
+<!-- ============================================================ -->
+<!-- 9. DATABASE SCHEMA                                           -->
+<!-- ============================================================ -->
+<h2 id="schema">9. Database Schema</h2>
+
+<!-- ---- SQL TABLES ---- -->
+<h3>SQL Tables</h3>
+
+<h4>9.1 <code>users</code></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>id</code></td><td>UUID</td><td><strong>Primary Key</strong></td><td>Globally unique user ID</td></tr>
+<tr><td><code>name</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>email</code></td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td><td></td></tr>
+<tr><td><code>phone</code></td><td>VARCHAR(20)</td><td>UNIQUE, NOT NULL</td><td></td></tr>
+<tr><td><code>password_hash</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>user_type</code></td><td>ENUM('rider','driver')</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+</table>
+<p><strong>Why SQL:</strong> User data is relational, requires ACID transactions (e.g., preventing duplicate accounts), and supports complex queries (joins with rides, ratings). Low write frequency (only on registration/profile updates).</p>
+<p><strong>Indexes:</strong></p>
 <ul>
-<li><strong>Why WebSocket:</strong> Server-push every 4 seconds. HTTP polling would waste bandwidth and add latency. WebSocket = persistent connection, server sends when ready</li>
-<li><strong>Scale:</strong> Millions of concurrent WebSocket connections. Each server handles ~50K connections. Horizontally scaled behind L4 load balancer with sticky sessions</li>
-<li><strong>Fallback:</strong> If WebSocket fails (corporate firewall), fall back to HTTP long-polling with 4-second intervals</li>
-<li><strong>Connection management:</strong> Heartbeat ping/pong every 30 seconds. If no pong, consider rider disconnected. Reconnect with last-known state</li>
+  <li><strong>Hash index on <code>email</code>:</strong> Enables O(1) lookup during login (exact match).</li>
+  <li><strong>Hash index on <code>phone</code>:</strong> Enables O(1) lookup during phone-based authentication.</li>
 </ul>
-</div>
-
-<!-- Combined Architecture -->
-<div class="section">
-<h2>Combined Overall Architecture</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00c9ff"/></marker></defs>
-<text x="600" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Uber: Combined Architecture</text>
-<rect x="20" y="200" width="100" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="70" y="230" text-anchor="middle" fill="white" font-size="11">Rider App</text>
-<rect x="20" y="320" width="100" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="70" y="350" text-anchor="middle" fill="white" font-size="11">Driver App</text>
-<rect x="170" y="250" width="110" height="50" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="225" y="280" text-anchor="middle" fill="white" font-size="11">API Gateway</text>
-<rect x="340" y="80" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="400" y="105" text-anchor="middle" fill="white" font-size="11">Trip Svc</text>
-<rect x="340" y="150" width="120" height="40" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="400" y="175" text-anchor="middle" fill="white" font-size="11">Matching Engine</text>
-<rect x="340" y="220" width="120" height="40" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="400" y="245" text-anchor="middle" fill="white" font-size="11">Location Svc</text>
-<rect x="340" y="290" width="120" height="40" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="400" y="315" text-anchor="middle" fill="white" font-size="11">Pricing Svc</text>
-<rect x="340" y="360" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="400" y="385" text-anchor="middle" fill="white" font-size="11">ETA Svc</text>
-<rect x="340" y="430" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="400" y="455" text-anchor="middle" fill="white" font-size="11">Payment Svc</text>
-<rect x="340" y="500" width="120" height="40" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="400" y="525" text-anchor="middle" fill="white" font-size="11">Notification Svc</text>
-<rect x="540" y="80" width="110" height="40" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="595" y="105" text-anchor="middle" fill="white" font-size="10">Geo Index (Redis)</text>
-<rect x="540" y="150" width="110" height="40" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="595" y="175" text-anchor="middle" fill="white" font-size="10">Kafka</text>
-<rect x="540" y="220" width="110" height="40" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="595" y="245" text-anchor="middle" fill="white" font-size="10">WebSocket Hub</text>
-<rect x="540" y="290" width="110" height="40" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="595" y="315" text-anchor="middle" fill="white" font-size="10">Map/Routing</text>
-<ellipse cx="740" cy="100" rx="55" ry="22" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="740" y="105" text-anchor="middle" fill="white" font-size="10">Trip DB</text>
-<ellipse cx="740" cy="175" rx="55" ry="22" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="740" y="180" text-anchor="middle" fill="white" font-size="10">User DB</text>
-<ellipse cx="740" cy="250" rx="55" ry="22" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="740" y="255" text-anchor="middle" fill="white" font-size="10">Payment DB</text>
-<rect x="700" y="310" width="100" height="35" rx="8" fill="#888" stroke="#aaa" stroke-width="2"/><text x="750" y="332" text-anchor="middle" fill="white" font-size="10">Location Hist</text>
-<line x1="120" y1="225" x2="168" y2="265" stroke="#00c9ff" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="120" y1="345" x2="168" y2="290" stroke="#00c9ff" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="280" y1="270" x2="338" y2="100" stroke="#00c9ff" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="280" y1="275" x2="338" y2="170" stroke="#00c9ff" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="280" y1="280" x2="338" y2="240" stroke="#00c9ff" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="280" y1="285" x2="338" y2="310" stroke="#00c9ff" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="280" y1="290" x2="338" y2="380" stroke="#00c9ff" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="460" y1="100" x2="538" y2="100" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="460" y1="240" x2="538" y2="240" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="460" y1="170" x2="538" y2="170" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="460" y1="385" x2="538" y2="315" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="650" y1="100" x2="683" y2="100" stroke="#ff6b6b" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="650" y1="175" x2="683" y2="175" stroke="#ff6b6b" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="650" y1="245" x2="683" y2="245" stroke="#ff6b6b" stroke-width="1" marker-end="url(#arrow3)"/>
-</svg>
-</div>
-
-<div class="example">
-<strong>Example — Full ride lifecycle:</strong> Rider opens app → sees ETA "3 min" (ETA Service pre-computes based on nearby supply) → requests ride → Pricing Service: $22.50 (1.2x surge) → rider confirms → Matching Engine finds 5 nearby drivers → sends request to Driver A (closest, 4.95★) → Driver A accepts (8 sec) → Rider sees driver on map (WebSocket location updates every 4 sec) → Driver arrives at pickup → "Start trip" → GPS tracking records route → arrives at destination → fare calculated: $22.50 → Payment Service charges rider's card → driver receives $18.00 (80% cut) → both rate each other → trip saved to Trip DB.
-</div>
-</div>
-
-<!-- Database Schema -->
-<div class="section">
-<h2>Database Schema</h2>
-
-<h3>SQL — PostgreSQL (Trips, Users, Payments — ACID required)</h3>
-<table>
-<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
-<tr><td rowspan="10"><strong>trips</strong></td><td>trip_id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>rider_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → users</span> <span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>driver_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → users</span> <span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>status</td><td>ENUM</td><td>matching, driver_assigned, in_progress, completed, canceled</td></tr>
-<tr><td>pickup_lat, pickup_lng</td><td>DOUBLE</td><td></td></tr>
-<tr><td>dest_lat, dest_lng</td><td>DOUBLE</td><td></td></tr>
-<tr><td>fare_amount</td><td>BIGINT</td><td>In cents</td></tr>
-<tr><td>surge_multiplier</td><td>DECIMAL(3,2)</td><td>1.00 = no surge</td></tr>
-<tr><td>distance_miles</td><td>DECIMAL(6,2)</td><td></td></tr>
-<tr><td>created_at</td><td>TIMESTAMP</td><td><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td rowspan="5"><strong>users</strong></td><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>type</td><td>ENUM</td><td>rider, driver, both</td></tr>
-<tr><td>rating</td><td>DECIMAL(3,2)</td><td>Denormalized avg rating</td></tr>
-<tr><td>phone</td><td>VARCHAR(20)</td><td><span class="tag tag-idx">UNIQUE INDEX</span></td></tr>
-<tr><td>payment_method_id</td><td>VARCHAR(30)</td><td>Default payment</td></tr>
-</table>
-
-<h3>Geospatial — Redis</h3>
-<table>
-<tr><th>Key</th><th>Type</th><th>Details</th></tr>
-<tr><td><code>drivers:active</code></td><td>GEOSPATIAL</td><td>All available drivers' locations. GEOADD/GEORADIUS</td></tr>
-<tr><td><code>drivers:busy</code></td><td>GEOSPATIAL</td><td>Drivers on active trips (for supply visibility)</td></tr>
-<tr><td><code>surge:{geohash6}</code></td><td>Hash</td><td>{ demand_count, supply_count, multiplier }</td></tr>
-</table>
-
-<h3>NoSQL — Cassandra (Location History)</h3>
-<table>
-<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
-<tr><td rowspan="5"><strong>location_history</strong></td><td>trip_id</td><td>UUID</td><td><span class="tag tag-pk">Partition Key</span></td></tr>
-<tr><td>timestamp</td><td>TIMESTAMP</td><td><span class="tag tag-pk">Clustering Key</span> ASC</td></tr>
-<tr><td>lat</td><td>DOUBLE</td><td></td></tr>
-<tr><td>lng</td><td>DOUBLE</td><td></td></tr>
-<tr><td>speed</td><td>FLOAT</td><td>km/h</td></tr>
-</table>
-
-<h4>Sharding</h4>
+<p><strong>Read/Write triggers:</strong></p>
 <ul>
-<li><strong>trips:</strong> Shard by <code>rider_id</code> — rider's trip history is shard-local. Driver's trip history uses scatter-gather (less frequent query)</li>
-<li><strong>Redis geospatial:</strong> Partitioned by S2 cell (geographic region). SF drivers on one Redis, NYC on another. Matching engine queries local cell</li>
-<li><strong>location_history:</strong> Partitioned by <code>trip_id</code>. All GPS points for one trip co-located. Excellent for trip route replay</li>
+  <li><em>Write:</em> User registration, profile update.</li>
+  <li><em>Read:</em> Login, profile display, ride request (to validate rider), matching (to get driver details).</li>
 </ul>
+<p><strong>Sharding:</strong> Shard by <code>id</code> (hash-based). User data is accessed by user ID in most queries, so hash-based sharding distributes evenly and ensures single-shard lookups.</p>
 
-<h3>Indexes</h3>
-<ul>
-<li><code>trips.rider_id</code> + <code>trips.driver_id</code> — B-tree indexes for "my trip history" queries</li>
-<li><code>trips.created_at</code> — For admin queries, analytics, and cleanup</li>
-<li>Redis GEOSPATIAL index — O(N+logN) for GEORADIUS queries, effectively O(logN) for nearby driver lookup</li>
-</ul>
-</div>
-
-<!-- Cache -->
-<div class="section">
-<h2>Cache Deep Dive</h2>
+<h4>9.2 <code>driver_profiles</code></h4>
 <table>
-<tr><th>Cache</th><th>Strategy</th><th>Eviction</th><th>TTL</th></tr>
-<tr><td>Driver Location (Redis GEO)</td><td>Write-through (every 4s)</td><td>Stale entries removed after 60s no-update</td><td>60s implicit</td></tr>
-<tr><td>Surge Pricing (Redis)</td><td>Computed every 30s</td><td>TTL</td><td>30 seconds</td></tr>
-<tr><td>ETA Cache (Redis)</td><td>Read-through</td><td>TTL</td><td>15 seconds</td></tr>
-<tr><td>User Profile (Redis)</td><td>Read-through</td><td>LRU</td><td>1 hour</td></tr>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>id</code></td><td>UUID</td><td><strong>Primary Key</strong></td><td></td></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td><strong>Foreign Key → users.id</strong>, UNIQUE</td><td></td></tr>
+<tr><td><code>vehicle_type</code></td><td>VARCHAR(50)</td><td>NOT NULL</td><td>e.g., UberX, UberXL, Black</td></tr>
+<tr><td><code>vehicle_make</code></td><td>VARCHAR(100)</td><td></td><td></td></tr>
+<tr><td><code>vehicle_model</code></td><td>VARCHAR(100)</td><td></td><td></td></tr>
+<tr><td><code>license_plate</code></td><td>VARCHAR(20)</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>avg_rating</code></td><td>DECIMAL(3,2)</td><td></td><td>Denormalized rolling avg</td></tr>
+<tr><td><code>total_rides</code></td><td>INT</td><td>DEFAULT 0</td><td>Denormalized counter</td></tr>
+<tr><td><code>status</code></td><td>ENUM('available','busy','offline')</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
 </table>
+<p><strong>Why SQL:</strong> Relational to <code>users</code>; frequently joined with user data. Low write frequency.</p>
+<p><strong>Denormalization note:</strong> <code>avg_rating</code> and <code>total_rides</code> are denormalized here to avoid computing them from the <code>ratings</code> table on every read. The Rating Service updates these fields atomically when a new rating is submitted. This trades slight write complexity for massive read performance gains — driver profiles are read far more often than rated.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>B-tree index on <code>user_id</code>:</strong> Fast lookup of driver profile by user ID (FK join).</li>
+  <li><strong>B-tree index on <code>status</code>:</strong> Allows filtering by availability status.</li>
+</ul>
+<p><strong>Read/Write triggers:</strong></p>
+<ul>
+  <li><em>Write:</em> Driver registration, status toggle (online/offline/busy), rating update.</li>
+  <li><em>Read:</em> Matching (get driver details, vehicle info), rider's "driver is on the way" screen.</li>
+</ul>
+<p><strong>Sharding:</strong> Co-located with <code>users</code> table — shard by <code>user_id</code> (hash-based) to keep joins local.</p>
+
+<h4>9.3 <code>rides</code></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>id</code></td><td>UUID</td><td><strong>Primary Key</strong></td><td></td></tr>
+<tr><td><code>rider_id</code></td><td>UUID</td><td><strong>Foreign Key → users.id</strong></td><td></td></tr>
+<tr><td><code>driver_id</code></td><td>UUID</td><td><strong>Foreign Key → users.id</strong>, NULLABLE</td><td>NULL until matched</td></tr>
+<tr><td><code>pickup_lat</code></td><td>DECIMAL(10,7)</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>pickup_lng</code></td><td>DECIMAL(10,7)</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>dropoff_lat</code></td><td>DECIMAL(10,7)</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>dropoff_lng</code></td><td>DECIMAL(10,7)</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>status</code></td><td>ENUM('requested','matched',<br/>'driver_arriving','in_progress',<br/>'completed','cancelled')</td><td>NOT NULL</td><td>Ride state machine</td></tr>
+<tr><td><code>vehicle_type</code></td><td>VARCHAR(50)</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>fare_estimate</code></td><td>DECIMAL(10,2)</td><td></td><td></td></tr>
+<tr><td><code>fare_final</code></td><td>DECIMAL(10,2)</td><td></td><td>Set on completion</td></tr>
+<tr><td><code>surge_multiplier</code></td><td>DECIMAL(3,2)</td><td>DEFAULT 1.00</td><td></td></tr>
+<tr><td><code>distance_km</code></td><td>DECIMAL(8,2)</td><td></td><td>Set on completion</td></tr>
+<tr><td><code>duration_min</code></td><td>DECIMAL(8,2)</td><td></td><td>Set on completion</td></tr>
+<tr><td><code>payment_method_id</code></td><td>UUID</td><td></td><td></td></tr>
+<tr><td><code>started_at</code></td><td>TIMESTAMP</td><td></td><td>When ride begins</td></tr>
+<tr><td><code>completed_at</code></td><td>TIMESTAMP</td><td></td><td>When ride ends</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>city_id</code></td><td>VARCHAR(50)</td><td></td><td>For geographic partitioning</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Rides require ACID transactions for state machine transitions (e.g., only one driver can be matched to a ride). Complex queries needed for ride history, analytics, and financial reporting. Referential integrity with users table is important.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>B-tree index on <code>rider_id</code>:</strong> Fast lookup for ride history (<code>GET /rides?rider_id=...</code>).</li>
+  <li><strong>B-tree index on <code>driver_id</code>:</strong> Fast lookup for driver's ride history and earnings reports.</li>
+  <li><strong>Composite B-tree index on <code>(status, created_at)</code>:</strong> Efficiently find active rides and recently created rides. Supports queries like "find all in_progress rides" for monitoring dashboards.</li>
+  <li><strong>B-tree index on <code>city_id</code>:</strong> Supports geographic queries and city-level analytics.</li>
+</ul>
+<p><strong>Read/Write triggers:</strong></p>
+<ul>
+  <li><em>Write:</em> Ride request (insert), driver match (update), ride start (update), ride complete (update), cancellation (update).</li>
+  <li><em>Read:</em> Ride status checks, ride history display, fare calculation, payment processing.</li>
+</ul>
+<p><strong>Sharding:</strong> Shard by <code>city_id</code> (range-based). Rides are geographically localized — a ride in San Francisco never needs to join with a ride in New York. City-based sharding provides data locality and keeps related rides on the same shard. Within a city, further partition by time range for archival. Alternatively, shard by <code>id</code> (hash-based) if cross-city analytics are more important than locality.</p>
+
+<h4>9.4 <code>payments</code></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>id</code></td><td>UUID</td><td><strong>Primary Key</strong></td><td></td></tr>
+<tr><td><code>ride_id</code></td><td>UUID</td><td><strong>Foreign Key → rides.id</strong>, UNIQUE</td><td>One payment per ride</td></tr>
+<tr><td><code>rider_id</code></td><td>UUID</td><td><strong>Foreign Key → users.id</strong></td><td></td></tr>
+<tr><td><code>driver_id</code></td><td>UUID</td><td><strong>Foreign Key → users.id</strong></td><td></td></tr>
+<tr><td><code>amount</code></td><td>DECIMAL(10,2)</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>currency</code></td><td>VARCHAR(3)</td><td>NOT NULL</td><td>ISO 4217 (e.g., USD)</td></tr>
+<tr><td><code>platform_fee</code></td><td>DECIMAL(10,2)</td><td></td><td></td></tr>
+<tr><td><code>driver_payout</code></td><td>DECIMAL(10,2)</td><td></td><td></td></tr>
+<tr><td><code>payment_method_id</code></td><td>UUID</td><td></td><td></td></tr>
+<tr><td><code>status</code></td><td>ENUM('pending','completed','failed','refunded')</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>idempotency_key</code></td><td>VARCHAR(255)</td><td>UNIQUE</td><td>Prevents double charges</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>completed_at</code></td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<p><strong>Why SQL:</strong> Financial data requires strong ACID guarantees. Cannot tolerate eventual consistency — a payment must be recorded exactly once. Supports complex financial reporting queries.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>Hash index on <code>ride_id</code>:</strong> Unique constraint + fast lookup by ride.</li>
+  <li><strong>Hash index on <code>idempotency_key</code>:</strong> Unique constraint for idempotent payment processing.</li>
+  <li><strong>B-tree index on <code>rider_id</code>:</strong> Payment history for riders.</li>
+  <li><strong>B-tree index on <code>driver_id</code>:</strong> Earnings history for drivers.</li>
+</ul>
+<p><strong>Read/Write triggers:</strong></p>
+<ul>
+  <li><em>Write:</em> Payment Service processes a payment job from the message queue.</li>
+  <li><em>Read:</em> Payment history display, earnings reports, financial reconciliation, refund processing.</li>
+</ul>
+<p><strong>Sharding:</strong> Shard by <code>ride_id</code> (hash-based) — aligns with rides table sharding for co-located queries. Payment lookups are almost always by ride_id.</p>
+
+<h4>9.5 <code>ratings</code></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>id</code></td><td>UUID</td><td><strong>Primary Key</strong></td><td></td></tr>
+<tr><td><code>ride_id</code></td><td>UUID</td><td><strong>Foreign Key → rides.id</strong></td><td></td></tr>
+<tr><td><code>rater_id</code></td><td>UUID</td><td><strong>Foreign Key → users.id</strong></td><td>Who is rating</td></tr>
+<tr><td><code>ratee_id</code></td><td>UUID</td><td><strong>Foreign Key → users.id</strong></td><td>Who is being rated</td></tr>
+<tr><td><code>score</code></td><td>SMALLINT</td><td>NOT NULL, CHECK(1-5)</td><td></td></tr>
+<tr><td><code>comment</code></td><td>TEXT</td><td></td><td>Optional</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+</table>
+<p><strong>Why SQL:</strong> Relational data (references rides and users). Unique constraint on <code>(ride_id, rater_id)</code> prevents duplicate ratings. Queries like "get all ratings for a driver" benefit from indexed lookups.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>Composite unique B-tree index on <code>(ride_id, rater_id)</code>:</strong> Prevents duplicate ratings and enables fast duplicate checks.</li>
+  <li><strong>B-tree index on <code>ratee_id</code>:</strong> Fast retrieval of all ratings received by a user (for computing averages or displaying reviews).</li>
+</ul>
+<p><strong>Read/Write triggers:</strong></p>
+<ul>
+  <li><em>Write:</em> Rider or driver submits a rating after ride completion.</li>
+  <li><em>Read:</em> Computing average rating (rare, since avg is denormalized on driver_profiles), displaying individual reviews, moderation.</li>
+</ul>
+<p><strong>Sharding:</strong> Shard by <code>ratee_id</code> (hash-based). Most queries are "get ratings for user X," so all of a user's ratings live on the same shard.</p>
+
+<h4>9.6 <code>payment_methods</code></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>id</code></td><td>UUID</td><td><strong>Primary Key</strong></td><td></td></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td><strong>Foreign Key → users.id</strong></td><td></td></tr>
+<tr><td><code>type</code></td><td>ENUM('credit_card','debit_card','paypal')</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>last_four</code></td><td>VARCHAR(4)</td><td></td><td>Last 4 digits for display</td></tr>
+<tr><td><code>token</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Tokenized card from payment gateway</td></tr>
+<tr><td><code>is_default</code></td><td>BOOLEAN</td><td>DEFAULT FALSE</td><td></td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+</table>
+<p><strong>Why SQL:</strong> Relational to users; requires strong consistency and security guarantees. Very low write frequency.</p>
+<p><strong>Read/Write triggers:</strong></p>
+<ul>
+  <li><em>Write:</em> User adds or removes a payment method.</li>
+  <li><em>Read:</em> Ride request (get default payment method), payment processing, payment settings screen.</li>
+</ul>
+
+<!-- ---- NoSQL TABLES ---- -->
+<h3>NoSQL Tables</h3>
+
+<h4>9.7 <code>driver_locations</code></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>driver_id</code></td><td>STRING</td><td><strong>Partition Key</strong></td><td></td></tr>
+<tr><td><code>timestamp</code></td><td>TIMESTAMP</td><td><strong>Sort Key</strong></td><td>Enables time-range queries</td></tr>
+<tr><td><code>lat</code></td><td>DOUBLE</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>lng</code></td><td>DOUBLE</td><td>NOT NULL</td><td></td></tr>
+<tr><td><code>geohash</code></td><td>STRING</td><td>NOT NULL</td><td>Geohash at precision 6</td></tr>
+<tr><td><code>status</code></td><td>STRING</td><td></td><td>available / busy / offline</td></tr>
+<tr><td><code>heading</code></td><td>DOUBLE</td><td></td><td>Direction in degrees</td></tr>
+<tr><td><code>speed</code></td><td>DOUBLE</td><td></td><td>km/h</td></tr>
+</table>
+<p><strong>Why NoSQL:</strong> Extremely high write throughput — millions of drivers sending updates every 3–5 seconds results in hundreds of thousands to millions of writes per second. No complex joins or transactions needed. Simple key-value access pattern (lookup by driver_id). Schema flexibility for adding new telemetry fields. NoSQL wide-column stores handle this time-series-like workload efficiently.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>Secondary index on <code>geohash</code>:</strong> Enables the "find all drivers in geohash cell X" query. However, for real-time matching, the in-memory spatial index is preferred. The NoSQL geohash index serves historical/analytics queries.</li>
+</ul>
+<p><strong>Read/Write triggers:</strong></p>
+<ul>
+  <li><em>Write:</em> Every location update from every online driver (every 3–5 seconds).</li>
+  <li><em>Read:</em> Historical route reconstruction, analytics, dispute resolution. Real-time reads go through the in-memory spatial index, not this table.</li>
+</ul>
+<p><strong>Sharding:</strong> Shard by <code>driver_id</code> (hash-based) — distributes writes evenly. Each driver's location history is co-located. TTL policy: records older than 30 days are automatically deleted (or archived to cold storage).</p>
+
+<h4>9.8 <code>surge_zones</code> (NoSQL / In-Memory Cache)</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td><code>zone_id</code></td><td>STRING</td><td><strong>Partition Key</strong></td><td>Geohash prefix (e.g., "9q8y")</td></tr>
+<tr><td><code>city_id</code></td><td>STRING</td><td></td><td></td></tr>
+<tr><td><code>demand_count</code></td><td>INT</td><td></td><td>Ride requests in last N min</td></tr>
+<tr><td><code>supply_count</code></td><td>INT</td><td></td><td>Available drivers in zone</td></tr>
+<tr><td><code>surge_multiplier</code></td><td>DOUBLE</td><td></td><td>Computed multiplier</td></tr>
+<tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<p><strong>Why NoSQL / Cache:</strong> High read frequency (every fare estimate checks surge), low complexity (single-key lookup), recomputed periodically (every 1–2 min). Primarily lives in the in-memory cache; NoSQL is a backing store for persistence across restarts.</p>
+<p><strong>Read/Write triggers:</strong></p>
+<ul>
+  <li><em>Write:</em> Fare Service periodically recomputes surge multipliers based on supply/demand ratio.</li>
+  <li><em>Read:</em> Every fare estimate and final fare calculation.</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- 10. CDN & CACHING DEEP DIVE                                  -->
+<!-- ============================================================ -->
+<h2 id="caching">10. CDN &amp; Caching Deep Dive</h2>
 
 <h3>CDN</h3>
+<p>A CDN is <strong>not a core component</strong> for Uber's primary ride-hailing flow. Unlike media-heavy applications (Instagram, YouTube), Uber's data is mostly dynamic and personalized (real-time locations, fares, ride status). However, a CDN is useful for:</p>
 <ul>
-<li><strong>Map tiles:</strong> Served via CDN (pre-rendered at various zoom levels). Raster or vector tiles</li>
-<li><strong>Static assets:</strong> App icons, UI assets cached at CDN</li>
-<li><strong>No CDN for real-time data:</strong> Driver locations, surge prices, ETAs are dynamic — served directly from services</li>
+  <li><strong>Static app assets:</strong> App icons, images, UI resources served via CDN for faster app loading.</li>
+  <li><strong>Map tiles:</strong> If using a self-hosted mapping solution, map tiles can be cached at CDN edge nodes. If using an external map provider, the provider handles their own CDN.</li>
+  <li><strong>Promotional content:</strong> Banner images, marketing pages.</li>
 </ul>
-</div>
+<p>Overall, CDN is a supporting component, not central to the real-time architecture.</p>
 
-<!-- Scaling -->
-<div class="section">
-<h2>Scaling Considerations</h2>
+<h3>In-Memory Cache</h3>
+<p>Caching is <strong>critical</strong> for Uber's performance at scale. Several caching layers are used:</p>
+
+<h4>Cache 1: Driver Location Spatial Index</h4>
 <ul>
-<li><strong>Location updates:</strong> 1M active drivers × 1 update/4s = 250K writes/sec to Redis. Redis handles this easily (single instance does 100K+ ops/sec). Shard by city for parallelism</li>
-<li><strong>Matching at scale:</strong> Batched matching runs per-city. SF matching engine independent from NYC. Each city can scale independently</li>
-<li><strong>Cell-based architecture:</strong> World divided into hexagonal cells (H3 from Uber). Services partitioned by cell. Queries only hit relevant cells</li>
-<li><strong>Surge computation:</strong> Supply/demand ratio computed per geohash6 cell every 30 seconds. Kafka stream of ride requests and driver availability → Flink aggregation</li>
-<li><strong>Multi-region:</strong> Each country/region has its own deployment. Data locality reduces latency. Regulations (GDPR) require data residency</li>
+  <li><strong>What it caches:</strong> Current location and status of all online drivers, organized by geohash.</li>
+  <li><strong>Caching strategy:</strong> <strong>Write-behind (write-back) cache.</strong> Location updates are written to the in-memory spatial index first (serving real-time queries), then asynchronously persisted to the NoSQL <code>driver_locations</code> table. This prioritizes write speed and query latency over immediate durability — a lost location update is acceptable since a new one arrives in 3–5 seconds.</li>
+  <li><strong>What populates it:</strong> Every driver location update via WebSocket.</li>
+  <li><strong>Eviction policy:</strong> <strong>TTL-based.</strong> Entries expire after 30 seconds if not refreshed. Since drivers send updates every 3–5 seconds, a 30-second TTL ensures that a driver who disconnects is removed from the index promptly, preventing stale matches.</li>
+  <li><strong>Why TTL over LRU:</strong> LRU evicts based on access frequency, which would incorrectly remove idle-but-available drivers who haven't been queried recently. TTL evicts based on freshness, which aligns with the requirement that location data must be recent.</li>
 </ul>
-</div>
 
-<!-- Tradeoffs -->
-<div class="section">
-<h2>Tradeoffs & Deep Dives</h2>
-<div class="tradeoff">
-<div class="pro"><h4>✅ Batched Matching</h4><ul><li>Globally optimal matching (minimize total pickup ETAs)</li><li>Reduces driver competition for same rider</li><li>More efficient fleet utilization</li></ul></div>
-<div class="con"><h4>❌ Batched Matching Downsides</h4><ul><li>2-second delay before matching starts</li><li>Complex optimization algorithm (Hungarian/assignment problem)</li><li>Must handle riders who cancel during batch window</li></ul></div>
-</div>
-
-<h3>WebSocket vs Polling for Location</h3>
+<h4>Cache 2: Surge Pricing Cache</h4>
 <ul>
-<li><strong>WebSocket chosen:</strong> Persistent connection, server-push model. 4-second updates feel instantaneous on map. Low overhead after connection established</li>
-<li><strong>Alternative — HTTP polling:</strong> Client polls every 4 seconds. Pros: simpler, works through all proxies. Cons: overhead of HTTP headers per request, slight latency increase</li>
-<li><strong>Alternative — Server-Sent Events (SSE):</strong> Server-push over HTTP. Simpler than WebSocket (one-way only). Good enough for location tracking since rider doesn't send data back on this channel</li>
+  <li><strong>What it caches:</strong> Surge multiplier per geographic zone.</li>
+  <li><strong>Caching strategy:</strong> <strong>Write-through cache.</strong> When the Fare Service recomputes surge multipliers (every 1–2 min), it writes simultaneously to the cache and the backing NoSQL store. This ensures the cache is always in sync and the data is durable.</li>
+  <li><strong>What populates it:</strong> Fare Service's periodic surge computation job.</li>
+  <li><strong>Eviction policy:</strong> <strong>TTL of 2 minutes.</strong> If the computation job fails, stale surge data expires and the system falls back to the NoSQL backing store (or defaults to 1.0× surge if both are unavailable — graceful degradation).</li>
+  <li><strong>Why write-through:</strong> Surge data is critical for pricing accuracy. Write-through ensures both cache and backing store are consistent. The write volume is low (hundreds of zones updated every 1–2 min), so the write overhead is negligible.</li>
 </ul>
-</div>
 
-<div class="section">
-<h2>Alternative Approaches</h2>
+<h4>Cache 3: User Profile &amp; Driver Profile Cache</h4>
 <ul>
-<li><strong>Quadtree for spatial indexing:</strong> Instead of Redis geohash. Quadtree recursively divides 2D space into quadrants. Better for non-uniform distribution (dense cities + sparse rural). But harder to distribute across servers</li>
-<li><strong>gRPC streaming for location:</strong> Instead of REST + WebSocket. gRPC bidirectional streaming for both driver uploads and rider tracking. Type-safe, efficient binary protocol (Protocol Buffers). Uber actually uses this</li>
-<li><strong>Machine learning for ETA:</strong> Instead of graph-based routing, use ML model trained on historical trip data. Captures traffic patterns, weather effects, event impacts. Uber's ETA model uses gradient boosted trees with 100+ features</li>
+  <li><strong>What it caches:</strong> User profiles and driver profiles (name, vehicle info, rating, photo URL).</li>
+  <li><strong>Caching strategy:</strong> <strong>Read-through (cache-aside with lazy loading).</strong> On cache miss, the service reads from the SQL database, populates the cache, and returns the result. Subsequent reads are served from cache.</li>
+  <li><strong>What populates it:</strong> Cache miss triggers a database read and cache write.</li>
+  <li><strong>Eviction policy:</strong> <strong>LRU (Least Recently Used)</strong> with a <strong>TTL of 1 hour.</strong> LRU evicts cold profiles (users who haven't taken a ride recently), while TTL ensures even active profiles are refreshed periodically (in case of profile updates).</li>
+  <li><strong>Why LRU + TTL:</strong> User profiles are read-heavy (displayed multiple times per ride) and update-infrequent. LRU keeps hot data in cache. TTL bounds staleness.</li>
 </ul>
-</div>
 
-<div class="section">
-<h2>Additional Information</h2>
+<h4>Cache 4: Active Ride Cache</h4>
 <ul>
-<li><strong>H3 (Hexagonal Hierarchical Spatial Index):</strong> Uber's open-source geospatial system. Divides world into hexagonal cells at multiple resolutions. Better than square grids for distance calculations (hexagons have more uniform neighbor distances)</li>
-<li><strong>Surge pricing formula:</strong> <code>multiplier = max(1.0, demand_requests / available_drivers * sensitivity_factor)</code>. Capped at 8x. Shown to rider before confirming. Incentivizes more drivers to come online in high-demand areas</li>
-<li><strong>Safety features:</strong> Share trip with contacts (real-time location sharing), emergency button (one-tap 911 with location), driver background checks, ride verification PIN</li>
-<li><strong>Driver state machine:</strong> offline → online(available) → matching → en_route_to_pickup → waiting_at_pickup → in_trip → trip_complete → online(available). Each transition triggers different system actions</li>
+  <li><strong>What it caches:</strong> Currently active rides (ride_id → { rider_id, driver_id, status, pickup, dropoff }).</li>
+  <li><strong>Caching strategy:</strong> <strong>Write-through cache.</strong> Every ride state change writes to both the SQL database and the cache. The Location Service uses this cache to quickly look up which rider to forward location updates to.</li>
+  <li><strong>What populates it:</strong> Ride Service writes on every status change.</li>
+  <li><strong>Eviction policy:</strong> <strong>Explicit eviction</strong> on ride completion or cancellation. TTL of 2 hours as a safety net for rides that are never explicitly completed (orphaned rides).</li>
+  <li><strong>Why write-through:</strong> Active ride data is read on every location update (every 3–5 sec per ride) but written only a few times per ride. The read:write ratio strongly favors caching.</li>
 </ul>
-</div>
+
+<!-- ============================================================ -->
+<!-- 11. WEBSOCKET DEEP DIVE                                      -->
+<!-- ============================================================ -->
+<h2 id="websocket">11. WebSocket Deep Dive</h2>
+
+<h3>Why WebSocket?</h3>
+<p>Uber requires <strong>bidirectional, low-latency, real-time communication</strong> between clients and the server:</p>
+<ul>
+  <li>Drivers send location updates (client → server) every 3–5 seconds.</li>
+  <li>Drivers receive ride requests (server → client) at unpredictable times.</li>
+  <li>Riders receive driver location updates and ride status changes (server → client) in real-time.</li>
+</ul>
+<p>WebSocket provides full-duplex communication over a single persistent TCP connection, making it ideal for this use case.</p>
+
+<h3>Why not alternatives?</h3>
+<table>
+<tr><th>Alternative</th><th>Why Not</th></tr>
+<tr><td><strong>HTTP Polling</strong></td><td>Riders/drivers would need to poll every 1–3 seconds. With millions of users, this creates massive overhead — each poll is a full HTTP request/response cycle with headers, TCP handshake (if not persistent), etc. Latency is bounded by the polling interval. Wastes bandwidth when there's no new data.</td></tr>
+<tr><td><strong>HTTP Long Polling</strong></td><td>Better than polling but still creates a new connection for each response. Each location update would require closing and reopening the long-poll. Not suitable for high-frequency bidirectional data (location updates + ride requests on the same channel).</td></tr>
+<tr><td><strong>Server-Sent Events (SSE)</strong></td><td>SSE is <strong>unidirectional</strong> (server → client only). We need the driver to <strong>send</strong> location updates (client → server) AND receive ride requests (server → client). SSE would require a separate mechanism for client-to-server data, adding complexity.</td></tr>
+<tr><td><strong>WebRTC</strong></td><td>Designed for peer-to-peer communication (audio/video). Overkill for structured data messages. More complex setup (STUN/TURN servers). Better suited for voice/video calls between rider and driver, not for location streaming.</td></tr>
+</table>
+
+<h3>Connection Establishment</h3>
+<ol>
+  <li><strong>Driver goes online:</strong> The driver app initiates a WebSocket handshake: <code>GET wss://ws.uber.com/driver?token=JWT_TOKEN</code> with <code>Upgrade: websocket</code> header.</li>
+  <li><strong>L4 Load Balancer:</strong> Routes the TCP connection to a WebSocket Gateway server using IP-hash sticky sessions.</li>
+  <li><strong>WebSocket Gateway:</strong> Validates the JWT token. If valid, completes the WebSocket handshake (101 Switching Protocols). Registers the connection in the Connection Registry: <code>SET d-123 → { server: "ws-07", conn_id: "c-9981", ts: 1707840000 }</code> with TTL.</li>
+  <li><strong>Heartbeat:</strong> The gateway sends ping frames every 15 seconds. If no pong response within 10 seconds, the connection is considered dead. The gateway closes it, removes the Connection Registry entry, and the Location Service marks the driver as offline in the spatial index.</li>
+</ol>
+
+<h3>Connection Registry</h3>
+<p>A distributed in-memory key-value store that acts as a "phone book" for WebSocket connections:</p>
+<ul>
+  <li><strong>Key:</strong> <code>user_id</code> (driver or rider)</li>
+  <li><strong>Value:</strong> <code>{ gateway_server_id, connection_id, connected_at }</code></li>
+  <li><strong>TTL:</strong> 60 seconds, refreshed on every heartbeat.</li>
+</ul>
+<p>When Service X needs to push a message to user Y:</p>
+<ol>
+  <li>Service X queries the Connection Registry: <code>GET user_Y</code> → <code>{ server: "ws-03" }</code>.</li>
+  <li>Service X sends the message to <code>ws-03</code> via internal gRPC: <code>PushMessage({ conn_id, payload })</code>.</li>
+  <li><code>ws-03</code> finds the WebSocket connection by <code>conn_id</code> and writes the message frame to the client.</li>
+</ol>
+
+<h3>Message Routing</h3>
+<p>When the Matching Service wants to send a ride request to driver John:</p>
+<ol>
+  <li>Matching Service calls Connection Registry: <code>GET d-123</code> → <code>ws-07</code>.</li>
+  <li>Matching Service sends gRPC to <code>ws-07</code>: <code>PushToConnection(conn_id: "c-9981", payload: { type: "ride_request", ride_id: "r-5678", pickup: ..., dropoff: ..., fare: ... })</code>.</li>
+  <li><code>ws-07</code> sends a WebSocket text frame to John's app with the ride request.</li>
+  <li>John's app displays the ride request. John taps Accept.</li>
+  <li>John's app sends a WebSocket frame: <code>{ type: "ride_accept", ride_id: "r-5678" }</code>.</li>
+  <li><code>ws-07</code> receives the frame and forwards to the Matching Service.</li>
+</ol>
+
+<h3>Scaling WebSocket Connections</h3>
+<p>Each WebSocket Gateway server can hold ~50,000–100,000 concurrent connections (limited by memory and file descriptors). For 5 million concurrent drivers + riders, we need ~50–100 gateway servers. The Connection Registry enables horizontal scaling: any service can reach any connected user regardless of which gateway server they're on.</p>
+
+<!-- ============================================================ -->
+<!-- 12. MESSAGE QUEUE DEEP DIVE                                  -->
+<!-- ============================================================ -->
+<h2 id="mq">12. Message Queue Deep Dive</h2>
+
+<h3>Why a Message Queue?</h3>
+<p>Several operations in the ride lifecycle are <strong>not latency-critical</strong> and benefit from asynchronous, decoupled processing:</p>
+<ul>
+  <li><strong>Payment processing:</strong> After ride completion, the rider doesn't need to wait for payment to clear before exiting the app. The payment can be processed asynchronously.</li>
+  <li><strong>Push notifications:</strong> Sending push notifications (ride complete, receipt, rating prompt) can tolerate a few seconds of delay.</li>
+  <li><strong>Analytics events:</strong> Ride data, location data, and user behavior events are ingested asynchronously for ML models and dashboards.</li>
+  <li><strong>Moderation triggers:</strong> Low ratings triggering reviews are not time-sensitive.</li>
+</ul>
+
+<h3>Why not pub/sub?</h3>
+<p>Pub/sub is designed for fan-out (one message to many subscribers). Our payment and notification use cases are <strong>point-to-point</strong> — one payment job processed by one Payment Service instance. A message queue with competing consumers is a better fit. However, for analytics events where multiple downstream systems (ML pipeline, data warehouse, real-time dashboards) need the same event, a pub/sub topic could be used in addition.</p>
+
+<h3>How Messages are Produced</h3>
+<p>When a ride is completed, the Ride Service enqueues messages:</p>
+<pre><code>// Payment queue
+queue.publish("payment-queue", {
+  ride_id: "r-5678",
+  rider_id: "u-alice",
+  driver_id: "d-123",
+  amount: 16.45,
+  currency: "USD",
+  payment_method_id: "pm-42",
+  idempotency_key: "r-5678-payment"
+});
+
+// Notification queue
+queue.publish("notification-queue", {
+  user_id: "u-alice",
+  type: "ride_completed",
+  title: "Trip completed",
+  body: "Your trip cost $16.45",
+  data: { ride_id: "r-5678" }
+});
+
+// Notification for driver
+queue.publish("notification-queue", {
+  user_id: "d-123",
+  type: "earnings",
+  title: "You earned $13.16",
+  body: "Trip r-5678 completed",
+  data: { ride_id: "r-5678" }
+});</code></pre>
+
+<h3>How Messages are Consumed</h3>
+<ul>
+  <li><strong>Competing consumers:</strong> Multiple instances of Payment Service subscribe to the <code>payment-queue</code>. The message queue delivers each message to exactly one consumer (at-least-once delivery).</li>
+  <li><strong>Acknowledgment:</strong> The consumer processes the message and sends an explicit ACK. If the consumer crashes before ACKing, the message becomes visible again after a visibility timeout (e.g., 30 seconds) and is delivered to another consumer.</li>
+  <li><strong>Retry policy:</strong> Up to 3 retries with exponential backoff (5 s, 30 s, 2 min).</li>
+  <li><strong>Dead-letter queue (DLQ):</strong> Messages that fail after maximum retries are moved to a DLQ for manual investigation. A monitor alerts the on-call team when DLQ depth exceeds a threshold.</li>
+</ul>
+
+<h3>Queue Separation</h3>
+<ul>
+  <li><code>payment-queue</code> — Dedicated queue for payment processing. Highest priority. Separate queue ensures payment processing is never starved by a flood of notifications.</li>
+  <li><code>notification-queue</code> — For push notifications. Can tolerate slightly more latency.</li>
+  <li><code>analytics-queue</code> — For analytics events. Lowest priority. Can be batched.</li>
+  <li><code>moderation-queue</code> — For moderation triggers (low ratings, safety reports).</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- 13. GEOSPATIAL INDEXING DEEP DIVE                            -->
+<!-- ============================================================ -->
+<h2 id="geo">13. Geospatial Indexing Deep Dive</h2>
+
+<h3>The Problem</h3>
+<p>When a rider requests a ride, the system must answer: "Which available drivers are within X km of this location?" with millions of drivers updating their positions continuously. A naive full-table scan is O(n) per query — unacceptable at scale.</p>
+
+<h3>Solution: Geohash-Based Spatial Index</h3>
+<p><strong>Geohash</strong> encodes a 2D coordinate (lat, lng) into a 1D string by recursively subdividing the Earth into a grid. Adjacent cells share common prefixes. For example:</p>
+<ul>
+  <li>Precision 4 (<code>9q8y</code>) ≈ 39 km × 19 km cells</li>
+  <li>Precision 5 (<code>9q8yy</code>) ≈ 5 km × 5 km cells</li>
+  <li>Precision 6 (<code>9q8yyk</code>) ≈ 1.2 km × 0.6 km cells</li>
+</ul>
+
+<h3>How It Works</h3>
+<ol>
+  <li><strong>Insertion:</strong> When driver John sends location (37.7749, -122.4194), the Location Service computes geohash <code>9q8yyk</code> at precision 6. It inserts/updates John's entry in a hash map: <code>geohash_index["9q8yyk"] → Set{d-123, d-456, d-789, ...}</code>.</li>
+  <li><strong>Query:</strong> When rider Alice requests a ride from (37.7750, -122.4190), the system computes her geohash <code>9q8yyk</code> and queries the <strong>same cell + all 8 adjacent cells</strong> (to handle edge cases where nearby drivers are just across a cell boundary). This yields a candidate set of drivers.</li>
+  <li><strong>Filter:</strong> For each candidate driver, compute the exact Haversine distance. Filter to those within the desired radius. Sort by distance or ETA.</li>
+</ol>
+
+<h3>Why Geohash over Quadtree?</h3>
+<table>
+<tr><th>Criteria</th><th>Geohash</th><th>Quadtree</th></tr>
+<tr><td>Distributed-friendly</td><td>✅ Maps to key-value stores natively</td><td>❌ Tree structure hard to distribute</td></tr>
+<tr><td>Sharding</td><td>✅ Shard by geohash prefix</td><td>❌ Unbalanced tree depth varies</td></tr>
+<tr><td>Implementation complexity</td><td>✅ Simple string operations</td><td>❌ Complex tree balancing</td></tr>
+<tr><td>Density adaptation</td><td>❌ Fixed cell size at each precision</td><td>✅ Adaptive subdivision</td></tr>
+<tr><td>Edge effects</td><td>⚠️ Need to query 8 neighbors</td><td>✅ No boundary issues</td></tr>
+</table>
+<p>For Uber's use case, <strong>geohash wins</strong> because the system is distributed across many servers. Geohash's natural mapping to key-value stores and simple sharding by prefix outweighs the quadtree's adaptivity advantage. The edge-effect issue is mitigated by always querying neighboring cells.</p>
+
+<h3>Precision Selection</h3>
+<p>Precision 6 (~1.2 km × 0.6 km) is used for the primary spatial index. For urban areas with high driver density, this provides a good balance — each cell contains a manageable number of drivers. For suburban/rural areas with lower density, the Matching Service expands the search to include precision 5 cells (~5 km) or wider.</p>
+
+<!-- ============================================================ -->
+<!-- 14. LOAD BALANCER DEEP DIVE                                  -->
+<!-- ============================================================ -->
+<h2 id="lb">14. Load Balancer Deep Dive</h2>
+
+<h3>Where Load Balancers Are Placed</h3>
+
+<h4>LB 1: Layer-7 Load Balancer (HTTP Traffic)</h4>
+<p><strong>Position:</strong> Between client apps and the API Gateway fleet.</p>
+<ul>
+  <li><strong>Protocol:</strong> HTTP/HTTPS (Layer 7).</li>
+  <li><strong>Algorithm:</strong> Round-robin or least-connections. Round-robin is simple and effective when API Gateway instances are homogeneous.</li>
+  <li><strong>Responsibilities:</strong> TLS termination, health checks (HTTP health endpoint on API Gateway), connection draining during deployments.</li>
+  <li><strong>Why L7:</strong> Can inspect HTTP headers for path-based routing (e.g., <code>/rides/*</code> to one pool, <code>/payments/*</code> to another), enabling service-level routing if needed.</li>
+</ul>
+
+<h4>LB 2: Layer-4 Load Balancer (WebSocket Traffic)</h4>
+<p><strong>Position:</strong> Between client apps and the WebSocket Gateway fleet.</p>
+<ul>
+  <li><strong>Protocol:</strong> TCP (Layer 4).</li>
+  <li><strong>Algorithm:</strong> IP-hash (sticky sessions). Ensures all frames from the same client go to the same WebSocket Gateway server.</li>
+  <li><strong>Responsibilities:</strong> TCP connection forwarding, health checks (TCP health on gateway port).</li>
+  <li><strong>Why L4 with sticky sessions:</strong> WebSocket is a stateful protocol. The persistent TCP connection between client and gateway server must remain stable. L4 ensures the LB doesn't inspect or modify WebSocket frames, and sticky sessions ensure reconnects (within a timeout) go to the same server when possible.</li>
+</ul>
+
+<h4>LB 3: Internal Load Balancers (Service-to-Service)</h4>
+<p><strong>Position:</strong> Between microservices (e.g., Ride Service → Matching Service, Matching Service → Location Service).</p>
+<ul>
+  <li><strong>Protocol:</strong> gRPC (HTTP/2).</li>
+  <li><strong>Algorithm:</strong> Client-side load balancing with round-robin. Each service instance maintains a pool of connections to downstream service instances and distributes requests evenly. Service discovery provides the list of healthy instances.</li>
+  <li><strong>Why client-side LB:</strong> Avoids an additional network hop through a dedicated LB proxy. gRPC natively supports client-side load balancing. Lower latency for internal calls.</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- 15. SCALING CONSIDERATIONS                                   -->
+<!-- ============================================================ -->
+<h2 id="scaling">15. Scaling Considerations</h2>
+
+<h3>Estimated Scale</h3>
+<ul>
+  <li><strong>Concurrent drivers:</strong> ~5 million globally.</li>
+  <li><strong>Concurrent riders:</strong> ~10 million globally (including those browsing/estimating).</li>
+  <li><strong>Location updates:</strong> 5M drivers × 1 update/4 sec ≈ <strong>1.25 million writes/sec</strong> to the spatial index.</li>
+  <li><strong>Ride requests:</strong> ~100,000 rides/min at peak → ~1,700/sec.</li>
+  <li><strong>Matching queries:</strong> ~1,700/sec (one per ride request).</li>
+</ul>
+
+<h3>Horizontal Scaling Strategy by Component</h3>
+
+<table>
+<tr><th>Component</th><th>Scaling Strategy</th><th>Notes</th></tr>
+<tr><td><strong>API Gateway</strong></td><td>Horizontal (add instances behind L7 LB)</td><td>Stateless; scale linearly with HTTP traffic.</td></tr>
+<tr><td><strong>WebSocket Gateway</strong></td><td>Horizontal (add servers behind L4 LB)</td><td>Each server: ~50K–100K connections. 5M drivers + 2M active riders = ~70–140 servers.</td></tr>
+<tr><td><strong>Location Service</strong></td><td>Horizontal + geographic partitioning</td><td>Partition spatial index by geohash prefix region. Each instance handles a geographic shard. This is the most write-intensive service.</td></tr>
+<tr><td><strong>Matching Service</strong></td><td>Horizontal + geographic partitioning</td><td>Partition by city/region. A ride in SF is matched only against SF drivers, so matching is embarrassingly parallel across cities.</td></tr>
+<tr><td><strong>Ride Service</strong></td><td>Horizontal (stateless)</td><td>All state in SQL database. Scale instances behind internal LB.</td></tr>
+<tr><td><strong>Fare Service</strong></td><td>Horizontal (stateless)</td><td>Read-heavy from surge cache. Scale linearly.</td></tr>
+<tr><td><strong>Payment Service</strong></td><td>Horizontal (message queue consumers)</td><td>Add consumers to increase throughput. Each consumer processes payments independently.</td></tr>
+<tr><td><strong>Notification Service</strong></td><td>Horizontal (message queue consumers)</td><td>Scale with notification volume.</td></tr>
+<tr><td><strong>SQL Database</strong></td><td>Sharding + read replicas</td><td>Shard rides by city. Read replicas for analytics. Connection pooling.</td></tr>
+<tr><td><strong>NoSQL (driver_locations)</strong></td><td>Sharding by driver_id</td><td>Distributed across many nodes. Linear write scaling.</td></tr>
+<tr><td><strong>In-Memory Spatial Index</strong></td><td>Partitioned by geohash prefix</td><td>Each partition handles a geographic region. Replicated for HA.</td></tr>
+<tr><td><strong>In-Memory Cache</strong></td><td>Distributed cache cluster</td><td>Consistent hashing for key distribution. Replicated for HA.</td></tr>
+<tr><td><strong>Message Queue</strong></td><td>Partitioned topics</td><td>Separate queues per concern. Partition within queue for parallel consumption.</td></tr>
+</table>
+
+<h3>Geographic Distribution</h3>
+<p>Deploy the entire stack in multiple regions (e.g., US-West, US-East, Europe, Southeast Asia). Route users to the nearest region using DNS-based geographic routing. Each region operates independently for most operations. Cross-region communication is only needed for global features (e.g., user traveling between regions).</p>
+
+<h3>Load Balancer Placement (Summary)</h3>
+<ul>
+  <li><strong>L7 LB</strong> → API Gateway fleet (HTTP REST traffic)</li>
+  <li><strong>L4 LB</strong> → WebSocket Gateway fleet (persistent connections)</li>
+  <li><strong>Client-side LB</strong> → Between all internal microservices (gRPC)</li>
+  <li><strong>Database connection pooling</strong> → Between services and SQL/NoSQL databases</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- 16. TRADEOFFS & DEEP DIVES                                   -->
+<!-- ============================================================ -->
+<h2 id="tradeoffs">16. Tradeoffs &amp; Deep Dives</h2>
+
+<h3>Consistency vs. Availability</h3>
+<ul>
+  <li><strong>Driver locations:</strong> Favor <strong>availability</strong>. A slightly stale driver location (a few seconds old) is acceptable — the driver moves anyway. If the spatial index is briefly unavailable, matching degrades but doesn't fail catastrophically.</li>
+  <li><strong>Ride state:</strong> Favor <strong>consistency.</strong> A ride must not be matched to two drivers simultaneously. SQL transactions with row-level locking prevent this.</li>
+  <li><strong>Payments:</strong> Favor <strong>consistency.</strong> Double-charging is unacceptable. Idempotency keys and SQL ACID transactions ensure exactly-once semantics.</li>
+</ul>
+
+<h3>TCP vs. UDP for Location Updates</h3>
+<p>Location updates are sent over WebSocket, which runs over <strong>TCP</strong>. Why not UDP?</p>
+<ul>
+  <li>TCP provides reliable, ordered delivery. A missed location update could cause the matching algorithm to use stale data (a driver who moved away from the rider's area might get matched). TCP's retransmission ensures updates arrive.</li>
+  <li>TCP's overhead (handshake, acknowledgments) is amortized over the persistent WebSocket connection — the initial handshake happens once, and subsequent frames have minimal overhead.</li>
+  <li>UDP would require building custom reliability (acknowledgments, retransmission, ordering) at the application layer, negating its benefits.</li>
+  <li>Exception: If real-time voice/video between rider and driver is needed, WebRTC over UDP would be appropriate for that specific feature.</li>
+</ul>
+
+<h3>Monolith vs. Microservices</h3>
+<p>This design uses microservices because:</p>
+<ul>
+  <li><strong>Independent scaling:</strong> The Location Service needs far more instances than the Rating Service.</li>
+  <li><strong>Independent deployment:</strong> A bug in the Fare Service shouldn't require redeploying the Payment Service.</li>
+  <li><strong>Team autonomy:</strong> Different teams can own different services.</li>
+  <li><strong>Technology diversity:</strong> The spatial index might use a different language/runtime than the Payment Service.</li>
+</ul>
+<p>The tradeoff is increased operational complexity (service discovery, distributed tracing, network latency between services). For a system at Uber's scale, the benefits outweigh the costs.</p>
+
+<h3>Surge Pricing Granularity</h3>
+<ul>
+  <li><strong>Finer granularity</strong> (smaller zones) allows more precise pricing but requires more computation and can cause "surge boundaries" where moving one block changes the price dramatically.</li>
+  <li><strong>Coarser granularity</strong> (larger zones) is simpler and smoother but less responsive to hyperlocal demand spikes.</li>
+  <li><strong>Chosen approach:</strong> Hexagonal zones roughly 2–3 km² each, computed using geohash precision 5. This balances precision and computational cost.</li>
+</ul>
+
+<h3>Matching Algorithm Tradeoff</h3>
+<ul>
+  <li><strong>Greedy (closest driver first):</strong> Simple, fast, low latency. But may not be globally optimal — matching driver A to ride 1 might prevent a better match for ride 2 that arrives 2 seconds later.</li>
+  <li><strong>Batch matching (collect requests for N seconds, optimize globally):</strong> More efficient overall (fewer total miles driven), but adds N seconds of latency to every ride request.</li>
+  <li><strong>Chosen approach:</strong> Greedy matching for simplicity and low latency, with a very short batch window (2–3 seconds) in high-demand areas. This is a good balance for most scenarios.</li>
+</ul>
+
+<h3>Ride State Machine Enforcement</h3>
+<p>The ride state machine (<code>requested → matched → driver_arriving → in_progress → completed | cancelled</code>) is enforced in the Ride Service with database-level checks. Each state transition is validated (e.g., a ride can only move from <code>in_progress</code> to <code>completed</code>, not from <code>requested</code> to <code>completed</code>). This is done using SQL conditional updates: <code>UPDATE rides SET status = 'matched' WHERE id = ? AND status = 'requested'</code>. If zero rows affected, the transition was invalid.</p>
+
+<!-- ============================================================ -->
+<!-- 17. ALTERNATIVE APPROACHES                                   -->
+<!-- ============================================================ -->
+<h2 id="alternatives">17. Alternative Approaches</h2>
+
+<h3>17.1 HTTP Polling for Location Tracking</h3>
+<p><strong>How it would work:</strong> Riders poll <code>GET /drivers/{id}/location</code> every 2 seconds to get the driver's latest position.</p>
+<p><strong>Why not chosen:</strong> With 2M active riders polling every 2 seconds, that's 1M HTTP requests/sec for location alone — each with full HTTP headers, TLS overhead, and a database read. WebSocket reduces this to lightweight frames on persistent connections, cutting bandwidth by ~90% and latency by ~50%.</p>
+
+<h3>17.2 Server-Sent Events (SSE) for Real-time Updates</h3>
+<p><strong>How it would work:</strong> Riders open an SSE connection to receive driver location updates. Drivers use separate HTTP POSTs to send their locations.</p>
+<p><strong>Why not chosen:</strong> SSE is unidirectional (server → client). Drivers need to both send (location) and receive (ride requests) on the same connection. Using SSE for receiving + HTTP for sending means two separate channels to manage, increasing complexity. WebSocket provides one bidirectional channel for both.</p>
+
+<h3>17.3 Quadtree Instead of Geohash for Spatial Indexing</h3>
+<p><strong>How it would work:</strong> Build an in-memory quadtree that dynamically subdivides space, with denser areas getting deeper subdivision.</p>
+<p><strong>Why not chosen:</strong> Quadtrees are great for single-machine in-memory use but are difficult to distribute across a cluster. Rebalancing the tree when nodes are added/removed is complex. Geohash's string-based approach maps naturally to distributed key-value stores and supports simple range-based sharding by prefix.</p>
+
+<h3>17.4 Synchronous Payment Processing</h3>
+<p><strong>How it would work:</strong> When the driver taps "End Ride," the Ride Service synchronously calls the Payment Service, waits for the charge, and returns the result to the driver.</p>
+<p><strong>Why not chosen:</strong> Payment gateway calls can take 2–5 seconds (or more on failure/retry). This would block the driver from getting their next ride. Asynchronous payment via message queue decouples ride completion from payment, allowing the driver to go back online immediately. It also provides built-in retry and durability via the queue.</p>
+
+<h3>17.5 Single Matching Service (No Geographic Partitioning)</h3>
+<p><strong>How it would work:</strong> One centralized Matching Service handles all ride requests globally.</p>
+<p><strong>Why not chosen:</strong> A ride in San Francisco never competes with a ride in New York for the same driver. Geographic partitioning allows each instance to operate independently on a smaller dataset, reducing latency and enabling horizontal scaling. A centralized service would be a bottleneck and a single point of failure.</p>
+
+<h3>17.6 Graph Database for Road Network / Routing</h3>
+<p><strong>How it would work:</strong> Store the road network as a graph database and query shortest paths for ETA calculation.</p>
+<p><strong>Why not chosen (as a primary datastore):</strong> While a graph representation of the road network is conceptually correct, purpose-built routing engines with pre-computed contraction hierarchies are far more efficient than generic graph database queries for shortest-path problems. The ETA/Routing Service uses an in-memory routing engine with pre-processed road graph data, not a general-purpose graph database.</p>
+
+<!-- ============================================================ -->
+<!-- 18. ADDITIONAL CONSIDERATIONS                                -->
+<!-- ============================================================ -->
+<h2 id="additional">18. Additional Considerations</h2>
+
+<h3>Safety Features</h3>
+<ul>
+  <li><strong>Trip sharing:</strong> Riders can share their real-time trip with trusted contacts via a link. The system generates a unique URL that reads from the active ride cache and forwards driver location updates.</li>
+  <li><strong>Emergency button:</strong> Triggers an alert to local emergency services with the rider's live GPS coordinates.</li>
+  <li><strong>Driver verification:</strong> Periodic selfie checks compared against the driver's profile photo using facial recognition.</li>
+</ul>
+
+<h3>Cancellation Handling</h3>
+<ul>
+  <li><strong>Rider cancels before match:</strong> Ride record moves to <code>cancelled</code>. No charge.</li>
+  <li><strong>Rider cancels after match (before pickup):</strong> Cancellation fee charged if the driver has been en route for more than 2 minutes.</li>
+  <li><strong>Driver cancels:</strong> The ride goes back to the Matching Service for re-matching. Frequent cancellations affect the driver's rating/priority.</li>
+</ul>
+
+<h3>Idempotency</h3>
+<p>All state-changing operations use idempotency keys to handle retries safely:</p>
+<ul>
+  <li>Payment: <code>idempotency_key = ride_id + "-payment"</code></li>
+  <li>Ride creation: <code>idempotency_key = rider_id + "-" + timestamp_hash</code></li>
+  <li>Rating: Unique constraint on <code>(ride_id, rater_id)</code></li>
+</ul>
+
+<h3>Monitoring &amp; Observability</h3>
+<ul>
+  <li><strong>Distributed tracing:</strong> Every request carries a trace ID across all services for end-to-end latency analysis.</li>
+  <li><strong>Metrics:</strong> Match latency (p50, p95, p99), payment success rate, WebSocket connection count, location update lag.</li>
+  <li><strong>Alerting:</strong> Alert on match failure rate &gt; 5%, payment failure rate &gt; 1%, average match time &gt; 10s.</li>
+</ul>
+
+<h3>Data Retention &amp; Privacy</h3>
+<ul>
+  <li>Driver location data: Retained for 30 days (for dispute resolution), then archived to cold storage or deleted.</li>
+  <li>Ride history: Retained indefinitely for user access but archived to cold storage after 1 year.</li>
+  <li>Payment data: Retained per financial regulations (typically 7 years).</li>
+  <li>GDPR/CCPA compliance: Users can request data export and deletion.</li>
+</ul>
+
+<h3>Offline / Poor Connectivity</h3>
+<ul>
+  <li>The driver app queues location updates locally when offline and flushes them when connectivity is restored.</li>
+  <li>The rider app caches the last known ride state and driver location, showing "Reconnecting…" during disconnections.</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- 19. VENDOR RECOMMENDATIONS                                   -->
+<!-- ============================================================ -->
+<h2 id="vendors">19. Vendor Recommendations</h2>
+
+<table>
+<tr><th>Component</th><th>Potential Vendors</th><th>Why</th></tr>
+<tr><td><strong>SQL Database</strong></td><td>PostgreSQL, MySQL, CockroachDB, Google Cloud Spanner</td><td>PostgreSQL: Mature, feature-rich, excellent geospatial support (PostGIS). CockroachDB/Spanner: Distributed SQL for global scale with strong consistency. MySQL: Battle-tested at Uber's actual scale (they used it historically).</td></tr>
+<tr><td><strong>NoSQL (driver_locations)</strong></td><td>Apache Cassandra, ScyllaDB, DynamoDB</td><td>Cassandra/ScyllaDB: Excellent write throughput, tunable consistency, time-series friendly. DynamoDB: Fully managed, auto-scaling, built-in TTL.</td></tr>
+<tr><td><strong>In-Memory Cache / Spatial Index</strong></td><td>Redis, Memcached, Dragonfly</td><td>Redis: Supports geospatial commands natively (GEOADD, GEOSEARCH), pub/sub, and complex data structures. Rich ecosystem. Dragonfly: Redis-compatible with better multi-core performance.</td></tr>
+<tr><td><strong>Message Queue</strong></td><td>Apache Kafka, RabbitMQ, Amazon SQS, Apache Pulsar</td><td>Kafka: High throughput, durability, exactly-once semantics, excellent for event streaming + queuing. RabbitMQ: Simpler, great for traditional work queues. SQS: Fully managed. Pulsar: Combines messaging + streaming with multi-tenancy.</td></tr>
+<tr><td><strong>WebSocket Gateway</strong></td><td>Custom (Node.js/Go), Envoy, Netflix Zuul</td><td>Custom in Go: High performance, fine-grained control over connection lifecycle. Envoy: Battle-tested proxy with WebSocket support. Building custom is common at this scale for full control.</td></tr>
+<tr><td><strong>Object Storage (for analytics archival)</strong></td><td>Amazon S3, Google Cloud Storage, Azure Blob</td><td>Industry standard for cheap, durable cold storage. Used for archived ride data, location history, ML training data.</td></tr>
+<tr><td><strong>Service Discovery</strong></td><td>Consul, etcd, Kubernetes service discovery</td><td>Consul: Feature-rich, health checking, KV store. etcd: Battle-tested with Kubernetes. Kubernetes native: If already running on K8s.</td></tr>
+<tr><td><strong>Mapping / Routing</strong></td><td>Google Maps Platform, Mapbox, OSRM (Open Source Routing Machine), Valhalla</td><td>Google Maps: Most comprehensive data. Mapbox: Developer-friendly, customizable. OSRM/Valhalla: Open-source, self-hosted, no per-request cost at scale.</td></tr>
+</table>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    flowchart: {
+      useMaxWidth: true,
+      htmlLabels: true,
+      curve: 'basis'
+    }
+  });
+</script>
+
 </body>
 </html>
