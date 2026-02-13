@@ -4,271 +4,999 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>System Design: Twitter Search</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 <style>
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: #e0e0e0; line-height: 1.7; }
-h1 { color: #1da1f2; border-bottom: 3px solid #1da1f2; padding-bottom: 10px; font-size: 2.2em; }
-h2 { color: #4db8ff; margin-top: 40px; font-size: 1.6em; border-left: 4px solid #4db8ff; padding-left: 12px; }
-h3 { color: #80cfff; font-size: 1.3em; }
-.section { background: #1a1a2e; border-radius: 10px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
-.diagram-container { background: #0d1117; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
-.example { background: #1e293b; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
-.example strong { color: #f59e0b; }
-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-th { background: #2a2a4a; color: #4db8ff; padding: 12px; text-align: left; border: 1px solid #444; }
-td { padding: 10px 12px; border: 1px solid #333; }
-tr:nth-child(even) { background: #1a1a2e; }
-tr:nth-child(odd) { background: #151528; }
-code { background: #2d2d4d; padding: 2px 8px; border-radius: 4px; color: #ff79c6; font-size: 0.95em; }
-.tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
-.tag-pk { background: #4a1a6b; color: #d4a5ff; }
-.tag-idx { background: #4a3a1a; color: #ffd4a5; }
-ul { padding-left: 25px; }
-li { margin: 5px 0; }
-.tradeoff { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-.pro { background: #0a2a1a; border: 1px solid #2a5a3a; padding: 15px; border-radius: 8px; }
-.con { background: #2a0a1a; border: 1px solid #5a2a3a; padding: 15px; border-radius: 8px; }
+  :root {
+    --bg: #f8f9fc;
+    --surface: #ffffff;
+    --border: #e2e5ef;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --accent: #4f46e5;
+    --accent2: #0891b2;
+    --green: #059669;
+    --red: #dc2626;
+    --yellow: #b45309;
+    --code-bg: #f1f5f9;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.8;
+    padding: 2.5rem;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 {
+    font-size: 2.4rem;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: -0.5px;
+  }
+  h2 {
+    font-size: 1.5rem;
+    color: var(--accent);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 3px solid var(--accent);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  h3 {
+    font-size: 1.2rem;
+    color: var(--accent2);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  h4 {
+    font-size: 1.05rem;
+    color: #7c3aed;
+    margin-top: 1.4rem;
+    margin-bottom: 0.5rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  p, li { color: var(--text); margin-bottom: 0.6rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1.2rem 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .example {
+    background: #ecfdf5;
+    border-left: 4px solid var(--green);
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+  }
+  .example strong { color: var(--green); }
+  .warn {
+    background: #fffbeb;
+    border-left: 4px solid var(--yellow);
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+  }
+  .warn strong { color: var(--yellow); }
+  .alt {
+    background: #eff6ff;
+    border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+  }
+  .alt strong { color: var(--accent); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.92rem;
+  }
+  th, td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+  th { background: #eef2ff; color: var(--accent); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  td { background: var(--surface); }
+  code {
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: #7c3aed;
+  }
+  pre {
+    background: var(--code-bg);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.88rem;
+    margin: 0.8rem 0;
+    border: 1px solid var(--border);
+  }
+  .mermaid {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1.2rem 0;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .tag-sql { background: #dbeafe; color: #1d4ed8; }
+  .tag-nosql { background: #ede9fe; color: #6d28d9; }
+  .tag-cache { background: #d1fae5; color: #047857; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
 </style>
 </head>
 <body>
+<div class="container">
+
 <h1>System Design: Twitter Search</h1>
+<p style="color:var(--text-muted); margin-bottom: 2rem; font-style: italic;">A comprehensive design for a full-text search engine powering tweet search, user search, autocomplete, and trending topics at Twitter scale (~500M tweets/day, ~500M searches/day).</p>
 
-<div class="section">
-<h2>Functional Requirements</h2>
-<ul>
-<li>Full-text search across all tweets (hundreds of billions of tweets)</li>
-<li>Real-time indexing — new tweets searchable within seconds of posting</li>
-<li>Search by keywords, hashtags, user mentions, cashtags ($AAPL)</li>
-<li>Filter by: recency, popularity, media type, language, location</li>
-<li>Trending topics and hashtag discovery</li>
-<li>User search (find users by name or handle)</li>
-<li>Typeahead / autocomplete suggestions</li>
-</ul>
-</div>
-
-<div class="section">
-<h2>Non-Functional Requirements</h2>
-<ul>
-<li><strong>Latency:</strong> Search results in &lt;500ms</li>
-<li><strong>Freshness:</strong> New tweets indexed within 10 seconds of creation (near real-time)</li>
-<li><strong>Scalability:</strong> Handle billions of queries/day, index 500M+ tweets/day</li>
-<li><strong>Relevance:</strong> Results ranked by relevance + recency + engagement</li>
-<li><strong>Availability:</strong> 99.99% — search is a core feature</li>
-</ul>
-</div>
-
-<!-- Flow 1: Indexing -->
-<div class="section">
-<h2>Flow 1: Tweet Indexing (Write Path)</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1050 380" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#1da1f2"/></marker></defs>
-<rect x="20" y="150" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="85" y="178" text-anchor="middle" fill="white" font-size="12">Tweet Service</text><text x="85" y="195" text-anchor="middle" fill="white" font-size="10">(new tweet)</text>
-<rect x="200" y="150" width="130" height="60" rx="10" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="265" y="185" text-anchor="middle" fill="white" font-size="12">Kafka</text>
-<rect x="390" y="90" width="150" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="465" y="118" text-anchor="middle" fill="white" font-size="11">Tokenizer / NLP</text><text x="465" y="132" text-anchor="middle" fill="white" font-size="10">(text processing)</text>
-<rect x="390" y="200" width="150" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="465" y="228" text-anchor="middle" fill="white" font-size="11">Index Writer</text><text x="465" y="242" text-anchor="middle" fill="white" font-size="10">(inverted index)</text>
-<rect x="390" y="300" width="150" height="50" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="465" y="330" text-anchor="middle" fill="white" font-size="11">Entity Extractor</text><text x="465" y="344" text-anchor="middle" fill="white" font-size="10">(hashtags, mentions)</text>
-<rect x="620" y="90" width="150" height="50" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="695" y="115" text-anchor="middle" fill="white" font-size="11">Real-time Index</text><text x="695" y="130" text-anchor="middle" fill="white" font-size="10">(Earlybird/Lucene)</text>
-<ellipse cx="695" cy="225" rx="70" ry="28" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="695" y="222" text-anchor="middle" fill="white" font-size="10">Full Index</text><text x="695" y="238" text-anchor="middle" fill="white" font-size="10">(Historical)</text>
-<rect x="850" y="140" width="130" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="915" y="170" text-anchor="middle" fill="white" font-size="12">Trending Svc</text>
-<line x1="150" y1="180" x2="198" y2="180" stroke="#1da1f2" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="330" y1="168" x2="388" y2="118" stroke="#1da1f2" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="330" y1="190" x2="388" y2="225" stroke="#1da1f2" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="330" y1="195" x2="388" y2="325" stroke="#1da1f2" stroke-width="1.5" marker-end="url(#arrow1)"/>
-<line x1="540" y1="115" x2="618" y2="115" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="540" y1="230" x2="623" y2="228" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="540" y1="325" x2="848" y2="170" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow1)"/>
-<text x="520" y="30" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Twitter Search: Indexing Pipeline</text>
-</svg>
-</div>
-
-<h3>Step-by-Step</h3>
+<!-- ============================================================ -->
+<h2>1 &mdash; Functional Requirements</h2>
+<!-- ============================================================ -->
+<div class="card">
 <ol>
-<li><strong>Tweet published</strong> → event sent to Kafka "tweets" topic</li>
-<li><strong>Tokenizer / NLP:</strong> Processes tweet text — tokenization, stemming, language detection, stop word removal. "I'm running fast" → tokens: ["run", "fast"]</li>
-<li><strong>Entity Extractor:</strong> Identifies hashtags (#tech), mentions (@elonmusk), cashtags ($AAPL), URLs, emojis. Creates structured entities</li>
-<li><strong>Index Writer:</strong> Builds inverted index entries: token → [tweet_id_1, tweet_id_2, ...]. Writes to both Real-time Index (in-memory, last 7 days) and Full Index (on-disk, all time)</li>
-<li><strong>Trending Service:</strong> Counts hashtag/topic frequency using Count-Min Sketch. Detects spikes against baseline</li>
+  <li><strong>Tweet search by keyword / phrase</strong> &mdash; Users can enter free-text queries and receive a ranked list of matching tweets.</li>
+  <li><strong>User / account search</strong> &mdash; Users can search for other accounts by name, username, or bio.</li>
+  <li><strong>Hashtag search</strong> &mdash; Users can search by hashtag and see all tweets containing that hashtag.</li>
+  <li><strong>Search filters</strong> &mdash; Users can narrow results by date range, media type (images, videos), language, "from" user, minimum likes/retweets, etc.</li>
+  <li><strong>Search result ranking</strong> &mdash; Results are ranked by a combination of relevance (text match), recency, and engagement (likes, retweets, replies).</li>
+  <li><strong>Typeahead / autocomplete</strong> &mdash; As users type, suggestions for queries, hashtags, and accounts appear in real time.</li>
+  <li><strong>Trending topics</strong> &mdash; Users can view currently trending hashtags/topics in their region or globally.</li>
 </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2>2 &mdash; Non-Functional Requirements</h2>
+<!-- ============================================================ -->
+<div class="card">
+<ol>
+  <li><strong>Low latency</strong> &mdash; p99 search response &lt; 500 ms; p99 typeahead &lt; 100 ms.</li>
+  <li><strong>High availability</strong> &mdash; 99.99% uptime; search must remain operational even during partial failures.</li>
+  <li><strong>Scalability</strong> &mdash; Handle ~500 million tweets/day ingestion and ~500 million search queries/day.</li>
+  <li><strong>Near-real-time indexing</strong> &mdash; New tweets should be searchable within seconds (eventual consistency).</li>
+  <li><strong>Fault tolerance</strong> &mdash; No single point of failure; graceful degradation under load.</li>
+  <li><strong>Freshness</strong> &mdash; Search ranking should strongly favor recency for general queries.</li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2>3 &mdash; Flow 1: Tweet Ingestion &amp; Indexing</h2>
+<!-- ============================================================ -->
+<p>When a user creates a tweet, the tweet must be tokenized and indexed so it becomes searchable.</p>
+
+<div class="mermaid">
+graph LR
+    A["Client<br/>(Mobile / Web)"] -->|"HTTP POST<br/>/tweets"| B["Tweet Service"]
+    B -->|"Write tweet"| C[("Tweet Store<br/>(NoSQL)")]
+    B -->|"Publish tweet_created event"| D["Message Queue"]
+    D -->|"Consume"| E["Indexing Service"]
+    E -->|"Tokenize, stem,<br/>build inverted index"| F[("Search Index<br/>(Inverted Index Store)")]
+    E -->|"Update typeahead<br/>tokens"| G[("Typeahead Index<br/>(Prefix Trie Store)")]
+    D -->|"Consume"| H["Trending<br/>Aggregator"]
+    H -->|"Increment<br/>counters"| I[("Trending Store<br/>(Time-Series NoSQL)")]
+</div>
+
+<h3>Examples</h3>
 
 <div class="example">
-<strong>Example:</strong> Tweet: "Just bought $AAPL after the earnings call! 🚀 #investing #stocks" → Tokenizer produces: ["bought", "aapl", "earnings", "call", "investing", "stocks"]. Entity Extractor: hashtags=[#investing, #stocks], cashtags=[$AAPL]. Index Writer creates entries: "aapl" → [tweet_12345], "investing" → [tweet_12345], etc. Written to Earlybird real-time index within 5 seconds. Searchable immediately.
+<strong>Example 1 &mdash; Normal tweet creation:</strong><br/>
+User <code>@alice</code> posts the tweet <em>"Just landed in Tokyo! #travel #japan"</em>. The client issues an <code>HTTP POST /tweets</code> to the Tweet Service. The Tweet Service writes the tweet to the Tweet Store and publishes a <code>tweet_created</code> event to the Message Queue. The Indexing Service consumes this event, tokenizes the text into tokens <code>["just", "land", "tokyo", "travel", "japan"]</code> (after lowercasing and stemming), and inserts entries into the inverted index mapping each token to this tweet's ID. It also updates the Typeahead Index with the tokens. Simultaneously, the Trending Aggregator consumes the same event, detects the hashtags <code>#travel</code> and <code>#japan</code>, and increments their counters in the Trending Store for the current time window.
 </div>
-
-<h3>Deep Dive: Earlybird (Real-time Index)</h3>
-<ul>
-<li><strong>What:</strong> Twitter's custom real-time search engine (based on Lucene). Holds tweets from last 7 days in memory</li>
-<li><strong>Architecture:</strong> Tweets hash-partitioned across ~200 Earlybird servers. Each server holds a shard of the index</li>
-<li><strong>Inverted index in memory:</strong> Token → posting list (sorted tweet_ids with positions). ~50GB RAM per server</li>
-<li><strong>Updates:</strong> New tweets indexed within seconds. Index segments merged periodically (like Lucene merge policy)</li>
-<li><strong>Why custom:</strong> Standard Elasticsearch not fast enough for Twitter's real-time indexing latency requirements (~5 second freshness)</li>
-</ul>
-</div>
-
-<!-- Flow 2: Search Query -->
-<div class="section">
-<h2>Flow 2: Search Query Execution (Read Path)</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffaa00"/></marker></defs>
-<rect x="20" y="160" width="110" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="195" text-anchor="middle" fill="white" font-size="13">User</text>
-<rect x="170" y="160" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="235" y="195" text-anchor="middle" fill="white" font-size="12">Search Service</text>
-<rect x="350" y="80" width="140" height="50" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="420" y="108" text-anchor="middle" fill="white" font-size="11">Earlybird (Real-time)</text><text x="420" y="122" text-anchor="middle" fill="white" font-size="10">Last 7 days</text>
-<rect x="350" y="180" width="140" height="50" rx="8" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="420" y="208" text-anchor="middle" fill="white" font-size="11">Full Index</text><text x="420" y="222" text-anchor="middle" fill="white" font-size="10">Historical</text>
-<rect x="350" y="280" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="420" y="308" text-anchor="middle" fill="white" font-size="11">Blender</text><text x="420" y="322" text-anchor="middle" fill="white" font-size="10">(Result Merger)</text>
-<rect x="560" y="160" width="140" height="60" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="630" y="188" text-anchor="middle" fill="white" font-size="12">Ranking Service</text><text x="630" y="205" text-anchor="middle" fill="white" font-size="10">(ML Scorer)</text>
-<rect x="770" y="80" width="130" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="835" y="108" text-anchor="middle" fill="white" font-size="11">Tweet Hydrator</text>
-<rect x="770" y="200" width="130" height="50" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="835" y="228" text-anchor="middle" fill="white" font-size="11">Safety Filter</text>
-<rect x="960" y="160" width="110" height="50" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="1015" y="190" text-anchor="middle" fill="white" font-size="12">Results</text>
-<line x1="130" y1="190" x2="168" y2="190" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="300" y1="178" x2="348" y2="110" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="300" y1="195" x2="348" y2="205" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="490" y1="110" x2="490" y2="278" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
-<line x1="490" y1="215" x2="490" y2="278" stroke="#ffaa00" stroke-width="1.5"/>
-<line x1="490" y1="305" x2="558" y2="195" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="700" y1="180" x2="768" y2="110" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="700" y1="200" x2="768" y2="225" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="900" y1="105" x2="958" y2="175" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
-<text x="550" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Twitter Search: Query Execution</text>
-</svg>
-</div>
-
-<h3>Step-by-Step</h3>
-<ol>
-<li><strong>User searches "earthquake california"</strong> → <code>GET /v1/search?q=earthquake+california&result_type=recent</code></li>
-<li><strong>Search Service:</strong> Parses query, identifies tokens ["earthquake", "california"], detects filter mode (recent/top/media)</li>
-<li><strong>Scatter-gather:</strong> Query sent to all Earlybird shards (real-time, last 7 days) AND full index shards (historical). Each shard returns top-K local results</li>
-<li><strong>Blender:</strong> Merges results from all shards. Deduplicates. Selects top 500 candidates</li>
-<li><strong>Ranking Service (ML):</strong> Scores each tweet: <code>score = text_relevance * 0.3 + engagement * 0.25 + recency * 0.25 + author_authority * 0.2</code></li>
-<li><strong>Tweet Hydrator:</strong> Fetches full tweet objects (text, author info, media, engagement counts)</li>
-<li><strong>Safety Filter:</strong> Removes NSFW, spam, blocked users, muted keywords from results</li>
-<li><strong>Returns top 20 results</strong> per page</li>
-</ol>
 
 <div class="example">
-<strong>Example:</strong> User searches "earthquake california". Earlybird real-time shards find 2000 recent tweets containing both tokens. Full index finds 50K historical matches. Blender merges and selects top 500 by initial score. ML Ranking: breaking news tweet from @USGS (verified, 10K retweets, 2 min old) scores 0.98. Old news article from 2019 scores 0.15. Top 20 returned. Total latency: ~350ms (scatter: 100ms, rank: 50ms, hydrate: 100ms, network: 100ms).
+<strong>Example 2 &mdash; Tweet with media:</strong><br/>
+User <code>@bob</code> posts <em>"Check out this sunset 🌅 #photography"</em> with an attached image. The flow is identical to Example 1, except the Indexing Service also indexes the <code>has_media: true</code> and <code>media_type: image</code> fields, enabling filtered searches like <em>"sunset filter:images"</em>.
 </div>
 
-<h3>Deep Dive: Inverted Index</h3>
-<ul>
-<li><strong>Structure:</strong> Dictionary (token → posting list). Posting list = sorted array of (tweet_id, position, metadata)</li>
-<li><strong>Boolean query:</strong> "earthquake AND california" → intersect posting lists for "earthquake" and "california". Use skip pointers for efficient intersection</li>
-<li><strong>Phrase query:</strong> "earthquake in california" → check position offsets (earthquake at pos 0, in at pos 1, california at pos 2 in same tweet)</li>
-<li><strong>Compression:</strong> Delta encoding + variable-byte encoding for posting lists. 4x compression ratio</li>
-</ul>
+<div class="example">
+<strong>Example 3 &mdash; High-velocity burst (celebrity tweet):</strong><br/>
+A celebrity with 80M followers tweets <em>"Big announcement coming! #breaking"</em>. This causes a spike in <code>#breaking</code> counter increments. The Message Queue absorbs the burst. The Indexing Service processes the tweet normally. The Trending Aggregator's sliding window counter for <code>#breaking</code> rapidly climbs, and it is promoted to the trending list within seconds.
 </div>
 
-<!-- Combined Architecture -->
-<div class="section">
-<h2>Combined Overall Architecture</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1100 500" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#1da1f2"/></marker></defs>
-<text x="550" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Twitter Search: Combined Architecture</text>
-<rect x="20" y="200" width="100" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="70" y="230" text-anchor="middle" fill="white" font-size="12">Clients</text>
-<rect x="160" y="200" width="110" height="50" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="215" y="230" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
-<rect x="320" y="100" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="380" y="125" text-anchor="middle" fill="white" font-size="11">Search Svc</text>
-<rect x="320" y="180" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="380" y="205" text-anchor="middle" fill="white" font-size="11">Typeahead Svc</text>
-<rect x="320" y="260" width="120" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="380" y="285" text-anchor="middle" fill="white" font-size="11">Trending Svc</text>
-<rect x="320" y="340" width="120" height="40" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="380" y="365" text-anchor="middle" fill="white" font-size="11">Kafka</text>
-<rect x="520" y="60" width="130" height="40" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="585" y="85" text-anchor="middle" fill="white" font-size="10">Earlybird (RT)</text>
-<rect x="520" y="120" width="130" height="40" rx="8" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="585" y="145" text-anchor="middle" fill="white" font-size="10">Full Index (Hist)</text>
-<rect x="520" y="180" width="130" height="40" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="585" y="205" text-anchor="middle" fill="white" font-size="10">Blender</text>
-<rect x="520" y="240" width="130" height="40" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="585" y="265" text-anchor="middle" fill="white" font-size="10">ML Ranker</text>
-<rect x="520" y="300" width="130" height="40" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="585" y="325" text-anchor="middle" fill="white" font-size="10">Safety Filter</text>
-<rect x="520" y="360" width="130" height="40" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="585" y="385" text-anchor="middle" fill="white" font-size="10">Index Writer</text>
-<rect x="730" y="180" width="110" height="40" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="785" y="205" text-anchor="middle" fill="white" font-size="10">Hydrator</text>
-<rect x="730" y="260" width="110" height="40" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="785" y="285" text-anchor="middle" fill="white" font-size="10">Result Cache</text>
-<line x1="120" y1="225" x2="158" y2="225" stroke="#1da1f2" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="270" y1="218" x2="318" y2="120" stroke="#1da1f2" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="270" y1="225" x2="318" y2="200" stroke="#1da1f2" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="270" y1="232" x2="318" y2="280" stroke="#1da1f2" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="440" y1="120" x2="518" y2="80" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="440" y1="120" x2="518" y2="140" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="585" y1="100" x2="585" y2="178" stroke="#ffaa00" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="585" y1="160" x2="585" y2="178" stroke="#ffaa00" stroke-width="1"/>
-<line x1="585" y1="220" x2="585" y2="238" stroke="#ffaa00" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="585" y1="280" x2="585" y2="298" stroke="#ffaa00" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="650" y1="200" x2="728" y2="200" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="440" y1="360" x2="518" y2="380" stroke="#66ff66" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="650" y1="380" x2="650" y2="80" stroke="#66ff66" stroke-width="1" stroke-dasharray="4,4" marker-end="url(#arrow3)"/>
-</svg>
-</div>
+<h3>Component Deep Dive &mdash; Flow 1</h3>
+
+<div class="card">
+<h4>Client (Mobile / Web)</h4>
+<p>The user's device (iOS, Android, or web browser). Initiates tweet creation.</p>
 </div>
 
-<!-- Database Schema -->
-<div class="section">
-<h2>Database Schema</h2>
-
-<h3>Inverted Index (Earlybird / Custom Lucene)</h3>
+<div class="card">
+<h4>Tweet Service</h4>
+<p><strong>Protocol:</strong> HTTP REST</p>
 <table>
-<tr><th>Structure</th><th>Key</th><th>Value</th><th>Storage</th></tr>
-<tr><td>Token Dictionary</td><td>token (string)</td><td>Pointer to posting list</td><td>In-memory hash map</td></tr>
-<tr><td>Posting List</td><td>token</td><td>Sorted [tweet_id, position, field, flags]</td><td>In-memory compressed arrays</td></tr>
-<tr><td>Tweet Forward Index</td><td>tweet_id</td><td>{author_id, timestamp, engagement_score, lang}</td><td>In-memory columnar</td></tr>
+<tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th></tr>
+<tr>
+  <td><code>/tweets</code></td>
+  <td>POST</td>
+  <td><code>{ user_id, text, media_urls[], hashtags[], lang }</code></td>
+  <td><code>{ tweet_id, created_at, status: "created" }</code></td>
+</tr>
+</table>
+<p>Responsible for persisting the tweet and emitting the <code>tweet_created</code> event to the message queue. Stateless; horizontally scalable behind a load balancer.</p>
+</div>
+
+<div class="card">
+<h4>Tweet Store (NoSQL)</h4>
+<p>Stores the canonical tweet data. NoSQL (wide-column) is chosen because tweets are write-heavy, append-only, and access patterns are primarily key-value lookups by <code>tweet_id</code>. No complex joins required.</p>
+</div>
+
+<div class="card">
+<h4>Message Queue</h4>
+<p>Decouples tweet creation from indexing. Provides durability (persisted on disk), at-least-once delivery, and back-pressure handling during traffic spikes. The <code>tweet_created</code> topic is consumed by multiple consumer groups: the Indexing Service and the Trending Aggregator. Partitioned by <code>tweet_id</code> for ordered per-tweet processing.</p>
+<p><strong>Why a message queue over direct RPC?</strong> Direct calls from the Tweet Service to the Indexing Service would couple availability: if the Indexing Service is down, tweet creation would fail. The queue absorbs bursts and retries transparently.</p>
+<p><strong>Why not pub/sub?</strong> A message queue with consumer groups achieves fan-out to multiple consumers while also providing ordering guarantees and replay ability. Pub/sub could work, but message queue semantics (consumer offsets, dead-letter queues) are better suited for durable processing pipelines.</p>
+</div>
+
+<div class="card">
+<h4>Indexing Service</h4>
+<p>Consumes <code>tweet_created</code> events from the queue. Performs:</p>
+<ol>
+  <li><strong>Tokenization</strong> &mdash; Splits tweet text into tokens.</li>
+  <li><strong>Normalization</strong> &mdash; Lowercases, strips accents, removes stop words.</li>
+  <li><strong>Stemming / Lemmatization</strong> &mdash; Reduces words to root forms (e.g., "running" → "run").</li>
+  <li><strong>Inverted index update</strong> &mdash; For each token, appends <code>{ tweet_id, timestamp, position }</code> to the posting list in the Search Index.</li>
+  <li><strong>Typeahead update</strong> &mdash; Inserts/increments tokens and hashtags in the prefix trie store.</li>
+</ol>
+<p>Stateless; scales horizontally with more consumer instances (one per queue partition).</p>
+</div>
+
+<div class="card">
+<h4>Search Index (Inverted Index Store)</h4>
+<p>The core data structure for full-text search. Conceptually:</p>
+<pre>
+token → [ { tweet_id, timestamp, score, position }, ... ]
+</pre>
+<p>Stored in a distributed, sharded inverted-index storage engine. Each shard holds a range of tokens (or a range of tweet IDs, depending on sharding strategy &mdash; see Sharding section). Supports Boolean queries (AND, OR), phrase queries (via positional index), and scoring.</p>
+</div>
+
+<div class="card">
+<h4>Typeahead Index (Prefix Trie Store)</h4>
+<p>A prefix-trie structure mapping character prefixes to suggested completions (queries, hashtags, usernames). Stored in an in-memory data store for sub-10ms lookups.</p>
+</div>
+
+<div class="card">
+<h4>Trending Aggregator</h4>
+<p>Consumes <code>tweet_created</code> events. Extracts hashtags and significant terms. Uses a sliding-window counter (e.g., 1-minute and 5-minute windows) to detect velocity spikes. Writes counter data to the Trending Store. Runs as a stream-processing job.</p>
+</div>
+
+<div class="card">
+<h4>Trending Store (Time-Series NoSQL)</h4>
+<p>Stores time-bucketed counters: <code>{ topic, region, time_bucket, count }</code>. Time-series optimized NoSQL because the access pattern is append-heavy and queries are always scoped to recent time windows. Old buckets are TTL-expired.</p>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<h2>4 &mdash; Flow 2: Search Query Execution</h2>
+<!-- ============================================================ -->
+<p>When a user types a query and hits "Search", the system retrieves and ranks matching tweets.</p>
+
+<div class="mermaid">
+graph LR
+    A["Client<br/>(Mobile / Web)"] -->|"HTTP GET<br/>/search?q=...&filters=..."| B["Search Service"]
+    B -->|"Check cache"| C[("Search Result Cache<br/>(In-Memory Cache)")]
+    C -->|"Cache miss"| B
+    B -->|"Fan out query<br/>to shards"| D["Search Index<br/>Shard 1"]
+    B -->|"Fan out query<br/>to shards"| E["Search Index<br/>Shard 2"]
+    B -->|"Fan out query<br/>to shards"| F["Search Index<br/>Shard N"]
+    D -->|"Posting lists"| B
+    E -->|"Posting lists"| B
+    F -->|"Posting lists"| B
+    B -->|"Fetch tweet<br/>metadata"| G[("Tweet Store<br/>(NoSQL)")]
+    B -->|"Rank &<br/>return results"| A
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 &mdash; Simple keyword search:</strong><br/>
+User <code>@carol</code> types <em>"tokyo travel"</em> and presses Search. The client issues <code>HTTP GET /search?q=tokyo+travel</code> to the Search Service. The Search Service first checks the Search Result Cache for this exact query &mdash; cache miss. It tokenizes the query into <code>["tokyo", "travel"]</code>, fans out the query to all Search Index shards in parallel, each shard returns the top-K posting list entries (tweet IDs + scores) matching both tokens. The Search Service merges results, fetches tweet metadata (text, user, media, like/retweet counts) from the Tweet Store, applies the ranking algorithm (BM25 relevance × recency decay × engagement boost), and returns the top 20 results to the client. The result is also written to the cache with a short TTL (e.g., 30 seconds).
+</div>
+
+<div class="example">
+<strong>Example 2 &mdash; Filtered search:</strong><br/>
+User <code>@dave</code> searches <em>"climate change filter:images since:2025-01-01 min_likes:100"</em>. The Search Service parses the filters, tokenizes <code>["climat", "chang"]</code> (after stemming), fans out to shards with the additional filter predicates. Each shard intersects the posting lists for the tokens and applies filters (media_type = image, created_at ≥ 2025-01-01, like_count ≥ 100) before returning results. Merge and rank as above.
+</div>
+
+<div class="example">
+<strong>Example 3 &mdash; Cache hit (trending query):</strong><br/>
+During a major sporting event, thousands of users search <em>"super bowl"</em>. The first request populates the cache. Subsequent identical requests within the 30-second TTL are served directly from the cache, bypassing the index entirely. This dramatically reduces load on the Search Index shards.
+</div>
+
+<div class="example">
+<strong>Example 4 &mdash; Phrase search:</strong><br/>
+User <code>@eve</code> searches <em>"climate change"</em> (in quotes, indicating a phrase search). The Search Service detects the phrase operator, queries the inverted index for both tokens, but additionally checks positional data to ensure <code>"climate"</code> appears immediately before <code>"change"</code> in the original tweet text. Only tweets with the exact phrase are returned.
+</div>
+
+<h3>Component Deep Dive &mdash; Flow 2</h3>
+
+<div class="card">
+<h4>Search Service</h4>
+<p><strong>Protocol:</strong> HTTP REST</p>
+<table>
+<tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th></tr>
+<tr>
+  <td><code>/search</code></td>
+  <td>GET</td>
+  <td>Query params: <code>q</code> (query text), <code>filter</code> (media, lang, since, until, from, min_likes, min_retweets), <code>cursor</code> (pagination), <code>count</code> (page size, default 20)</td>
+  <td><code>{ results: [{ tweet_id, text, user, created_at, like_count, retweet_count, media[] }], next_cursor, total_estimate }</code></td>
+</tr>
+</table>
+<p>Orchestrates the full search pipeline: query parsing → cache check → fan-out to shards → merge → hydrate from Tweet Store → rank → return. Stateless. Horizontally scalable.</p>
+
+<p><strong>Ranking Algorithm:</strong></p>
+<pre>
+score = BM25(query, tweet_text)
+      × recency_decay(created_at)
+      × engagement_boost(likes, retweets, replies)
+      × author_authority(follower_count, verified)
+</pre>
+<p>BM25 handles text relevance. Recency decay applies an exponential time penalty so newer tweets rank higher. Engagement boost and author authority are multiplicative signals.</p>
+</div>
+
+<div class="card">
+<h4>Search Result Cache (In-Memory Cache)</h4>
+<p>Caches full search result pages keyed by normalized query + filters. See the dedicated Cache Deep Dive section below.</p>
+</div>
+
+<div class="card">
+<h4>Search Index Shards</h4>
+<p>The inverted index is horizontally partitioned. The Search Service fans out the query to all shards in parallel (scatter-gather). Each shard independently evaluates the query against its local index and returns a top-K result set. The Search Service then performs a global merge-sort of the per-shard results to produce the final ranked list.</p>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<h2>5 &mdash; Flow 3: Typeahead / Autocomplete</h2>
+<!-- ============================================================ -->
+<p>As the user types characters in the search box, real-time suggestions are displayed.</p>
+
+<div class="mermaid">
+graph LR
+    A["Client<br/>(Mobile / Web)"] -->|"HTTP GET<br/>/typeahead?prefix=..."| B["Typeahead Service"]
+    B -->|"Lookup prefix"| C[("Typeahead Index<br/>(In-Memory Prefix Trie)")]
+    C -->|"Top-K<br/>suggestions"| B
+    B -->|"Return suggestions"| A
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 &mdash; Hashtag suggestion:</strong><br/>
+User starts typing <em>"#trav"</em>. The client sends <code>HTTP GET /typeahead?prefix=%23trav</code>. The Typeahead Service looks up the prefix <code>"#trav"</code> in the in-memory prefix trie, which returns <code>["#travel", "#traveling", "#travelphotography", "#travelgram"]</code> sorted by popularity (frequency-weighted). The top 5 are returned to the client in &lt; 50 ms.
+</div>
+
+<div class="example">
+<strong>Example 2 &mdash; User search suggestion:</strong><br/>
+User types <em>"@elonm"</em>. The client sends <code>HTTP GET /typeahead?prefix=%40elonm</code>. The Typeahead Service matches the prefix against indexed usernames and returns <code>["@elonmusk"]</code> along with display name and profile image URL. The <code>@</code> prefix signals that this is a user search rather than a keyword search.
+</div>
+
+<div class="example">
+<strong>Example 3 &mdash; General query suggestion:</strong><br/>
+User types <em>"clim"</em> (no special prefix). The Typeahead Service returns a blended list: popular recent queries (<code>"climate change"</code>, <code>"climate summit"</code>), hashtags (<code>"#climateaction"</code>), and users (<code>"@ClimateReality"</code>), each labeled by type.
+</div>
+
+<h3>Component Deep Dive &mdash; Flow 3</h3>
+
+<div class="card">
+<h4>Typeahead Service</h4>
+<p><strong>Protocol:</strong> HTTP REST</p>
+<table>
+<tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th></tr>
+<tr>
+  <td><code>/typeahead</code></td>
+  <td>GET</td>
+  <td>Query params: <code>prefix</code> (the partial string), <code>count</code> (max results, default 5)</td>
+  <td><code>{ suggestions: [{ text, type: "query"|"hashtag"|"user", metadata }] }</code></td>
+</tr>
+</table>
+<p>Stateless service that queries the Typeahead Index. Extremely latency-sensitive (&lt; 50 ms target). The client debounces keystrokes (e.g., 150 ms) to avoid flooding the service.</p>
+</div>
+
+<div class="card">
+<h4>Typeahead Index (In-Memory Prefix Trie)</h4>
+<p>An in-memory trie data structure where each node represents a character. Leaf/intermediate nodes store the top-K completions sorted by a popularity score. The popularity score is a combination of:</p>
+<ul>
+  <li>Frequency of the term in recent tweets (last 7 days, decayed).</li>
+  <li>Search frequency (how often users have searched for this term).</li>
+  <li>For users: follower count and verified status.</li>
+</ul>
+<p>The trie is rebuilt periodically (every few minutes) by the Indexing Service and pushed to the Typeahead Service nodes. Because the entire trie fits in memory (millions of entries ≈ a few GB), lookups are O(L) where L is prefix length.</p>
+<p><strong>Why not a database lookup?</strong> Prefix matching on every keystroke requires sub-10ms latency. Even an in-memory cache with a key-value store would require prefix-range scans; a purpose-built trie is more efficient.</p>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<h2>6 &mdash; Flow 4: Trending Topics</h2>
+<!-- ============================================================ -->
+<p>Users view a "Trending" section showing the most popular topics/hashtags in real time.</p>
+
+<div class="mermaid">
+graph LR
+    A["Client<br/>(Mobile / Web)"] -->|"HTTP GET<br/>/trends?region=..."| B["Trending Service"]
+    B -->|"Check cache"| C[("Trending Cache<br/>(In-Memory Cache)")]
+    C -->|"Cache miss"| B
+    B -->|"Query top-K<br/>topics by region"| D[("Trending Store<br/>(Time-Series NoSQL)")]
+    D -->|"Top-K topics<br/>with counts"| B
+    B -->|"Return trends"| A
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 &mdash; Regional trending:</strong><br/>
+User <code>@frank</code> opens the Explore tab and sees "Trending in United States". The client sends <code>HTTP GET /trends?region=US</code>. The Trending Service checks the Trending Cache &mdash; cache hit (TTL = 60 seconds). It returns the precomputed top 10 trending topics for the US, e.g., <code>["#SuperBowl", "#breaking", "Taylor Swift", ...]</code>, each with tweet volume counts.
+</div>
+
+<div class="example">
+<strong>Example 2 &mdash; Global trending (cache miss):</strong><br/>
+A user requests <code>HTTP GET /trends?region=global</code>. Cache miss. The Trending Service queries the Trending Store, aggregating counters across all regions for the last 5 minutes, weighted by velocity (rate of increase). Topics with the highest velocity are ranked at the top. Results are cached for 60 seconds before the next recomputation.
+</div>
+
+<h3>Component Deep Dive &mdash; Flow 4</h3>
+
+<div class="card">
+<h4>Trending Service</h4>
+<p><strong>Protocol:</strong> HTTP REST</p>
+<table>
+<tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th></tr>
+<tr>
+  <td><code>/trends</code></td>
+  <td>GET</td>
+  <td>Query params: <code>region</code> (ISO country code or "global"), <code>count</code> (default 10)</td>
+  <td><code>{ trends: [{ topic, tweet_volume, rank }] }</code></td>
+</tr>
+</table>
+<p>Reads from the Trending Store and applies the velocity-based ranking. Results are cached aggressively since trending topics change at a 1-minute granularity, not per-request.</p>
+</div>
+
+<div class="card">
+<h4>Trending Cache</h4>
+<p>Caches the top-K trending topics per region. TTL = 60 seconds. Since all users in a region see the same trending list, the cache hit rate is extremely high (&gt; 99%). This is a classic read-heavy, rarely-changing dataset ideal for caching.</p>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<h2>7 &mdash; Combined Overall Diagram</h2>
+<!-- ============================================================ -->
+<p>The unified view combining tweet ingestion, search, typeahead, and trending into one architecture.</p>
+
+<div class="mermaid">
+graph TB
+    Client["Client<br/>(Mobile / Web)"]
+
+    subgraph Ingestion Path
+        TS["Tweet Service<br/>(HTTP POST)"]
+        MQ["Message Queue"]
+        IS["Indexing Service"]
+        TA["Trending Aggregator"]
+    end
+
+    subgraph Query Path
+        SS["Search Service<br/>(HTTP GET)"]
+        TAS["Typeahead Service<br/>(HTTP GET)"]
+        TRS["Trending Service<br/>(HTTP GET)"]
+    end
+
+    subgraph Data Stores
+        TweetDB[("Tweet Store<br/>(NoSQL)")]
+        SI[("Search Index<br/>(Inverted Index)")]
+        TI[("Typeahead Index<br/>(In-Memory Trie)")]
+        TrendDB[("Trending Store<br/>(Time-Series NoSQL)")]
+    end
+
+    subgraph Caching Layer
+        SRC[("Search Result<br/>Cache")]
+        TC[("Trending<br/>Cache")]
+    end
+
+    Client -->|"POST /tweets"| TS
+    TS --> TweetDB
+    TS --> MQ
+    MQ --> IS
+    MQ --> TA
+    IS --> SI
+    IS --> TI
+    TA --> TrendDB
+
+    Client -->|"GET /search"| SS
+    SS --> SRC
+    SS --> SI
+    SS --> TweetDB
+
+    Client -->|"GET /typeahead"| TAS
+    TAS --> TI
+
+    Client -->|"GET /trends"| TRS
+    TRS --> TC
+    TRS --> TrendDB
+</div>
+
+<h3>End-to-End Example</h3>
+
+<div class="example">
+<strong>Full lifecycle example:</strong><br/>
+<ol>
+  <li><code>@alice</code> posts <em>"Incredible match at Wimbledon! #tennis #wimbledon"</em> → <code>POST /tweets</code> → Tweet Service writes to Tweet Store, publishes <code>tweet_created</code> to Message Queue.</li>
+  <li>Indexing Service consumes the event, tokenizes the text, and updates the Search Index (inverted index) and the Typeahead Index (prefix trie with <code>#tennis</code>, <code>#wimbledon</code>).</li>
+  <li>Trending Aggregator consumes the same event, increments counters for <code>#tennis</code> and <code>#wimbledon</code> in the Trending Store.</li>
+  <li>2 seconds later, <code>@bob</code> starts typing <em>"wimb"</em> in the search bar → <code>GET /typeahead?prefix=wimb</code> → Typeahead Service returns <code>["wimbledon", "#wimbledon"]</code>.</li>
+  <li><code>@bob</code> selects <em>"wimbledon"</em> and presses Search → <code>GET /search?q=wimbledon</code> → Search Service checks cache (miss), fans out to index shards, merges results, fetches tweet metadata from Tweet Store, ranks by relevance + recency + engagement, returns the top 20 tweets (including Alice's tweet). Caches the result.</li>
+  <li><code>@carol</code> opens the Explore tab → <code>GET /trends?region=UK</code> → Trending Service finds the result in the Trending Cache (populated 15 seconds ago). Returns <code>["#wimbledon", "#tennis", ...]</code> as trending in the UK.</li>
+</ol>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<h2>8 &mdash; Database Schema</h2>
+<!-- ============================================================ -->
+
+<h3>8.1 &mdash; Tweet Store <span class="tag tag-nosql">NoSQL</span></h3>
+<div class="card">
+<table>
+<tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+<tr><td><code>tweet_id</code></td><td>UUID / Snowflake ID</td><td>Partition Key (PK)</td><td>Globally unique tweet identifier</td></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td></td><td>Author of the tweet</td></tr>
+<tr><td><code>text</code></td><td>String (280 chars)</td><td></td><td>Tweet content</td></tr>
+<tr><td><code>hashtags</code></td><td>List&lt;String&gt;</td><td></td><td>Extracted hashtags</td></tr>
+<tr><td><code>media_urls</code></td><td>List&lt;String&gt;</td><td></td><td>URLs to media in object storage</td></tr>
+<tr><td><code>media_type</code></td><td>Enum (none, image, video, gif)</td><td></td><td>Type of attached media</td></tr>
+<tr><td><code>lang</code></td><td>String (ISO 639-1)</td><td></td><td>Detected language</td></tr>
+<tr><td><code>like_count</code></td><td>Integer</td><td></td><td>Denormalized like count</td></tr>
+<tr><td><code>retweet_count</code></td><td>Integer</td><td></td><td>Denormalized retweet count</td></tr>
+<tr><td><code>reply_count</code></td><td>Integer</td><td></td><td>Denormalized reply count</td></tr>
+<tr><td><code>created_at</code></td><td>Timestamp</td><td></td><td>Tweet creation time</td></tr>
 </table>
 
-<h3>Trending Data — Redis</h3>
+<p><strong>Why NoSQL?</strong> Tweets are write-heavy (~6,000 tweets/sec), append-only, and the primary access pattern is point lookups by <code>tweet_id</code> (to hydrate search results). No joins are needed. Wide-column NoSQL provides excellent write throughput and horizontal scalability via partitioning on <code>tweet_id</code>.</p>
+
+<p><strong>Denormalization:</strong> <code>like_count</code>, <code>retweet_count</code>, and <code>reply_count</code> are denormalized (stored directly on the tweet rather than computed via COUNT queries on a separate likes/retweets table). This is done because these counts are needed for every search result ranking computation. A join or aggregation at query time would add unacceptable latency. The counts are updated asynchronously via counter increments when likes/retweets occur.</p>
+
+<p><strong>Written:</strong> When a user creates a tweet (POST /tweets).<br/>
+<strong>Read:</strong> When the Search Service hydrates search results with tweet metadata (GET /search).</p>
+
+<p><strong>Sharding:</strong> Partitioned by <code>tweet_id</code> (hash-based partitioning). Snowflake-style IDs embed a timestamp prefix, so recent tweets naturally distribute across shards while still enabling time-range queries. This avoids hot spots since tweet IDs are uniformly distributed.</p>
+</div>
+
+<h3>8.2 &mdash; User Store <span class="tag tag-nosql">NoSQL</span></h3>
+<div class="card">
 <table>
-<tr><th>Key</th><th>Type</th><th>Details</th></tr>
-<tr><td><code>trending:{region}:{timewindow}</code></td><td>Sorted Set</td><td>Members: hashtag/topic, Score: count in window</td></tr>
-<tr><td><code>trending:global:current</code></td><td>Sorted Set</td><td>Top 50 global trending topics</td></tr>
+<tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td>Partition Key (PK)</td><td>Unique user identifier</td></tr>
+<tr><td><code>username</code></td><td>String</td><td></td><td>Handle (e.g., "alice")</td></tr>
+<tr><td><code>display_name</code></td><td>String</td><td></td><td>Display name</td></tr>
+<tr><td><code>bio</code></td><td>String</td><td></td><td>User bio text</td></tr>
+<tr><td><code>profile_image_url</code></td><td>String</td><td></td><td>URL to profile image</td></tr>
+<tr><td><code>follower_count</code></td><td>Integer</td><td></td><td>Denormalized follower count</td></tr>
+<tr><td><code>verified</code></td><td>Boolean</td><td></td><td>Whether user is verified</td></tr>
+<tr><td><code>created_at</code></td><td>Timestamp</td><td></td><td>Account creation time</td></tr>
 </table>
 
-<h4>Sharding Strategy</h4>
-<ul>
-<li><strong>Earlybird:</strong> Tweets hash-partitioned by tweet_id across ~200 shards. Search query sent to ALL shards (scatter-gather)</li>
-<li><strong>Full Index:</strong> Time-based sharding. Each shard holds 1 week of data. Recent shards queried first. Old shards only queried if user requests historical results</li>
-<li><strong>Trending:</strong> Redis per-region sharding. Global trending computed from regional aggregates</li>
-</ul>
+<p><strong>Why NoSQL?</strong> Access pattern is simple key-value lookup by <code>user_id</code>. No complex queries. Read-heavy (fetched for every search result to display author info).</p>
+
+<p><strong>Denormalization:</strong> <code>follower_count</code> is denormalized for the same reason as engagement counts on tweets &mdash; it is used as a ranking signal and must be available without joins.</p>
+
+<p><strong>Written:</strong> When a user creates/updates their account.<br/>
+<strong>Read:</strong> When hydrating search results (author info) and typeahead user suggestions.</p>
 </div>
 
-<div class="section">
-<h2>Cache Deep Dive</h2>
+<h3>8.3 &mdash; Search Index (Inverted Index) <span class="tag tag-nosql">Specialized</span></h3>
+<div class="card">
 <table>
-<tr><th>Cache</th><th>Strategy</th><th>Eviction</th><th>TTL</th></tr>
-<tr><td>Search Result Cache</td><td>Read-through</td><td>LRU</td><td>30 seconds (very short — results change rapidly)</td></tr>
-<tr><td>Typeahead Cache</td><td>Write-through</td><td>LRU</td><td>5 minutes</td></tr>
-<tr><td>Tweet Cache (Memcached)</td><td>Read-through</td><td>LRU</td><td>1 hour</td></tr>
-<tr><td>Trending Cache</td><td>Write-through</td><td>TTL</td><td>1 minute</td></tr>
+<tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+<tr><td><code>token</code></td><td>String</td><td>Partition Key</td><td>Stemmed/normalized term</td></tr>
+<tr><td><code>tweet_id</code></td><td>UUID</td><td>Sort Key</td><td>Tweet containing this token</td></tr>
+<tr><td><code>timestamp</code></td><td>Timestamp</td><td></td><td>Tweet creation time (for recency sorting)</td></tr>
+<tr><td><code>positions</code></td><td>List&lt;Integer&gt;</td><td></td><td>Token positions in tweet (for phrase queries)</td></tr>
+<tr><td><code>field</code></td><td>Enum (text, hashtag, username)</td><td></td><td>Which field the token came from</td></tr>
 </table>
-<p><strong>CDN:</strong> Search results NOT cached at CDN (dynamic, personalized). Only media (images, videos) in search results served via CDN.</p>
-</div>
 
-<div class="section">
-<h2>Scaling Considerations</h2>
+<p><strong>Why a specialized inverted index?</strong> General-purpose databases (SQL or NoSQL) are not optimized for full-text search operations like Boolean intersection of posting lists, BM25 scoring, or phrase matching with positional data. A distributed inverted index (similar in concept to an inverted index engine) is purpose-built for this workload.</p>
+
+<p><strong>Index structure:</strong> <strong>Inverted index</strong> on <code>token</code>. Each token maps to a posting list: an ordered list of <code>(tweet_id, timestamp, positions)</code> tuples. The posting list is sorted by <code>timestamp DESC</code> so recent tweets are at the front for efficient top-K retrieval.</p>
+
+<p><strong>Written:</strong> By the Indexing Service when consuming <code>tweet_created</code> events.<br/>
+<strong>Read:</strong> By the Search Service during query execution (GET /search).</p>
+
+<p><strong>Sharding:</strong> Two approaches considered:</p>
 <ul>
-<li><strong>Scatter-gather:</strong> Query goes to 200+ Earlybird shards. Each shard processes independently, returns top-K local results. Blender merges. Latency = max(shard latencies). Mitigated by: hedged requests (send to 2 replicas, take first response), timeout and skip slow shards</li>
-<li><strong>Real-time indexing scale:</strong> 500M tweets/day = ~6K tweets/sec. Each Earlybird shard indexes ~30 tweets/sec. Index stays in memory for speed</li>
-<li><strong>Historical index:</strong> Petabytes of historical data on SSDs. Only queried on-demand (when user scrolls past recent results)</li>
-<li><strong>Surge handling:</strong> Major events (Super Bowl, elections) cause 10x search spikes. Pre-scale based on event calendar. Auto-scale Earlybird replicas</li>
+  <li><strong>Document-based sharding (chosen):</strong> Tweets are distributed across shards by <code>tweet_id</code>. Each shard holds a complete inverted index for its subset of tweets. Queries must fan out to all shards (scatter-gather), but this ensures uniform shard sizes and avoids hot-token problems.</li>
+  <li><strong>Term-based sharding (rejected):</strong> Tokens are distributed by token hash. Queries for a single term hit only one shard, but common tokens (e.g., "the", "a") create massive hot shards, and multi-term queries require cross-shard joins.</li>
 </ul>
 </div>
 
-<div class="section">
-<h2>Tradeoffs & Deep Dives</h2>
-<div class="tradeoff">
-<div class="pro"><h4>✅ Custom Search (Earlybird)</h4><ul><li>Optimized for Twitter's specific access patterns</li><li>~5 second indexing latency (Elasticsearch: 1-30 seconds)</li><li>In-memory for recent tweets = ultra-fast queries</li></ul></div>
-<div class="con"><h4>❌ Custom Search Downsides</h4><ul><li>Massive engineering investment to build and maintain</li><li>No community support (vs Elasticsearch ecosystem)</li><li>Specialized knowledge required</li></ul></div>
-</div>
+<h3>8.4 &mdash; Trending Store <span class="tag tag-nosql">Time-Series NoSQL</span></h3>
+<div class="card">
+<table>
+<tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+<tr><td><code>topic</code></td><td>String</td><td>Partition Key</td><td>Hashtag or significant term</td></tr>
+<tr><td><code>region</code></td><td>String</td><td>Sort Key (part 1)</td><td>ISO country code or "global"</td></tr>
+<tr><td><code>time_bucket</code></td><td>Timestamp (1-min bucket)</td><td>Sort Key (part 2)</td><td>Time window start</td></tr>
+<tr><td><code>count</code></td><td>Integer</td><td></td><td>Number of tweets in this bucket</td></tr>
+</table>
+
+<p><strong>Why time-series NoSQL?</strong> The access pattern is inherently time-series: write counters bucketed by time, read recent buckets to compute trending velocity. Time-series databases optimize for sequential writes and time-range scans. Old data is automatically expired via TTL (e.g., 24 hours).</p>
+
+<p><strong>Written:</strong> By the Trending Aggregator when processing <code>tweet_created</code> events (counter increment).<br/>
+<strong>Read:</strong> By the Trending Service when computing top-K trends (GET /trends).</p>
+
+<p><strong>Sharding:</strong> Partitioned by <code>topic</code>. This co-locates all time buckets for a given topic on the same shard, making time-range scans efficient.</p>
 </div>
 
-<div class="section">
-<h2>Alternative Approaches</h2>
+<h3>8.5 &mdash; Typeahead Data <span class="tag tag-cache">In-Memory</span></h3>
+<div class="card">
+<table>
+<tr><th>Field</th><th>Type</th><th>Description</th></tr>
+<tr><td><code>prefix</code></td><td>String</td><td>Character prefix (trie path)</td></tr>
+<tr><td><code>suggestions</code></td><td>List&lt;{text, type, score}&gt;</td><td>Top-K completions with type (query/hashtag/user) and popularity score</td></tr>
+</table>
+
+<p>Not a traditional database &mdash; this is an in-memory trie data structure rebuilt periodically from the Search Index and User Store. Each Typeahead Service node holds a full replica in memory.</p>
+
+<p><strong>Written:</strong> Rebuilt by the Indexing Service every 2&ndash;5 minutes and pushed to Typeahead Service nodes.<br/>
+<strong>Read:</strong> By the Typeahead Service on every keystroke (GET /typeahead).</p>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<h2>9 &mdash; CDN &amp; Caching Deep Dive</h2>
+<!-- ============================================================ -->
+
+<h3>9.1 &mdash; CDN</h3>
+<div class="card">
+<p><strong>Is a CDN appropriate here?</strong> A CDN is <strong>not directly applicable</strong> to the search results themselves, because search results are dynamic, personalized, and change in real time. CDNs are ideal for static or semi-static content (images, videos, JS bundles, CSS).</p>
+<p>However, a CDN <strong>is appropriate</strong> for:</p>
 <ul>
-<li><strong>Elasticsearch:</strong> Off-the-shelf full-text search. Easier to operate. Good enough for most scale. Tradeoff: 1-30s indexing latency, higher resource usage</li>
-<li><strong>Apache Solr:</strong> Another Lucene-based option. Strong for faceted search. Less real-time oriented than Earlybird</li>
-<li><strong>Embedding-based search:</strong> Use neural embeddings (BERT) for semantic search. "earthquake damage" matches "seismic destruction" even without exact keyword match. Higher latency, requires ANN index (FAISS/HNSW)</li>
+  <li><strong>Media in tweets</strong> &mdash; Images and videos embedded in tweets returned by search should be served via CDN. The Tweet Store stores media URLs pointing to objects in an object storage, fronted by a CDN.</li>
+  <li><strong>Profile images</strong> &mdash; User avatars displayed in search results are served via CDN.</li>
+  <li><strong>Static assets</strong> &mdash; The web application's JS, CSS, and fonts are served via CDN.</li>
 </ul>
 </div>
 
-<div class="section">
-<h2>Additional Information</h2>
+<h3>9.2 &mdash; Search Result Cache</h3>
+<div class="card">
+<h4>Purpose</h4>
+<p>Cache the top-K results for recently-seen queries to avoid hitting the Search Index on every request. Particularly effective for trending/popular queries that many users search simultaneously.</p>
+
+<h4>Caching Strategy: Write-Behind (Lazy Population)</h4>
+<p>The cache is <strong>not pre-populated</strong>. On a cache miss, the Search Service executes the full query against the index, then writes the result to the cache before returning it to the client. This is a <strong>cache-aside (lazy loading)</strong> pattern.</p>
+<p><strong>Why cache-aside?</strong> The space of possible queries is enormous (combinatorial explosion of keywords × filters). Pre-populating would be wasteful. Cache-aside ensures only actually-requested queries consume cache space.</p>
+
+<h4>Cache Key</h4>
+<pre>normalized_query + sorted_filters + page_number</pre>
+<p>The query is lowercased and whitespace-normalized to maximize cache hits across trivially different query strings.</p>
+
+<h4>Expiration Policy: Short TTL (30 seconds)</h4>
+<p>Search results must be fresh &mdash; new tweets appear constantly. A 30-second TTL balances freshness against cache hit rate. For trending queries that are searched thousands of times per second, even a 30-second TTL yields a massive hit rate.</p>
+
+<h4>Eviction Policy: LRU (Least Recently Used)</h4>
+<p>When cache memory is full, the least recently accessed entries are evicted. LRU is chosen because search queries follow a power-law distribution: a small number of popular queries account for most traffic. LRU naturally retains these hot queries.</p>
+
+<h4>Why not write-through?</h4>
+<p>Write-through would require the Indexing Service to invalidate or update cache entries whenever a new tweet is indexed. Given that millions of tweets per day could affect any cached query, the invalidation fanout would be enormous and impractical. Short TTL with cache-aside is far simpler and sufficient.</p>
+</div>
+
+<h3>9.3 &mdash; Trending Cache</h3>
+<div class="card">
+<h4>Purpose</h4>
+<p>Cache the trending topics list per region to avoid recomputing from the Trending Store on every request.</p>
+
+<h4>Caching Strategy: Cache-Aside (Lazy Loading)</h4>
+<p>On cache miss, the Trending Service queries the Trending Store, computes the ranking, and caches the result.</p>
+
+<h4>Cache Key</h4>
+<pre>region</pre>
+
+<h4>Expiration Policy: TTL = 60 seconds</h4>
+<p>Trending topics change at 1-minute granularity. All users in a region see the same list, so a 60-second TTL is appropriate. The cache hit rate is extremely high (&gt; 99%).</p>
+
+<h4>Eviction Policy: LRU</h4>
+<p>With only ~200 regions worldwide, the cache footprint is tiny. Eviction rarely occurs.</p>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<h2>10 &mdash; Scaling Considerations</h2>
+<!-- ============================================================ -->
+
+<h3>10.1 &mdash; Load Balancers</h3>
+<div class="card">
+<p>Load balancers are placed at the following points:</p>
+<ol>
+  <li><strong>Between Clients and Services (L7 Load Balancer):</strong> An application-layer (HTTP) load balancer sits in front of the Tweet Service, Search Service, Typeahead Service, and Trending Service. It routes requests using a round-robin or least-connections strategy. It also performs health checks and removes unhealthy instances from the pool.</li>
+  <li><strong>Between Search Service and Search Index Shards:</strong> The Search Service itself acts as a "logical load balancer" when fanning out queries. For each shard, there may be multiple replicas; the Search Service routes to a healthy, least-loaded replica.</li>
+</ol>
+
+<h4>Deep Dive: L7 Load Balancer</h4>
+<p>An L7 (Layer 7 / HTTP-aware) load balancer is used because:</p>
 <ul>
-<li><strong>Query understanding:</strong> NLP pipeline parses queries: spell correction ("eathquake" → "earthquake"), synonym expansion ("car" → "car OR automobile"), intent detection (is user searching for news, people, or media?)</li>
-<li><strong>Personalization:</strong> Same query, different results per user. If user frequently engages with sports content, sports-related results boosted</li>
-<li><strong>Safe search:</strong> Sensitive content filtered by default. NSFW classifier runs on indexed tweets. Users can opt-in to see all results</li>
-<li><strong>Search ads:</strong> Promoted tweets inserted into search results. Ad auction runs in parallel with organic search. Relevance threshold: ad must be relevant to query to be shown</li>
+  <li>It can inspect HTTP paths to route <code>/search</code>, <code>/typeahead</code>, and <code>/trends</code> to different backend service clusters.</li>
+  <li>It can perform TLS termination, reducing CPU load on backend services.</li>
+  <li>It supports sticky sessions if needed (though our services are stateless, so round-robin is preferred).</li>
+  <li>It enables rate limiting and DDoS protection at the entry point.</li>
+</ul>
+<p><strong>Strategy:</strong> Round-robin with health checks (HTTP 200 on <code>/health</code> endpoint). If a service instance fails 3 consecutive health checks, it is removed from the pool.</p>
+</div>
+
+<h3>10.2 &mdash; Horizontal Scaling</h3>
+<div class="card">
+<ul>
+  <li><strong>Tweet Service:</strong> Stateless; scale out by adding instances behind the load balancer.</li>
+  <li><strong>Search Service:</strong> Stateless; scale out by adding instances. The bottleneck shifts to the Search Index shards.</li>
+  <li><strong>Search Index:</strong> Scale by adding more shards (re-partitioning) and adding read replicas per shard. During high-traffic events, read replicas can be spun up to handle increased query load.</li>
+  <li><strong>Indexing Service:</strong> Scale by adding more consumer instances (one per message queue partition). Adding partitions to the message queue enables more parallelism.</li>
+  <li><strong>Typeahead Service:</strong> Scale by adding replicas. Each replica holds the full trie in memory. No sharding needed since the trie is small enough to fit on a single node.</li>
+  <li><strong>Trending Aggregator:</strong> Scale by increasing stream-processing parallelism (more partitions).</li>
 </ul>
 </div>
+
+<h3>10.3 &mdash; Search Index Scaling Strategy</h3>
+<div class="card">
+<p>The Search Index is the most critical scaling challenge. At ~500M tweets/day:</p>
+<ul>
+  <li><strong>Index size:</strong> ~500M new documents/day × ~50 tokens/tweet × ~20 bytes/posting = ~500 GB/day of new index data.</li>
+  <li><strong>Strategy:</strong> Time-partitioned index segments. The index is split into <em>tiers</em>:</li>
+</ul>
+<ol>
+  <li><strong>Real-time tier:</strong> Last 7 days of tweets. Held in memory/SSD for fast access. This is the primary search tier for most queries.</li>
+  <li><strong>Archive tier:</strong> Older tweets. Stored on disk. Only queried when the user explicitly searches with a date range extending beyond 7 days.</li>
+</ol>
+<p>This tiered approach ensures that the majority of queries (which target recent content) hit the fast real-time tier, while the archive tier scales independently with cheaper storage.</p>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<h2>11 &mdash; Tradeoffs &amp; Deep Dives</h2>
+<!-- ============================================================ -->
+
+<h3>11.1 &mdash; Relevance vs. Recency</h3>
+<div class="card">
+<p><strong>Tradeoff:</strong> Twitter search heavily favors recency over traditional relevance. A tweet from 5 minutes ago with moderate text match is often more valuable than a highly relevant tweet from 2 years ago.</p>
+<p><strong>Decision:</strong> The ranking formula applies exponential time decay. For the default "Latest" tab, results are sorted purely by time with a minimum relevance threshold. For the "Top" tab, the full BM25 + recency + engagement formula is used.</p>
+</div>
+
+<h3>11.2 &mdash; Index Freshness vs. Throughput</h3>
+<div class="card">
+<p><strong>Tradeoff:</strong> Making tweets searchable instantly requires real-time index updates, which are more expensive than batch indexing.</p>
+<p><strong>Decision:</strong> Near-real-time indexing via the message queue. Tweets become searchable within 2&ndash;10 seconds. This is acceptable because users don't expect instant sub-second searchability. The message queue buffers bursts, and the Indexing Service processes events in micro-batches for efficiency.</p>
+</div>
+
+<h3>11.3 &mdash; Document-Based vs. Term-Based Index Sharding</h3>
+<div class="card">
+<p><strong>Document-based (chosen):</strong> Each shard holds a complete mini-index for a subset of tweets. Every query fans out to all shards. Pro: uniform shard sizes, no hot spots. Con: higher fan-out per query.</p>
+<p><strong>Term-based (rejected):</strong> Each shard holds posting lists for a subset of tokens. Single-term queries hit one shard. Pro: lower fan-out for simple queries. Con: extreme hot-spot risk (common tokens like "the" create gigantic shards), and multi-term queries require cross-shard coordination.</p>
+<p><strong>Why document-based?</strong> Twitter queries are typically multi-term, so term-based sharding would still require multi-shard coordination. And the hot-spot problem with term-based sharding is severe at Twitter scale.</p>
+</div>
+
+<h3>11.4 &mdash; Scatter-Gather Tail Latency</h3>
+<div class="card">
+<p><strong>Problem:</strong> In scatter-gather (fan-out to N shards), the overall latency is determined by the slowest shard (tail latency).</p>
+<p><strong>Mitigation:</strong></p>
+<ul>
+  <li><strong>Hedged requests:</strong> Send the query to two replicas of each shard; use whichever responds first.</li>
+  <li><strong>Timeouts:</strong> If a shard doesn't respond within 200ms, return results from the other shards (partial results are acceptable).</li>
+  <li><strong>Shard replicas:</strong> Multiple replicas per shard reduce the probability of hitting a slow instance.</li>
+</ul>
+</div>
+
+<h3>11.5 &mdash; Early Termination</h3>
+<div class="card">
+<p>For time-sorted queries ("Latest"), each shard can stop scanning after finding top-K results since the posting list is sorted by timestamp descending. This dramatically reduces work for common queries. For relevance-sorted queries, each shard uses a top-K heap and prunes low-scoring documents early using BM25 upper-bound estimates (WAND algorithm).</p>
+</div>
+
+<h3>11.6 &mdash; Typeahead Freshness vs. Simplicity</h3>
+<div class="card">
+<p><strong>Tradeoff:</strong> Rebuilding the trie every few minutes means very new tweets (< 5 min old) won't appear in autocomplete.</p>
+<p><strong>Decision:</strong> Acceptable. Typeahead is a convenience feature; users can always type the full query. The rebuild interval can be tuned based on operational requirements.</p>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<h2>12 &mdash; Alternative Approaches</h2>
+<!-- ============================================================ -->
+
+<div class="alt">
+<strong>Alternative 1: Use a general-purpose NoSQL database for full-text search</strong><br/>
+<p>Instead of building a dedicated inverted index, use secondary indexes on a NoSQL database.</p>
+<p><strong>Why rejected:</strong> General-purpose databases don't support efficient posting list intersection, positional phrase queries, or BM25 scoring natively. The query latency and throughput would be unacceptable at Twitter's scale. Full-text search is a fundamentally different access pattern from key-value or range queries.</p>
+</div>
+
+<div class="alt">
+<strong>Alternative 2: Use a SQL database with full-text search extensions</strong><br/>
+<p>Some SQL databases support full-text indexes (e.g., GIN indexes with tsvector).</p>
+<p><strong>Why rejected:</strong> SQL databases struggle with the write throughput (~6K tweets/sec) and the index size (~hundreds of billions of postings). Sharding a SQL database for full-text search is operationally complex and sacrifices the benefits of SQL (joins, transactions) that aren't needed here.</p>
+</div>
+
+<div class="alt">
+<strong>Alternative 3: WebSockets for real-time search result streaming</strong><br/>
+<p>Instead of the client polling or re-requesting, push new matching tweets to the client via WebSocket.</p>
+<p><strong>Why rejected:</strong> The cardinality of concurrent searches is enormous (millions). Maintaining a WebSocket connection per active search and continuously evaluating new tweets against all active queries is computationally infeasible. The standard request-response model with short-TTL caching is far more scalable. For real-time streams (e.g., Twitter's former "streaming API"), a separate system could be built, but that's outside the scope of search.</p>
+</div>
+
+<div class="alt">
+<strong>Alternative 4: Pre-compute search results for popular queries</strong><br/>
+<p>Identify popular queries and pre-compute their results periodically.</p>
+<p><strong>Why rejected:</strong> The query space is too large and dynamic to pre-compute effectively. Short-TTL caching (our chosen approach) achieves a similar effect for hot queries without the complexity of prediction. However, this approach could be used as an optimization for the top 100 most common queries if needed in the future.</p>
+</div>
+
+<div class="alt">
+<strong>Alternative 5: Polling for trending topics instead of stream processing</strong><br/>
+<p>Instead of a real-time Trending Aggregator, periodically run a batch job that scans recent tweets and counts hashtags.</p>
+<p><strong>Why rejected:</strong> Batch processing introduces significant latency (minutes to hours). Users expect trending topics to reflect what's happening <em>right now</em>. Stream processing via the message queue provides near-real-time trending with sub-minute latency. However, a batch job could complement the streaming pipeline as a consistency check.</p>
+</div>
+
+<div class="alt">
+<strong>Alternative 6: Pub/Sub instead of Message Queue for event distribution</strong><br/>
+<p>Use a pub/sub system where the Tweet Service publishes events and the Indexing Service and Trending Aggregator subscribe.</p>
+<p><strong>Why rejected (partially):</strong> Pure pub/sub (fire-and-forget) doesn't provide the durability and replayability guarantees needed for indexing. If the Indexing Service goes down, events would be lost. A message queue with consumer groups provides durable, ordered, replayable event streams with at-least-once delivery. That said, many modern message queue systems blur the line between message queues and pub/sub, and the chosen message queue supports both semantics.</p>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<h2>13 &mdash; Additional Considerations</h2>
+<!-- ============================================================ -->
+
+<h3>13.1 &mdash; Spam &amp; Abuse Filtering</h3>
+<div class="card">
+<p>A spam-filtering layer should sit between the Indexing Service and the Search Index. Tweets flagged as spam (by ML classifiers) are either excluded from the index entirely or demoted in ranking. This prevents search result pollution.</p>
+</div>
+
+<h3>13.2 &mdash; Content Moderation</h3>
+<div class="card">
+<p>Tweets that violate content policies must be removable from the index. The Indexing Service should support a <code>tweet_deleted</code> event from the message queue, which triggers removal of the tweet's entries from the inverted index (a "tombstone" or "soft delete" in the posting list).</p>
+</div>
+
+<h3>13.3 &mdash; Multilingual Support</h3>
+<div class="card">
+<p>The tokenizer and stemmer must be language-aware. For example, Chinese and Japanese require word segmentation (no spaces between words). The <code>lang</code> field on the tweet determines which tokenizer pipeline is used. Separate language-specific analyzers are configured per language.</p>
+</div>
+
+<h3>13.4 &mdash; Safe Search</h3>
+<div class="card">
+<p>Results can be filtered by a "safe search" flag that excludes adult or sensitive content. Tweets are classified during indexing, and the flag is stored in the posting list metadata.</p>
+</div>
+
+<h3>13.5 &mdash; Monitoring &amp; Observability</h3>
+<div class="card">
+<p>Key metrics to monitor:</p>
+<ul>
+  <li><strong>Indexing lag:</strong> Time from tweet creation to searchability. Alert if &gt; 30 seconds.</li>
+  <li><strong>Query latency (p50, p95, p99):</strong> Alert if p99 &gt; 500ms.</li>
+  <li><strong>Typeahead latency:</strong> Alert if p99 &gt; 100ms.</li>
+  <li><strong>Cache hit rate:</strong> Should be &gt; 60% for search, &gt; 99% for trending.</li>
+  <li><strong>Message queue consumer lag:</strong> Alert if growing (indicates Indexing Service can't keep up).</li>
+  <li><strong>Shard health:</strong> Number of healthy shards/replicas per index tier.</li>
+</ul>
+</div>
+
+<h3>13.6 &mdash; Disaster Recovery</h3>
+<div class="card">
+<p>The Search Index is derived data &mdash; it can be rebuilt from the Tweet Store. In the event of catastrophic index corruption, the message queue (with sufficient retention, e.g., 7 days) allows replaying events to reconstruct the index. The Tweet Store is the source of truth and should be replicated across multiple data centers.</p>
+</div>
+
+<h3>13.7 &mdash; Protocol Choices</h3>
+<div class="card">
+<p><strong>HTTP/HTTPS (TCP):</strong> All client-to-service communication uses HTTPS over TCP. TCP is chosen for reliability (guaranteed delivery, ordering). UDP is not appropriate for search queries where data integrity is critical.</p>
+<p><strong>Internal RPC (TCP):</strong> Service-to-service communication (e.g., Search Service to Search Index shards) uses an internal RPC framework over TCP. The RPC framework provides serialization (e.g., Protocol Buffers), load balancing, retries, and circuit breaking. TCP is required for the ordered, reliable delivery of query results.</p>
+</div>
+
+<hr/>
+
+<!-- ============================================================ -->
+<h2>14 &mdash; Vendor Suggestions</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+<table>
+<tr><th>Component</th><th>Potential Vendors</th><th>Why</th></tr>
+<tr>
+  <td>Tweet Store (NoSQL)</td>
+  <td>Apache Cassandra, Amazon DynamoDB, ScyllaDB</td>
+  <td>All are wide-column stores optimized for high write throughput and horizontal scalability. Cassandra and ScyllaDB are open-source. DynamoDB is fully managed.</td>
+</tr>
+<tr>
+  <td>Search Index (Inverted Index)</td>
+  <td>Apache Lucene / Elasticsearch / Apache Solr</td>
+  <td>Lucene is the de-facto standard for inverted index implementations. Elasticsearch and Solr build on Lucene with distribution, replication, and management layers. Twitter historically built their own Lucene-based system (Earlybird).</td>
+</tr>
+<tr>
+  <td>Message Queue</td>
+  <td>Apache Kafka, Apache Pulsar, Amazon Kinesis</td>
+  <td>Kafka is the industry standard for high-throughput, durable, partitioned event streaming. Pulsar adds native multi-tenancy. Kinesis is fully managed.</td>
+</tr>
+<tr>
+  <td>In-Memory Cache</td>
+  <td>Redis, Memcached, Dragonfly</td>
+  <td>Redis offers data structures (sorted sets for top-K), TTL, and clustering. Memcached is simpler and faster for pure key-value caching. Dragonfly is a modern Redis-compatible alternative with better multi-core utilization.</td>
+</tr>
+<tr>
+  <td>Trending Store (Time-Series)</td>
+  <td>Apache Cassandra (with time-window compaction), InfluxDB, TimescaleDB</td>
+  <td>Cassandra with TWCS (Time Window Compaction Strategy) handles time-series patterns well. InfluxDB and TimescaleDB are purpose-built for time-series workloads.</td>
+</tr>
+<tr>
+  <td>Object Storage (Media)</td>
+  <td>Amazon S3, Google Cloud Storage, MinIO</td>
+  <td>S3 is the de-facto standard for object storage. MinIO is S3-compatible and self-hostable.</td>
+</tr>
+<tr>
+  <td>CDN</td>
+  <td>Cloudflare, Akamai, Fastly, Amazon CloudFront</td>
+  <td>All are global CDN providers with edge caching, DDoS protection, and image optimization. Fastly offers edge compute (VCL/WASM) for custom logic at the edge.</td>
+</tr>
+<tr>
+  <td>Load Balancer</td>
+  <td>NGINX, HAProxy, Envoy, AWS ALB</td>
+  <td>NGINX and HAProxy are proven L7 load balancers. Envoy is modern, cloud-native, with advanced observability. AWS ALB is fully managed.</td>
+</tr>
+<tr>
+  <td>Stream Processing (Trending)</td>
+  <td>Apache Flink, Apache Kafka Streams, Apache Spark Streaming</td>
+  <td>Flink is the gold standard for stateful stream processing with exactly-once semantics. Kafka Streams is lightweight and embeddable. Spark Streaming supports micro-batch processing.</td>
+</tr>
+</table>
+</div>
+
+<hr/>
+<p style="color: var(--text-muted); text-align: center; margin-top: 3rem; font-style: italic;">End of System Design: Twitter Search</p>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#e0e7ff',
+      primaryTextColor: '#1e293b',
+      primaryBorderColor: '#4f46e5',
+      lineColor: '#475569',
+      secondaryColor: '#f0e6ff',
+      tertiaryColor: '#ecfdf5',
+      nodeTextColor: '#1e293b',
+      mainBkg: '#e0e7ff',
+      nodeBorder: '#4f46e5',
+      clusterBkg: '#f8fafc',
+      clusterBorder: '#94a3b8',
+      titleColor: '#1e293b',
+      edgeLabelBackground: '#ffffff',
+      fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif',
+      fontSize: '14px'
+    },
+    flowchart: {
+      useMaxWidth: true,
+      htmlLabels: true,
+      curve: 'basis'
+    }
+  });
+</script>
 </body>
 </html>
