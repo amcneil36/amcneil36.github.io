@@ -3,401 +3,1334 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DirecTV App - System Design</title>
+<title>System Design: DirecTV</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <style>
-:root{--bg:#0f0f0f;--surface:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--accent:#00A3E0;--accent2:#FF6B00;}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem;max-width:1400px;margin:0 auto}
-h1{color:var(--accent);font-size:2.2rem;border-bottom:3px solid var(--accent);padding-bottom:.5rem;margin-bottom:1.5rem}
-h2{color:var(--accent2);margin:2rem 0 1rem;font-size:1.5rem}
-h3{color:#81D4FA;margin:1.5rem 0 .75rem}
-h4{color:#CE93D8;margin:1rem 0 .5rem}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
-table{width:100%;border-collapse:collapse;margin:1rem 0}
-th,td{border:1px solid var(--border);padding:.75rem;text-align:left;font-size:.95rem}
-th{background:#0a3d5c;color:var(--accent)}
-pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}
-code{color:#89DDFF;font-size:.9rem}
-svg text{font-family:'Segoe UI',system-ui,sans-serif}
-.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-.pro{border-left:4px solid #4CAF50;padding-left:1rem}
-.con{border-left:4px solid #f44336;padding-left:1rem}
-details{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin:.5rem 0}
-summary{cursor:pointer;font-weight:600;color:var(--accent)}
-.step{margin:.5rem 0;padding:.5rem 1rem;border-left:3px solid var(--accent2)}
-.tag-pk{background:#E91E63;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
-.tag-fk{background:#2196F3;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
-.tag-idx{background:#FF9800;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
-.tag-shard{background:#9C27B0;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+  :root {
+    --bg: #0f1117;
+    --surface: #161922;
+    --border: #2a2d3a;
+    --text: #e0e0e6;
+    --heading: #ffffff;
+    --accent: #6c9fff;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --accent4: #f59e0b;
+    --code-bg: #1e2130;
+    --table-header: #1c2035;
+    --table-row-alt: #13151e;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height:1.7; padding: 2rem; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  h1 { color: var(--heading); font-size: 2.4rem; margin-bottom: 0.5rem; border-bottom: 3px solid var(--accent); padding-bottom: 0.8rem; }
+  h2 { color: var(--accent); font-size: 1.7rem; margin-top: 2.5rem; margin-bottom: 1rem; border-left: 4px solid var(--accent); padding-left: 0.8rem; }
+  h3 { color: var(--accent2); font-size: 1.3rem; margin-top: 1.8rem; margin-bottom: 0.7rem; }
+  h4 { color: var(--accent3); font-size: 1.1rem; margin-top: 1.3rem; margin-bottom: 0.5rem; }
+  p { margin-bottom: 1rem; }
+  ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+  li { margin-bottom: 0.4rem; }
+  code { background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; color: var(--accent3); }
+  pre { background: var(--code-bg); padding: 1rem; border-radius: 8px; overflow-x: auto; margin-bottom: 1rem; border: 1px solid var(--border); }
+  pre code { padding: 0; background: none; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+  th { background: var(--table-header); color: var(--accent); text-align: left; padding: 0.7rem 1rem; border: 1px solid var(--border); }
+  td { padding: 0.6rem 1rem; border: 1px solid var(--border); }
+  tr:nth-child(even) { background: var(--table-row-alt); }
+  .diagram-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+  .example-box { background: #1a1f2e; border-left: 4px solid var(--accent4); padding: 1rem 1.5rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+  .example-box strong { color: var(--accent4); }
+  .note-box { background: #1a2a1e; border-left: 4px solid var(--accent3); padding: 1rem 1.5rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+  .warn-box { background: #2a1a1e; border-left: 4px solid #f87171; padding: 1rem 1.5rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+  .subtitle { color: #8888aa; font-size: 1.1rem; margin-bottom: 2rem; }
+  .tag { display: inline-block; background: var(--accent); color: #000; padding: 0.15rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-right: 0.4rem; }
+  .tag.nf { background: var(--accent2); }
+  .mermaid { display: flex; justify-content: center; }
+  .mermaid svg { max-width: 100%; }
+  a { color: var(--accent); }
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem 2rem; margin: 1.5rem 0; }
+  .toc a { text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc li { margin-bottom: 0.3rem; }
 </style>
 </head>
 <body>
+<div class="container">
 
-<h1>📺 DirecTV App — Live TV & Streaming Platform</h1>
-<p>Design a TV streaming application that delivers live satellite/streaming channels, on-demand content, DVR recording, and multi-device viewing with a unified electronic program guide (EPG).</p>
+<h1>📡 System Design: DirecTV</h1>
+<p class="subtitle">A live TV streaming platform with on-demand content, cloud DVR, and electronic program guide — serving millions of concurrent viewers across set-top boxes, mobile, and web.</p>
 
-<h2>📋 Functional Requirements</h2>
-<div class="card">
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+<h3 style="margin-top:0;">Table of Contents</h3>
+<ol>
+  <li><a href="#fr">Functional Requirements</a></li>
+  <li><a href="#nfr">Non-Functional Requirements</a></li>
+  <li><a href="#capacity">Capacity Estimation</a></li>
+  <li><a href="#flow1">Flow 1 — Live TV Channel Tuning</a></li>
+  <li><a href="#flow2">Flow 2 — On-Demand Content Playback</a></li>
+  <li><a href="#flow3">Flow 3 — Cloud DVR (Schedule &amp; Playback)</a></li>
+  <li><a href="#flow4">Flow 4 — Electronic Program Guide (EPG)</a></li>
+  <li><a href="#combined">Combined Overall Diagram</a></li>
+  <li><a href="#schema">Database Schema</a></li>
+  <li><a href="#cdn-cache">CDN &amp; Caching Deep Dive</a></li>
+  <li><a href="#scaling">Scaling Considerations</a></li>
+  <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+  <li><a href="#alternatives">Alternative Approaches</a></li>
+  <li><a href="#additional">Additional Considerations</a></li>
+  <li><a href="#vendors">Vendor Section</a></li>
+</ol>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="fr">1. Functional Requirements</h2>
 <ul>
-<li><strong>Live TV streaming</strong> — stream 300+ live channels with &lt;3s channel switch time</li>
-<li><strong>Electronic Program Guide (EPG)</strong> — browseable schedule grid with 14-day lookback and 7-day lookahead</li>
-<li><strong>Cloud DVR</strong> — record live programs to cloud storage, manage recordings, series recording rules</li>
-<li><strong>On-demand library</strong> — browse/search 50K+ movies and shows with personalized recommendations</li>
-<li><strong>Multi-device sync</strong> — seamless handoff between TV, mobile, tablet, web (resume where you left off)</li>
-<li><strong>Parental controls</strong> — content ratings filter, PIN-locked channels, viewing time limits</li>
-<li><strong>Authentication & entitlements</strong> — verify subscription tier, regional blackout enforcement, concurrent stream limits</li>
+  <li><strong>Live TV Streaming:</strong> Users can browse a channel lineup, select a live channel, and watch a real-time video stream with adaptive bitrate quality.</li>
+  <li><strong>Electronic Program Guide (EPG):</strong> Users can view a time-based grid of current, upcoming, and past programming across all channels for up to 14 days ahead.</li>
+  <li><strong>On-Demand Content Playback:</strong> Users can browse or search a catalog of movies and TV show episodes and play them on demand.</li>
+  <li><strong>Cloud DVR:</strong> Users can schedule recordings of upcoming live programs. The system captures the live stream server-side and stores it. Users can later browse their recordings and play them back.</li>
+  <li><strong>Search &amp; Discovery:</strong> Users can search across live, on-demand, and DVR content by title, genre, actor, etc.</li>
+  <li><strong>User Authentication &amp; Subscription Management:</strong> Users register, log in, and subscribe to plans/tiers that determine which channels and content they can access.</li>
+  <li><strong>Multi-Device Support:</strong> Supported on set-top boxes (STB), smart TVs, iOS, Android, and web browsers.</li>
+  <li><strong>Parental Controls:</strong> Users can set content rating restrictions and PINs for child-safe viewing.</li>
+  <li><strong>Playback Controls:</strong> Pause, rewind, fast-forward for DVR and on-demand. Limited rewind for live TV (lookback buffer).</li>
+  <li><strong>Content Recommendations:</strong> Personalized suggestions based on viewing history and preferences.</li>
 </ul>
-</div>
 
-<h2>📋 Non-Functional Requirements</h2>
-<div class="card">
+<!-- ================================================================ -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
 <ul>
-<li><strong>Low latency</strong> — live TV latency &lt;5s behind actual broadcast, channel switch &lt;3s</li>
-<li><strong>Availability</strong> — 99.99% for live streams, especially during major events (Super Bowl, Olympics)</li>
-<li><strong>Scale</strong> — 15M+ subscribers, 5M+ concurrent viewers during peak (Sunday NFL)</li>
-<li><strong>Quality</strong> — adaptive bitrate 480p to 4K HDR, Dolby Atmos audio</li>
-<li><strong>DRM</strong> — content protection (Widevine, FairPlay, PlayReady) per studio licensing</li>
-<li><strong>Compliance</strong> — FCC blackout rules, regional sports network restrictions, Ad insertion for live</li>
+  <li><strong>Low Latency:</strong> Live TV stream latency should be under 10 seconds from real-time (ideally 3-5s for sports). Channel-tune time should be under 2 seconds.</li>
+  <li><strong>High Availability:</strong> 99.99% uptime. Live TV outages are unacceptable, especially during major sporting events.</li>
+  <li><strong>Scalability:</strong> Handle 15+ million subscribers and 5+ million peak concurrent viewers. Must handle burst traffic (e.g., Super Bowl, season premieres).</li>
+  <li><strong>Video Quality:</strong> Support SD (480p), HD (720p/1080p), and 4K (2160p) with adaptive bitrate streaming.</li>
+  <li><strong>Content Protection:</strong> Studio-grade DRM to prevent piracy. Comply with content licensing agreements.</li>
+  <li><strong>Fault Tolerance:</strong> Graceful degradation — if the recommendation service is down, the app should still work for core streaming.</li>
+  <li><strong>Data Consistency:</strong> Strong consistency for subscription/billing data. Eventual consistency acceptable for EPG, viewing history, and recommendations.</li>
+  <li><strong>Global Edge Distribution:</strong> CDN edge servers close to users for low-buffering video delivery across the country.</li>
+  <li><strong>Security:</strong> HTTPS everywhere. Token-based authentication. HDCP for output protection on devices.</li>
 </ul>
-</div>
 
-<h2>🔄 Flow 1: Live TV Channel Streaming</h2>
-<svg viewBox="0 0 1050 320" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="a1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#00A3E0"/></marker></defs>
-<rect x="20" y="50" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="80" text-anchor="middle" fill="white" font-size="12">Satellite Feed</text>
-<rect x="170" y="50" width="130" height="50" rx="8" fill="#1565C0"/><text x="235" y="70" text-anchor="middle" fill="white" font-size="12">Ingest & Transcode</text><text x="235" y="85" text-anchor="middle" fill="white" font-size="10">(MPEG-TS → HLS)</text>
-<rect x="345" y="50" width="130" height="50" rx="8" fill="#E65100"/><text x="410" y="70" text-anchor="middle" fill="white" font-size="12">Origin Server</text><text x="410" y="85" text-anchor="middle" fill="white" font-size="10">(manifest + segments)</text>
-<rect x="520" y="50" width="120" height="50" rx="8" fill="#607D8B"/><text x="580" y="80" text-anchor="middle" fill="white" font-size="12">CDN Edge</text>
-<rect x="690" y="50" width="120" height="50" rx="8" fill="#2E7D32"/><text x="750" y="80" text-anchor="middle" fill="white" font-size="12">Client Player</text>
-<rect x="345" y="170" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="410" y="190" text-anchor="middle" fill="white" font-size="12">SCTE-35 Ad</text><text x="410" y="205" text-anchor="middle" fill="white" font-size="10">Insertion (SSAI)</text>
-<rect x="520" y="170" width="120" height="50" rx="8" fill="#1565C0"/><text x="580" y="190" text-anchor="middle" fill="white" font-size="12">Entitlements</text><text x="580" y="205" text-anchor="middle" fill="white" font-size="10">Service</text>
-<rect x="690" y="170" width="120" height="50" rx="8" fill="#4E342E"/><text x="750" y="190" text-anchor="middle" fill="white" font-size="12">DRM License</text><text x="750" y="205" text-anchor="middle" fill="white" font-size="10">Server</text>
-<line x1="130" y1="75" x2="165" y2="75" stroke="#00A3E0" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="300" y1="75" x2="340" y2="75" stroke="#00A3E0" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="475" y1="75" x2="515" y2="75" stroke="#00A3E0" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="640" y1="75" x2="685" y2="75" stroke="#00A3E0" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="410" y1="100" x2="410" y2="165" stroke="#FF6B00" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="750" y1="100" x2="750" y2="165" stroke="#FF6B00" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="640" y1="195" x2="685" y2="195" stroke="#FF6B00" stroke-width="2" marker-end="url(#a1)"/>
-<text x="420" y="140" fill="#aaa" font-size="10">ad markers</text>
-<text x="760" y="140" fill="#aaa" font-size="10">license request</text>
-</svg>
-
-<div class="step"><strong>Step 1:</strong> Satellite/fiber feed received at ingest facility. MPEG-TS demuxed, transcoded to multiple ABR profiles (HLS/DASH)</div>
-<div class="step"><strong>Step 2:</strong> Live segments (2-6s each) pushed to origin server with rolling manifest updates</div>
-<div class="step"><strong>Step 3:</strong> SCTE-35 markers in stream trigger server-side ad insertion (SSAI) for personalized ads</div>
-<div class="step"><strong>Step 4:</strong> Client requests manifest from CDN edge, plays segments. DRM license fetched on first play</div>
-<div class="step"><strong>Step 5:</strong> Entitlements Service validates subscription tier and blackout rules before granting access</div>
-
-<details><summary>Deep Dive: HLS Live Streaming Architecture</summary>
-<div class="card">
-<pre><code>// HLS (HTTP Live Streaming) for live TV:
-// Segments: 6-second CMAF (Common Media Application Format) chunks
-// Low-latency HLS (LL-HLS): partial segments of ~200ms
-
-// Manifest structure:
-#EXTM3U
-#EXT-X-STREAM-INF:BANDWIDTH=2000000,RESOLUTION=1280x720
-  channel_123/720p/playlist.m3u8
-#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080
-  channel_123/1080p/playlist.m3u8
-#EXT-X-STREAM-INF:BANDWIDTH=15000000,RESOLUTION=3840x2160
-  channel_123/4k/playlist.m3u8
-
-// Per-quality playlist (rolling window):
-#EXT-X-TARGETDURATION:6
-#EXT-X-MEDIA-SEQUENCE:48291
-#EXTINF:6.006,
-  segment_48291.ts
-#EXTINF:6.006,
-  segment_48292.ts
-// ... rolling 3-5 segments for live edge
-
-// Channel switch optimization:
-// 1. Start with lowest quality (instant start)
-// 2. ABR algorithm switches up within 2-3 segments
-// 3. Pre-fetch neighboring channel manifests
-// 4. Keep low-quality stream for recently-watched channels in buffer
-// Goal: &lt;2s perceived switch time</code></pre>
-</div>
-</details>
-
-<details><summary>Deep Dive: Server-Side Ad Insertion (SSAI)</summary>
-<div class="card">
-<pre><code>// SSAI replaces broadcast ads with personalized digital ads
-// Advantages over client-side: no ad blockers, seamless stitching
-
-// Flow:
-// 1. Encoder detects SCTE-35 markers in MPEG-TS stream
-//    (SCTE-35 = industry standard for ad signaling)
-// 2. Ad decision server called with user profile + context
-// 3. Ad creative pre-transcoded to match stream bitrate profiles
-// 4. Manifest manipulated to splice ad segments inline
-// 5. Client sees continuous stream (no buffering at ad breaks)
-
-// Personalization signals:
-{
-  "user_id": "u_123",
-  "geo": {"dma": "501", "zip": "10001"},  // Nielsen DMA
-  "device": "roku_ultra",
-  "channel": "ESPN",
-  "program": "NFL_Sunday",
-  "ad_pod_duration": 120,  // seconds
-  "content_rating": "TV-PG"
-}
-
-// Revenue: targeted ads command 3-5x CPM vs broadcast ads
-// Compliance: maintain ad load limits per FCC/contractual rules</code></pre>
-</div>
-</details>
-
-<h2>🔄 Flow 2: Cloud DVR Recording</h2>
-<svg viewBox="0 0 1000 280" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="a2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FF6B00"/></marker></defs>
-<rect x="20" y="60" width="120" height="50" rx="8" fill="#2E7D32"/><text x="80" y="90" text-anchor="middle" fill="white" font-size="12">User Sets Record</text>
-<rect x="190" y="60" width="130" height="50" rx="8" fill="#1565C0"/><text x="255" y="80" text-anchor="middle" fill="white" font-size="12">DVR Scheduler</text><text x="255" y="95" text-anchor="middle" fill="white" font-size="10">Service</text>
-<rect x="370" y="60" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="435" y="80" text-anchor="middle" fill="white" font-size="12">Live Ingest</text><text x="435" y="95" text-anchor="middle" fill="white" font-size="10">Capture</text>
-<rect x="550" y="60" width="130" height="50" rx="8" fill="#4E342E"/><text x="615" y="80" text-anchor="middle" fill="white" font-size="12">Object Storage</text><text x="615" y="95" text-anchor="middle" fill="white" font-size="10">(S3 / GCS)</text>
-<rect x="730" y="60" width="130" height="50" rx="8" fill="#00695C"/><text x="795" y="80" text-anchor="middle" fill="white" font-size="12">Recording</text><text x="795" y="95" text-anchor="middle" fill="white" font-size="10">Metadata DB</text>
-<rect x="370" y="180" width="130" height="50" rx="8" fill="#1565C0"/><text x="435" y="200" text-anchor="middle" fill="white" font-size="12">Copy-on-Write</text><text x="435" y="215" text-anchor="middle" fill="white" font-size="10">Deduplication</text>
-<line x1="140" y1="85" x2="185" y2="85" stroke="#FF6B00" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="320" y1="85" x2="365" y2="85" stroke="#FF6B00" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="500" y1="85" x2="545" y2="85" stroke="#FF6B00" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="680" y1="85" x2="725" y2="85" stroke="#FF6B00" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="435" y1="110" x2="435" y2="175" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
-<text x="450" y="150" fill="#aaa" font-size="10">shared segments</text>
-</svg>
-
-<div class="step"><strong>Step 1:</strong> User schedules recording (single episode or series rule). DVR Scheduler persists rule</div>
-<div class="step"><strong>Step 2:</strong> At scheduled time, Live Ingest Capture writes encrypted segments to object storage</div>
-<div class="step"><strong>Step 3:</strong> Copy-on-write deduplication: if 10K users record same show, store ONE copy, create per-user metadata pointers</div>
-<div class="step"><strong>Step 4:</strong> Recording metadata (start/end times, segment manifest, user_id) saved to Recording DB</div>
-<div class="step"><strong>Step 5:</strong> Playback: generate user-specific manifest with their ad insertions, serve from CDN</div>
-
-<details><summary>Deep Dive: Cloud DVR Deduplication</summary>
-<div class="card">
-<pre><code>// Cloud DVR economics depend on deduplication:
-// Without dedup: 1M users × 50 recordings × 2GB each = 100 PB!
-// With dedup: store unique content ONCE = ~500TB
-
-// Implementation: Copy-on-Write references
-// Physical storage: one copy per (channel, timeslot)
-// Per-user: metadata pointer + custom ad manifest
-
-recordings_physical: {
-  id: "rec_phys_espn_20250209_1300",
-  channel_id: "espn",
-  start_time: "2025-02-09T13:00:00Z",
-  end_time: "2025-02-09T16:30:00Z",
-  segments: ["s3://dvr/espn/20250209/seg_0001.ts", ...],
-  total_size_gb: 8.5
-}
-
-recordings_user: {
-  user_id: "u_123",
-  physical_recording_id: "rec_phys_espn_20250209_1300",
-  user_start_offset: 0, // user might set to record from beginning
-  user_end_offset: 0,
-  ad_manifest_id: "adm_u123_espn_sb", // personalized ads
-  watched_position: 3600, // resume point (seconds)
-  expires_at: "2025-05-09T16:30:00Z" // 90-day retention
-}
-
-// Storage savings: 95-99% reduction via deduplication
-// Cost: ~$0.02/GB/month for S3 Standard</code></pre>
-</div>
-</details>
-
-<h2>🔄 Flow 3: EPG (Electronic Program Guide) & Search</h2>
-<svg viewBox="0 0 1000 280" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="a3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#00A3E0"/></marker></defs>
-<rect x="20" y="60" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="90" text-anchor="middle" fill="white" font-size="12">Client App</text>
-<rect x="180" y="60" width="130" height="50" rx="8" fill="#1565C0"/><text x="245" y="80" text-anchor="middle" fill="white" font-size="12">EPG Service</text><text x="245" y="95" text-anchor="middle" fill="white" font-size="10">(schedule API)</text>
-<rect x="360" y="30" width="130" height="50" rx="8" fill="#00695C"/><text x="425" y="60" text-anchor="middle" fill="white" font-size="12">Redis EPG Cache</text>
-<rect x="360" y="100" width="130" height="50" rx="8" fill="#4E342E"/><text x="425" y="130" text-anchor="middle" fill="white" font-size="12">Schedule DB</text>
-<rect x="550" y="60" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="615" y="80" text-anchor="middle" fill="white" font-size="12">Gracenote /</text><text x="615" y="95" text-anchor="middle" fill="white" font-size="10">TMS Data Feed</text>
-<rect x="180" y="190" width="130" height="50" rx="8" fill="#1565C0"/><text x="245" y="220" text-anchor="middle" fill="white" font-size="12">Search Service</text>
-<rect x="360" y="190" width="130" height="50" rx="8" fill="#4E342E"/><text x="425" y="220" text-anchor="middle" fill="white" font-size="12">Elasticsearch</text>
-<line x1="130" y1="85" x2="175" y2="85" stroke="#00A3E0" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="310" y1="70" x2="355" y2="55" stroke="#00A3E0" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="310" y1="100" x2="355" y2="125" stroke="#00A3E0" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="490" y1="55" x2="545" y2="75" stroke="#81D4FA" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="490" y1="125" x2="545" y2="95" stroke="#81D4FA" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="130" y1="95" x2="175" y2="215" stroke="#FF6B00" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="310" y1="215" x2="355" y2="215" stroke="#FF6B00" stroke-width="2" marker-end="url(#a3)"/>
-</svg>
-
-<div class="step"><strong>Step 1:</strong> Gracenote/TMS provides program schedule data (updated every 15 min). Ingested into Schedule DB</div>
-<div class="step"><strong>Step 2:</strong> EPG Service caches schedule data in Redis (key: channel_id + date, TTL: 1 hour)</div>
-<div class="step"><strong>Step 3:</strong> Client requests EPG grid for visible channels + time window. Server returns paginated schedule</div>
-<div class="step"><strong>Step 4:</strong> Search queries hit Elasticsearch (title, actor, genre, keyword across live + on-demand catalog)</div>
-
-<h2>🏗️ Combined Architecture</h2>
-<svg viewBox="0 0 1100 500" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="ac" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#00A3E0"/></marker></defs>
-<text x="550" y="25" text-anchor="middle" fill="#00A3E0" font-size="16" font-weight="bold">DirecTV Streaming Architecture</text>
-<rect x="20" y="50" width="120" height="40" rx="8" fill="#2E7D32"/><text x="80" y="75" text-anchor="middle" fill="white" font-size="11">Client Devices</text>
-<rect x="200" y="50" width="130" height="40" rx="8" fill="#E65100"/><text x="265" y="75" text-anchor="middle" fill="white" font-size="11">API Gateway / LB</text>
-<rect x="400" y="40" width="130" height="35" rx="8" fill="#1565C0"/><text x="465" y="63" text-anchor="middle" fill="white" font-size="11">Auth & Entitlements</text>
-<rect x="400" y="85" width="130" height="35" rx="8" fill="#1565C0"/><text x="465" y="108" text-anchor="middle" fill="white" font-size="11">EPG Service</text>
-<rect x="400" y="130" width="130" height="35" rx="8" fill="#1565C0"/><text x="465" y="153" text-anchor="middle" fill="white" font-size="11">DVR Service</text>
-<rect x="400" y="175" width="130" height="35" rx="8" fill="#1565C0"/><text x="465" y="198" text-anchor="middle" fill="white" font-size="11">Catalog / Search</text>
-<rect x="400" y="220" width="130" height="35" rx="8" fill="#1565C0"/><text x="465" y="243" text-anchor="middle" fill="white" font-size="11">Playback Service</text>
-<rect x="620" y="50" width="130" height="40" rx="8" fill="#6A1B9A"/><text x="685" y="75" text-anchor="middle" fill="white" font-size="11">Live Ingest Pipeline</text>
-<rect x="620" y="110" width="130" height="40" rx="8" fill="#607D8B"/><text x="685" y="135" text-anchor="middle" fill="white" font-size="11">CDN (Akamai)</text>
-<rect x="620" y="170" width="130" height="40" rx="8" fill="#4E342E"/><text x="685" y="195" text-anchor="middle" fill="white" font-size="11">DRM License Server</text>
-<rect x="620" y="230" width="130" height="40" rx="8" fill="#E65100"/><text x="685" y="255" text-anchor="middle" fill="white" font-size="11">SSAI Ad Server</text>
-<rect x="830" y="50" width="140" height="40" rx="8" fill="#4E342E"/><text x="900" y="75" text-anchor="middle" fill="white" font-size="11">Object Storage (DVR)</text>
-<rect x="830" y="110" width="140" height="40" rx="8" fill="#4E342E"/><text x="900" y="135" text-anchor="middle" fill="white" font-size="11">PostgreSQL / Cassandra</text>
-<rect x="830" y="170" width="140" height="40" rx="8" fill="#00695C"/><text x="900" y="195" text-anchor="middle" fill="white" font-size="11">Redis Cluster</text>
-<rect x="830" y="230" width="140" height="40" rx="8" fill="#4E342E"/><text x="900" y="255" text-anchor="middle" fill="white" font-size="11">Elasticsearch</text>
-<rect x="200" y="370" width="130" height="40" rx="8" fill="#6A1B9A"/><text x="265" y="395" text-anchor="middle" fill="white" font-size="11">Recommendation ML</text>
-<rect x="400" y="370" width="130" height="40" rx="8" fill="#6A1B9A"/><text x="465" y="395" text-anchor="middle" fill="white" font-size="11">Analytics Pipeline</text>
-<rect x="620" y="370" width="130" height="40" rx="8" fill="#1565C0"/><text x="685" y="395" text-anchor="middle" fill="white" font-size="11">Concurrency Mgr</text>
-<line x1="140" y1="70" x2="195" y2="70" stroke="#00A3E0" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="330" y1="70" x2="395" y2="57" stroke="#00A3E0" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="330" y1="70" x2="395" y2="102" stroke="#00A3E0" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="530" y1="57" x2="615" y2="70" stroke="#00A3E0" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="530" y1="243" x2="615" y2="135" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="750" y1="70" x2="825" y2="70" stroke="#FF6B00" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="750" y1="135" x2="825" y2="135" stroke="#FF6B00" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="750" y1="195" x2="825" y2="195" stroke="#FF6B00" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="750" y1="255" x2="825" y2="255" stroke="#FF6B00" stroke-width="2" marker-end="url(#ac)"/>
-</svg>
-
-<h2>💾 Database Schema</h2>
-<div class="grid">
-<div class="card">
-<h3>PostgreSQL — Core Entities</h3>
-<pre><code>CREATE TABLE users (
-  id UUID PRIMARY KEY, -- <span class="tag-pk">PK</span>
-  account_id UUID NOT NULL, -- <span class="tag-fk">FK</span> household account
-  email VARCHAR(255) UNIQUE,
-  subscription_tier VARCHAR(20) NOT NULL, -- 'entertainment','choice','ultimate'
-  max_concurrent_streams INT DEFAULT 3,
-  parental_pin_hash VARCHAR(64),
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
-CREATE TABLE channels (
-  id SERIAL PRIMARY KEY, -- <span class="tag-pk">PK</span>
-  call_sign VARCHAR(10) NOT NULL, -- 'ESPN', 'HBO'
-  name VARCHAR(100) NOT NULL,
-  tier_required VARCHAR(20) NOT NULL, -- <span class="tag-idx">IDX</span>
-  category VARCHAR(30), -- 'sports','movies','news'
-  hls_origin_url TEXT NOT NULL,
-  logo_url TEXT
-);
-
-CREATE TABLE schedule (
-  id BIGSERIAL PRIMARY KEY,
-  channel_id INT NOT NULL REFERENCES channels(id), -- <span class="tag-fk">FK</span>
-  program_title VARCHAR(255) NOT NULL,
-  start_time TIMESTAMPTZ NOT NULL, -- <span class="tag-idx">IDX</span>
-  end_time TIMESTAMPTZ NOT NULL,
-  rating VARCHAR(10), -- 'TV-PG', 'TV-MA'
-  description TEXT,
-  series_id VARCHAR(50), -- <span class="tag-idx">IDX</span>
-  episode_num VARCHAR(20),
-  gracenote_id VARCHAR(30) -- <span class="tag-idx">IDX</span>
-);
--- <span class="tag-idx">IDX</span>: (channel_id, start_time) for EPG queries</code></pre>
-</div>
-<div class="card">
-<h3>Cassandra — DVR & Playback</h3>
-<pre><code>-- DVR Recordings (Cassandra for write-heavy, time-series)
-CREATE TABLE dvr_recordings (
-  user_id UUID,        -- <span class="tag-shard">PARTITION KEY</span>
-  recording_id UUID,
-  channel_id INT,
-  program_title TEXT,
-  start_time TIMESTAMP,
-  end_time TIMESTAMP,
-  physical_recording_id UUID, -- dedup reference
-  ad_manifest_url TEXT,
-  watched_position INT,  -- seconds, for resume
-  expires_at TIMESTAMP,
-  PRIMARY KEY (user_id, recording_id)
-) WITH default_time_to_live = 7776000; -- 90 days
-
--- Watch History / Resume Points
-CREATE TABLE watch_progress (
-  user_id UUID,         -- <span class="tag-shard">PARTITION KEY</span>
-  content_id TEXT,      -- channel_id or vod_asset_id
-  content_type TEXT,    -- 'live' | 'vod' | 'dvr'
-  position_seconds INT,
-  duration_seconds INT,
-  last_updated TIMESTAMP,
-  device_id TEXT,
-  PRIMARY KEY (user_id, content_id)
-);
-
--- Concurrent stream tracking (Redis better for this)
--- Key: account:{account_id}:streams
--- Value: SET of {device_id, stream_url, started_at}
--- SCARD for count check, SADD/SREM for manage</code></pre>
-</div>
-</div>
-
-<h2>⚡ Cache & CDN Deep Dive</h2>
-<div class="card">
+<!-- ================================================================ -->
+<h2 id="capacity">3. Capacity Estimation</h2>
 <table>
-<tr><th>Layer</th><th>What</th><th>Strategy</th><th>TTL</th></tr>
-<tr><td>CDN Edge (Akamai)</td><td>HLS segments + manifests</td><td>Pull-through, segment TTL = segment duration</td><td>6-10s (live), 24h (VOD)</td></tr>
-<tr><td>Redis EPG Cache</td><td>Schedule grid data</td><td>Pre-computed per channel+day</td><td>1 hour</td></tr>
-<tr><td>Redis Session</td><td>Auth tokens, entitlements</td><td>Write-through on login</td><td>30 min</td></tr>
-<tr><td>Client Buffer</td><td>Video segments</td><td>ABR buffer: 30s ahead for live</td><td>Until played</td></tr>
-<tr><td>Catalog Cache</td><td>VOD metadata, images</td><td>LRU, invalidate on catalog update</td><td>6 hours</td></tr>
+  <tr><th>Metric</th><th>Estimate</th></tr>
+  <tr><td>Total Subscribers</td><td>~15 million</td></tr>
+  <tr><td>Daily Active Users (DAU)</td><td>~8 million</td></tr>
+  <tr><td>Peak Concurrent Viewers</td><td>~5 million</td></tr>
+  <tr><td>Live Channels</td><td>~350</td></tr>
+  <tr><td>On-Demand Titles</td><td>~50,000</td></tr>
+  <tr><td>Average Viewing Session</td><td>~2.5 hours</td></tr>
+  <tr><td>Video Bitrate Range</td><td>1.5 Mbps (SD) – 25 Mbps (4K HDR)</td></tr>
+  <tr><td>Peak Egress Bandwidth</td><td>~25-50 Tbps (served primarily from CDN edge)</td></tr>
+  <tr><td>EPG API Requests</td><td>~100K requests/sec at peak (cacheable)</td></tr>
+  <tr><td>Stream Start Requests</td><td>~50K requests/sec at peak (channel tunes)</td></tr>
+  <tr><td>DVR Recordings Stored</td><td>~500 million recordings total</td></tr>
+  <tr><td>Storage for DVR</td><td>~100 PB (assuming average 2 GB per recording)</td></tr>
 </table>
-<h4>CDN for Live Streaming</h4>
-<pre><code>// Live HLS segment caching at CDN edge:
-// Challenge: 300 channels × 5 quality levels × 6s segments
-// = new segment every 6s per rendition = massive origin load
 
-// Solution: CDN shield layer
-// Edge → Shield (regional) → Origin
-// Shield absorbs concurrent requests for same segment
-// Request coalescing: 10K edge requests → 1 origin request
+<!-- ================================================================ -->
+<h2 id="flow1">4. Flow 1 — Live TV Channel Tuning</h2>
+<p>This flow covers the end-to-end process of a user selecting and watching a live TV channel.</p>
 
-// Manifest caching: very short TTL (1-2s) or server push
-// Segment caching: TTL = segment duration (6s)
-// Stale-while-revalidate for smooth playback</code></pre>
+<div class="diagram-box">
+<pre class="mermaid">
+graph TD
+    subgraph Client["📱 Client App (STB / Mobile / Web)"]
+        A1[User selects channel]
+    end
+
+    subgraph Gateway["🔀 API Gateway + Load Balancer"]
+        GW[Route &amp; Authenticate]
+    end
+
+    subgraph StreamSvc["🎬 Stream Service"]
+        SS[Generate stream session]
+    end
+
+    subgraph EntitleSvc["🔐 Entitlement Service"]
+        ES[Check subscription access]
+    end
+
+    subgraph DRMSvc["🛡️ DRM Service"]
+        DR[Issue license token]
+    end
+
+    subgraph Cache1["⚡ In-Memory Cache"]
+        EC[Entitlement Cache]
+    end
+
+    subgraph UserDB["🗄️ User / Subscription DB (SQL)"]
+        UDB[(users, subscriptions, plans)]
+    end
+
+    subgraph CDNLayer["🌐 CDN Edge Network"]
+        CDN[Edge Server]
+    end
+
+    subgraph Origin["📡 Origin Server"]
+        OG[Serve HLS/DASH Manifests &amp; Segments]
+    end
+
+    subgraph Ingest["🎥 Live Ingest Pipeline"]
+        IS[Ingest Server<br/>receives RTMP/SRT] --> TC[Transcoding Service<br/>ABR encoding]
+        TC --> OG
+    end
+
+    subgraph Broadcaster["📺 Content Provider"]
+        BP[Live Feed]
+    end
+
+    A1 -->|"1. HTTPS POST /api/v1/stream/live<br/>{channel_id, device_info}"| GW
+    GW --> SS
+    SS --> ES
+    ES --> EC
+    EC -->|"cache miss"| UDB
+    ES -->|"entitled ✓"| SS
+    SS --> DR
+    DR -->|"license_url + token"| SS
+    SS -->|"2. Response: {manifest_url, license_url}"| GW
+    GW --> A1
+
+    A1 -->|"3. HTTPS GET manifest.m3u8"| CDN
+    CDN -->|"cache miss"| OG
+
+    A1 -->|"4. HTTPS GET segment_001.ts"| CDN
+
+    BP -->|"RTMP / SRT"| IS
+</pre>
 </div>
 
-<h2>📈 Scaling Considerations</h2>
-<div class="card">
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Standard Channel Tune (Happy Path):</strong><br/>
+User "JohnD" is subscribed to the "Ultimate" tier. He opens the DirecTV app on his Apple TV set-top box, navigates to the channel grid, and taps on ESPN (channel 206). The client sends an <code>HTTPS POST /api/v1/stream/live</code> with <code>{channel_id: "espn-206", device_id: "atv-xxxx"}</code> and John's JWT auth token. The API Gateway validates the JWT and routes to the Stream Service. The Stream Service calls the Entitlement Service, which checks the in-memory cache for John's entitlements — it's a cache hit because John started watching 30 minutes ago. ESPN is included in the "Ultimate" tier, so entitlement passes. The Stream Service then calls the DRM Service, which generates a Widevine/FairPlay license token. The Stream Service returns <code>{manifest_url: "https://cdn.directv.com/live/espn-206/master.m3u8", license_url: "https://drm.directv.com/license", token: "eyJ..."}</code>. The client fetches the HLS master manifest from the CDN edge server (cache hit — thousands of users are already watching ESPN). The client picks the 1080p rendition based on bandwidth, fetches .ts segments every 6 seconds from the CDN, and John is watching live ESPN within 1.5 seconds of tapping the channel.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Entitlement Denied:</strong><br/>
+User "SarahM" is on the "Basic" tier, which does not include HBO. She navigates to HBO (channel 501) and taps it. The same flow occurs, but when the Entitlement Service checks her subscription against the channel-to-plan mapping, HBO is not in the Basic tier's channel list. The Stream Service returns an <code>HTTP 403 Forbidden</code> with <code>{error: "CHANNEL_NOT_IN_PLAN", upgrade_url: "/plans/upgrade"}</code>. The client displays an upsell screen: "HBO is available on the Premier tier. Upgrade now?"
+</div>
+
+<div class="example-box">
+<strong>Example 3 — CDN Cache Miss (New Channel Start):</strong><br/>
+A brand-new pop-up channel ("Super Bowl LVIII Pre-Game") just went live 2 seconds ago. User "MikeT" tunes to it. His entitlement passes, and he receives the manifest URL. When the CDN edge server receives the manifest request, it doesn't have this channel cached yet (cold start). The edge server fetches the manifest from the Origin Server, which is actively receiving transcoded segments from the Live Ingest Pipeline. The edge caches the manifest (TTL = 2 seconds for live) and returns it. The first segment fetch also goes to origin but is immediately cached at the edge. Subsequent users hitting the same edge server get cache hits. Mike experiences ~3 seconds of tune time instead of the typical 1.5 seconds due to the cold cache.
+</div>
+
+<h3>Component Deep Dive — Flow 1</h3>
+
+<h4>Client App (STB / Mobile / Web)</h4>
+<p>The client application runs on set-top boxes (Apple TV, Roku, proprietary STBs), iOS/Android mobile devices, and web browsers. It implements an HLS player (Apple devices) or DASH player (Android/Web) with adaptive bitrate (ABR) logic. The player monitors network bandwidth and switches between quality renditions dynamically. It also handles DRM license acquisition — using FairPlay on Apple, Widevine on Android/Chrome, PlayReady on Microsoft platforms.</p>
+
+<h4>API Gateway + Load Balancer</h4>
+<p>A Layer-7 (application-level) gateway that serves as the single entry point for all client API requests. Responsibilities include:</p>
 <ul>
-<li><strong>Super Bowl problem:</strong> 5M+ concurrent viewers on one channel. CDN pre-warms edge caches, dedicated origin capacity, regional failover. Predictive scaling based on event schedule.</li>
-<li><strong>Concurrent stream enforcement:</strong> Redis SET per account tracks active streams. SCARD check before granting new stream. Challenge: device crash doesn't send stop → heartbeat timeout (30s) cleans stale entries.</li>
-<li><strong>EPG data volume:</strong> 300 channels × 24h × 14 days lookback = ~100K schedule entries. Redis can hold entire EPG in memory (~500MB). Shard by channel range.</li>
-<li><strong>Regional blackout:</strong> Geo-IP lookup + blackout rules engine. Override CDN routing for blacked-out regions. Must handle VPN detection for sports blackouts.</li>
+  <li><strong>Authentication:</strong> Validates JWT tokens on every request.</li>
+  <li><strong>Rate Limiting:</strong> Prevents abuse (e.g., 100 stream requests/min per user).</li>
+  <li><strong>Routing:</strong> Routes <code>/api/v1/stream/*</code> to Stream Service, <code>/api/v1/channels/*</code> to Channel Service, etc.</li>
+  <li><strong>TLS Termination:</strong> Handles HTTPS termination so backend services can communicate over internal HTTP.</li>
+  <li><strong>Protocol:</strong> HTTPS (TLS 1.3).</li>
 </ul>
+
+<h4>Stream Service</h4>
+<p>Orchestrates the live stream session creation. It is the central coordinator for starting playback.</p>
+<table>
+  <tr><th>Aspect</th><th>Detail</th></tr>
+  <tr><td>Protocol</td><td>Internal HTTP (REST)</td></tr>
+  <tr><td>Endpoint</td><td><code>POST /api/v1/stream/live</code></td></tr>
+  <tr><td>Input</td><td><code>{channel_id: string, device_id: string, device_type: string}</code> + JWT in Authorization header</td></tr>
+  <tr><td>Output (success)</td><td><code>{manifest_url: string, license_url: string, token: string, heartbeat_interval_sec: int}</code></td></tr>
+  <tr><td>Output (error)</td><td><code>{error: string, code: string, upgrade_url?: string}</code></td></tr>
+  <tr><td>Responsibilities</td><td>Calls Entitlement Service, calls DRM Service, constructs CDN-signed manifest URL, enforces concurrent stream limits</td></tr>
+</table>
+
+<h4>Entitlement Service</h4>
+<p>Determines whether a given user has the right to access a specific channel or piece of content based on their active subscription.</p>
+<table>
+  <tr><th>Aspect</th><th>Detail</th></tr>
+  <tr><td>Protocol</td><td>Internal gRPC (for low-latency inter-service calls)</td></tr>
+  <tr><td>Input</td><td><code>{user_id: string, resource_type: "channel"|"content", resource_id: string}</code></td></tr>
+  <tr><td>Output</td><td><code>{entitled: boolean, reason?: string}</code></td></tr>
+  <tr><td>Caching</td><td>Checks in-memory cache first (keyed on user_id). Cache miss → query User/Subscription SQL DB.</td></tr>
+</table>
+
+<h4>DRM Service</h4>
+<p>Issues content decryption licenses to authenticated and entitled clients. Supports multi-DRM: Widevine (Google/Android/Chrome), FairPlay (Apple), and PlayReady (Microsoft).</p>
+<table>
+  <tr><th>Aspect</th><th>Detail</th></tr>
+  <tr><td>Protocol</td><td>HTTPS (license acquisition is done directly by the client player)</td></tr>
+  <tr><td>Input</td><td>License challenge (binary blob from player) + auth token</td></tr>
+  <tr><td>Output</td><td>License response (encrypted content keys)</td></tr>
+  <tr><td>Note</td><td>Content keys are generated at packaging/transcoding time and stored securely. The DRM Service retrieves the correct key for the requested content and wraps it in a license.</td></tr>
+</table>
+
+<h4>CDN Edge Network</h4>
+<p>Geographically distributed edge servers that cache and serve video manifests and segments. For live TV, segment TTLs match the segment duration (~2-6 seconds). The CDN absorbs 95%+ of video traffic, shielding origin servers from the load of millions of concurrent viewers.</p>
+
+<h4>Origin Server</h4>
+<p>The authoritative source for live video manifests and segments. Receives freshly transcoded segments from the Transcoding Service and serves them to CDN edge servers on cache miss. For a 350-channel live system, origin servers handle ~350 continuous streams × multiple bitrate renditions.</p>
+
+<h4>Live Ingest Pipeline</h4>
+<p><strong>Ingest Server:</strong> Receives raw live feeds from content providers/broadcasters via RTMP (Real-Time Messaging Protocol) or SRT (Secure Reliable Transport). SRT is preferred for higher-quality contribution over the internet due to its error correction capabilities.</p>
+<p><strong>Transcoding Service:</strong> Takes the single incoming feed and encodes it into multiple ABR renditions (e.g., 480p @ 1.5 Mbps, 720p @ 4 Mbps, 1080p @ 8 Mbps, 4K @ 20 Mbps). It segments the video into 2-6 second chunks in HLS (.ts) and/or DASH (.m4s) format and pushes them to the Origin Server. This is a computationally intensive operation using hardware-accelerated encoding (GPU/FPGA).</p>
+
+<!-- ================================================================ -->
+<h2 id="flow2">5. Flow 2 — On-Demand Content Playback</h2>
+<p>This flow covers a user browsing the on-demand catalog, searching for a movie or show, and playing it.</p>
+
+<div class="diagram-box">
+<pre class="mermaid">
+graph TD
+    subgraph Client["📱 Client App"]
+        B1[User browses/searches catalog]
+        B2[User selects title and presses Play]
+    end
+
+    subgraph Gateway2["🔀 API Gateway"]
+        GW2[Route &amp; Auth]
+    end
+
+    subgraph CatalogSvc["📚 Content Catalog Service"]
+        CS2[Query content metadata]
+    end
+
+    subgraph SearchSvc["🔍 Search Service"]
+        SrS[Full-text search]
+    end
+
+    subgraph SearchIdx["📇 Search Index (Inverted Index)"]
+        SI[(title, genre, cast, ...)]
+    end
+
+    subgraph CatDB["🗄️ Content Metadata DB (NoSQL Document)"]
+        CMD[(content catalog)]
+    end
+
+    subgraph CatCache["⚡ In-Memory Cache"]
+        CC[Content Metadata Cache]
+    end
+
+    subgraph StreamSvc2["🎬 Stream Service"]
+        SS2[Generate VOD stream session]
+    end
+
+    subgraph EntitleSvc2["🔐 Entitlement Service"]
+        ES2[Check content access]
+    end
+
+    subgraph DRMSvc2["🛡️ DRM Service"]
+        DR2[Issue license]
+    end
+
+    subgraph CDN2["🌐 CDN Edge"]
+        CDN2a[Serve video segments]
+    end
+
+    subgraph ObjStore["💾 Object Storage"]
+        OS2[Pre-transcoded VOD files]
+    end
+
+    B1 -->|"1. HTTPS GET /api/v1/search?q=batman"| GW2
+    GW2 --> SrS
+    SrS --> SI
+    SrS -->|"result list"| GW2
+    GW2 --> B1
+
+    B1 -->|"2. HTTPS GET /api/v1/content/{content_id}"| GW2
+    GW2 --> CS2
+    CS2 --> CC
+    CC -->|"cache miss"| CMD
+    CS2 -->|"content detail"| GW2
+    GW2 --> B1
+
+    B2 -->|"3. HTTPS POST /api/v1/stream/vod"| GW2
+    GW2 --> SS2
+    SS2 --> ES2
+    SS2 --> DR2
+    SS2 -->|"{manifest_url, license_url}"| GW2
+    GW2 --> B2
+
+    B2 -->|"4. Fetch HLS/DASH manifest + segments"| CDN2a
+    CDN2a -->|"cache miss"| OS2
+</pre>
 </div>
 
-<h2>⚖️ Tradeoffs</h2>
-<div class="tradeoff-grid">
-<div class="card pro"><h4>SSAI (Server-Side Ads)</h4><ul><li>Ad-blocker resistant</li><li>Seamless stitching (no buffering)</li><li>Unified QoS metrics</li></ul></div>
-<div class="card con"><h4>SSAI (Server-Side Ads)</h4><ul><li>Per-viewer manifest = higher origin load</li><li>Less interactive than CSAI</li><li>Complex CDN caching (personalized manifests uncacheable)</li></ul></div>
-<div class="card pro"><h4>Cloud DVR (Copy-on-Write)</h4><ul><li>95%+ storage savings via dedup</li><li>Instant "recording" (just metadata)</li><li>No per-user storage limits needed</li></ul></div>
-<div class="card con"><h4>Cloud DVR (Copy-on-Write)</h4><ul><li>Complex rights management per user</li><li>Ad replacement rules vary per user</li><li>Regulatory: some markets require unique copies</li></ul></div>
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Search &amp; Play a Movie (Happy Path):</strong><br/>
+User "EmmaR" opens the DirecTV app on her iPad and types "The Batman" in the search bar. The client sends <code>HTTPS GET /api/v1/search?q=the+batman&type=movie</code>. The API Gateway routes to the Search Service, which queries the inverted index for "batman" across title, description, and cast fields. The index returns 12 matching documents ranked by relevance. The Search Service returns a list of content IDs with thumbnails and titles. Emma taps on "The Batman (2022)". The client sends <code>HTTPS GET /api/v1/content/mov-batman-2022</code> to fetch the detail page (synopsis, cast, runtime, rating). This hits the Content Metadata Cache (cache hit, popular movie). Emma presses Play. The client sends <code>HTTPS POST /api/v1/stream/vod</code> with <code>{content_id: "mov-batman-2022"}</code>. The Entitlement Service confirms her "Premier" plan includes this movie. The Stream Service returns the manifest URL. The CDN serves the pre-transcoded segments from Object Storage (likely cached at the edge since it's a popular movie). Emma begins watching within 1 second.
 </div>
 
-<h2>🔄 Alternative Approaches</h2>
-<div class="grid">
-<div class="card"><h4>ATSC 3.0 (NextGen TV)</h4><p>IP-based broadcast standard replacing satellite. Combines over-the-air broadcast with internet delivery. Supports 4K HDR, immersive audio, targeted OTA ads. Hybrid approach: broadcast popular channels OTA, niche channels via IP.</p></div>
-<div class="card"><h4>WebRTC for Ultra-Low Latency</h4><p>Sub-second latency for sports betting / interactive use cases. Replace HLS (3-30s latency) with WebRTC (&lt;500ms). Trade scalability (WebRTC needs media server per viewer) for interactivity. Use selectively for specific premium features.</p></div>
+<div class="example-box">
+<strong>Example 2 — Content Requires Additional Purchase (Pay-Per-View):</strong><br/>
+User "TomB" searches for "UFC 300" and taps on it. The content metadata includes <code>purchase_type: "ppv", price: 79.99</code>. When Tom presses Play, the Entitlement Service returns <code>{entitled: false, reason: "PPV_NOT_PURCHASED"}</code>. The Stream Service returns an <code>HTTP 402 Payment Required</code> with a purchase flow URL. The client shows a purchase dialog. If Tom completes the purchase, a new subscription record is written, the entitlement cache is invalidated, and a subsequent play request succeeds.
 </div>
 
-<h2>📚 Additional Information</h2>
-<div class="card">
+<div class="example-box">
+<strong>Example 3 — Resuming Partially-Watched Content:</strong><br/>
+User "LisaK" watched 45 minutes of a 2-hour movie yesterday and closed the app. Today she taps on the movie again. The client sends <code>HTTPS GET /api/v1/history/progress?content_id=mov-xyz</code>, which returns <code>{progress_sec: 2700, duration_sec: 7200}</code>. The client seeks to the 45:00 mark in the stream after playback starts, so Lisa resumes right where she left off.
+</div>
+
+<h3>Component Deep Dive — Flow 2</h3>
+
+<h4>Content Catalog Service</h4>
+<table>
+  <tr><th>Aspect</th><th>Detail</th></tr>
+  <tr><td>Protocol</td><td>Internal HTTP (REST)</td></tr>
+  <tr><td>Endpoints</td><td><code>GET /api/v1/content/{content_id}</code> — single title detail<br/><code>GET /api/v1/content?genre=action&page=1</code> — browse by genre</td></tr>
+  <tr><td>Input</td><td>Content ID or filter parameters (genre, year, rating)</td></tr>
+  <tr><td>Output</td><td><code>{content_id, title, description, genre[], cast[], duration_sec, rating, thumbnail_url, release_year, content_type}</code></td></tr>
+  <tr><td>Data Source</td><td>NoSQL Document DB for flexible schema; in-memory cache in front for hot content</td></tr>
+</table>
+
+<h4>Search Service</h4>
+<table>
+  <tr><th>Aspect</th><th>Detail</th></tr>
+  <tr><td>Protocol</td><td>Internal HTTP (REST)</td></tr>
+  <tr><td>Endpoint</td><td><code>GET /api/v1/search?q={query}&type={movie|show|all}&page={n}</code></td></tr>
+  <tr><td>Input</td><td>Query string, optional filters (type, genre, year)</td></tr>
+  <tr><td>Output</td><td><code>{results: [{content_id, title, thumbnail_url, type, relevance_score}], total_count, page}</code></td></tr>
+  <tr><td>Indexing</td><td>Inverted index across title, description, genre, cast, director fields. Supports fuzzy matching and autocomplete.</td></tr>
+</table>
+
+<h4>Object Storage</h4>
+<p>Stores pre-transcoded VOD files (HLS segments and manifests). Each title is stored in multiple renditions (480p, 720p, 1080p, 4K). A 2-hour movie at all renditions may consume ~15-30 GB. With 50,000 titles, total VOD storage is approximately 750 TB – 1.5 PB. Content is encrypted at rest with DRM content keys.</p>
+
+<!-- ================================================================ -->
+<h2 id="flow3">6. Flow 3 — Cloud DVR (Schedule &amp; Playback)</h2>
+<p>This flow has two sub-paths: <strong>(A)</strong> scheduling a recording, and <strong>(B)</strong> playing back a recording.</p>
+
+<h3>Flow 3A — Scheduling a DVR Recording</h3>
+
+<div class="diagram-box">
+<pre class="mermaid">
+graph TD
+    subgraph Client3A["📱 Client App"]
+        C1[User views EPG and clicks Record]
+    end
+
+    subgraph Gateway3["🔀 API Gateway"]
+        GW3[Route &amp; Auth]
+    end
+
+    subgraph DVRSvc["📼 DVR Service"]
+        DVR1[Create recording job]
+    end
+
+    subgraph DVRDB["🗄️ DVR Recordings DB (NoSQL)"]
+        DVRD[(recordings)]
+    end
+
+    subgraph MsgQ["📨 Message Queue"]
+        MQ[Recording Job Queue]
+    end
+
+    subgraph RecWorker["⚙️ Recording Worker"]
+        RW[Capture live stream at scheduled time]
+    end
+
+    subgraph ObjStore3["💾 Object Storage"]
+        OS3[Store recorded segments]
+    end
+
+    subgraph Origin3["📡 Origin Server"]
+        OG3[Live stream segments]
+    end
+
+    C1 -->|"1. HTTPS POST /api/v1/dvr/record<br/>{channel_id, program_id, start_time, end_time}"| GW3
+    GW3 --> DVR1
+    DVR1 -->|"2. Write recording status=SCHEDULED"| DVRD
+    DVR1 -->|"3. Enqueue recording job"| MQ
+    DVR1 -->|"4. 201 Created {recording_id}"| GW3
+    GW3 --> C1
+
+    MQ -->|"5. Worker picks up job at start_time"| RW
+    RW -->|"6. Fetch live segments"| OG3
+    RW -->|"7. Write recorded segments"| OS3
+    RW -->|"8. Update status=COMPLETED"| DVRD
+</pre>
+</div>
+
+<h3>Flow 3B — DVR Playback</h3>
+
+<div class="diagram-box">
+<pre class="mermaid">
+graph TD
+    subgraph Client3B["📱 Client App"]
+        D1[User opens My DVR]
+        D2[User selects recording and presses Play]
+    end
+
+    subgraph Gateway3B["🔀 API Gateway"]
+        GW3B[Route &amp; Auth]
+    end
+
+    subgraph DVRSvc3B["📼 DVR Service"]
+        DVR3B[Fetch user recordings]
+    end
+
+    subgraph DVRDB3B["🗄️ DVR DB (NoSQL)"]
+        DVRD3B[(recordings)]
+    end
+
+    subgraph StreamSvc3B["🎬 Stream Service"]
+        SS3B[Generate DVR playback session]
+    end
+
+    subgraph DRMSvc3B["🛡️ DRM Service"]
+        DR3B[Issue license]
+    end
+
+    subgraph CDN3B["🌐 CDN Edge"]
+        CDN3Bn[Serve recorded segments]
+    end
+
+    subgraph ObjStore3B["💾 Object Storage"]
+        OS3B[Recorded VOD files]
+    end
+
+    D1 -->|"1. HTTPS GET /api/v1/dvr/recordings?status=completed"| GW3B
+    GW3B --> DVR3B
+    DVR3B --> DVRD3B
+    DVR3B -->|"Recording list"| GW3B
+    GW3B --> D1
+
+    D2 -->|"2. HTTPS POST /api/v1/stream/dvr<br/>{recording_id}"| GW3B
+    GW3B --> SS3B
+    SS3B --> DR3B
+    SS3B -->|"{manifest_url, license_url}"| GW3B
+    GW3B --> D2
+
+    D2 -->|"3. Fetch manifest + segments"| CDN3Bn
+    CDN3Bn -->|"cache miss"| OS3B
+</pre>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Schedule a Recording (Happy Path):</strong><br/>
+User "DaveW" is browsing the EPG on his Roku and sees that "Sunday Night Football" airs on NBC at 8:20 PM EST. He long-presses on the program and taps "Record". The client sends <code>HTTPS POST /api/v1/dvr/record</code> with <code>{channel_id: "nbc-4", program_id: "snf-2024-wk12", start_time: "2024-11-24T20:20:00-05:00", end_time: "2024-11-24T23:30:00-05:00"}</code>. The DVR Service creates a record in the DVR DB with <code>status: "SCHEDULED"</code> and enqueues a job on the Message Queue with the same metadata plus <code>user_id: "dave-w"</code>. It returns <code>HTTP 201 {recording_id: "rec-abc123"}</code>. The client shows a red dot on the EPG entry confirming the recording is scheduled.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Recording Worker Captures the Stream:</strong><br/>
+At 8:20 PM, the Recording Worker that is polling the message queue picks up Dave's recording job (it was scheduled with a delivery delay matching the start time). The worker connects to the Origin Server's live stream for NBC, fetches each HLS segment in real time, and writes them sequentially to Object Storage at the path <code>/dvr/dave-w/rec-abc123/</code>. At 11:30 PM, the end time is reached; the worker finalizes the manifest file, writes it to Object Storage, and updates the DVR DB record to <code>status: "COMPLETED"</code> with <code>stream_url: "https://cdn.directv.com/dvr/dave-w/rec-abc123/master.m3u8"</code>.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Play Back a DVR Recording:</strong><br/>
+The next morning, Dave opens "My DVR" in the app. The client calls <code>HTTPS GET /api/v1/dvr/recordings?status=completed</code>, which queries the DVR DB partitioned by Dave's user_id. The list returns his Sunday Night Football recording with a thumbnail, title, duration (3h 10m), and recording date. Dave taps Play. The client sends <code>HTTPS POST /api/v1/stream/dvr</code> with <code>{recording_id: "rec-abc123"}</code>. The Stream Service looks up the recording's <code>stream_url</code>, generates a CDN-signed URL and DRM license, and returns them. The client fetches the manifest and segments from CDN/Object Storage and Dave watches the game with full trick-play controls (pause, rewind, fast-forward, skip).
+</div>
+
+<div class="example-box">
+<strong>Example 4 — DVR Storage Quota Exceeded:</strong><br/>
+User "MaryJ" has a 200-hour DVR plan and has used 198 hours. She tries to schedule a 3-hour movie recording. The DVR Service checks her current usage against her plan's quota: 198 + 3 = 201 > 200. It returns <code>HTTP 409 Conflict {error: "DVR_QUOTA_EXCEEDED", used_hours: 198, max_hours: 200}</code>. The client suggests she delete old recordings or upgrade her plan.
+</div>
+
+<h3>Component Deep Dive — Flow 3</h3>
+
+<h4>DVR Service</h4>
+<table>
+  <tr><th>Aspect</th><th>Detail</th></tr>
+  <tr><td>Protocol</td><td>Internal HTTP (REST)</td></tr>
+  <tr><td>Endpoints</td><td><code>POST /api/v1/dvr/record</code> — schedule recording<br/><code>GET /api/v1/dvr/recordings</code> — list user's recordings<br/><code>DELETE /api/v1/dvr/recordings/{id}</code> — delete a recording</td></tr>
+  <tr><td>Input (schedule)</td><td><code>{channel_id, program_id, start_time, end_time}</code></td></tr>
+  <tr><td>Output (schedule)</td><td><code>{recording_id, status: "SCHEDULED"}</code></td></tr>
+  <tr><td>Storage Quota</td><td>Tracks per-user DVR usage hours against their plan limit</td></tr>
+</table>
+
+<h4>Message Queue (Recording Jobs)</h4>
+<p>The message queue decouples the scheduling of recordings from their execution. When a user schedules a recording, a message is placed on the queue immediately. The message includes all metadata needed for the recording (user_id, channel_id, start_time, end_time, recording_id). Messages are configured with a <strong>delivery delay</strong> so that they become visible to workers at the scheduled start time.</p>
+<p><strong>Why a Message Queue and not direct scheduling?</strong></p>
 <ul>
-<li><strong>CMAF (Common Media Application Format):</strong> unified segment format for both HLS and DASH. Single encoding pipeline serves Apple and non-Apple devices.</li>
-<li><strong>Widevine L1/L3:</strong> L1 = hardware-backed DRM (required for HD/4K on Android/Chrome). L3 = software only (SD max). FairPlay for Apple, PlayReady for Windows.</li>
-<li><strong>QoE metrics:</strong> time-to-first-frame, buffering ratio, bitrate stability, channel switch time. Tracked via client beacons to analytics pipeline (Conviva/NPAW).</li>
-<li><strong>Failover:</strong> multi-CDN strategy (Akamai + CloudFront). Real-time CDN health monitoring. Client-side CDN switching on error (manifest contains alternate CDN URLs).</li>
+  <li><strong>Decoupling:</strong> The DVR Service doesn't need to maintain timer threads for millions of scheduled recordings. The queue handles delayed delivery.</li>
+  <li><strong>Reliability:</strong> If a Recording Worker crashes mid-recording, the message can be re-driven to another worker (with visibility timeout and dead-letter queue for repeated failures).</li>
+  <li><strong>Scalability:</strong> During peak scheduling times (e.g., before a popular series premiere), the queue absorbs bursts without overwhelming workers.</li>
+  <li><strong>Why not a cron job / scheduler?</strong> Cron-based approaches don't scale well to millions of individually-timed recordings and are harder to make fault-tolerant.</li>
+  <li><strong>Why not WebSockets / Pub-Sub?</strong> This is a background processing task, not a real-time communication need. A message queue provides durability guarantees (messages persist until acknowledged) that pub-sub typically doesn't.</li>
 </ul>
+<p><strong>Message Lifecycle:</strong></p>
+<ol>
+  <li>Producer (DVR Service) publishes a message with a delayed delivery timestamp.</li>
+  <li>At the scheduled time, the message becomes visible in the queue.</li>
+  <li>A Recording Worker polls the queue and receives the message. The message becomes invisible to other workers (visibility timeout = recording duration + buffer).</li>
+  <li>The worker processes the recording. On success, it acknowledges (deletes) the message.</li>
+  <li>On failure, the visibility timeout expires and the message becomes available for another worker to retry.</li>
+  <li>After N retries, the message is moved to a dead-letter queue for manual investigation.</li>
+</ol>
+
+<h4>Recording Worker</h4>
+<p>Stateless worker processes that consume recording jobs from the message queue. Each worker connects to the live stream origin for the specified channel, downloads segments in real time, and writes them to Object Storage. Workers are horizontally scalable — during prime time when many recordings happen simultaneously, more workers are spun up. Each worker handles one recording at a time to ensure reliability.</p>
+
+<!-- ================================================================ -->
+<h2 id="flow4">7. Flow 4 — Electronic Program Guide (EPG)</h2>
+<p>This flow covers how EPG data is ingested and how users browse the TV guide.</p>
+
+<div class="diagram-box">
+<pre class="mermaid">
+graph TD
+    subgraph Providers["📺 Content Providers"]
+        PP[Schedule Data Feeds<br/>XMLTV / JSON]
+    end
+
+    subgraph IngestEPG["⚙️ EPG Ingestion Service"]
+        EI[Parse &amp; normalize schedule data]
+    end
+
+    subgraph EPGDB["🗄️ EPG DB (NoSQL)"]
+        EPD[(channel_id + start_time → program)]
+    end
+
+    subgraph EPGCache["⚡ In-Memory Cache"]
+        EPC[EPG Cache Layer]
+    end
+
+    subgraph Client4["📱 Client App"]
+        E1[User opens Channel Guide]
+    end
+
+    subgraph Gateway4["🔀 API Gateway"]
+        GW4[Route &amp; Auth]
+    end
+
+    subgraph EPGSvc["📋 EPG Service"]
+        EPGS[Query schedule data]
+    end
+
+    PP -->|"Daily / hourly feed push"| EI
+    EI -->|"Write normalized schedule"| EPD
+    EI -->|"Invalidate affected cache keys"| EPC
+
+    E1 -->|"1. HTTPS GET /api/v1/epg?channels=espn,nbc,hbo<br/>&amp;start=now&amp;hours=3"| GW4
+    GW4 --> EPGS
+    EPGS --> EPC
+    EPC -->|"cache miss"| EPD
+    EPGS -->|"2. Schedule grid data"| GW4
+    GW4 --> E1
+</pre>
 </div>
 
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Browse the Guide (Happy Path):</strong><br/>
+User "AnnaP" opens the DirecTV app and taps "Guide" on her iPhone. The client sends <code>HTTPS GET /api/v1/epg?channels=espn-206,nbc-4,hbo-501,fox-5,...&start=2024-11-24T19:00:00Z&hours=3</code> requesting the next 3 hours of programming for the channels in her subscription. The API Gateway routes to the EPG Service. The EPG Service checks the in-memory cache with key <code>epg:2024-11-24T19:00:00:3h:hash(channel_list)</code> — it's a cache hit because many users with the same plan requested the same time window recently. The service returns a JSON grid: <code>[{channel_id: "espn-206", programs: [{title: "SportsCenter", start: "19:00", end: "20:00"}, {title: "Monday Night Football", start: "20:15", end: "23:30"}]}, ...]</code>. The client renders a scrollable grid with channel rows and time columns. Anna can scroll left (past programs) or right (upcoming) to see more. Each cell shows the program title, time, and a colored bar indicating genre.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — EPG Data Ingestion (Backend):</strong><br/>
+Every 6 hours, content providers push updated schedule feeds (in XMLTV or proprietary JSON format) to the EPG Ingestion Service via a secure SFTP drop or webhook. The ingestion service parses the XML, normalizes fields (start/end times to UTC, standardizes genre codes), and performs an upsert into the EPG NoSQL DB keyed by <code>(channel_id, start_time)</code>. If a program time has changed (e.g., a live sports game ran long causing a schedule shift), the ingestion service invalidates the relevant cache keys so subsequent user requests get fresh data. A background reconciliation job runs nightly to detect and clean up stale or orphaned entries.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Scrolling Into Uncached Time Range:</strong><br/>
+Anna scrolls the guide 12 hours into the future to see tomorrow morning's lineup. The client sends a request with <code>start=2024-11-25T07:00:00Z&hours=3</code>. This is a less popular time window, so it's a cache miss. The EPG Service queries the NoSQL DB using a range query: partition key = each channel_id, sort key between 07:00 and 10:00. The query returns results in ~15ms due to the sort key index on start_time. The response is cached for future requests (TTL = 15 minutes) and returned to Anna.
+</div>
+
+<h3>Component Deep Dive — Flow 4</h3>
+
+<h4>EPG Ingestion Service</h4>
+<p>A batch processing service that receives schedule data from content providers. It runs as a scheduled job (every 4-6 hours) or reacts to webhook pushes. It handles data normalization (time zones, genre mapping, deduplication) and writes to the EPG DB. It also triggers cache invalidation for changed schedule blocks.</p>
+
+<h4>EPG Service</h4>
+<table>
+  <tr><th>Aspect</th><th>Detail</th></tr>
+  <tr><td>Protocol</td><td>Internal HTTP (REST)</td></tr>
+  <tr><td>Endpoint</td><td><code>GET /api/v1/epg?channels={csv}&start={ISO-8601}&hours={n}</code></td></tr>
+  <tr><td>Input</td><td>Channel IDs (comma-separated), start time, window size in hours</td></tr>
+  <tr><td>Output</td><td><code>{channels: [{channel_id, channel_name, programs: [{program_id, title, description, start_time, end_time, genre, rating, thumbnail_url}]}]}</code></td></tr>
+  <tr><td>Pagination</td><td>For large time windows, supports cursor-based pagination by channel</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2 id="combined">8. Combined Overall Diagram</h2>
+<p>This diagram integrates all flows into a single architecture view showing how all components interact.</p>
+
+<div class="diagram-box">
+<pre class="mermaid">
+graph TD
+    subgraph Clients["📱 Clients (STB / Mobile / Web)"]
+        CL[Client Application<br/>HLS/DASH Player + UI]
+    end
+
+    subgraph LB["⚖️ Load Balancers"]
+        LB1[L7 Load Balancer]
+    end
+
+    subgraph GW["🔀 API Gateway"]
+        AGW[Auth + Rate Limit + Route]
+    end
+
+    subgraph Services["🧩 Application Services"]
+        direction TB
+        ChS[Channel Service]
+        StS[Stream Service]
+        EntS[Entitlement Service]
+        DRMS[DRM Service]
+        CatS[Content Catalog Service]
+        SrcS[Search Service]
+        DVRS[DVR Service]
+        EPGS2[EPG Service]
+        UserS[User Service]
+        SubS[Subscription Service]
+        RecS[Recommendation Service]
+    end
+
+    subgraph AsyncProc["⚙️ Async Processing"]
+        MQ2[Message Queue]
+        RecW[Recording Workers]
+    end
+
+    subgraph DataStores["🗄️ Data Stores"]
+        direction TB
+        SQLDB[(SQL DB<br/>users, subscriptions,<br/>plans, channels)]
+        NoSQL1[(NoSQL Document DB<br/>content catalog)]
+        NoSQL2[(NoSQL Wide-Column DB<br/>EPG schedules)]
+        NoSQL3[(NoSQL DB<br/>DVR recordings,<br/>viewing history)]
+        SIDX[(Search Index<br/>Inverted Index)]
+    end
+
+    subgraph Caches["⚡ In-Memory Caches"]
+        C1c[Entitlement Cache]
+        C2c[EPG Cache]
+        C3c[Content Metadata Cache]
+        C4c[Channel List Cache]
+    end
+
+    subgraph ContentDelivery["🌐 Content Delivery"]
+        CDNe[CDN Edge Servers]
+        OGS[Origin Servers]
+        ObjS[Object Storage<br/>VOD + DVR files]
+    end
+
+    subgraph LivePipeline["🎥 Live Ingest Pipeline"]
+        Ingest[Ingest Servers<br/>RTMP / SRT]
+        Transcode[Transcoding Service<br/>ABR Encoding]
+    end
+
+    subgraph External["📺 External"]
+        Bcast[Broadcasters / Content Providers]
+        EPGFeed[EPG Schedule Feeds]
+    end
+
+    subgraph EPGIngest["⚙️ EPG Ingestion"]
+        EPGI[EPG Ingestion Service]
+    end
+
+    CL --> LB1
+    LB1 --> AGW
+
+    AGW --> ChS
+    AGW --> StS
+    AGW --> CatS
+    AGW --> SrcS
+    AGW --> DVRS
+    AGW --> EPGS2
+    AGW --> UserS
+    AGW --> SubS
+
+    StS --> EntS
+    StS --> DRMS
+
+    ChS --> C4c
+    C4c --> SQLDB
+    EntS --> C1c
+    C1c --> SQLDB
+    EPGS2 --> C2c
+    C2c --> NoSQL2
+    CatS --> C3c
+    C3c --> NoSQL1
+    SrcS --> SIDX
+    DVRS --> NoSQL3
+    UserS --> SQLDB
+    SubS --> SQLDB
+    RecS --> NoSQL3
+
+    DVRS --> MQ2
+    MQ2 --> RecW
+    RecW --> OGS
+    RecW --> ObjS
+    RecW --> NoSQL3
+
+    CL -->|"HLS / DASH"| CDNe
+    CDNe --> OGS
+    CDNe --> ObjS
+
+    Bcast -->|"RTMP / SRT"| Ingest
+    Ingest --> Transcode
+    Transcode --> OGS
+
+    EPGFeed --> EPGI
+    EPGI --> NoSQL2
+    EPGI --> C2c
+</pre>
+</div>
+
+<h3>Examples — Combined Flow</h3>
+
+<div class="example-box">
+<strong>Example 1 — Full Live TV Session:</strong><br/>
+User "JakeM" opens the DirecTV app on his Samsung Smart TV. The app loads and calls <code>GET /api/v1/channels</code> through the L7 Load Balancer → API Gateway → Channel Service, which returns the channel list from the Channel List Cache. The app also calls <code>GET /api/v1/epg</code> to load the guide grid from the EPG Service (served from EPG Cache). Jake sees that Monday Night Football is on ESPN and taps it. The client calls <code>POST /api/v1/stream/live</code> → Stream Service → Entitlement Service (cache hit, Jake has the Sports tier) → DRM Service → returns manifest URL. The client fetches the HLS manifest from CDN (the edge server has it cached since millions are watching ESPN). Video segments are fetched every 4 seconds from CDN. Meanwhile, ESPN's live feed is being received by the Ingest Server via SRT from ESPN's broadcast center, transcoded into 6 ABR renditions by the Transcoding Service, and pushed to the Origin Server, which feeds the CDN edge network. Jake watches the entire game with no buffering because the CDN edge is 20ms away from his home.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Schedule DVR During Live Browsing, Then Watch VOD:</strong><br/>
+User "RachelS" is browsing the EPG on her iPad. She notices a documentary airing tomorrow at 9 PM on National Geographic. She taps "Record" — the client calls <code>POST /api/v1/dvr/record</code> → DVR Service writes to DVR DB with status SCHEDULED, enqueues a delayed message on the Message Queue. Rachel gets confirmation. She then switches to the On-Demand section, searches for "Planet Earth" via <code>GET /api/v1/search?q=planet+earth</code> → Search Service → Search Index returns results. She taps on "Planet Earth III" → <code>GET /api/v1/content/pe3</code> → Content Catalog Service (cache hit) → she presses Play → <code>POST /api/v1/stream/vod</code> → Stream Service → Entitlement Service → DRM Service → returns manifest URL. The CDN serves pre-transcoded segments from Object Storage. Tomorrow at 9 PM, the Recording Worker picks up the DVR job from the Message Queue, captures the Nat Geo live stream from the Origin Server, and writes segments to Object Storage. The next day, Rachel opens My DVR, sees the completed recording, and plays it through the same CDN pathway.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — New User Onboarding Flow:</strong><br/>
+A new user "CarlosG" signs up via the website. The client calls <code>POST /api/v1/users/register</code> → User Service writes to the SQL DB (users table). Carlos selects the "Choice" plan ($85/mo) → <code>POST /api/v1/subscriptions</code> → Subscription Service creates a subscription record in SQL DB and populates the Entitlement Cache with his channel access map. Carlos opens the app, browses the guide (EPG flow), tunes into CNN (Live TV flow), later searches for a movie (Search → VOD flow), and schedules a recording for the weekend (DVR flow) — all using the same infrastructure.
+</div>
+
+<!-- ================================================================ -->
+<h2 id="schema">9. Database Schema</h2>
+
+<h3>SQL Tables</h3>
+<p>SQL is chosen for user, subscription, and channel data because these require <strong>ACID transactions</strong> (e.g., billing must be exactly-once), <strong>relational integrity</strong> (foreign keys between users↔subscriptions↔plans↔channels), and <strong>strong consistency</strong> (a user's entitlement must be accurate immediately after a subscription change).</p>
+
+<h4>Table: <code>users</code></h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>user_id</td><td>UUID</td><td>PK</td><td>Unique user identifier</td></tr>
+  <tr><td>email</td><td>VARCHAR(255)</td><td>UNIQUE INDEX</td><td>User email (for login)</td></tr>
+  <tr><td>password_hash</td><td>VARCHAR(255)</td><td></td><td>Bcrypt hashed password</td></tr>
+  <tr><td>display_name</td><td>VARCHAR(100)</td><td></td><td>User's display name</td></tr>
+  <tr><td>parental_pin</td><td>CHAR(4)</td><td></td><td>PIN for parental controls (nullable)</td></tr>
+  <tr><td>max_rating</td><td>VARCHAR(10)</td><td></td><td>Max content rating (e.g., "TV-14", "R") for parental controls</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Account creation time</td></tr>
+  <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>Last update time</td></tr>
+</table>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>Hash index on <code>email</code></strong> — Used for login lookups. Hash index is ideal because login queries are always exact-match (<code>WHERE email = ?</code>), providing O(1) lookup time. No range queries needed on email.</li>
+</ul>
+<p><strong>Read:</strong> On user login, profile page load. <strong>Write:</strong> On registration, profile update, parental control change.</p>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code> using consistent hashing. This evenly distributes users across shards and ensures all queries for a specific user hit the same shard. With 15M users, 8-16 shards provide sufficient capacity.</p>
+
+<h4>Table: <code>plans</code></h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>plan_id</td><td>UUID</td><td>PK</td><td>Unique plan identifier</td></tr>
+  <tr><td>name</td><td>VARCHAR(50)</td><td></td><td>Plan name (e.g., "Entertainment", "Choice", "Ultimate", "Premier")</td></tr>
+  <tr><td>price_cents</td><td>INTEGER</td><td></td><td>Monthly price in cents</td></tr>
+  <tr><td>dvr_hours</td><td>INTEGER</td><td></td><td>Included cloud DVR storage hours</td></tr>
+  <tr><td>max_streams</td><td>INTEGER</td><td></td><td>Max concurrent streams</td></tr>
+  <tr><td>max_resolution</td><td>VARCHAR(10)</td><td></td><td>Max video resolution (e.g., "1080p", "4K")</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Plan creation time</td></tr>
+</table>
+<p><strong>Indexes:</strong> None beyond PK. Small table (~10 rows), fully cacheable.</p>
+<p><strong>Read:</strong> On plan listing page, entitlement checks (cached). <strong>Write:</strong> Rarely — only when business adds/modifies plans.</p>
+<p><strong>No sharding needed</strong> — tiny table, fits on a single node with replication.</p>
+
+<h4>Table: <code>subscriptions</code></h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>subscription_id</td><td>UUID</td><td>PK</td><td>Unique subscription identifier</td></tr>
+  <tr><td>user_id</td><td>UUID</td><td>FK → users.user_id</td><td>The subscriber</td></tr>
+  <tr><td>plan_id</td><td>UUID</td><td>FK → plans.plan_id</td><td>The subscribed plan</td></tr>
+  <tr><td>status</td><td>ENUM</td><td></td><td>ACTIVE, PAUSED, CANCELLED, EXPIRED</td></tr>
+  <tr><td>start_date</td><td>DATE</td><td></td><td>Subscription start</td></tr>
+  <tr><td>end_date</td><td>DATE</td><td></td><td>Current billing period end</td></tr>
+  <tr><td>auto_renew</td><td>BOOLEAN</td><td></td><td>Whether to auto-renew</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Record creation time</td></tr>
+  <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>Last update time</td></tr>
+</table>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>B-Tree index on <code>user_id</code></strong> — The Entitlement Service frequently queries <code>WHERE user_id = ? AND status = 'ACTIVE'</code>. A B-Tree index on user_id supports this efficiently. B-Tree chosen over hash because we sometimes need range scans (e.g., find all subscriptions for a user, including historical).</li>
+  <li><strong>B-Tree index on <code>(status, end_date)</code></strong> — Used by the billing renewal batch job to find subscriptions expiring soon: <code>WHERE status = 'ACTIVE' AND end_date <= ?</code>.</li>
+</ul>
+<p><strong>Read:</strong> On every stream start (entitlement check), account page. <strong>Write:</strong> On subscription creation, plan change, cancellation, renewal.</p>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code> (same shard as the users table) to keep user + subscription co-located for efficient joins.</p>
+
+<h4>Table: <code>channels</code></h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>channel_id</td><td>VARCHAR(20)</td><td>PK</td><td>Unique channel identifier (e.g., "espn-206")</td></tr>
+  <tr><td>name</td><td>VARCHAR(100)</td><td></td><td>Channel name</td></tr>
+  <tr><td>number</td><td>INTEGER</td><td>UNIQUE</td><td>Channel number in lineup</td></tr>
+  <tr><td>category</td><td>VARCHAR(50)</td><td></td><td>Genre/category (Sports, News, Movies, etc.)</td></tr>
+  <tr><td>logo_url</td><td>VARCHAR(500)</td><td></td><td>Channel logo image URL</td></tr>
+  <tr><td>stream_ingest_url</td><td>VARCHAR(500)</td><td></td><td>Internal origin URL for this channel's live feed</td></tr>
+  <tr><td>is_active</td><td>BOOLEAN</td><td></td><td>Whether channel is currently broadcasting</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Record creation time</td></tr>
+</table>
+<p><strong>Indexes:</strong> B-Tree index on <code>number</code> for ordering (users browse channels by number). Also indexed via <code>category</code> for filtered views.</p>
+<p><strong>Read:</strong> On app launch (channel list), EPG rendering. <strong>Write:</strong> Rarely — only when channels are added/removed from the lineup.</p>
+<p><strong>No sharding needed</strong> — ~350 rows, easily fits on a single node. Fully cached in memory.</p>
+
+<h4>Table: <code>plan_channels</code> (Join Table)</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>plan_id</td><td>UUID</td><td>PK (composite), FK → plans.plan_id</td><td>The plan</td></tr>
+  <tr><td>channel_id</td><td>VARCHAR(20)</td><td>PK (composite), FK → channels.channel_id</td><td>The channel included in this plan</td></tr>
+</table>
+<p><strong>Why normalized:</strong> A many-to-many relationship between plans and channels is best represented as a join table. Normalization avoids data duplication (a channel appears in multiple plans) and ensures a single source of truth. Changes to a plan's channel lineup only need to update this one table. Since this table is small (~350 channels × ~5 plans ≈ 1,750 rows) and heavily cached, the join overhead is negligible.</p>
+<p><strong>Read:</strong> On entitlement check (cached). <strong>Write:</strong> When channel lineup for a plan changes (rare).</p>
+
+<h3>NoSQL Tables</h3>
+
+<h4>Table: <code>epg_schedules</code> (NoSQL Wide-Column Store)</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>channel_id</td><td>STRING</td><td>Partition Key</td><td>The channel this program airs on</td></tr>
+  <tr><td>start_time</td><td>TIMESTAMP</td><td>Sort Key</td><td>Program start time (UTC)</td></tr>
+  <tr><td>program_id</td><td>STRING</td><td></td><td>Unique program identifier</td></tr>
+  <tr><td>title</td><td>STRING</td><td></td><td>Program title</td></tr>
+  <tr><td>description</td><td>STRING</td><td></td><td>Episode/program description</td></tr>
+  <tr><td>end_time</td><td>TIMESTAMP</td><td></td><td>Program end time</td></tr>
+  <tr><td>genre</td><td>STRING</td><td></td><td>Genre classification</td></tr>
+  <tr><td>rating</td><td>STRING</td><td></td><td>Content rating (TV-G, TV-PG, etc.)</td></tr>
+  <tr><td>thumbnail_url</td><td>STRING</td><td></td><td>Program image URL</td></tr>
+  <tr><td>is_new</td><td>BOOLEAN</td><td></td><td>Whether this is a new episode</td></tr>
+  <tr><td>series_id</td><td>STRING</td><td></td><td>For series episodes, links to the series</td></tr>
+</table>
+<p><strong>Why NoSQL Wide-Column:</strong></p>
+<ul>
+  <li><strong>Massive volume:</strong> 350 channels × 24 hours × 14 days × ~3 programs/hour ≈ 350,000+ rows that refresh regularly. Write-heavy during ingestion, read-heavy during primetime.</li>
+  <li><strong>Access pattern:</strong> The primary query is "give me all programs for channel X between time A and time B" — this maps perfectly to a partition key (channel_id) + sort key range query (start_time BETWEEN A AND B). Wide-column stores excel at this pattern.</li>
+  <li><strong>No joins needed:</strong> EPG data is self-contained; no relational joins required.</li>
+  <li><strong>Flexible schema:</strong> Different channels may have extra metadata fields (e.g., sports channels have "home_team" and "away_team").</li>
+</ul>
+<p><strong>Indexes:</strong> The partition key + sort key combination <code>(channel_id, start_time)</code> serves as the primary index. No secondary indexes needed — the access pattern is always by channel + time range.</p>
+<p><strong>Read:</strong> When user opens the EPG guide (filtered by channel + time window). <strong>Write:</strong> During EPG ingestion (batch, every 4-6 hours).</p>
+<p><strong>Sharding:</strong> Automatically partitioned by <code>channel_id</code>. With 350 channels, data is naturally distributed. Hot channels (ESPN during NFL season) may require further sub-partitioning by date if needed, but at this data volume, a single partition per channel handles the load.</p>
+
+<h4>Table: <code>content_catalog</code> (NoSQL Document Store)</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>content_id</td><td>STRING</td><td>Partition Key</td><td>Unique content identifier</td></tr>
+  <tr><td>title</td><td>STRING</td><td></td><td>Movie/episode title</td></tr>
+  <tr><td>content_type</td><td>STRING</td><td></td><td>"movie", "episode", "special"</td></tr>
+  <tr><td>description</td><td>STRING</td><td></td><td>Synopsis</td></tr>
+  <tr><td>genre</td><td>LIST&lt;STRING&gt;</td><td></td><td>Genre tags</td></tr>
+  <tr><td>cast</td><td>LIST&lt;OBJECT&gt;</td><td></td><td>Cast members with roles</td></tr>
+  <tr><td>director</td><td>STRING</td><td></td><td>Director name</td></tr>
+  <tr><td>duration_sec</td><td>INTEGER</td><td></td><td>Content duration in seconds</td></tr>
+  <tr><td>release_year</td><td>INTEGER</td><td></td><td>Year of release</td></tr>
+  <tr><td>rating</td><td>STRING</td><td></td><td>Content rating (PG, PG-13, R, etc.)</td></tr>
+  <tr><td>thumbnail_url</td><td>STRING</td><td></td><td>Poster/thumbnail image URL</td></tr>
+  <tr><td>stream_manifest_path</td><td>STRING</td><td></td><td>Path in Object Storage to the master manifest</td></tr>
+  <tr><td>drm_key_id</td><td>STRING</td><td></td><td>Reference to the DRM encryption key</td></tr>
+  <tr><td>purchase_type</td><td>STRING</td><td></td><td>"included", "ppv", "rental"</td></tr>
+  <tr><td>price_cents</td><td>INTEGER</td><td></td><td>Price if PPV/rental (nullable)</td></tr>
+  <tr><td>series_id</td><td>STRING</td><td></td><td>For episodes, the parent series (nullable)</td></tr>
+  <tr><td>season_number</td><td>INTEGER</td><td></td><td>Season number (nullable)</td></tr>
+  <tr><td>episode_number</td><td>INTEGER</td><td></td><td>Episode number (nullable)</td></tr>
+  <tr><td>available_from</td><td>TIMESTAMP</td><td></td><td>Content availability window start</td></tr>
+  <tr><td>available_until</td><td>TIMESTAMP</td><td></td><td>Content availability window end</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Record creation time</td></tr>
+</table>
+<p><strong>Why NoSQL Document Store:</strong></p>
+<ul>
+  <li><strong>Flexible schema:</strong> Movies have different fields than TV episodes (season/episode numbers). Specials, documentaries, and sports events have unique metadata. A document store naturally accommodates this without schema migrations.</li>
+  <li><strong>Read-heavy:</strong> Content metadata is read millions of times per day (browsing, detail pages) but written rarely (when new content is added or metadata is updated).</li>
+  <li><strong>No complex joins:</strong> Content detail pages show all information from a single document — no multi-table joins needed.</li>
+  <li><strong>Nested data:</strong> Cast lists, genre arrays, and other nested structures fit naturally in documents.</li>
+</ul>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>Inverted index on <code>title</code>, <code>description</code>, <code>genre</code>, <code>cast</code>, <code>director</code></strong> — Maintained in a separate Search Index (search engine). This supports full-text search with fuzzy matching, autocomplete, and relevance ranking. An inverted index maps each term to the list of documents containing it, enabling sub-second search across 50,000 titles.</li>
+  <li><strong>Secondary index on <code>genre</code></strong> — For genre-based browsing ("Show me all Action movies"). This is a Global Secondary Index (GSI) in the document store.</li>
+  <li><strong>Secondary index on <code>series_id</code></strong> — To quickly fetch all episodes of a series.</li>
+</ul>
+<p><strong>Read:</strong> Content detail page, browse-by-genre, search results. <strong>Write:</strong> When content is added/updated by the content operations team.</p>
+<p><strong>Sharding:</strong> Shard by <code>content_id</code> using consistent hashing. With 50,000 titles, even 4 shards are sufficient. The in-memory cache absorbs most read traffic.</p>
+
+<h4>Table: <code>dvr_recordings</code> (NoSQL Wide-Column Store)</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>user_id</td><td>STRING</td><td>Partition Key</td><td>The user who owns this recording</td></tr>
+  <tr><td>recording_id</td><td>STRING</td><td>Sort Key</td><td>Unique recording identifier</td></tr>
+  <tr><td>channel_id</td><td>STRING</td><td></td><td>Channel recorded from</td></tr>
+  <tr><td>program_id</td><td>STRING</td><td></td><td>EPG program that was recorded</td></tr>
+  <tr><td>title</td><td>STRING</td><td></td><td>Recording title</td></tr>
+  <tr><td>status</td><td>STRING</td><td></td><td>SCHEDULED, RECORDING, COMPLETED, FAILED</td></tr>
+  <tr><td>scheduled_start</td><td>TIMESTAMP</td><td></td><td>When recording should start</td></tr>
+  <tr><td>scheduled_end</td><td>TIMESTAMP</td><td></td><td>When recording should end</td></tr>
+  <tr><td>actual_start</td><td>TIMESTAMP</td><td></td><td>When recording actually started (nullable)</td></tr>
+  <tr><td>actual_end</td><td>TIMESTAMP</td><td></td><td>When recording actually ended (nullable)</td></tr>
+  <tr><td>duration_sec</td><td>INTEGER</td><td></td><td>Recording duration in seconds</td></tr>
+  <tr><td>stream_url</td><td>STRING</td><td></td><td>Object Storage path to recording manifest</td></tr>
+  <tr><td>thumbnail_url</td><td>STRING</td><td></td><td>Recording thumbnail</td></tr>
+  <tr><td>size_bytes</td><td>BIGINT</td><td></td><td>Storage consumed</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Record creation time</td></tr>
+</table>
+<p><strong>Why NoSQL Wide-Column:</strong></p>
+<ul>
+  <li><strong>Access pattern:</strong> Primary query is "get all recordings for user X" (sorted by date or title) — partition key on user_id enables single-partition reads.</li>
+  <li><strong>High write volume:</strong> Millions of users scheduling recordings, workers updating status. Wide-column stores handle high write throughput well.</li>
+  <li><strong>No joins:</strong> Recording data is self-contained. We denormalize the title into this table (from EPG) to avoid a join on every DVR list page load.</li>
+</ul>
+<p><strong>Denormalization Note:</strong> The <code>title</code> field is denormalized from the EPG schedule data. This is intentional because:</p>
+<ul>
+  <li>When a user opens "My DVR", we need to display the title. A join to the EPG table would be cross-store (this is NoSQL, EPG is a different NoSQL table) and would add latency.</li>
+  <li>EPG data for past programs may be purged after 14 days, but the DVR recording needs to retain the title indefinitely.</li>
+  <li>The title never changes after the recording is created, so there's no staleness risk.</li>
+</ul>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li>Primary: <code>(user_id, recording_id)</code> — The default access path.</li>
+  <li><strong>Local secondary index on <code>(user_id, scheduled_start)</code></strong> — Allows fetching a user's recordings sorted by date. B-Tree-like ordered index on the sort key supports efficient range queries ("show me recordings from this week").</li>
+  <li><strong>Global secondary index on <code>status</code></strong> — Used by the Recording Workers to find all SCHEDULED recordings that should start soon. This is a sparse index (most recordings are COMPLETED; only a small fraction are SCHEDULED at any time).</li>
+</ul>
+<p><strong>Read:</strong> User opens "My DVR" (by user_id), DVR playback (by recording_id), worker checks status. <strong>Write:</strong> User schedules recording, worker updates status (RECORDING → COMPLETED).</p>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code> using consistent hashing. This ensures all of a user's recordings are on the same shard, enabling efficient list queries. With 15M users averaging ~30 recordings each = ~450M rows, 32-64 shards provide good distribution.</p>
+
+<h4>Table: <code>viewing_history</code> (NoSQL Wide-Column / Time-Series Store)</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td>user_id</td><td>STRING</td><td>Partition Key</td><td>The viewer</td></tr>
+  <tr><td>watched_at</td><td>TIMESTAMP</td><td>Sort Key</td><td>When the viewing event occurred</td></tr>
+  <tr><td>content_type</td><td>STRING</td><td></td><td>"live", "vod", "dvr"</td></tr>
+  <tr><td>content_id</td><td>STRING</td><td></td><td>Channel ID (live) or content ID (VOD) or recording ID (DVR)</td></tr>
+  <tr><td>title</td><td>STRING</td><td></td><td>What was watched (denormalized for display)</td></tr>
+  <tr><td>progress_sec</td><td>INTEGER</td><td></td><td>How far the user got (for resume)</td></tr>
+  <tr><td>duration_sec</td><td>INTEGER</td><td></td><td>Total content duration</td></tr>
+  <tr><td>device_type</td><td>STRING</td><td></td><td>Device used (STB, mobile, web)</td></tr>
+</table>
+<p><strong>Why NoSQL / Time-Series:</strong></p>
+<ul>
+  <li><strong>Append-heavy workload:</strong> Every viewing session writes a record. With 8M DAU watching ~2.5 hours (possibly switching channels 10+ times), this is tens of millions of writes per day.</li>
+  <li><strong>Time-ordered access:</strong> "Show me my recent viewing history" is a time-range query on user_id partition.</li>
+  <li><strong>TTL:</strong> Old viewing history (>90 days) can be automatically expired, reducing storage costs.</li>
+</ul>
+<p><strong>Denormalization Note:</strong> The <code>title</code> is denormalized so the "Continue Watching" row on the home screen doesn't need to join to the content catalog or EPG tables. Since the title is immutable for a given content piece, no consistency issues arise.</p>
+<p><strong>Read:</strong> Home screen "Continue Watching" carousel, recommendation engine. <strong>Write:</strong> Every time a user starts, progresses, or finishes watching content (periodic heartbeat from the client, e.g., every 30 seconds).</p>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code>. Time-series data per user stays on one shard.</p>
+
+<!-- ================================================================ -->
+<h2 id="cdn-cache">10. CDN &amp; Caching Deep Dive</h2>
+
+<h3>CDN (Content Delivery Network)</h3>
+<p><strong>Is CDN appropriate?</strong> Absolutely essential. DirecTV delivers video to millions of concurrent users. Without a CDN, all video requests would hit the origin servers, requiring an impossibly large origin infrastructure and resulting in high latency for users far from the data center. The CDN serves 95%+ of video traffic from edge servers geographically close to users.</p>
+
+<h4>CDN Architecture</h4>
+<ul>
+  <li><strong>Edge Servers:</strong> Deployed in 50+ PoPs (Points of Presence) across the country. Each PoP has SSD-backed storage for hot content and RAM for the most popular live segments.</li>
+  <li><strong>Mid-Tier Cache:</strong> Regional aggregation layer between edge and origin. Reduces origin load further.</li>
+  <li><strong>Origin Shield:</strong> A single designated cache in front of the origin server. All edge servers fetch from the shield instead of directly from origin, reducing origin requests from N × (edge servers) to 1.</li>
+</ul>
+
+<h4>CDN Caching Strategy for Live TV</h4>
+<table>
+  <tr><th>Aspect</th><th>Detail</th></tr>
+  <tr><td>Caching Strategy</td><td><strong>Pull-based (Lazy Loading / Cache-Aside)</strong>. Edge servers fetch segments from origin on first request. This is appropriate because live segments are produced continuously, and push-based would waste bandwidth on channels nobody in that region is watching.</td></tr>
+  <tr><td>Eviction Policy</td><td><strong>LRU (Least Recently Used)</strong>. Live segments that are more than ~30 seconds old are rarely re-requested (live TV is real-time). LRU naturally evicts stale segments.</td></tr>
+  <tr><td>Expiration (TTL)</td><td><strong>Manifest: 1-2 seconds.</strong> Live manifests update every segment duration to point to the latest segments. Short TTL ensures clients get the freshest manifest. <br/><strong>Segments: 30-60 seconds.</strong> Once a segment is produced, it's immutable. The short TTL is just to free edge cache space, since live segments older than ~30s are rarely requested.</td></tr>
+  <tr><td>Why These Policies</td><td>Live TV is time-sensitive — viewers want the latest content. Short TTLs on manifests ensure freshness. LRU eviction ensures the edge cache prioritizes currently-airing segments over stale ones. Pull-based is efficient because only requested channels are cached at each edge (no need to push all 350 channels to every PoP).</td></tr>
+</table>
+
+<h4>CDN Caching Strategy for VOD</h4>
+<table>
+  <tr><th>Aspect</th><th>Detail</th></tr>
+  <tr><td>Caching Strategy</td><td><strong>Pull-based (Cache-Aside)</strong>. Edge servers pull from Object Storage (via origin shield) on first request. Popular titles remain hot in cache; long-tail titles may only exist at origin.</td></tr>
+  <tr><td>Eviction Policy</td><td><strong>LFU (Least Frequently Used)</strong>. VOD has a popularity distribution (80/20 rule). LFU keeps popular movies in cache and evicts rarely-watched content. This maximizes cache hit rate.</td></tr>
+  <tr><td>Expiration (TTL)</td><td><strong>Manifest: 24 hours.</strong> VOD manifests are immutable once published. Long TTL is safe.<br/><strong>Segments: 7 days.</strong> VOD segments are immutable. Long TTL maximizes cache hits. Content that is removed from the catalog triggers a cache purge.</td></tr>
+  <tr><td>Why These Policies</td><td>VOD content doesn't change once transcoded — long TTLs are appropriate. LFU eviction is better than LRU for VOD because a movie watched once in the morning shouldn't evict a movie that's been watched 100 times just because the 100th viewing was slightly earlier.</td></tr>
+</table>
+
+<h3>In-Memory Cache</h3>
+<p><strong>Is an in-memory cache appropriate?</strong> Yes, critical for multiple data types. The system serves millions of requests per second; hitting the database for every EPG query, entitlement check, or content metadata lookup would overwhelm the databases and add latency.</p>
+
+<h4>Entitlement Cache</h4>
+<table>
+  <tr><th>Aspect</th><th>Detail</th></tr>
+  <tr><td>What's Cached</td><td>Mapping of <code>user_id → {plan_id, channel_ids[], max_resolution, max_streams, status}</code></td></tr>
+  <tr><td>Caching Strategy</td><td><strong>Write-Through.</strong> When a user's subscription changes (upgrade, downgrade, cancel), the Subscription Service writes to the SQL DB AND updates the cache in the same transaction flow. This ensures the cache is always up-to-date — critical because a stale entitlement cache could allow access to channels the user just lost, or deny access to channels the user just gained.</td></tr>
+  <tr><td>Population</td><td>Initially populated on first access (cache-aside). Subsequent updates via write-through from Subscription Service.</td></tr>
+  <tr><td>Eviction Policy</td><td><strong>LRU.</strong> Inactive users' entitlements are evicted to free memory. Active users' entries stay hot.</td></tr>
+  <tr><td>Expiration (TTL)</td><td><strong>30 minutes.</strong> Even with write-through, TTL acts as a safety net. If a write-through update fails, the stale entry will expire within 30 minutes. This balances freshness with the risk of a missed write-through.</td></tr>
+  <tr><td>Why Write-Through</td><td>Entitlement data is on the critical path of every stream start. A cache miss means a DB query on every channel tune, which at 50K tunes/sec would overwhelm the SQL DB. Write-through ensures near-100% cache hit rate for active users. Cache-aside alone would risk serving stale entitlements after a subscription change.</td></tr>
+</table>
+
+<h4>EPG Cache</h4>
+<table>
+  <tr><th>Aspect</th><th>Detail</th></tr>
+  <tr><td>What's Cached</td><td>EPG schedule blocks keyed by <code>epg:{channel_id}:{date}:{time_block}</code> (e.g., 3-hour blocks)</td></tr>
+  <tr><td>Caching Strategy</td><td><strong>Cache-Aside (Lazy Loading).</strong> EPG data is read-heavy and written in batches (every 4-6 hours). On cache miss, the EPG Service reads from the NoSQL DB and populates the cache. On EPG ingestion, the ingestion service explicitly invalidates affected cache keys.</td></tr>
+  <tr><td>Population</td><td>Lazily populated on first user request for a time block. Invalidated on EPG data update.</td></tr>
+  <tr><td>Eviction Policy</td><td><strong>LRU.</strong> Current time blocks are hot (everyone browsing "what's on now"). Past time blocks and far-future blocks are cold and evicted first.</td></tr>
+  <tr><td>Expiration (TTL)</td><td><strong>15 minutes.</strong> EPG data can change mid-cycle (e.g., a breaking news special replaces the scheduled program). A 15-minute TTL limits staleness while reducing DB load by ~97% (at 100K req/sec, a 15-min TTL means each block is fetched from DB only 4x/hour instead of millions of times).</td></tr>
+  <tr><td>Why Cache-Aside</td><td>EPG data is bulk-loaded periodically, not updated per-record in real-time. Cache-aside is simpler than write-through for batch ingestion, and explicit invalidation handles mid-cycle changes.</td></tr>
+</table>
+
+<h4>Content Metadata Cache</h4>
+<table>
+  <tr><th>Aspect</th><th>Detail</th></tr>
+  <tr><td>What's Cached</td><td>Content catalog documents keyed by <code>content:{content_id}</code></td></tr>
+  <tr><td>Caching Strategy</td><td><strong>Cache-Aside.</strong> Content metadata changes infrequently (new titles added, descriptions updated). On miss, read from NoSQL Document DB and cache. Content team has an "invalidate cache" button when they update metadata.</td></tr>
+  <tr><td>Eviction Policy</td><td><strong>LFU.</strong> Popular titles (trending movies, new releases) should stay in cache. Obscure titles evicted first.</td></tr>
+  <tr><td>Expiration (TTL)</td><td><strong>1 hour.</strong> Content metadata is mostly static. 1-hour TTL balances freshness with cache efficiency.</td></tr>
+</table>
+
+<h4>Channel List Cache</h4>
+<table>
+  <tr><th>Aspect</th><th>Detail</th></tr>
+  <tr><td>What's Cached</td><td>Full channel lineup keyed by <code>channels:all</code></td></tr>
+  <tr><td>Caching Strategy</td><td><strong>Cache-Aside.</strong> Channel list almost never changes. One cache entry serves all users.</td></tr>
+  <tr><td>Eviction Policy</td><td>N/A — single entry, always in cache.</td></tr>
+  <tr><td>Expiration (TTL)</td><td><strong>6 hours.</strong> Channels almost never change. Long TTL is safe.</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2 id="scaling">11. Scaling Considerations</h2>
+
+<h3>Load Balancers</h3>
+<p>Load balancers are critical for distributing traffic across horizontally scaled service instances. They should be placed at the following points:</p>
+
+<h4>1. External Load Balancer (Internet-facing)</h4>
+<ul>
+  <li><strong>Location:</strong> Between client devices and the API Gateway cluster.</li>
+  <li><strong>Type:</strong> Layer 7 (application-level) for HTTP/HTTPS routing.</li>
+  <li><strong>Algorithm:</strong> Least Connections — routes new requests to the gateway instance with the fewest active connections. This handles uneven request durations (streaming session setup takes longer than a channel list fetch).</li>
+  <li><strong>Health Checks:</strong> HTTP health endpoint (<code>/health</code>) on each gateway instance, checked every 5 seconds. Unhealthy instances are removed from rotation within 15 seconds.</li>
+  <li><strong>TLS Termination:</strong> Handles SSL/TLS termination, offloading encryption from backend services.</li>
+  <li><strong>Sticky Sessions:</strong> Not needed — all services are stateless. Each request carries a JWT and is self-contained.</li>
+  <li><strong>Scale:</strong> Multiple LB instances in active-active behind DNS round-robin or anycast for the LB tier itself.</li>
+</ul>
+
+<h4>2. Internal Load Balancers (Service-to-Service)</h4>
+<ul>
+  <li><strong>Location:</strong> Between API Gateway and each backend service (Stream Service, EPG Service, DVR Service, etc.).</li>
+  <li><strong>Type:</strong> Layer 7 with gRPC support (for inter-service gRPC calls like Entitlement Service).</li>
+  <li><strong>Algorithm:</strong> Round Robin for most services (requests are homogeneous). Weighted Round Robin for the Transcoding Service (some instances may have more GPU capacity).</li>
+  <li><strong>Service Discovery:</strong> Services register with a service registry on startup. Load balancers resolve service names to healthy instance IPs.</li>
+</ul>
+
+<h4>3. CDN Load Balancing</h4>
+<ul>
+  <li><strong>Location:</strong> DNS-based geographic load balancing routes users to the nearest CDN PoP.</li>
+  <li><strong>Type:</strong> DNS GeoDNS + anycast routing.</li>
+  <li><strong>Failover:</strong> If a PoP becomes unhealthy, DNS directs users to the next-nearest PoP.</li>
+</ul>
+
+<h3>Horizontal Scaling Strategy</h3>
+<table>
+  <tr><th>Component</th><th>Scaling Approach</th><th>Trigger</th></tr>
+  <tr><td>API Gateway</td><td>Horizontal auto-scale</td><td>CPU > 60% or request rate > threshold</td></tr>
+  <tr><td>Stream Service</td><td>Horizontal auto-scale</td><td>Concurrent stream sessions. Scale up before predicted peak events (Super Bowl).</td></tr>
+  <tr><td>Entitlement Service</td><td>Horizontal auto-scale</td><td>Request rate. Lightweight service (cache lookups), but must handle 50K+ req/sec at peak.</td></tr>
+  <tr><td>EPG Service</td><td>Horizontal auto-scale</td><td>Request rate at primetime. Heavy EPG browsing 7-10 PM.</td></tr>
+  <tr><td>DVR Service</td><td>Horizontal auto-scale</td><td>Recording schedule volume and list query rate.</td></tr>
+  <tr><td>Recording Workers</td><td>Horizontal auto-scale</td><td>Queue depth. More workers added when many recordings start simultaneously (primetime).</td></tr>
+  <tr><td>Transcoding Service</td><td>Horizontal scale with GPU instances</td><td>Number of live channels. Mostly static (350 channels), but burst for special events.</td></tr>
+  <tr><td>SQL DB</td><td>Read replicas + sharding</td><td>Read traffic (replicas). Data volume (sharding). Writes go to primary; reads distributed to replicas.</td></tr>
+  <tr><td>NoSQL DBs</td><td>Horizontal partition expansion</td><td>Throughput exceeds partition limits. Add nodes to the cluster.</td></tr>
+  <tr><td>Message Queue</td><td>Add partitions</td><td>Consumer lag > threshold. More partitions allow more Recording Workers to consume in parallel.</td></tr>
+  <tr><td>In-Memory Cache</td><td>Cluster mode with more nodes</td><td>Memory utilization > 70% or cache miss rate increases.</td></tr>
+  <tr><td>CDN</td><td>Add PoPs / increase edge capacity</td><td>Regional bandwidth saturation or cache hit ratio drops.</td></tr>
+</table>
+
+<h3>Peak Event Scaling (e.g., Super Bowl)</h3>
+<p>Major live events can cause 3-10x normal traffic. The scaling strategy for these events:</p>
+<ol>
+  <li><strong>Pre-scaling:</strong> 24 hours before the event, auto-scale all services to 3x normal capacity based on predicted viewership.</li>
+  <li><strong>CDN Pre-warming:</strong> Ensure the event's channel is cached at all edge PoPs by sending synthetic requests.</li>
+  <li><strong>Entitlement Cache Pre-warming:</strong> Bulk-load entitlement data for all subscribers likely to watch (sports tier subscribers).</li>
+  <li><strong>Stream Service concurrency limit increase:</strong> Temporarily raise per-user concurrent stream limits if needed.</li>
+  <li><strong>Graceful degradation:</strong> If services are overwhelmed, shed non-critical features (recommendations, viewing history writes) and prioritize stream serving.</li>
+</ol>
+
+<!-- ================================================================ -->
+<h2 id="tradeoffs">12. Tradeoffs &amp; Deep Dives</h2>
+
+<h3>HLS vs. DASH</h3>
+<p><strong>Decision:</strong> Support both, with HLS as primary.</p>
+<ul>
+  <li><strong>HLS (HTTP Live Streaming):</strong> Required for Apple devices (iOS, tvOS, Safari). Uses .m3u8 manifests and .ts segments. Widely supported across CDNs. Slightly higher latency (typical 15-30 seconds) due to longer default segment durations, but Low-Latency HLS (LL-HLS) reduces this to 2-3 seconds.</li>
+  <li><strong>DASH (Dynamic Adaptive Streaming over HTTP):</strong> Open standard (ISO/IEC). Uses .mpd manifests and .m4s segments. Native on Android (ExoPlayer) and web (via dash.js). Supports more flexible DRM.</li>
+  <li><strong>Why both:</strong> Apple mandates HLS for App Store apps. Android and web work better with DASH for Widevine DRM integration. The transcoding pipeline produces both formats from the same source, so the incremental cost is only storage and origin serving (which CDN mitigates).</li>
+</ul>
+
+<h3>Low-Latency Live Streaming (LL-HLS / LL-DASH)</h3>
+<p><strong>Tradeoff:</strong> Standard HLS has 15-30 second latency (3 segments × 6 seconds + network delay). For sports, this means a neighbor with satellite/cable sees a touchdown 20 seconds before a streaming viewer. LL-HLS uses partial segments (chunked transfer encoding) and playlist delta updates to achieve ~2-3 second latency.</p>
+<p><strong>Cost:</strong> LL-HLS increases CDN request rates (smaller chunks = more requests), increases origin load, and requires CDN support for chunked transfer encoding. Not all edge servers support it. It also slightly reduces ABR adaptation quality (less data per decision point).</p>
+<p><strong>Decision:</strong> Enable LL-HLS for sports/news channels where latency matters. Use standard HLS/DASH for movies and entertainment where 15-second latency is imperceptible.</p>
+
+<h3>Monolithic DVR vs. Per-User DVR Storage</h3>
+<p><strong>Per-User DVR (current design):</strong> Each user's recording is a separate copy stored in Object Storage under their user directory. Simple to implement, supports individual trick-play, and supports per-user deletion.</p>
+<p><strong>Shared/Deduplication DVR (alternative):</strong> If 1 million users record the same Sunday Night Football game, store only ONE copy and create pointer records for each user. Saves ~99.9% storage for popular recordings.</p>
+<p><strong>Decision:</strong> Implement a hybrid approach. Popular programs (watched by >1,000 subscribers) are stored once, with per-user metadata records pointing to the shared recording. Niche recordings remain per-user. A background deduplication job identifies duplicate recordings after they complete. This adds complexity (must handle deletion carefully — can't delete the shared file until all user pointers are removed) but the storage savings at scale (potentially 80-90% reduction) justify it.</p>
+
+<h3>REST vs. gRPC for Inter-Service Communication</h3>
+<p><strong>Decision:</strong> gRPC for latency-critical inter-service calls (Entitlement Service, DRM Service). REST for client-facing APIs (easier to debug, wider compatibility, firewall-friendly).</p>
+<ul>
+  <li><strong>gRPC advantages:</strong> Binary serialization (Protocol Buffers) is 5-10x smaller and faster to parse than JSON. HTTP/2 multiplexing reduces connection overhead. Strongly typed contracts prevent API drift between services.</li>
+  <li><strong>REST advantages:</strong> Human-readable. Easy to test with curl/Postman. Works through all firewalls/proxies. Better tooling for client SDKs.</li>
+</ul>
+
+<h3>TCP for Video Delivery</h3>
+<p><strong>Why TCP (via HTTP/HTTPS) and not UDP?</strong></p>
+<ul>
+  <li>HLS and DASH are HTTP-based protocols, which run on TCP. This is deliberate — TCP's reliability (retransmission of lost packets) ensures no video corruption, and ABR handles network fluctuations by switching quality levels rather than losing data.</li>
+  <li>UDP-based streaming (e.g., WebRTC, QUIC) is used for real-time communication (video calls) where sub-second latency is critical and some packet loss is acceptable. For TV streaming, a 2-5 second delay is acceptable, and video quality must be perfect (no glitches from lost packets).</li>
+  <li>CDNs are optimized for HTTP/TCP delivery. Most CDN infrastructure doesn't support UDP-based streaming at scale.</li>
+  <li><strong>Exception:</strong> The ingest path (broadcaster → ingest server) may use SRT (Secure Reliable Transport), which runs over UDP with its own error correction layer. SRT is preferred for contribution feeds because it handles unreliable internet connections between broadcaster studios and the ingest data center better than TCP (which can stall on packet loss). SRT's forward error correction (FEC) recovers lost packets without the TCP retransmission delay.</li>
+</ul>
+
+<h3>RTMP vs. SRT for Live Ingest</h3>
+<p><strong>RTMP (Real-Time Messaging Protocol):</strong> Legacy protocol, runs over TCP. Widely supported by encoders. Higher latency over long-distance connections due to TCP head-of-line blocking.</p>
+<p><strong>SRT (Secure Reliable Transport):</strong> Modern protocol, runs over UDP with ARQ (Automatic Repeat Request) error correction. Handles packet loss gracefully, supports encryption, achieves lower latency over unreliable networks.</p>
+<p><strong>Decision:</strong> Accept both RTMP and SRT from content providers (many still use RTMP encoders), but prefer and encourage SRT for new integrations. The ingest server normalizes both into the internal format before sending to the transcoding pipeline.</p>
+
+<h3>Concurrent Stream Limiting</h3>
+<p>DirecTV plans allow a limited number of concurrent streams (e.g., 3 for a family plan). The Stream Service maintains a real-time count of active streams per user using the in-memory cache:</p>
+<ul>
+  <li>On stream start: Increment <code>streams:{user_id}</code> counter. If >= max_streams, reject with HTTP 429.</li>
+  <li>Client sends periodic heartbeats (every 30 seconds). If no heartbeat for 2 minutes, decrement the counter (stream assumed dead).</li>
+  <li>On explicit stream stop: Decrement the counter.</li>
+</ul>
+
+<!-- ================================================================ -->
+<h2 id="alternatives">13. Alternative Approaches</h2>
+
+<h3>Alternative 1: WebSocket-Based Live Channel Updates Instead of Polling EPG</h3>
+<p><strong>Approach:</strong> Maintain a persistent WebSocket connection from the client to an EPG Update Service. When the current program ends and a new one begins, push the update to all connected clients.</p>
+<p><strong>Why not chosen:</strong></p>
+<ul>
+  <li>EPG changes are infrequent (programs change every 30-60 minutes on average). A WebSocket connection consumes server resources (memory for connection state, file descriptors) for every connected user, even when no updates are being sent.</li>
+  <li>With 5M+ concurrent users, maintaining 5M WebSocket connections requires significant infrastructure (WebSocket servers, connection registries, pub-sub for fan-out).</li>
+  <li>The EPG guide view is not latency-sensitive — if the "currently on" indicator lags by 15-30 seconds, no user notices.</li>
+  <li>Short-polling (or better, the 15-minute cache TTL with client-side timer to refresh) achieves the same result with vastly less infrastructure.</li>
+  <li><strong>When WebSockets would make sense:</strong> For real-time sports scores overlay or live betting integration, a WebSocket/SSE connection could be justified for the subset of users watching sports. But for the general EPG, it's overkill.</li>
+</ul>
+
+<h3>Alternative 2: Peer-to-Peer (P2P) CDN for Live Streaming</h3>
+<p><strong>Approach:</strong> Use WebRTC-based P2P mesh to offload CDN bandwidth. Viewers watching the same live channel share segments with each other, reducing CDN egress.</p>
+<p><strong>Why not chosen:</strong></p>
+<ul>
+  <li>P2P adds 200-500ms latency and introduces variable quality (dependent on peers' upload speeds).</li>
+  <li>DRM content is end-to-end encrypted — peers can't share decrypted segments without violating content protection requirements.</li>
+  <li>Studios and content owners contractually prohibit P2P delivery for premium content.</li>
+  <li>Reliability depends on peer availability — during off-peak hours or in regions with few viewers, P2P falls back to CDN anyway.</li>
+  <li>The complexity of managing a P2P mesh (NAT traversal, STUN/TURN servers, peer selection) is significant.</li>
+</ul>
+
+<h3>Alternative 3: Server-Side Ad Insertion (SSAI) vs. Client-Side Ad Insertion (CSAI)</h3>
+<p><strong>Approach:</strong> CSAI has the client fetch ads separately and stitch them into the stream. SSAI stitches ads into the video stream on the server side.</p>
+<p><strong>Decision (SSAI chosen):</strong></p>
+<ul>
+  <li>SSAI prevents ad blockers from detecting and removing ads (the ad is part of the video stream itself).</li>
+  <li>SSAI provides a seamless viewing experience (no buffering between content and ads).</li>
+  <li>CSAI would require the client player to manage two streams (content + ads), adding complexity and buffering.</li>
+  <li><strong>Tradeoff:</strong> SSAI increases origin/CDN complexity (ads must be stitched per-user for targeted advertising, making the stream non-cacheable during ad breaks). This is solved with personalized ad manifests — the manifest points to user-specific ad segments for ad slots, while content segments remain shared/cached.</li>
+</ul>
+
+<h3>Alternative 4: SQL for EPG Data</h3>
+<p><strong>Approach:</strong> Store EPG data in a SQL database with tables for channels, programs, and schedules.</p>
+<p><strong>Why not chosen:</strong></p>
+<ul>
+  <li>EPG queries are always single-dimensional: "programs for channel X between time A and B." This maps perfectly to a NoSQL partition key + sort key range scan, which is faster and cheaper than an SQL index scan.</li>
+  <li>EPG data doesn't require ACID transactions or joins — it's ingested in bulk and read independently.</li>
+  <li>The EPG schema is semi-structured (sports programs have different fields than movie showings). NoSQL's flexible schema avoids wide tables with many nullable columns.</li>
+  <li>At scale (350 channels × 14 days), the write throughput during ingestion and read throughput during primetime are better handled by NoSQL's horizontal scaling.</li>
+</ul>
+
+<h3>Alternative 5: Event-Driven (Pub-Sub) for DVR Instead of Message Queue</h3>
+<p><strong>Approach:</strong> When a user schedules a recording, publish an event to a pub-sub topic. Recording workers subscribe and process the event.</p>
+<p><strong>Why not chosen:</strong></p>
+<ul>
+  <li>Pub-sub delivers messages to all subscribers (fan-out). For DVR, we need exactly-one-worker to process each recording — this is a point-to-point pattern, not fan-out.</li>
+  <li>Message queues provide <strong>visibility timeout</strong> (if a worker fails, the message becomes available for another worker) and <strong>dead-letter queues</strong> (failed messages are quarantined for investigation). Pub-sub typically doesn't offer these reliability semantics.</li>
+  <li>Message queues support <strong>delayed delivery</strong> natively — a recording scheduled for 8 PM can be enqueued now with a 6-hour delay. Pub-sub delivers immediately.</li>
+  <li><strong>When pub-sub would be appropriate:</strong> If we needed to notify multiple downstream systems when a recording completes (e.g., update search index, send push notification, update recommendation model), we'd publish a "recording.completed" event to a pub-sub topic that multiple consumers subscribe to.</li>
+</ul>
+
+<!-- ================================================================ -->
+<h2 id="additional">14. Additional Considerations</h2>
+
+<h3>DRM &amp; Content Protection Deep Dive</h3>
+<p>Content studios require multi-layered protection:</p>
+<ul>
+  <li><strong>Encryption:</strong> All video content (live, VOD, DVR) is encrypted using AES-128 or CENC (Common Encryption Scheme). Each content key is unique per title/channel and rotated periodically for live channels.</li>
+  <li><strong>License Server:</strong> The DRM Service acts as a license server. Clients must acquire a license (containing the decryption key) before playback. Licenses are bound to the device and expire (e.g., after 24 hours for offline downloads, after the session ends for streaming).</li>
+  <li><strong>HDCP:</strong> High-bandwidth Digital Content Protection on HDMI output prevents screen capture from set-top boxes and connected devices.</li>
+  <li><strong>Watermarking:</strong> Forensic watermarks embedded in the video stream can trace leaked content back to a specific user account.</li>
+  <li><strong>Concurrent Stream Enforcement:</strong> Limits prevent password sharing. After exceeding the limit, additional stream requests are denied.</li>
+</ul>
+
+<h3>Offline Downloads</h3>
+<p>For mobile devices on poor connections (e.g., airplane), some on-demand content can be downloaded for offline viewing. Downloaded content uses the same DRM — the license has an expiry (e.g., 48 hours from download), after which the user must re-connect to renew the license. This prevents permanent offline copies.</p>
+
+<h3>Multi-Region / Disaster Recovery</h3>
+<ul>
+  <li><strong>Active-Active deployment</strong> across 2-3 geographic regions (e.g., US East, US West, US Central).</li>
+  <li>SQL databases: Primary-replica across regions with synchronous replication for critical data (user/subscription) and asynchronous for less critical data.</li>
+  <li>NoSQL databases: Multi-region replication built-in (eventual consistency across regions).</li>
+  <li>CDN: Inherently distributed. PoP failure routes to next-nearest PoP.</li>
+  <li>Live Ingest: Dual ingest paths. Each broadcaster sends two feeds to two ingest data centers. If one DC fails, the other takes over.</li>
+</ul>
+
+<h3>Monitoring &amp; Observability</h3>
+<ul>
+  <li><strong>Video Quality Metrics:</strong> Buffer ratio, start-up time, bitrate fluctuations, error rate — collected from client-side telemetry.</li>
+  <li><strong>Service Metrics:</strong> Latency (p50, p95, p99), error rate, throughput per service.</li>
+  <li><strong>Business Metrics:</strong> Concurrent viewers per channel, DVR usage, search queries, conversion rate from upsell screens.</li>
+  <li><strong>Alerting:</strong> PagerDuty-style alerts on stream failure rate > 0.1%, API latency p99 > 500ms, CDN cache hit ratio < 90%.</li>
+</ul>
+
+<h3>Accessibility</h3>
+<ul>
+  <li><strong>Closed Captions (CC):</strong> CEA-608/708 captions embedded in the video stream or delivered as sidecar WebVTT files.</li>
+  <li><strong>Audio Description (AD):</strong> Alternative audio track for visually impaired viewers.</li>
+  <li><strong>Multi-Language Audio:</strong> SAP (Secondary Audio Program) for Spanish and other languages, delivered as separate audio renditions in the ABR manifest.</li>
+</ul>
+
+<h3>API Rate Limiting &amp; Abuse Prevention</h3>
+<ul>
+  <li>Rate limits per user per endpoint (e.g., 10 stream starts/minute, 100 search queries/minute).</li>
+  <li>Device fingerprinting to detect credential sharing (same account from many different IP ranges/geographies simultaneously).</li>
+  <li>CAPTCHA challenge after repeated failed login attempts.</li>
+</ul>
+
+<!-- ================================================================ -->
+<h2 id="vendors">15. Vendor Section</h2>
+<p>The design above is vendor-agnostic. Below are vendor suggestions for each infrastructure component if implementation decisions are needed:</p>
+
+<table>
+  <tr><th>Component</th><th>Potential Vendors</th><th>Why</th></tr>
+  <tr><td>SQL Database</td><td>PostgreSQL, Amazon Aurora, CockroachDB, Google Cloud Spanner</td><td>PostgreSQL for mature ACID compliance and ecosystem. Aurora for managed scaling. CockroachDB/Spanner for globally-distributed strong consistency (useful for multi-region subscription data).</td></tr>
+  <tr><td>NoSQL Wide-Column Store</td><td>Apache Cassandra, ScyllaDB, Amazon DynamoDB, Google Bigtable</td><td>Cassandra/ScyllaDB for high write throughput and tunable consistency (good for EPG and DVR). DynamoDB for fully managed with built-in DAX caching. Bigtable for time-series viewing history.</td></tr>
+  <tr><td>NoSQL Document Store</td><td>MongoDB, Amazon DocumentDB, Couchbase</td><td>MongoDB for flexible schema with rich querying (good for content catalog). Couchbase for built-in caching layer.</td></tr>
+  <tr><td>Search Engine / Inverted Index</td><td>Elasticsearch, Apache Solr, Meilisearch</td><td>Elasticsearch for powerful full-text search, fuzzy matching, autocomplete, and faceted search. Industry standard for content discovery.</td></tr>
+  <tr><td>In-Memory Cache</td><td>Redis, Memcached, Hazelcast</td><td>Redis for data structures (counters for concurrent streams, sorted sets for rankings), TTL support, and cluster mode for horizontal scaling. Memcached for simpler key-value caching if data structures aren't needed.</td></tr>
+  <tr><td>Message Queue</td><td>Amazon SQS, RabbitMQ, Apache ActiveMQ</td><td>SQS for fully managed, built-in delayed delivery, dead-letter queues, and no operational burden. RabbitMQ for more routing flexibility and on-premises deployment.</td></tr>
+  <tr><td>Pub-Sub (for event fan-out)</td><td>Apache Kafka, Amazon SNS, Google Pub/Sub, NATS</td><td>Kafka for high-throughput event streaming with replay capability (useful for feeding analytics pipelines). SNS for simple fan-out notifications.</td></tr>
+  <tr><td>Object Storage</td><td>Amazon S3, Google Cloud Storage, Azure Blob Storage, MinIO</td><td>S3 for industry-leading durability (99.999999999%), lifecycle policies (move old DVR recordings to cheaper tiers), and CDN integration. MinIO for on-premises S3-compatible storage.</td></tr>
+  <tr><td>CDN</td><td>Akamai, Cloudflare, Amazon CloudFront, Fastly, Limelight</td><td>Akamai for largest global network and broadcast-grade video delivery (used by major TV networks). Cloudflare for DDoS protection + CDN. Fastly for real-time cache purging (useful for live manifest updates).</td></tr>
+  <tr><td>Transcoding</td><td>FFmpeg (open source), AWS Elemental MediaLive, Harmonic VOS</td><td>FFmpeg for flexible open-source encoding. AWS Elemental for managed live transcoding with ABR and DRM packaging. Harmonic for broadcast-grade on-premises transcoding.</td></tr>
+  <tr><td>DRM</td><td>Google Widevine, Apple FairPlay, Microsoft PlayReady, PallyCon, BuyDRM</td><td>Multi-DRM is required: Widevine for Android/Chrome, FairPlay for iOS/Safari, PlayReady for Smart TVs/Xbox. PallyCon/BuyDRM provide multi-DRM-as-a-service to simplify integration.</td></tr>
+  <tr><td>Load Balancer</td><td>AWS ALB/NLB, NGINX, HAProxy, Envoy, Google Cloud Load Balancer</td><td>Envoy for modern service mesh with gRPC support (good for inter-service communication). NGINX/HAProxy for battle-tested HTTP load balancing. Cloud LBs for managed auto-scaling.</td></tr>
+  <tr><td>Container Orchestration</td><td>Kubernetes, Amazon ECS, Docker Swarm</td><td>Kubernetes for industry-standard container orchestration — auto-scaling, rolling deployments, health checks. Essential for scaling Recording Workers and microservices.</td></tr>
+  <tr><td>Monitoring</td><td>Prometheus + Grafana, Datadog, New Relic, Conviva (video-specific)</td><td>Conviva is purpose-built for video QoE (Quality of Experience) monitoring — tracks rebuffering, bitrate, start time per viewer. Prometheus/Grafana for infrastructure metrics. Datadog for unified observability.</td></tr>
+</table>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1e2130',
+      primaryBorderColor: '#6c9fff',
+      primaryTextColor: '#e0e0e6',
+      lineColor: '#6c9fff',
+      secondaryColor: '#2a2d3a',
+      tertiaryColor: '#161922',
+      fontFamily: 'Segoe UI, system-ui, sans-serif'
+    },
+    flowchart: {
+      htmlLabels: true,
+      curve: 'basis',
+      useMaxWidth: true
+    }
+  });
+</script>
 </body>
 </html>
