@@ -1,346 +1,996 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>System Design: TinyURL</title>
-<style>body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:20px;background:#f5f5f5;color:#333}.container{max-width:1200px;margin:0 auto;background:#fff;padding:40px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.1)}h1{color:#1a73e8;border-bottom:3px solid #1a73e8;padding-bottom:10px}h2{color:#2c3e50;margin-top:40px;border-left:4px solid #1a73e8;padding-left:12px}h3{color:#34495e}h4{color:#555}.diagram{background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:20px;margin:20px 0;overflow-x:auto}.example{background:#e8f5e9;border-left:4px solid #4caf50;padding:15px;margin:15px 0;border-radius:4px}.deep-dive{background:#e3f2fd;border-left:4px solid #2196f3;padding:15px;margin:15px 0;border-radius:4px}.tradeoff{background:#fff3e0;border-left:4px solid #ff9800;padding:15px;margin:15px 0;border-radius:4px}.alternative{background:#fce4ec;border-left:4px solid #e91e63;padding:15px;margin:15px 0;border-radius:4px}table{border-collapse:collapse;width:100%;margin:15px 0}th,td{border:1px solid #ddd;padding:10px 14px;text-align:left}th{background:#1a73e8;color:#fff}tr:nth-child(even){background:#f9f9f9}code{background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:.9em}.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.85em;margin:2px}.tag-pk{background:#ffeb3b;color:#333}.tag-fk{background:#ce93d8;color:#333}.tag-idx{background:#80cbc4;color:#333}ul,ol{line-height:1.8}svg text{font-family:'Segoe UI',Arial,sans-serif}</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card-bg: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #d2a8ff;
+    --accent4: #f0883e;
+    --red: #f85149;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 40px 20px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 {
+    font-size: 2.4em;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle { color: var(--text-muted); font-size: 1.1em; margin-bottom: 40px; }
+  h2 {
+    font-size: 1.6em;
+    margin: 50px 0 20px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent);
+    color: var(--accent);
+  }
+  h3 {
+    font-size: 1.25em;
+    margin: 30px 0 12px;
+    color: var(--accent3);
+  }
+  h4 {
+    font-size: 1.1em;
+    margin: 20px 0 10px;
+    color: var(--accent4);
+  }
+  p { margin-bottom: 14px; }
+  ul, ol { margin: 10px 0 18px 24px; }
+  li { margin-bottom: 6px; }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin: 20px 0;
+  }
+  .example {
+    background: #1c2333;
+    border-left: 4px solid var(--accent2);
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.95em;
+  }
+  .example strong { color: var(--accent2); }
+  .warn {
+    background: #2d1b00;
+    border-left: 4px solid var(--accent4);
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .warn strong { color: var(--accent4); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.95em;
+  }
+  th, td {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+  th { background: #1c2333; color: var(--accent); }
+  code {
+    background: #1c2333;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.92em;
+    color: var(--accent3);
+  }
+  .mermaid {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+  }
+  .toc {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 28px;
+    margin: 20px 0 40px;
+  }
+  .toc a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .toc a:hover { text-decoration: underline; }
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .badge-sql { background: #0d419d; color: #79b8ff; }
+  .badge-nosql { background: #1b4332; color: #52b788; }
+  .badge-cache { background: #5c2d00; color: #f0883e; }
+</style>
 </head>
 <body>
 <div class="container">
-<h1>System Design: TinyURL (URL Shortener)</h1>
 
-<h2>Functional Requirements</h2>
-<ol>
-  <li><strong>Shorten URL</strong> – Given a long URL, generate a unique short URL (e.g., tinyurl.com/abc123).</li>
-  <li><strong>Redirect</strong> – When users visit the short URL, redirect them (HTTP 301/302) to the original long URL.</li>
-  <li><strong>Custom aliases</strong> – Users can optionally specify a custom short code (e.g., tinyurl.com/my-brand).</li>
-  <li><strong>Expiration</strong> – URLs can optionally have an expiration time after which they stop working.</li>
-  <li><strong>Analytics</strong> – Track click counts, referrers, geographic data, and device info for each shortened URL.</li>
-</ol>
+<h1>System Design: TinyURL</h1>
+<p class="subtitle">A URL shortening service that converts long URLs into short, easy-to-share aliases and redirects users to the original URL.</p>
 
-<h2>Non-Functional Requirements</h2>
-<ol>
-  <li><strong>High availability</strong> – 99.99% uptime; redirect must always work.</li>
-  <li><strong>Low latency</strong> – Redirect in &lt;50ms (p99). URL creation in &lt;200ms.</li>
-  <li><strong>Scalability</strong> – Handle 1B+ shortened URLs, 100K reads/sec, 1K writes/sec (100:1 read-to-write ratio).</li>
-  <li><strong>Uniqueness</strong> – No two long URLs should generate the same short code (unless explicitly the same URL).</li>
-  <li><strong>Durability</strong> – Shortened URLs must be persistent and never lost.</li>
-</ol>
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <strong>Table of Contents</strong>
+  <ol>
+    <li><a href="#fr">Functional Requirements</a></li>
+    <li><a href="#nfr">Non-Functional Requirements</a></li>
+    <li><a href="#flow1">Flow 1: URL Shortening (Write Path)</a></li>
+    <li><a href="#flow2">Flow 2: URL Redirection (Read Path)</a></li>
+    <li><a href="#flow3">Flow 3: Analytics (Read Path)</a></li>
+    <li><a href="#combined">Combined Overall Diagram</a></li>
+    <li><a href="#schema">Database Schema</a></li>
+    <li><a href="#cache">CDN &amp; Cache Deep Dive</a></li>
+    <li><a href="#scaling">Scaling Considerations</a></li>
+    <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+    <li><a href="#alternatives">Alternative Approaches</a></li>
+    <li><a href="#additional">Additional Information</a></li>
+    <li><a href="#vendors">Vendor Section</a></li>
+  </ol>
+</div>
 
-<!-- ==================== FLOW 1: URL SHORTENING ==================== -->
-<h2>Flow 1: Creating a Short URL</h2>
-<div class="diagram">
-<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
-  <rect x="10" y="130" width="80" height="50" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
-  <text x="50" y="160" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">User</text>
-  <line x1="90" y1="155" x2="160" y2="155" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <text x="125" y="145" text-anchor="middle" fill="#555" font-size="9">POST /shorten</text>
-  <rect x="160" y="130" width="80" height="50" rx="8" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
-  <text x="200" y="153" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">API</text>
-  <text x="200" y="165" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">GW</text>
-  <line x1="240" y1="155" x2="310" y2="155" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <rect x="310" y="125" width="120" height="60" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
-  <text x="370" y="153" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">URL Shortener</text>
-  <text x="370" y="168" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Service</text>
-  <!-- To Key Generation Service -->
-  <line x1="370" y1="125" x2="370" y2="55" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <rect x="315" y="5" width="110" height="50" rx="8" fill="#673ab7" stroke="#4527a0" stroke-width="2"/>
-  <text x="370" y="28" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Key Gen</text>
-  <text x="370" y="43" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Service (KGS)</text>
-  <!-- KGS to Key DB -->
-  <line x1="425" y1="30" x2="500" y2="30" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <ellipse cx="550" cy="23" rx="40" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <rect x="510" y="23" width="80" height="22" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <ellipse cx="550" cy="45" rx="40" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="510" y1="23" x2="510" y2="45" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="590" y1="23" x2="590" y2="45" stroke="#d84315" stroke-width="1.5"/>
-  <text x="550" y="38" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Key DB</text>
-  <!-- URL Service to URL DB -->
-  <line x1="430" y1="155" x2="520" y2="155" stroke="#333" stroke-width="2" marker-end="url(#a1)"/>
-  <ellipse cx="575" cy="145" rx="45" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="2"/>
-  <rect x="530" y="145" width="90" height="30" fill="#ff5722" stroke="#d84315" stroke-width="2"/>
-  <ellipse cx="575" cy="175" rx="45" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="2"/>
-  <line x1="530" y1="145" x2="530" y2="175" stroke="#d84315" stroke-width="2"/>
-  <line x1="620" y1="145" x2="620" y2="175" stroke="#d84315" stroke-width="2"/>
-  <text x="575" y="164" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">URL DB</text>
-  <!-- URL Service to Cache -->
-  <line x1="370" y1="185" x2="370" y2="250" stroke="#333" stroke-width="1.5" marker-end="url(#a1)"/>
-  <ellipse cx="370" cy="260" rx="45" ry="10" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <rect x="325" y="260" width="90" height="25" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <ellipse cx="370" cy="285" rx="45" ry="10" fill="#00796b" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="325" y1="260" x2="325" y2="285" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="415" y1="260" x2="415" y2="285" stroke="#00695c" stroke-width="1.5"/>
-  <text x="370" y="277" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Cache (Redis)</text>
-</svg>
+<!-- ============================================================ -->
+<h2 id="fr">1. Functional Requirements</h2>
+<!-- ============================================================ -->
+<div class="card">
+<ul>
+  <li><strong>Shorten URL:</strong> Given a long URL, generate a unique, short alias (e.g., <code>tinyurl.com/abc1234</code>).</li>
+  <li><strong>Redirect:</strong> When a user visits the short URL, redirect them to the original long URL.</li>
+  <li><strong>Custom Alias (optional):</strong> Users may provide a custom short alias instead of having one auto-generated.</li>
+  <li><strong>Expiration:</strong> URLs can have an optional expiration date after which the short link is no longer active.</li>
+  <li><strong>Analytics:</strong> Track click count, geographic distribution, referrer, and user-agent for each short URL.</li>
+  <li><strong>User Accounts (optional):</strong> Registered users can manage (view, edit, delete) their shortened URLs.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
+<!-- ============================================================ -->
+<div class="card">
+<ul>
+  <li><strong>High Availability:</strong> The redirection service must be available 99.99% of the time; reads are critical.</li>
+  <li><strong>Low Latency:</strong> Redirect lookups should complete in &lt; 50 ms (p99) to feel instant.</li>
+  <li><strong>Scalability:</strong> Must handle billions of stored URLs and tens of thousands of redirect requests per second.</li>
+  <li><strong>Read-Heavy:</strong> The system is heavily read-biased (estimated 100:1 read-to-write ratio).</li>
+  <li><strong>Durability:</strong> Once a short URL is created it must not be lost (until explicitly deleted or expired).</li>
+  <li><strong>Uniqueness:</strong> Every auto-generated short key must be globally unique—no two long URLs should share an auto-generated key unless intentionally.</li>
+  <li><strong>Non-Predictability:</strong> Auto-generated keys should not be sequential or easily guessable for security and privacy.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="flow1">3. Flow 1 — URL Shortening (Write Path)</h2>
+<!-- ============================================================ -->
+
+<h3>3.1 Diagram</h3>
+<div class="mermaid">
+graph LR
+    Client["👤 Client<br/>(Browser / API)"]
+    LB["⚖️ Load Balancer"]
+    SS["🔧 URL Shortening<br/>Service"]
+    KGS["🔑 Key Generation<br/>Service"]
+    KeyDB["🗄️ Key DB<br/>(NoSQL)"]
+    URLDB[("🗃️ URL Mappings<br/>DB (NoSQL)")]
+
+    Client -->|"HTTP POST<br/>/api/v1/shorten"| LB
+    LB --> SS
+    SS -->|"Request unused key"| KGS
+    KGS -->|"Fetch batch of<br/>pre-generated keys"| KeyDB
+    SS -->|"Write mapping<br/>(short_key → long_url)"| URLDB
+    SS -->|"Return short URL"| Client
+
+    style Client fill:#1a1a2e,stroke:#58a6ff,color:#fff
+    style LB fill:#1a1a2e,stroke:#f0883e,color:#fff
+    style SS fill:#1a1a2e,stroke:#3fb950,color:#fff
+    style KGS fill:#1a1a2e,stroke:#d2a8ff,color:#fff
+    style KeyDB fill:#1a1a2e,stroke:#d2a8ff,color:#fff
+    style URLDB fill:#1a1a2e,stroke:#3fb950,color:#fff
+</div>
+
+<h3>3.2 Examples</h3>
+
+<div class="example">
+  <strong>Example 1 — Auto-generated key:</strong><br/>
+  A user pastes <code>https://www.example.com/very/long/path?query=1&amp;ref=abc</code> into the TinyURL web form and clicks <em>Shorten</em>. This triggers an <code>HTTP POST /api/v1/shorten</code> with body <code>{ "long_url": "https://www.example.com/very/long/path?query=1&ref=abc" }</code>. The Load Balancer routes the request to a URL Shortening Service instance. The service asks the Key Generation Service for the next available key. The KGS, which has pre-loaded a batch of 1,000 unused keys from the Key DB into its in-memory buffer, returns <code>aB3xZ9q</code>. The Shortening Service writes the mapping <code>aB3xZ9q → https://www.example.com/very/long/path?query=1&ref=abc</code> to the URL Mappings DB and returns <code>https://tinyurl.com/aB3xZ9q</code> to the client.
 </div>
 
 <div class="example">
-<h4>Example 1: Auto-generated short code</h4>
-<p>Alice submits <strong>POST /api/v1/shorten</strong> with <code>{long_url: "https://www.example.com/very/long/path?param=value"}</code>. The API Gateway authenticates the request and routes to the <strong>URL Shortener Service</strong>. The service calls the <strong>Key Generation Service (KGS)</strong> to get a pre-generated unique 7-character key (e.g., "aB3xY9k"). The KGS maintains a pool of pre-generated keys in the <strong>Key DB</strong> — it marks the key as "used" atomically. The Shortener Service writes the mapping <code>{short_code: "aB3xY9k", long_url: "https://...", user_id: alice, created_at, expires_at: null}</code> to the <strong>URL DB</strong> and populates the <strong>Cache</strong> (Redis). Returns <code>{short_url: "https://tinyurl.com/aB3xY9k"}</code> to Alice.</p>
+  <strong>Example 2 — Custom alias (happy path):</strong><br/>
+  A user submits <code>{ "long_url": "https://myblog.com/post/123", "custom_alias": "myblog" }</code>. The Shortening Service first checks the URL Mappings DB to see if <code>myblog</code> is already taken. It is not, so the service skips the KGS, writes <code>myblog → https://myblog.com/post/123</code> directly to the URL Mappings DB, and returns <code>https://tinyurl.com/myblog</code>.
 </div>
 
 <div class="example">
-<h4>Example 2: Custom alias</h4>
-<p>Bob submits <strong>POST /api/v1/shorten</strong> with <code>{long_url: "https://mybusiness.com", custom_alias: "my-biz"}</code>. The Shortener Service checks if "my-biz" is already taken in the URL DB. It's not, so it creates the mapping and returns <code>{short_url: "https://tinyurl.com/my-biz"}</code>. If "my-biz" were already taken, a 409 Conflict error would be returned.</p>
+  <strong>Example 3 — Custom alias (conflict):</strong><br/>
+  A user submits <code>{ "long_url": "https://other.com/page", "custom_alias": "myblog" }</code>. The Shortening Service queries the URL Mappings DB and finds that <code>myblog</code> already exists. It returns an <code>HTTP 409 Conflict</code> response: <code>{ "error": "Custom alias 'myblog' is already in use." }</code>.
 </div>
 
-<h3>Deep Dive: Components</h3>
+<div class="example">
+  <strong>Example 4 — URL with expiration:</strong><br/>
+  A user submits <code>{ "long_url": "https://promo.com/sale", "expires_at": "2025-12-31T23:59:59Z" }</code>. The Shortening Service obtains key <code>pR7mK2s</code> from the KGS and writes the mapping to the URL Mappings DB with the <code>expires_at</code> field set. The short URL will stop redirecting after the expiration timestamp.
+</div>
 
-<div class="deep-dive">
+<h3>3.3 Component Deep Dive</h3>
+
+<div class="card">
+<h4>Client (Browser / API Consumer)</h4>
+<p>The end user interacts with TinyURL through a web form or a REST API. Mobile apps or third-party integrations call the API directly using an API key for authentication.</p>
+</div>
+
+<div class="card">
+<h4>Load Balancer</h4>
+<p>Distributes incoming requests across multiple instances of the URL Shortening Service. Uses <strong>round-robin</strong> or <strong>least-connections</strong> strategy. Handles TLS termination so back-end services communicate over plain HTTP internally. Placed between the client and the service tier.</p>
+</div>
+
+<div class="card">
+<h4>URL Shortening Service</h4>
+<p><strong>Protocol:</strong> HTTP REST</p>
+<table>
+  <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th></tr>
+  <tr>
+    <td><code>/api/v1/shorten</code></td>
+    <td><code>POST</code></td>
+    <td><code>{ long_url: string, custom_alias?: string, expires_at?: ISO-8601 }</code></td>
+    <td><code>201 Created</code> — <code>{ short_url: string, expires_at?: string }</code><br/>
+        <code>409 Conflict</code> — if custom alias taken<br/>
+        <code>400 Bad Request</code> — if URL is invalid</td>
+  </tr>
+</table>
+<p>Responsibilities: validate the URL format, check for custom alias conflicts, request a key from the KGS (or use the custom alias), write the mapping to the URL Mappings DB, and return the short URL. Also performs rate limiting per API key / IP.</p>
+</div>
+
+<div class="card">
 <h4>Key Generation Service (KGS)</h4>
-<p>Pre-generates unique 7-character codes using base62 encoding (a-z, A-Z, 0-9). 62^7 = 3.5 trillion possible codes — enough for centuries of usage. The KGS pre-generates keys in batches (e.g., 1M at a time) and stores them in the Key DB with a <code>used</code> flag. When the Shortener Service requests a key, KGS pops one from the pool and marks it used.</p>
-<p><strong>Why KGS over hash-based approach:</strong> Hashing (e.g., MD5/SHA256 of long URL, truncated to 7 chars) can produce collisions. KGS guarantees uniqueness without collision checking. KGS also decouples key generation from the main service, enabling horizontal scaling.</p>
-<p><strong>Concurrency:</strong> Each KGS instance pre-loads a batch of unused keys into memory. Multiple instances can serve keys in parallel without conflicts because each instance has its own batch.</p>
+<p>A separate internal service that pre-generates random 7-character Base62 keys (a-z, A-Z, 0-9 → 62<sup>7</sup> ≈ 3.5 trillion possible keys) and stores them in the Key DB.</p>
+<p><strong>How it works:</strong></p>
+<ul>
+  <li>A background process continuously generates random Base62 keys and inserts them into the <code>unused_keys</code> table of the Key DB.</li>
+  <li>Each KGS instance loads a <strong>batch</strong> of keys (e.g., 1,000) from <code>unused_keys</code> into its in-memory buffer and atomically moves them to <code>used_keys</code>.</li>
+  <li>When the URL Shortening Service requests a key, the KGS pops one from its in-memory buffer (O(1)).</li>
+  <li>When the buffer is exhausted, the KGS loads another batch.</li>
+  <li>If a KGS instance crashes, the in-memory keys are lost, but this is acceptable given the enormous key space.</li>
+</ul>
+<p><strong>Protocol:</strong> Internal gRPC (low-latency, binary protocol between services). Input: none. Output: <code>{ key: string }</code>.</p>
 </div>
 
-<div class="deep-dive">
-<h4>URL Shortener Service</h4>
-<p><strong>Endpoints:</strong></p>
+<div class="card">
+<h4>Key DB (NoSQL — Key-Value Store)</h4>
+<p>Stores two logical collections: <code>unused_keys</code> and <code>used_keys</code>. The KGS reads from <code>unused_keys</code> and moves keys to <code>used_keys</code> atomically. This is a simple key-value workload with no joins, making a NoSQL key-value store ideal.</p>
+</div>
+
+<div class="card">
+<h4>URL Mappings DB (NoSQL — Key-Value Store)</h4>
+<p>Stores the mapping from <code>short_key</code> to the long URL plus metadata. Accessed by the Shortening Service (writes) and the Redirection Service (reads). Detailed schema in <a href="#schema">Section 7</a>.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="flow2">4. Flow 2 — URL Redirection (Read Path)</h2>
+<!-- ============================================================ -->
+
+<h3>4.1 Diagram</h3>
+<div class="mermaid">
+graph LR
+    Client["👤 Client<br/>(Browser)"]
+    LB["⚖️ Load Balancer"]
+    RS["🔀 URL Redirection<br/>Service"]
+    Cache["⚡ In-Memory<br/>Cache"]
+    URLDB[("🗃️ URL Mappings<br/>DB (NoSQL)")]
+    MQ["📨 Message Queue"]
+    AP["📊 Analytics<br/>Processor"]
+    ADB[("📈 Analytics DB<br/>(NoSQL)")]
+
+    Client -->|"HTTP GET<br/>/{short_key}"| LB
+    LB --> RS
+    RS -->|"1. Lookup"| Cache
+    Cache -.->|"Cache miss"| URLDB
+    RS -->|"2. Async: publish<br/>click event"| MQ
+    MQ --> AP
+    AP -->|"Write click data"| ADB
+    RS -->|"3. HTTP 302<br/>Location: long_url"| Client
+
+    style Client fill:#1a1a2e,stroke:#58a6ff,color:#fff
+    style LB fill:#1a1a2e,stroke:#f0883e,color:#fff
+    style RS fill:#1a1a2e,stroke:#3fb950,color:#fff
+    style Cache fill:#1a1a2e,stroke:#f0883e,color:#fff
+    style URLDB fill:#1a1a2e,stroke:#3fb950,color:#fff
+    style MQ fill:#1a1a2e,stroke:#d2a8ff,color:#fff
+    style AP fill:#1a1a2e,stroke:#d2a8ff,color:#fff
+    style ADB fill:#1a1a2e,stroke:#d2a8ff,color:#fff
+</div>
+
+<h3>4.2 Examples</h3>
+
+<div class="example">
+  <strong>Example 1 — Cache hit (happy path):</strong><br/>
+  A user clicks <code>https://tinyurl.com/aB3xZ9q</code> in a tweet. The browser sends <code>HTTP GET /aB3xZ9q</code>. The Load Balancer routes the request to a URL Redirection Service instance. The service looks up <code>aB3xZ9q</code> in the in-memory cache and finds the mapping: <code>https://www.example.com/very/long/path?query=1&ref=abc</code>. The service asynchronously publishes a click event <code>{ key: "aB3xZ9q", timestamp, ip, user_agent, referrer }</code> to the Message Queue. It immediately returns <code>HTTP 302 Found</code> with header <code>Location: https://www.example.com/very/long/path?query=1&ref=abc</code>. The browser follows the redirect. Later, the Analytics Processor consumes the event from the queue and writes the click record to the Analytics DB.
+</div>
+
+<div class="example">
+  <strong>Example 2 — Cache miss:</strong><br/>
+  A user visits <code>https://tinyurl.com/xY9kL3m</code>. The Redirection Service checks the cache but does not find the key (cache miss). It then queries the URL Mappings DB, which returns the long URL. The service populates the cache with this mapping (cache-aside pattern) and returns <code>HTTP 302</code> as above. The next visitor for the same short URL will get a cache hit.
+</div>
+
+<div class="example">
+  <strong>Example 3 — Expired URL:</strong><br/>
+  A user visits <code>https://tinyurl.com/pR7mK2s</code>. The Redirection Service retrieves the record and finds that <code>expires_at</code> is <code>2025-12-31T23:59:59Z</code>, which is in the past. The service returns <code>HTTP 410 Gone</code> with body <code>{ "error": "This short URL has expired." }</code>.
+</div>
+
+<div class="example">
+  <strong>Example 4 — Non-existent URL:</strong><br/>
+  A user visits <code>https://tinyurl.com/zzzzzz</code>. Neither the cache nor the DB contains a mapping. The service returns <code>HTTP 404 Not Found</code>.
+</div>
+
+<h3>4.3 Component Deep Dive</h3>
+
+<div class="card">
+<h4>URL Redirection Service</h4>
+<p><strong>Protocol:</strong> HTTP</p>
+<table>
+  <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th></tr>
+  <tr>
+    <td><code>/{short_key}</code></td>
+    <td><code>GET</code></td>
+    <td>Path parameter: <code>short_key</code> (7-char Base62 string)</td>
+    <td><code>302 Found</code> — <code>Location</code> header with long URL<br/>
+        <code>404 Not Found</code> — key doesn't exist<br/>
+        <code>410 Gone</code> — key has expired</td>
+  </tr>
+</table>
+<p>This is the most latency-sensitive service. It first checks the in-memory cache; on a miss it queries the URL Mappings DB and backfills the cache. It asynchronously publishes click events to the message queue so analytics tracking never blocks the redirect response.</p>
+</div>
+
+<div class="card">
+<h4>In-Memory Cache</h4>
+<p>Caches the hottest URL mappings. Full deep dive in <a href="#cache">Section 8</a>.</p>
+</div>
+
+<div class="card">
+<h4>Message Queue</h4>
+<p>Decouples the redirect path from analytics processing. The Redirection Service <strong>produces</strong> a click-event message onto the queue (fire-and-forget, non-blocking). The Analytics Processor <strong>consumes</strong> messages in batches.</p>
+<p><strong>Why a message queue instead of alternatives:</strong></p>
 <ul>
-  <li><code>POST /api/v1/shorten</code> – Input: <code>{long_url, custom_alias?, expires_at?}</code>. Output: <code>{short_url, short_code, created_at}</code>.</li>
-  <li><code>GET /{short_code}</code> – Redirect endpoint (see Flow 2).</li>
-  <li><code>GET /api/v1/stats/{short_code}</code> – Analytics endpoint.</li>
-  <li><code>DELETE /api/v1/urls/{short_code}</code> – Delete a short URL.</li>
+  <li><strong>vs. Synchronous write:</strong> Writing analytics synchronously to a DB on the redirect path would add 5-20 ms of latency to every redirect. Unacceptable at scale.</li>
+  <li><strong>vs. Pub/Sub:</strong> We have a single consumer group (Analytics Processor). Pub/Sub's fan-out capability is unnecessary. A message queue with partitioned topics provides ordered, at-least-once delivery which is exactly what we need.</li>
+  <li><strong>vs. Logging + batch ETL:</strong> Logging to files and running periodic ETL is viable but introduces much higher analytics latency (minutes to hours). The message queue approach gives near-real-time analytics (seconds).</li>
+</ul>
+<p><strong>How messages are produced:</strong> The Redirection Service serializes the click event as JSON and publishes it to a topic/queue partitioned by <code>short_key</code>. Publishing is asynchronous (fire-and-forget with optional acknowledgement).</p>
+<p><strong>How messages are consumed:</strong> The Analytics Processor runs as a consumer group with multiple workers. Each worker pulls a batch of messages (e.g., 100 at a time), writes them in bulk to the Analytics DB, and then acknowledges (commits the offset). If a worker crashes before acknowledging, messages are redelivered (at-least-once semantics). The analytics pipeline is idempotent to handle duplicates.</p>
+</div>
+
+<div class="card">
+<h4>Analytics Processor</h4>
+<p>A background worker service that consumes click events from the message queue and writes aggregated and raw click data to the Analytics DB. It performs batch inserts for efficiency. It also increments the <code>total_clicks</code> counter in the URL Mappings DB (denormalized counter for fast reads).</p>
+</div>
+
+<div class="card">
+<h4>Analytics DB (NoSQL — Wide-Column / Time-Series)</h4>
+<p>Stores individual click events for detailed analytics. Optimized for high write throughput and time-range queries. Detailed schema in <a href="#schema">Section 7</a>.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="flow3">5. Flow 3 — Analytics (Read Path)</h2>
+<!-- ============================================================ -->
+
+<h3>5.1 Diagram</h3>
+<div class="mermaid">
+graph LR
+    Client["👤 Client<br/>(Dashboard)"]
+    LB["⚖️ Load Balancer"]
+    AS["📊 Analytics<br/>Service"]
+    ACache["⚡ Analytics<br/>Cache"]
+    ADB[("📈 Analytics DB<br/>(NoSQL)")]
+    URLDB[("🗃️ URL Mappings<br/>DB (NoSQL)")]
+
+    Client -->|"HTTP GET<br/>/api/v1/analytics/{key}"| LB
+    LB --> AS
+    AS -->|"1. Get total_clicks"| URLDB
+    AS -->|"2. Get detailed stats"| ACache
+    ACache -.->|"Cache miss"| ADB
+    AS -->|"Return analytics"| Client
+
+    style Client fill:#1a1a2e,stroke:#58a6ff,color:#fff
+    style LB fill:#1a1a2e,stroke:#f0883e,color:#fff
+    style AS fill:#1a1a2e,stroke:#d2a8ff,color:#fff
+    style ACache fill:#1a1a2e,stroke:#f0883e,color:#fff
+    style ADB fill:#1a1a2e,stroke:#d2a8ff,color:#fff
+    style URLDB fill:#1a1a2e,stroke:#3fb950,color:#fff
+</div>
+
+<h3>5.2 Examples</h3>
+
+<div class="example">
+  <strong>Example 1 — Dashboard view:</strong><br/>
+  A registered user opens the TinyURL dashboard and clicks on their link <code>aB3xZ9q</code> to view analytics. The browser sends <code>HTTP GET /api/v1/analytics/aB3xZ9q</code>. The Analytics Service reads the <code>total_clicks</code> field from the URL Mappings DB (fast, single key lookup). It then checks the Analytics Cache for pre-aggregated stats (clicks per day, top countries, top referrers for the last 30 days). On a cache miss, it queries the Analytics DB, aggregates the data, caches it (TTL: 5 minutes), and returns: <code>{ total_clicks: 14523, clicks_today: 87, top_countries: [{country: "US", count: 9102}, ...], top_referrers: [{referrer: "twitter.com", count: 4201}, ...] }</code>.
+</div>
+
+<div class="example">
+  <strong>Example 2 — Non-existent key:</strong><br/>
+  A user requests analytics for a key that does not exist. The Analytics Service queries the URL Mappings DB, finds no record, and returns <code>HTTP 404 Not Found</code>.
+</div>
+
+<h3>5.3 Component Deep Dive</h3>
+
+<div class="card">
+<h4>Analytics Service</h4>
+<p><strong>Protocol:</strong> HTTP REST</p>
+<table>
+  <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th></tr>
+  <tr>
+    <td><code>/api/v1/analytics/{short_key}</code></td>
+    <td><code>GET</code></td>
+    <td>Path param: <code>short_key</code>; Query params: <code>start_date</code>, <code>end_date</code>, <code>granularity</code> (hour/day/month)</td>
+    <td><code>200 OK</code> — <code>{ total_clicks, time_series: [...], top_countries: [...], top_referrers: [...], top_user_agents: [...] }</code><br/>
+        <code>404 Not Found</code> — key doesn't exist</td>
+  </tr>
+</table>
+<p>Reads the denormalized <code>total_clicks</code> counter from the URL Mappings DB for the headline number, then queries the Analytics DB (or cache) for breakdown data. Aggregation is done at query time for flexible date ranges, or pre-aggregated by the Analytics Processor for common ranges (last 24h, last 7d, last 30d).</p>
+</div>
+
+<div class="card">
+<h4>Analytics Cache</h4>
+<p>A separate logical cache namespace (or separate cache cluster) dedicated to analytics aggregations. Key pattern: <code>analytics:{short_key}:{granularity}:{date_range}</code>. TTL: 5 minutes (analytics can tolerate slight staleness). Eviction: LRU.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="combined">6. Combined Overall Diagram</h2>
+<!-- ============================================================ -->
+
+<h3>6.1 Diagram</h3>
+<div class="mermaid">
+graph TB
+    Client["👤 Client<br/>(Browser / API)"]
+    LB["⚖️ Load Balancer"]
+
+    subgraph Write Path
+        SS["🔧 URL Shortening<br/>Service"]
+        KGS["🔑 Key Generation<br/>Service"]
+        KeyDB["🗄️ Key DB<br/>(NoSQL)"]
+    end
+
+    subgraph Read Path
+        RS["🔀 URL Redirection<br/>Service"]
+        Cache["⚡ URL Cache"]
+    end
+
+    subgraph Analytics Pipeline
+        MQ["📨 Message Queue"]
+        AP["📊 Analytics<br/>Processor"]
+        ADB[("📈 Analytics DB")]
+        ACache["⚡ Analytics Cache"]
+    end
+
+    AS["📊 Analytics<br/>Service"]
+    URLDB[("🗃️ URL Mappings DB<br/>(NoSQL)")]
+
+    Client -->|"POST /api/v1/shorten"| LB
+    Client -->|"GET /{short_key}"| LB
+    Client -->|"GET /api/v1/analytics/{key}"| LB
+
+    LB --> SS
+    LB --> RS
+    LB --> AS
+
+    SS -->|"Get key"| KGS
+    KGS -->|"Batch fetch"| KeyDB
+    SS -->|"Write mapping"| URLDB
+
+    RS -->|"Lookup"| Cache
+    Cache -.->|"Miss"| URLDB
+    RS -->|"Publish click event"| MQ
+    MQ --> AP
+    AP -->|"Write clicks"| ADB
+    AP -->|"Increment total_clicks"| URLDB
+
+    AS -->|"Read total_clicks"| URLDB
+    AS -->|"Read stats"| ACache
+    ACache -.->|"Miss"| ADB
+
+    style Client fill:#1a1a2e,stroke:#58a6ff,color:#fff
+    style LB fill:#1a1a2e,stroke:#f0883e,color:#fff
+    style SS fill:#1a1a2e,stroke:#3fb950,color:#fff
+    style KGS fill:#1a1a2e,stroke:#d2a8ff,color:#fff
+    style KeyDB fill:#1a1a2e,stroke:#d2a8ff,color:#fff
+    style RS fill:#1a1a2e,stroke:#3fb950,color:#fff
+    style Cache fill:#1a1a2e,stroke:#f0883e,color:#fff
+    style URLDB fill:#1a1a2e,stroke:#3fb950,color:#fff
+    style MQ fill:#1a1a2e,stroke:#d2a8ff,color:#fff
+    style AP fill:#1a1a2e,stroke:#d2a8ff,color:#fff
+    style ADB fill:#1a1a2e,stroke:#d2a8ff,color:#fff
+    style AS fill:#1a1a2e,stroke:#d2a8ff,color:#fff
+    style ACache fill:#1a1a2e,stroke:#f0883e,color:#fff
+</div>
+
+<h3>6.2 Combined Flow Examples</h3>
+
+<div class="example">
+  <strong>Full lifecycle example:</strong><br/>
+  <strong>Step 1 (Shorten):</strong> User A pastes <code>https://docs.example.com/guide/intro?v=2</code> into TinyURL and clicks "Shorten". <code>POST /api/v1/shorten</code> goes through the Load Balancer → URL Shortening Service → KGS returns key <code>Qw8rT1n</code> → mapping is written to URL Mappings DB → User A receives <code>https://tinyurl.com/Qw8rT1n</code>.<br/><br/>
+  <strong>Step 2 (Share &amp; Redirect):</strong> User A shares the link on social media. User B clicks <code>https://tinyurl.com/Qw8rT1n</code>. <code>GET /Qw8rT1n</code> goes through the Load Balancer → URL Redirection Service → cache miss → DB lookup returns the long URL → cache is populated → a click event is published to the Message Queue → <code>HTTP 302</code> redirect is returned. User B's browser follows the redirect and lands on the original page. The Analytics Processor consumes the click event and writes it to the Analytics DB while also incrementing <code>total_clicks</code> in the URL Mappings DB.<br/><br/>
+  <strong>Step 3 (Subsequent Redirect):</strong> User C also clicks the same link. This time the URL Redirection Service finds the mapping in the cache (cache hit) and returns the redirect immediately with even lower latency.<br/><br/>
+  <strong>Step 4 (View Analytics):</strong> User A logs in and views the analytics dashboard. <code>GET /api/v1/analytics/Qw8rT1n</code> → Analytics Service reads <code>total_clicks = 2</code> from the URL Mappings DB, queries the Analytics DB (or Analytics Cache) for the breakdown, and returns the stats to User A.
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="schema">7. Database Schema</h2>
+<!-- ============================================================ -->
+
+<!-- ---- SQL Table: Users ---- -->
+<h3>7.1 Users Table <span class="badge badge-sql">SQL</span></h3>
+<div class="card">
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td><code>user_id</code></td><td>UUID</td><td>Primary Key</td><td>Unique identifier for the user</td></tr>
+  <tr><td><code>email</code></td><td>VARCHAR(255)</td><td>Unique Index</td><td>User's email address</td></tr>
+  <tr><td><code>password_hash</code></td><td>VARCHAR(255)</td><td>—</td><td>Bcrypt hash of password</td></tr>
+  <tr><td><code>api_key</code></td><td>VARCHAR(64)</td><td>Unique Index (Hash)</td><td>API key for programmatic access</td></tr>
+  <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>—</td><td>Account creation timestamp</td></tr>
+</table>
+
+<p><strong>Why SQL:</strong> User data is relational (a user has many URLs), benefits from ACID transactions (e.g., during registration or API key rotation), and the dataset is small (millions of users, not billions). SQL's strong consistency guarantees are ideal for authentication and account management.</p>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><code>email</code> — <strong>Hash index</strong> for O(1) lookups during login (exact match on email).</li>
+  <li><code>api_key</code> — <strong>Hash index</strong> for O(1) lookups to authenticate API requests.</li>
+</ul>
+
+<p><strong>Read from:</strong> When a user logs in, when an API request is authenticated via API key.</p>
+<p><strong>Written to:</strong> When a user registers, updates their profile, or rotates their API key.</p>
+
+<p><strong>Sharding:</strong> Not required. The Users table is small (millions of rows). A single SQL primary with read replicas is sufficient.</p>
+</div>
+
+<!-- ---- NoSQL Table: URL Mappings ---- -->
+<h3>7.2 URL Mappings Table <span class="badge badge-nosql">NoSQL (Key-Value)</span></h3>
+<div class="card">
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td><code>short_key</code></td><td>VARCHAR(7)</td><td>Primary Key (Partition Key)</td><td>The 7-character Base62 short URL identifier</td></tr>
+  <tr><td><code>long_url</code></td><td>TEXT</td><td>—</td><td>The original long URL</td></tr>
+  <tr><td><code>user_id</code></td><td>UUID</td><td>Secondary Index</td><td>Owner of the URL (nullable for anonymous users)</td></tr>
+  <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>—</td><td>When the short URL was created</td></tr>
+  <tr><td><code>expires_at</code></td><td>TIMESTAMP</td><td>—</td><td>Optional expiration time (null = never expires)</td></tr>
+  <tr><td><code>is_custom</code></td><td>BOOLEAN</td><td>—</td><td>Whether this was a custom alias</td></tr>
+  <tr><td><code>total_clicks</code></td><td>BIGINT</td><td>—</td><td>Denormalized total click count</td></tr>
+</table>
+
+<p><strong>Why NoSQL (Key-Value):</strong> The access pattern is almost exclusively a single-key lookup (<code>short_key → long_url</code>). No joins or complex queries are needed on the critical read path. NoSQL provides sub-millisecond reads, easy horizontal scaling, and handles billions of records natively. Eventual consistency is acceptable — a newly created URL being invisible for a few hundred milliseconds is fine.</p>
+
+<p><strong>Denormalization — <code>total_clicks</code>:</strong> The <code>total_clicks</code> counter is stored directly in this table instead of being computed by counting rows in the Analytics DB. This avoids an expensive <code>COUNT(*)</code> aggregation across potentially millions of click records every time analytics are viewed. The trade-off is that the Analytics Processor must perform an additional atomic increment on this field after processing each batch. Given the read-heavy nature of analytics (users check their dashboard frequently), the denormalized counter is well worth the minor write overhead.</p>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><code>short_key</code> — <strong>Hash index</strong> (implicit as the partition key). Provides O(1) lookups for the redirect path. This is the most critical access pattern in the entire system.</li>
+  <li><code>user_id</code> — <strong>Global Secondary Index (Hash)</strong> to support "list all URLs for a given user" on the dashboard. Without this index, we would need a full table scan to find a user's URLs.</li>
+  <li><code>expires_at</code> — <strong>Secondary Index (B-tree)</strong> to support the cleanup job that scans for expired URLs. A B-tree index supports range queries (<code>expires_at < NOW()</code>) efficiently. A hash index would not work here since we need inequality comparisons.</li>
+</ul>
+
+<p><strong>Read from:</strong> Every URL redirect (read path), analytics total_clicks lookup, user dashboard "my URLs" list, custom alias conflict check during URL creation.</p>
+<p><strong>Written to:</strong> When a new URL is shortened, when the Analytics Processor increments <code>total_clicks</code>, when a user deletes a URL, when the expiration cleanup job removes expired URLs.</p>
+
+<h4>Sharding Strategy</h4>
+<p><strong>Strategy: Hash-based sharding on <code>short_key</code>.</strong></p>
+<p>The <code>short_key</code> is hashed to determine which shard stores the record. Since the KGS generates random Base62 keys, the keys are already uniformly distributed — no hot partitions. Hash-based sharding ensures even data distribution across shards.</p>
+<p><strong>Why not range-based sharding:</strong> Range-based sharding (e.g., keys starting with 'a' on shard 1, 'b' on shard 2) could create hotspots if certain key prefixes are generated more frequently (unlikely here, but hash-based is more robust). It also doesn't benefit us since we never query by key range.</p>
+<p><strong>Estimated sizing:</strong> At 1 billion URLs with ~500 bytes per record = ~500 GB. With replication factor 3, that's ~1.5 TB. A reasonable number of shards (e.g., 10-20) keeps each shard under 100 GB.</p>
+</div>
+
+<!-- ---- NoSQL Table: Keys ---- -->
+<h3>7.3 Keys Tables <span class="badge badge-nosql">NoSQL (Key-Value)</span></h3>
+<div class="card">
+<p>Two logical collections managed by the Key Generation Service:</p>
+
+<h4>unused_keys</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td><code>key_value</code></td><td>VARCHAR(7)</td><td>Primary Key</td><td>The pre-generated Base62 key</td></tr>
+</table>
+
+<h4>used_keys</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td><code>key_value</code></td><td>VARCHAR(7)</td><td>Primary Key</td><td>A key that has been allocated</td></tr>
+</table>
+
+<p><strong>Why NoSQL:</strong> Simple key-existence checks, no relational needs. High write throughput needed for the background key generation process. Reads are done in bulk (batch of 1,000 keys at a time).</p>
+
+<p><strong>Read from:</strong> When the KGS loads a batch of keys into its in-memory buffer.</p>
+<p><strong>Written to:</strong> The background key generator inserts into <code>unused_keys</code>. The KGS batch fetch atomically deletes from <code>unused_keys</code> and inserts into <code>used_keys</code>.</p>
+
+<p><strong>Sharding:</strong> Hash-based on <code>key_value</code>. Same rationale as URL Mappings — keys are random and uniformly distributed.</p>
+</div>
+
+<!-- ---- NoSQL Table: Click Events ---- -->
+<h3>7.4 Click Events Table <span class="badge badge-nosql">NoSQL (Wide-Column / Time-Series)</span></h3>
+<div class="card">
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td><code>short_key</code></td><td>VARCHAR(7)</td><td>Partition Key</td><td>Which short URL was clicked</td></tr>
+  <tr><td><code>timestamp</code></td><td>TIMESTAMP</td><td>Sort/Clustering Key</td><td>When the click occurred</td></tr>
+  <tr><td><code>ip_address</code></td><td>VARCHAR(45)</td><td>—</td><td>Visitor IP (for geo lookup)</td></tr>
+  <tr><td><code>country</code></td><td>VARCHAR(2)</td><td>—</td><td>ISO country code (derived from IP)</td></tr>
+  <tr><td><code>user_agent</code></td><td>TEXT</td><td>—</td><td>Browser / device info</td></tr>
+  <tr><td><code>referrer</code></td><td>TEXT</td><td>—</td><td>HTTP Referer header</td></tr>
+</table>
+
+<p><strong>Why NoSQL (Wide-Column / Time-Series):</strong> Click events are an append-heavy, time-series workload. We need high write throughput (potentially hundreds of thousands of writes per second for viral URLs). Wide-column stores excel at this — they write to in-memory tables first (memtable) and flush to disk sequentially (SSTables), providing extremely fast writes. The <code>short_key</code> as partition key and <code>timestamp</code> as clustering/sort key naturally supports the query pattern: "Give me all clicks for URL X between time T1 and T2."</p>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><code>(short_key, timestamp)</code> — <strong>Composite primary key</strong>. The partition key (<code>short_key</code>) determines which node stores the data. The clustering key (<code>timestamp</code>) sorts rows within a partition, enabling efficient range scans for time-based queries without a separate index.</li>
+  <li>No additional indexes are needed. Queries always filter by <code>short_key</code> first (partition key), then by time range (clustering key). Queries like "top countries" or "top referrers" are aggregated at the application level (Analytics Processor or Analytics Service).</li>
+</ul>
+
+<p><strong>Read from:</strong> When the Analytics Service needs breakdown data (clicks per day, top countries, etc.) for a specific short URL.</p>
+<p><strong>Written to:</strong> When the Analytics Processor consumes click events from the message queue and batch-inserts them.</p>
+
+<h4>Sharding Strategy</h4>
+<p><strong>Strategy: Hash-based sharding on <code>short_key</code>.</strong></p>
+<p>This ensures click data for different URLs is distributed across nodes. However, extremely viral URLs may create hot partitions. Mitigation: add a <strong>bucket suffix</strong> to the partition key (e.g., <code>short_key + "_" + (timestamp_ms % N)</code> where N = 10) to split a single URL's data across multiple partitions. Queries then need to fan out across N partitions, but this is acceptable for the analytics read path.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="cache">8. CDN &amp; Cache Deep Dive</h2>
+<!-- ============================================================ -->
+
+<h3>8.1 CDN</h3>
+<div class="card">
+<p><strong>Verdict: CDN is NOT used for the redirect path, but IS used for static assets.</strong></p>
+
+<p><strong>Why not for redirects:</strong> We use <code>HTTP 302</code> (temporary) redirects rather than <code>301</code> (permanent). CDN edge nodes typically do not cache 302 responses because the spec marks them as temporary. Even if a CDN were configured to cache 302s, it would prevent our analytics tracking — clicks served from the CDN edge would never reach our Redirection Service, resulting in lost click data. Since analytics is a core feature, using CDN for redirects would undermine a functional requirement.</p>
+
+<p><strong>When CDN WOULD be appropriate:</strong> If analytics were not a requirement and all we cared about was raw redirect speed, we could use <code>HTTP 301</code> redirects and put a CDN in front. The CDN would cache the redirect mapping at edge locations worldwide, reducing latency to single-digit milliseconds for popular URLs. This trade-off (performance vs. analytics) is covered in <a href="#tradeoffs">Section 10</a>.</p>
+
+<p><strong>CDN for static assets:</strong> The TinyURL website itself (HTML, CSS, JavaScript, images) is served through a CDN to reduce load on origin servers and deliver fast page loads globally.</p>
+</div>
+
+<h3>8.2 URL Cache (In-Memory Cache)</h3>
+<div class="card">
+<p>This cache sits between the URL Redirection Service and the URL Mappings DB.</p>
+
+<h4>Caching Strategy: Cache-Aside (Lazy Loading)</h4>
+<ul>
+  <li><strong>On read (redirect):</strong> The Redirection Service checks the cache first. On a <strong>hit</strong>, it returns the long URL immediately. On a <strong>miss</strong>, it queries the URL Mappings DB, writes the result to the cache, then returns the long URL.</li>
+  <li><strong>On write (URL creation):</strong> The Shortening Service writes only to the DB. The cache is <strong>not</strong> proactively populated.</li>
+</ul>
+
+<p><strong>Why cache-aside instead of alternatives:</strong></p>
+<ul>
+  <li><strong>vs. Write-through:</strong> Write-through would populate the cache on every URL creation, but the majority of newly created URLs may never be visited or may only be visited hours/days later. This wastes cache space with cold entries and provides no benefit. Cache-aside ensures only URLs that are actually accessed consume cache space.</li>
+  <li><strong>vs. Write-behind (write-back):</strong> Not applicable — our write path doesn't need caching. Writes go directly to the DB.</li>
+  <li><strong>vs. Read-through:</strong> Functionally similar to cache-aside, but read-through couples the cache with the DB at the cache layer. Cache-aside gives us more control at the application layer (e.g., we can decide not to cache expired URLs).</li>
+</ul>
+
+<h4>Eviction Policy: LRU (Least Recently Used)</h4>
+<p><strong>Why LRU:</strong> URL access patterns follow a power-law distribution — a small number of URLs (viral links, popular short URLs) account for the majority of traffic. LRU naturally keeps these hot URLs in cache and evicts rarely-accessed URLs. This is a textbook use case for LRU.</p>
+<p><strong>Why not LFU:</strong> LFU (Least Frequently Used) could also work, but it can keep stale popular URLs in cache even after they stop being popular (frequency count stays high). LRU is more responsive to changing access patterns.</p>
+
+<h4>Expiration Policy: TTL of 24 hours</h4>
+<p><strong>Why 24-hour TTL:</strong></p>
+<ul>
+  <li>Ensures that expired URLs are eventually evicted from the cache even if they are still being accessed (the Redirection Service checks <code>expires_at</code> in the cached record, but a TTL provides defense-in-depth).</li>
+  <li>Limits how long a stale entry can persist if the underlying record is deleted or modified.</li>
+  <li>24 hours is long enough to capture daily traffic patterns (most viral URLs see a burst and then sustained traffic within a 24-hour cycle).</li>
+</ul>
+
+<h4>Cache Size Estimation</h4>
+<p>If 20% of URLs account for 80% of traffic (Pareto principle), and we have 1 billion URLs at ~500 bytes each: 200 million × 500 bytes = ~100 GB. In practice, caching the top 10% of frequently accessed URLs would cover &gt;90% of requests, so ~50 GB of cache would yield an excellent hit ratio.</p>
+</div>
+
+<h3>8.3 Analytics Cache (In-Memory Cache)</h3>
+<div class="card">
+<p>Caches pre-aggregated analytics results for the Analytics Service.</p>
+<ul>
+  <li><strong>Strategy:</strong> Cache-aside. Populated on first read, not on write.</li>
+  <li><strong>Key format:</strong> <code>analytics:{short_key}:{date_range}:{granularity}</code></li>
+  <li><strong>TTL:</strong> 5 minutes. Analytics data changes frequently (new clicks arriving), but users can tolerate data that is up to 5 minutes stale on a dashboard.</li>
+  <li><strong>Eviction:</strong> LRU. Most short URLs are rarely checked for analytics; only active/viral URLs are frequently viewed.</li>
 </ul>
 </div>
 
-<!-- ==================== FLOW 2: URL REDIRECT ==================== -->
-<h2>Flow 2: URL Redirect</h2>
-<div class="diagram">
-<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
-  <rect x="10" y="100" width="80" height="50" rx="8" fill="#4caf50" stroke="#388e3c" stroke-width="2"/>
-  <text x="50" y="130" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">User</text>
-  <line x1="90" y1="125" x2="170" y2="125" stroke="#333" stroke-width="2" marker-end="url(#a2)"/>
-  <text x="130" y="115" text-anchor="middle" fill="#555" font-size="9">GET /aB3xY9k</text>
-  <rect x="170" y="100" width="80" height="50" rx="8" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
-  <text x="210" y="123" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Load</text>
-  <text x="210" y="135" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Balancer</text>
-  <line x1="250" y1="125" x2="330" y2="125" stroke="#333" stroke-width="2" marker-end="url(#a2)"/>
-  <rect x="330" y="100" width="110" height="50" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
-  <text x="385" y="130" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">URL Service</text>
-  <!-- Cache check -->
-  <line x1="440" y1="115" x2="520" y2="70" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
-  <text x="500" y="80" text-anchor="middle" fill="#555" font-size="8">1. Cache lookup</text>
-  <ellipse cx="575" cy="58" rx="45" ry="10" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <rect x="530" y="58" width="90" height="22" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <ellipse cx="575" cy="80" rx="45" ry="10" fill="#00796b" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="530" y1="58" x2="530" y2="80" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="620" y1="58" x2="620" y2="80" stroke="#00695c" stroke-width="1.5"/>
-  <text x="575" y="73" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Redis Cache</text>
-  <!-- DB fallback -->
-  <line x1="440" y1="135" x2="520" y2="175" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
-  <text x="500" y="170" text-anchor="middle" fill="#555" font-size="8">2. DB (cache miss)</text>
-  <ellipse cx="575" cy="170" rx="45" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <rect x="530" y="170" width="90" height="25" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <ellipse cx="575" cy="195" rx="45" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="530" y1="170" x2="530" y2="195" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="620" y1="170" x2="620" y2="195" stroke="#d84315" stroke-width="1.5"/>
-  <text x="575" y="187" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">URL DB</text>
-  <!-- 301 redirect back to user -->
-  <line x1="330" y1="150" x2="90" y2="175" stroke="#333" stroke-width="1.5" marker-end="url(#a2)"/>
-  <text x="210" y="178" text-anchor="middle" fill="#555" font-size="9">HTTP 301 → long_url</text>
-  <!-- Async analytics -->
-  <line x1="385" y1="150" x2="385" y2="230" stroke="#333" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a2)"/>
-  <rect x="330" y="230" width="110" height="35" rx="6" fill="#9c27b0" stroke="#6a1b9a" stroke-width="1.5"/>
-  <text x="385" y="252" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Analytics Queue</text>
-</svg>
-</div>
 
-<div class="example">
-<h4>Example 1: Cache hit</h4>
-<p>A user clicks <code>https://tinyurl.com/aB3xY9k</code>. The browser sends <strong>GET /aB3xY9k</strong> to the Load Balancer → <strong>URL Service</strong>. The service looks up "aB3xY9k" in the <strong>Redis Cache</strong> — cache hit! Returns the long URL. The service responds with <strong>HTTP 301 Moved Permanently</strong> with <code>Location: https://www.example.com/very/long/path?param=value</code>. The browser redirects. Asynchronously, a click event is published to the <strong>Analytics Queue</strong>.</p>
-</div>
-
-<div class="example">
-<h4>Example 2: Cache miss</h4>
-<p>The short code "xYz987" hasn't been accessed recently and was evicted from cache. The URL Service queries the <strong>URL DB</strong> (cache miss → DB lookup), finds the mapping, populates the Redis Cache for future requests, and returns the 301 redirect.</p>
-</div>
-
-<div class="example">
-<h4>Example 3: Expired URL</h4>
-<p>The short code "abc123" was set to expire on 2024-01-01. A user visits it on 2024-03-15. The URL Service finds the record but checks <code>expires_at &lt; now()</code> → expired. Returns <strong>HTTP 410 Gone</strong> with a friendly error page.</p>
-</div>
-
-<div class="deep-dive">
-<h4>HTTP 301 vs. 302</h4>
-<p><strong>301 (Moved Permanently):</strong> Browser caches the redirect. Subsequent visits to the short URL don't hit our server — faster for the user, less server load. But we lose analytics on repeat visits.</p>
-<p><strong>302 (Found/Temporary):</strong> Browser doesn't cache. Every visit hits our server — enables accurate click counting. Slightly slower for repeat visits.</p>
-<p><strong>Our choice:</strong> Use <strong>301</strong> by default for speed and reduced load. For URLs with analytics tracking enabled, use <strong>302</strong> to capture every click.</p>
-</div>
-
-<!-- ==================== OVERALL COMBINED FLOW ==================== -->
-<h2>Overall Combined Flow</h2>
-<div class="diagram">
-<svg viewBox="0 0 1050 380" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#333"/></marker></defs>
-  <rect x="10" y="150" width="70" height="45" rx="6" fill="#4caf50" stroke="#388e3c" stroke-width="1.5"/>
-  <text x="45" y="177" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Client</text>
-  <line x1="80" y1="172" x2="130" y2="172" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <rect x="130" y="150" width="70" height="45" rx="6" fill="#ff9800" stroke="#f57c00" stroke-width="1.5"/>
-  <text x="165" y="170" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Load</text>
-  <text x="165" y="182" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Balancer</text>
-  <line x1="200" y1="172" x2="250" y2="172" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <rect x="250" y="145" width="100" height="55" rx="8" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
-  <text x="300" y="170" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">URL</text>
-  <text x="300" y="183" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Service</text>
-  <!-- Cache -->
-  <line x1="350" y1="162" x2="420" y2="110" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <ellipse cx="470" cy="100" rx="40" ry="10" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <rect x="430" y="100" width="80" height="20" fill="#009688" stroke="#00695c" stroke-width="1.5"/>
-  <ellipse cx="470" cy="120" rx="40" ry="10" fill="#00796b" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="430" y1="100" x2="430" y2="120" stroke="#00695c" stroke-width="1.5"/>
-  <line x1="510" y1="100" x2="510" y2="120" stroke="#00695c" stroke-width="1.5"/>
-  <text x="470" y="114" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">Redis</text>
-  <!-- URL DB -->
-  <line x1="350" y1="180" x2="420" y2="230" stroke="#333" stroke-width="1.5" marker-end="url(#a3)"/>
-  <ellipse cx="470" cy="225" rx="40" ry="10" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <rect x="430" y="225" width="80" height="22" fill="#ff5722" stroke="#d84315" stroke-width="1.5"/>
-  <ellipse cx="470" cy="247" rx="40" ry="10" fill="#e64a19" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="430" y1="225" x2="430" y2="247" stroke="#d84315" stroke-width="1.5"/>
-  <line x1="510" y1="225" x2="510" y2="247" stroke="#d84315" stroke-width="1.5"/>
-  <text x="470" y="240" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">URL DB</text>
-  <!-- KGS -->
-  <line x1="300" y1="145" x2="300" y2="70" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="255" y="25" width="90" height="45" rx="6" fill="#673ab7" stroke="#4527a0" stroke-width="1.5"/>
-  <text x="300" y="52" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">KGS</text>
-  <line x1="345" y1="47" x2="400" y2="47" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <ellipse cx="440" cy="40" rx="30" ry="8" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
-  <rect x="410" y="40" width="60" height="16" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
-  <ellipse cx="440" cy="56" rx="30" ry="8" fill="#e64a19" stroke="#d84315" stroke-width="1"/>
-  <line x1="410" y1="40" x2="410" y2="56" stroke="#d84315" stroke-width="1"/>
-  <line x1="470" y1="40" x2="470" y2="56" stroke="#d84315" stroke-width="1"/>
-  <text x="440" y="52" text-anchor="middle" fill="#fff" font-size="7" font-weight="bold">Key DB</text>
-  <!-- Analytics -->
-  <line x1="300" y1="200" x2="300" y2="290" stroke="#333" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a3)"/>
-  <rect x="255" y="290" width="90" height="35" rx="6" fill="#9c27b0" stroke="#6a1b9a" stroke-width="1.5"/>
-  <text x="300" y="312" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Analytics Q</text>
-  <line x1="345" y1="307" x2="410" y2="307" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <rect x="410" y="290" width="90" height="35" rx="6" fill="#e91e63" stroke="#ad1457" stroke-width="1.5"/>
-  <text x="455" y="312" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Analytics Svc</text>
-  <line x1="500" y1="307" x2="560" y2="307" stroke="#333" stroke-width="1" marker-end="url(#a3)"/>
-  <ellipse cx="605" cy="300" rx="35" ry="8" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
-  <rect x="570" y="300" width="70" height="16" fill="#ff5722" stroke="#d84315" stroke-width="1"/>
-  <ellipse cx="605" cy="316" rx="35" ry="8" fill="#e64a19" stroke="#d84315" stroke-width="1"/>
-  <line x1="570" y1="300" x2="570" y2="316" stroke="#d84315" stroke-width="1"/>
-  <line x1="640" y1="300" x2="640" y2="316" stroke="#d84315" stroke-width="1"/>
-  <text x="605" y="312" text-anchor="middle" fill="#fff" font-size="7" font-weight="bold">Analytics DB</text>
-</svg>
-</div>
-
-<div class="example">
-<h4>Combined Example</h4>
-<p><strong>Create:</strong> User POSTs long URL → LB → URL Service → KGS provides unique key "aB3xY9k" → saved to URL DB + Redis Cache → returns short URL.<br/>
-<strong>Redirect:</strong> User GETs /aB3xY9k → LB → URL Service → Redis cache hit → HTTP 301 redirect to long URL. Click event → Analytics Queue → Analytics Service → Analytics DB.</p>
-</div>
-
-<!-- ==================== SCHEMA ==================== -->
-<h2>Database Schema</h2>
-
-<h3>NoSQL Table (DynamoDB/Cassandra)</h3>
-
-<h4>1. urls</h4>
-<table>
-  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
-  <tr><td>short_code</td><td>VARCHAR(7)</td><td><span class="tag tag-pk">Partition Key</span></td><td>The 7-char unique short code</td></tr>
-  <tr><td>long_url</td><td>TEXT</td><td></td><td>Original URL (up to 2048 chars)</td></tr>
-  <tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-idx">Secondary Index (Hash)</span></td><td>Creator (nullable for anonymous)</td></tr>
-  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>Creation time</td></tr>
-  <tr><td>expires_at</td><td>TIMESTAMP</td><td></td><td>Expiration time (nullable)</td></tr>
-  <tr><td>click_count</td><td>COUNTER</td><td></td><td>Total clicks (denormalized)</td></tr>
-</table>
-<p><strong>Why NoSQL:</strong> This is a simple key-value lookup (short_code → long_url). No joins, no complex queries. NoSQL provides low-latency reads and easy horizontal scaling. Cassandra or DynamoDB both work well.</p>
-<p><strong>Index:</strong> Hash index on <code>short_code</code> (partition key) for O(1) lookups. Secondary hash index on <code>user_id</code> for "get all URLs created by user X" queries (used in the dashboard).</p>
-<p><strong>Sharding:</strong> Auto-sharded by <code>short_code</code> (partition key) using consistent hashing. Distributes evenly due to random nature of generated codes.</p>
-<p><strong>Read trigger:</strong> Every redirect (GET /{short_code}). <strong>Write trigger:</strong> URL creation (POST /shorten).</p>
-
-<h4>2. keys (Key Generation)</h4>
-<table>
-  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
-  <tr><td>key_value</td><td>VARCHAR(7)</td><td><span class="tag tag-pk">PK</span></td><td>Pre-generated short code</td></tr>
-  <tr><td>is_used</td><td>BOOLEAN</td><td><span class="tag tag-idx">Index</span></td><td>Whether the key has been assigned</td></tr>
-</table>
-<p>Stored in a simple key-value store. KGS instances pre-load batches of unused keys into memory.</p>
-
-<h4>3. analytics (Time-series)</h4>
-<table>
-  <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
-  <tr><td>short_code</td><td>VARCHAR(7)</td><td><span class="tag tag-pk">Partition Key</span></td><td>The short code</td></tr>
-  <tr><td>timestamp</td><td>TIMESTAMP</td><td><span class="tag tag-pk">Clustering Key</span></td><td>Click timestamp</td></tr>
-  <tr><td>ip_address</td><td>TEXT</td><td></td><td>Client IP</td></tr>
-  <tr><td>user_agent</td><td>TEXT</td><td></td><td>Browser/device info</td></tr>
-  <tr><td>referrer</td><td>TEXT</td><td></td><td>HTTP referrer</td></tr>
-  <tr><td>country</td><td>TEXT</td><td></td><td>Geo-resolved country</td></tr>
-</table>
-
-<!-- ==================== CACHE ==================== -->
-<h2>Cache Deep Dive</h2>
-<div class="deep-dive">
-<h4>Redis Cache</h4>
-<p><strong>Purpose:</strong> Cache the short_code → long_url mapping for fast redirect lookups.</p>
-<p><strong>Caching strategy:</strong> <strong>Write-through + Read-through.</strong> On URL creation: write to both DB and Redis. On redirect: check Redis first; on miss, query DB and populate Redis.</p>
-<p><strong>Eviction policy:</strong> <strong>LRU (Least Recently Used).</strong> Popular URLs stay cached; rarely accessed URLs get evicted. This is optimal because URL access follows a power-law distribution — a small percentage of URLs account for the majority of traffic.</p>
-<p><strong>Expiration policy:</strong> TTL = 24 hours. Refreshed on each access (TTL reset on read). Expired URLs in the DB are not cached.</p>
-<p><strong>Cache size:</strong> With 20% of URLs accounting for 80% of traffic, caching the top 20% (~200M URLs × 1KB each = ~200GB) provides excellent hit rates (~95%).</p>
-</div>
-
-<div class="deep-dive">
-<h4>CDN Consideration</h4>
-<p>CDN is <strong>appropriate for the redirect</strong> endpoint. Configure CDN (e.g., CloudFront) to cache 301 redirects at edge locations. When a user in Tokyo clicks a short URL, the CDN edge in Tokyo responds directly with the cached redirect without hitting the origin server. This reduces redirect latency from ~50ms to ~5ms.</p>
-<p><strong>CDN TTL:</strong> 1 hour for 301 redirects. Invalidate CDN cache when a URL is deleted or updated.</p>
-</div>
-
-<!-- ==================== SCALING ==================== -->
-<h2>Scaling Considerations</h2>
-<h3>Load Balancers</h3>
+<!-- ============================================================ -->
+<h2 id="scaling">9. Scaling Considerations</h2>
+<!-- ============================================================ -->
+<div class="card">
+<h4>Traffic Estimates</h4>
 <ul>
-  <li><strong>L7 Load Balancer</strong> in front of URL Service instances. Round-robin distribution for stateless HTTP requests.</li>
-  <li>For redirect endpoint (GET), consider <strong>consistent hashing</strong> on the short_code to improve local caching on URL Service instances.</li>
+  <li><strong>Write:</strong> ~1,000 new URLs/second (peak)</li>
+  <li><strong>Read (redirects):</strong> ~100,000 redirects/second (100:1 read-to-write ratio)</li>
+  <li><strong>Storage:</strong> 1 billion URLs × ~500 bytes = ~500 GB for URL mappings; click events could grow to tens of TB over time</li>
 </ul>
-<h3>Horizontal Scaling</h3>
+</div>
+
+<h3>9.1 Load Balancers</h3>
+<div class="card">
+<p>Load balancers are placed at three tiers:</p>
+
+<h4>Tier 1: Client → Application Services</h4>
+<p>A Layer 7 (HTTP) load balancer sits between external clients and the application services (URL Shortening Service, URL Redirection Service, Analytics Service). It performs:</p>
 <ul>
-  <li>URL Service: Stateless, add instances behind LB.</li>
-  <li>Redis: Cluster mode, shard by short_code hash slot.</li>
-  <li>Cassandra/DynamoDB: Add nodes, auto-rebalance.</li>
-  <li>KGS: Multiple instances, each pre-loads its own batch of unused keys.</li>
+  <li><strong>TLS termination:</strong> Handles HTTPS so back-end services don't bear the crypto overhead.</li>
+  <li><strong>Path-based routing:</strong> Routes <code>POST /api/v1/shorten</code> to the Shortening Service pool, <code>GET /{short_key}</code> to the Redirection Service pool, and <code>GET /api/v1/analytics/*</code> to the Analytics Service pool.</li>
+  <li><strong>Health checks:</strong> Removes unhealthy instances from the rotation.</li>
+  <li><strong>Algorithm:</strong> Least-connections for the Redirection Service (since request durations are uniform and short) and round-robin for the Shortening Service.</li>
+  <li><strong>Rate limiting:</strong> Enforces per-IP or per-API-key rate limits to prevent abuse.</li>
 </ul>
 
-<h2>Tradeoffs and Deep Dives</h2>
-<div class="tradeoff">
-<h4>KGS vs. Hash-based Key Generation</h4>
-<p><strong>KGS (chosen):</strong> Guarantees uniqueness without collision checking. Slight overhead of maintaining pre-generated keys. If KGS goes down, the pool of in-memory keys can serve requests until it recovers.</p>
-<p><strong>Hashing:</strong> MD5/SHA256 of long URL, take first 7 chars of base62-encoded hash. Simpler but collision-prone. Must check DB for uniqueness and retry with a different seed on collision. At scale (1B+ URLs), collision rate increases.</p>
+<h4>Tier 2: KGS → Key DB</h4>
+<p>An internal L4 (TCP) load balancer distributes KGS batch-fetch requests across Key DB nodes. Less critical since KGS instances rarely make requests (only when their buffer is depleted).</p>
+
+<h4>Tier 3: Analytics Processor → Analytics DB</h4>
+<p>An internal L4 load balancer distributes batch writes from the Analytics Processor workers to Analytics DB nodes.</p>
+
+<h4>High Availability for Load Balancers</h4>
+<p>Deploy load balancers in active-passive or active-active pairs. Use DNS-based failover or a virtual IP (VIP) to route traffic to the active LB. Geographic DNS routing can direct users to the nearest data center.</p>
 </div>
 
-<div class="tradeoff">
-<h4>Base62 vs. Base64</h4>
-<p>Base62 (a-z, A-Z, 0-9) produces URL-safe characters. Base64 includes +, /, = which must be URL-encoded. We chose base62 for cleaner URLs. The tradeoff is slightly longer codes for the same keyspace, but 62^7 = 3.5T is more than sufficient.</p>
+<h3>9.2 Horizontal Scaling of Services</h3>
+<div class="card">
+<ul>
+  <li><strong>URL Redirection Service:</strong> Stateless. Scale horizontally by adding more instances behind the load balancer. This is the most heavily loaded service (100K req/s). Auto-scale based on CPU or request rate.</li>
+  <li><strong>URL Shortening Service:</strong> Stateless. Scale horizontally. Much lower load (~1K req/s).</li>
+  <li><strong>Key Generation Service:</strong> Slightly stateful (in-memory key buffer). Scale by running multiple instances, each holding its own batch. No coordination needed between instances since each operates on a disjoint set of keys.</li>
+  <li><strong>Analytics Processor:</strong> Scale by adding more consumers to the consumer group. The message queue partitions ensure each message is processed by exactly one consumer.</li>
+  <li><strong>Analytics Service:</strong> Stateless. Scale horizontally.</li>
+</ul>
 </div>
 
-<h2>Alternative Approaches</h2>
-<div class="alternative">
-<h4>Alternative 1: Counter-based IDs</h4>
-<p>Use an auto-incrementing counter, convert to base62. Simple and unique. Not chosen because: (1) sequential IDs are predictable (security concern — users can enumerate URLs), (2) requires a single counter or distributed counter (coordination overhead).</p>
-</div>
-<div class="alternative">
-<h4>Alternative 2: UUID</h4>
-<p>Use a UUID (128-bit), encode in base62 (22 chars). Guaranteed unique. Not chosen because the resulting short URL is too long (defeats the purpose of URL shortening).</p>
-</div>
-<div class="alternative">
-<h4>Alternative 3: Snowflake ID</h4>
-<p>64-bit timestamp-based ID, base62 encoded (~11 chars). Time-sortable and unique. Viable alternative, but still produces longer codes than our 7-char target. Could work if we accept slightly longer URLs.</p>
+<h3>9.3 Database Scaling</h3>
+<div class="card">
+<ul>
+  <li><strong>URL Mappings DB:</strong> Hash-sharded by <code>short_key</code> across multiple nodes. Add shards as data grows. Replication factor of 3 for durability and read scalability. Read replicas can serve redirect reads to spread the load.</li>
+  <li><strong>Analytics DB:</strong> Sharded by <code>short_key</code> with bucket suffix for hot URLs. Time-based compaction to archive old click data. Consider TTL on very old data (e.g., auto-delete raw click events after 1 year but keep aggregated stats).</li>
+  <li><strong>Users DB (SQL):</strong> Single primary with read replicas. Not a bottleneck.</li>
+</ul>
 </div>
 
-<h2>Additional Information</h2>
-<h3>URL Deduplication</h3>
-<p>If Alice shortens the same long URL twice, should she get the same short code? Two approaches: (1) Always generate a new short code (simpler, allows per-link analytics). (2) Check if the long URL already exists and return the existing short code (saves storage, but requires a secondary index on long_url — expensive for long strings). We choose option (1) for simplicity.</p>
-
-<h3>Abuse Prevention</h3>
-<p>Short URLs can be used for phishing. Mitigations: (1) Rate limit URL creation per user/IP. (2) Check long URLs against a phishing/malware blocklist (e.g., Google Safe Browsing API) before shortening. (3) Show a preview/interstitial page before redirecting for suspicious URLs.</p>
-
-<h3>Cleanup Job</h3>
-<p>A periodic background job scans for expired URLs (where <code>expires_at &lt; now()</code>) and soft-deletes them. This frees up storage and eventually returns the short codes to the key pool for reuse (after a quarantine period to avoid confusion).</p>
+<h3>9.4 Cache Scaling</h3>
+<div class="card">
+<p>The in-memory URL cache is itself sharded using consistent hashing. As the cache cluster grows, consistent hashing minimizes cache misses during resharding (only ~1/N keys are remapped when adding a node). Multiple cache replicas provide fault tolerance — if one cache node fails, the load shifts to the DB temporarily until the cache warms up.</p>
 </div>
+
+<h3>9.5 Geographic Distribution</h3>
+<div class="card">
+<p>For global users, deploy the Redirection Service + URL Cache in multiple geographic regions. Use GeoDNS to route users to the nearest region. The URL Mappings DB can be replicated across regions with eventual consistency (a few hundred ms delay is acceptable for new URLs to appear in remote regions). The Shortening Service can remain centralized in a single region since writes are infrequent.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="tradeoffs">10. Tradeoffs &amp; Deep Dives</h2>
+<!-- ============================================================ -->
+
+<h3>10.1 HTTP 301 vs. 302 Redirect</h3>
+<div class="card">
+<table>
+  <tr><th></th><th>301 (Permanent)</th><th>302 (Temporary)</th></tr>
+  <tr><td>Browser caches?</td><td>Yes — subsequent visits skip our server</td><td>No — every visit hits our server</td></tr>
+  <tr><td>CDN cacheable?</td><td>Yes</td><td>Generally no</td></tr>
+  <tr><td>Analytics impact</td><td>Lose repeat-visit data</td><td>Capture every click</td></tr>
+  <tr><td>SEO</td><td>Passes link juice to destination</td><td>Does not pass link juice</td></tr>
+  <tr><td>Server load</td><td>Lower (browser cache absorbs repeats)</td><td>Higher (every click hits server)</td></tr>
+</table>
+<p><strong>Our choice: 302.</strong> Analytics is a core functional requirement, so we need every click to hit our servers. The additional server load is handled through horizontal scaling and caching at the application level.</p>
+</div>
+
+<h3>10.2 Key Generation: Pre-generated KGS vs. Hashing vs. Counter</h3>
+<div class="card">
+<table>
+  <tr><th>Approach</th><th>Pros</th><th>Cons</th></tr>
+  <tr>
+    <td><strong>KGS (chosen)</strong></td>
+    <td>Zero collision risk; O(1) key retrieval; non-predictable keys; decoupled from hash algorithm</td>
+    <td>Extra infrastructure (KGS + Key DB); lost keys if KGS crashes (negligible)</td>
+  </tr>
+  <tr>
+    <td>Hash (MD5/SHA-256) + truncation</td>
+    <td>Simple; no separate service needed</td>
+    <td>Collisions require retry logic; same long URL always produces same hash (could be a pro or con); hash truncation increases collision probability</td>
+  </tr>
+  <tr>
+    <td>Auto-incrementing counter + Base62</td>
+    <td>Simple; guaranteed unique; no separate service</td>
+    <td>Sequential/predictable (security concern); single point of failure if using one counter; distributed counters add complexity</td>
+  </tr>
+</table>
+<p><strong>Our choice: KGS.</strong> It eliminates collision handling entirely, provides non-predictable keys, and the key generation is amortized (batch fetches). The extra infrastructure is minimal compared to the simplicity it brings to the write path.</p>
+</div>
+
+<h3>10.3 NoSQL vs. SQL for URL Mappings</h3>
+<div class="card">
+<p><strong>Our choice: NoSQL (Key-Value store).</strong></p>
+<ul>
+  <li>The primary access pattern is a simple <code>GET(key)</code> — perfect for key-value stores.</li>
+  <li>No joins or complex transactions needed on the URL data.</li>
+  <li>Need to scale to billions of records with sub-millisecond reads.</li>
+  <li>Horizontal scaling (sharding) is built into NoSQL systems.</li>
+</ul>
+<p>SQL would work for smaller scale, but at billions of records with 100K reads/second, a NoSQL key-value store is more naturally suited and simpler to operate.</p>
+</div>
+
+<h3>10.4 Synchronous vs. Asynchronous Analytics</h3>
+<div class="card">
+<p><strong>Our choice: Asynchronous (via message queue).</strong></p>
+<p>Writing click data synchronously on the redirect path would add 5-20 ms of latency to every redirect. At 100K redirects/second, this would also create a massive write bottleneck on the Analytics DB. By publishing click events to a message queue asynchronously, we keep the redirect response time under 50 ms and allow the Analytics Processor to batch-insert events at its own pace. The trade-off is that analytics data is eventually consistent (delayed by a few seconds), which is perfectly acceptable for a dashboard.</p>
+</div>
+
+<h3>10.5 Denormalized total_clicks Counter</h3>
+<div class="card">
+<p>Storing <code>total_clicks</code> in the URL Mappings table is a deliberate denormalization. The normalized approach would compute the count from the Click Events table: <code>SELECT COUNT(*) FROM click_events WHERE short_key = ?</code>. For a viral URL with millions of clicks, this aggregation could take seconds. The denormalized counter provides O(1) access to the total at the cost of an atomic increment on every analytics batch write. Given the 100:1 read-to-write ratio, this trade-off heavily favors reads.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="alternatives">11. Alternative Approaches</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+<h4>Alternative 1: Hash-based key generation instead of KGS</h4>
+<p>Generate the short key by hashing the long URL (e.g., MD5 → take first 7 Base62 characters). <strong>Why not chosen:</strong> (1) Collision risk: with 3.5 trillion possible keys and billions of URLs, the birthday problem means collisions occur sooner than expected. Each collision requires a retry (hash the URL with a counter appended, check DB, repeat). (2) The same long URL always produces the same short key — this could be a feature (deduplication) but also means different users can't have different short URLs for the same destination. Our KGS approach sidesteps both issues cleanly.</p>
+</div>
+
+<div class="card">
+<h4>Alternative 2: SQL database for URL Mappings</h4>
+<p>Use a relational database with a simple table and B-tree index on <code>short_key</code>. <strong>Why not chosen:</strong> While SQL works at moderate scale, it doesn't naturally shard for billions of records. Read replicas help with read scaling but introduce replication lag. A NoSQL key-value store is purpose-built for this exact access pattern and scales more naturally. We still use SQL for the Users table where relational guarantees matter.</p>
+</div>
+
+<div class="card">
+<h4>Alternative 3: Use CDN for caching redirects</h4>
+<p>Place a CDN in front of the Redirection Service and serve 301 redirects. <strong>Why not chosen:</strong> This would make redirect latency extremely fast (edge-cached globally) but would blind us to analytics data. Clicks served from the CDN never reach our servers. If analytics were not a requirement, this would be the optimal architecture for pure speed.</p>
+</div>
+
+<div class="card">
+<h4>Alternative 4: Pub/Sub instead of message queue for analytics</h4>
+<p>Use a Pub/Sub system where the Redirection Service publishes click events and multiple subscribers (real-time dashboard, batch aggregator, fraud detector) consume them. <strong>Why not chosen:</strong> We currently have a single consumer (Analytics Processor). Pub/Sub's fan-out is unnecessary overhead. A message queue with consumer groups is simpler and provides better ordering guarantees. If the system evolves to need multiple consumers (e.g., a real-time fraud detector), migrating to Pub/Sub would be warranted.</p>
+</div>
+
+<div class="card">
+<h4>Alternative 5: Snowflake / ULID-based ID generation</h4>
+<p>Use distributed ID generators (similar to Twitter's Snowflake) to generate globally unique, time-sortable 64-bit IDs, then Base62-encode them. <strong>Why not chosen:</strong> Snowflake IDs are time-sortable and encode the generating machine ID, making them partially predictable. They also produce longer keys (11 Base62 characters for 64-bit IDs) compared to our 7-character keys. The KGS approach produces shorter, more random keys.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="additional">12. Additional Information</h2>
+<!-- ============================================================ -->
+
+<h3>12.1 Rate Limiting</h3>
+<div class="card">
+<p>Rate limiting is applied at the Load Balancer and/or the URL Shortening Service to prevent abuse:</p>
+<ul>
+  <li><strong>Anonymous users:</strong> 10 URL shortenings per hour per IP address.</li>
+  <li><strong>Authenticated users:</strong> 100 URL shortenings per hour per API key (higher tiers available).</li>
+  <li><strong>Redirect path:</strong> Rate limiting is generally not applied to redirects to avoid degrading user experience, but DDoS protection (e.g., IP-level throttling at the network edge) is in place.</li>
+</ul>
+<p>Implementation: Token bucket or sliding window counter stored in the in-memory cache with the key pattern <code>ratelimit:{ip_or_api_key}</code>.</p>
+</div>
+
+<h3>12.2 URL Validation &amp; Security</h3>
+<div class="card">
+<ul>
+  <li><strong>URL validation:</strong> The Shortening Service validates that the submitted URL has a valid scheme (http/https), a resolvable domain, and a reasonable length (&lt; 2,048 characters).</li>
+  <li><strong>Malicious URL detection:</strong> Before creating a short URL, the service can check the long URL against a known malware/phishing blocklist. This adds latency to the write path but protects users from being redirected to harmful sites.</li>
+  <li><strong>Abuse detection:</strong> Monitor for patterns like mass URL creation from a single IP, URLs pointing to known phishing domains, or URLs used in spam campaigns.</li>
+</ul>
+</div>
+
+<h3>12.3 Expiration Cleanup Job</h3>
+<div class="card">
+<p>A background cron job runs periodically (e.g., every hour) to scan the URL Mappings DB for records where <code>expires_at < NOW()</code> and deletes them. The <code>expires_at</code> B-tree index enables efficient range scans for this query. Deleted keys can optionally be recycled back to the Key DB's <code>unused_keys</code> collection, but this is unnecessary given the vast key space (3.5 trillion).</p>
+</div>
+
+<h3>12.4 High Availability &amp; Disaster Recovery</h3>
+<div class="card">
+<ul>
+  <li><strong>Multi-region deployment:</strong> Active-active in two or more regions. GeoDNS routes users to the nearest healthy region.</li>
+  <li><strong>DB replication:</strong> URL Mappings DB replicated across regions with eventual consistency.</li>
+  <li><strong>Failover:</strong> If an entire region goes down, DNS automatically routes to the surviving region. Cache warms up quickly due to the high hit rate on popular URLs.</li>
+  <li><strong>Backups:</strong> Daily snapshots of all databases with point-in-time recovery capability.</li>
+</ul>
+</div>
+
+<h3>12.5 Monitoring &amp; Alerting</h3>
+<div class="card">
+<ul>
+  <li><strong>Key metrics:</strong> Redirect latency (p50, p95, p99), cache hit ratio, DB read/write latency, message queue consumer lag, KGS key buffer level, error rates (4xx, 5xx).</li>
+  <li><strong>Alerts:</strong> Cache hit ratio drops below 80%, redirect p99 exceeds 100 ms, KGS key buffer falls below 100 keys, message queue consumer lag exceeds 10,000 messages, any service instance unhealthy.</li>
+</ul>
+</div>
+
+
+<!-- ============================================================ -->
+<h2 id="vendors">13. Vendor Section</h2>
+<!-- ============================================================ -->
+<div class="card">
+<p>The design above is vendor-agnostic. Below are specific products that map well to each component:</p>
+
+<table>
+  <tr><th>Component</th><th>Vendor Options</th><th>Why</th></tr>
+  <tr>
+    <td>URL Mappings DB (NoSQL KV)</td>
+    <td>Amazon DynamoDB, Apache Cassandra, ScyllaDB</td>
+    <td>DynamoDB: fully managed, single-digit ms latency, auto-scaling. Cassandra/ScyllaDB: proven at massive scale, tunable consistency, excellent write throughput.</td>
+  </tr>
+  <tr>
+    <td>Analytics DB (Wide-Column / Time-Series)</td>
+    <td>Apache Cassandra, ClickHouse, TimescaleDB</td>
+    <td>Cassandra: excellent for time-series write-heavy workloads. ClickHouse: blazing fast columnar analytics. TimescaleDB: if SQL analytics queries are preferred.</td>
+  </tr>
+  <tr>
+    <td>Users DB (SQL)</td>
+    <td>PostgreSQL, MySQL</td>
+    <td>Mature, reliable RDBMS options with strong ACID guarantees and rich ecosystem.</td>
+  </tr>
+  <tr>
+    <td>In-Memory Cache</td>
+    <td>Redis, Memcached</td>
+    <td>Redis: supports TTL, LRU eviction, data structures, persistence. Memcached: simpler, slightly faster for pure key-value cache.</td>
+  </tr>
+  <tr>
+    <td>Message Queue</td>
+    <td>Apache Kafka, Amazon SQS, RabbitMQ</td>
+    <td>Kafka: high-throughput, durable, partitioned topics, excellent for event streaming. SQS: managed, simple. RabbitMQ: flexible routing.</td>
+  </tr>
+  <tr>
+    <td>Load Balancer</td>
+    <td>NGINX, HAProxy, AWS ALB/NLB, Envoy</td>
+    <td>NGINX/HAProxy: proven L7/L4 load balancers. ALB: managed AWS option. Envoy: modern service mesh proxy with advanced routing.</td>
+  </tr>
+  <tr>
+    <td>CDN (static assets)</td>
+    <td>Cloudflare, AWS CloudFront, Fastly</td>
+    <td>All provide global edge caching with low configuration overhead.</td>
+  </tr>
+  <tr>
+    <td>Key DB (NoSQL KV)</td>
+    <td>Amazon DynamoDB, Redis (persistent mode)</td>
+    <td>DynamoDB for fully managed experience. Redis with AOF persistence for simpler setup.</td>
+  </tr>
+</table>
+</div>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    securityLevel: 'loose',
+    flowchart: {
+      useMaxWidth: true,
+      htmlLabels: true,
+      curve: 'basis'
+    }
+  });
+</script>
 </body>
 </html>
