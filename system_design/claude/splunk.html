@@ -1,632 +1,1199 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Splunk - System Design</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>System Design: Splunk</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 <style>
-  body { background: #0f0f0f; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; line-height: 1.7; }
-  h1 { color: #65a637; text-align: center; font-size: 2.2em; margin-bottom: 5px; }
-  h2 { color: #f58220; border-bottom: 2px solid #f58220; padding-bottom: 6px; margin-top: 40px; }
-  h3 { color: #8bc34a; }
-  .section { background: #1a1a1a; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #2a2a2a; }
-  .diagram-box { background: #141414; border-radius: 10px; padding: 20px; margin: 15px 0; text-align: center; overflow-x: auto; }
-  .example { background: #1e2a1e; border-left: 4px solid #65a637; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
-  .deep-dive { background: #1a1a2e; border-left: 4px solid #f58220; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
-  .tradeoff { background: #2a1a1a; border-left: 4px solid #ff6b6b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
-  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-  th, td { border: 1px solid #333; padding: 10px 14px; text-align: left; }
-  th { background: #1e3a1e; color: #8bc34a; }
-  code { background: #2a2a2a; padding: 2px 7px; border-radius: 4px; color: #8bc34a; font-size: 0.95em; }
-  .tag-pk { background: #4a2; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
-  .tag-fk { background: #2a4a8a; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
-  .tag-idx { background: #8a6a2a; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
-  .tag-shard { background: #6a2a6a; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
-  .tag-ttl { background: #8a2a2a; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
-  ul, ol { padding-left: 22px; }
-  li { margin: 6px 0; }
-  .subtitle { text-align: center; color: #999; font-size: 1.1em; margin-bottom: 30px; }
+  :root { --bg: #fdfdfd; --fg: #1a1a1a; --accent: #2563eb; --accent2: #7c3aed; --border: #e5e7eb; --code-bg: #f3f4f6; --table-head: #f0f4ff; --section-bg: #ffffff; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.7; padding: 2rem; max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 2.2rem; margin-bottom: .3rem; color: var(--accent); }
+  h2 { font-size: 1.6rem; margin-top: 2.5rem; margin-bottom: 1rem; padding-bottom: .4rem; border-bottom: 3px solid var(--accent); color: var(--accent); }
+  h3 { font-size: 1.25rem; margin-top: 1.8rem; margin-bottom: .6rem; color: var(--accent2); }
+  h4 { font-size: 1.05rem; margin-top: 1.2rem; margin-bottom: .4rem; }
+  p, li { margin-bottom: .5rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: .92em; }
+  pre { background: var(--code-bg); padding: 1rem; border-radius: 8px; overflow-x: auto; margin-bottom: 1rem; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+  th, td { border: 1px solid var(--border); padding: .55rem .75rem; text-align: left; font-size: .93rem; }
+  th { background: var(--table-head); font-weight: 600; }
+  .mermaid { margin: 1.5rem 0; text-align: center; }
+  .example-box { background: #eff6ff; border-left: 4px solid var(--accent); padding: 1rem 1.2rem; border-radius: 6px; margin: 1rem 0; }
+  .example-box strong { color: var(--accent); }
+  .warn-box { background: #fef9c3; border-left: 4px solid #ca8a04; padding: 1rem 1.2rem; border-radius: 6px; margin: 1rem 0; }
+  .section-card { background: var(--section-bg); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  .subtitle { color: #6b7280; font-size: 1rem; margin-bottom: 2rem; }
 </style>
 </head>
 <body>
 
-<h1>🔍 Splunk — System Design</h1>
-<p class="subtitle">Log Analytics, Search Processing Language, Machine Data Indexing &amp; Real-Time Alerting Platform</p>
+<h1>System Design: Splunk (Log Management & Analytics Platform)</h1>
+<p class="subtitle">A comprehensive design for ingesting, indexing, searching, and alerting on machine-generated data at scale.</p>
 
-<!-- ==================== REQUIREMENTS ==================== -->
-<div class="section">
-<h2>Functional Requirements</h2>
+<!-- ============================================================ -->
+<h2>1. Functional Requirements</h2>
+<!-- ============================================================ -->
+<div class="section-card">
 <ol>
-  <li><strong>Data Ingestion</strong> — Accept structured/unstructured machine data from syslog, files, HTTP Event Collector (HEC), forwarders, cloud APIs</li>
-  <li><strong>Indexing</strong> — Parse, timestamp-extract, and store events in time-series indexed buckets for sub-second search</li>
-  <li><strong>Search (SPL)</strong> — Execute Search Processing Language queries: filtering, transforming, statistical, join, subsearch commands</li>
-  <li><strong>Dashboards &amp; Visualization</strong> — Real-time and scheduled dashboards with charts, tables, single-value panels, maps</li>
-  <li><strong>Alerting</strong> — Threshold-based, scheduled, and real-time alerts with webhook/email/PagerDuty actions</li>
-  <li><strong>Knowledge Objects</strong> — Field extractions, lookups, event types, tags, data models, saved searches</li>
-  <li><strong>RBAC &amp; Multi-Tenancy</strong> — Role-based access to indexes, apps, and search capabilities</li>
+  <li><strong>Log Ingestion</strong> — Accept log/event data from diverse sources (application servers, network devices, containers, cloud services) via agents (forwarders) and direct API submission.</li>
+  <li><strong>Parsing &amp; Field Extraction</strong> — Automatically parse raw log lines, extract timestamps, and apply source-type-specific rules to create structured fields.</li>
+  <li><strong>Full-Text Search</strong> — Users can search across massive volumes of log data using a query language supporting filters, wildcards, boolean operators, aggregations, and statistical functions (e.g., <code>index=web status=500 | stats count by host</code>).</li>
+  <li><strong>Real-Time Search &amp; Streaming</strong> — Support real-time searches that continuously stream newly arriving matching events to the user.</li>
+  <li><strong>Dashboards &amp; Visualizations</strong> — Users can create dashboards composed of panels, each backed by a saved search query, rendered as charts, tables, or single-value displays.</li>
+  <li><strong>Alerting</strong> — Users can define alert rules (scheduled or real-time) that evaluate a search query against a condition and trigger notifications (email, webhook, PagerDuty-style integrations).</li>
+  <li><strong>Index Management</strong> — Support multiple logical indexes with independent retention policies, access controls, and storage tiers.</li>
+  <li><strong>Data Retention &amp; Tiered Storage</strong> — Automatically migrate data across storage tiers (hot → warm → cold → frozen) based on age and policy.</li>
+  <li><strong>Role-Based Access Control (RBAC)</strong> — Authenticate users and restrict access to specific indexes, dashboards, and features based on roles.</li>
+  <li><strong>Saved Searches &amp; Reports</strong> — Users can save search queries and schedule them to run periodically, producing reports.</li>
 </ol>
 </div>
 
-<div class="section">
-<h2>Non-Functional Requirements</h2>
-<ul>
-  <li><strong>Throughput</strong> — 100s of TB/day ingestion across distributed indexer clusters</li>
-  <li><strong>Search Latency</strong> — &lt;10s for recent data, minutes for terabytes of historical data (MapReduce-style parallel search)</li>
-  <li><strong>Durability</strong> — Replication factor 3 across indexer peers; no data loss during node failures</li>
-  <li><strong>Scalability</strong> — Horizontal scaling: add indexers for throughput, add search heads for concurrent users</li>
-  <li><strong>Availability</strong> — 99.99% uptime with search head clustering and indexer cluster auto-failover</li>
-  <li><strong>Retention</strong> — Configurable per-index (hot → warm → cold → frozen → thawed lifecycle)</li>
-  <li><strong>Security</strong> — TLS in transit, AES-256 at rest, audit logging, SAML/LDAP SSO integration</li>
-</ul>
-</div>
-
-<!-- ==================== FLOW 1: DATA INGESTION ==================== -->
-<div class="section">
-<h2>Flow 1: Data Ingestion &amp; Indexing Pipeline</h2>
-
-<div class="diagram-box">
-<svg viewBox="0 0 1050 420" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <marker id="ah1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" fill="#65a637"/>
-    </marker>
-  </defs>
-  <!-- Data Sources -->
-  <rect x="10" y="30" width="130" height="50" rx="8" fill="#2e7d32"/>
-  <text x="75" y="60" text-anchor="middle" fill="white" font-size="12">Servers / Apps</text>
-  <rect x="10" y="100" width="130" height="50" rx="8" fill="#2e7d32"/>
-  <text x="75" y="130" text-anchor="middle" fill="white" font-size="12">Network Devices</text>
-  <rect x="10" y="170" width="130" height="50" rx="8" fill="#2e7d32"/>
-  <text x="75" y="200" text-anchor="middle" fill="white" font-size="12">Cloud (AWS/GCP)</text>
-  <rect x="10" y="240" width="130" height="50" rx="8" fill="#2e7d32"/>
-  <text x="75" y="270" text-anchor="middle" fill="white" font-size="12">Custom Apps (HEC)</text>
-
-  <!-- Universal Forwarder -->
-  <rect x="200" y="80" width="140" height="60" rx="8" fill="#f58220"/>
-  <text x="270" y="105" text-anchor="middle" fill="white" font-size="11">Universal Forwarder</text>
-  <text x="270" y="122" text-anchor="middle" fill="white" font-size="10">(UF Agent)</text>
-
-  <!-- Heavy Forwarder -->
-  <rect x="200" y="180" width="140" height="60" rx="8" fill="#e65100"/>
-  <text x="270" y="205" text-anchor="middle" fill="white" font-size="11">Heavy Forwarder</text>
-  <text x="270" y="222" text-anchor="middle" fill="white" font-size="10">(Parsing/Filtering)</text>
-
-  <!-- Indexer Cluster -->
-  <rect x="420" y="50" width="160" height="70" rx="8" fill="#1565c0"/>
-  <text x="500" y="80" text-anchor="middle" fill="white" font-size="12">Indexer Peer 1</text>
-  <text x="500" y="98" text-anchor="middle" fill="white" font-size="10">Parse → Index → Store</text>
-  <rect x="420" y="140" width="160" height="70" rx="8" fill="#1565c0"/>
-  <text x="500" y="170" text-anchor="middle" fill="white" font-size="12">Indexer Peer 2</text>
-  <text x="500" y="188" text-anchor="middle" fill="white" font-size="10">Parse → Index → Store</text>
-  <rect x="420" y="230" width="160" height="70" rx="8" fill="#1565c0"/>
-  <text x="500" y="260" text-anchor="middle" fill="white" font-size="12">Indexer Peer N</text>
-  <text x="500" y="278" text-anchor="middle" fill="white" font-size="10">Parse → Index → Store</text>
-
-  <!-- Cluster Master -->
-  <rect x="430" y="330" width="140" height="50" rx="8" fill="#7b1fa2"/>
-  <text x="500" y="352" text-anchor="middle" fill="white" font-size="11">Cluster Manager</text>
-  <text x="500" y="368" text-anchor="middle" fill="white" font-size="10">(Replication Mgmt)</text>
-
-  <!-- Storage Buckets -->
-  <rect x="660" y="50" width="140" height="55" rx="8" fill="#c62828"/>
-  <text x="730" y="75" text-anchor="middle" fill="white" font-size="11">Hot Buckets</text>
-  <text x="730" y="92" text-anchor="middle" fill="white" font-size="10">(Active Write)</text>
-  <rect x="660" y="120" width="140" height="55" rx="8" fill="#e65100"/>
-  <text x="730" y="145" text-anchor="middle" fill="white" font-size="11">Warm Buckets</text>
-  <text x="730" y="162" text-anchor="middle" fill="white" font-size="10">(Read-only, local)</text>
-  <rect x="660" y="190" width="140" height="55" rx="8" fill="#4a148c"/>
-  <text x="730" y="215" text-anchor="middle" fill="white" font-size="11">Cold Buckets</text>
-  <text x="730" y="232" text-anchor="middle" fill="white" font-size="10">(Separate Path)</text>
-  <rect x="660" y="260" width="140" height="55" rx="8" fill="#37474f"/>
-  <text x="730" y="285" text-anchor="middle" fill="white" font-size="11">Frozen → S3/HDFS</text>
-  <text x="730" y="302" text-anchor="middle" fill="white" font-size="10">(SmartStore Archive)</text>
-
-  <!-- TSIDX -->
-  <rect x="860" y="130" width="150" height="60" rx="8" fill="#006064"/>
-  <text x="935" y="155" text-anchor="middle" fill="white" font-size="11">TSIDX Files</text>
-  <text x="935" y="172" text-anchor="middle" fill="white" font-size="10">(Time-Series Index)</text>
-
-  <!-- Arrows -->
-  <line x1="140" y1="55" x2="198" y2="100" stroke="#65a637" stroke-width="2" marker-end="url(#ah1)"/>
-  <line x1="140" y1="125" x2="198" y2="112" stroke="#65a637" stroke-width="2" marker-end="url(#ah1)"/>
-  <line x1="140" y1="195" x2="198" y2="205" stroke="#65a637" stroke-width="2" marker-end="url(#ah1)"/>
-  <line x1="140" y1="265" x2="198" y2="215" stroke="#65a637" stroke-width="2" marker-end="url(#ah1)"/>
-  <line x1="340" y1="110" x2="418" y2="90" stroke="#65a637" stroke-width="2" marker-end="url(#ah1)"/>
-  <line x1="340" y1="110" x2="418" y2="175" stroke="#65a637" stroke-width="2" marker-end="url(#ah1)"/>
-  <line x1="340" y1="210" x2="418" y2="265" stroke="#65a637" stroke-width="2" marker-end="url(#ah1)"/>
-  <line x1="580" y1="85" x2="658" y2="77" stroke="#65a637" stroke-width="2" marker-end="url(#ah1)"/>
-  <line x1="580" y1="175" x2="658" y2="147" stroke="#65a637" stroke-width="2" marker-end="url(#ah1)"/>
-  <line x1="580" y1="265" x2="658" y2="217" stroke="#65a637" stroke-width="2" marker-end="url(#ah1)"/>
-  <line x1="800" y1="160" x2="858" y2="160" stroke="#65a637" stroke-width="2" marker-end="url(#ah1)"/>
-  <line x1="500" y1="300" x2="500" y2="328" stroke="#f58220" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah1)"/>
-</svg>
-</div>
-
-<h3>Ingestion Steps</h3>
+<!-- ============================================================ -->
+<h2>2. Non-Functional Requirements</h2>
+<!-- ============================================================ -->
+<div class="section-card">
 <ol>
-  <li><strong>Data Collection</strong> — Universal Forwarders (UFs) run as lightweight agents on source machines, tailing log files and forwarding raw data over TCP/TLS (port 9997) to indexers. Heavy Forwarders (HFs) add parsing/filtering/routing before forwarding.</li>
-  <li><strong>HTTP Event Collector (HEC)</strong> — RESTful endpoint (port 8088) for application telemetry. Token-based auth. Accepts JSON/raw payloads. <code>POST /services/collector/event</code> with <code>{"event": {...}, "sourcetype": "json", "index": "main"}</code>.</li>
-  <li><strong>Parsing Pipeline</strong> — Indexer receives data → <em>character encoding</em> → <em>line breaking</em> (LINE_BREAKER regex) → <em>timestamp extraction</em> (TIME_FORMAT, MAX_TIMESTAMP_LOOKAHEAD) → <em>event assembly</em> → assign metadata (host, source, sourcetype, index).</li>
-  <li><strong>Indexing</strong> — Events are written to Hot Buckets (on local SSD). Each bucket is a directory containing: <code>rawdata/journal.gz</code> (compressed events), <code>*.tsidx</code> (inverted index), <code>.bucketmanifest</code>. TSIDX maps terms → event offsets for fast search.</li>
-  <li><strong>Replication</strong> — Cluster Manager coordinates replication factor (RF) and search factor (SF). RF=3 means 3 copies of rawdata across peers. SF=2 means 2 searchable copies with TSIDX.</li>
-  <li><strong>Bucket Lifecycle</strong> — Hot (active writes) → Warm (rolled, read-only, local) → Cold (older, separate mount) → Frozen (archived to S3/HDFS via SmartStore or deleted).</li>
+  <li><strong>High Write Throughput</strong> — Must ingest hundreds of thousands to millions of events per second sustained.</li>
+  <li><strong>Low-Latency Search</strong> — Interactive searches over recent data (hot tier) should return results within seconds for typical queries.</li>
+  <li><strong>Horizontal Scalability</strong> — Ingestion, indexing, and search layers must scale out independently by adding nodes.</li>
+  <li><strong>High Availability</strong> — No single point of failure; data ingestion must not be interrupted by individual node failures.</li>
+  <li><strong>Data Durability</strong> — Ingested data must not be lost. Replication factor ≥ 2 for hot/warm data.</li>
+  <li><strong>Petabyte-Scale Storage</strong> — Must handle petabytes of cumulative log data across all tiers.</li>
+  <li><strong>Fault Tolerance</strong> — Node failures should degrade performance gracefully, not cause data loss or total outage.</li>
+  <li><strong>Compression</strong> — Data should be compressed at rest (especially warm/cold tiers) to reduce storage costs.</li>
+  <li><strong>Multi-Tenancy</strong> — Support multiple teams/orgs with isolated indexes and access controls.</li>
+  <li><strong>Consistency Model</strong> — Eventual consistency for search (slight delay between ingestion and searchability is acceptable, targeting &lt; 5 seconds).</li>
 </ol>
-
-<div class="example">
-  <strong>Example — Application logs ingestion:</strong><br>
-  A web server UF tails <code>/var/log/nginx/access.log</code>, forwards to indexer cluster. Indexer parses timestamps (<code>%d/%b/%Y:%H:%M:%S %z</code>), assigns <code>sourcetype=access_combined</code>, writes to index <code>web_logs</code>. Each event: <code>192.168.1.50 - - [09/Feb/2026:15:30:01 +0000] "GET /api/users HTTP/1.1" 200 1532 0.045</code>. TSIDX indexes terms: "192.168.1.50", "GET", "/api/users", "200".
 </div>
 
-<div class="deep-dive">
-  <strong>Deep Dive — TSIDX (Time-Series Index):</strong><br>
-  TSIDX is Splunk's inverted index stored per-bucket. Structure: segmented terms → posting lists (event offsets in rawdata journal). Terms are <em>major segments</em> (full words) and <em>minor segments</em> (sub-tokens from segmentation). Default segmentation: <code>SEGMENTATION-regex</code> splits on non-alphanumeric characters. Index-time field extraction creates <code>field::value</code> entries in TSIDX. <em>Bloom filters</em> (.bloomfilter) per bucket allow fast negative lookups — if a term definitely isn't in a bucket, skip it entirely during search. This reduces I/O by 90%+ for sparse queries.
+<!-- ============================================================ -->
+<h2>3. Flow 1 — Log Ingestion</h2>
+<!-- ============================================================ -->
+<div class="section-card">
+
+<h3>3.1 Diagram</h3>
+<div class="mermaid">
+graph LR
+    subgraph Sources
+        A1[App Server 1<br/>Forwarder Agent]
+        A2[App Server 2<br/>Forwarder Agent]
+        A3[Network Device]
+        A4[External API Client]
+    end
+
+    LB1[Load Balancer<br/>Ingestion LB]
+
+    subgraph Ingestion Layer
+        IS1[Ingestion Service<br/>Node 1]
+        IS2[Ingestion Service<br/>Node 2]
+    end
+
+    MQ[(Message Queue<br/>Ingestion Topic)]
+
+    subgraph Indexing Layer
+        IX1[Indexer Worker 1]
+        IX2[Indexer Worker 2]
+        IX3[Indexer Worker 3]
+    end
+
+    subgraph Storage
+        HOT[(Hot Storage<br/>SSD — Indexed)]
+        WARM[(Warm Storage<br/>HDD — Indexed)]
+        META[(Metadata DB<br/>NoSQL)]
+    end
+
+    A1 -- TCP --> LB1
+    A2 -- TCP --> LB1
+    A3 -- syslog/TCP --> LB1
+    A4 -- HTTP POST --> LB1
+
+    LB1 --> IS1
+    LB1 --> IS2
+
+    IS1 -- enqueue --> MQ
+    IS2 -- enqueue --> MQ
+
+    MQ -- consume --> IX1
+    MQ -- consume --> IX2
+    MQ -- consume --> IX3
+
+    IX1 -- write raw + index --> HOT
+    IX2 -- write raw + index --> HOT
+    IX3 -- write raw + index --> HOT
+
+    IX1 -. update bucket metadata .-> META
+    IX2 -. update bucket metadata .-> META
+    IX3 -. update bucket metadata .-> META
+
+    HOT -. age-based migration .-> WARM
 </div>
 
-<div class="deep-dive">
-  <strong>Deep Dive — SmartStore (Remote Storage):</strong><br>
-  SmartStore separates compute (indexers) from storage (S3/GCS/Azure Blob). Hot buckets are local. When rolled to warm, data is uploaded to remote store and local copy is cached. Indexers maintain a local cache manager (LRU eviction, configurable max size). On search, if bucket not cached locally, indexer fetches from remote store on-demand. Benefits: elastic storage costs, indexer nodes are stateless (can be auto-scaled). Tradeoff: cold search latency increases by 1-5s for cache misses.
-</div>
-</div>
+<h3>3.2 Examples</h3>
 
-<!-- ==================== FLOW 2: SEARCH ==================== -->
-<div class="section">
-<h2>Flow 2: Search Processing (SPL Execution)</h2>
-
-<div class="diagram-box">
-<svg viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" fill="#65a637"/>
-    </marker>
-  </defs>
-  <!-- User -->
-  <rect x="10" y="130" width="110" height="55" rx="8" fill="#2e7d32"/>
-  <text x="65" y="155" text-anchor="middle" fill="white" font-size="12">User / API</text>
-  <text x="65" y="172" text-anchor="middle" fill="white" font-size="10">SPL Query</text>
-
-  <!-- Search Head -->
-  <rect x="170" y="60" width="150" height="60" rx="8" fill="#f58220"/>
-  <text x="245" y="85" text-anchor="middle" fill="white" font-size="12">Search Head</text>
-  <text x="245" y="100" text-anchor="middle" fill="white" font-size="10">(Parse + Coordinate)</text>
-
-  <!-- SHC -->
-  <rect x="170" y="180" width="150" height="60" rx="8" fill="#e65100"/>
-  <text x="245" y="205" text-anchor="middle" fill="white" font-size="11">SH Cluster Captain</text>
-  <text x="245" y="222" text-anchor="middle" fill="white" font-size="10">(Job Scheduling)</text>
-
-  <!-- Distributed Map Phase -->
-  <rect x="390" y="30" width="160" height="55" rx="8" fill="#1565c0"/>
-  <text x="470" y="52" text-anchor="middle" fill="white" font-size="11">Indexer 1 (Map)</text>
-  <text x="470" y="70" text-anchor="middle" fill="white" font-size="10">Filter + Extract</text>
-  <rect x="390" y="100" width="160" height="55" rx="8" fill="#1565c0"/>
-  <text x="470" y="122" text-anchor="middle" fill="white" font-size="11">Indexer 2 (Map)</text>
-  <text x="470" y="140" text-anchor="middle" fill="white" font-size="10">Filter + Extract</text>
-  <rect x="390" y="170" width="160" height="55" rx="8" fill="#1565c0"/>
-  <text x="470" y="192" text-anchor="middle" fill="white" font-size="11">Indexer N (Map)</text>
-  <text x="470" y="210" text-anchor="middle" fill="white" font-size="10">Filter + Extract</text>
-
-  <!-- Reduce Phase -->
-  <rect x="620" y="100" width="150" height="60" rx="8" fill="#7b1fa2"/>
-  <text x="695" y="125" text-anchor="middle" fill="white" font-size="12">Search Head</text>
-  <text x="695" y="142" text-anchor="middle" fill="white" font-size="10">(Reduce / Merge)</text>
-
-  <!-- Results -->
-  <rect x="840" y="100" width="130" height="60" rx="8" fill="#006064"/>
-  <text x="905" y="125" text-anchor="middle" fill="white" font-size="12">Results</text>
-  <text x="905" y="142" text-anchor="middle" fill="white" font-size="10">Events / Stats</text>
-
-  <!-- Arrows -->
-  <line x1="120" y1="155" x2="168" y2="95" stroke="#65a637" stroke-width="2" marker-end="url(#ah2)"/>
-  <line x1="320" y1="90" x2="388" y2="60" stroke="#65a637" stroke-width="2" marker-end="url(#ah2)"/>
-  <line x1="320" y1="90" x2="388" y2="127" stroke="#65a637" stroke-width="2" marker-end="url(#ah2)"/>
-  <line x1="320" y1="90" x2="388" y2="195" stroke="#65a637" stroke-width="2" marker-end="url(#ah2)"/>
-  <line x1="550" y1="57" x2="618" y2="120" stroke="#65a637" stroke-width="2" marker-end="url(#ah2)"/>
-  <line x1="550" y1="127" x2="618" y2="130" stroke="#65a637" stroke-width="2" marker-end="url(#ah2)"/>
-  <line x1="550" y1="197" x2="618" y2="140" stroke="#65a637" stroke-width="2" marker-end="url(#ah2)"/>
-  <line x1="770" y1="130" x2="838" y2="130" stroke="#65a637" stroke-width="2" marker-end="url(#ah2)"/>
-  <line x1="245" y1="120" x2="245" y2="178" stroke="#f58220" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah2)"/>
-</svg>
+<div class="example-box">
+<strong>Example 1 — Agent-Based Forwarding (Happy Path):</strong><br/>
+A web application running on App Server 1 writes an error log line: <code>2026-02-13 18:00:01 ERROR [RequestHandler] NullPointerException at line 42</code>. The <em>Forwarder Agent</em> installed on the server tails the log file, batches recent lines (e.g., every 100 ms or every 64 KB), and sends them over a persistent <strong>TCP</strong> connection to the <em>Ingestion Load Balancer</em>. The load balancer routes the batch to <em>Ingestion Service Node 2</em>. The Ingestion Service validates the payload, applies source-type tagging (<code>source_type=java_app</code>, <code>index=web_logs</code>), and enqueues each event as a message on the <em>Message Queue</em> (ingestion topic, partitioned by index name). <em>Indexer Worker 3</em> consumes the message, parses the raw log line using the <code>java_app</code> source type rules (extracts timestamp, log level, class name, message), tokenizes the raw text to build inverted index entries, writes the raw event + index segment to <em>Hot Storage</em> (SSD), and updates the <em>Metadata DB</em> with the new bucket statistics. The event is now searchable within ~2–3 seconds of the original log write.
 </div>
 
-<h3>Search Execution Steps</h3>
-<ol>
-  <li><strong>SPL Parsing</strong> — Search Head parses the SPL query into an AST. Commands are classified: <em>streaming</em> (per-event: search, eval, rex, where), <em>transforming</em> (aggregate: stats, chart, timechart), <em>generating</em> (create events: inputlookup, makeresults), <em>orchestrating</em> (join, append, subsearch).</li>
-  <li><strong>Search Optimization</strong> — The Splunk query planner optimizes by: pushing streaming commands to indexers (run in parallel), evaluating <code>tstats</code> against accelerated data models (skip rawdata), identifying bloom filter eligible terms to prune buckets.</li>
-  <li><strong>Map Phase (Distributed)</strong> — Search Head dispatches the "streaming" portion to all relevant indexers. Each indexer: scans TSIDX → bloom filter check → read matching events from rawdata journal → apply field extractions (search-time regex) → filter → stream results back.</li>
-  <li><strong>Reduce Phase (Search Head)</strong> — Search Head receives partial results from all indexers, merges them, applies transforming commands (stats, dedup, sort, head/tail), evaluates subsearches, and produces final result set.</li>
-  <li><strong>Result Delivery</strong> — Results served to user via Splunk Web (SplunkJS framework), REST API (<code>GET /services/search/jobs/{sid}/results</code>), or forwarded to scheduled alert actions.</li>
-</ol>
-
-<div class="example">
-  <strong>Example — Error rate search:</strong><br>
-  <code>index=web_logs sourcetype=access_combined status>=500 | timechart span=5m count AS errors | where errors > 100</code><br>
-  Search Head parses → pushes <code>index=web_logs sourcetype=access_combined status>=500</code> to indexers (Map phase). Each indexer: bloom filter checks for "500", "501", "502"... → reads matching events → extracts <code>status</code> field → filters status≥500 → streams events back. Search Head: aggregates into 5-minute bins → applies <code>where errors > 100</code> threshold. ~10 indexers scan 500GB in parallel → results in ~8 seconds.
+<div class="example-box">
+<strong>Example 2 — Direct API Submission:</strong><br/>
+A CI/CD pipeline finishes a build and wants to send structured build metrics. It issues an <strong>HTTP POST</strong> to <code>https://splunk-ingest.example.com/v1/events</code> with a JSON body: <code>{"index": "ci_metrics", "source_type": "build_json", "event": {"build_id": "B-9921", "status": "failed", "duration_ms": 48200}}</code>. The <em>Ingestion Load Balancer</em> routes it to <em>Ingestion Service Node 1</em>, which validates the API key, normalises the payload, and enqueues it. An <em>Indexer Worker</em> consumes, parses (already structured JSON so minimal parsing), indexes, and stores it.
 </div>
 
-<div class="deep-dive">
-  <strong>Deep Dive — SPL Command Pipeline:</strong><br>
-  SPL uses a Unix pipe model. Commands chain via <code>|</code>. Execution categories:<br>
-  • <strong>Streaming (distributable)</strong>: <code>search</code>, <code>eval</code>, <code>rex</code>, <code>rename</code>, <code>where</code> — run on indexers in parallel<br>
-  • <strong>Streaming (centralized)</strong>: <code>head</code>, <code>streamstats</code> — must run on search head (order-dependent)<br>
-  • <strong>Transforming</strong>: <code>stats</code>, <code>timechart</code>, <code>top</code>, <code>rare</code> — partial on indexers, final merge on search head<br>
-  • <strong>Generating</strong>: <code>inputlookup</code>, <code>makeresults</code>, <code>tstats</code> — generate events from non-index sources<br>
-  • <strong>Dataset</strong>: <code>from</code>, <code>pivot</code> — operate on data models<br>
-  For <code>stats</code> commands, indexers compute partial aggregates (sum, count, min, max) locally and send only summaries to search head. This reduces network transfer by 1000x compared to sending all raw events.
+<div class="example-box">
+<strong>Example 3 — Burst / Back-Pressure Handling:</strong><br/>
+A sudden deployment failure causes App Server 1 and App Server 2 to emit 50× their normal log volume. The forwarder agents send data as fast as their TCP connections allow. The <em>Ingestion Service</em> nodes enqueue rapidly into the <em>Message Queue</em>. Because the Message Queue is durable and can absorb bursts (high partition count, configurable retention), the Indexer Workers consume at their maximum throughput without dropping data. The queue depth temporarily grows but drains back to near-zero once the log spike subsides. No logs are lost.
 </div>
 
-<div class="deep-dive">
-  <strong>Deep Dive — tstats (Accelerated Data Models):</strong><br>
-  <code>tstats</code> searches directly against TSIDX summary data — no rawdata decompression needed. Data Model Acceleration (DMA) pre-builds summary TSIDX files at index time for defined data models. Example: <code>| tstats count WHERE index=web_logs BY status, host</code> returns in &lt;1s for TB-scale data (vs. 30s+ for equivalent <code>stats</code> on raw events). Tradeoff: DMA consumes additional storage (5-15% overhead) and requires maintenance windows.
-</div>
-</div>
+<h3>3.3 Component Deep Dive</h3>
 
-<!-- ==================== FLOW 3: ALERTING ==================== -->
-<div class="section">
-<h2>Flow 3: Real-Time Alerting &amp; Monitoring</h2>
-
-<div class="diagram-box">
-<svg viewBox="0 0 950 300" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" fill="#65a637"/>
-    </marker>
-  </defs>
-  <!-- Saved Search -->
-  <rect x="10" y="110" width="140" height="60" rx="8" fill="#7b1fa2"/>
-  <text x="80" y="135" text-anchor="middle" fill="white" font-size="12">Saved Search</text>
-  <text x="80" y="152" text-anchor="middle" fill="white" font-size="10">(Scheduled / RT)</text>
-
-  <!-- Search Head -->
-  <rect x="200" y="110" width="140" height="60" rx="8" fill="#f58220"/>
-  <text x="270" y="135" text-anchor="middle" fill="white" font-size="12">Search Head</text>
-  <text x="270" y="152" text-anchor="middle" fill="white" font-size="10">(Execute SPL)</text>
-
-  <!-- Alert Condition -->
-  <rect x="400" y="110" width="140" height="60" rx="8" fill="#1565c0"/>
-  <text x="470" y="135" text-anchor="middle" fill="white" font-size="12">Alert Evaluator</text>
-  <text x="470" y="152" text-anchor="middle" fill="white" font-size="10">(Threshold Check)</text>
-
-  <!-- Actions -->
-  <rect x="600" y="20" width="140" height="50" rx="8" fill="#c62828"/>
-  <text x="670" y="50" text-anchor="middle" fill="white" font-size="11">Email Notification</text>
-  <rect x="600" y="85" width="140" height="50" rx="8" fill="#c62828"/>
-  <text x="670" y="115" text-anchor="middle" fill="white" font-size="11">Webhook / REST</text>
-  <rect x="600" y="150" width="140" height="50" rx="8" fill="#c62828"/>
-  <text x="670" y="180" text-anchor="middle" fill="white" font-size="11">PagerDuty / Slack</text>
-  <rect x="600" y="215" width="140" height="50" rx="8" fill="#c62828"/>
-  <text x="670" y="245" text-anchor="middle" fill="white" font-size="11">Run Script / SOAR</text>
-
-  <!-- Suppression -->
-  <rect x="790" y="110" width="140" height="60" rx="8" fill="#006064"/>
-  <text x="860" y="135" text-anchor="middle" fill="white" font-size="12">Throttle / Suppress</text>
-  <text x="860" y="152" text-anchor="middle" fill="white" font-size="10">(Dedup Window)</text>
-
-  <!-- Arrows -->
-  <line x1="150" y1="140" x2="198" y2="140" stroke="#65a637" stroke-width="2" marker-end="url(#ah3)"/>
-  <line x1="340" y1="140" x2="398" y2="140" stroke="#65a637" stroke-width="2" marker-end="url(#ah3)"/>
-  <line x1="540" y1="130" x2="598" y2="47" stroke="#65a637" stroke-width="2" marker-end="url(#ah3)"/>
-  <line x1="540" y1="135" x2="598" y2="110" stroke="#65a637" stroke-width="2" marker-end="url(#ah3)"/>
-  <line x1="540" y1="145" x2="598" y2="175" stroke="#65a637" stroke-width="2" marker-end="url(#ah3)"/>
-  <line x1="540" y1="150" x2="598" y2="240" stroke="#65a637" stroke-width="2" marker-end="url(#ah3)"/>
-  <line x1="740" y1="140" x2="788" y2="140" stroke="#65a637" stroke-width="2" marker-end="url(#ah3)"/>
-</svg>
-</div>
-
-<h3>Alerting Steps</h3>
-<ol>
-  <li><strong>Alert Definition</strong> — Admin creates a saved search with alert conditions. <em>Scheduled alert</em>: runs SPL on cron schedule (e.g., every 5 min). <em>Real-time alert</em>: uses rolling time window, continuously evaluates as events arrive.</li>
-  <li><strong>Trigger Conditions</strong> — Number of results &gt; threshold, custom condition (SPL expression), per-result trigger, throttle window (e.g., once per 10 minutes per <code>host</code>).</li>
-  <li><strong>Alert Actions</strong> — Triggered alerts fire one or more actions: send email, call webhook (HTTP POST with JSON payload), create PagerDuty incident, post to Slack channel, run custom script, trigger SOAR playbook (Splunk SOAR/Phantom).</li>
-  <li><strong>Suppression &amp; Throttle</strong> — Prevent alert storms: suppress duplicate alerts within time window grouped by field values. E.g., suppress per <code>host</code> for 30 minutes after first trigger.</li>
-  <li><strong>Notable Events (ES)</strong> — In Splunk Enterprise Security, alerts create Notable Events in the Incident Review dashboard with severity, owner assignment, status tracking (New → In Progress → Resolved).</li>
-</ol>
-
-<div class="example">
-  <strong>Example — Security alert:</strong><br>
-  Saved search: <code>index=auth sourcetype=sshd "Failed password" | stats count BY src_ip | where count > 50</code> runs every 5 minutes. When <code>src_ip=10.0.5.99</code> has 73 failed SSH logins → alert fires → webhook POSTs to SOAR → automated playbook blocks IP in firewall via API → PagerDuty page to SOC analyst → notable event created in Splunk ES.
-</div>
-
-<div class="deep-dive">
-  <strong>Deep Dive — Real-Time Search vs. Scheduled:</strong><br>
-  <em>Real-time search</em> uses a sliding window. The search head opens a persistent connection to indexers and receives events as they are indexed. Window types: <strong>real-time (windowed)</strong> — e.g., last 30 seconds, re-evaluated continuously; <strong>real-time (all-time)</strong> — growing window from search start. Real-time is expensive: keeps search slots open, increases indexer CPU. <em>Indexed real-time</em> (introduced in Splunk 7.3) is a lighter alternative: uses periodic micro-batches (1-second granularity) instead of true streaming. Recommended for most RT alerting use cases with &lt;1s additional latency but 80% less resource usage.
-</div>
-</div>
-
-<!-- ==================== COMBINED ARCHITECTURE ==================== -->
-<div class="section">
-<h2>Combined Architecture</h2>
-
-<div class="diagram-box">
-<svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" fill="#65a637"/>
-    </marker>
-  </defs>
-  <!-- Data Sources -->
-  <rect x="10" y="20" width="120" height="45" rx="8" fill="#2e7d32"/>
-  <text x="70" y="47" text-anchor="middle" fill="white" font-size="11">Servers (UF)</text>
-  <rect x="10" y="80" width="120" height="45" rx="8" fill="#2e7d32"/>
-  <text x="70" y="107" text-anchor="middle" fill="white" font-size="11">Network (Syslog)</text>
-  <rect x="10" y="140" width="120" height="45" rx="8" fill="#2e7d32"/>
-  <text x="70" y="167" text-anchor="middle" fill="white" font-size="11">Apps (HEC API)</text>
-  <rect x="10" y="200" width="120" height="45" rx="8" fill="#2e7d32"/>
-  <text x="70" y="227" text-anchor="middle" fill="white" font-size="11">Cloud (Modular)</text>
-
-  <!-- Forwarder Tier -->
-  <rect x="190" y="80" width="130" height="55" rx="8" fill="#e65100"/>
-  <text x="255" y="102" text-anchor="middle" fill="white" font-size="11">Forwarder Tier</text>
-  <text x="255" y="120" text-anchor="middle" fill="white" font-size="10">UF / HF / Syslog-ng</text>
-
-  <!-- Load Balancer -->
-  <rect x="190" y="170" width="130" height="45" rx="8" fill="#37474f"/>
-  <text x="255" y="197" text-anchor="middle" fill="white" font-size="11">LB (HAProxy/F5)</text>
-
-  <!-- Indexer Cluster -->
-  <rect x="380" y="40" width="150" height="50" rx="8" fill="#1565c0"/>
-  <text x="455" y="70" text-anchor="middle" fill="white" font-size="11">Indexer Peer 1</text>
-  <rect x="380" y="105" width="150" height="50" rx="8" fill="#1565c0"/>
-  <text x="455" y="135" text-anchor="middle" fill="white" font-size="11">Indexer Peer 2</text>
-  <rect x="380" y="170" width="150" height="50" rx="8" fill="#1565c0"/>
-  <text x="455" y="200" text-anchor="middle" fill="white" font-size="11">Indexer Peer N</text>
-
-  <!-- Cluster Manager -->
-  <rect x="380" y="250" width="150" height="45" rx="8" fill="#7b1fa2"/>
-  <text x="455" y="277" text-anchor="middle" fill="white" font-size="11">Cluster Manager</text>
-
-  <!-- Remote Storage -->
-  <rect x="380" y="320" width="150" height="45" rx="8" fill="#4a148c"/>
-  <text x="455" y="347" text-anchor="middle" fill="white" font-size="11">S3 / SmartStore</text>
-
-  <!-- Search Head Cluster -->
-  <rect x="610" y="40" width="150" height="50" rx="8" fill="#f58220"/>
-  <text x="685" y="70" text-anchor="middle" fill="white" font-size="11">Search Head 1</text>
-  <rect x="610" y="105" width="150" height="50" rx="8" fill="#f58220"/>
-  <text x="685" y="135" text-anchor="middle" fill="white" font-size="11">Search Head 2</text>
-  <rect x="610" y="170" width="150" height="50" rx="8" fill="#f58220"/>
-  <text x="685" y="200" text-anchor="middle" fill="white" font-size="11">Search Head N</text>
-
-  <!-- SHC Captain -->
-  <rect x="610" y="250" width="150" height="45" rx="8" fill="#e65100"/>
-  <text x="685" y="277" text-anchor="middle" fill="white" font-size="11">SHC Captain (Raft)</text>
-
-  <!-- Deployer -->
-  <rect x="610" y="320" width="150" height="45" rx="8" fill="#37474f"/>
-  <text x="685" y="347" text-anchor="middle" fill="white" font-size="11">Deployer (Apps)</text>
-
-  <!-- Users / Dashboards -->
-  <rect x="840" y="60" width="130" height="50" rx="8" fill="#006064"/>
-  <text x="905" y="82" text-anchor="middle" fill="white" font-size="11">Splunk Web UI</text>
-  <text x="905" y="98" text-anchor="middle" fill="white" font-size="10">Dashboards</text>
-  <rect x="840" y="130" width="130" height="50" rx="8" fill="#006064"/>
-  <text x="905" y="152" text-anchor="middle" fill="white" font-size="11">REST API</text>
-  <text x="905" y="168" text-anchor="middle" fill="white" font-size="10">/services/*</text>
-  <rect x="840" y="200" width="130" height="50" rx="8" fill="#c62828"/>
-  <text x="905" y="222" text-anchor="middle" fill="white" font-size="11">Alert Actions</text>
-  <text x="905" y="238" text-anchor="middle" fill="white" font-size="10">Webhook/SOAR</text>
-
-  <!-- KV Store -->
-  <rect x="840" y="320" width="130" height="45" rx="8" fill="#4a148c"/>
-  <text x="905" y="347" text-anchor="middle" fill="white" font-size="11">KV Store (MongoDB)</text>
-
-  <!-- Deployment Server -->
-  <rect x="190" y="320" width="130" height="45" rx="8" fill="#37474f"/>
-  <text x="255" y="347" text-anchor="middle" fill="white" font-size="11">Deployment Server</text>
-
-  <!-- License Master -->
-  <rect x="190" y="390" width="130" height="45" rx="8" fill="#37474f"/>
-  <text x="255" y="417" text-anchor="middle" fill="white" font-size="11">License Manager</text>
-
-  <!-- Arrows -->
-  <line x1="130" y1="42" x2="188" y2="100" stroke="#65a637" stroke-width="1.5" marker-end="url(#ah4)"/>
-  <line x1="130" y1="102" x2="188" y2="107" stroke="#65a637" stroke-width="1.5" marker-end="url(#ah4)"/>
-  <line x1="130" y1="162" x2="188" y2="190" stroke="#65a637" stroke-width="1.5" marker-end="url(#ah4)"/>
-  <line x1="130" y1="222" x2="188" y2="195" stroke="#65a637" stroke-width="1.5" marker-end="url(#ah4)"/>
-  <line x1="320" y1="107" x2="378" y2="65" stroke="#65a637" stroke-width="1.5" marker-end="url(#ah4)"/>
-  <line x1="320" y1="107" x2="378" y2="130" stroke="#65a637" stroke-width="1.5" marker-end="url(#ah4)"/>
-  <line x1="320" y1="192" x2="378" y2="195" stroke="#65a637" stroke-width="1.5" marker-end="url(#ah4)"/>
-  <line x1="530" y1="65" x2="608" y2="65" stroke="#65a637" stroke-width="1.5" marker-end="url(#ah4)"/>
-  <line x1="530" y1="130" x2="608" y2="130" stroke="#65a637" stroke-width="1.5" marker-end="url(#ah4)"/>
-  <line x1="530" y1="195" x2="608" y2="195" stroke="#65a637" stroke-width="1.5" marker-end="url(#ah4)"/>
-  <line x1="760" y1="65" x2="838" y2="80" stroke="#65a637" stroke-width="1.5" marker-end="url(#ah4)"/>
-  <line x1="760" y1="130" x2="838" y2="150" stroke="#65a637" stroke-width="1.5" marker-end="url(#ah4)"/>
-  <line x1="760" y1="195" x2="838" y2="220" stroke="#65a637" stroke-width="1.5" marker-end="url(#ah4)"/>
-  <line x1="455" y1="220" x2="455" y2="248" stroke="#f58220" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah4)"/>
-  <line x1="455" y1="295" x2="455" y2="318" stroke="#f58220" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah4)"/>
-  <line x1="685" y1="220" x2="685" y2="248" stroke="#f58220" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah4)"/>
-  <line x1="685" y1="295" x2="685" y2="318" stroke="#f58220" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah4)"/>
-</svg>
-</div>
-
-<div class="example">
-  <strong>Example — Full flow (security investigation):</strong><br>
-  1. Firewall sends syslog to Heavy Forwarder → routes to <code>index=firewall</code> on indexer cluster<br>
-  2. Scheduled correlation search in Splunk ES: <code>| tstats count from datamodel=Network_Traffic where dest_port=4444 BY src_ip, dest_ip | where count > 5</code><br>
-  3. Alert triggers → creates Notable Event (severity=Critical) → SOAR playbook auto-enriches with VirusTotal, GeoIP → analyst triages in Incident Review → executes response action (isolate host via EDR API)<br>
-  4. Dashboard shows real-time: blocked connections, top attacker IPs, MITRE ATT&CK mapping, mean time to respond
-</div>
-</div>
-
-<!-- ==================== DATABASE SCHEMA ==================== -->
-<div class="section">
-<h2>Database Schema &amp; Storage Design</h2>
-
-<h3>Bucket Structure (Filesystem-Based)</h3>
-<table>
-  <tr><th>Component</th><th>File</th><th>Description</th></tr>
-  <tr><td>Raw Data</td><td><code>rawdata/journal.gz</code></td><td>Compressed events (zlib/zstd), append-only, ~1:8 compression ratio. Each event has offset, length, metadata pointers.</td></tr>
-  <tr><td>TSIDX</td><td><code>*.tsidx</code></td><td>Inverted index: term → posting list (offset in journal). Multiple TSIDX files per bucket as index grows. ~15-25% of raw size.</td></tr>
-  <tr><td>Bloom Filter</td><td><code>.bloomfilter</code></td><td>Probabilistic set membership per bucket. 10 bits/term, 7 hash functions. FP rate ~0.8%. Used to skip irrelevant buckets.</td></tr>
-  <tr><td>Metadata</td><td><code>.bucketmanifest</code></td><td>Bucket time range (earliest/latest), event count, size, generation ID, primary/replicated flag.</td></tr>
-  <tr><td>Hot Metadata</td><td><code>Hosts.data</code>, <code>Sources.data</code>, <code>Sourcetypes.data</code></td><td>Per-bucket metadata catalogs for <code>| metadata</code> searches and typeahead.</td></tr>
-</table>
-
-<h3>KV Store (App State — MongoDB-backed)</h3>
-<table>
-  <tr><th>Collection</th><th>Fields</th><th>Purpose</th></tr>
-  <tr>
-    <td>saved_searches</td>
-    <td><code>_key</code> <span class="tag-pk">PK</span>, <code>name</code>, <code>search</code> (SPL), <code>cron_schedule</code>, <code>alert_type</code>, <code>dispatch.earliest_time</code>, <code>dispatch.latest_time</code>, <code>owner</code>, <code>app</code></td>
-    <td>Persisted saved searches and alerts</td>
-  </tr>
-  <tr>
-    <td>lookup_definitions</td>
-    <td><code>_key</code> <span class="tag-pk">PK</span>, <code>filename</code>, <code>fields_list</code>, <code>collection</code>, <code>external_type</code></td>
-    <td>Lookup table definitions for enrichment</td>
-  </tr>
-  <tr>
-    <td>notable_events</td>
-    <td><code>_key</code> <span class="tag-pk">PK</span>, <code>rule_name</code> <span class="tag-idx">IDX</span>, <code>severity</code>, <code>src_ip</code>, <code>dest_ip</code>, <code>status</code> <span class="tag-idx">IDX</span>, <code>owner</code>, <code>time</code> <span class="tag-idx">IDX</span>, <code>disposition</code></td>
-    <td>ES notable events for incident management</td>
-  </tr>
-  <tr>
-    <td>asset_inventory</td>
-    <td><code>_key</code> <span class="tag-pk">PK</span>, <code>ip</code> <span class="tag-idx">IDX</span>, <code>hostname</code>, <code>mac</code>, <code>category</code>, <code>priority</code>, <code>bunit</code>, <code>owner</code></td>
-    <td>Asset and identity framework data</td>
-  </tr>
-</table>
-
-<h3>Index Configuration (indexes.conf)</h3>
-<table>
-  <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
-  <tr><td><code>homePath</code></td><td><code>$SPLUNK_DB/&lt;index&gt;/db</code></td><td>Hot/warm bucket location (fast SSD recommended)</td></tr>
-  <tr><td><code>coldPath</code></td><td><code>$SPLUNK_DB/&lt;index&gt;/colddb</code></td><td>Cold bucket location (can be slower storage)</td></tr>
-  <tr><td><code>frozenTimePeriodInSecs</code></td><td><code>188697600</code> (6 years)</td><td>Max age before freezing</td></tr>
-  <tr><td><code>maxTotalDataSizeMB</code></td><td><code>500000</code></td><td>Max total index size before oldest buckets frozen</td></tr>
-  <tr><td><code>maxHotBuckets</code></td><td><code>10</code></td><td>Max concurrent hot buckets per index</td></tr>
-  <tr><td><code>maxDataSize</code></td><td><code>auto_high_volume</code></td><td>Max single bucket size (10GB for high volume)</td></tr>
-  <tr><td><code>repFactor</code></td><td><code>auto</code></td><td>Inherit cluster replication factor</td></tr>
-</table>
-
-<div class="deep-dive">
-  <strong>Deep Dive — TSIDX Inverted Index Internals:</strong><br>
-  TSIDX uses a <strong>lexicon + postings</strong> structure similar to Lucene but optimized for time-series data. The lexicon is a sorted dictionary of terms (both raw text segments and <code>field::value</code> pairs). Each term maps to a posting list containing: event offsets in journal, time range of matching events. Posting lists are delta-encoded and compressed (variable-byte encoding). Search process: 1) lookup term in lexicon (binary search), 2) read posting list, 3) intersect posting lists for AND queries, 4) seek to offsets in journal.gz, 5) decompress and return events. For <code>tstats</code>, only steps 1-2 are needed — no rawdata decompression.
-</div>
-</div>
-
-<!-- ==================== CACHE & CDN ==================== -->
-<div class="section">
-<h2>Cache &amp; Performance Deep Dive</h2>
-
-<h3>SmartStore Cache Architecture</h3>
-<table>
-  <tr><th>Cache Layer</th><th>Strategy</th><th>Eviction</th><th>Details</th></tr>
-  <tr><td>Hot Bucket Cache</td><td>Write-through</td><td>N/A (always local)</td><td>Active write buckets always on local SSD. Rolled to warm → uploaded to remote.</td></tr>
-  <tr><td>Warm/Cold Cache</td><td>LRU (demand-fetch)</td><td>LRU by access time</td><td>Configurable max cache size per index. Cache miss → fetch from S3 (~1-5s). Cache hit rate >90% for typical workloads.</td></tr>
-  <tr><td>TSIDX Summary Cache</td><td>Pre-computed</td><td>Age-based rollup</td><td>Accelerated data model summaries. Pre-built at index time. Refreshed on schedule.</td></tr>
-  <tr><td>Search Artifact Cache</td><td>Per-search-job</td><td>TTL (10 min default)</td><td>Results of completed searches cached as dispatch artifacts. Reusable by other users with same query.</td></tr>
-  <tr><td>KV Store Cache</td><td>MongoDB WiredTiger cache</td><td>LRU</td><td>In-memory cache for lookup tables and app state. Sized at 50% of RAM by default.</td></tr>
-</table>
-
-<h3>Performance Optimization Techniques</h3>
+<h4>Forwarder Agent</h4>
 <ul>
-  <li><strong>Bloom Filters</strong> — Skip entire buckets when search terms definitely not present. Saves 80-95% I/O for selective searches.</li>
-  <li><strong>Parallel Streaming</strong> — Search head opens concurrent TCP connections to all indexers. Results streamed back as produced (no wait for slowest).</li>
-  <li><strong>Search Affinity</strong> — SHC Captain routes identical searches to the same search head to reuse cached artifacts.</li>
-  <li><strong>Summary Indexing</strong> — <code>| collect</code> or <code>| sitimechart</code> commands create pre-aggregated summaries in dedicated summary indexes for expensive recurring reports.</li>
-  <li><strong>Report Acceleration</strong> — Auto-builds summary for saved reports. First run: full search; subsequent runs: incremental update of summary.</li>
+  <li>Lightweight daemon installed on each source host.</li>
+  <li>Tails log files, captures stdout/stderr, or listens on local syslog.</li>
+  <li>Batches events and sends over persistent <strong>TCP</strong> connections (with TLS) to the Ingestion Load Balancer.</li>
+  <li>Implements local disk buffering: if the remote endpoint is unreachable, events are spooled to a local write-ahead log on disk and replayed once connectivity resumes.</li>
+  <li>Applies optional filtering/routing rules (e.g., drop debug-level logs, route access logs to <code>index=access</code>).</li>
+  <li>Protocol choice: <strong>TCP</strong> over UDP because log data must be delivered reliably; UDP would risk silent data loss under congestion.</li>
+</ul>
+
+<h4>Ingestion Load Balancer (LB)</h4>
+<ul>
+  <li>Layer-4 (TCP) load balancer distributing connections across Ingestion Service nodes.</li>
+  <li>Health-checks Ingestion Service nodes and removes unhealthy ones from the pool.</li>
+  <li>Supports both TCP (for agent connections) and HTTP (for API clients) on different ports.</li>
+  <li>Sticky sessions are <strong>not</strong> required — each batch is independent.</li>
+</ul>
+
+<h4>Ingestion Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> Accepts TCP streams (custom binary protocol or line-delimited text) and <strong>HTTP POST</strong> (<code>/v1/events</code>).</li>
+  <li><strong>Input (HTTP):</strong> JSON body with fields <code>index</code>, <code>source_type</code>, <code>host</code>, <code>event</code> (string or JSON). Headers include <code>Authorization: Bearer &lt;api_token&gt;</code>.</li>
+  <li><strong>Output (HTTP):</strong> <code>200 OK</code> with <code>{"status":"accepted","event_count":N}</code> on success; <code>400</code> for malformed input; <code>429</code> if rate-limited.</li>
+  <li>Validates payloads, authenticates API tokens, applies rate limiting per source.</li>
+  <li>Tags each event with ingestion timestamp, source metadata.</li>
+  <li>Enqueues events to the Message Queue, partitioned by <code>index_name</code>.</li>
+  <li>Stateless — scales horizontally.</li>
+</ul>
+
+<h4>Message Queue (Ingestion Topic)</h4>
+<ul>
+  <li>Durable, partitioned, ordered-within-partition message queue.</li>
+  <li>Partitioned by <code>index_name</code> (ensures events for the same index are processed in roughly temporal order and by the same consumer group).</li>
+  <li>Provides back-pressure absorption: if indexers fall behind, the queue buffers messages (configurable retention, e.g., 24 hours).</li>
+  <li>Consumer groups allow multiple Indexer Workers to consume in parallel, each handling a subset of partitions.</li>
+  <li><strong>Why a Message Queue?</strong> Decouples ingestion from indexing. Ingestion rate can spike during incidents; the queue absorbs the burst. Without it, indexers would be overwhelmed or data would be dropped.</li>
+  <li><strong>Why not pub/sub?</strong> We need durable, exactly-once (or at-least-once with idempotency) delivery to a single consumer group, not fan-out to multiple subscribers. A message queue with consumer groups fits perfectly. (Note: many message queue systems also support pub/sub semantics; here we use the queue/consumer-group pattern.)</li>
+</ul>
+
+<h4>Indexer Worker</h4>
+<ul>
+  <li>Consumes batches of events from the Message Queue.</li>
+  <li><strong>Parsing:</strong> Applies source-type-specific parsing rules to extract structured fields from raw text. For example, an Apache access log is parsed into <code>client_ip</code>, <code>method</code>, <code>uri</code>, <code>status_code</code>, <code>response_time</code>.</li>
+  <li><strong>Tokenization &amp; Inverted Index:</strong> Tokenizes the raw text and extracted fields. Builds an inverted index mapping each token → list of event IDs and positions. The inverted index is stored as segment files in Hot Storage.</li>
+  <li><strong>Time Bucketing:</strong> Groups events into time-based buckets (e.g., 15-minute or 1-hour segments). Each bucket is a self-contained unit with its own raw data files and index segment.</li>
+  <li><strong>Writes:</strong> Raw event data + inverted index segments to Hot Storage. Bucket metadata (bucket ID, time range, event count, size, storage tier, node assignment) to the Metadata DB.</li>
+  <li>Stateless workers — scales horizontally by adding more workers and message queue partitions.</li>
+</ul>
+
+<h4>Hot Storage</h4>
+<ul>
+  <li>SSD-backed local or network-attached storage on Indexer nodes.</li>
+  <li>Stores the most recent data (configurable, e.g., last 7 days).</li>
+  <li>Contains both raw event data (compressed) and inverted index segment files.</li>
+  <li>Fastest search performance since data is local and fully indexed.</li>
+</ul>
+
+<h4>Warm Storage</h4>
+<ul>
+  <li>HDD-backed or network-attached storage (cheaper, higher latency).</li>
+  <li>Data migrated from Hot via age-based policy (e.g., after 7 days).</li>
+  <li>Still fully indexed — search is possible but slower than Hot.</li>
+</ul>
+
+<h4>Metadata DB (NoSQL)</h4>
+<ul>
+  <li>Stores metadata about every index bucket: time range, event count, size, storage tier, which node holds it.</li>
+  <li>Used by the Search Service to plan which nodes/buckets to query for a given time range.</li>
+  <li>NoSQL chosen for high write throughput (every bucket creation/migration updates this) and simple key-value access pattern.</li>
 </ul>
 </div>
 
-<!-- ==================== SCALING ==================== -->
-<div class="section">
-<h2>Scaling Considerations</h2>
+<!-- ============================================================ -->
+<h2>4. Flow 2 — Search &amp; Query</h2>
+<!-- ============================================================ -->
+<div class="section-card">
 
-<h3>Horizontal Scaling Tiers</h3>
+<h3>4.1 Diagram</h3>
+<div class="mermaid">
+graph LR
+    U[User / Web UI]
+    LB2[Load Balancer<br/>Search LB]
+
+    subgraph Search Layer
+        SH1[Search Head 1]
+        SH2[Search Head 2]
+    end
+
+    META2[(Metadata DB<br/>NoSQL)]
+    CACHE[(Search Results<br/>Cache)]
+
+    subgraph Indexer Nodes
+        IN1[Indexer Node 1<br/>Hot + Warm Data]
+        IN2[Indexer Node 2<br/>Hot + Warm Data]
+        IN3[Indexer Node 3<br/>Hot + Warm Data]
+    end
+
+    COLD[(Cold Storage<br/>Object Storage)]
+
+    U -- "HTTP POST /v1/search" --> LB2
+    LB2 --> SH1
+    LB2 --> SH2
+
+    SH1 -- lookup bucket locations --> META2
+    SH1 -- check cache --> CACHE
+    SH1 -- "fan-out search RPCs" --> IN1
+    SH1 -- "fan-out search RPCs" --> IN2
+    SH1 -- "fan-out search RPCs" --> IN3
+
+    IN1 -- partial results --> SH1
+    IN2 -- partial results --> SH1
+    IN3 -- partial results --> SH1
+
+    SH1 -- "WebSocket stream" --> U
+
+    SH1 -. rehydrate if needed .-> COLD
+</div>
+
+<h3>4.2 Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Interactive Keyword Search (Happy Path):</strong><br/>
+An SRE types <code>index=web_logs status=500 host=prod-web-* earliest=-1h</code> in the Splunk Web UI and clicks Search. The browser sends an <strong>HTTP POST</strong> to <code>/v1/search</code> with the query string and opens a <strong>WebSocket</strong> connection for result streaming. The <em>Search Load Balancer</em> routes the request to <em>Search Head 1</em>. Search Head 1 parses the query, determines the time range (last 1 hour), checks the <em>Metadata DB</em> to find which Indexer Nodes hold hot-tier buckets for <code>web_logs</code> within that hour (e.g., Nodes 1 and 3). It checks the <em>Search Results Cache</em> — cache miss. It fans out search RPCs to Indexer Nodes 1 and 3. Each Indexer Node uses its local inverted index to find events matching "status=500" with host matching "prod-web-*", scans the relevant time buckets, and streams partial results back. Search Head 1 merges and deduplicates results, sorts by time, and streams them to the user's browser over the WebSocket. The final result set is cached for 60 seconds in case the user re-runs the same query. Total latency: ~1.5 seconds for 12,000 matching events across 2 nodes.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Aggregation Query:</strong><br/>
+A user runs: <code>index=app_logs | stats avg(response_time_ms) by endpoint | sort -avg(response_time_ms)</code>. Search Head 2 parses this as a two-phase MapReduce-style operation. Phase 1 (Map): fan out to all Indexer Nodes holding <code>app_logs</code> hot/warm data; each node computes partial aggregations (sum, count per endpoint) locally. Phase 2 (Reduce): Search Head 2 collects partial aggregations, computes the final averages, sorts, and returns the table. This approach minimizes data transfer — only partial aggregates are sent over the network, not raw events.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Cold Tier Query (Rehydration):</strong><br/>
+A compliance officer searches: <code>index=audit_logs user=admin action=delete earliest=-1y latest=-6mon</code>. Search Head 1 checks the Metadata DB and finds that all relevant buckets are in <em>Cold Storage</em> (Object Storage). It initiates an asynchronous rehydration job: the cold buckets are copied to temporary warm storage, decompressed, and their indexes are loaded. The user sees a message: "Rehydrating data from cold storage, estimated time: 3 minutes." Once rehydration completes, the search executes against the restored buckets and results are streamed back. The temporary copy is evicted after a configurable TTL (e.g., 1 hour).
+</div>
+
+<div class="example-box">
+<strong>Example 4 — Real-Time Search:</strong><br/>
+A developer runs a real-time search: <code>index=payment_logs error | head 100</code> set to "real-time" mode. Search Head 1 registers a standing query with all relevant Indexer Nodes. As new events arrive and are indexed, each Indexer Node pushes matching events to the Search Head, which streams them to the user's browser over WebSocket. The search continues until the user cancels it.
+</div>
+
+<h3>4.3 Component Deep Dive</h3>
+
+<h4>Search Load Balancer</h4>
+<ul>
+  <li>Layer-7 (HTTP) load balancer distributing search requests across Search Head nodes.</li>
+  <li>Round-robin or least-connections strategy.</li>
+  <li>Terminates TLS. Performs health checks on Search Heads.</li>
+</ul>
+
+<h4>Search Head</h4>
+<ul>
+  <li><strong>Protocol:</strong> <strong>HTTP POST</strong> <code>/v1/search</code></li>
+  <li><strong>Input:</strong> JSON body: <code>{"query": "index=web_logs status=500", "earliest": "-1h", "latest": "now", "max_results": 10000}</code></li>
+  <li><strong>Output:</strong> Initial HTTP response <code>202 Accepted</code> with <code>{"search_id": "SID-abc123"}</code>. Results streamed over <strong>WebSocket</strong> at <code>/v1/search/SID-abc123/results</code>.</li>
+  <li><strong>Query Parsing:</strong> Parses the SPL-like query into an abstract syntax tree (AST). Identifies: target index(es), time range, filter predicates, transformations (stats, sort, head, etc.).</li>
+  <li><strong>Search Planning:</strong> Consults the Metadata DB to determine which Indexer Nodes hold buckets for the target index + time range.</li>
+  <li><strong>Fan-Out &amp; Aggregation:</strong> Sends search RPCs (internal gRPC) to relevant Indexer Nodes. Each node returns partial results. The Search Head merges/aggregates and streams to the client.</li>
+  <li><strong>MapReduce for Aggregations:</strong> For queries with <code>stats</code>, <code>timechart</code>, etc., Indexer Nodes compute partial aggregates locally (map phase), and the Search Head combines them (reduce phase).</li>
+  <li>Stateless except for active search sessions — scales horizontally.</li>
+</ul>
+
+<h4>WebSocket Connection (Search Results Streaming)</h4>
+<ul>
+  <li><strong>How it's established:</strong> After the user submits a search, the browser opens a WebSocket connection to the Search Head (via LB) at <code>wss://splunk.example.com/v1/search/{search_id}/results</code>. A standard HTTP Upgrade handshake is performed.</li>
+  <li><strong>What stores the connection:</strong> The Search Head maintains an in-memory map of <code>search_id → WebSocket connection</code>. Since the LB uses sticky sessions (by search_id cookie) for WebSocket, the same Search Head handles the full lifecycle of a search.</li>
+  <li><strong>How results flow:</strong> As Indexer Nodes return partial results via gRPC streams, the Search Head immediately pushes them to the client over the WebSocket as JSON frames.</li>
+  <li><strong>Why WebSocket over alternatives:</strong>
+    <ul>
+      <li><em>vs. HTTP Long Polling:</em> Long polling requires repeated request/response cycles with overhead. WebSocket maintains a single persistent connection with lower latency and less overhead for streaming thousands of results.</li>
+      <li><em>vs. Server-Sent Events (SSE):</em> SSE is unidirectional (server → client). WebSocket allows bidirectional communication, useful if the user wants to pause/cancel/modify a running search.</li>
+      <li><em>vs. Short Polling:</em> Extremely wasteful for search result streaming — would require many requests and add significant latency.</li>
+    </ul>
+  </li>
+</ul>
+
+<h4>Indexer Node (Search Role)</h4>
+<ul>
+  <li>Each Indexer Node stores a subset of the overall data (assigned buckets).</li>
+  <li>Receives search RPCs from Search Heads (internal <strong>gRPC</strong>).</li>
+  <li>Uses the local inverted index to efficiently look up matching events by keyword, then applies additional filters (field-level predicates, time range).</li>
+  <li>For aggregation queries, computes partial aggregates locally.</li>
+  <li>Returns results as a stream to the requesting Search Head.</li>
+</ul>
+
+<h4>Search Results Cache (In-Memory Cache)</h4>
+<ul>
+  <li>Caches recently executed search results keyed by a hash of (query + time range + index).</li>
+  <li>See Section 10 (CDN &amp; Caching) for deep dive on strategy, eviction, and expiration.</li>
+</ul>
+
+<h4>Cold Storage (Object Storage)</h4>
+<ul>
+  <li>Cheapest tier for archival data.</li>
+  <li>Stores compressed raw data and index segments.</li>
+  <li>Not directly searchable — must be rehydrated to temporary warm storage first.</li>
+  <li>Retention: configurable per index (e.g., 1 year, 7 years for compliance).</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>5. Flow 3 — Alerting</h2>
+<!-- ============================================================ -->
+<div class="section-card">
+
+<h3>5.1 Diagram</h3>
+<div class="mermaid">
+graph LR
+    U2[User / Web UI]
+    LB3[Load Balancer<br/>API LB]
+
+    API[API Service]
+    SQLDB[(SQL DB<br/>Alert Definitions)]
+
+    SCHED[Alert Scheduler]
+    SH[Search Head]
+
+    subgraph Indexer Nodes
+        IN1b[Indexer Node 1]
+        IN2b[Indexer Node 2]
+    end
+
+    EVAL[Alert Evaluator]
+    NQ[(Message Queue<br/>Notification Topic)]
+    NS[Notification Service]
+
+    DEST1[Email]
+    DEST2[Webhook]
+    DEST3[PagerDuty-style<br/>Integration]
+
+    HIST[(Alert History<br/>NoSQL)]
+
+    U2 -- "HTTP POST /v1/alerts" --> LB3
+    LB3 --> API
+    API -- write alert def --> SQLDB
+
+    SCHED -- read due alerts --> SQLDB
+    SCHED -- trigger search --> SH
+
+    SH -- fan-out --> IN1b
+    SH -- fan-out --> IN2b
+
+    IN1b -- results --> SH
+    IN2b -- results --> SH
+
+    SH -- search results --> EVAL
+    EVAL -- condition met? --> NQ
+
+    NQ -- consume --> NS
+    NS --> DEST1
+    NS --> DEST2
+    NS --> DEST3
+
+    EVAL -- write history --> HIST
+</div>
+
+<h3>5.2 Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Creating an Alert:</strong><br/>
+A platform engineer navigates to the Alerts page in the Web UI and creates a new alert: "High Error Rate" with query <code>index=api_logs status>=500 | stats count as error_count | where error_count > 100</code>, schedule "every 5 minutes", trigger condition "if results > 0", and action "send email to oncall@example.com + fire webhook to PagerDuty-style endpoint." The browser sends an <strong>HTTP POST</strong> to <code>/v1/alerts</code> with this configuration. The <em>API Service</em> validates, persists the alert definition to the <em>SQL DB</em>, and returns <code>201 Created</code>.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Alert Triggered (Condition Met):</strong><br/>
+The <em>Alert Scheduler</em> polls the SQL DB every 30 seconds, finds that the "High Error Rate" alert is due for evaluation. It triggers the saved search on the <em>Search Head</em>, which fans out to Indexer Nodes and returns <code>{"error_count": 347}</code>. The <em>Alert Evaluator</em> checks the condition: 347 > 100 → <strong>true</strong>. It enqueues a notification message on the <em>Message Queue (Notification Topic)</em> with the alert details and writes an entry to <em>Alert History</em>. The <em>Notification Service</em> consumes the message and dispatches: (a) an email to oncall@example.com and (b) an HTTP POST webhook to the PagerDuty-style endpoint.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Alert Not Triggered (Condition Not Met):</strong><br/>
+The scheduler triggers the same search 5 minutes later. This time the search returns <code>{"error_count": 12}</code>. The Alert Evaluator checks: 12 > 100 → <strong>false</strong>. No notification is sent. A history entry is still written (with <code>triggered=false</code>) for audit purposes.
+</div>
+
+<div class="example-box">
+<strong>Example 4 — Real-Time Alert:</strong><br/>
+A user creates a real-time alert for <code>index=security_logs action=unauthorized_access</code>. Instead of a scheduled evaluation, the Alert Scheduler registers a standing real-time search on the Search Head. Whenever a matching event arrives, the Search Head immediately pushes it to the Alert Evaluator, which fires a notification within seconds of the event being ingested. This provides near-instant alerting for critical security events.
+</div>
+
+<h3>5.3 Component Deep Dive</h3>
+
+<h4>API Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> HTTP REST</li>
+  <li><strong>Create Alert: HTTP POST</strong> <code>/v1/alerts</code></li>
+  <li><strong>Input:</strong> <code>{"name":"High Error Rate", "query":"index=api_logs status>=500 | stats count as error_count | where error_count > 100", "schedule":"*/5 * * * *", "condition":{"operator":"gt","threshold":0}, "actions":[{"type":"email","to":"oncall@example.com"},{"type":"webhook","url":"https://..."}]}</code></li>
+  <li><strong>Output:</strong> <code>201 Created</code> — <code>{"alert_id":"A-7721","status":"enabled"}</code></li>
+  <li><strong>Update Alert: HTTP PUT</strong> <code>/v1/alerts/{alert_id}</code></li>
+  <li><strong>Delete Alert: HTTP DELETE</strong> <code>/v1/alerts/{alert_id}</code></li>
+  <li><strong>List Alerts: HTTP GET</strong> <code>/v1/alerts?user_id=U123</code></li>
+</ul>
+
+<h4>Alert Scheduler</h4>
+<ul>
+  <li>Runs as a background service that polls the SQL DB for alerts that are due for evaluation based on their cron schedule.</li>
+  <li>Distributes evaluation work across available Search Heads to avoid overloading any single node.</li>
+  <li>Uses a distributed lock (via the SQL DB or a coordination service) to prevent duplicate evaluations in a multi-node deployment.</li>
+</ul>
+
+<h4>Alert Evaluator</h4>
+<ul>
+  <li>Receives search results from the Search Head.</li>
+  <li>Applies the trigger condition (e.g., "error_count > 100").</li>
+  <li>If condition met: enqueues a notification message on the Message Queue and writes a triggered history entry.</li>
+  <li>If condition not met: writes a non-triggered history entry (for audit).</li>
+  <li>Supports suppression windows (e.g., don't re-fire the same alert within 15 minutes) using the Alert History.</li>
+</ul>
+
+<h4>Message Queue (Notification Topic)</h4>
+<ul>
+  <li>Decouples alert evaluation from notification delivery.</li>
+  <li>If the email server or webhook endpoint is temporarily down, notifications remain in the queue and are retried.</li>
+  <li>Separate from the Ingestion Topic to avoid interference between the two workloads.</li>
+</ul>
+
+<h4>Notification Service</h4>
+<ul>
+  <li>Consumes messages from the Notification Topic.</li>
+  <li>Dispatches notifications via configured channels: email (SMTP), webhook (HTTP POST), or third-party integration APIs.</li>
+  <li>Implements retry logic with exponential backoff for transient failures.</li>
+  <li>Logs delivery status to the Alert History.</li>
+</ul>
+
+<h4>Alert History (NoSQL)</h4>
+<ul>
+  <li>Append-heavy write pattern (every evaluation creates an entry).</li>
+  <li>Queried when the user views alert history in the UI or when the Evaluator checks suppression windows.</li>
+  <li>See Schema section for details.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>6. Flow 4 — Dashboard Visualization</h2>
+<!-- ============================================================ -->
+<div class="section-card">
+
+<h3>6.1 Diagram</h3>
+<div class="mermaid">
+graph LR
+    U3[User / Web UI]
+    CDN1[CDN<br/>Static Assets]
+    LB4[Load Balancer<br/>API LB]
+    API2[API Service]
+    SQLDB2[(SQL DB<br/>Dashboard Definitions)]
+    CACHE2[(Cache<br/>Dashboard Data)]
+    SH2b[Search Head]
+
+    subgraph Indexer Nodes
+        IN1c[Indexer Node 1]
+        IN2c[Indexer Node 2]
+    end
+
+    U3 -- "load JS/CSS/HTML" --> CDN1
+    U3 -- "HTTP GET /v1/dashboards/{id}" --> LB4
+    LB4 --> API2
+    API2 -- fetch definition --> SQLDB2
+    API2 -- check panel cache --> CACHE2
+    API2 -- "execute panel queries" --> SH2b
+    SH2b -- fan-out --> IN1c
+    SH2b -- fan-out --> IN2c
+    IN1c -- results --> SH2b
+    IN2c -- results --> SH2b
+    SH2b -- panel results --> API2
+    API2 -- populate cache --> CACHE2
+    API2 -- "JSON response" --> U3
+</div>
+
+<h3>6.2 Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Loading a Dashboard (Cache Miss):</strong><br/>
+A user clicks on "Production Overview" dashboard in the Web UI. The browser loads static assets (JS, CSS) from the <em>CDN</em>. It then sends an <strong>HTTP GET</strong> to <code>/v1/dashboards/D-5501</code>. The <em>API Service</em> fetches the dashboard definition from the <em>SQL DB</em> (containing 4 panels, each with a saved search query). For each panel, it checks the <em>Dashboard Data Cache</em> — all miss. The API Service dispatches the 4 queries to the <em>Search Head</em> in parallel. The Search Head fans out each query to the relevant Indexer Nodes, aggregates results, and returns panel data. The API Service populates the cache for each panel (TTL = 60 seconds) and returns the full dashboard JSON. The browser renders 4 visualizations (line chart, bar chart, table, single-value counter).
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Loading a Dashboard (Cache Hit):</strong><br/>
+Another user opens the same "Production Overview" dashboard 30 seconds later. The API Service checks the cache — all 4 panels are cache hits. No search queries are executed. The cached results are returned immediately, resulting in a sub-100ms response time.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Creating a Dashboard:</strong><br/>
+A user builds a new dashboard in the UI, adding panels with custom queries and selecting visualization types. Upon clicking "Save," the browser sends an <strong>HTTP POST</strong> to <code>/v1/dashboards</code> with the dashboard definition JSON. The API Service persists it to the SQL DB and returns <code>201 Created</code>.
+</div>
+
+<h3>6.3 Component Deep Dive</h3>
+
+<h4>CDN (Static Assets)</h4>
+<ul>
+  <li>Serves the Splunk Web UI: HTML, JavaScript bundles, CSS, images, fonts.</li>
+  <li>Globally distributed edge caches minimize latency for users worldwide.</li>
+  <li>Cache-Control headers with content-hash-based filenames enable aggressive caching with instant invalidation on deployment.</li>
+  <li><strong>Why CDN is appropriate here:</strong> The Web UI is a single-page application (SPA) with heavy JavaScript. Serving it from a CDN reduces load on the API servers and provides fast initial load times. CDN is <strong>not</strong> used for log data or search results (dynamic, user-specific, real-time).</li>
+</ul>
+
+<h4>API Service (Dashboard APIs)</h4>
+<ul>
+  <li><strong>HTTP GET</strong> <code>/v1/dashboards/{id}</code> — Fetches dashboard definition + executes panel queries.</li>
+  <li><strong>Input:</strong> Path param <code>id</code>. Optional query params: <code>refresh=true</code> (bypass cache), <code>earliest</code>, <code>latest</code> (override time range).</li>
+  <li><strong>Output:</strong> <code>200 OK</code> — JSON with dashboard metadata and panel results: <code>{"dashboard_id":"D-5501","name":"Production Overview","panels":[{"panel_id":"P1","type":"line_chart","data":[...]}, ...]}</code></li>
+  <li><strong>HTTP POST</strong> <code>/v1/dashboards</code> — Creates a new dashboard.</li>
+  <li><strong>HTTP PUT</strong> <code>/v1/dashboards/{id}</code> — Updates dashboard definition.</li>
+  <li><strong>HTTP DELETE</strong> <code>/v1/dashboards/{id}</code> — Deletes a dashboard.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>7. Combined Overall Flow</h2>
+<!-- ============================================================ -->
+<div class="section-card">
+
+<h3>7.1 Diagram</h3>
+<div class="mermaid">
+graph TB
+    subgraph Data Sources
+        SRC1[App Server<br/>Forwarder Agent]
+        SRC2[Network Device]
+        SRC3[API Client]
+    end
+
+    subgraph User Interfaces
+        WEB[Web UI / Browser]
+    end
+
+    CDN[CDN<br/>Static Assets]
+
+    LB_ING[Load Balancer<br/>Ingestion]
+    LB_API[Load Balancer<br/>API + Search]
+
+    subgraph Ingestion Layer
+        ING1[Ingestion Service 1]
+        ING2[Ingestion Service 2]
+    end
+
+    MQ_ING[(Message Queue<br/>Ingestion Topic)]
+
+    subgraph Indexing & Search Layer
+        IX1d[Indexer Node 1<br/>Index + Search]
+        IX2d[Indexer Node 2<br/>Index + Search]
+        IX3d[Indexer Node 3<br/>Index + Search]
+    end
+
+    subgraph Search Coordination
+        SH1d[Search Head 1]
+        SH2d[Search Head 2]
+    end
+
+    subgraph Storage Tiers
+        HOT2[(Hot Storage<br/>SSD)]
+        WARM2[(Warm Storage<br/>HDD)]
+        COLD2[(Cold Storage<br/>Object Storage)]
+    end
+
+    META3[(Metadata DB<br/>NoSQL)]
+    CACHE3[(In-Memory Cache<br/>Search + Dashboard)]
+    SQLDB3[(SQL DB<br/>Users, Dashboards,<br/>Alerts, Saved Searches)]
+
+    subgraph API & App Layer
+        API3[API Service]
+    end
+
+    subgraph Alerting
+        SCHED2[Alert Scheduler]
+        EVAL2[Alert Evaluator]
+        MQ_NOT[(Message Queue<br/>Notification Topic)]
+        NOTIF[Notification Service]
+    end
+
+    AHIST[(Alert History<br/>NoSQL)]
+
+    %% Ingestion Flow
+    SRC1 -- TCP --> LB_ING
+    SRC2 -- syslog/TCP --> LB_ING
+    SRC3 -- HTTP POST --> LB_ING
+    LB_ING --> ING1
+    LB_ING --> ING2
+    ING1 --> MQ_ING
+    ING2 --> MQ_ING
+    MQ_ING --> IX1d
+    MQ_ING --> IX2d
+    MQ_ING --> IX3d
+    IX1d --> HOT2
+    IX2d --> HOT2
+    IX3d --> HOT2
+    IX1d -.-> META3
+    IX2d -.-> META3
+    IX3d -.-> META3
+    HOT2 -.-> WARM2
+    WARM2 -.-> COLD2
+
+    %% User Interaction
+    WEB -- static assets --> CDN
+    WEB -- "API requests" --> LB_API
+    LB_API --> API3
+    LB_API --> SH1d
+    LB_API --> SH2d
+
+    API3 --> SQLDB3
+    API3 --> CACHE3
+    API3 --> SH1d
+
+    SH1d --> META3
+    SH1d --> CACHE3
+    SH1d --> IX1d
+    SH1d --> IX2d
+    SH1d --> IX3d
+    SH2d --> IX1d
+    SH2d --> IX2d
+    SH2d --> IX3d
+    SH1d -.-> COLD2
+
+    %% Alerting Flow
+    SCHED2 --> SQLDB3
+    SCHED2 --> SH2d
+    SH2d --> EVAL2
+    EVAL2 --> MQ_NOT
+    EVAL2 --> AHIST
+    MQ_NOT --> NOTIF
+</div>
+
+<h3>7.2 Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — End-to-End: Log Ingested → Alert Fired → User Investigates via Dashboard:</strong><br/>
+<strong>Step 1 (Ingestion):</strong> A payment microservice on App Server 1 logs: <code>ERROR PaymentProcessor: timeout connecting to payment gateway, order_id=ORD-8812</code>. The forwarder agent sends it over TCP to the Ingestion LB → Ingestion Service → Message Queue (Ingestion Topic) → Indexer Node 2 parses (source_type=payment_app), indexes, and writes to Hot Storage. The event is searchable within ~2 seconds.<br/><br/>
+<strong>Step 2 (Alert):</strong> The Alert Scheduler triggers the "Payment Gateway Errors" alert (runs every 1 minute). Search Head 2 fans out the query <code>index=payment_logs "timeout connecting to payment gateway" | stats count</code> to Indexer Nodes. The result: <code>count=47</code> (threshold is 10). The Alert Evaluator fires → enqueues notification on the Notification Topic → Notification Service sends an email to the payments-oncall team and fires a PagerDuty-style webhook.<br/><br/>
+<strong>Step 3 (Dashboard Investigation):</strong> The on-call engineer receives the alert, opens the "Payment Health" dashboard in their browser. Static assets load from the CDN. The API Service fetches the dashboard definition from the SQL DB, executes 3 panel queries via Search Head 1, which fans out to Indexer Nodes. The dashboard renders: a time chart showing error spike, a table of recent errors with order IDs, and a single-value panel showing current error rate. The engineer identifies the root cause and resolves the issue.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — End-to-End: Bulk Historical Analysis:</strong><br/>
+<strong>Step 1:</strong> A compliance team needs to analyze 6 months of audit logs. They run: <code>index=audit_logs earliest=-6mon | stats count by user, action | sort -count</code>.<br/>
+<strong>Step 2:</strong> Search Head 1 checks the Metadata DB: the first 1 month is in Hot/Warm storage, the remaining 5 months are in Cold Storage (Object Storage). It initiates rehydration for the cold buckets while simultaneously searching hot/warm data.<br/>
+<strong>Step 3:</strong> Partial results from hot/warm data stream to the user's browser via WebSocket within seconds. Cold data becomes available after ~5 minutes of rehydration, and the remaining results stream in. The complete aggregation table is displayed.
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>8. Schema Design</h2>
+<!-- ============================================================ -->
+<div class="section-card">
+
+<h3>8.1 SQL Tables</h3>
+<p><strong>Why SQL for these tables:</strong> These are metadata/configuration tables with complex relationships (users → dashboards → panels, users → alerts → saved_searches), require strong consistency (e.g., alert definitions must not be partially updated), benefit from ACID transactions (e.g., deleting a user cascades to their dashboards), and have relatively low write volume compared to log data. Relational modeling is ideal here.</p>
+
+<h4>Table: <code>users</code></h4>
 <table>
-  <tr><th>Tier</th><th>Scale Unit</th><th>Scaling Metric</th><th>Notes</th></tr>
-  <tr><td>Forwarder Tier</td><td>UF per source host</td><td>~500 MB/day per UF typical</td><td>Minimal overhead (&lt;2% CPU). HFs for heavy parsing/routing.</td></tr>
-  <tr><td>Indexer Tier</td><td>Indexer peer node</td><td>~200-300 GB/day per indexer</td><td>Scale linearly. Add indexers for throughput. Rebalance buckets via Cluster Manager.</td></tr>
-  <tr><td>Search Head Tier</td><td>SH node in SHC</td><td>~20-50 concurrent searches per SH</td><td>Scale for concurrent users. SHC Captain (Raft consensus) distributes jobs.</td></tr>
-  <tr><td>Storage Tier</td><td>SmartStore remote</td><td>Unlimited (S3/GCS)</td><td>Local cache sized per indexer. Remote storage scales independently.</td></tr>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td><td>Unique user identifier</td></tr>
+<tr><td><code>username</code></td><td>VARCHAR(100)</td><td>UNIQUE, NOT NULL</td><td>Login username</td></tr>
+<tr><td><code>email</code></td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td><td>Email address</td></tr>
+<tr><td><code>password_hash</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Bcrypt-hashed password</td></tr>
+<tr><td><code>role</code></td><td>ENUM</td><td>NOT NULL</td><td>admin, power_user, user, read_only</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Account creation time</td></tr>
+</table>
+<ul>
+  <li><strong>Index:</strong> Hash index on <code>username</code> for O(1) login lookups.</li>
+  <li><strong>Read:</strong> On user login, session validation.</li>
+  <li><strong>Write:</strong> On user registration, profile update.</li>
+</ul>
+
+<h4>Table: <code>dashboards</code></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+<tr><td><code>dashboard_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td><td>Unique dashboard identifier</td></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td><strong>Foreign Key → users.user_id</strong></td><td>Creator/owner</td></tr>
+<tr><td><code>name</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Dashboard title</td></tr>
+<tr><td><code>description</code></td><td>TEXT</td><td></td><td>Optional description</td></tr>
+<tr><td><code>definition_json</code></td><td>JSON/TEXT</td><td>NOT NULL</td><td>Full panel layout, queries, viz types</td></tr>
+<tr><td><code>is_shared</code></td><td>BOOLEAN</td><td>DEFAULT false</td><td>Whether visible to all users</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Creation time</td></tr>
+<tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last modification time</td></tr>
+</table>
+<ul>
+  <li><strong>Index:</strong> B-tree index on <code>user_id</code> for fetching all dashboards belonging to a user (range query).</li>
+  <li><strong>Index:</strong> B-tree index on <code>(is_shared, name)</code> for browsing shared dashboards alphabetically.</li>
+  <li><strong>Read:</strong> When a user opens the dashboard list page or loads a specific dashboard.</li>
+  <li><strong>Write:</strong> When a user creates, edits, or deletes a dashboard.</li>
+  <li><strong>Denormalization note:</strong> The <code>definition_json</code> field stores the entire panel configuration as a JSON blob rather than normalizing panels into a separate table. This is intentional: dashboards are always loaded/saved as a whole unit, and the panel structure is complex/nested. Normalizing would require many JOINs on every dashboard load with no benefit, since panels are never queried independently.</li>
+</ul>
+
+<h4>Table: <code>saved_searches</code></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+<tr><td><code>search_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td><td>Unique identifier</td></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td><strong>Foreign Key → users.user_id</strong></td><td>Owner</td></tr>
+<tr><td><code>name</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Saved search name</td></tr>
+<tr><td><code>query</code></td><td>TEXT</td><td>NOT NULL</td><td>SPL query string</td></tr>
+<tr><td><code>earliest</code></td><td>VARCHAR(50)</td><td></td><td>Default earliest time (e.g., "-24h")</td></tr>
+<tr><td><code>latest</code></td><td>VARCHAR(50)</td><td></td><td>Default latest time (e.g., "now")</td></tr>
+<tr><td><code>schedule</code></td><td>VARCHAR(100)</td><td></td><td>Cron expression (null = not scheduled)</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Creation time</td></tr>
+</table>
+<ul>
+  <li><strong>Index:</strong> B-tree index on <code>user_id</code> for listing a user's saved searches.</li>
+  <li><strong>Index:</strong> B-tree index on <code>schedule</code> (filtered: WHERE schedule IS NOT NULL) for the Alert Scheduler to efficiently find scheduled searches.</li>
+  <li><strong>Read:</strong> When a user lists their saved searches, or when the Alert Scheduler polls for due searches.</li>
+  <li><strong>Write:</strong> When a user saves or updates a search.</li>
+</ul>
+
+<h4>Table: <code>alerts</code></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+<tr><td><code>alert_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td><td>Unique alert identifier</td></tr>
+<tr><td><code>search_id</code></td><td>UUID</td><td><strong>Foreign Key → saved_searches.search_id</strong></td><td>Backing search</td></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td><strong>Foreign Key → users.user_id</strong></td><td>Alert creator</td></tr>
+<tr><td><code>name</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Alert name</td></tr>
+<tr><td><code>condition_json</code></td><td>JSON/TEXT</td><td>NOT NULL</td><td>Trigger condition (operator, threshold, field)</td></tr>
+<tr><td><code>severity</code></td><td>ENUM</td><td>NOT NULL</td><td>info, warning, critical</td></tr>
+<tr><td><code>actions_json</code></td><td>JSON/TEXT</td><td>NOT NULL</td><td>Notification actions (email, webhook, etc.)</td></tr>
+<tr><td><code>suppression_period_sec</code></td><td>INT</td><td>DEFAULT 0</td><td>Seconds to suppress re-firing</td></tr>
+<tr><td><code>enabled</code></td><td>BOOLEAN</td><td>DEFAULT true</td><td>Whether alert is active</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Creation time</td></tr>
+</table>
+<ul>
+  <li><strong>Index:</strong> B-tree index on <code>(enabled, search_id)</code> for the scheduler to find active alerts linked to scheduled searches.</li>
+  <li><strong>Read:</strong> When the Alert Scheduler evaluates due alerts; when users view their alert configurations.</li>
+  <li><strong>Write:</strong> When a user creates, updates, or deletes an alert.</li>
+  <li><strong>Normalization note:</strong> Alerts and saved_searches are kept as separate tables (normalized) even though each alert references exactly one saved search. This is because saved searches can exist independently (as reports) without being alerts. Normalization avoids duplicating query definitions and allows a single search to back multiple alerts with different conditions.</li>
+</ul>
+
+<h3>8.2 NoSQL Tables</h3>
+
+<h4>Table: <code>log_events</code></h4>
+<p><strong>Why NoSQL:</strong> Log events are write-heavy (millions/second), append-only, never updated, and primarily accessed by time range + keyword. Schema varies by source type (different logs have different fields). A wide-column or document NoSQL database optimized for time-series writes is ideal. SQL would not handle this write throughput, and the schema variability would require extensive use of JSON columns anyway.</p>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+<tr><td><code>index_name</code></td><td>STRING</td><td><strong>Partition Key (part 1)</strong></td><td>Logical index (e.g., "web_logs")</td></tr>
+<tr><td><code>time_bucket</code></td><td>STRING</td><td><strong>Partition Key (part 2)</strong></td><td>Time bucket ID (e.g., "2026-02-13T18")</td></tr>
+<tr><td><code>event_id</code></td><td>UUID</td><td><strong>Sort Key</strong></td><td>Unique event identifier</td></tr>
+<tr><td><code>timestamp</code></td><td>TIMESTAMP</td><td></td><td>Event timestamp (from the log)</td></tr>
+<tr><td><code>ingestion_time</code></td><td>TIMESTAMP</td><td></td><td>When the event was ingested</td></tr>
+<tr><td><code>source_host</code></td><td>STRING</td><td></td><td>Hostname of the source</td></tr>
+<tr><td><code>source_type</code></td><td>STRING</td><td></td><td>Log format identifier</td></tr>
+<tr><td><code>raw_log</code></td><td>TEXT</td><td></td><td>Original raw log line</td></tr>
+<tr><td><code>parsed_fields</code></td><td>MAP/JSON</td><td></td><td>Extracted key-value fields</td></tr>
+</table>
+<ul>
+  <li><strong>Sharding Strategy:</strong> Composite partition key <code>(index_name, time_bucket)</code>. This ensures:
+    <ul>
+      <li>All events for the same index and time bucket are co-located → efficient time-range scans.</li>
+      <li>Different indexes are isolated → one noisy index doesn't impact another.</li>
+      <li>Time buckets distribute writes across partitions as time advances → no hot partition problem.</li>
+      <li>This enables the search layer to prune irrelevant partitions based on query time range.</li>
+    </ul>
+  </li>
+  <li><strong>Why this sharding strategy:</strong> Sharding by <code>event_id</code> alone would scatter time-range queries across all shards. Sharding by <code>index_name</code> alone would create a hot partition for high-volume indexes. The composite key balances write distribution and read locality.</li>
+  <li><strong>Read:</strong> When a search query targets a specific index and time range (fan-out from Search Head to relevant Indexer Nodes).</li>
+  <li><strong>Write:</strong> When an Indexer Worker processes a log event from the Message Queue.</li>
+</ul>
+
+<h4>Table: <code>inverted_index</code></h4>
+<p><strong>Why NoSQL:</strong> The inverted index is a specialized structure mapping tokens to event lists. It requires extremely fast writes (every event adds multiple entries) and fast reads (every search query looks up tokens). Key-value/wide-column NoSQL is ideal for this access pattern.</p>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+<tr><td><code>index_name</code></td><td>STRING</td><td><strong>Partition Key (part 1)</strong></td><td>Logical index</td></tr>
+<tr><td><code>time_bucket</code></td><td>STRING</td><td><strong>Partition Key (part 2)</strong></td><td>Time bucket</td></tr>
+<tr><td><code>token</code></td><td>STRING</td><td><strong>Sort Key</strong></td><td>Indexed term/token</td></tr>
+<tr><td><code>posting_list</code></td><td>LIST&lt;UUID&gt;</td><td></td><td>List of event_ids containing this token</td></tr>
+<tr><td><code>term_frequency</code></td><td>INT</td><td></td><td>Number of events containing this token in this bucket</td></tr>
+</table>
+<ul>
+  <li><strong>Index Type:</strong> This table <em>is</em> the inverted index. The partition key + sort key structure allows looking up a specific token within a specific index and time bucket in O(1). The posting list retrieval is a single row read.</li>
+  <li><strong>Sharding:</strong> Same composite partition key <code>(index_name, time_bucket)</code> as <code>log_events</code>, co-located on the same nodes for data locality during search.</li>
+  <li><strong>Read:</strong> When a Search Head fans out a keyword search to an Indexer Node. The node looks up each search keyword in this table for the relevant time buckets.</li>
+  <li><strong>Write:</strong> When an Indexer Worker indexes a new event — each token extracted from the raw log is added to the posting list.</li>
+</ul>
+
+<h4>Table: <code>index_metadata</code></h4>
+<p><strong>Why NoSQL:</strong> High write frequency (updated on every bucket creation/migration), simple key-value access pattern, no relational requirements.</p>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+<tr><td><code>index_name</code></td><td>STRING</td><td><strong>Partition Key</strong></td><td>Logical index name</td></tr>
+<tr><td><code>time_bucket</code></td><td>STRING</td><td><strong>Sort Key</strong></td><td>Time bucket ID</td></tr>
+<tr><td><code>bucket_id</code></td><td>UUID</td><td></td><td>Unique bucket identifier</td></tr>
+<tr><td><code>time_range_start</code></td><td>TIMESTAMP</td><td></td><td>Earliest event time in bucket</td></tr>
+<tr><td><code>time_range_end</code></td><td>TIMESTAMP</td><td></td><td>Latest event time in bucket</td></tr>
+<tr><td><code>event_count</code></td><td>BIGINT</td><td></td><td>Number of events in this bucket</td></tr>
+<tr><td><code>size_bytes</code></td><td>BIGINT</td><td></td><td>Storage size</td></tr>
+<tr><td><code>storage_tier</code></td><td>ENUM</td><td></td><td>hot, warm, cold, frozen</td></tr>
+<tr><td><code>node_id</code></td><td>STRING</td><td></td><td>ID of the Indexer Node holding this bucket (null for cold/frozen)</td></tr>
+<tr><td><code>object_storage_path</code></td><td>STRING</td><td></td><td>Path in object storage (for cold/frozen)</td></tr>
+</table>
+<ul>
+  <li><strong>Index:</strong> The partition + sort key structure provides efficient range queries: given an <code>index_name</code>, the Search Head can scan <code>time_bucket</code> values to find all buckets within the query's time range.</li>
+  <li><strong>Read:</strong> By Search Heads during search planning (which nodes/buckets to query).</li>
+  <li><strong>Write:</strong> By Indexer Workers on bucket creation; by the Tier Migration Service on bucket migration.</li>
+</ul>
+
+<h4>Table: <code>alert_history</code></h4>
+<p><strong>Why NoSQL:</strong> Append-only, high write volume (every alert evaluation writes an entry), queried primarily by <code>alert_id</code> + time range. No complex joins needed.</p>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+<tr><td><code>alert_id</code></td><td>UUID</td><td><strong>Partition Key</strong></td><td>FK → alerts (logical, not enforced)</td></tr>
+<tr><td><code>evaluation_time</code></td><td>TIMESTAMP</td><td><strong>Sort Key</strong></td><td>When the alert was evaluated</td></tr>
+<tr><td><code>triggered</code></td><td>BOOLEAN</td><td></td><td>Whether the condition was met</td></tr>
+<tr><td><code>result_summary</code></td><td>JSON/TEXT</td><td></td><td>Summary of the search results</td></tr>
+<tr><td><code>notification_sent</code></td><td>BOOLEAN</td><td></td><td>Whether notification was dispatched</td></tr>
+<tr><td><code>suppressed</code></td><td>BOOLEAN</td><td></td><td>Whether firing was suppressed</td></tr>
+</table>
+<ul>
+  <li><strong>Read:</strong> When a user views alert history in the UI; when the Alert Evaluator checks the suppression window (reads the last triggered entry for a given alert_id).</li>
+  <li><strong>Write:</strong> On every alert evaluation (triggered or not).</li>
+</ul>
+
+<h4>Table: <code>source_type_configs</code></h4>
+<p><strong>Why NoSQL:</strong> Simple key-value lookup, read-heavy (every event parse reads this), infrequently updated. Cached in memory on Indexer Workers.</p>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+<tr><td><code>source_type</code></td><td>STRING</td><td><strong>Partition Key</strong></td><td>e.g., "apache_access", "java_app"</td></tr>
+<tr><td><code>parsing_regex</code></td><td>TEXT</td><td></td><td>Regex for field extraction</td></tr>
+<tr><td><code>timestamp_format</code></td><td>STRING</td><td></td><td>Expected timestamp format</td></tr>
+<tr><td><code>field_definitions</code></td><td>JSON</td><td></td><td>Expected fields and types</td></tr>
+<tr><td><code>line_breaking_regex</code></td><td>TEXT</td><td></td><td>How to split multi-line events</td></tr>
+<tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td></td><td>Last update time</td></tr>
+</table>
+<ul>
+  <li><strong>Read:</strong> By Indexer Workers during event parsing (cached in memory, refreshed periodically).</li>
+  <li><strong>Write:</strong> When an admin creates or updates a source type configuration (rare).</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>9. Database Indexing Summary</h2>
+<!-- ============================================================ -->
+<div class="section-card">
+<table>
+<tr><th>Table</th><th>Column(s)</th><th>Index Type</th><th>Rationale</th></tr>
+<tr><td><code>users</code></td><td><code>username</code></td><td>Hash Index</td><td>Login lookups are exact-match by username. Hash gives O(1) lookup.</td></tr>
+<tr><td><code>dashboards</code></td><td><code>user_id</code></td><td>B-Tree Index</td><td>Range query: "all dashboards for user X." B-tree supports equality and range.</td></tr>
+<tr><td><code>dashboards</code></td><td><code>(is_shared, name)</code></td><td>Composite B-Tree Index</td><td>Browsing shared dashboards alphabetically: filter by is_shared=true, order by name.</td></tr>
+<tr><td><code>saved_searches</code></td><td><code>user_id</code></td><td>B-Tree Index</td><td>List all saved searches for a user.</td></tr>
+<tr><td><code>saved_searches</code></td><td><code>schedule</code> (partial, WHERE NOT NULL)</td><td>B-Tree Index (partial)</td><td>Alert Scheduler only needs scheduled searches. Partial index avoids indexing nulls.</td></tr>
+<tr><td><code>alerts</code></td><td><code>(enabled, search_id)</code></td><td>Composite B-Tree Index</td><td>Scheduler finds enabled alerts linked to their searches.</td></tr>
+<tr><td><code>inverted_index</code> (NoSQL)</td><td><code>(index_name, time_bucket, token)</code></td><td>Inverted Index (inherent)</td><td>This table <em>is</em> the inverted index for full-text search. Token lookup retrieves posting lists.</td></tr>
+<tr><td><code>log_events</code> (NoSQL)</td><td><code>(index_name, time_bucket)</code></td><td>Partition Key (hash-range)</td><td>Composite partition key enables time-range-scoped queries within a logical index.</td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2>10. CDN &amp; Caching Deep Dive</h2>
+<!-- ============================================================ -->
+<div class="section-card">
+
+<h3>10.1 CDN — Static Web UI Assets</h3>
+<ul>
+  <li><strong>Why appropriate:</strong> The Splunk Web UI is a JavaScript-heavy SPA. Serving JS bundles (often multi-MB), CSS, fonts, and images from a CDN reduces latency for global users and offloads static traffic from API servers.</li>
+  <li><strong>What it caches:</strong> HTML shell, JS bundles, CSS files, images, fonts. All static and versioned.</li>
+  <li><strong>Invalidation:</strong> Content-hash-based filenames (e.g., <code>app.a3f2b1.js</code>). On new deployments, filenames change → CDN fetches new versions. Old versions naturally expire.</li>
+  <li><strong>CDN is NOT used for:</strong> Log data, search results, or any dynamic content. These are user-specific, real-time, and not cacheable at the CDN layer.</li>
+</ul>
+
+<h3>10.2 In-Memory Cache — Search Results &amp; Dashboard Data</h3>
+
+<h4>Purpose</h4>
+<p>Caches the results of recent search queries and dashboard panel queries to avoid re-executing expensive distributed searches for identical queries.</p>
+
+<h4>Cache Key</h4>
+<p><code>SHA256(query + index_name + earliest + latest + user_role)</code> — includes user_role to ensure RBAC is respected (different roles may see different data).</p>
+
+<h4>Caching Strategy: Cache-Aside (Lazy Loading)</h4>
+<ul>
+  <li><strong>How it works:</strong>
+    <ol>
+      <li>Search Head receives a query.</li>
+      <li>Computes cache key and checks the in-memory cache.</li>
+      <li><strong>Cache hit:</strong> Return cached results immediately.</li>
+      <li><strong>Cache miss:</strong> Execute the distributed search, return results, and populate the cache.</li>
+    </ol>
+  </li>
+  <li><strong>Why Cache-Aside:</strong> Search results are the product of complex distributed computation over constantly changing data. Write-through or write-behind caching doesn't apply because there's no "write" in the traditional sense — logs are ingested asynchronously, and the relationship between new logs and cached query results is not straightforward. Cache-aside lets us cache results only when they're actually requested, avoiding wasting cache space on queries nobody runs.</li>
+</ul>
+
+<h4>Eviction Policy: LRU (Least Recently Used)</h4>
+<ul>
+  <li><strong>Why LRU:</strong> Search patterns are highly skewed — a few common queries (dashboard panels, alert searches) are run repeatedly while most ad-hoc queries are one-off. LRU naturally keeps frequently accessed results warm while evicting rarely repeated queries.</li>
+  <li><strong>Why not LFU:</strong> LFU (Least Frequently Used) could "lock in" stale results from historically popular queries that are no longer relevant. LRU is more responsive to recency.</li>
+</ul>
+
+<h4>Expiration Policy: Short TTL (30–120 seconds)</h4>
+<ul>
+  <li><strong>Why short TTL:</strong> Log data is continuously arriving. A cached search result becomes stale within seconds as new events are indexed. A TTL of 30–120 seconds balances performance (avoid re-executing the same search when a user refreshes) with freshness (results are never more than 2 minutes stale). For dashboards, the typical auto-refresh interval is 60 seconds, so a 60-second TTL aligns well.</li>
+  <li><strong>Real-time searches bypass the cache entirely</strong> — they need the latest data by definition.</li>
+</ul>
+
+<h4>What Populates the Cache</h4>
+<ul>
+  <li>Completed search queries (on cache miss).</li>
+  <li>Dashboard panel query results (on dashboard load).</li>
+  <li>Scheduled report results (pre-populated on schedule execution).</li>
+</ul>
+
+<h4>Cache Sizing</h4>
+<ul>
+  <li>Each Search Head maintains its own local in-memory cache (not shared across heads).</li>
+  <li>Typical sizing: 2–8 GB per Search Head, depending on result set sizes.</li>
+  <li>The LB's sticky-session-by-search-id ensures the same search hits the same cache.</li>
+</ul>
+
+<h3>10.3 Source Type Config Cache (Indexer Workers)</h3>
+<ul>
+  <li>Each Indexer Worker caches source type configurations in local memory.</li>
+  <li><strong>Strategy:</strong> Cache-aside with TTL of 5 minutes. On miss, fetch from the <code>source_type_configs</code> NoSQL table.</li>
+  <li><strong>Why:</strong> Source type configs change rarely but are read on every single event parse. Caching avoids a DB read per event.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>11. Scaling Considerations</h2>
+<!-- ============================================================ -->
+<div class="section-card">
+
+<h3>11.1 Load Balancers</h3>
+
+<h4>Ingestion Load Balancer</h4>
+<ul>
+  <li><strong>Position:</strong> Between data sources (forwarder agents, API clients) and Ingestion Service nodes.</li>
+  <li><strong>Type:</strong> Layer-4 (TCP) load balancer.</li>
+  <li><strong>Strategy:</strong> Round-robin or least-connections. No session affinity needed — each batch is independent.</li>
+  <li><strong>Why needed:</strong> Distributes ingestion traffic evenly across Ingestion Service nodes. As ingestion volume grows, add more Ingestion Service nodes behind the LB.</li>
+  <li><strong>Health checks:</strong> TCP connection check + custom health endpoint on Ingestion Service.</li>
+</ul>
+
+<h4>API / Search Load Balancer</h4>
+<ul>
+  <li><strong>Position:</strong> Between the Web UI (browsers) and API Service / Search Head nodes.</li>
+  <li><strong>Type:</strong> Layer-7 (HTTP/HTTPS) load balancer.</li>
+  <li><strong>Strategy:</strong> Round-robin for API requests. For WebSocket search sessions, sticky sessions by <code>search_id</code> cookie to ensure the client reconnects to the same Search Head for the duration of a search.</li>
+  <li><strong>Why needed:</strong> Distributes search and API load across multiple Search Head and API Service nodes. As query volume grows, add more nodes.</li>
+  <li><strong>TLS termination:</strong> Performed at the LB to offload encryption from backend services.</li>
+</ul>
+
+<h3>11.2 Horizontal Scaling by Layer</h3>
+
+<table>
+<tr><th>Layer</th><th>Scaling Mechanism</th><th>Trigger</th></tr>
+<tr><td>Ingestion Service</td><td>Add more stateless nodes behind the Ingestion LB.</td><td>Ingestion throughput exceeds capacity (measured by event queue depth, CPU utilization).</td></tr>
+<tr><td>Message Queue</td><td>Add more partitions. Each new partition can be consumed by a new Indexer Worker.</td><td>Consumer lag grows (indexers falling behind ingestion rate).</td></tr>
+<tr><td>Indexer Workers</td><td>Add more worker instances in the consumer group. Each consumes a subset of queue partitions.</td><td>Consumer lag, high CPU during parsing/indexing.</td></tr>
+<tr><td>Indexer Nodes (Storage)</td><td>Add more nodes. Rebalance bucket assignments so new nodes take on a share of hot/warm data.</td><td>Storage capacity approaching limits, search latency increasing due to per-node data volume.</td></tr>
+<tr><td>Search Heads</td><td>Add more stateless Search Head nodes behind the Search LB.</td><td>Query concurrency/latency metrics exceed thresholds.</td></tr>
+<tr><td>API Service</td><td>Add more stateless API nodes behind the LB.</td><td>API latency or error rate increases.</td></tr>
+<tr><td>SQL DB (Metadata)</td><td>Read replicas for read-heavy workloads. The write volume is low enough that vertical scaling + read replicas suffice.</td><td>Query latency on metadata reads.</td></tr>
+<tr><td>NoSQL (Log Data)</td><td>Add more nodes to the NoSQL cluster. Data re-partitions automatically across the new consistent hash ring.</td><td>Storage capacity, write throughput, read latency.</td></tr>
+<tr><td>Object Storage (Cold)</td><td>Effectively infinite scaling — object storage scales transparently.</td><td>N/A — managed by the storage provider.</td></tr>
 </table>
 
-<h3>Deployment Topologies</h3>
+<h3>11.3 Data Volume Estimates</h3>
 <ul>
-  <li><strong>Single Server</strong> — All-in-one for &lt;50 GB/day. Forwarder + Indexer + Search Head on one machine. Lab/dev use.</li>
-  <li><strong>Distributed</strong> — Separate forwarder → indexer → search head tiers. 50-500 GB/day. Most common production topology.</li>
-  <li><strong>Clustered</strong> — Indexer Cluster (RF=3, SF=2) + Search Head Cluster (3+ SHs). 500 GB - 10 TB/day. High availability.</li>
-  <li><strong>Multi-Site</strong> — site1/site2 indexer clusters with site-aware replication. site_replication_factor=origin:2,total:3. DR and data locality.</li>
-  <li><strong>Splunk Cloud</strong> — SaaS: fully managed indexer/SH clusters. Customer manages forwarders only. Victoria/Noah architecture.</li>
+  <li><strong>Assumption:</strong> 500,000 events/second average, 1 KB average per event.</li>
+  <li><strong>Daily volume:</strong> ~43 TB/day raw. With compression (5:1), ~8.6 TB/day stored.</li>
+  <li><strong>Yearly volume:</strong> ~3.1 PB raw, ~630 TB stored (before cold/frozen archival).</li>
+  <li><strong>Hot tier (7 days):</strong> ~60 TB. <strong>Warm tier (30 days):</strong> ~260 TB. <strong>Cold tier (1 year):</strong> ~3.1 PB compressed.</li>
 </ul>
 
-<div class="deep-dive">
-  <strong>Deep Dive — Indexer Cluster Replication:</strong><br>
-  The Cluster Manager (CM) maintains a <strong>generation</strong> model. Each generation represents a consistent view of bucket distribution. When a peer joins/leaves, CM initiates generation roll: reassigns bucket primacy, triggers replication to maintain RF/SF. Replication is <em>bucket-level</em>: source peer streams rawdata + TSIDX to target peer. <strong>Search Factor</strong> (SF): number of searchable copies (with TSIDX). SF ≤ RF. Example: RF=3, SF=2 → 3 copies of raw data, 2 have searchable indexes, 1 is rawdata-only (cheaper). During peer failure: CM marks peer as down after heartbeat timeout (60s default) → promotes non-searchable copies to searchable (rebuild TSIDX) → initiates fix-up replication to restore RF. Recovery time: minutes for search restoration, hours for full replication fix-up on TB-scale clusters.
-</div>
-</div>
-
-<!-- ==================== TRADEOFFS ==================== -->
-<div class="section">
-<h2>Tradeoffs &amp; Alternative Approaches</h2>
-
-<div class="tradeoff">
-  <strong>Tradeoff — Schema-on-Read vs. Schema-on-Write:</strong><br>
-  Splunk uses <strong>schema-on-read</strong>: data is ingested as raw text, fields extracted at search time via regex/delimiters. Advantage: no upfront schema definition, any data format accepted, retroactive field extraction. Disadvantage: search-time extraction is CPU-intensive (10x slower than pre-indexed fields). Mitigation: index-time field extraction for frequently searched fields (<code>INDEXED_EXTRACTIONS</code>), calculated fields, accelerated data models.
+<h3>11.4 Auto-Scaling Policies</h3>
+<ul>
+  <li>Ingestion and Search layers support auto-scaling based on CPU, memory, and queue depth metrics.</li>
+  <li>Indexer Nodes require more careful scaling due to data rebalancing costs — manual or semi-automated scaling with pre-provisioning is preferred.</li>
+</ul>
 </div>
 
-<div class="tradeoff">
-  <strong>Tradeoff — SmartStore vs. Local Storage:</strong><br>
-  <em>Local storage</em>: all buckets on local SSD. Fastest search, no remote fetch latency. Cost: expensive SSD at scale, indexers are stateful (hard to replace). <em>SmartStore</em>: hot local + warm/cold on S3. Cost: 10x cheaper storage, stateless indexers (easy auto-scaling). Penalty: cache miss adds 1-5s per bucket fetch. Best for: large retention requirements, cloud-native deployments, elastic scaling.
+<!-- ============================================================ -->
+<h2>12. Tradeoffs &amp; Deep Dives</h2>
+<!-- ============================================================ -->
+<div class="section-card">
+
+<h3>12.1 Eventual Consistency vs. Strong Consistency</h3>
+<p><strong>Choice:</strong> Eventual consistency for search (ingestion → searchable delay of 2–5 seconds).</p>
+<p><strong>Why:</strong> Strong consistency would require synchronous indexing before acknowledging ingestion, which would dramatically reduce ingestion throughput. For a log analytics platform, a few seconds of lag between log emission and searchability is universally acceptable. The tradeoff is that a user running a real-time search might miss events that were ingested in the last 2–5 seconds.</p>
+
+<h3>12.2 Inverted Index Granularity</h3>
+<p><strong>Choice:</strong> Per-time-bucket inverted index segments (e.g., one segment per 15-minute or 1-hour bucket).</p>
+<p><strong>Why:</strong> Smaller segments allow faster searches over short time ranges (only relevant segments are opened). However, too many small segments increase metadata overhead and merge costs. A 15-minute bucket balances search granularity with operational overhead.</p>
+<p><strong>Tradeoff:</strong> Larger buckets → fewer segments → lower overhead but slower short-range searches. Smaller buckets → more segments → higher overhead but faster time-targeted searches.</p>
+
+<h3>12.3 MapReduce-Style Search vs. Centralized Search</h3>
+<p><strong>Choice:</strong> MapReduce-style (fan-out to Indexer Nodes, aggregate on Search Head).</p>
+<p><strong>Why:</strong> Moving computation to data is far more efficient than moving data to computation. If the Search Head had to pull all raw data from all Indexer Nodes and process locally, network bandwidth would be the bottleneck. By having Indexer Nodes filter and partially aggregate locally, only relevant results traverse the network.</p>
+
+<h3>12.4 Tiered Storage</h3>
+<p><strong>Tradeoff:</strong> Hot → Warm → Cold tiers trade search speed for storage cost. Hot (SSD, local, fully indexed) is expensive but fast. Cold (object storage, compressed) is cheap but requires rehydration for search. The tier migration policies must be tuned per organization based on their search patterns and budget.</p>
+
+<h3>12.5 Forwarder Agent vs. Direct API</h3>
+<p><strong>Tradeoff:</strong> Agents provide reliable delivery (local disk buffering), compression, and batching, but require installation and management on every source host. Direct API is simpler for CI/CD pipelines and serverless functions but lacks local buffering (data can be lost if the API is temporarily unreachable).</p>
+
+<h3>12.6 TCP vs. UDP for Log Forwarding</h3>
+<p><strong>Choice:</strong> TCP.</p>
+<p><strong>Why:</strong> Logs are critical operational data. UDP's fire-and-forget semantics would risk silent data loss under congestion or packet drops. TCP provides reliable, ordered delivery with flow control. The overhead of TCP's connection management and acknowledgments is acceptable for log forwarding because:</p>
+<ul>
+  <li>Log forwarding uses persistent connections (not per-event connections), amortizing TCP handshake cost.</li>
+  <li>The data rates, while high, are well within TCP's capability (unlike, say, live video streaming where UDP is preferred).</li>
+  <li>Lost log data could mean missing critical security or debugging information — reliability is non-negotiable.</li>
+</ul>
 </div>
 
-<div class="tradeoff">
-  <strong>Tradeoff — Splunk vs. ELK (Elasticsearch + Logstash + Kibana):</strong><br>
-  <em>Splunk</em>: Proprietary, SPL query language (more powerful for chained analytics), built-in SOAR/SIEM, easier for non-developers (GUI-driven). Cost: $$$, licensed by daily ingestion volume ($1-3K/GB/year). <em>ELK</em>: Open-source core (Elastic License), Lucene query + KQL, JSON document model, developer-oriented. Cost: infrastructure + operational expertise. Splunk excels at security ops (ES) and enterprise compliance. ELK excels at developer observability and cost-sensitive deployments.
+<!-- ============================================================ -->
+<h2>13. Alternative Approaches</h2>
+<!-- ============================================================ -->
+<div class="section-card">
+
+<h3>13.1 Alternative: Direct Write to Storage (No Message Queue)</h3>
+<p><strong>Description:</strong> Ingestion Service writes directly to Indexer Nodes/storage, bypassing the message queue.</p>
+<p><strong>Why rejected:</strong> Without a buffer, ingestion spikes (common during incidents — exactly when logs are most needed) would overwhelm Indexer Workers, causing back-pressure to propagate to the Ingestion Service and then to forwarder agents. Agents would fill their local disk buffers and potentially start dropping logs. The message queue absorbs bursts elastically, decoupling ingestion rate from indexing rate.</p>
+
+<h3>13.2 Alternative: Centralized Index (Single Search Node)</h3>
+<p><strong>Description:</strong> All data indexed and stored on a single powerful node; search happens locally.</p>
+<p><strong>Why rejected:</strong> Does not scale beyond a single machine's capacity. At millions of events/second and petabytes of data, a single node is physically insufficient. The distributed fan-out architecture allows linear horizontal scaling.</p>
+
+<h3>13.3 Alternative: Store Raw Logs in Object Storage Only (No Local Hot Tier)</h3>
+<p><strong>Description:</strong> Skip hot/warm tiers entirely; store everything in object storage and search it directly (like a data lake approach).</p>
+<p><strong>Why rejected:</strong> Object storage has high read latency (10s to 100s of milliseconds per request) and is not optimized for the small, random reads required by inverted index lookups. Interactive search over recent data would be unacceptably slow. The tiered approach keeps recent data on fast local storage where interactive search is expected, while using object storage for cost-effective long-term archival.</p>
+
+<h3>13.4 Alternative: Pull-Based Ingestion (Scraping)</h3>
+<p><strong>Description:</strong> Instead of agents pushing logs, a central scraper pulls logs from source hosts (similar to Prometheus's pull model for metrics).</p>
+<p><strong>Why rejected:</strong> Pull-based requires the central system to know about every source host and poll them. This doesn't scale well with ephemeral infrastructure (containers, serverless). Push-based with agents is more natural for logs — the source knows when it has data and pushes immediately. Pull introduces polling delay and requires service discovery overhead.</p>
+
+<h3>13.5 Alternative: Using a Relational Database for Log Storage</h3>
+<p><strong>Description:</strong> Store all log events in a SQL database.</p>
+<p><strong>Why rejected:</strong> SQL databases are not designed for the write throughput required (millions of inserts/second). They also struggle with full-text search at this scale (even with full-text indexes, performance degrades with billions of rows). The schema variability of logs (different fields per source type) is awkward in a rigid relational schema. A NoSQL wide-column store with custom inverted indexing is purpose-built for this workload.</p>
+
+<h3>13.6 Alternative: Server-Sent Events (SSE) Instead of WebSocket for Search Streaming</h3>
+<p><strong>Description:</strong> Use SSE instead of WebSocket for streaming search results.</p>
+<p><strong>Why not chosen:</strong> SSE is unidirectional (server → client). While sufficient for result streaming, it doesn't support client → server communication. With WebSocket, the client can send control messages (pause, cancel, modify query) on the same connection. Additionally, SSE has limitations with certain proxies and a lower maximum connection limit in some browsers.</p>
 </div>
 
-<h3>Alternative Approaches</h3>
+<!-- ============================================================ -->
+<h2>14. Additional Information</h2>
+<!-- ============================================================ -->
+<div class="section-card">
+
+<h3>14.1 Data Lifecycle Management</h3>
+<ul>
+  <li><strong>Tier Migration Service:</strong> A background service monitors bucket ages and migrates data across tiers:
+    <ul>
+      <li><strong>Hot → Warm:</strong> Move from SSD to HDD when bucket age exceeds hot retention (e.g., 7 days). Index is preserved.</li>
+      <li><strong>Warm → Cold:</strong> Compress and move to object storage when bucket age exceeds warm retention (e.g., 30 days). Index metadata is retained in the Metadata DB; actual index is stored compressed alongside raw data.</li>
+      <li><strong>Cold → Frozen:</strong> Further compression and possible deletion of index files. Searching requires full rehydration.</li>
+      <li><strong>Frozen → Delete:</strong> Data purged when retention policy expires (e.g., 7 years for compliance logs).</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>14.2 Data Replication</h3>
+<ul>
+  <li>Hot and Warm tier data is replicated across at least 2 Indexer Nodes for durability.</li>
+  <li>One node holds the "primary" copy (handles both reads and writes), and 1+ nodes hold replicas (handle reads, promoted to primary on failure).</li>
+  <li>Cold tier data in object storage inherently has redundancy (object stores typically replicate data across availability zones).</li>
+</ul>
+
+<h3>14.3 Query Language (SPL-like)</h3>
+<p>The search language supports a pipeline model:</p>
+<pre>index=web_logs status=500 earliest=-1h
+| stats count by host, uri
+| sort -count
+| head 10</pre>
+<p>Each pipe stage transforms the data: filter → aggregate → sort → limit. The Search Head's query parser builds an execution plan that pushes filters and partial aggregations to Indexer Nodes (predicate pushdown).</p>
+
+<h3>14.4 Multi-Tenancy &amp; RBAC</h3>
+<ul>
+  <li>Each index can be restricted to specific roles.</li>
+  <li>Search requests include the user's role; the Search Head enforces access control by filtering allowed indexes before fan-out.</li>
+  <li>This prevents unauthorized users from accessing sensitive logs (e.g., security, PII-containing indexes).</li>
+</ul>
+
+<h3>14.5 Monitoring the Monitor</h3>
+<ul>
+  <li>A meta-monitoring system ingests Splunk's own internal metrics (ingestion rate, search latency, queue depth, error rates) into a dedicated internal index.</li>
+  <li>Alerts on this internal index detect issues like indexer lag, storage capacity warnings, or ingestion failures.</li>
+  <li>This "monitoring the monitoring system" pattern is critical for operational reliability.</li>
+</ul>
+
+<h3>14.6 Data Compression</h3>
+<ul>
+  <li>Logs are highly compressible (repetitive structure, lots of common strings).</li>
+  <li>Compression ratios of 5:1 to 10:1 are typical.</li>
+  <li>Hot tier: light compression (e.g., LZ4) prioritizing decompression speed for search performance.</li>
+  <li>Warm/Cold: heavier compression (e.g., zstd) prioritizing space savings.</li>
+</ul>
+
+<h3>14.7 Exactly-Once vs. At-Least-Once Semantics</h3>
+<ul>
+  <li>The ingestion pipeline provides <strong>at-least-once</strong> delivery. If an Indexer Worker crashes after writing an event but before committing its queue offset, the event will be re-delivered and re-indexed.</li>
+  <li>Deduplication is handled via the <code>event_id</code> (UUID generated at the Ingestion Service). On re-delivery, the Indexer Worker checks if the event_id already exists in the current bucket and skips it if so.</li>
+  <li>This provides effective exactly-once semantics without the performance penalty of distributed transactions.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>15. Vendor Section</h2>
+<!-- ============================================================ -->
+<div class="section-card">
+<p>The design above is vendor-agnostic. Below are potential vendor choices for each infrastructure component, with rationale:</p>
+
 <table>
-  <tr><th>Approach</th><th>Technology</th><th>When to Prefer</th></tr>
-  <tr><td>Columnar Log Analytics</td><td>ClickHouse, Apache Druid</td><td>High-cardinality metrics, SQL-native teams, cost optimization</td></tr>
-  <tr><td>Cloud-Native Logging</td><td>AWS CloudWatch, GCP Cloud Logging, Datadog</td><td>Cloud-first organizations, managed services preference</td></tr>
-  <tr><td>Open-Source SIEM</td><td>Wazuh, OSSEC, SecurityOnion</td><td>Budget-constrained security operations</td></tr>
-  <tr><td>OpenTelemetry + Backend</td><td>OTel Collector → Jaeger/Grafana Tempo/Loki</td><td>Vendor-neutral observability, traces + logs correlation</td></tr>
-  <tr><td>Data Lake Analytics</td><td>Apache Spark + Delta Lake + Databricks</td><td>ML on log data, long-term analytics, data science workloads</td></tr>
+<tr><th>Component</th><th>Vendor Options</th><th>Rationale</th></tr>
+<tr>
+  <td>Message Queue</td>
+  <td>Apache Kafka, Apache Pulsar, Amazon Kinesis, Redpanda</td>
+  <td><strong>Kafka</strong> is the most proven for high-throughput log streaming with partitioned topics, consumer groups, and configurable retention. Pulsar adds multi-tenancy and tiered storage. Kinesis is a managed option for AWS-centric deployments. Redpanda offers Kafka API compatibility with lower operational overhead.</td>
+</tr>
+<tr>
+  <td>NoSQL (Log Storage, Inverted Index)</td>
+  <td>Apache Cassandra, ScyllaDB, Apache HBase, custom (like Splunk's own TSIDX)</td>
+  <td><strong>Cassandra/ScyllaDB</strong> excels at write-heavy, time-partitioned workloads with tunable consistency. HBase is strong for wide-column time-series with range scans. A custom indexing engine (like Splunk's actual TSIDX format) is optimal but requires significant engineering investment.</td>
+</tr>
+<tr>
+  <td>NoSQL (Metadata, Alert History)</td>
+  <td>Apache Cassandra, Amazon DynamoDB, ScyllaDB</td>
+  <td>Simpler key-value patterns; any of these handle the relatively lower throughput with high availability.</td>
+</tr>
+<tr>
+  <td>SQL Database</td>
+  <td>PostgreSQL, MySQL, Amazon Aurora, CockroachDB</td>
+  <td><strong>PostgreSQL</strong> for rich feature set (JSON support, partial indexes). Aurora for managed scalability. CockroachDB for distributed SQL if global deployment is needed.</td>
+</tr>
+<tr>
+  <td>Object Storage (Cold/Frozen)</td>
+  <td>Amazon S3, Google Cloud Storage, Azure Blob Storage, MinIO (self-hosted)</td>
+  <td>All provide durable, scalable, cost-effective storage for compressed archival data. S3 is the de facto standard. MinIO for on-premises or vendor-neutral deployments.</td>
+</tr>
+<tr>
+  <td>In-Memory Cache</td>
+  <td>Redis, Memcached, Dragonfly</td>
+  <td><strong>Redis</strong> for its rich data structures (useful for caching complex search results) and TTL support. Memcached for pure key-value caching at scale with simpler operational model. Dragonfly as a modern, multi-threaded alternative.</td>
+</tr>
+<tr>
+  <td>CDN</td>
+  <td>Cloudflare, Amazon CloudFront, Akamai, Fastly</td>
+  <td>Any major CDN serves static SPA assets effectively. <strong>Cloudflare</strong> for ease of use and DDoS protection. CloudFront for AWS integration. Fastly for real-time purging capabilities.</td>
+</tr>
+<tr>
+  <td>Load Balancer</td>
+  <td>NGINX, HAProxy, AWS ALB/NLB, Envoy</td>
+  <td><strong>NGINX/HAProxy</strong> for self-hosted with proven performance. ALB for AWS HTTP load balancing. NLB for TCP (ingestion). <strong>Envoy</strong> for service mesh integration and gRPC load balancing between Search Heads and Indexer Nodes.</td>
+</tr>
+<tr>
+  <td>Container Orchestration</td>
+  <td>Kubernetes, Docker Swarm, Nomad</td>
+  <td><strong>Kubernetes</strong> for auto-scaling, rolling deployments, and managing the many stateless services (Ingestion, Search Heads, API). Indexer Nodes may use StatefulSets for stable storage mounts.</td>
+</tr>
 </table>
 </div>
 
-<!-- ==================== ADDITIONAL ==================== -->
-<div class="section">
-<h2>Additional Information</h2>
-
-<h3>Splunk Processing Language (SPL) — Key Commands</h3>
-<table>
-  <tr><th>Category</th><th>Commands</th><th>Example</th></tr>
-  <tr><td>Filtering</td><td><code>search</code>, <code>where</code>, <code>dedup</code></td><td><code>index=web status=500 | dedup src_ip</code></td></tr>
-  <tr><td>Transformation</td><td><code>stats</code>, <code>timechart</code>, <code>chart</code>, <code>top</code></td><td><code>| stats avg(response_time) BY endpoint</code></td></tr>
-  <tr><td>Evaluation</td><td><code>eval</code>, <code>rex</code>, <code>spath</code></td><td><code>| eval duration_ms=duration*1000</code></td></tr>
-  <tr><td>Enrichment</td><td><code>lookup</code>, <code>inputlookup</code>, <code>geostats</code></td><td><code>| lookup geo_ip src_ip OUTPUT country</code></td></tr>
-  <tr><td>Join</td><td><code>join</code>, <code>append</code>, <code>subsearch</code></td><td><code>| join src_ip [search index=threat_intel]</code></td></tr>
-  <tr><td>Output</td><td><code>table</code>, <code>fields</code>, <code>outputlookup</code>, <code>collect</code></td><td><code>| table _time, src_ip, status, response_time</code></td></tr>
-</table>
-
-<h3>Security (Splunk Enterprise Security)</h3>
-<ul>
-  <li><strong>Correlation Searches</strong> — Scheduled SPL that detect threats across multiple data sources. Map to MITRE ATT&CK techniques.</li>
-  <li><strong>Risk-Based Alerting (RBA)</strong> — Assign risk scores to entities (users, hosts). Alert only when cumulative risk exceeds threshold. Reduces alert fatigue by 90%.</li>
-  <li><strong>Adaptive Response</strong> — Automated response actions: block IP, disable user, quarantine host, create ticket. Integrated with SOAR playbooks.</li>
-  <li><strong>Threat Intelligence Framework</strong> — Ingest IOCs from STIX/TAXII, MISP, OpenCTI. Auto-correlate against all incoming data.</li>
-</ul>
-
-<h3>Observability (Splunk Observability Cloud)</h3>
-<ul>
-  <li><strong>Splunk APM</strong> — Distributed tracing (OpenTelemetry), full-fidelity trace storage (no sampling), AI-directed root cause analysis.</li>
-  <li><strong>Splunk Infrastructure Monitoring</strong> — Real-time streaming analytics on metrics (SignalFlow language). 1-second resolution. 100K+ metrics/sec per node.</li>
-  <li><strong>Splunk RUM</strong> — Real User Monitoring: browser/mobile performance, Core Web Vitals, session replay, error tracking.</li>
-  <li><strong>Splunk Synthetic Monitoring</strong> — Proactive uptime checks, multi-step API tests, global checkpoint locations.</li>
-</ul>
-
-<h3>Data Input Methods</h3>
-<ul>
-  <li><strong>Universal Forwarder</strong> — Lightweight agent (50MB), file monitoring + network inputs, output to indexers. No parsing.</li>
-  <li><strong>Heavy Forwarder</strong> — Full Splunk instance configured for forwarding. Can parse, filter, route, mask data before forwarding.</li>
-  <li><strong>HTTP Event Collector (HEC)</strong> — <code>POST /services/collector/event</code>, token auth, JSON/raw, batching support (<code>/services/collector/event</code> with array payload). 1000s events/request.</li>
-  <li><strong>Syslog (TCP/UDP)</strong> — Direct syslog input on port 514. For network devices, firewalls. Often via syslog-ng/rsyslog intermediate.</li>
-  <li><strong>Modular Inputs</strong> — Python/Node scripts that poll external APIs (AWS CloudTrail, O365, Salesforce). Checkpoint-based incremental collection.</li>
-  <li><strong>DB Connect</strong> — JDBC connections to SQL databases. Scheduled queries import rows as events. Supports Oracle, MySQL, PostgreSQL, SQL Server.</li>
-</ul>
-</div>
+<script>
+mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+</script>
 
 </body>
 </html>
