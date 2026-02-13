@@ -1,421 +1,1167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Microsoft Teams - System Design</title>
-<style>
-:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--heading:#6264A7;--accent:#464EB8;--accent2:#9EA2FF;--accent3:#E74856;--muted:#888}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
-h1{color:var(--heading);font-size:2.2rem;border-bottom:3px solid var(--heading);padding-bottom:.5rem;margin-bottom:1.5rem}
-h2{color:var(--accent2);margin:2rem 0 1rem;font-size:1.5rem}
-h3{color:var(--accent);margin:1.5rem 0 .75rem;font-size:1.2rem}
-h4{color:var(--accent3);margin:1rem 0 .5rem}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
-ul,ol{margin:.75rem 0 .75rem 1.5rem}
-li{margin:.4rem 0}
-code{background:#2d2d2d;padding:.2rem .5rem;border-radius:4px;font-size:.9rem;color:#f8f8f2}
-pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:1rem 0}
-pre code{padding:0;background:none}
-.tag{display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600;margin:.2rem}
-.tag-pk{background:#E53935;color:#fff}
-.tag-fk{background:#1E88E5;color:#fff}
-.tag-idx{background:#43A047;color:#fff}
-.tag-shard{background:#FB8C00;color:#fff}
-svg text{font-family:'Segoe UI',system-ui,sans-serif}
-.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
-.pro{background:#1b3a1b;border:1px solid #2d5a2d;border-radius:8px;padding:1rem}
-.con{background:#3a1b1b;border:1px solid #5a2d2d;border-radius:8px;padding:1rem}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design: Microsoft Teams</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad: true, theme: 'base', themeVariables: { primaryColor: '#ffffff', primaryTextColor: '#000000', primaryBorderColor: '#000000', lineColor: '#000000', secondaryColor: '#ffffff', tertiaryColor: '#ffffff', mainBkg: '#ffffff', nodeBorder: '#000000', clusterBkg: '#ffffff', clusterBorder: '#000000', titleColor: '#000000', edgeLabelBackground: '#ffffff', nodeTextColor: '#000000', actorTextColor: '#000000', signalColor: '#000000', labelBoxBkgColor: '#ffffff', labelBoxBorderColor: '#000000', labelTextColor: '#000000', loopTextColor: '#000000', noteBorderColor: '#000000', noteBkgColor: '#ffffff', noteTextColor: '#000000', activationBorderColor: '#000000', activationBkgColor: '#ffffff', sequenceNumberColor: '#000000', sectionBkgColor: '#ffffff', altSectionBkgColor: '#ffffff', sectionBkgColor2: '#ffffff', taskBorderColor: '#000000', taskBkgColor: '#ffffff', taskTextColor: '#000000', taskTextLightColor: '#000000', taskTextOutsideColor: '#000000', activeTaskBorderColor: '#000000', activeTaskBkgColor: '#ffffff', gridColor: '#000000', doneTaskBkgColor: '#ffffff', doneTaskBorderColor: '#000000', critBorderColor: '#000000', critBkgColor: '#ffffff', todayLineColor: '#000000', textColor: '#000000', arrowheadColor: '#000000' }});</script>
+    <style>
+        :root { --accent: #4a56a6; --bg: #fdfdfd; --card-bg: #fff; --text: #222; --muted: #666; --border: #e0e0e0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+        h1 { font-size: 2.4em; color: var(--accent); margin-bottom: 8px; border-bottom: 3px solid var(--accent); padding-bottom: 12px; }
+        h2 { font-size: 1.7em; color: var(--accent); margin: 48px 0 16px; border-left: 4px solid var(--accent); padding-left: 14px; }
+        h3 { font-size: 1.3em; color: #333; margin: 28px 0 12px; }
+        h4 { font-size: 1.1em; color: #444; margin: 20px 0 8px; }
+        p, li { font-size: 1em; color: var(--text); }
+        ul, ol { margin-left: 24px; margin-bottom: 16px; }
+        li { margin-bottom: 6px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+        .diagram-container { background: #ffffff; border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+        .example-box { background: #f4f6fb; border-left: 4px solid var(--accent); padding: 16px 20px; margin: 16px 0; border-radius: 0 8px 8px 0; }
+        .example-box strong { color: var(--accent); }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.95em; }
+        th { background: var(--accent); color: #fff; padding: 10px 14px; text-align: left; }
+        td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+        tr:nth-child(even) { background: #f8f8fc; }
+        code { background: #eef; padding: 2px 6px; border-radius: 4px; font-size: 0.92em; font-family: 'Fira Code', 'Consolas', monospace; }
+        .tag { display: inline-block; background: var(--accent); color: #fff; padding: 2px 10px; border-radius: 12px; font-size: 0.82em; margin-right: 6px; }
+        .tag.green { background: #2e7d32; }
+        .tag.orange { background: #e65100; }
+        .tag.blue { background: #1565c0; }
+        .warn { background: #fff3e0; border-left: 4px solid #e65100; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+        .info { background: #e3f2fd; border-left: 4px solid #1565c0; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+        .toc { background: #f4f6fb; border: 1px solid var(--border); border-radius: 8px; padding: 20px 28px; margin: 24px 0; }
+        .toc a { color: var(--accent); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .toc li { margin-bottom: 4px; }
+        hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+    </style>
 </head>
 <body>
+<div class="container">
 
-<h1>💬 Microsoft Teams - System Design</h1>
+<h1>System Design: Microsoft Teams</h1>
+<p style="color:var(--muted); margin-bottom: 24px;">A comprehensive collaboration platform supporting real-time messaging, presence, audio/video calling, file sharing, and notifications at enterprise scale.</p>
 
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+    <h3>Table of Contents</h3>
+    <ol>
+        <li><a href="#fr">Functional Requirements</a></li>
+        <li><a href="#nfr">Non-Functional Requirements</a></li>
+        <li><a href="#flow1">Flow 1: Real-Time Messaging</a></li>
+        <li><a href="#flow2">Flow 2: Presence &amp; Status</a></li>
+        <li><a href="#flow3">Flow 3: Video / Audio Calling</a></li>
+        <li><a href="#flow4">Flow 4: File Sharing</a></li>
+        <li><a href="#flow5">Flow 5: Notifications</a></li>
+        <li><a href="#combined">Combined Overall Architecture</a></li>
+        <li><a href="#schema">Database Schema</a></li>
+        <li><a href="#cdn-cache">CDN &amp; Caching Deep Dive</a></li>
+        <li><a href="#scaling">Scaling Considerations</a></li>
+        <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+        <li><a href="#alternatives">Alternative Approaches</a></li>
+        <li><a href="#additional">Additional Information</a></li>
+        <li><a href="#vendors">Vendor Recommendations</a></li>
+    </ol>
+</div>
+
+<!-- ============================== SECTION 1 ============================== -->
+<h2 id="fr">1. Functional Requirements</h2>
 <div class="card">
-<h2>Functional Requirements</h2>
 <ol>
-<li><strong>Real-Time Messaging:</strong> 1:1 and group chat with @mentions, reactions, threaded replies, file sharing, message editing/deletion, typing indicators, read receipts</li>
-<li><strong>Video/Audio Conferencing:</strong> HD video meetings (up to 10K participants), screen sharing, breakout rooms, recording, live captions, Together Mode (AI background)</li>
-<li><strong>Channels & Teams:</strong> Organized workspaces with channels, tabs (apps integration), wiki, file storage (SharePoint), permissions (owner/member/guest), cross-org federation</li>
+    <li><strong>1:1 and Group Messaging</strong> — Users can send and receive text messages, emojis, GIFs, and reactions in 1:1 chats, group chats, and channels.</li>
+    <li><strong>Channels within Teams</strong> — Organizations can create Teams, each containing multiple channels (public or private) for topic-based conversation.</li>
+    <li><strong>Threaded Replies</strong> — Users can reply to a specific message, creating a thread.</li>
+    <li><strong>Real-Time Delivery</strong> — Messages are delivered in real-time with typing indicators and read receipts.</li>
+    <li><strong>Presence &amp; Status</strong> — Users have a status (Online, Offline, Away, Busy, Do Not Disturb) visible to teammates.</li>
+    <li><strong>Audio/Video Calling</strong> — Users can make 1:1 and group audio/video calls.</li>
+    <li><strong>Screen Sharing</strong> — Users can share their screen during a call.</li>
+    <li><strong>File Upload &amp; Sharing</strong> — Users can upload files to a chat/channel and recipients can view/download them.</li>
+    <li><strong>Push &amp; In-App Notifications</strong> — Users receive notifications for new messages, mentions, calls, and reactions.</li>
+    <li><strong>Message Search</strong> — Users can search across all their messages and channels by keyword.</li>
+    <li><strong>Message Editing &amp; Deletion</strong> — Users can edit or delete their own sent messages.</li>
 </ol>
 </div>
 
+<!-- ============================== SECTION 2 ============================== -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
 <div class="card">
-<h2>Non-Functional Requirements</h2>
+<ol>
+    <li><strong>Low Latency</strong> — Message delivery &lt; 200ms for online recipients; call setup &lt; 2 seconds.</li>
+    <li><strong>High Availability</strong> — 99.99% uptime (≈ 52 minutes downtime/year).</li>
+    <li><strong>Message Ordering</strong> — Messages within a single conversation must be delivered in order.</li>
+    <li><strong>Scalability</strong> — Support hundreds of millions of registered users and tens of millions of concurrent connections.</li>
+    <li><strong>Data Durability</strong> — Zero message loss; all messages persisted before acknowledgment.</li>
+    <li><strong>Security</strong> — Encryption in transit (TLS) and at rest; support for compliance (eDiscovery, DLP).</li>
+    <li><strong>Cross-Platform</strong> — Web, Windows, macOS, iOS, Android with feature parity.</li>
+    <li><strong>Consistency</strong> — Eventual consistency acceptable for presence; strong consistency for message storage.</li>
+    <li><strong>Fault Tolerance</strong> — No single point of failure; graceful degradation under load.</li>
+</ol>
+</div>
+
+<!-- ============================== FLOW 1 ============================== -->
+<h2 id="flow1">3. Flow 1 — Real-Time Messaging</h2>
+<p>This flow covers a user composing a message and it being delivered in real-time to all participants of the conversation.</p>
+
+<h3>3.1 Diagram</h3>
+<div class="diagram-container">
+<div class="mermaid">
+graph LR
+    subgraph Sender Side
+        SC[Sender Client<br/>Web / Desktop / Mobile]
+    end
+
+    SC -->|"1. HTTP POST /api/messages<br/>(TLS over TCP)"| LB[Load Balancer]
+    LB --> AG[API Gateway<br/>Auth · Rate Limit]
+    AG --> CS[Chat Service]
+    CS -->|"2. Write message"| MDB[(Message DB<br/>NoSQL)]
+    CS -->|"3. Publish message event"| MQ[Message Queue]
+    MQ --> FO[Fan-Out Service]
+    FO -->|"4a. Lookup connections"| WSR[WebSocket Registry<br/>In-Memory Cache]
+    FO -->|"4b. Deliver via WebSocket"| WSS[WebSocket Service]
+    WSS -->|"5. Real-time push"| RC[Recipient Client<br/>Online]
+    MQ --> NS[Notification Service]
+    NS -->|"6. Push if offline"| PNS[Push Gateway<br/>APNs / FCM]
+    PNS --> OC[Recipient Client<br/>Offline]
+    CS -->|"3b. Invalidate/update cache"| CMC[Conversation<br/>Metadata Cache]
+</div>
+</div>
+
+<h3>3.2 Flow Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Online Recipient (Happy Path):</strong><br/>
+Alice opens the "Project Alpha" channel and types "Meeting moved to 3pm" and presses Enter. Her client sends an <code>HTTP POST /api/messages</code> with the payload <code>{ conversation_id: "ch_001", content: "Meeting moved to 3pm", sender_id: "alice_01" }</code> to the Load Balancer, which routes to the API Gateway. The API Gateway authenticates Alice's JWT token and forwards to the Chat Service. The Chat Service writes the message to the Message DB (NoSQL), then publishes a <code>message.created</code> event to the Message Queue. The Fan-Out Service consumes this event, looks up all participants of <code>ch_001</code> in the WebSocket Registry, discovers Bob is online with an active WebSocket connection on server <code>ws-node-07</code>, and forwards the message payload to that WebSocket Service node. Bob's client receives the message instantly via WebSocket and renders it in his channel view.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Offline Recipient:</strong><br/>
+Continuing the above scenario, Carol is also a member of "Project Alpha" but has her laptop closed. The Fan-Out Service looks up Carol in the WebSocket Registry and finds no active connection. The event also reaches the Notification Service via the Message Queue. The Notification Service checks Carol's presence (offline) via the Presence Service, then sends a push notification through the Push Gateway (APNs for her iPhone). Carol's phone displays: "Alice in Project Alpha: Meeting moved to 3pm". When Carol later opens Teams, her client calls <code>HTTP GET /api/conversations/ch_001/messages?after=last_seen_ts</code> to fetch missed messages.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Typing Indicator (Ephemeral):</strong><br/>
+Before sending the message, while Alice is typing, her client sends a lightweight <code>typing.start</code> event over her existing WebSocket connection. The WebSocket Service forwards this to the Fan-Out Service which broadcasts it to all online participants of <code>ch_001</code>. Bob sees "Alice is typing..." appear. This event is ephemeral — it is never persisted to the database. If Alice stops typing for 3 seconds, a <code>typing.stop</code> event is sent.
+</div>
+
+<div class="example-box">
+<strong>Example 4 — Read Receipt:</strong><br/>
+Bob reads Alice's message. His client sends an <code>HTTP PATCH /api/messages/{msg_id}/read</code> request. The Chat Service updates the <code>read_receipts</code> entry for Bob on that message and publishes a <code>message.read</code> event. The Fan-Out Service delivers this to Alice's client via WebSocket, which updates the UI to show a "Seen by Bob" indicator.
+</div>
+
+<h3>3.3 Component Deep Dive</h3>
+
+<h4>Load Balancer</h4>
+<p>Sits at the edge of the system. Distributes incoming HTTP requests across multiple API Gateway instances using round-robin or least-connections algorithms. Performs TLS termination and health checks. For WebSocket connections, uses sticky sessions (IP-hash or cookie-based) to ensure a client's persistent connection stays routed to the same WebSocket Service node.</p>
+
+<h4>API Gateway</h4>
+<p>Single entry point for all REST API calls. Responsibilities include: JWT-based authentication, rate limiting (per-user and per-org), request validation, and routing to downstream microservices. It does <strong>not</strong> handle WebSocket connections — those go directly to the WebSocket Service via the Load Balancer.</p>
+
+<h4>Chat Service</h4>
+<p>Core microservice for messaging CRUD. Exposed protocols and endpoints:</p>
+<table>
+    <tr><th>Method</th><th>Endpoint</th><th>Input</th><th>Output</th><th>Description</th></tr>
+    <tr><td><code>POST</code></td><td><code>/api/messages</code></td><td><code>{ conversation_id, content, sender_id, parent_message_id? }</code></td><td><code>{ message_id, created_at, status }</code></td><td>Create a new message</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/conversations/{id}/messages</code></td><td>Query params: <code>before</code>, <code>after</code>, <code>limit</code></td><td><code>{ messages: [...], has_more }</code></td><td>Fetch paginated messages</td></tr>
+    <tr><td><code>PATCH</code></td><td><code>/api/messages/{id}</code></td><td><code>{ content }</code></td><td><code>{ message_id, updated_at }</code></td><td>Edit a message</td></tr>
+    <tr><td><code>DELETE</code></td><td><code>/api/messages/{id}</code></td><td>—</td><td><code>{ status: "deleted" }</code></td><td>Soft-delete a message</td></tr>
+    <tr><td><code>PATCH</code></td><td><code>/api/messages/{id}/read</code></td><td><code>{ user_id }</code></td><td><code>{ status: "ok" }</code></td><td>Mark message as read</td></tr>
+</table>
+<p>Communication with the Message DB uses the database driver directly (TCP). Communication with the Message Queue uses the queue's client library (TCP). Internal service-to-service calls use gRPC for low-latency binary serialization.</p>
+
+<h4>Message DB (NoSQL)</h4>
+<p>Stores all messages. NoSQL document store chosen because: (1) messages are append-heavy with infrequent updates, (2) schema flexibility for different message types (text, file reference, system message), (3) horizontal scalability via sharding on <code>conversation_id</code>. Each document includes <code>message_id</code>, <code>conversation_id</code>, <code>sender_id</code>, <code>content</code>, <code>created_at</code>, <code>parent_message_id</code>, <code>reactions</code>, and <code>read_receipts</code>.</p>
+
+<h4>Message Queue</h4>
+<p>Decouples the write path (Chat Service → persist) from the delivery path (Fan-Out → WebSocket). Guarantees at-least-once delivery. Messages are partitioned by <code>conversation_id</code> to maintain ordering within a conversation. The Chat Service produces events; the Fan-Out Service and Notification Service are consumers. See the <a href="#mq-deep-dive">Message Queue Deep Dive</a> section for more.</p>
+
+<h4>Fan-Out Service</h4>
+<p>Consumes <code>message.created</code>, <code>message.edited</code>, <code>message.deleted</code>, and <code>message.read</code> events. For each event, it looks up all participants of the conversation, queries the WebSocket Registry to find which participants are online and which WebSocket Service node they're connected to, then forwards the payload to those specific nodes. For large channels (thousands of members), it performs <strong>lazy fan-out</strong> — only delivering to participants who have the channel active/visible, and relying on pull-based fetching for others.</p>
+
+<h4>WebSocket Service</h4>
+<p>Maintains persistent, bidirectional WebSocket (RFC 6455) connections with all online clients. Each node holds thousands of concurrent connections in memory. When a client connects, it registers its <code>user_id → { node_id, connection_id }</code> mapping in the WebSocket Registry. Handles: message delivery, typing indicators, presence updates, call signaling, and in-app notifications. Uses heartbeats (ping/pong every 30 seconds) to detect stale connections.</p>
+
+<h4>WebSocket Registry (In-Memory Cache)</h4>
+<p>A distributed in-memory cache that maps <code>user_id → [{ ws_node_id, connection_id, device_type }]</code>. Supports multi-device: a single user may have entries for web, desktop, and mobile simultaneously. The Fan-Out Service queries this to determine where to route real-time events. TTL of 60 seconds; refreshed on every heartbeat.</p>
+
+<h4>Conversation Metadata Cache</h4>
+<p>Caches frequently accessed conversation metadata (participant lists, conversation name, last_message_at). Cache-aside strategy. Invalidated by the Chat Service on message writes. Reduces load on the database for the common operation of looking up participants during fan-out.</p>
+
+<h4>Notification Service</h4>
+<p>Detailed in <a href="#flow5">Flow 5</a>.</p>
+
+<!-- ============================== FLOW 2 ============================== -->
+<h2 id="flow2">4. Flow 2 — Presence &amp; Status</h2>
+<p>This flow covers how the system tracks whether a user is online, offline, away, busy, or in Do Not Disturb mode, and how that status is propagated to their contacts.</p>
+
+<h3>4.1 Diagram</h3>
+<div class="diagram-container">
+<div class="mermaid">
+graph LR
+    subgraph User Actions
+        UC[User Client]
+    end
+
+    UC -->|"1. WebSocket Heartbeat<br/>(every 30s)"| WSS[WebSocket Service]
+    UC -->|"1b. HTTP PUT /api/presence<br/>{status: 'busy'}"| LB[Load Balancer]
+    LB --> AG[API Gateway]
+    AG --> PS[Presence Service]
+    WSS -->|"2. Report heartbeat"| PS
+    PS -->|"3. Update status"| PC[(Presence Cache<br/>In-Memory)]
+    PS -->|"4. Publish status change"| PubSub[Pub/Sub System]
+    PubSub -->|"5. Broadcast"| WSS2[WebSocket Service]
+    WSS2 -->|"6. Status update"| CC[Contacts' Clients<br/>Online]
+</div>
+</div>
+
+<h3>4.2 Flow Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — User Comes Online:</strong><br/>
+Dave opens the Teams desktop app. The client establishes a WebSocket connection to the WebSocket Service. The WebSocket Service notifies the Presence Service that Dave is now connected. The Presence Service updates the Presence Cache: <code>{ user_id: "dave_01", status: "online", last_seen: now, device: "desktop" }</code>. It then publishes a <code>presence.changed</code> event to the Pub/Sub System with <code>{ user_id: "dave_01", status: "online" }</code>. The Pub/Sub System delivers this to all WebSocket Service nodes. Each node checks if any of Dave's contacts are connected to it, and if so, pushes the status update. Alice, who has Dave in her recent chats, sees Dave's avatar change from grey (offline) to green (online).
+</div>
+
+<div class="example-box">
+<strong>Example 2 — User Goes Idle → Away:</strong><br/>
+Dave hasn't interacted with his computer for 5 minutes. His Teams client detects inactivity and sends a <code>presence.idle</code> signal over the WebSocket. The Presence Service updates Dave's status to "Away" in the Presence Cache and publishes the change via Pub/Sub. Alice sees Dave's status change from green (online) to yellow (away).
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Manual Status Override:</strong><br/>
+Dave is preparing for a presentation and manually sets his status to "Do Not Disturb" via the UI. His client sends <code>HTTP PUT /api/presence</code> with <code>{ status: "dnd" }</code>. The API Gateway routes to the Presence Service, which updates the cache and publishes the change. This manual status takes priority over automatic detection — even if Dave is actively using his machine, the status remains DND until he changes it.
+</div>
+
+<div class="example-box">
+<strong>Example 4 — User Disconnects Unexpectedly:</strong><br/>
+Dave's internet drops. The WebSocket Service stops receiving heartbeat pongs. After missing 2 consecutive heartbeats (60 seconds), the WebSocket Service declares the connection dead, removes it from the WebSocket Registry, and notifies the Presence Service. The Presence Service waits an additional 30 seconds (grace period to handle brief network blips), then sets Dave to "Offline" and publishes the change. If Dave reconnects within the grace period, no status change is broadcast.
+</div>
+
+<h3>4.3 Component Deep Dive</h3>
+
+<h4>Presence Service</h4>
+<p>Manages user status lifecycle. Exposed endpoints:</p>
+<table>
+    <tr><th>Method</th><th>Endpoint</th><th>Input</th><th>Output</th><th>Description</th></tr>
+    <tr><td><code>PUT</code></td><td><code>/api/presence</code></td><td><code>{ user_id, status }</code></td><td><code>{ status: "ok" }</code></td><td>Set manual status</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/presence/{user_id}</code></td><td>—</td><td><code>{ user_id, status, last_seen }</code></td><td>Get a user's current status</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/presence/batch</code></td><td><code>{ user_ids: [...] }</code></td><td><code>{ presences: [{user_id, status}...] }</code></td><td>Batch fetch (for contact list)</td></tr>
+</table>
+<p>Internal communication from WebSocket Service → Presence Service uses gRPC for low-latency heartbeat reporting. The service applies a state machine: Online → Away (after 5 min idle) → Offline (after disconnect + grace period). Manual overrides (Busy, DND) bypass the automatic state machine.</p>
+
+<h4>Presence Cache (In-Memory)</h4>
+<p>Stores the current status of every user. Data model: <code>key = user_id</code>, <code>value = { status, last_seen, device, manual_override }</code>. TTL of 120 seconds; refreshed on every heartbeat. Uses a <strong>write-through</strong> strategy: every status change is written to the cache immediately. No persistent backing store — presence is purely ephemeral. If the cache is lost, users simply appear offline until their next heartbeat.</p>
+
+<h4>Pub/Sub System</h4>
+<p>Used for broadcasting presence changes to all WebSocket Service nodes. Each WebSocket Service node subscribes to a <code>presence.changed</code> topic. When the Presence Service publishes a status change, all nodes receive it and check if any of the affected user's contacts have active connections on that node. This is preferable to direct point-to-point communication because the Presence Service doesn't need to know which nodes to contact — the Pub/Sub handles fan-out. See the <a href="#pubsub-deep-dive">Pub/Sub Deep Dive</a> for details on why Pub/Sub was chosen over alternatives.</p>
+
+<!-- ============================== FLOW 3 ============================== -->
+<h2 id="flow3">5. Flow 3 — Video / Audio Calling</h2>
+<p>This flow covers initiating, connecting, and maintaining audio and video calls, including screen sharing.</p>
+
+<h3>5.1 Diagram</h3>
+<div class="diagram-container">
+<div class="mermaid">
+graph LR
+    subgraph Caller
+        CallerC[Caller Client]
+    end
+
+    CallerC -->|"1. HTTP POST /api/calls<br/>{ participants, type }"| LB[Load Balancer]
+    LB --> AG[API Gateway]
+    AG --> CAS[Call Service]
+    CAS -->|"2. Create call record"| CDB[(Call DB<br/>SQL)]
+    CAS -->|"3. Signal: incoming_call<br/>via WebSocket"| WSS[WebSocket Service]
+    WSS -->|"4. Ring"| CalleeC[Callee Client]
+    CalleeC -->|"5. Accept → SDP Answer<br/>via WebSocket"| WSS
+    WSS --> CAS
+    CAS -->|"6. Exchange ICE candidates<br/>via WebSocket"| WSS
+
+    CallerC <-->|"7. Media Stream<br/>WebRTC / UDP / SRTP"| SFU[SFU<br/>Media Server]
+    CalleeC <-->|"7. Media Stream<br/>WebRTC / UDP / SRTP"| SFU
+    SFU <--> TURN[TURN / STUN<br/>NAT Traversal]
+    CAS -->|"8. Call ended → update record"| CDB
+</div>
+</div>
+
+<h3>5.2 Flow Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — 1:1 Video Call (Happy Path):</strong><br/>
+Alice clicks the video call button on her chat with Bob. Her client sends <code>HTTP POST /api/calls</code> with <code>{ participants: ["alice_01", "bob_01"], type: "video" }</code>. The Call Service creates a call record in the Call DB (<code>call_id: "call_500", status: "ringing"</code>) and sends a signaling message via WebSocket to Bob: <code>{ type: "incoming_call", call_id: "call_500", caller: "alice_01", call_type: "video" }</code>. Bob's client shows a ringing UI. Bob clicks "Accept". His client generates an SDP answer and sends it back via WebSocket to the Call Service, which relays it to Alice. Both clients exchange ICE candidates via WebSocket to determine the best network path. Since both are on the same corporate network, STUN resolves their addresses and they establish a direct peer-to-peer WebRTC connection. Media (video + audio) flows over UDP using SRTP encryption. When Alice clicks "End Call", the Call Service updates the record: <code>{ status: "ended", ended_at: now, duration: 847s }</code>.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Group Call with SFU:</strong><br/>
+Alice starts a group call in the "Project Alpha" channel with 8 participants. The Call Service creates the call and signals all 8 participants. As each participant joins, they establish a WebRTC connection <strong>not with each other</strong> but with the SFU (Selective Forwarding Unit) media server. Each participant sends one upstream video/audio track to the SFU. The SFU selectively forwards each participant's stream to all others — meaning each participant receives 7 incoming streams. The SFU does <strong>not</strong> transcode; it merely routes packets, keeping latency low. If a participant has low bandwidth, the SFU can choose to forward only a lower-quality simulcast layer. The Call Service assigns the nearest SFU based on geographic proximity.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — NAT Traversal via TURN:</strong><br/>
+Bob is on a restrictive corporate network behind symmetric NAT. STUN fails to resolve a direct path. The ICE framework falls back to the TURN relay server. Both Alice's and Bob's media streams route through the TURN server, which relays UDP packets between them. This adds slight latency (~20-50ms) but ensures connectivity.
+</div>
+
+<div class="example-box">
+<strong>Example 4 — Screen Sharing:</strong><br/>
+During the call, Alice clicks "Share Screen". Her client captures her screen as a video stream and adds it as an additional WebRTC media track to her connection with the SFU. The SFU forwards this new track to all other participants. Bob's client detects the new screen-share track and renders it in a larger viewport while shrinking Alice's camera feed.
+</div>
+
+<div class="example-box">
+<strong>Example 5 — Callee Declines / No Answer:</strong><br/>
+Alice calls Bob, but Bob clicks "Decline". A <code>call.declined</code> event is sent via WebSocket to the Call Service, which updates the call record to <code>status: "declined"</code> and notifies Alice. Alternatively, if Bob doesn't respond within 30 seconds, the Call Service times out the ring, sets status to <code>"missed"</code>, and the Notification Service sends Bob a "Missed call from Alice" push notification.
+</div>
+
+<h3>5.3 Component Deep Dive</h3>
+
+<h4>Call Service</h4>
+<p>Manages call lifecycle (create, ring, connect, end). It is a <strong>signaling-only</strong> service — it never touches media streams. Endpoints:</p>
+<table>
+    <tr><th>Method</th><th>Endpoint</th><th>Input</th><th>Output</th><th>Description</th></tr>
+    <tr><td><code>POST</code></td><td><code>/api/calls</code></td><td><code>{ participants, type }</code></td><td><code>{ call_id, status, sfu_endpoint }</code></td><td>Initiate a call</td></tr>
+    <tr><td><code>PUT</code></td><td><code>/api/calls/{id}/join</code></td><td><code>{ user_id, sdp_offer }</code></td><td><code>{ sdp_answer, ice_servers }</code></td><td>Join / accept a call</td></tr>
+    <tr><td><code>PUT</code></td><td><code>/api/calls/{id}/leave</code></td><td><code>{ user_id }</code></td><td><code>{ status }</code></td><td>Leave a call</td></tr>
+    <tr><td><code>PUT</code></td><td><code>/api/calls/{id}/end</code></td><td>—</td><td><code>{ status, duration }</code></td><td>End the call</td></tr>
+</table>
+
+<h4>SFU (Selective Forwarding Unit) / Media Server</h4>
+<p>Receives media streams from each participant and selectively forwards them. Does <strong>not</strong> transcode (unlike an MCU), preserving low latency. Supports simulcast: each sender transmits multiple quality layers (e.g., 720p, 360p, 180p), and the SFU chooses the appropriate layer per receiver based on bandwidth and viewport size. Deployed in multiple geographic regions to minimize latency. Communicates using WebRTC data channels over <strong>UDP</strong> with <strong>SRTP</strong> (Secure Real-time Transport Protocol) encryption.</p>
+
+<p><strong>Why UDP over TCP for media:</strong> UDP is preferred for real-time audio/video because it doesn't retransmit lost packets (which would cause jitter and delay). Minor packet loss is acceptable for media — the codec compensates. TCP's head-of-line blocking and retransmission would add unacceptable latency for interactive communication.</p>
+
+<h4>TURN / STUN Servers</h4>
+<p><strong>STUN</strong> (Session Traversal Utilities for NAT) helps clients discover their public IP and port, enabling direct P2P connections when possible. <strong>TURN</strong> (Traversal Using Relays around NAT) acts as a relay when direct connection fails (symmetric NAT, firewalls). TURN is bandwidth-expensive but is a last resort (~15% of calls need it in enterprise environments). Both are part of the ICE (Interactive Connectivity Establishment) framework.</p>
+
+<h4>Call DB (SQL)</h4>
+<p>Relational database storing call metadata. SQL chosen because call data is structured, relationships are well-defined (call → participants), and strong consistency is needed for billing, compliance, and audit trails. Schema detailed in the <a href="#schema">Schema section</a>.</p>
+
+<!-- ============================== FLOW 4 ============================== -->
+<h2 id="flow4">6. Flow 4 — File Sharing</h2>
+<p>This flow covers uploading a file to a chat or channel and how recipients access it.</p>
+
+<h3>6.1 Diagram</h3>
+<div class="diagram-container">
+<div class="mermaid">
+graph LR
+    subgraph Upload Path
+        UC[Sender Client] -->|"1. HTTP POST /api/files<br/>multipart/form-data"| LB[Load Balancer]
+        LB --> AG[API Gateway]
+        AG --> FS[File Service]
+        FS -->|"2. Store file blob"| OS[(Object Storage)]
+        FS -->|"3. Store metadata"| FDB[(File Metadata DB<br/>SQL)]
+        FS -->|"4. Return file_url + file_id"| AG
+    end
+
+    subgraph Message Path
+        UC -->|"5. HTTP POST /api/messages<br/>{ type: file, file_id }"| LB2[Load Balancer]
+        LB2 --> AG2[API Gateway]
+        AG2 --> CS[Chat Service]
+        CS --> MDB[(Message DB)]
+    end
+
+    subgraph Download Path
+        RC[Recipient Client] -->|"6. GET file_url"| CDN[CDN]
+        CDN -->|"Cache Miss"| OS
+    end
+</div>
+</div>
+
+<h3>6.2 Flow Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — File Upload and Share (Happy Path):</strong><br/>
+Alice drags a 5MB PDF "Q4_Report.pdf" into the "Project Alpha" channel. Her client sends <code>HTTP POST /api/files</code> with the file as <code>multipart/form-data</code>, including metadata <code>{ conversation_id: "ch_001", filename: "Q4_Report.pdf" }</code>. The File Service generates a unique <code>file_id</code>, uploads the file blob to Object Storage, and writes metadata to the File Metadata DB: <code>{ file_id: "f_300", uploader_id: "alice_01", filename: "Q4_Report.pdf", size: 5242880, mime_type: "application/pdf", storage_path: "/org_01/ch_001/f_300.pdf", created_at: now }</code>. The File Service returns <code>{ file_id: "f_300", file_url: "https://cdn.teams.example.com/org_01/ch_001/f_300.pdf" }</code>. Alice's client then sends <code>HTTP POST /api/messages</code> with <code>{ conversation_id: "ch_001", type: "file", file_id: "f_300", content: "Q4_Report.pdf" }</code>. This follows the normal messaging flow — the message is persisted, fan-out occurs, and Bob receives a message rendered as a downloadable file card.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — File Download via CDN:</strong><br/>
+Bob clicks the "Q4_Report.pdf" card in the channel. His client makes a <code>GET</code> request to the CDN URL. If the file is cached at the CDN edge node nearest to Bob, it's served immediately (CDN hit). If not, the CDN fetches it from Object Storage, caches it at the edge, and serves it to Bob. Subsequent downloads by other team members hit the CDN cache.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Large File (Chunked Upload):</strong><br/>
+Alice uploads a 500MB video recording. Her client uses chunked upload: <code>HTTP POST /api/files/initiate</code> to get an upload session, then sends multiple <code>HTTP PUT /api/files/{session_id}/chunk?part=N</code> requests in parallel. The File Service assembles chunks in Object Storage. Once all chunks are uploaded, the client sends <code>HTTP POST /api/files/{session_id}/complete</code>. This prevents timeout issues and allows resumable uploads.
+</div>
+
+<h3>6.3 Component Deep Dive</h3>
+
+<h4>File Service</h4>
+<p>Handles file lifecycle. Endpoints:</p>
+<table>
+    <tr><th>Method</th><th>Endpoint</th><th>Input</th><th>Output</th><th>Description</th></tr>
+    <tr><td><code>POST</code></td><td><code>/api/files</code></td><td>multipart: file binary + metadata</td><td><code>{ file_id, file_url }</code></td><td>Upload a file</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/files/initiate</code></td><td><code>{ filename, size, mime_type }</code></td><td><code>{ session_id, chunk_size }</code></td><td>Initiate chunked upload</td></tr>
+    <tr><td><code>PUT</code></td><td><code>/api/files/{session}/chunk</code></td><td>Binary chunk + part number</td><td><code>{ status }</code></td><td>Upload a chunk</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/files/{session}/complete</code></td><td>—</td><td><code>{ file_id, file_url }</code></td><td>Finalize chunked upload</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/files/{id}/metadata</code></td><td>—</td><td><code>{ filename, size, uploader, url }</code></td><td>Get file metadata</td></tr>
+    <tr><td><code>DELETE</code></td><td><code>/api/files/{id}</code></td><td>—</td><td><code>{ status }</code></td><td>Delete a file</td></tr>
+</table>
+<p>Files are stored in Object Storage organized by <code>/org_id/conversation_id/file_id.ext</code>. Signed URLs with expiration are generated for downloads to enforce access control.</p>
+
+<h4>Object Storage</h4>
+<p>Durable blob storage for all file content. Supports multi-part uploads for large files. Data is replicated across multiple availability zones for durability (99.999999999% — "11 nines"). Files are organized by organization and conversation for data isolation and compliance (e.g., data residency requirements).</p>
+
+<h4>CDN (Content Delivery Network)</h4>
+<p>Caches file content at edge nodes globally. Detailed in the <a href="#cdn-cache">CDN &amp; Caching</a> section.</p>
+
+<h4>File Metadata DB (SQL)</h4>
+<p>SQL chosen because file metadata is structured with clear relationships (uploader → user, file → conversation). Supports transactional integrity for operations like delete (must update both metadata and trigger Object Storage deletion). Schema detailed in the <a href="#schema">Schema section</a>.</p>
+
+<!-- ============================== FLOW 5 ============================== -->
+<h2 id="flow5">7. Flow 5 — Notifications</h2>
+<p>This flow covers how notifications are generated, delivered, and managed for events like new messages, mentions, reactions, missed calls, and file shares.</p>
+
+<h3>7.1 Diagram</h3>
+<div class="diagram-container">
+<div class="mermaid">
+graph LR
+    subgraph Event Sources
+        CS[Chat Service]
+        CAS[Call Service]
+        FS[File Service]
+    end
+
+    CS -->|"message.created<br/>message.reaction<br/>message.mention"| MQ[Message Queue]
+    CAS -->|"call.missed"| MQ
+    FS -->|"file.shared"| MQ
+
+    MQ --> NS[Notification Service]
+    NS -->|"1. Check preferences"| NPD[(Notification<br/>Preferences DB<br/>SQL)]
+    NS -->|"2. Check presence"| PS[Presence Service]
+    NS -->|"3a. Online → in-app"| WSS[WebSocket Service]
+    NS -->|"3b. Offline → push"| PG[Push Gateway]
+    NS -->|"4. Persist"| NDB[(Notification DB<br/>NoSQL)]
+    WSS -->|WebSocket| OC[Online Client]
+    PG -->|APNs| iOS[iPhone]
+    PG -->|FCM| And[Android]
+
+    subgraph Notification Feed
+        UC[User Client] -->|"HTTP GET /api/notifications"| LB[Load Balancer]
+        LB --> AG[API Gateway]
+        AG --> NS2[Notification Service]
+        NS2 --> NDB
+    end
+</div>
+</div>
+
+<h3>7.2 Flow Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — @mention Notification (Online):</strong><br/>
+Alice posts "@Bob can you review this?" in the Project Alpha channel. The Chat Service detects the @mention, writes the message, and publishes a <code>message.mention</code> event to the Message Queue with <code>{ mentioned_user: "bob_01", message_id: "msg_800", conversation_id: "ch_001" }</code>. The Notification Service consumes this event, checks Bob's notification preferences (he has mentions enabled), checks his presence (online), and sends the notification via WebSocket: <code>{ type: "mention", title: "Alice mentioned you", body: "can you review this?", conversation_id: "ch_001" }</code>. Bob sees a badge appear on the channel and a toast notification in-app. The notification is also persisted to the Notification DB for his notification feed.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Missed Call Notification (Offline):</strong><br/>
+Alice called Carol but Carol didn't answer. The Call Service publishes <code>call.missed</code> to the Message Queue. The Notification Service checks Carol's presence — she's offline. It sends a push notification via the Push Gateway: APNs (Carol has an iPhone). The push payload: <code>{ title: "Missed call", body: "Alice tried to call you", call_id: "call_501" }</code>. Carol's phone shows a notification. The notification is persisted so Carol sees it in her notification feed when she opens Teams.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Do Not Disturb Mode:</strong><br/>
+Dave has set his status to "Do Not Disturb". Alice sends him a message. The Notification Service checks Dave's presence and sees DND. It persists the notification to the Notification DB but does <strong>not</strong> send a push notification or WebSocket notification. Dave will see the unread message when he opens Teams. Exception: if Alice marks the message as "Urgent" (a Teams-specific feature), the notification breaks through DND.
+</div>
+
+<div class="example-box">
+<strong>Example 4 — Notification Feed Retrieval:</strong><br/>
+Carol opens Teams after being offline for 4 hours. Her client calls <code>HTTP GET /api/notifications?unread=true&limit=50</code>. The Notification Service queries the Notification DB for Carol's unread notifications, sorted by <code>created_at DESC</code>, and returns a paginated list. Carol sees: 3 mentions, 1 missed call, and 12 channel messages. She marks all as read with <code>HTTP PATCH /api/notifications/mark-read</code> which updates the <code>is_read</code> flag in bulk.
+</div>
+
+<h3>7.3 Component Deep Dive</h3>
+
+<h4>Notification Service</h4>
+<table>
+    <tr><th>Method</th><th>Endpoint</th><th>Input</th><th>Output</th><th>Description</th></tr>
+    <tr><td><code>GET</code></td><td><code>/api/notifications</code></td><td>Query: <code>unread</code>, <code>limit</code>, <code>cursor</code></td><td><code>{ notifications: [...], next_cursor }</code></td><td>Fetch notification feed</td></tr>
+    <tr><td><code>PATCH</code></td><td><code>/api/notifications/mark-read</code></td><td><code>{ notification_ids: [...] }</code></td><td><code>{ status: "ok" }</code></td><td>Mark notifications as read</td></tr>
+    <tr><td><code>PUT</code></td><td><code>/api/notifications/settings</code></td><td><code>{ channel_muted: bool, mentions_only: bool, ... }</code></td><td><code>{ status: "ok" }</code></td><td>Update preferences</td></tr>
+</table>
+<p>The service deduplicates notifications (e.g., if 10 messages arrive in a muted channel, only one summary notification is sent). It also batches notifications for channels — instead of one push per message, it bundles: "5 new messages in Project Alpha".</p>
+
+<h4>Notification Preferences DB (SQL)</h4>
+<p>Stores per-user, per-conversation notification settings: mute state, mentions-only mode, quiet hours, per-device preferences. SQL chosen for structured data with clear user-to-settings relationships and transactional consistency when preferences are updated.</p>
+
+<h4>Notification DB (NoSQL)</h4>
+<p>Stores the notification feed for each user. NoSQL chosen because notifications are append-heavy (write-intensive), have a flexible schema (different notification types have different data), and need horizontal scalability as every event generates notifications for potentially many users. Sharded by <code>user_id</code>.</p>
+
+<h4>Push Gateway</h4>
+<p>Abstracts platform-specific push notification services. Routes to APNs for iOS devices and FCM for Android devices. Handles token management (device tokens registered when the app is installed/updated), retry logic with exponential backoff, and payload formatting per platform. Communication uses HTTPS (HTTP/2 for APNs).</p>
+
+<!-- ============================== COMBINED ============================== -->
+<h2 id="combined">8. Combined Overall Architecture</h2>
+<p>This diagram combines all five flows into a single unified view of the Microsoft Teams architecture.</p>
+
+<div class="diagram-container">
+<div class="mermaid">
+graph TB
+    subgraph Clients
+        Web[Web Client]
+        Desktop[Desktop Client]
+        Mobile[Mobile Client]
+    end
+
+    Web & Desktop & Mobile -->|"HTTPS / REST"| LB[Load Balancer<br/>L7]
+    Web & Desktop & Mobile <-->|"WebSocket<br/>WSS"| LBWS[Load Balancer<br/>L4 Sticky]
+
+    LB --> AG[API Gateway<br/>Auth · Rate Limit · Routing]
+    LBWS --> WSS[WebSocket Service<br/>Cluster]
+
+    AG --> CS[Chat Service]
+    AG --> PS[Presence Service]
+    AG --> CAS[Call Service]
+    AG --> FS[File Service]
+    AG --> NS[Notification Service]
+    AG --> SS[Search Service]
+
+    CS -->|Read/Write| MDB[(Message DB<br/>NoSQL)]
+    CS --> MQ[Message Queue]
+    CS --> CMC[Conversation<br/>Cache]
+
+    PS --> PC[(Presence Cache<br/>In-Memory)]
+    PS --> PubSub[Pub/Sub]
+    PubSub --> WSS
+
+    CAS --> CDB[(Call DB<br/>SQL)]
+    CAS -->|Signaling| WSS
+    CAS -.->|Assign| SFU[SFU / Media Server]
+
+    FS --> OS[(Object Storage)]
+    FS --> FDB[(File Metadata DB<br/>SQL)]
+    OS --> CDN[CDN]
+
+    MQ --> FOS[Fan-Out Service]
+    FOS --> WSR[WebSocket Registry<br/>Cache]
+    FOS --> WSS
+    MQ --> NS
+
+    NS --> NPD[(Notification Prefs<br/>SQL)]
+    NS --> NDB[(Notification DB<br/>NoSQL)]
+    NS --> PG[Push Gateway<br/>APNs / FCM]
+    NS --> PS
+
+    SS --> SI[(Search Index<br/>Inverted Index)]
+    MDB -.->|Index Pipeline| SI
+
+    WSS --> WSR
+
+    Web & Desktop & Mobile <-->|"WebRTC<br/>UDP/SRTP"| SFU
+    SFU <--> TURN[TURN/STUN]
+
+    subgraph Databases
+        MDB
+        CDB
+        FDB
+        NPD
+        NDB
+    end
+
+    subgraph Caches
+        PC
+        CMC
+        WSR
+    end
+</div>
+</div>
+
+<h3>8.1 Combined Flow Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Full Lifecycle: Alice sends a message, Bob reads it and starts a call:</strong><br/>
+<ol>
+    <li>Alice opens the Teams web app. Her client establishes a WebSocket connection (via the L4 Load Balancer) to the WebSocket Service. The WebSocket Service registers Alice in the WebSocket Registry and notifies the Presence Service, which updates Alice's status to "Online" in the Presence Cache and broadcasts via Pub/Sub.</li>
+    <li>Alice navigates to her 1:1 chat with Bob and types "Hey, let's do a quick sync!" and presses Send. Her client sends <code>HTTP POST /api/messages</code> (via the L7 Load Balancer → API Gateway → Chat Service). The Chat Service persists the message to the Message DB and publishes a <code>message.created</code> event to the Message Queue.</li>
+    <li>The Fan-Out Service consumes the event, looks up Bob in the WebSocket Registry, and delivers the message via WebSocket. Bob sees the message appear instantly. The Notification Service also consumes the event but sees Bob is online and the chat is active — no push notification needed.</li>
+    <li>Bob reads the message. His client sends <code>HTTP PATCH /api/messages/{id}/read</code>. Alice sees the "Seen" indicator.</li>
+    <li>Bob clicks the video call button. His client sends <code>HTTP POST /api/calls</code>. The Call Service creates the call, signals Alice via WebSocket ("incoming call"). Alice accepts. SDP and ICE are exchanged via WebSocket. A direct WebRTC connection is established (or via TURN if needed). Video streams flow over UDP/SRTP.</li>
+    <li>During the call, Bob shares his screen. A new media track is added. Alice receives both Bob's camera feed and screen share.</li>
+    <li>After the call, Bob shares a file "sync_notes.pdf" by dragging it into the chat. The File Service uploads it to Object Storage, the Chat Service creates a file-type message, and Alice receives it via WebSocket. She downloads it via CDN.</li>
+</ol>
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Offline User Catches Up:</strong><br/>
+Carol was offline for 6 hours. During that time, 20 messages were posted in "Project Alpha", she was @mentioned twice, and she missed a call from Dave. All events were processed by the Notification Service: push notifications were sent for the mentions and missed call; channel messages were batched into a summary push ("20 new messages in Project Alpha"). When Carol opens Teams, her client: (1) establishes WebSocket → online presence broadcast, (2) fetches unread notifications via <code>GET /api/notifications?unread=true</code>, (3) fetches missed messages per conversation via <code>GET /api/conversations/{id}/messages?after={last_seen}</code>, (4) fetches latest presence of her contacts via <code>POST /api/presence/batch</code>. All data is rendered and Carol is caught up.
+</div>
+
+<hr/>
+
+<!-- ============================== SCHEMA ============================== -->
+<h2 id="schema">9. Database Schema</h2>
+
+<h3>9.1 SQL Tables</h3>
+
+<h4>users</h4>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>email</code></td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td></tr>
+    <tr><td><code>display_name</code></td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+    <tr><td><code>avatar_url</code></td><td>VARCHAR(500)</td><td>NULLABLE</td></tr>
+    <tr><td><code>organization_id</code></td><td>UUID</td><td><strong>Foreign Key → organizations.org_id</strong></td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td></tr>
+    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td></tr>
+</table>
+<p><strong>Why SQL:</strong> User data is highly structured, relational (tied to organizations, teams), requires transactional integrity for profile updates, and is read-heavy with a well-defined schema that rarely changes.</p>
+<p><strong>Reads:</strong> On login, on profile view, when resolving user details for display (cached aggressively). <strong>Writes:</strong> On registration, profile update.</p>
+<p><strong>Index:</strong> B-tree index on <code>email</code> for fast login lookups. B-tree index on <code>organization_id</code> for listing users in an org.</p>
+<p><strong>Sharding:</strong> Sharded by <code>organization_id</code>. This keeps all users of an organization on the same shard, optimizing the common query pattern of "list all users in my org" and avoiding cross-shard joins for team operations.</p>
+</div>
+
+<h4>organizations</h4>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>org_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>name</code></td><td>VARCHAR(200)</td><td>NOT NULL</td></tr>
+    <tr><td><code>domain</code></td><td>VARCHAR(100)</td><td>UNIQUE, NOT NULL</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Small, well-structured table with clear relationships. Rarely changes.</p>
+<p><strong>Reads:</strong> On login (for domain verification), admin console. <strong>Writes:</strong> On org creation (rare).</p>
+</div>
+
+<h4>teams</h4>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>team_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>name</code></td><td>VARCHAR(200)</td><td>NOT NULL</td></tr>
+    <tr><td><code>org_id</code></td><td>UUID</td><td><strong>Foreign Key → organizations.org_id</strong></td></tr>
+    <tr><td><code>owner_id</code></td><td>UUID</td><td><strong>Foreign Key → users.user_id</strong></td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Well-defined relationships (org → teams → channels). Supports JOINs for queries like "all channels in a team".</p>
+<p><strong>Reads:</strong> When user opens Teams sidebar (list of teams). <strong>Writes:</strong> When a team is created/modified (infrequent).</p>
+<p><strong>Index:</strong> B-tree index on <code>org_id</code> for listing teams in an organization.</p>
+</div>
+
+<h4>channels</h4>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>channel_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>team_id</code></td><td>UUID</td><td><strong>Foreign Key → teams.team_id</strong></td></tr>
+    <tr><td><code>name</code></td><td>VARCHAR(200)</td><td>NOT NULL</td></tr>
+    <tr><td><code>type</code></td><td>ENUM('public','private')</td><td>NOT NULL</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Relational with teams, well-structured, supports integrity constraints.</p>
+<p><strong>Reads:</strong> When user opens a team (list channels). <strong>Writes:</strong> When a channel is created (infrequent).</p>
+<p><strong>Index:</strong> B-tree index on <code>team_id</code> for listing channels within a team.</p>
+</div>
+
+<h4>conversations</h4>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>conversation_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>type</code></td><td>ENUM('one_to_one','group','channel')</td><td>NOT NULL</td></tr>
+    <tr><td><code>channel_id</code></td><td>UUID</td><td><strong>Foreign Key → channels.channel_id</strong>, NULLABLE</td></tr>
+    <tr><td><code>name</code></td><td>VARCHAR(200)</td><td>NULLABLE (for group chats)</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td></tr>
+    <tr><td><code>last_message_at</code></td><td>TIMESTAMP</td><td>NULLABLE</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Relational with channels, participants, and referenced by messages. <code>last_message_at</code> is a <strong>denormalized</strong> field — it duplicates data from the Message DB to avoid a cross-store JOIN. This denormalization is justified because the chat list sorted by recency is the most common query (every time a user opens Teams), and querying the Message DB for the latest message per conversation would be extremely expensive.</p>
+<p><strong>Reads:</strong> Every time a user opens the chat list (sorted by <code>last_message_at DESC</code>). <strong>Writes:</strong> On conversation creation, and on every new message (<code>last_message_at</code> update).</p>
+<p><strong>Index:</strong> B-tree index on <code>last_message_at</code> for sorting the conversation list by recency.</p>
+</div>
+
+<h4>conversation_participants</h4>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>conversation_id</code></td><td>UUID</td><td><strong>Composite Primary Key</strong>, <strong>FK → conversations</strong></td></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><strong>Composite Primary Key</strong>, <strong>FK → users</strong></td></tr>
+    <tr><td><code>role</code></td><td>ENUM('member','admin')</td><td>NOT NULL, DEFAULT 'member'</td></tr>
+    <tr><td><code>joined_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td></tr>
+    <tr><td><code>last_read_at</code></td><td>TIMESTAMP</td><td>NULLABLE</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Classic many-to-many junction table. Relational queries like "all participants of conversation X" and "all conversations of user Y" are natural JOINs.</p>
+<p><strong>Reads:</strong> On fan-out (get all participants of a conversation), on unread count calculation. <strong>Writes:</strong> When user joins/leaves a conversation, and on every message read (updating <code>last_read_at</code>).</p>
+<p><strong>Denormalization note:</strong> <code>last_read_at</code> is stored here for efficient unread count calculation: <code>COUNT(messages WHERE created_at > last_read_at)</code>. This avoids scanning the entire message history.</p>
+<p><strong>Index:</strong> Composite B-tree index on <code>(user_id, last_read_at)</code> for efficiently computing unread counts per user.</p>
+</div>
+
+<h4>calls</h4>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>call_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>conversation_id</code></td><td>UUID</td><td><strong>Foreign Key → conversations</strong></td></tr>
+    <tr><td><code>initiated_by</code></td><td>UUID</td><td><strong>Foreign Key → users</strong></td></tr>
+    <tr><td><code>call_type</code></td><td>ENUM('audio','video')</td><td>NOT NULL</td></tr>
+    <tr><td><code>status</code></td><td>ENUM('ringing','active','ended','missed','declined')</td><td>NOT NULL</td></tr>
+    <tr><td><code>started_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td></tr>
+    <tr><td><code>ended_at</code></td><td>TIMESTAMP</td><td>NULLABLE</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Structured, relational (call → participants), and strong consistency needed for compliance/audit trails (call logging, duration tracking for billing).</p>
+<p><strong>Reads:</strong> Call history page, compliance audit. <strong>Writes:</strong> On call initiation, status changes, call end.</p>
+<p><strong>Index:</strong> B-tree index on <code>(conversation_id, started_at)</code> for retrieving call history of a conversation sorted by time.</p>
+</div>
+
+<h4>call_participants</h4>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>call_id</code></td><td>UUID</td><td><strong>Composite Primary Key</strong>, <strong>FK → calls</strong></td></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><strong>Composite Primary Key</strong>, <strong>FK → users</strong></td></tr>
+    <tr><td><code>joined_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td></tr>
+    <tr><td><code>left_at</code></td><td>TIMESTAMP</td><td>NULLABLE</td></tr>
+    <tr><td><code>is_screen_sharing</code></td><td>BOOLEAN</td><td>DEFAULT FALSE</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Junction table for many-to-many relationship; consistent with the calls table.</p>
+<p><strong>Reads:</strong> Displaying who's in a call, call history details. <strong>Writes:</strong> When a user joins/leaves a call.</p>
+</div>
+
+<h4>file_metadata</h4>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>file_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>uploader_id</code></td><td>UUID</td><td><strong>Foreign Key → users</strong></td></tr>
+    <tr><td><code>conversation_id</code></td><td>UUID</td><td><strong>Foreign Key → conversations</strong></td></tr>
+    <tr><td><code>filename</code></td><td>VARCHAR(500)</td><td>NOT NULL</td></tr>
+    <tr><td><code>file_size</code></td><td>BIGINT</td><td>NOT NULL</td></tr>
+    <tr><td><code>mime_type</code></td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+    <tr><td><code>storage_path</code></td><td>VARCHAR(1000)</td><td>NOT NULL</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Structured metadata with clear relationships (uploader, conversation). Needs transactional consistency for upload/delete operations.</p>
+<p><strong>Reads:</strong> When a file card is rendered in chat (metadata lookup). <strong>Writes:</strong> On file upload.</p>
+<p><strong>Index:</strong> B-tree index on <code>conversation_id</code> for listing all files in a conversation (the "Files" tab in a channel). B-tree index on <code>uploader_id</code> for "My files" view.</p>
+</div>
+
+<h4>notification_preferences</h4>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><strong>Composite Primary Key</strong>, <strong>FK → users</strong></td></tr>
+    <tr><td><code>conversation_id</code></td><td>UUID</td><td><strong>Composite Primary Key</strong>, <strong>FK → conversations</strong></td></tr>
+    <tr><td><code>is_muted</code></td><td>BOOLEAN</td><td>DEFAULT FALSE</td></tr>
+    <tr><td><code>mentions_only</code></td><td>BOOLEAN</td><td>DEFAULT FALSE</td></tr>
+    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Simple, structured per-user per-conversation settings. Low volume, transactional updates.</p>
+<p><strong>Reads:</strong> Every time a notification is generated (checked by Notification Service). <strong>Writes:</strong> When user mutes/unmutes a channel.</p>
+<p><strong>Index:</strong> Primary key composite index already covers the main query pattern <code>(user_id, conversation_id)</code>.</p>
+</div>
+
+<h3>9.2 NoSQL Tables</h3>
+
+<h4>messages</h4>
+<div class="card">
+<table>
+    <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+    <tr><td><code>message_id</code></td><td>UUID</td><td><strong>Partition Key component</strong></td></tr>
+    <tr><td><code>conversation_id</code></td><td>UUID</td><td><strong>Partition Key</strong></td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td><strong>Sort Key</strong> (for chronological ordering)</td></tr>
+    <tr><td><code>sender_id</code></td><td>UUID</td><td>Reference to users</td></tr>
+    <tr><td><code>content</code></td><td>STRING</td><td>Message text</td></tr>
+    <tr><td><code>message_type</code></td><td>STRING</td><td>'text', 'file', 'system', 'rich'</td></tr>
+    <tr><td><code>parent_message_id</code></td><td>UUID</td><td>NULLABLE — for threaded replies</td></tr>
+    <tr><td><code>reactions</code></td><td>MAP</td><td>e.g., <code>{ "👍": ["user_01","user_02"], "❤️": ["user_03"] }</code></td></tr>
+    <tr><td><code>file_id</code></td><td>UUID</td><td>NULLABLE — reference to file_metadata</td></tr>
+    <tr><td><code>is_edited</code></td><td>BOOLEAN</td><td>DEFAULT FALSE</td></tr>
+    <tr><td><code>is_deleted</code></td><td>BOOLEAN</td><td>DEFAULT FALSE (soft delete)</td></tr>
+    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td></td></tr>
+</table>
+<p><strong>Why NoSQL:</strong> Messages are the highest-volume data in the system (billions of messages). They are append-heavy (write-intensive), require horizontal scalability, and benefit from flexible schema (different message types embed different data, e.g., reactions as a nested map). The access pattern is almost always "get messages for a conversation sorted by time" — a perfect fit for a wide-column or document store with <code>conversation_id</code> as partition key and <code>created_at</code> as sort key.</p>
+<p><strong>Reads:</strong> When a user opens a conversation (paginated query: <code>conversation_id = X AND created_at < cursor LIMIT 50</code>). <strong>Writes:</strong> Every time a message is sent, edited, deleted, or reacted to.</p>
+<p><strong>Sharding:</strong> Partitioned by <code>conversation_id</code>. This ensures all messages in a conversation reside on the same partition, enabling efficient range queries sorted by <code>created_at</code>. Hot partitions are possible for very active channels — mitigated by time-bucketing (partition key = <code>conversation_id#YYYY-MM</code>) for channels with millions of messages.</p>
+</div>
+
+<h4>notifications</h4>
+<div class="card">
+<table>
+    <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+    <tr><td><code>notification_id</code></td><td>UUID</td><td>Unique ID</td></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><strong>Partition Key</strong></td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td><strong>Sort Key</strong></td></tr>
+    <tr><td><code>type</code></td><td>STRING</td><td>'message', 'mention', 'reaction', 'missed_call', 'file_shared'</td></tr>
+    <tr><td><code>title</code></td><td>STRING</td><td>Notification title</td></tr>
+    <tr><td><code>body</code></td><td>STRING</td><td>Notification body text</td></tr>
+    <tr><td><code>source_conversation_id</code></td><td>UUID</td><td>Links back to the conversation</td></tr>
+    <tr><td><code>source_message_id</code></td><td>UUID</td><td>NULLABLE</td></tr>
+    <tr><td><code>is_read</code></td><td>BOOLEAN</td><td>DEFAULT FALSE</td></tr>
+</table>
+<p><strong>Why NoSQL:</strong> Notifications are write-heavy (every event generates notifications for multiple users), the schema varies by notification type, and the access pattern is simple: "get all unread notifications for user X sorted by time". NoSQL with <code>user_id</code> as partition key and <code>created_at</code> as sort key fits perfectly.</p>
+<p><strong>Reads:</strong> When user opens notification feed. <strong>Writes:</strong> When any notifiable event occurs, and when user marks notifications as read.</p>
+<p><strong>Sharding:</strong> Partitioned by <code>user_id</code>. Each user's notifications are co-located for efficient feed retrieval.</p>
+<p><strong>TTL:</strong> Notifications older than 90 days are automatically expired to control storage growth.</p>
+</div>
+
+<h3>9.3 Search Index</h3>
+<div class="card">
+<p>A dedicated <strong>inverted index</strong> is maintained for full-text message search. When a message is written to the Message DB, an asynchronous indexing pipeline (consuming from the same Message Queue) tokenizes the message content and updates the inverted index. The index maps <code>token → [(conversation_id, message_id, score)]</code>.</p>
+<p><strong>Why inverted index:</strong> Full-text search requires mapping words to the documents containing them. An inverted index is the standard data structure for this. It supports fast keyword lookups, relevance scoring (TF-IDF or BM25), and boolean queries (AND/OR).</p>
+<p><strong>Access:</strong> The Search Service queries this index when a user performs a search. Results are filtered by the user's permissions (only conversations they're a member of).</p>
+</div>
+
+<hr/>
+
+<!-- ============================== CDN & CACHE ============================== -->
+<h2 id="cdn-cache">10. CDN &amp; Caching Deep Dive</h2>
+
+<h3>10.1 CDN</h3>
+<div class="card">
+<p>A CDN is <strong>appropriate and essential</strong> for Microsoft Teams for the following reasons:</p>
 <ul>
-<li><strong>Scale:</strong> 320M+ monthly active users, 2B+ meeting minutes/day, millions of concurrent meetings</li>
-<li><strong>Latency:</strong> Message delivery &lt;500ms, video/audio &lt;200ms end-to-end, screen share &lt;300ms</li>
-<li><strong>Availability:</strong> 99.99% (Microsoft 365 SLA), multi-region active-active with automatic failover</li>
-<li><strong>Compliance:</strong> GDPR, HIPAA, FedRAMP High, SOC 2, eDiscovery, legal hold, DLP (Data Loss Prevention), information barriers</li>
-<li><strong>Integration:</strong> Deep M365 integration — SharePoint, OneDrive, Outlook, Power Platform, 1,800+ third-party apps</li>
+    <li><strong>Static assets:</strong> JavaScript bundles, CSS, images, and fonts for the web client. Teams is a global product — CDN edge caching reduces load times for users worldwide.</li>
+    <li><strong>Shared files:</strong> Files uploaded to channels/chats are served via CDN. A popular file in a 500-person channel could be downloaded hundreds of times — CDN caching prevents repeated Object Storage fetches.</li>
+    <li><strong>Profile avatars:</strong> Frequently requested, small images that benefit enormously from edge caching.</li>
+</ul>
+<p><strong>CDN is NOT used for:</strong> Real-time messages (delivered via WebSocket), presence data (ephemeral, too dynamic), or call signaling (latency-sensitive, goes through WebSocket).</p>
+
+<h4>CDN Caching Strategy</h4>
+<table>
+    <tr><th>Aspect</th><th>Strategy</th><th>Rationale</th></tr>
+    <tr><td>Caching Model</td><td><strong>Pull-based (lazy)</strong></td><td>CDN fetches from origin (Object Storage) on cache miss. Files are cached only when requested, avoiding unnecessary pre-population of rarely accessed files.</td></tr>
+    <tr><td>Expiration Policy</td><td><strong>TTL-based: 24 hours</strong> for files, <strong>7 days</strong> for static assets (versioned by content hash)</td><td>Files may be deleted/replaced; 24-hour TTL balances freshness with cache efficiency. Static assets use content-hash URLs, so they can be cached longer — a new deploy produces a new URL.</td></tr>
+    <tr><td>Eviction Policy</td><td><strong>LRU (Least Recently Used)</strong></td><td>When edge node cache is full, the least recently accessed items are evicted. This naturally keeps popular files cached and evicts rarely accessed ones.</td></tr>
+    <tr><td>Cache Invalidation</td><td><strong>Purge on delete</strong></td><td>When a file is deleted via <code>DELETE /api/files/{id}</code>, the File Service issues a CDN purge request for that URL. This ensures deleted files aren't served from CDN cache.</td></tr>
+</table>
+</div>
+
+<h3>10.2 In-Memory Caches</h3>
+<p>Three distinct in-memory caches are used in this architecture:</p>
+
+<h4>Cache 1: Presence Cache</h4>
+<div class="card">
+<table>
+    <tr><th>Aspect</th><th>Detail</th></tr>
+    <tr><td>What it stores</td><td>Current status of each user: <code>{ user_id → { status, last_seen, device, manual_override } }</code></td></tr>
+    <tr><td>Caching Strategy</td><td><strong>Write-through:</strong> Every status change is written to cache immediately by the Presence Service. There is no backing persistent store — this IS the primary store for presence data.</td></tr>
+    <tr><td>Why write-through</td><td>Presence must be instantly current. Any staleness means incorrect status indicators. Write-through ensures the cache is always up-to-date.</td></tr>
+    <tr><td>Populated by</td><td>WebSocket connection events, heartbeats, manual status changes (<code>PUT /api/presence</code>), disconnect events.</td></tr>
+    <tr><td>Eviction Policy</td><td><strong>TTL-based: 120 seconds.</strong> If no heartbeat refreshes the entry, it expires → user is considered offline.</td></tr>
+    <tr><td>Why TTL eviction</td><td>Presence is inherently temporal. A stale entry means the user disconnected but the disconnect event was lost. TTL acts as a safety net to ensure eventually-correct status.</td></tr>
+    <tr><td>Cluster topology</td><td>Replicated across multiple nodes for availability. Consistent hashing to distribute users across cache nodes.</td></tr>
+</table>
+</div>
+
+<h4>Cache 2: Conversation Metadata Cache</h4>
+<div class="card">
+<table>
+    <tr><th>Aspect</th><th>Detail</th></tr>
+    <tr><td>What it stores</td><td>Conversation metadata: <code>{ conversation_id → { participant_ids, name, type, last_message_at } }</code></td></tr>
+    <tr><td>Caching Strategy</td><td><strong>Cache-aside (lazy loading):</strong> On a cache miss, the service reads from the SQL DB, populates the cache, and returns. On writes, the cache is invalidated.</td></tr>
+    <tr><td>Why cache-aside</td><td>Conversation metadata is read-heavy (accessed on every message send for fan-out, every chat list load) but writes are relatively infrequent (member joins, conversation created). Cache-aside minimizes cache writes while keeping reads fast.</td></tr>
+    <tr><td>Populated by</td><td>First access to a conversation triggers a DB read → cache write. Also invalidated/repopulated on membership changes.</td></tr>
+    <tr><td>Eviction Policy</td><td><strong>LRU</strong> with <strong>TTL of 1 hour</strong>.</td></tr>
+    <tr><td>Why LRU + TTL</td><td>LRU ensures active conversations stay cached. TTL provides a safety bound to prevent stale data from persisting indefinitely if invalidation messages are lost.</td></tr>
+</table>
+</div>
+
+<h4>Cache 3: WebSocket Registry</h4>
+<div class="card">
+<table>
+    <tr><th>Aspect</th><th>Detail</th></tr>
+    <tr><td>What it stores</td><td>User-to-connection mapping: <code>{ user_id → [{ ws_node_id, connection_id, device_type }] }</code></td></tr>
+    <tr><td>Caching Strategy</td><td><strong>Write-through:</strong> Entries are written when a WebSocket connection is established and removed when it's closed.</td></tr>
+    <tr><td>Why write-through</td><td>The registry is the authoritative source for "where is this user connected?" It must be immediately consistent — a stale entry means messages routed to a dead node.</td></tr>
+    <tr><td>Populated by</td><td>WebSocket Service on connect/disconnect events.</td></tr>
+    <tr><td>Eviction Policy</td><td><strong>TTL of 60 seconds</strong>, refreshed on every heartbeat.</td></tr>
+    <tr><td>Why TTL eviction</td><td>If a WebSocket Service node crashes, it can't send disconnect events. TTL ensures stale connection entries are automatically cleaned up.</td></tr>
+</table>
+</div>
+
+<hr/>
+
+<!-- ============================== SCALING ============================== -->
+<h2 id="scaling">11. Scaling Considerations</h2>
+
+<h3>11.1 Load Balancers</h3>
+<div class="card">
+<p>Load balancers are critical at multiple points in the architecture:</p>
+
+<h4>LB 1: L7 Load Balancer (HTTP Traffic)</h4>
+<p><strong>Position:</strong> Between clients and the API Gateway.</p>
+<p>Handles all REST API traffic (messaging, file upload, calls, notifications, search). Uses <strong>round-robin</strong> or <strong>least-connections</strong> algorithm to distribute requests across API Gateway instances. Performs TLS termination, so internal traffic between LB → API Gateway can be unencrypted (within a secure VPC) for reduced latency. Health checks API Gateway instances every 10 seconds; unhealthy instances are removed from the pool.</p>
+
+<h4>LB 2: L4 Load Balancer (WebSocket Traffic)</h4>
+<p><strong>Position:</strong> Between clients and WebSocket Service nodes.</p>
+<p>WebSocket connections are <strong>long-lived</strong> and <strong>stateful</strong> — once established, all messages must flow through the same server node for the duration of the connection. Therefore, this LB uses <strong>IP-hash or cookie-based sticky sessions</strong> to ensure a client's WebSocket connection is always routed to the same node. Operates at L4 (TCP-level) rather than L7 to avoid unnecessary HTTP parsing overhead for persistent connections. If a WebSocket node goes down, affected clients reconnect and are redistributed.</p>
+
+<h4>LB 3: Internal Load Balancers (Service-to-Service)</h4>
+<p><strong>Position:</strong> Between internal microservices (e.g., Chat Service → Message DB, Fan-Out Service → WebSocket Service).</p>
+<p>Uses client-side load balancing via service discovery (each service registers its instances; callers resolve and load-balance). This avoids an additional network hop through a centralized LB for internal traffic.</p>
+</div>
+
+<h3>11.2 Horizontal Scaling by Component</h3>
+<div class="card">
+<table>
+    <tr><th>Component</th><th>Scaling Strategy</th><th>Notes</th></tr>
+    <tr><td>API Gateway</td><td>Horizontal — add more instances behind LB</td><td>Stateless; any instance can handle any request.</td></tr>
+    <tr><td>Chat Service</td><td>Horizontal — stateless</td><td>Scale based on message throughput (messages/sec).</td></tr>
+    <tr><td>WebSocket Service</td><td>Horizontal — add nodes</td><td>Each node handles ~100K concurrent connections. For 10M concurrent users = ~100 nodes. New connections are distributed by LB.</td></tr>
+    <tr><td>Fan-Out Service</td><td>Horizontal — consumer group</td><td>Message Queue partitions are assigned to consumer instances. Add more consumers as throughput increases.</td></tr>
+    <tr><td>Presence Service</td><td>Horizontal — stateless</td><td>Scale based on heartbeat rate (heartbeats/sec × concurrent users).</td></tr>
+    <tr><td>Call Service</td><td>Horizontal — stateless</td><td>Scale based on concurrent calls. Signaling is lightweight.</td></tr>
+    <tr><td>SFU / Media Servers</td><td>Horizontal — per-region</td><td>Each SFU handles ~500 concurrent streams. Deploy in every major region. Assign users to nearest SFU.</td></tr>
+    <tr><td>Notification Service</td><td>Horizontal — consumer group</td><td>Similar to Fan-Out; scales based on notification event volume.</td></tr>
+    <tr><td>Message DB (NoSQL)</td><td>Horizontal sharding by conversation_id</td><td>Add shards as data volume grows. Rebalancing is handled by the NoSQL store.</td></tr>
+    <tr><td>SQL Databases</td><td>Read replicas + sharding</td><td>Read replicas for read-heavy tables (users, conversations). Shard by org_id for multi-tenant isolation.</td></tr>
+    <tr><td>Message Queue</td><td>Add partitions</td><td>More partitions = more parallel consumers = higher throughput.</td></tr>
+    <tr><td>In-Memory Cache</td><td>Consistent hashing ring</td><td>Add cache nodes; consistent hashing minimizes key redistribution.</td></tr>
+</table>
+</div>
+
+<h3>11.3 Geographic Distribution</h3>
+<div class="card">
+<p>Teams is a global product. The architecture should be deployed in <strong>multiple regions</strong> (e.g., US-East, US-West, EU-West, APAC). Key considerations:</p>
+<ul>
+    <li><strong>SFU / TURN servers:</strong> Must be in every major region to minimize media latency.</li>
+    <li><strong>WebSocket Service:</strong> Deployed per-region; users connect to the nearest region.</li>
+    <li><strong>Data residency:</strong> Enterprise customers may require data to stay within a geographic boundary (e.g., EU data in EU). Sharding by <code>org_id</code> supports this — an org's shard can be pinned to a region.</li>
+    <li><strong>CDN edge nodes:</strong> Distributed globally for static assets and files.</li>
+    <li><strong>Cross-region messaging:</strong> When Alice (US-East) messages Bob (EU-West), the message is written to the region where the conversation shard lives, and the Fan-Out Service delivers via the WebSocket node in Bob's region. This requires cross-region Pub/Sub replication.</li>
 </ul>
 </div>
 
-<!-- ============ FLOW 1: MESSAGING ============ -->
-<h2>Flow 1: Real-Time Chat Messaging</h2>
+<hr/>
+
+<!-- ============================== TRADEOFFS ============================== -->
+<h2 id="tradeoffs">12. Tradeoffs &amp; Deep Dives</h2>
+
+<h3 id="mq-deep-dive">12.1 Message Queue Deep Dive</h3>
 <div class="card">
-<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#6264A7"/></marker></defs>
-<rect x="20" y="50" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Teams Client</text><text x="80" y="87" text-anchor="middle" fill="#fff" font-size="10">(Desktop/Web/Mobile)</text>
-<rect x="190" y="50" width="130" height="50" rx="8" fill="#FB8C00"/><text x="255" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Azure Front Door</text><text x="255" y="87" text-anchor="middle" fill="#fff" font-size="10">(L7 LB + WAF)</text>
-<rect x="370" y="50" width="130" height="50" rx="8" fill="#4285F4"/><text x="435" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Chat Service</text><text x="435" y="87" text-anchor="middle" fill="#fff" font-size="10">(Message Router)</text>
-<rect x="550" y="20" width="130" height="50" rx="8" fill="#607D8B"/><text x="615" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">SignalR Hub</text><text x="615" y="57" text-anchor="middle" fill="#fff" font-size="10">(WebSocket/SSE)</text>
-<rect x="550" y="90" width="130" height="50" rx="8" fill="#795548"/><text x="615" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Azure Cosmos DB</text><text x="615" y="127" text-anchor="middle" fill="#fff" font-size="10">(Message Store)</text>
-<rect x="740" y="20" width="130" height="50" rx="8" fill="#E53935"/><text x="805" y="42" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Push Notifier</text><text x="805" y="57" text-anchor="middle" fill="#fff" font-size="10">(WNS/FCM/APNs)</text>
-<rect x="740" y="90" width="130" height="50" rx="8" fill="#9C27B0"/><text x="805" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Compliance</text><text x="805" y="127" text-anchor="middle" fill="#fff" font-size="10">(DLP + eDiscovery)</text>
-<rect x="370" y="200" width="130" height="50" rx="8" fill="#00897B"/><text x="435" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Azure Search</text><text x="435" y="237" text-anchor="middle" fill="#fff" font-size="10">(Message Index)</text>
-<line x1="140" y1="75" x2="185" y2="75" stroke="#6264A7" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="320" y1="75" x2="365" y2="75" stroke="#6264A7" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="500" y1="65" x2="545" y2="45" stroke="#6264A7" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="500" y1="85" x2="545" y2="110" stroke="#6264A7" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="680" y1="45" x2="735" y2="45" stroke="#6264A7" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="680" y1="115" x2="735" y2="115" stroke="#6264A7" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="435" y1="100" x2="435" y2="195" stroke="#6264A7" stroke-width="2" marker-end="url(#ah)"/>
-</svg>
+<p>The message queue is the backbone of the asynchronous processing pipeline, decoupling the write path from the delivery and notification paths.</p>
+
+<h4>How Messages are Put on the Queue</h4>
+<p>The Chat Service acts as the <strong>producer</strong>. After successfully persisting a message to the Message DB, it serializes the event (e.g., <code>{ event_type: "message.created", conversation_id: "ch_001", message_id: "msg_800", sender_id: "alice_01", content: "...", timestamp: "..." }</code>) and publishes it to the queue. The partition key is <code>conversation_id</code>, ensuring all events for the same conversation go to the same partition, preserving ordering.</p>
+
+<h4>How Messages are Removed from the Queue</h4>
+<p>The Fan-Out Service and Notification Service act as <strong>consumers</strong> in separate <strong>consumer groups</strong>. Each consumer group independently processes every message. Within a consumer group, partitions are distributed across consumer instances. A consumer reads a batch of events, processes them (e.g., fan-out to WebSocket), and <strong>commits the offset</strong> to acknowledge processing. If a consumer crashes before committing, the event is redelivered (at-least-once semantics). Idempotency is ensured by deduplicating on <code>message_id</code>.</p>
+
+<h4>Why Message Queue over Direct Communication</h4>
+<ul>
+    <li><strong>Decoupling:</strong> Chat Service doesn't need to know about Fan-Out or Notification services. New consumers can be added without modifying the producer.</li>
+    <li><strong>Buffering:</strong> During traffic spikes (Monday morning logins), the queue absorbs the burst. Consumers process at their own pace without overloading.</li>
+    <li><strong>Reliability:</strong> If the Fan-Out Service goes down, messages are retained in the queue and processed when it recovers. No message loss.</li>
+    <li><strong>Ordering:</strong> Partition-by-conversation guarantees messages are delivered in order within a conversation.</li>
+</ul>
+
+<h4>Why Not Pub/Sub for This?</h4>
+<p>Pub/Sub (used for presence) delivers to all subscribers but doesn't provide consumer groups, offset management, or replay. The message queue's consumer group model is essential here because Fan-Out and Notification are independent consumers that both need to process every event, but at their own pace, with independent offset tracking.</p>
 </div>
 
+<h3 id="pubsub-deep-dive">12.2 Pub/Sub Deep Dive</h3>
 <div class="card">
-<h3>Steps</h3>
+<p>Pub/Sub is used specifically for <strong>presence broadcasting</strong> — a scenario where the same event needs to be delivered to all WebSocket Service nodes simultaneously.</p>
+
+<h4>How It Works</h4>
+<p>The Presence Service publishes a <code>presence.changed</code> event to a topic (e.g., <code>presence-updates</code>). Every WebSocket Service node is subscribed to this topic. When the event is published, all subscriber nodes receive it simultaneously. Each node then checks its local connections to see if any of the affected user's contacts are connected, and if so, pushes the status update.</p>
+
+<h4>What Information It Has</h4>
+<p>Each presence event contains: <code>{ user_id, new_status, old_status, timestamp }</code>. The WebSocket Service nodes maintain a local in-memory map of <code>{ user_id → contact_list }</code> (loaded when the user connects), so they can efficiently determine which local connections need the update.</p>
+
+<h4>Why Pub/Sub over Message Queue for Presence</h4>
+<ul>
+    <li>Presence updates are <strong>fire-and-forget</strong> — if a node misses an update, the next heartbeat will correct it. No need for persistent offsets or replay.</li>
+    <li>Every node needs every event (broadcast pattern), not partitioned consumption.</li>
+    <li>Lower latency than message queue — no offset management overhead.</li>
+</ul>
+
+<h4>Why Pub/Sub over Direct Communication (e.g., Presence Service → each WebSocket node)</h4>
+<ul>
+    <li>The Presence Service doesn't need to maintain a list of all WebSocket nodes or manage connections to them.</li>
+    <li>Adding/removing WebSocket nodes is transparent — they subscribe/unsubscribe from the topic.</li>
+</ul>
+</div>
+
+<h3>12.3 WebSocket Deep Dive</h3>
+<div class="card">
+<h4>Connection Establishment</h4>
 <ol>
-<li>Client sends message via HTTPS POST through Azure Front Door (global L7 load balancer with WAF)</li>
-<li>Chat Service authenticates via Azure AD (OAuth2 + tenant validation), validates permissions (is user in this chat/channel?)</li>
-<li>Message persisted to Azure Cosmos DB (multi-region write, automatic failover) — partitioned by chat/channel ID</li>
-<li>SignalR Hub pushes message to all online chat participants via persistent WebSocket connections (fallback: SSE → long polling)</li>
-<li>Offline users receive push notification via Windows Notification Service (WNS), FCM, or APNs</li>
-<li>Compliance pipeline: DLP policy check (credit card numbers, SSN detection), message retained per retention policy, eDiscovery indexed</li>
-<li>Message indexed in Azure Cognitive Search for cross-chat search functionality</li>
+    <li>Client sends an HTTP Upgrade request to the L4 Load Balancer at <code>wss://ws.teams.example.com/connect?token=JWT</code>.</li>
+    <li>LB routes to a WebSocket Service node (sticky session via IP hash).</li>
+    <li>WebSocket Service validates the JWT token, extracts <code>user_id</code>.</li>
+    <li>If valid, the HTTP connection is upgraded to WebSocket (101 Switching Protocols).</li>
+    <li>The node registers the connection in the WebSocket Registry: <code>{ user_id → { node_id: "ws-07", connection_id: "conn_abc", device: "web" } }</code>.</li>
+    <li>The node notifies the Presence Service that the user is online.</li>
+    <li>Heartbeat pings begin every 30 seconds.</li>
 </ol>
 
-<h3>Example</h3>
-<p>User in "Engineering" channel types "@alice can you review the PR?" Chat Service persists to Cosmos DB (partition key: channel_12345). SignalR pushes to all 50 online channel members. @alice receives push notification (mobile). DLP scans message (clean). Message indexed for search. Compliance: retained for 7 years per org policy.</p>
+<h4>What Stores the Connection</h4>
+<p>The actual WebSocket connection (TCP socket) is held <strong>in-memory on the WebSocket Service node</strong>. The mapping of user to node is stored in the <strong>WebSocket Registry (distributed in-memory cache)</strong>, enabling other services to know where to route events.</p>
 
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>SignalR (Real-Time)</h4>
-<p><strong>Protocol:</strong> Azure SignalR Service — managed WebSocket hub; fallback to Server-Sent Events → long polling</p>
-<p><strong>Scale:</strong> Serverless mode supports millions of concurrent connections; auto-scales based on connection count</p>
-<p><strong>Groups:</strong> Each chat/channel is a SignalR group — broadcast to group delivers to all connected members</p>
-<p><strong>Sticky:</strong> Connection affinity to specific SignalR unit; reconnection logic handles server-side failover</p>
-</div>
-<div class="card">
-<h4>Azure Cosmos DB</h4>
-<p><strong>API:</strong> SQL API (JSON documents) with server-side JavaScript stored procedures for atomic operations</p>
-<p><strong>Partition:</strong> chat_id as partition key — all messages in a chat co-located for efficient range queries</p>
-<p><strong>Consistency:</strong> Session consistency (read-your-own-writes) within region; bounded staleness across regions</p>
-<p><strong>RU Budget:</strong> Auto-scale from 400 to 100K RU/s per container based on throughput demand</p>
-</div>
-<div class="card">
-<h4>Compliance & DLP</h4>
-<p><strong>DLP:</strong> Sensitive information types (credit cards, SSN, passport numbers) detected in real-time; messages blocked or redacted</p>
-<p><strong>eDiscovery:</strong> All messages searchable by compliance officers; legal hold prevents deletion</p>
-<p><strong>Retention:</strong> Configurable per org: 30 days to forever; messages stored in Azure Blob for long-term compliance</p>
-<p><strong>Information Barriers:</strong> Prevent communication between specific groups (e.g., investment banking and research)</p>
-</div>
-</div>
+<h4>How Other WebSocket Connections Are Found</h4>
+<p>When the Fan-Out Service needs to deliver a message to Bob, it queries the WebSocket Registry: <code>GET user:bob_01</code>. The registry returns <code>[{ node: "ws-07", conn: "conn_xyz", device: "desktop" }, { node: "ws-12", conn: "conn_def", device: "mobile" }]</code>. The Fan-Out Service then sends the payload to <code>ws-07</code> and <code>ws-12</code> via internal gRPC, and those nodes push it through the respective WebSocket connections to Bob's devices.</p>
+
+<h4>Why WebSocket over Alternatives</h4>
+<table>
+    <tr><th>Alternative</th><th>Why Not Used</th></tr>
+    <tr><td><strong>Long Polling</strong></td><td>Higher latency (each message requires a new HTTP request/response cycle), more overhead per message, and doesn't support server-initiated pushes efficiently. Would use ~3-5× more bandwidth.</td></tr>
+    <tr><td><strong>Short Polling</strong></td><td>Extremely wasteful — most polls return empty responses. Would generate enormous unnecessary traffic for millions of users.</td></tr>
+    <tr><td><strong>Server-Sent Events (SSE)</strong></td><td>Unidirectional (server → client only). Teams requires bidirectional communication (typing indicators, read receipts sent from client). Would need a separate HTTP channel for client → server, adding complexity.</td></tr>
+</table>
 </div>
 
-<!-- ============ FLOW 2: VIDEO MEETING ============ -->
-<h2>Flow 2: Video/Audio Conferencing</h2>
+<h3>12.4 Key Tradeoffs</h3>
 <div class="card">
-<svg viewBox="0 0 1000 320" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#464EB8"/></marker></defs>
-<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Client A</text><text x="80" y="97" text-anchor="middle" fill="#fff" font-size="10">(Camera + Mic)</text>
-<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Calling Service</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="10">(Signaling)</text>
-<rect x="370" y="30" width="130" height="50" rx="8" fill="#9C27B0"/><text x="435" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Media Processor</text><text x="435" y="67" text-anchor="middle" fill="#fff" font-size="10">(SFU / MCU)</text>
-<rect x="370" y="100" width="130" height="50" rx="8" fill="#00897B"/><text x="435" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">TURN/STUN</text><text x="435" y="137" text-anchor="middle" fill="#fff" font-size="10">(NAT Traversal)</text>
-<rect x="560" y="30" width="130" height="50" rx="8" fill="#E53935"/><text x="625" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Recording</text><text x="625" y="67" text-anchor="middle" fill="#fff" font-size="10">(Azure Media)</text>
-<rect x="560" y="100" width="130" height="50" rx="8" fill="#FB8C00"/><text x="625" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Live Captions</text><text x="625" y="137" text-anchor="middle" fill="#fff" font-size="10">(Azure Speech)</text>
-<rect x="740" y="60" width="130" height="50" rx="8" fill="#795548"/><text x="805" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Stream Storage</text><text x="805" y="97" text-anchor="middle" fill="#fff" font-size="10">(OneDrive/Stream)</text>
-<line x1="140" y1="85" x2="185" y2="85" stroke="#464EB8" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="320" y1="75" x2="365" y2="55" stroke="#464EB8" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="320" y1="95" x2="365" y2="120" stroke="#464EB8" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="500" y1="55" x2="555" y2="55" stroke="#464EB8" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="500" y1="55" x2="555" y2="120" stroke="#464EB8" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="690" y1="55" x2="735" y2="75" stroke="#464EB8" stroke-width="2" marker-end="url(#ah2)"/>
-</svg>
+<table>
+    <tr><th>Tradeoff</th><th>Decision</th><th>Rationale</th></tr>
+    <tr><td>Consistency vs. Availability for messaging</td><td>Strong consistency for message persistence; eventual consistency for delivery.</td><td>Messages must never be lost (persistent write confirmed before ACK), but delivery order across devices can tolerate slight delays.</td></tr>
+    <tr><td>SFU vs. MCU for group calls</td><td>SFU (Selective Forwarding Unit)</td><td>MCU transcodes all streams into one, reducing bandwidth for receivers but adding server-side latency and CPU cost. SFU is lower latency, simpler, and more scalable. Bandwidth is traded for latency.</td></tr>
+    <tr><td>Fan-Out-on-Write vs. Fan-Out-on-Read</td><td>Hybrid: Write for small conversations, Read for large channels</td><td>For 1:1 and small group chats, fan-out-on-write (push to all participants) is efficient. For channels with thousands of members, lazy fan-out-on-read avoids wasted delivery to inactive members.</td></tr>
+    <tr><td>SQL vs. NoSQL for messages</td><td>NoSQL</td><td>Messages have a simple access pattern (by conversation + time), require massive write throughput, and benefit from flexible schema. SQL's ACID and JOINs are unnecessary overhead for this workload.</td></tr>
+    <tr><td>Single global DB vs. sharded</td><td>Sharded</td><td>Enterprise scale (hundreds of millions of users, billions of messages) exceeds single-node capacity. Sharding is essential.</td></tr>
+</table>
 </div>
 
+<hr/>
+
+<!-- ============================== ALTERNATIVES ============================== -->
+<h2 id="alternatives">13. Alternative Approaches</h2>
+
 <div class="card">
-<h3>Steps</h3>
+<h4>Alternative 1: Peer-to-Peer Mesh for Group Calls (instead of SFU)</h4>
+<p>In a mesh topology, each participant sends their stream to every other participant directly (P2P). For N participants, each sends N-1 streams and receives N-1 streams.</p>
+<p><strong>Why not chosen:</strong> Doesn't scale beyond ~4-5 participants. With 10 participants, each client must encode and upload 9 streams, which is impractical for most consumer hardware and bandwidth. CPU usage grows quadratically. SFU scales linearly — each client sends only 1 stream.</p>
+
+<h4>Alternative 2: MCU (Multipoint Control Unit) for Group Calls</h4>
+<p>An MCU receives all participant streams, transcodes and mixes them into a single composite stream, and sends one stream to each participant.</p>
+<p><strong>Why not chosen:</strong> Transcoding is CPU-intensive and adds 100-300ms latency. Server costs are significantly higher. It removes the ability for clients to independently control layout (e.g., pinning a speaker). SFU with simulcast provides a better balance of quality, latency, and cost.</p>
+
+<h4>Alternative 3: HTTP Long Polling (instead of WebSocket)</h4>
+<p>Client sends an HTTP GET that the server holds open until new data is available, then responds and the client immediately sends a new request.</p>
+<p><strong>Why not chosen:</strong> Each message delivery requires a full HTTP request/response cycle, adding latency. Connection overhead is higher. Doesn't support multiplexing multiple event types on the same connection. Not suitable for high-frequency events like typing indicators. WebSocket provides persistent, low-overhead bidirectional communication.</p>
+
+<h4>Alternative 4: Polling for Presence (instead of Pub/Sub)</h4>
+<p>Clients periodically poll <code>GET /api/presence/batch</code> every 10-30 seconds to check their contacts' status.</p>
+<p><strong>Why not chosen:</strong> With millions of concurrent users, each polling their contact list every 10 seconds, the Presence Service would be overwhelmed (~100M requests/sec). Push-based via Pub/Sub is far more efficient — events are only sent when status actually changes (much rarer than every 10 seconds).</p>
+
+<h4>Alternative 5: Single Monolithic Service (instead of Microservices)</h4>
+<p>A single service handling messaging, presence, calls, files, and notifications.</p>
+<p><strong>Why not chosen:</strong> Teams is a large-scale system with very different scaling profiles: messaging is write-heavy, presence is ephemeral with high heartbeat frequency, calling is media-intensive, file upload is I/O-intensive. A monolith can't scale each independently. Microservices allow Chat Service to scale to 100 instances while Call Service only needs 10, optimizing resource usage. Additionally, different teams can own and deploy services independently.</p>
+
+<h4>Alternative 6: XMPP Protocol (instead of Custom WebSocket)</h4>
+<p>XMPP (Extensible Messaging and Presence Protocol) is an established messaging protocol with built-in presence, roster management, and message delivery.</p>
+<p><strong>Why not chosen:</strong> XMPP is XML-based, resulting in verbose payloads (higher bandwidth). It's a complex protocol with many extensions (XEPs) — implementing only what's needed with a custom WebSocket protocol is leaner and more flexible. Custom protocols allow tighter integration with the specific microservices architecture and can be optimized for Teams' exact needs (e.g., custom event types for reactions, threads, file cards).</p>
+
+<h4>Alternative 7: Graph Database for Social/Contact Relationships</h4>
+<p>Using a graph database to model user relationships, team memberships, and conversation participation.</p>
+<p><strong>Why not chosen:</strong> While team/conversation membership is inherently graph-like, the query patterns are simple (direct lookups, not multi-hop traversals). SQL with junction tables handles "who's in this conversation?" and "what conversations is this user in?" efficiently with indexed JOINs. Graph databases add operational complexity without sufficient benefit for these access patterns. If features like "suggested contacts" (friends-of-friends) were critical, a graph DB might be warranted.</p>
+</div>
+
+<hr/>
+
+<!-- ============================== ADDITIONAL ============================== -->
+<h2 id="additional">14. Additional Information</h2>
+
+<h3>14.1 Security Considerations</h3>
+<div class="card">
+<ul>
+    <li><strong>TLS Everywhere:</strong> All client ↔ server communication uses TLS 1.3. WebSocket connections use WSS (WebSocket Secure).</li>
+    <li><strong>Authentication:</strong> JWT tokens issued by an Identity Service (OAuth 2.0 / OIDC). Tokens are short-lived (1 hour) with refresh tokens.</li>
+    <li><strong>Authorization:</strong> Each API call checks that the user has permission to access the requested conversation/team/file. Role-based access control (member, admin, owner).</li>
+    <li><strong>Encryption at Rest:</strong> All databases and Object Storage encrypt data at rest using AES-256.</li>
+    <li><strong>Media Encryption:</strong> WebRTC media uses DTLS for key exchange and SRTP for media encryption.</li>
+    <li><strong>Compliance:</strong> Enterprise features include eDiscovery (search and export all messages for legal holds), Data Loss Prevention (DLP) policies that scan messages for sensitive content, and audit logs for admin actions.</li>
+</ul>
+</div>
+
+<h3>14.2 Message Ordering Guarantee</h3>
+<div class="card">
+<p>Messages within a conversation must be displayed in order. This is achieved through:</p>
 <ol>
-<li>User clicks "Meet Now" → Calling Service creates meeting, generates join URL, initiates signaling (SDP offer/answer)</li>
-<li>ICE negotiation via STUN/TURN servers — determines optimal media path (direct P2P for 1:1, SFU relay for groups)</li>
-<li>Media Processor (SFU architecture for most meetings) receives audio/video from speakers, selectively forwards to participants</li>
-<li>For large meetings (100+ participants): MCU mode — server mixes video into gallery view, reduces client bandwidth</li>
-<li>Screen sharing: encoded as separate video stream at 1080p/30fps with content-optimized codec (lower framerate, higher quality)</li>
-<li>Live captions powered by Azure Cognitive Speech — real-time speech-to-text with speaker attribution</li>
-<li>Recording: server-side recording (cloud recording) → transcoded and stored in OneDrive/Microsoft Stream</li>
+    <li><strong>Server-assigned timestamps:</strong> The Chat Service assigns <code>created_at</code> using the server clock (not the client clock) at the time of persistence. This prevents clock skew issues across clients.</li>
+    <li><strong>Partition-by-conversation:</strong> The Message Queue partitions by <code>conversation_id</code>, ensuring all messages for a conversation are processed by the same consumer in order.</li>
+    <li><strong>Monotonic IDs:</strong> Within a partition, message IDs are sortable (e.g., ULIDs or Snowflake-style IDs) to provide a total order even if timestamps collide.</li>
 </ol>
-
-<h3>Example</h3>
-<p>10-person team standup meeting. Calling Service allocates SFU in Azure US-East. Each participant sends 720p video (~1.5 Mbps) + Opus audio to SFU. SFU forwards only active speaker's video at full resolution; other participants at thumbnail quality (180p). Total downstream per client: ~3 Mbps (vs. 15 Mbps without SFU optimization). Meeting recorded → uploaded to team's SharePoint → transcript generated in 10 minutes.</p>
-
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>Media Architecture</h4>
-<p><strong>Small Meetings (≤4):</strong> P2P mesh or single SFU — each client sends/receives directly</p>
-<p><strong>Medium (5-49):</strong> SFU with simulcast — each sender produces 3 quality levels; SFU selects appropriate level per receiver based on viewport size and bandwidth</p>
-<p><strong>Large (50-10K):</strong> Hierarchical SFU + MCU hybrid — server-side composition for gallery view; cascaded SFUs across regions</p>
-<p><strong>Codec:</strong> H.264/VP8 for video; Opus for audio; SRTP encryption (DTLS-SRTP key exchange)</p>
-</div>
-<div class="card">
-<h4>Together Mode (AI)</h4>
-<p><strong>Background:</strong> AI body segmentation model (real-time on client GPU/CPU) separates person from background</p>
-<p><strong>Composition:</strong> Segmented participants placed into shared virtual scene (auditorium, coffee shop)</p>
-<p><strong>Processing:</strong> Client-side ML inference (~20ms per frame on modern hardware); no server-side processing needed</p>
-</div>
-</div>
 </div>
 
-<!-- ============ FLOW 3: CHANNELS & APPS ============ -->
-<h2>Flow 3: Teams, Channels & App Integration</h2>
+<h3>14.3 Rate Limiting</h3>
 <div class="card">
-<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#9EA2FF"/></marker></defs>
-<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="90" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Client</text>
-<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Graph API</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="10">(Microsoft Graph)</text>
-<rect x="370" y="30" width="130" height="50" rx="8" fill="#795548"/><text x="435" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">SharePoint</text><text x="435" y="67" text-anchor="middle" fill="#fff" font-size="10">(Files + Wiki)</text>
-<rect x="370" y="100" width="130" height="50" rx="8" fill="#9C27B0"/><text x="435" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Azure AD</text><text x="435" y="137" text-anchor="middle" fill="#fff" font-size="10">(Identity + Groups)</text>
-<rect x="560" y="30" width="130" height="50" rx="8" fill="#FB8C00"/><text x="625" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">App Platform</text><text x="625" y="67" text-anchor="middle" fill="#fff" font-size="10">(Tabs + Bots)</text>
-<rect x="560" y="100" width="130" height="50" rx="8" fill="#00897B"/><text x="625" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Connectors</text><text x="625" y="137" text-anchor="middle" fill="#fff" font-size="10">(Webhook + O365)</text>
-<line x1="140" y1="85" x2="185" y2="85" stroke="#9EA2FF" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="320" y1="75" x2="365" y2="55" stroke="#9EA2FF" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="320" y1="95" x2="365" y2="120" stroke="#9EA2FF" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="500" y1="55" x2="555" y2="55" stroke="#9EA2FF" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="500" y1="125" x2="555" y2="125" stroke="#9EA2FF" stroke-width="2" marker-end="url(#ah3)"/>
-</svg>
-</div>
-
-<div class="card">
-<h3>Steps</h3>
-<ol>
-<li>Creating a Team provisions: Azure AD security group, SharePoint site (for files), Exchange mailbox (for email integration), Planner plan</li>
-<li>Channels are sub-divisions within a Team — Standard (visible to all members), Private (subset), Shared (cross-org)</li>
-<li>Each channel gets a SharePoint folder; files shared in chat uploaded to channel's SharePoint document library</li>
-<li>Microsoft Graph API provides unified endpoint for all M365 data: users, teams, channels, messages, files, calendar</li>
-<li>App Platform: Tabs (embedded web apps via iframe), Bots (conversational AI), Messaging Extensions (compose actions), Adaptive Cards</li>
-<li>Connectors: incoming webhooks (external services post to channel) and O365 connectors (RSS, JIRA, GitHub notifications)</li>
-</ol>
-
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>Microsoft Graph API</h4>
-<p><strong>Endpoint:</strong> <code>https://graph.microsoft.com/v1.0/</code> — RESTful API for all M365 services</p>
-<p><strong>Teams:</strong> <code>GET /teams/{id}/channels/{id}/messages</code> — channel messages with OData pagination</p>
-<p><strong>Auth:</strong> OAuth 2.0 with delegated (user) or application (service) permissions; Azure AD consent model</p>
-<p><strong>Webhooks:</strong> Change notifications via <code>/subscriptions</code> — real-time push when resources change</p>
-</div>
-<div class="card">
-<h4>Teams App Platform</h4>
-<p><strong>Tabs:</strong> Embedded web pages (React/Angular) rendered in iframe; Teams SDK provides context (user, team, theme)</p>
-<p><strong>Bots:</strong> Azure Bot Framework — receive messages via Activity Protocol, respond with Adaptive Cards</p>
-<p><strong>Adaptive Cards:</strong> JSON-based card format for rich interactive content — forms, approvals, polls rendered natively</p>
-<p><strong>Store:</strong> Teams App Store — 1,800+ apps; IT admin can control which apps are allowed per org</p>
-</div>
-</div>
-</div>
-
-<!-- ============ COMBINED ARCHITECTURE ============ -->
-<h2>Combined Architecture</h2>
-<div class="card">
-<svg viewBox="0 0 1050 460" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#6264A7"/></marker></defs>
-<rect x="20" y="60" width="130" height="50" rx="8" fill="#34A853"/><text x="85" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Desktop / Web</text><text x="85" y="97" text-anchor="middle" fill="#fff" font-size="10">(Electron / React)</text>
-<rect x="20" y="130" width="130" height="50" rx="8" fill="#34A853"/><text x="85" y="152" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Mobile Apps</text><text x="85" y="167" text-anchor="middle" fill="#fff" font-size="10">(iOS / Android)</text>
-<rect x="210" y="90" width="130" height="55" rx="8" fill="#FB8C00"/><text x="275" y="112" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Azure Front Door</text><text x="275" y="129" text-anchor="middle" fill="#fff" font-size="10">(CDN + WAF)</text>
-<rect x="400" y="30" width="130" height="45" rx="8" fill="#4285F4"/><text x="465" y="57" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Chat Service</text>
-<rect x="400" y="90" width="130" height="45" rx="8" fill="#4285F4"/><text x="465" y="117" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Calling Service</text>
-<rect x="400" y="150" width="130" height="45" rx="8" fill="#4285F4"/><text x="465" y="177" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Teams/Channel Svc</text>
-<rect x="590" y="30" width="130" height="45" rx="8" fill="#607D8B"/><text x="655" y="57" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">SignalR Hub</text>
-<rect x="590" y="90" width="130" height="45" rx="8" fill="#9C27B0"/><text x="655" y="117" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Media Processor</text>
-<rect x="590" y="150" width="130" height="45" rx="8" fill="#9C27B0"/><text x="655" y="172" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Azure AD</text><text x="655" y="187" text-anchor="middle" fill="#fff" font-size="10">(Identity)</text>
-<rect x="780" y="60" width="130" height="45" rx="8" fill="#E53935"/><text x="845" y="87" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Compliance Svc</text>
-<rect x="780" y="120" width="130" height="45" rx="8" fill="#FB8C00"/><text x="845" y="147" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Bot Framework</text>
-<rect x="400" y="300" width="130" height="55" rx="8" fill="#795548"/><text x="465" y="322" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Cosmos DB</text><text x="465" y="339" text-anchor="middle" fill="#fff" font-size="10">(Messages)</text>
-<rect x="590" y="300" width="130" height="55" rx="8" fill="#795548"/><text x="655" y="322" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">SharePoint</text><text x="655" y="339" text-anchor="middle" fill="#fff" font-size="10">(Files + Sites)</text>
-<rect x="780" y="300" width="130" height="55" rx="8" fill="#00897B"/><text x="845" y="322" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Azure Search</text><text x="845" y="339" text-anchor="middle" fill="#fff" font-size="10">(Message Index)</text>
-<line x1="150" y1="85" x2="205" y2="105" stroke="#6264A7" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="150" y1="155" x2="205" y2="130" stroke="#6264A7" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="340" y1="105" x2="395" y2="52" stroke="#6264A7" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="340" y1="118" x2="395" y2="112" stroke="#6264A7" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="340" y1="130" x2="395" y2="172" stroke="#6264A7" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="530" y1="52" x2="585" y2="52" stroke="#6264A7" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="530" y1="112" x2="585" y2="112" stroke="#6264A7" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="530" y1="172" x2="585" y2="172" stroke="#6264A7" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="720" y1="52" x2="775" y2="75" stroke="#6264A7" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="720" y1="172" x2="775" y2="142" stroke="#6264A7" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="465" y1="75" x2="465" y2="295" stroke="#6264A7" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="530" y1="195" x2="590" y2="310" stroke="#6264A7" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="720" y1="85" x2="780" y2="315" stroke="#6264A7" stroke-width="1.5" marker-end="url(#ah4)"/>
-</svg>
-</div>
-
-<!-- ============ DATABASE SCHEMA ============ -->
-<h2>Database Schema</h2>
-<div class="grid">
-<div class="card">
-<h3>Cosmos DB — Messages</h3>
-<pre><code>{
-  "id": "msg_uuid",
-  "chatId": "chat_12345",       // partition key
-  "threadId": "thread_abc",
-  "senderId": "user_uuid",
-  "senderName": "Alice Smith",
-  "body": {
-    "contentType": "html",
-    "content": "&lt;p&gt;@bob review the PR&lt;/p&gt;"
-  },
-  "attachments": [{
-    "id": "att_uuid",
-    "name": "design.pdf",
-    "contentUrl": "https://sharepoint.com/...",
-    "contentType": "application/pdf"
-  }],
-  "mentions": [{"id": "user_bob", "text": "@bob"}],
-  "reactions": [{"type": "like", "userId": "user_carol"}],
-  "importance": "normal",
-  "deleted": false,
-  "editedAt": null,
-  "createdAt": "2024-02-09T10:30:00Z",
-  "_ts": 1707471000
-}</code></pre>
-<p><span class="tag tag-shard">SHARD</span> Partitioned by chatId — all messages in same chat co-located in same logical partition</p>
-</div>
-
-<div class="card">
-<h3>Azure AD — Teams & Channels</h3>
-<pre><code>Team {
-  id: UUID,                  <span class="tag tag-pk">PK</span>
-  displayName: "Engineering",
-  description: "Engineering team",
-  visibility: "private",     // private | public
-  groupId: UUID,             // Azure AD group  <span class="tag tag-fk">FK</span>
-  sharepointSiteUrl: "https://org.sharepoint.com/sites/eng",
-  createdAt: DateTime
-}
-
-Channel {
-  id: UUID,                  <span class="tag tag-pk">PK</span>
-  teamId: UUID,              <span class="tag tag-fk">FK</span>
-  displayName: "backend",
-  membershipType: "standard", // standard | private | shared
-  sharepointFolderId: UUID,
-  email: "eng-backend@org.com",
-  createdAt: DateTime
-}
-
-TeamMember {
-  teamId: UUID,              <span class="tag tag-fk">FK</span>
-  userId: UUID,              <span class="tag tag-fk">FK</span>
-  role: "owner" | "member" | "guest",
-  addedAt: DateTime
-}</code></pre>
-</div>
-</div>
-
-<!-- ============ CACHE & CDN ============ -->
-<h2>Cache & CDN Deep Dive</h2>
-<div class="card">
-<div class="grid">
-<div class="card">
-<h4>Azure Front Door (CDN)</h4>
-<p><strong>Static:</strong> Teams web app bundles, icons, fonts cached globally at 180+ edge PoPs</p>
-<p><strong>WAF:</strong> Web Application Firewall with DDoS protection, rate limiting, bot detection</p>
-<p><strong>Routing:</strong> Anycast + latency-based routing to nearest Azure region</p>
-</div>
-<div class="card">
-<h4>Azure Redis Cache</h4>
-<p><strong>Cached:</strong> User presence (online/away/busy), team membership lists, permission checks, recent conversations list</p>
-<p><strong>Strategy:</strong> Cache-aside with TTL; invalidated on presence change / membership update events</p>
-<p><strong>TTL:</strong> Presence: 60s; membership: 5min; conversation list: 2min</p>
-</div>
-<div class="card">
-<h4>Client-Side Cache</h4>
-<p><strong>Desktop:</strong> IndexedDB for message cache (last 7 days), user profiles, team structure — enables offline viewing</p>
-<p><strong>Sync:</strong> Delta sync protocol — client sends last sync token, server returns only new/modified messages</p>
-</div>
-</div>
-</div>
-
-<!-- ============ SCALING ============ -->
-<h2>Scaling & Load Balancing</h2>
-<div class="card">
+<p>The API Gateway enforces rate limits to prevent abuse and protect downstream services:</p>
 <ul>
-<li><strong>Azure Front Door:</strong> Global L7 load balancer with anycast; routes to nearest healthy Azure region; auto-failover on region outage</li>
-<li><strong>Cosmos DB:</strong> Multi-region write with automatic conflict resolution (last-writer-wins); auto-scale RU/s per partition</li>
-<li><strong>Media Processors:</strong> Auto-scaled VM pools per region; GPU-accelerated for video transcoding; cascaded SFUs for cross-region meetings</li>
-<li><strong>SignalR:</strong> Azure SignalR Service scales to millions of connections per unit; multiple units per region; sharded by chat group</li>
-<li><strong>Multi-Tenant:</strong> Each M365 tenant is logically isolated — data residency controls (EU data stays in EU Azure regions)</li>
+    <li><strong>Per-user:</strong> 100 messages/minute, 10 file uploads/minute, 5 call initiations/minute.</li>
+    <li><strong>Per-organization:</strong> Aggregate limits based on license tier.</li>
+    <li><strong>Algorithm:</strong> Token bucket with burst capacity. Allows short bursts (e.g., rapid-fire messages in a heated discussion) while enforcing overall rate.</li>
 </ul>
 </div>
 
-<!-- ============ TRADEOFFS ============ -->
-<h2>Tradeoffs</h2>
-<div class="tradeoff-grid">
-<div class="pro">
-<h4>✅ M365 Integration</h4>
-<ul>
-<li>Seamless file sharing (SharePoint), calendar (Outlook), identity (Azure AD)</li>
-<li>Single pane of glass for enterprise communication + collaboration</li>
-<li>IT admin can manage everything from M365 admin center</li>
-</ul>
-</div>
-<div class="con">
-<h4>❌ M365 Integration</h4>
-<ul>
-<li>Tightly coupled — switching away from M365 ecosystem is very difficult</li>
-<li>Complexity: provisioning a Team creates SharePoint site + AD group + mailbox</li>
-<li>Performance depends on multiple Azure services (cascading failures)</li>
-</ul>
-</div>
-<div class="pro">
-<h4>✅ Cosmos DB (Global Distribution)</h4>
-<ul>
-<li>Multi-region write with 99.999% availability SLA</li>
-<li>Automatic failover — regional outage is transparent to users</li>
-<li>Single-digit ms reads globally with session consistency</li>
-</ul>
-</div>
-<div class="con">
-<h4>❌ Cosmos DB</h4>
-<ul>
-<li>Expensive at scale (RU-based pricing model)</li>
-<li>Partition key design is critical — bad partitioning = hot partitions</li>
-<li>Limited query capabilities vs. traditional SQL databases</li>
-</ul>
-</div>
+<h3>14.4 Idempotency</h3>
+<div class="card">
+<p>Network issues can cause duplicate requests (client retries). The Chat Service uses client-generated <code>idempotency_key</code> (sent in the request header). If a duplicate key is detected, the service returns the original response without creating a duplicate message. Keys are stored in the in-memory cache with a 5-minute TTL.</p>
 </div>
 
-<!-- ============ ALTERNATIVES ============ -->
-<h2>Alternative Approaches</h2>
-<div class="grid">
-<div class="card">
-<h4>Matrix Protocol (Decentralized)</h4>
-<p>Open standard for decentralized communication (Element/Matrix). Each org runs own server, federated messaging across servers. Better for data sovereignty and avoiding vendor lock-in. But harder to achieve consistent UX, slower feature development, and no native M365 integration.</p>
-</div>
-<div class="card">
-<h4>XMPP-Based (Legacy)</h4>
-<p>Extensible Messaging and Presence Protocol — used by earlier enterprise messaging (Jabber, Lync). Proven, standards-based, extensible. But XML-heavy protocol, poor mobile support, and lacks modern features (threaded replies, adaptive cards, app platform).</p>
-</div>
-</div>
-
-<!-- ============ ADDITIONAL INFO ============ -->
-<h2>Additional Information</h2>
+<h3>14.5 Graceful Degradation</h3>
 <div class="card">
 <ul>
-<li><strong>Teams 2.0 (New Teams):</strong> Rewritten from Electron+Angular to Electron+React (WebView2 + Edge Chromium). 50% less memory, 2x faster startup. Uses IndexedDB for local caching, Web Workers for background processing.</li>
-<li><strong>Copilot in Teams:</strong> GPT-4 powered meeting summarization, action item extraction, catch-up ("What did I miss?"), intelligent recap. Processes meeting transcripts in real-time via Azure OpenAI Service.</li>
-<li><strong>PSTN Integration:</strong> Teams can replace traditional phone systems — Direct Routing (SBC gateway to PSTN), Calling Plans (Microsoft as carrier), Operator Connect (telco partnership). SIP trunking for enterprise PBX replacement.</li>
-<li><strong>Guest Access & Federation:</strong> External users can join teams as guests (Azure AD B2B); federation allows chat/calling with other Teams/Skype orgs without guest accounts. Cross-cloud federation supports GCC/DoD environments.</li>
-<li><strong>Live Events:</strong> Broadcast meetings to 20K+ attendees; uses Azure Media Services for live encoding + CDN distribution. Attendees receive stream (not interactive media); Q&A via moderated chat.</li>
+    <li>If the Presence Service is down: Users' statuses show as "unknown" rather than crashing the app. Messages still deliver.</li>
+    <li>If the Notification Service is down: Messages still deliver via WebSocket to online users. Push notifications are queued in the Message Queue and delivered when the service recovers.</li>
+    <li>If a WebSocket node crashes: Affected clients reconnect within seconds (exponential backoff). During reconnection, missed messages are fetched via REST API.</li>
+    <li>If the Search Index is down: Search returns an error, but all other features continue working.</li>
 </ul>
 </div>
 
+<hr/>
+
+<!-- ============================== VENDORS ============================== -->
+<h2 id="vendors">15. Vendor Recommendations</h2>
+<p>The design above is vendor-agnostic. Below are specific vendor options that would be suitable for each component category, with rationale.</p>
+
+<div class="card">
+<table>
+    <tr><th>Component</th><th>Vendor Options</th><th>Rationale</th></tr>
+    <tr>
+        <td><strong>NoSQL (Messages, Notifications)</strong></td>
+        <td>Apache Cassandra, Amazon DynamoDB, ScyllaDB</td>
+        <td><strong>Cassandra:</strong> Excellent write throughput, tunable consistency, partition-based architecture fits conversation_id sharding. No single point of failure. <strong>DynamoDB:</strong> Fully managed, auto-scaling, built-in partition key + sort key model. <strong>ScyllaDB:</strong> Cassandra-compatible with lower latency (C++ vs Java).</td>
+    </tr>
+    <tr>
+        <td><strong>SQL (Users, Teams, Conversations, Calls, Files)</strong></td>
+        <td>PostgreSQL, MySQL, CockroachDB</td>
+        <td><strong>PostgreSQL:</strong> Rich feature set, excellent JSON support for semi-structured fields, strong community. <strong>CockroachDB:</strong> Distributed SQL with horizontal scaling and strong consistency — ideal if global distribution of SQL data is needed.</td>
+    </tr>
+    <tr>
+        <td><strong>In-Memory Cache</strong></td>
+        <td>Redis, Memcached, Dragonfly</td>
+        <td><strong>Redis:</strong> Supports data structures (hashes for presence, sets for participant lists), Pub/Sub built-in, cluster mode for sharding. <strong>Memcached:</strong> Simpler, higher throughput for pure key-value. <strong>Dragonfly:</strong> Redis-compatible with better multi-core utilization.</td>
+    </tr>
+    <tr>
+        <td><strong>Message Queue</strong></td>
+        <td>Apache Kafka, Apache Pulsar, Amazon SQS/SNS</td>
+        <td><strong>Kafka:</strong> Industry standard for high-throughput event streaming, durable, exactly-once semantics, consumer groups, partition-based ordering. <strong>Pulsar:</strong> Similar to Kafka with multi-tenancy and geo-replication built-in. <strong>SQS/SNS:</strong> Fully managed, simpler operations.</td>
+    </tr>
+    <tr>
+        <td><strong>Pub/Sub</strong></td>
+        <td>Redis Pub/Sub, NATS, Google Cloud Pub/Sub</td>
+        <td><strong>Redis Pub/Sub:</strong> Already using Redis for caching; Pub/Sub is built-in — no additional infrastructure. Low latency. <strong>NATS:</strong> Ultra-lightweight, high-performance, designed for real-time pub/sub.</td>
+    </tr>
+    <tr>
+        <td><strong>Object Storage</strong></td>
+        <td>Amazon S3, Google Cloud Storage, Azure Blob Storage, MinIO</td>
+        <td><strong>S3:</strong> Industry standard, 11 nines durability, multi-part upload, lifecycle policies. <strong>MinIO:</strong> S3-compatible, self-hosted for on-premise requirements.</td>
+    </tr>
+    <tr>
+        <td><strong>CDN</strong></td>
+        <td>Cloudflare, Amazon CloudFront, Akamai, Fastly</td>
+        <td><strong>Cloudflare:</strong> Global edge network, built-in DDoS protection, WebSocket support. <strong>CloudFront:</strong> Tight integration with S3 origin.</td>
+    </tr>
+    <tr>
+        <td><strong>Search Index</strong></td>
+        <td>Elasticsearch, Apache Solr, Meilisearch</td>
+        <td><strong>Elasticsearch:</strong> Industry standard for full-text search, inverted index, relevance scoring, horizontal scaling, rich query DSL.</td>
+    </tr>
+    <tr>
+        <td><strong>SFU / Media Server</strong></td>
+        <td>Janus, mediasoup, Jitsi Videobridge, Pion</td>
+        <td><strong>mediasoup:</strong> Lightweight, Node.js/C++ based, WebRTC SFU with simulcast and SVC support. <strong>Janus:</strong> Feature-rich, supports multiple protocols. <strong>Pion:</strong> Go-based, excellent for custom integrations.</td>
+    </tr>
+    <tr>
+        <td><strong>TURN/STUN</strong></td>
+        <td>coturn, Twilio TURN</td>
+        <td><strong>coturn:</strong> Open-source, widely deployed, supports both TURN and STUN. <strong>Twilio TURN:</strong> Managed service, global distribution.</td>
+    </tr>
+</table>
+</div>
+
+<hr/>
+<p style="text-align:center; color:var(--muted); margin-top:40px;">— End of System Design: Microsoft Teams —</p>
+
+</div>
 </body>
 </html>
