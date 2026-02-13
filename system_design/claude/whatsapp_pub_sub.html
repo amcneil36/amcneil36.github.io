@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design: WhatsApp</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --card-bg: #181a20;
+    --border: #2a2d37;
+    --accent: #25d366;
+    --accent2: #128c7e;
+    --text: #e0e0e0;
+    --text-muted: #8b8fa3;
+    --heading: #ffffff;
+    --code-bg: #1e2028;
+    --warn: #fbbf24;
+    --info: #38bdf8;
+    --err: #f87171;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; padding: 2rem; max-width: 1200px; margin: 0 auto; }
+  h1 { color: var(--accent); font-size: 2.4rem; margin-bottom: .5rem; border-bottom: 3px solid var(--accent); padding-bottom: .5rem; }
+  h2 { color: var(--heading); font-size: 1.7rem; margin-top: 2.5rem; margin-bottom: .8rem; border-left: 4px solid var(--accent); padding-left: .8rem; }
+  h3 { color: var(--accent2); font-size: 1.3rem; margin-top: 1.5rem; margin-bottom: .5rem; }
+  h4 { color: var(--info); font-size: 1.1rem; margin-top: 1rem; margin-bottom: .4rem; }
+  p, li { margin-bottom: .5rem; }
+  ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: .92em; color: var(--accent); }
+  pre { background: var(--code-bg); padding: 1.2rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; border: 1px solid var(--border); font-size: .9em; line-height: 1.5; color: var(--text); }
+  .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin: 1rem 0; }
+  .diagram { background: #1a1c24; border: 2px solid var(--accent2); border-radius: 10px; padding: 1.5rem; margin: 1.2rem 0; overflow-x: auto; }
+  .example { background: #1a1e2e; border-left: 4px solid var(--info); padding: 1rem 1.2rem; margin: .8rem 0; border-radius: 0 8px 8px 0; }
+  .warn { background: #2a2418; border-left: 4px solid var(--warn); padding: 1rem 1.2rem; margin: .8rem 0; border-radius: 0 8px 8px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .92em; }
+  th { background: var(--accent2); color: white; padding: .7rem; text-align: left; }
+  td { padding: .6rem .7rem; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) { background: #1e2028; }
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: .8em; font-weight: 600; margin-right: .3rem; }
+  .tag-pk { background: #25d366; color: #000; }
+  .tag-fk { background: #38bdf8; color: #000; }
+  .tag-idx { background: #fbbf24; color: #000; }
+  .tag-shard { background: #c084fc; color: #000; }
+  svg text { font-family: 'Segoe UI', system-ui, sans-serif; }
+</style>
+</head>
+<body>
+
+<h1>🟢 System Design: WhatsApp</h1>
+<p>A real-time messaging platform supporting 1:1 conversations, group chats, media sharing, delivery/read receipts, online presence, and end-to-end encryption — designed for billions of users.</p>
+
+<!-- =========== FUNCTIONAL REQUIREMENTS =========== -->
+<h2>1. Functional Requirements</h2>
+<div class="card">
+<ol>
+  <li><strong>1:1 Messaging</strong> — Users can send and receive text messages in real time with any other user.</li>
+  <li><strong>Group Chat Messaging</strong> — Users can create groups (up to 1024 members) and send/receive messages to the group.</li>
+  <li><strong>Delivery &amp; Read Receipts</strong> — Messages transition through <em>Sent → Delivered → Read</em> states visible to the sender.</li>
+  <li><strong>Online / Last-Seen Presence</strong> — Users can see whether another user is currently online or their last-seen timestamp.</li>
+  <li><strong>Media Sharing</strong> — Users can send images, videos, audio, and documents within any conversation.</li>
+  <li><strong>Push Notifications</strong> — Offline users receive push notifications for new messages.</li>
+  <li><strong>Message Persistence (Temporary)</strong> — Server stores messages only until they are delivered; messages are primarily stored on-device (E2EE model).</li>
+  <li><strong>User Registration &amp; Contacts</strong> — Users register via phone number and can discover other users from their contact list.</li>
+</ol>
+</div>
+
+<!-- =========== NON-FUNCTIONAL REQUIREMENTS =========== -->
+<h2>2. Non-Functional Requirements</h2>
+<div class="card">
+<ol>
+  <li><strong>Low Latency</strong> — Message delivery in &lt;200ms when both users are online.</li>
+  <li><strong>High Availability</strong> — 99.99% uptime; messaging must never go fully down.</li>
+  <li><strong>Scalability</strong> — Support 2B+ registered users, 100B+ messages/day.</li>
+  <li><strong>Consistency</strong> — Messages must be delivered exactly once and in order within a conversation.</li>
+  <li><strong>Security</strong> — End-to-end encryption (E2EE) for all messages; the server never sees plaintext.</li>
+  <li><strong>Reliability</strong> — Zero message loss, even if a user is offline for days.</li>
+  <li><strong>Partition Tolerance</strong> — System continues to function during network partitions (AP in CAP for presence, CP for messaging).</li>
+  <li><strong>Minimal Server-Side Storage</strong> — Messages purged from server once delivered to align with E2EE privacy model.</li>
+</ol>
+</div>
+
+<!-- =========== FLOW 1 =========== -->
+<h2>3. Flow 1 — 1:1 Messaging (Send &amp; Receive)</h2>
+<div class="diagram">
+<svg viewBox="0 0 1100 480" xmlns="http://www.w3.org/2000/svg" font-size="13">
+  <defs>
+    <marker id="ag" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#25d366"/></marker>
+    <marker id="ab" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#38bdf8"/></marker>
+    <marker id="ap" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#c084fc"/></marker>
+    <marker id="ay" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#fbbf24"/></marker>
+    <marker id="ar" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#f87171"/></marker>
+  </defs>
+  <rect x="10" y="200" width="110" height="50" rx="10" fill="#25d366" stroke="#128c7e" stroke-width="2"/>
+  <text x="65" y="230" text-anchor="middle" fill="#000" font-weight="bold">User A (Sender)</text>
+  <polygon points="195,205 230,190 265,205 265,245 230,260 195,245" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/>
+  <text x="230" y="230" text-anchor="middle" fill="#000" font-weight="bold" font-size="11">LB</text>
+  <rect x="310" y="190" width="140" height="60" rx="8" fill="#1e2028" stroke="#25d366" stroke-width="2"/>
+  <text x="380" y="215" text-anchor="middle" fill="#25d366" font-weight="bold">Chat Service</text>
+  <text x="380" y="233" text-anchor="middle" fill="#8b8fa3" font-size="10">(WebSocket Handler)</text>
+  <rect x="530" y="190" width="130" height="60" rx="8" fill="#2a1832" stroke="#c084fc" stroke-width="2"/>
+  <text x="595" y="218" text-anchor="middle" fill="#c084fc" font-weight="bold">Pub/Sub</text>
+  <text x="595" y="236" text-anchor="middle" fill="#8b8fa3" font-size="10">Topic: user_{B_id}</text>
+  <rect x="730" y="190" width="140" height="60" rx="8" fill="#1e2028" stroke="#25d366" stroke-width="2"/>
+  <text x="800" y="215" text-anchor="middle" fill="#25d366" font-weight="bold">Chat Service</text>
+  <text x="800" y="233" text-anchor="middle" fill="#8b8fa3" font-size="10">(WS for User B)</text>
+  <rect x="940" y="200" width="120" height="50" rx="10" fill="#25d366" stroke="#128c7e" stroke-width="2"/>
+  <text x="1000" y="230" text-anchor="middle" fill="#000" font-weight="bold">User B (Receiver)</text>
+  <ellipse cx="380" cy="400" rx="60" ry="22" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <rect x="320" y="378" width="120" height="24" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <text x="380" y="408" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="11">Message DB</text>
+  <text x="380" y="438" text-anchor="middle" fill="#8b8fa3" font-size="10">(NoSQL)</text>
+  <rect x="530" y="370" width="130" height="50" rx="8" fill="#1e2028" stroke="#f87171" stroke-width="2"/>
+  <text x="595" y="392" text-anchor="middle" fill="#f87171" font-weight="bold" font-size="11">Session Store</text>
+  <text x="595" y="410" text-anchor="middle" fill="#8b8fa3" font-size="10">(In-Memory Cache)</text>
+  <rect x="730" y="370" width="140" height="50" rx="8" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <text x="800" y="392" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="11">Push Notification</text>
+  <text x="800" y="410" text-anchor="middle" fill="#8b8fa3" font-size="10">Service</text>
+  <rect x="530" y="70" width="130" height="50" rx="8" fill="#2a2418" stroke="#fbbf24" stroke-width="2"/>
+  <text x="595" y="92" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="11">Message Queue</text>
+  <text x="595" y="108" text-anchor="middle" fill="#8b8fa3" font-size="10">(Offline Delivery)</text>
+  <line x1="120" y1="225" x2="193" y2="225" stroke="#25d366" stroke-width="2" marker-end="url(#ag)"/>
+  <text x="155" y="215" text-anchor="middle" fill="#8b8fa3" font-size="9">WebSocket</text>
+  <line x1="265" y1="225" x2="308" y2="225" stroke="#38bdf8" stroke-width="2" marker-end="url(#ab)"/>
+  <line x1="450" y1="220" x2="528" y2="220" stroke="#c084fc" stroke-width="2" marker-end="url(#ap)"/>
+  <text x="489" y="212" text-anchor="middle" fill="#8b8fa3" font-size="9">publish</text>
+  <line x1="660" y1="220" x2="728" y2="220" stroke="#c084fc" stroke-width="2" marker-end="url(#ap)"/>
+  <text x="694" y="212" text-anchor="middle" fill="#8b8fa3" font-size="9">deliver</text>
+  <line x1="870" y1="225" x2="938" y2="225" stroke="#25d366" stroke-width="2" marker-end="url(#ag)"/>
+  <text x="904" y="215" text-anchor="middle" fill="#8b8fa3" font-size="9">WebSocket</text>
+  <line x1="380" y1="250" x2="380" y2="376" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ay)"/>
+  <text x="370" y="320" text-anchor="end" fill="#8b8fa3" font-size="9">persist</text>
+  <line x1="450" y1="242" x2="532" y2="375" stroke="#f87171" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ar)"/>
+  <text x="500" y="320" text-anchor="middle" fill="#8b8fa3" font-size="9">lookup</text>
+  <line x1="595" y1="190" x2="595" y2="122" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ay)"/>
+  <text x="620" y="158" text-anchor="start" fill="#8b8fa3" font-size="9">if offline</text>
+  <line x1="650" y1="246" x2="732" y2="375" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ay)"/>
+  <text x="710" y="310" text-anchor="middle" fill="#8b8fa3" font-size="9">if offline</text>
+</svg>
+</div>
+
+<h3>Flow 1 Examples</h3>
+<div class="example">
+<strong>Example 1 — Both users online (happy path):</strong><br>
+User A types "Hey, are you free tonight?" and taps Send. The client sends an encrypted message over the existing WebSocket connection to the Load Balancer, which routes it to the Chat Service instance handling User A's connection. The Chat Service persists the message to the Message DB with status <code>SENT</code>, looks up User B's connected server in the Session Store, then publishes the message to the Pub/Sub topic <code>user_{B_id}</code>. The Chat Service instance that holds User B's WebSocket subscription receives the message from the topic and pushes it to User B over their WebSocket. User B's client sends a <code>DELIVERED</code> acknowledgment back through the same path, which the Chat Service uses to update the message status in the DB and notify User A via Pub/Sub topic <code>user_{A_id}</code>. The message is then eligible for deletion from the server.
+</div>
+<div class="example">
+<strong>Example 2 — Recipient offline:</strong><br>
+User A sends "Call me when you can" to User B, but User B has no active WebSocket connection. The Chat Service persists the message to the Message DB with status <code>SENT</code>, checks the Session Store, finds no active session for User B, and publishes to <code>user_{B_id}</code>. Since no Chat Service instance is subscribed to that topic (nobody holding B's WebSocket), the message goes to the Message Queue for offline delivery. The Push Notification Service is also triggered to send an APNs/FCM push notification to User B's device. When User B opens WhatsApp later, a new WebSocket is established, the Chat Service subscribes to <code>user_{B_id}</code> on the Pub/Sub, and then pulls all pending messages from the Message Queue and sends them down the WebSocket. User B's client responds with <code>DELIVERED</code> ACKs for each message.
+</div>
+<div class="example">
+<strong>Example 3 — Network flap (User B briefly disconnects mid-delivery):</strong><br>
+User A sends a photo. The Chat Service publishes to <code>user_{B_id}</code>, but User B's WebSocket drops 50ms before delivery. The message remains in the Pub/Sub topic because no subscriber ACKed it. When User B reconnects within seconds, the Chat Service re-subscribes to <code>user_{B_id}</code> and the unacknowledged message is re-delivered automatically by the Pub/Sub system. If the reconnection takes longer than the Pub/Sub retention window (e.g., 7 days), the message is still safe in the Message DB and gets delivered via the offline queue pull on reconnection.
+</div>
+
+<h3>Flow 1 — Component Deep Dive</h3>
+<div class="card">
+<h4>WebSocket Connection (Client ↔ Chat Service)</h4>
+<ul>
+  <li><strong>Protocol:</strong> WebSocket (WSS — TLS-encrypted) over TCP.</li>
+  <li><strong>Why WebSocket:</strong> Real-time bidirectional messaging requires persistent connections. HTTP polling would add latency and waste bandwidth. Server-Sent Events (SSE) is unidirectional and wouldn't support sending messages from the client efficiently.</li>
+  <li><strong>Connection establishment:</strong> Client opens a WSS connection to the Load Balancer → routed to a Chat Service instance. The server stores the mapping <code>(user_id → server_instance_id, ws_connection_id)</code> in the Session Store.</li>
+  <li><strong>Heartbeat:</strong> Ping/pong frames every 30 seconds to detect dead connections. If 3 consecutive pongs are missed, the connection is closed and Session Store is updated.</li>
+  <li><strong>Why TCP (not UDP):</strong> Message delivery requires reliability and ordering guarantees that TCP provides. Unlike voice/video where occasional packet loss is acceptable, text messages must arrive intact and in order.</li>
+</ul>
+<h4>Load Balancer</h4>
+<ul>
+  <li><strong>Protocol:</strong> Layer 4 (TCP) load balancing for WebSocket connections; Layer 7 (HTTP) for REST APIs.</li>
+  <li><strong>Strategy:</strong> Least-connections for WebSocket traffic to distribute long-lived connections evenly.</li>
+  <li><strong>Sticky sessions:</strong> Not needed because the Session Store decouples user identity from specific server instances.</li>
+</ul>
+<h4>Chat Service</h4>
+<ul>
+  <li><strong>Responsibility:</strong> Manages WebSocket connections, processes incoming messages, publishes to Pub/Sub, handles acknowledgments.</li>
+  <li><strong>Protocols &amp; APIs:</strong>
+    <ul>
+      <li><strong>WebSocket frames</strong> — real-time send/receive of messages, receipts, typing indicators.</li>
+      <li><strong>HTTP POST <code>/api/messages/send</code></strong> — Fallback REST endpoint if WebSocket is temporarily down.
+        <br>Input: <code>{ sender_id, conversation_id, recipient_id, encrypted_payload, message_type, client_message_id }</code>
+        <br>Output: <code>{ message_id, timestamp, status: "SENT" }</code></li>
+      <li><strong>HTTP GET <code>/api/messages/sync?since={timestamp}</code></strong> — Pull pending messages on reconnection.
+        <br>Input: query param <code>since</code> (last synced timestamp), header <code>Authorization: Bearer {token}</code>
+        <br>Output: <code>{ messages: [...], next_cursor }</code></li>
+    </ul>
+  </li>
+  <li><strong>Idempotency:</strong> Uses <code>client_message_id</code> (UUID generated by sender's device) to deduplicate.</li>
+</ul>
+<h4>Pub/Sub System</h4>
+<ul>
+  <li><strong>Topic model:</strong> Each user has a dedicated topic <code>user_{user_id}</code>. When a Chat Service instance handles User B's WebSocket, it subscribes to <code>user_{B_id}</code>.</li>
+  <li><strong>Why Pub/Sub:</strong> Decouples sender's server from receiver's server. No need for an extra "connection registry" lookup + direct RPC.</li>
+  <li><strong>Delivery guarantee:</strong> At-least-once delivery with client-side deduplication via <code>message_id</code>.</li>
+  <li><strong>Unsubscribed topics:</strong> If no Chat Service is subscribed to a user's topic (user offline), messages are retained or drained to the Message Queue.</li>
+</ul>
+<h4>Message Queue (Offline Delivery)</h4>
+<ul>
+  <li><strong>Purpose:</strong> Stores messages for users who are offline beyond the Pub/Sub retention window.</li>
+  <li><strong>How messages are enqueued:</strong> A drain consumer on the Pub/Sub detects undeliverable messages and moves them to the per-user offline queue.</li>
+  <li><strong>How messages are dequeued:</strong> When a user reconnects, the Chat Service pulls all pending messages from the user's offline queue and delivers them via WebSocket. Messages are removed only after client ACK.</li>
+  <li><strong>Why not just use Pub/Sub for offline:</strong> Pub/Sub topics have limited retention and are not optimized for long-term storage. A dedicated message queue provides durable storage with configurable retention (e.g., 30 days).</li>
+  <li><strong>Ordering:</strong> FIFO, ordered by <code>timestamp</code> within each user's queue.</li>
+</ul>
+<h4>Message DB (NoSQL)</h4>
+<ul>
+  <li><strong>Purpose:</strong> Persists messages until confirmed delivered. Acts as the source of truth for message state and enables retry/recovery.</li>
+  <li><strong>Type:</strong> NoSQL (wide-column) — optimized for high write throughput and partitioned by conversation.</li>
+</ul>
+<h4>Session Store (In-Memory Cache)</h4>
+<ul>
+  <li><strong>Purpose:</strong> Maps <code>user_id → (server_instance_id, connection_id, last_active_timestamp)</code>.</li>
+  <li><strong>Type:</strong> In-memory key-value cache with TTL-based expiration (entry expires 90s after last heartbeat).</li>
+</ul>
+<h4>Push Notification Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> HTTP POST to APNs (Apple) and FCM (Google) endpoints.</li>
+  <li><strong>Trigger:</strong> When a message cannot be delivered in real-time (user offline).</li>
+  <li><strong>Payload:</strong> Contains only metadata (sender name, "New message") — never the message content (E2EE).</li>
+</ul>
+</div>
+
+<!-- =========== FLOW 2: GROUP MESSAGING =========== -->
+<h2>4. Flow 2 — Group Chat Messaging</h2>
+<div class="diagram">
+<svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" font-size="13">
+  <rect x="10" y="220" width="110" height="50" rx="10" fill="#25d366" stroke="#128c7e" stroke-width="2"/>
+  <text x="65" y="250" text-anchor="middle" fill="#000" font-weight="bold">User A (Sender)</text>
+  <polygon points="175,225 210,210 245,225 245,265 210,280 175,265" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/>
+  <text x="210" y="250" text-anchor="middle" fill="#000" font-weight="bold" font-size="11">LB</text>
+  <rect x="290" y="210" width="130" height="60" rx="8" fill="#1e2028" stroke="#25d366" stroke-width="2"/>
+  <text x="355" y="235" text-anchor="middle" fill="#25d366" font-weight="bold">Chat Service</text>
+  <text x="355" y="253" text-anchor="middle" fill="#8b8fa3" font-size="10">(Sender WS)</text>
+  <rect x="290" y="80" width="130" height="50" rx="8" fill="#1e2028" stroke="#38bdf8" stroke-width="2"/>
+  <text x="355" y="102" text-anchor="middle" fill="#38bdf8" font-weight="bold">Group Service</text>
+  <text x="355" y="118" text-anchor="middle" fill="#8b8fa3" font-size="10">(Membership)</text>
+  <ellipse cx="175" cy="105" rx="55" ry="20" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <rect x="120" y="85" width="110" height="22" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <text x="175" y="113" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="10">Group DB</text>
+  <rect x="500" y="150" width="160" height="180" rx="10" fill="#2a1832" stroke="#c084fc" stroke-width="2"/>
+  <text x="580" y="178" text-anchor="middle" fill="#c084fc" font-weight="bold">Pub/Sub Fan-Out</text>
+  <text x="580" y="240" text-anchor="middle" fill="#8b8fa3" font-size="10">topic: user_{B_id}</text>
+  <text x="580" y="260" text-anchor="middle" fill="#8b8fa3" font-size="10">topic: user_{C_id}</text>
+  <text x="580" y="280" text-anchor="middle" fill="#8b8fa3" font-size="10">topic: user_{D_id}</text>
+  <text x="580" y="300" text-anchor="middle" fill="#8b8fa3" font-size="10">topic: user_{...}</text>
+  <line x1="510" y1="195" x2="650" y2="195" stroke="#c084fc" stroke-width="1" opacity="0.3"/>
+  <rect x="730" y="120" width="120" height="45" rx="8" fill="#1e2028" stroke="#25d366" stroke-width="2"/>
+  <text x="790" y="140" text-anchor="middle" fill="#25d366" font-weight="bold" font-size="11">Chat Svc (B)</text>
+  <rect x="730" y="220" width="120" height="45" rx="8" fill="#1e2028" stroke="#25d366" stroke-width="2"/>
+  <text x="790" y="240" text-anchor="middle" fill="#25d366" font-weight="bold" font-size="11">Chat Svc (C)</text>
+  <rect x="730" y="320" width="120" height="45" rx="8" fill="#1e2028" stroke="#25d366" stroke-width="2"/>
+  <text x="790" y="340" text-anchor="middle" fill="#25d366" font-weight="bold" font-size="11">Chat Svc (D)</text>
+  <rect x="920" y="120" width="90" height="40" rx="8" fill="#25d366" stroke="#128c7e" stroke-width="2"/>
+  <text x="965" y="145" text-anchor="middle" fill="#000" font-weight="bold" font-size="11">User B</text>
+  <rect x="920" y="220" width="90" height="40" rx="8" fill="#25d366" stroke="#128c7e" stroke-width="2"/>
+  <text x="965" y="245" text-anchor="middle" fill="#000" font-weight="bold" font-size="11">User C</text>
+  <rect x="920" y="320" width="90" height="40" rx="8" fill="#128c7e" stroke="#0d6e5e" stroke-width="2"/>
+  <text x="965" y="338" text-anchor="middle" fill="#fff" font-weight="bold" font-size="11">User D</text>
+  <text x="965" y="353" text-anchor="middle" fill="#ccc" font-size="9">(offline)</text>
+  <ellipse cx="355" cy="420" rx="60" ry="22" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <rect x="295" y="398" width="120" height="24" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <text x="355" y="428" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="11">Message DB</text>
+  <!-- Arrows -->
+  <line x1="120" y1="245" x2="173" y2="245" stroke="#25d366" stroke-width="2" marker-end="url(#ag)"/>
+  <line x1="245" y1="245" x2="288" y2="245" stroke="#38bdf8" stroke-width="2" marker-end="url(#ab)"/>
+  <line x1="355" y1="210" x2="355" y2="132" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ab)"/>
+  <text x="362" y="175" text-anchor="start" fill="#8b8fa3" font-size="9">get members</text>
+  <line x1="290" y1="100" x2="232" y2="100" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ay)"/>
+  <line x1="420" y1="240" x2="498" y2="240" stroke="#c084fc" stroke-width="2" marker-end="url(#ap)"/>
+  <text x="459" y="232" text-anchor="middle" fill="#8b8fa3" font-size="9">publish each</text>
+  <line x1="660" y1="220" x2="728" y2="143" stroke="#c084fc" stroke-width="1.5" marker-end="url(#ap)"/>
+  <line x1="660" y1="250" x2="728" y2="243" stroke="#c084fc" stroke-width="1.5" marker-end="url(#ap)"/>
+  <line x1="660" y1="290" x2="728" y2="343" stroke="#c084fc" stroke-width="1.5" marker-end="url(#ap)"/>
+  <line x1="850" y1="143" x2="918" y2="140" stroke="#25d366" stroke-width="1.5" marker-end="url(#ag)"/>
+  <line x1="850" y1="243" x2="918" y2="240" stroke="#25d366" stroke-width="1.5" marker-end="url(#ag)"/>
+  <line x1="850" y1="343" x2="918" y2="340" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="890" y="335" text-anchor="middle" fill="#f87171" font-size="9">offline!</text>
+  <line x1="355" y1="270" x2="355" y2="396" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ay)"/>
+</svg>
+</div>
+
+<h3>Flow 2 Examples</h3>
+<div class="example">
+<strong>Example 1 — All group members online:</strong><br>
+User A sends "Meeting at 3pm" to the group "Project Team" (members: A, B, C, D). The message travels over WebSocket to the Chat Service, which calls the Group Service via internal gRPC: <code>GetGroupMembers(group_id)</code>. The Group Service queries the Group DB and returns <code>[B_id, C_id, D_id]</code> (excluding the sender). The Chat Service persists the group message to the Message DB, then publishes the encrypted message to three Pub/Sub topics: <code>user_{B_id}</code>, <code>user_{C_id}</code>, <code>user_{D_id}</code>. Each recipient's Chat Service instance picks up the message from the respective topic and delivers it via WebSocket.
+</div>
+<div class="example">
+<strong>Example 2 — Some members offline:</strong><br>
+User A sends "Don't forget the slides" to "Project Team". The Chat Service fans out to <code>user_{B_id}</code>, <code>user_{C_id}</code>, <code>user_{D_id}</code>. Users B and C are online and receive the message instantly. User D is offline — the message on <code>user_{D_id}</code> has no active subscriber, so it is routed to the offline Message Queue and a push notification is sent. When User D opens the app 2 hours later, the Chat Service pulls the pending message from the queue and delivers it.
+</div>
+<div class="example">
+<strong>Example 3 — Large group (500 members):</strong><br>
+User A sends a message to a 500-member group. The Chat Service retrieves the member list from the Group Service (which uses a cached result from the in-memory cache since group membership doesn't change often). The Chat Service then publishes to 499 individual Pub/Sub user topics. The Pub/Sub system handles the fan-out efficiently. For the ~80 members who are offline, the messages are queued and push notifications are batched. This approach avoids the "thundering herd" problem that a single group topic would cause.
+</div>
+
+<h3>Flow 2 — Component Deep Dive (Additional)</h3>
+<div class="card">
+<h4>Group Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> Internal gRPC (Chat Service → Group Service); HTTP REST for client-facing group management.</li>
+  <li><strong>APIs:</strong>
+    <ul>
+      <li><strong>gRPC <code>GetGroupMembers(group_id)</code></strong> — Internal.
+        <br>Input: <code>group_id</code>
+        <br>Output: <code>{ member_ids: [user_id, ...], group_metadata }</code></li>
+      <li><strong>HTTP POST <code>/api/groups</code></strong> — Create a new group.
+        <br>Input: <code>{ name, creator_id, member_ids[], avatar_url? }</code>
+        <br>Output: <code>{ group_id, created_at }</code></li>
+      <li><strong>HTTP PATCH <code>/api/groups/{group_id}/members</code></strong> — Add or remove members.
+        <br>Input: <code>{ add: [user_id, ...], remove: [user_id, ...] }</code>
+        <br>Output: <code>{ updated_member_count }</code></li>
+      <li><strong>HTTP GET <code>/api/groups/{group_id}</code></strong> — Retrieve group info.
+        <br>Output: <code>{ group_id, name, members: [...], avatar_url, created_at }</code></li>
+    </ul>
+  </li>
+</ul>
+<h4>Why Per-User Topics (Not Per-Group Topics)</h4>
+<ul>
+  <li><strong>Alternative considered:</strong> A single Pub/Sub topic per group where all members subscribe. This is simpler but: each user in hundreds of groups means hundreds of subscriptions per Chat Service; reconnects require rebuilding all subscriptions; offline handling is harder.</li>
+  <li><strong>Chosen approach:</strong> Per-user topics with sender-side fan-out. Each user only has one subscription (their own topic) regardless of how many groups they're in. Offline handling is trivially handled per-user.</li>
+  <li><strong>Trade-off:</strong> More publish operations (N-1 per group message) but simpler subscription management and offline handling.</li>
+</ul>
+</div>
+
+<!-- =========== FLOW 3: RECEIPTS =========== -->
+<h2>5. Flow 3 — Delivery &amp; Read Receipts</h2>
+<div class="diagram">
+<svg viewBox="0 0 960 300" xmlns="http://www.w3.org/2000/svg" font-size="13">
+  <rect x="10" y="120" width="120" height="50" rx="10" fill="#25d366" stroke="#128c7e" stroke-width="2"/>
+  <text x="70" y="145" text-anchor="middle" fill="#000" font-weight="bold" font-size="11">User B</text>
+  <text x="70" y="160" text-anchor="middle" fill="#000" font-size="9">(Recipient)</text>
+  <rect x="200" y="110" width="130" height="60" rx="8" fill="#1e2028" stroke="#25d366" stroke-width="2"/>
+  <text x="265" y="135" text-anchor="middle" fill="#25d366" font-weight="bold" font-size="11">Chat Service</text>
+  <text x="265" y="153" text-anchor="middle" fill="#8b8fa3" font-size="10">(User B's WS)</text>
+  <ellipse cx="265" cy="260" rx="55" ry="20" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <rect x="210" y="240" width="110" height="22" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <text x="265" y="268" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="10">Message DB</text>
+  <rect x="410" y="110" width="130" height="60" rx="8" fill="#2a1832" stroke="#c084fc" stroke-width="2"/>
+  <text x="475" y="135" text-anchor="middle" fill="#c084fc" font-weight="bold">Pub/Sub</text>
+  <text x="475" y="153" text-anchor="middle" fill="#8b8fa3" font-size="10">topic: user_{A_id}</text>
+  <rect x="620" y="110" width="130" height="60" rx="8" fill="#1e2028" stroke="#25d366" stroke-width="2"/>
+  <text x="685" y="135" text-anchor="middle" fill="#25d366" font-weight="bold" font-size="11">Chat Service</text>
+  <text x="685" y="153" text-anchor="middle" fill="#8b8fa3" font-size="10">(User A's WS)</text>
+  <rect x="820" y="120" width="120" height="50" rx="10" fill="#25d366" stroke="#128c7e" stroke-width="2"/>
+  <text x="880" y="145" text-anchor="middle" fill="#000" font-weight="bold" font-size="11">User A</text>
+  <text x="880" y="160" text-anchor="middle" fill="#000" font-size="9">(Original Sender)</text>
+  <line x1="130" y1="140" x2="198" y2="140" stroke="#25d366" stroke-width="2" marker-end="url(#ag)"/>
+  <text x="164" y="132" text-anchor="middle" fill="#8b8fa3" font-size="9">ACK</text>
+  <line x1="265" y1="170" x2="265" y2="238" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ay)"/>
+  <text x="275" y="208" text-anchor="start" fill="#8b8fa3" font-size="9">update status</text>
+  <line x1="330" y1="140" x2="408" y2="140" stroke="#c084fc" stroke-width="2" marker-end="url(#ap)"/>
+  <text x="369" y="132" text-anchor="middle" fill="#8b8fa3" font-size="9">publish receipt</text>
+  <line x1="540" y1="140" x2="618" y2="140" stroke="#c084fc" stroke-width="2" marker-end="url(#ap)"/>
+  <line x1="750" y1="140" x2="818" y2="140" stroke="#25d366" stroke-width="2" marker-end="url(#ag)"/>
+  <text x="784" y="132" text-anchor="middle" fill="#8b8fa3" font-size="9">✓✓ blue</text>
+  <text x="480" y="40" text-anchor="middle" fill="#38bdf8" font-weight="bold" font-size="14">← Receipt flows from Recipient to Sender →</text>
+</svg>
+</div>
+
+<h3>Flow 3 Examples</h3>
+<div class="example">
+<strong>Example 1 — Delivered receipt (double gray tick ✓✓):</strong><br>
+User B's client receives a message via WebSocket. The client immediately sends a <code>DELIVERED</code> ACK frame: <code>{ type: "receipt", message_id: "msg_123", status: "DELIVERED" }</code>. The Chat Service handling User B updates the message status in the Message DB to <code>DELIVERED</code>, then publishes a receipt event to <code>user_{A_id}</code> on the Pub/Sub. User A's Chat Service delivers it via WebSocket. User A's client changes the single gray tick (✓ Sent) to double gray ticks (✓✓ Delivered).
+</div>
+<div class="example">
+<strong>Example 2 — Read receipt (double blue tick ✓✓):</strong><br>
+User B opens the chat and scrolls past the message. The client detects that <code>msg_123</code> is visible in the viewport and sends a <code>READ</code> ACK: <code>{ type: "receipt", message_id: "msg_123", status: "READ" }</code>. The flow is identical — Chat Service updates DB, publishes to <code>user_{A_id}</code>, User A's client changes ticks from gray ✓✓ to blue ✓✓.
+</div>
+<div class="example">
+<strong>Example 3 — Group receipt aggregation:</strong><br>
+User A sends a message to a 5-person group. As each member receives the message, individual <code>DELIVERED</code> receipts flow back. User A's client shows single tick until first delivery, then double gray ticks. Blue ticks appear only when <em>all</em> members have read it. The client aggregates receipt state locally — the server just relays individual receipts.
+</div>
+
+<h3>Flow 3 — Component Deep Dive</h3>
+<div class="card">
+<h4>Receipt Processing</h4>
+<ul>
+  <li><strong>Lightweight messages:</strong> Receipts are small (just message_id + status) sent on the same WebSocket — no separate channel needed.</li>
+  <li><strong>Batching:</strong> When a user opens a conversation with 50 unread messages, the client batches READ receipts into a single frame: <code>{ type: "receipt_batch", message_ids: [...], status: "READ" }</code>.</li>
+  <li><strong>DB update:</strong> The Chat Service updates the message status. For group messages, per-recipient status is stored in the <code>message_receipts</code> table.</li>
+  <li><strong>Privacy:</strong> Users can disable read receipts in settings. When disabled, <code>READ</code> ACKs are not sent (but <code>DELIVERED</code> ACKs are still sent for delivery confirmation).</li>
+</ul>
+</div>
+
+<!-- =========== FLOW 4: PRESENCE =========== -->
+<h2>6. Flow 4 — Online / Last-Seen Presence</h2>
+<div class="diagram">
+<svg viewBox="0 0 820 330" xmlns="http://www.w3.org/2000/svg" font-size="13">
+  <rect x="10" y="120" width="100" height="50" rx="10" fill="#25d366" stroke="#128c7e" stroke-width="2"/>
+  <text x="60" y="150" text-anchor="middle" fill="#000" font-weight="bold" font-size="11">User A</text>
+  <rect x="170" y="110" width="130" height="60" rx="8" fill="#1e2028" stroke="#25d366" stroke-width="2"/>
+  <text x="235" y="135" text-anchor="middle" fill="#25d366" font-weight="bold" font-size="11">Chat Service</text>
+  <text x="235" y="153" text-anchor="middle" fill="#8b8fa3" font-size="10">(Heartbeat)</text>
+  <rect x="370" y="110" width="130" height="60" rx="8" fill="#1e2028" stroke="#38bdf8" stroke-width="2"/>
+  <text x="435" y="135" text-anchor="middle" fill="#38bdf8" font-weight="bold" font-size="11">Presence Service</text>
+  <rect x="370" y="250" width="130" height="50" rx="8" fill="#1e2028" stroke="#f87171" stroke-width="2"/>
+  <text x="435" y="272" text-anchor="middle" fill="#f87171" font-weight="bold" font-size="11">Presence Cache</text>
+  <text x="435" y="290" text-anchor="middle" fill="#8b8fa3" font-size="10">(In-Memory KV)</text>
+  <rect x="600" y="120" width="100" height="50" rx="10" fill="#25d366" stroke="#128c7e" stroke-width="2"/>
+  <text x="650" y="150" text-anchor="middle" fill="#000" font-weight="bold" font-size="11">User B</text>
+  <rect x="590" y="220" width="120" height="50" rx="8" fill="#1e2028" stroke="#25d366" stroke-width="2"/>
+  <text x="650" y="242" text-anchor="middle" fill="#25d366" font-weight="bold" font-size="11">Chat Service</text>
+  <text x="650" y="258" text-anchor="middle" fill="#8b8fa3" font-size="10">(User B's WS)</text>
+  <line x1="110" y1="145" x2="168" y2="145" stroke="#25d366" stroke-width="2" marker-end="url(#ag)"/>
+  <text x="139" y="137" text-anchor="middle" fill="#8b8fa3" font-size="9">heartbeat</text>
+  <line x1="300" y1="140" x2="368" y2="140" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#ab)"/>
+  <text x="334" y="132" text-anchor="middle" fill="#8b8fa3" font-size="9">update</text>
+  <line x1="435" y1="170" x2="435" y2="248" stroke="#f87171" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ar)"/>
+  <text x="445" y="212" text-anchor="start" fill="#8b8fa3" font-size="9">write/read</text>
+  <line x1="650" y1="170" x2="650" y2="218" stroke="#25d366" stroke-width="1.5" marker-end="url(#ag)"/>
+  <text x="660" y="196" text-anchor="start" fill="#8b8fa3" font-size="9">opens chat</text>
+  <line x1="590" y1="250" x2="502" y2="155" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ab)"/>
+  <text x="540" y="195" text-anchor="middle" fill="#8b8fa3" font-size="9">query</text>
+  <text x="410" y="30" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="11">Presence is eventually consistent — optimized for availability</text>
+</svg>
+</div>
+
+<h3>Flow 4 Examples</h3>
+<div class="example">
+<strong>Example 1 — User opens chat and sees "Online":</strong><br>
+User B opens the conversation with User A. The client sends a presence query to the Chat Service, which calls the Presence Service: <code>GetPresence(user_id: A_id)</code>. The Presence Cache returns <code>{ status: "ONLINE", last_heartbeat: 5s ago }</code>. Since the heartbeat is fresh (&lt;60s), the service returns "Online." User B's client displays "Online" under User A's name.
+</div>
+<div class="example">
+<strong>Example 2 — User sees "Last seen today at 2:15 PM":</strong><br>
+The Presence Cache shows <code>{ status: "OFFLINE", last_seen: today 2:15 PM }</code>. The heartbeat has expired. The Presence Service returns the last_seen timestamp. The client formats it as "Last seen today at 2:15 PM."
+</div>
+<div class="example">
+<strong>Example 3 — User A goes offline (natural disconnect):</strong><br>
+User A locks their phone. WebSocket heartbeat stops. After 60 seconds without a ping, the Chat Service detects the dead connection, closes it, and notifies the Presence Service: <code>UserDisconnected(A_id, last_active: now())</code>. The Presence Cache is updated to <code>{ status: "OFFLINE", last_seen: current_timestamp }</code>. Subsequent queries show "Last seen..." instead of "Online."
+</div>
+
+<h3>Flow 4 — Component Deep Dive</h3>
+<div class="card">
+<h4>Presence Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> Internal gRPC.</li>
+  <li><strong>APIs:</strong>
+    <ul>
+      <li><code>UpdatePresence(user_id, status, timestamp)</code> — Called on connect, disconnect, and via heartbeat.</li>
+      <li><code>GetPresence(user_id)</code> → <code>{ status, last_seen? }</code></li>
+      <li><code>GetBulkPresence(user_ids[])</code> → <code>{ presences: [{user_id, status, last_seen?}, ...] }</code> — For contact list loading.</li>
+    </ul>
+  </li>
+  <li><strong>Consistency model:</strong> Eventually consistent (AP from CAP). A user might appear "Online" for up to 60s after disconnecting — acceptable for presence.</li>
+  <li><strong>Why not push presence via Pub/Sub:</strong> With 2B users, broadcasting presence changes to all contacts would create massive fan-out. Instead, presence is <em>pulled</em> on-demand when a user opens a chat.</li>
+</ul>
+</div>
+
+<!-- =========== FLOW 5: MEDIA =========== -->
+<h2>7. Flow 5 — Media Sharing</h2>
+<div class="diagram">
+<svg viewBox="0 0 1050 420" xmlns="http://www.w3.org/2000/svg" font-size="13">
+  <rect x="10" y="170" width="100" height="50" rx="10" fill="#25d366" stroke="#128c7e" stroke-width="2"/>
+  <text x="60" y="200" text-anchor="middle" fill="#000" font-weight="bold" font-size="11">User A</text>
+  <polygon points="160,175 190,162 220,175 220,210 190,223 160,210" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/>
+  <text x="190" y="197" text-anchor="middle" fill="#000" font-weight="bold" font-size="10">LB</text>
+  <rect x="270" y="160" width="130" height="60" rx="8" fill="#1e2028" stroke="#38bdf8" stroke-width="2"/>
+  <text x="335" y="185" text-anchor="middle" fill="#38bdf8" font-weight="bold">Media Service</text>
+  <text x="335" y="203" text-anchor="middle" fill="#8b8fa3" font-size="10">(Upload/Download)</text>
+  <rect x="270" y="310" width="130" height="50" rx="8" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <text x="335" y="333" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="11">Object Storage</text>
+  <text x="335" y="350" text-anchor="middle" fill="#8b8fa3" font-size="10">(Encrypted Blobs)</text>
+  <rect x="480" y="60" width="110" height="45" rx="22" fill="#1e2028" stroke="#25d366" stroke-width="2"/>
+  <text x="535" y="87" text-anchor="middle" fill="#25d366" font-weight="bold">CDN</text>
+  <rect x="480" y="165" width="130" height="50" rx="8" fill="#1e2028" stroke="#25d366" stroke-width="2"/>
+  <text x="545" y="188" text-anchor="middle" fill="#25d366" font-weight="bold">Chat Service</text>
+  <rect x="680" y="165" width="120" height="50" rx="8" fill="#2a1832" stroke="#c084fc" stroke-width="2"/>
+  <text x="740" y="188" text-anchor="middle" fill="#c084fc" font-weight="bold">Pub/Sub</text>
+  <text x="740" y="203" text-anchor="middle" fill="#8b8fa3" font-size="10">user_{B_id}</text>
+  <rect x="880" y="170" width="100" height="50" rx="10" fill="#25d366" stroke="#128c7e" stroke-width="2"/>
+  <text x="930" y="200" text-anchor="middle" fill="#000" font-weight="bold" font-size="11">User B</text>
+  <rect x="480" y="310" width="130" height="50" rx="8" fill="#1e2028" stroke="#c084fc" stroke-width="2"/>
+  <text x="545" y="333" text-anchor="middle" fill="#c084fc" font-weight="bold" font-size="11">Thumbnail Svc</text>
+  <!-- Arrows -->
+  <line x1="110" y1="190" x2="158" y2="190" stroke="#25d366" stroke-width="2" marker-end="url(#ag)"/>
+  <text x="134" y="182" text-anchor="middle" fill="#8b8fa3" font-size="9">upload</text>
+  <line x1="220" y1="190" x2="268" y2="190" stroke="#38bdf8" stroke-width="2" marker-end="url(#ab)"/>
+  <line x1="335" y1="220" x2="335" y2="308" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ay)"/>
+  <text x="345" y="265" text-anchor="start" fill="#8b8fa3" font-size="9">store blob</text>
+  <line x1="400" y1="214" x2="480" y2="318" stroke="#c084fc" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ap)"/>
+  <text x="430" y="275" text-anchor="start" fill="#8b8fa3" font-size="9">generate</text>
+  <line x1="480" y1="335" x2="402" y2="335" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ay)"/>
+  <line x1="400" y1="186" x2="478" y2="186" stroke="#25d366" stroke-width="1.5" marker-end="url(#ag)"/>
+  <text x="439" y="178" text-anchor="middle" fill="#8b8fa3" font-size="9">media_url</text>
+  <line x1="610" y1="190" x2="678" y2="190" stroke="#c084fc" stroke-width="2" marker-end="url(#ap)"/>
+  <line x1="800" y1="190" x2="878" y2="190" stroke="#25d366" stroke-width="2" marker-end="url(#ag)"/>
+  <line x1="910" y1="170" x2="590" y2="100" stroke="#25d366" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ag)"/>
+  <text x="750" y="125" text-anchor="middle" fill="#8b8fa3" font-size="9">download media</text>
+  <line x1="500" y1="105" x2="380" y2="308" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ay)"/>
+  <text x="420" y="210" text-anchor="start" fill="#8b8fa3" font-size="8">cache miss</text>
+</svg>
+</div>
+
+<h3>Flow 5 Examples</h3>
+<div class="example">
+<strong>Example 1 — Sending a photo:</strong><br>
+User A takes a photo and taps Send. The client encrypts the image with a one-time symmetric key, then uploads the encrypted blob via HTTP POST to the Media Service through the LB. The Media Service stores the blob in Object Storage and triggers the Thumbnail Service to generate a low-res preview. The Media Service returns <code>media_url</code> and <code>thumbnail_url</code>. User A's client sends a message via WebSocket containing the media_url, thumbnail_url, and the encryption key (encrypted for the recipient). This message is published to <code>user_{B_id}</code> via Pub/Sub. User B receives the message, sees the thumbnail immediately, and downloads the full image from the CDN on tap. The CDN serves the encrypted blob; User B's client decrypts it.
+</div>
+<div class="example">
+<strong>Example 2 — CDN cache hit for group media:</strong><br>
+User A shares a video in a 200-person group. The first few members who download the video cause it to be cached at the CDN edge. Subsequent members download from the CDN without hitting Object Storage, significantly reducing latency and backend load.
+</div>
+
+<h3>Flow 5 — Component Deep Dive</h3>
+<div class="card">
+<h4>Media Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> HTTP REST.</li>
+  <li><strong>APIs:</strong>
+    <ul>
+      <li><strong>HTTP POST <code>/api/media/upload</code></strong> — Upload encrypted media.
+        <br>Input: Multipart form data with <code>encrypted_blob</code>, <code>content_type</code>, <code>sender_id</code>
+        <br>Output: <code>{ media_id, media_url, thumbnail_url, size_bytes }</code></li>
+      <li><strong>HTTP GET <code>/api/media/{media_id}</code></strong> — Download (redirects to CDN URL with signed token).</li>
+    </ul>
+  </li>
+  <li><strong>Upload limits:</strong> 16MB images, 64MB videos, 100MB documents.</li>
+  <li><strong>Encryption:</strong> Client encrypts before uploading. Server never has the decryption key.</li>
+</ul>
+<h4>Object Storage</h4>
+<ul>
+  <li><strong>Purpose:</strong> Durable blob storage for encrypted media files.</li>
+  <li><strong>Retention:</strong> Media persists for 30 days after last access, then purged.</li>
+</ul>
+<h4>CDN (Content Delivery Network)</h4>
+<ul>
+  <li><strong>Why appropriate:</strong> Media files are large (KB to MB), immutable, and requested by multiple group recipients from different geo-locations. CDN caches encrypted blobs at edge nodes close to users.</li>
+  <li><strong>Why NOT used for text messages:</strong> Text is tiny, real-time (WebSocket), unique per recipient (no cache reuse).</li>
+  <li><strong>Cache strategy:</strong> Pull-based (lazy). First request → CDN fetches from Object Storage → caches → serves. Subsequent requests hit edge cache.</li>
+  <li><strong>Eviction:</strong> LRU at each edge node.</li>
+  <li><strong>Expiration:</strong> TTL of 24 hours. Media is typically downloaded shortly after sending.</li>
+  <li><strong>Security:</strong> URLs are signed with time-limited tokens. Blob is encrypted regardless.</li>
+</ul>
+<h4>Thumbnail Service</h4>
+<ul>
+  <li><strong>Purpose:</strong> Generates low-res preview thumbnails (~5-10KB) so recipients see a blurry preview instantly before downloading full media.</li>
+  <li><strong>E2EE note:</strong> In strict E2EE, the <em>client</em> generates and encrypts thumbnails. The server-side Thumbnail Service handles storage/URL generation, not image processing.</li>
+</ul>
+</div>
+
+<!-- =========== COMBINED DIAGRAM =========== -->
+<h2>8. Combined System Diagram</h2>
+<div class="diagram">
+<svg viewBox="0 0 1150 680" xmlns="http://www.w3.org/2000/svg" font-size="12">
+  <text x="575" y="25" text-anchor="middle" fill="#25d366" font-weight="bold" font-size="17">WhatsApp — Complete System Architecture</text>
+  <!-- Clients -->
+  <rect x="30" y="50" width="90" height="40" rx="10" fill="#25d366" stroke="#128c7e" stroke-width="2"/>
+  <text x="75" y="75" text-anchor="middle" fill="#000" font-weight="bold" font-size="10">iPhone</text>
+  <rect x="140" y="50" width="90" height="40" rx="10" fill="#25d366" stroke="#128c7e" stroke-width="2"/>
+  <text x="185" y="75" text-anchor="middle" fill="#000" font-weight="bold" font-size="10">Android</text>
+  <rect x="250" y="50" width="90" height="40" rx="10" fill="#25d366" stroke="#128c7e" stroke-width="2"/>
+  <text x="295" y="75" text-anchor="middle" fill="#000" font-weight="bold" font-size="10">Web</text>
+  <!-- LBs -->
+  <polygon points="130,130 165,115 200,130 200,160 165,175 130,160" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/>
+  <text x="165" y="150" text-anchor="middle" fill="#000" font-weight="bold" font-size="9">LB (WS)</text>
+  <polygon points="290,130 325,115 360,130 360,160 325,175 290,160" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/>
+  <text x="325" y="150" text-anchor="middle" fill="#000" font-weight="bold" font-size="9">LB (HTTP)</text>
+  <!-- Services -->
+  <rect x="60" y="220" width="120" height="50" rx="8" fill="#1e2028" stroke="#25d366" stroke-width="2"/>
+  <text x="120" y="242" text-anchor="middle" fill="#25d366" font-weight="bold" font-size="10">Chat Service</text>
+  <text x="120" y="258" text-anchor="middle" fill="#8b8fa3" font-size="8">(WebSocket)</text>
+  <rect x="210" y="220" width="110" height="50" rx="8" fill="#1e2028" stroke="#38bdf8" stroke-width="2"/>
+  <text x="265" y="242" text-anchor="middle" fill="#38bdf8" font-weight="bold" font-size="10">Group Service</text>
+  <text x="265" y="258" text-anchor="middle" fill="#8b8fa3" font-size="8">(gRPC)</text>
+  <rect x="350" y="220" width="110" height="50" rx="8" fill="#1e2028" stroke="#38bdf8" stroke-width="2"/>
+  <text x="405" y="242" text-anchor="middle" fill="#38bdf8" font-weight="bold" font-size="10">Media Service</text>
+  <text x="405" y="258" text-anchor="middle" fill="#8b8fa3" font-size="8">(HTTP REST)</text>
+  <rect x="490" y="220" width="120" height="50" rx="8" fill="#1e2028" stroke="#38bdf8" stroke-width="2"/>
+  <text x="550" y="242" text-anchor="middle" fill="#38bdf8" font-weight="bold" font-size="10">Presence Service</text>
+  <text x="550" y="258" text-anchor="middle" fill="#8b8fa3" font-size="8">(gRPC)</text>
+  <rect x="640" y="220" width="110" height="50" rx="8" fill="#1e2028" stroke="#38bdf8" stroke-width="2"/>
+  <text x="695" y="242" text-anchor="middle" fill="#38bdf8" font-weight="bold" font-size="10">User Service</text>
+  <text x="695" y="258" text-anchor="middle" fill="#8b8fa3" font-size="8">(HTTP REST)</text>
+  <rect x="780" y="220" width="120" height="50" rx="8" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <text x="840" y="242" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="10">Push Notif Svc</text>
+  <!-- Pub/Sub -->
+  <rect x="200" y="330" width="260" height="55" rx="10" fill="#2a1832" stroke="#c084fc" stroke-width="2"/>
+  <text x="330" y="352" text-anchor="middle" fill="#c084fc" font-weight="bold" font-size="12">Pub/Sub System</text>
+  <text x="330" y="372" text-anchor="middle" fill="#8b8fa3" font-size="10">Per-user topics: user_{id}</text>
+  <!-- MQ -->
+  <rect x="520" y="335" width="150" height="45" rx="10" fill="#2a2418" stroke="#fbbf24" stroke-width="2"/>
+  <text x="595" y="355" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="10">Message Queue</text>
+  <text x="595" y="370" text-anchor="middle" fill="#8b8fa3" font-size="9">(Offline Delivery)</text>
+  <!-- Databases -->
+  <ellipse cx="100" cy="480" rx="58" ry="20" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <rect x="42" y="460" width="116" height="22" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <text x="100" y="488" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="9">Message DB (NoSQL)</text>
+  <ellipse cx="250" cy="480" rx="55" ry="20" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <rect x="195" y="460" width="110" height="22" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <text x="250" y="488" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="9">Group DB (NoSQL)</text>
+  <ellipse cx="400" cy="480" rx="50" ry="20" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <rect x="350" y="460" width="100" height="22" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <text x="400" y="488" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="9">User DB (SQL)</text>
+  <rect x="500" y="460" width="120" height="45" rx="8" fill="#1e2028" stroke="#fbbf24" stroke-width="2"/>
+  <text x="560" y="480" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="9">Object Storage</text>
+  <text x="560" y="495" text-anchor="middle" fill="#8b8fa3" font-size="8">(Media Blobs)</text>
+  <!-- Caches -->
+  <rect x="730" y="335" width="120" height="35" rx="8" fill="#1e2028" stroke="#f87171" stroke-width="2"/>
+  <text x="790" y="358" text-anchor="middle" fill="#f87171" font-weight="bold" font-size="9">Session Store</text>
+  <rect x="730" y="385" width="120" height="35" rx="8" fill="#1e2028" stroke="#f87171" stroke-width="2"/>
+  <text x="790" y="408" text-anchor="middle" fill="#f87171" font-weight="bold" font-size="9">Presence Cache</text>
+  <rect x="730" y="435" width="120" height="35" rx="8" fill="#1e2028" stroke="#f87171" stroke-width="2"/>
+  <text x="790" y="458" text-anchor="middle" fill="#f87171" font-weight="bold" font-size="9">Group Cache</text>
+  <!-- CDN -->
+  <rect x="950" y="50" width="120" height="45" rx="22" fill="#1e2028" stroke="#25d366" stroke-width="2"/>
+  <text x="1010" y="77" text-anchor="middle" fill="#25d366" font-weight="bold">CDN</text>
+  <!-- Connections -->
+  <line x1="100" y1="90" x2="155" y2="128" stroke="#25d366" stroke-width="1.5" marker-end="url(#ag)"/>
+  <line x1="185" y1="90" x2="170" y2="128" stroke="#25d366" stroke-width="1.5" marker-end="url(#ag)"/>
+  <line x1="295" y1="90" x2="325" y2="128" stroke="#25d366" stroke-width="1.5" marker-end="url(#ag)"/>
+  <line x1="165" y1="175" x2="120" y2="218" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#ab)"/>
+  <line x1="325" y1="175" x2="265" y2="218" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#ab)"/>
+  <line x1="325" y1="175" x2="405" y2="218" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#ab)"/>
+  <line x1="325" y1="175" x2="695" y2="218" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#ab)"/>
+  <line x1="120" y1="270" x2="240" y2="330" stroke="#c084fc" stroke-width="1.5" marker-end="url(#ap)"/>
+  <line x1="460" y1="358" x2="518" y2="358" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#ay)"/>
+  <text x="489" y="350" text-anchor="middle" fill="#8b8fa3" font-size="8">offline</text>
+  <line x1="120" y1="270" x2="100" y2="458" stroke="#fbbf24" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ay)"/>
+  <line x1="265" y1="270" x2="250" y2="458" stroke="#fbbf24" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ay)"/>
+  <line x1="405" y1="270" x2="560" y2="458" stroke="#fbbf24" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ay)"/>
+  <line x1="695" y1="270" x2="400" y2="458" stroke="#fbbf24" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ay)"/>
+  <line x1="550" y1="270" x2="730" y2="400" stroke="#f87171" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ar)"/>
+  <line x1="180" y1="250" x2="730" y2="352" stroke="#f87171" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ar)"/>
+  <line x1="320" y1="255" x2="730" y2="452" stroke="#f87171" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ar)"/>
+  <line x1="340" y1="60" x2="948" y2="68" stroke="#25d366" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ag)"/>
+  <text x="650" y="55" text-anchor="middle" fill="#8b8fa3" font-size="9">media download</text>
+  <line x1="980" y1="95" x2="600" y2="458" stroke="#fbbf24" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ay)"/>
+  <text x="830" y="280" text-anchor="middle" fill="#8b8fa3" font-size="8">cache miss</text>
+  <!-- Legend -->
+  <rect x="20" y="560" width="1080" height="100" rx="8" fill="#1e2028" stroke="#2a2d37" stroke-width="1"/>
+  <text x="40" y="585" fill="#fff" font-weight="bold" font-size="11">Legend:</text>
+  <line x1="40" y1="600" x2="75" y2="600" stroke="#25d366" stroke-width="2"/><text x="85" y="605" fill="#8b8fa3" font-size="9">WebSocket / Client</text>
+  <line x1="40" y1="618" x2="75" y2="618" stroke="#38bdf8" stroke-width="2"/><text x="85" y="623" fill="#8b8fa3" font-size="9">HTTP / gRPC</text>
+  <line x1="40" y1="636" x2="75" y2="636" stroke="#c084fc" stroke-width="2"/><text x="85" y="641" fill="#8b8fa3" font-size="9">Pub/Sub</text>
+  <line x1="260" y1="600" x2="295" y2="600" stroke="#fbbf24" stroke-width="2" stroke-dasharray="6,3"/><text x="305" y="605" fill="#8b8fa3" font-size="9">Database / Storage</text>
+  <line x1="260" y1="618" x2="295" y2="618" stroke="#f87171" stroke-width="2" stroke-dasharray="6,3"/><text x="305" y="623" fill="#8b8fa3" font-size="9">Cache read/write</text>
+  <rect x="500" y="592" width="15" height="15" rx="4" fill="#25d366"/><text x="525" y="604" fill="#8b8fa3" font-size="9">Client</text>
+  <polygon points="600,592 613,587 626,592 626,607 613,612 600,607" fill="#38bdf8"/><text x="636" y="604" fill="#8b8fa3" font-size="9">Load Balancer</text>
+  <rect x="730" y="592" width="15" height="15" rx="4" fill="#1e2028" stroke="#25d366" stroke-width="1.5"/><text x="755" y="604" fill="#8b8fa3" font-size="9">Service</text>
+  <ellipse cx="855" cy="600" rx="14" ry="9" fill="#1e2028" stroke="#fbbf24" stroke-width="1.5"/><text x="879" y="604" fill="#8b8fa3" font-size="9">Database</text>
+  <rect x="945" y="592" width="15" height="15" rx="4" fill="#1e2028" stroke="#f87171" stroke-width="1.5"/><text x="970" y="604" fill="#8b8fa3" font-size="9">Cache</text>
+</svg>
+</div>
+
+<h3>Combined Flow Examples</h3>
+<div class="example">
+<strong>Example — End-to-end 1:1 message with media + receipt + presence:</strong>
+<ol>
+  <li><strong>User A opens chat with User B:</strong> The client queries the Presence Service to check User B's status. The Presence Cache returns <code>ONLINE</code>. The client displays "Online."</li>
+  <li><strong>User A sends a photo with caption "Look at this!":</strong> Client encrypts the photo, uploads via HTTP POST to the Media Service (through HTTP LB). Media Service stores in Object Storage. A media_url is returned.</li>
+  <li><strong>Message sent via WebSocket:</strong> User A's client sends the message (caption + media_url + encryption key) over WebSocket to the Chat Service (through WS LB). Chat Service persists to Message DB and publishes to <code>user_{B_id}</code> on Pub/Sub.</li>
+  <li><strong>User B receives:</strong> User B's Chat Service picks up the message and pushes via WebSocket. User B sees thumbnail instantly and taps to download the full image from the CDN.</li>
+  <li><strong>Delivered receipt:</strong> User B's client sends DELIVERED ACK → Chat Service updates Message DB → publishes receipt to <code>user_{A_id}</code> → User A sees ✓✓ gray.</li>
+  <li><strong>Read receipt:</strong> Chat is open, so READ ACK is sent → same flow → User A sees ✓✓ blue.</li>
+</ol>
+</div>
+<div class="example">
+<strong>Example — Group message with mixed online/offline members:</strong>
+<ol>
+  <li><strong>User A sends "Sprint review at 4pm" to "Dev Team" (A, B, C, D, E):</strong> Chat Service calls Group Service (gRPC) which checks Group Cache. Cache hit returns <code>[B, C, D, E]</code>.</li>
+  <li><strong>Fan-out:</strong> Chat Service publishes to <code>user_{B_id}</code>, <code>user_{C_id}</code>, <code>user_{D_id}</code>, <code>user_{E_id}</code>.</li>
+  <li><strong>B and C online:</strong> Delivered via WebSocket immediately. Both send DELIVERED ACKs.</li>
+  <li><strong>D and E offline:</strong> No subscribers. Messages drain to Message Queue. Push notifications sent.</li>
+  <li><strong>D opens app 30 min later:</strong> WebSocket established, subscribes to <code>user_{D_id}</code>, pulls pending from offline queue. DELIVERED ACK sent.</li>
+  <li><strong>Receipt aggregation:</strong> Individual receipts flow back to User A via <code>user_{A_id}</code>. Client shows gray ✓✓ on first delivery, blue ✓✓ only when ALL members have read.</li>
+</ol>
+</div>
+
+<!-- =========== SCHEMA =========== -->
+<h2>9. Database Schema</h2>
+
+<h3>SQL Tables</h3>
+<div class="card">
+<h4>users</h4>
+<p><strong>Why SQL:</strong> User data is highly relational (referenced by messages, groups, contacts), requires strong consistency (ACID for phone number uniqueness), and reads are mostly by primary key.</p>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+  <tr><td>user_id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td><td>Globally unique identifier</td></tr>
+  <tr><td>phone_number</td><td>VARCHAR(20)</td><td>UNIQUE, NOT NULL <span class="tag tag-idx">INDEX</span></td><td>E.164 format</td></tr>
+  <tr><td>display_name</td><td>VARCHAR(100)</td><td></td><td></td></tr>
+  <tr><td>avatar_url</td><td>VARCHAR(500)</td><td></td><td>Object Storage URL</td></tr>
+  <tr><td>public_key</td><td>TEXT</td><td>NOT NULL</td><td>E2EE public key</td></tr>
+  <tr><td>status_text</td><td>VARCHAR(200)</td><td></td><td>"Hey there! I'm using WhatsApp"</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+  <tr><td>updated_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+</table>
+<p><strong>Index:</strong> <code>phone_number</code> — <strong>Hash index</strong>. Lookups are always exact-match (find user by phone number during contact sync). O(1) lookups. No range queries needed.</p>
+<p><strong>Sharding:</strong> Sharded by <code>user_id</code> (hash-based). Distributes users evenly. Phone number lookups use a global secondary index mapping <code>phone_number → user_id → shard</code>.</p>
+<p><strong>Read triggers:</strong> User opens app (fetch profile), contact sync (lookup by phone), viewing another user's profile.</p>
+<p><strong>Write triggers:</strong> Registration, profile update (name, avatar, status), key rotation.</p>
+</div>
+
+<div class="card">
+<h4>device_tokens</h4>
+<p><strong>Why SQL:</strong> Relational to users table, requires consistency (token must map to exactly one user), small dataset.</p>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+  <tr><td>token_id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td><td></td></tr>
+  <tr><td>user_id</td><td>UUID</td><td><span class="tag tag-fk">FK → users</span> <span class="tag tag-idx">INDEX</span></td><td></td></tr>
+  <tr><td>device_token</td><td>VARCHAR(500)</td><td>NOT NULL</td><td>APNs or FCM token</td></tr>
+  <tr><td>platform</td><td>ENUM('ios','android','web')</td><td>NOT NULL</td><td></td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<p><strong>Index:</strong> <code>user_id</code> — <strong>B-tree index</strong>. A user can have multiple devices; query all tokens for push notifications.</p>
+<p><strong>Read triggers:</strong> User is offline and a message arrives → Push Notification Service queries all device tokens.</p>
+<p><strong>Write triggers:</strong> User installs app / logs in on new device, token refresh by OS.</p>
+</div>
+
+<h3>NoSQL Tables</h3>
+<div class="card">
+<h4>messages</h4>
+<p><strong>Why NoSQL (Wide-Column):</strong> Highest-volume data (~100B+/day). Write throughput is paramount. Access patterns are simple: write a message, read by conversation in time order. No joins. Wide-column NoSQL provides massive write throughput with horizontal scaling and efficient range queries by partition + sort key.</p>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+  <tr><td>conversation_id</td><td>UUID</td><td><span class="tag tag-pk">Partition Key</span> <span class="tag tag-shard">Shard Key</span></td><td>Groups messages by conversation</td></tr>
+  <tr><td>message_id</td><td>TimeUUID / ULID</td><td><span class="tag tag-pk">Sort Key</span></td><td>Time-ordered unique ID</td></tr>
+  <tr><td>sender_id</td><td>UUID</td><td>NOT NULL</td><td></td></tr>
+  <tr><td>encrypted_content</td><td>BLOB</td><td></td><td>E2EE ciphertext</td></tr>
+  <tr><td>message_type</td><td>STRING</td><td></td><td>text, image, video, audio, document</td></tr>
+  <tr><td>media_url</td><td>STRING</td><td></td><td>URL if applicable</td></tr>
+  <tr><td>thumbnail_url</td><td>STRING</td><td></td><td>Low-res preview URL</td></tr>
+  <tr><td>client_message_id</td><td>UUID</td><td>UNIQUE</td><td>For idempotency</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+  <tr><td>expires_at</td><td>TIMESTAMP</td><td></td><td>TTL for server-side deletion</td></tr>
+</table>
+<p><strong>Partition key:</strong> <code>conversation_id</code> — All messages in a conversation co-located for efficient range scans.</p>
+<p><strong>Sort key:</strong> <code>message_id</code> (TimeUUID) — Chronological order. Loading "last 50 messages" is a reverse range scan.</p>
+<p><strong>Sharding:</strong> Sharded by <code>conversation_id</code> (hash-based). All messages for a conversation on the same shard (locality). Conversations distributed across shards (even write load). Hot conversations (large groups) mitigated by Pub/Sub handling real-time delivery.</p>
+<p><strong>TTL:</strong> <code>expires_at</code> = 30 days after creation. NoSQL store auto-deletes expired rows. Aligns with E2EE — messages stored on-device, not on server long-term.</p>
+<p><strong>Read triggers:</strong> User reconnects and syncs missed messages, delivery retry on failure.</p>
+<p><strong>Write triggers:</strong> Any message sent (1:1 or group).</p>
+</div>
+
+<div class="card">
+<h4>message_receipts</h4>
+<p><strong>Why NoSQL (Wide-Column):</strong> Very high write volume (every message generates 1-2 receipts per recipient). Simple access: lookup receipts for a message. No joins.</p>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+  <tr><td>message_id</td><td>TimeUUID</td><td><span class="tag tag-pk">Partition Key</span></td><td></td></tr>
+  <tr><td>user_id</td><td>UUID</td><td><span class="tag tag-pk">Sort Key</span></td><td>The recipient user</td></tr>
+  <tr><td>status</td><td>STRING</td><td></td><td>SENT, DELIVERED, READ</td></tr>
+  <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<p><strong>Read triggers:</strong> User long-presses a group message to see "Message info" (who has read it).</p>
+<p><strong>Write triggers:</strong> Every DELIVERED or READ ACK received from a recipient.</p>
+</div>
+
+<div class="card">
+<h4>conversations</h4>
+<p><strong>Why NoSQL (Document):</strong> Variable structure (1:1 vs group). Access by user_id or conversation_id. High read volume (loaded on every app open). Document model fits the semi-structured nature.</p>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+  <tr><td>conversation_id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td><td></td></tr>
+  <tr><td>type</td><td>STRING</td><td></td><td>"direct" or "group"</td></tr>
+  <tr><td>participant_ids</td><td>LIST&lt;UUID&gt;</td><td></td><td>2 users (direct) or all members (group)</td></tr>
+  <tr><td>last_message_preview</td><td>STRING</td><td></td><td><span class="tag tag-idx">DENORMALIZED</span> snippet of last message</td></tr>
+  <tr><td>last_message_at</td><td>TIMESTAMP</td><td><span class="tag tag-idx">INDEX</span></td><td><span class="tag tag-idx">DENORMALIZED</span> for sorting by recency</td></tr>
+  <tr><td>unread_counts</td><td>MAP&lt;UUID, INT&gt;</td><td></td><td><span class="tag tag-idx">DENORMALIZED</span> per-user unread count</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<p><strong>Denormalization rationale:</strong> <code>last_message_preview</code>, <code>last_message_at</code>, and <code>unread_counts</code> are denormalized (duplicated from messages table) to avoid expensive joins when rendering the conversation list — the most frequently loaded screen. Every new message requires an extra write to update the conversation record, but this is acceptable given the read-heavy access pattern.</p>
+<p><strong>Index:</strong> Composite <strong>B-tree</strong> on <code>(participant_id, last_message_at DESC)</code>. Supports the query "get all conversations for user X, sorted by most recent." A global secondary index (GSI) maps <code>user_id → [conversation_ids]</code>.</p>
+<p><strong>Read triggers:</strong> User opens app → load conversation list. User opens a specific chat.</p>
+<p><strong>Write triggers:</strong> New conversation created, message sent (updates last_message_preview, last_message_at, unread_counts), user reads messages (resets unread_count to 0).</p>
+</div>
+
+<div class="card">
+<h4>groups</h4>
+<p><strong>Why NoSQL (Document):</strong> Variable structure (description, settings, invite links). Access primarily by group_id. Member lists vary (2-1024). Document model handles this flexibly.</p>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+  <tr><td>group_id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td><td></td></tr>
+  <tr><td>name</td><td>STRING</td><td>NOT NULL</td><td></td></tr>
+  <tr><td>description</td><td>STRING</td><td></td><td></td></tr>
+  <tr><td>avatar_url</td><td>STRING</td><td></td><td></td></tr>
+  <tr><td>creator_id</td><td>UUID</td><td></td><td></td></tr>
+  <tr><td>admin_ids</td><td>LIST&lt;UUID&gt;</td><td></td><td></td></tr>
+  <tr><td>member_ids</td><td>LIST&lt;UUID&gt;</td><td></td><td></td></tr>
+  <tr><td>settings</td><td>MAP</td><td></td><td>only_admins_send, invite_link, etc.</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<p><strong>Read triggers:</strong> Group message sent (Chat Service fetches member list), user opens group info.</p>
+<p><strong>Write triggers:</strong> Group created, member add/remove, settings changed, admin promoted.</p>
+</div>
+
+<!-- =========== CACHE & CDN DEEP DIVE =========== -->
+<h2>10. Cache &amp; CDN Deep Dive</h2>
+
+<h3>Session Store (In-Memory Cache)</h3>
+<div class="card">
+<ul>
+  <li><strong>Purpose:</strong> Maps <code>user_id → { server_instance_id, ws_connection_id, connected_at }</code>.</li>
+  <li><strong>Why cache (not DB):</strong> Ephemeral data (only valid while WebSocket is open), requires sub-millisecond lookups.</li>
+  <li><strong>Caching strategy:</strong> <strong>Write-through.</strong> When a WebSocket is established, Chat Service synchronously writes to Session Store before accepting messages.</li>
+  <li><strong>Eviction policy:</strong> <strong>TTL-based</strong> (90 seconds). Each heartbeat resets TTL. No LRU needed — working set is always "hot" (only connected users).</li>
+  <li><strong>Expiration:</strong> Entries expire 90s after last heartbeat. The 90s window accommodates brief network blips.</li>
+  <li><strong>Population:</strong> On WebSocket connect. Refreshed every 30s by heartbeat. Removed on clean disconnect or TTL expiry.</li>
+</ul>
+</div>
+
+<h3>Presence Cache (In-Memory Cache)</h3>
+<div class="card">
+<ul>
+  <li><strong>Purpose:</strong> Stores <code>user_id → { status: ONLINE|OFFLINE, last_seen }</code>.</li>
+  <li><strong>Caching strategy:</strong> <strong>Write-through.</strong> Updated on every heartbeat and on explicit disconnect events.</li>
+  <li><strong>Eviction policy:</strong> <strong>TTL-based</strong> (90s for ONLINE entries). When TTL expires without refresh, user is offline. OFFLINE entries persist indefinitely (tiny — just user_id + timestamp).</li>
+  <li><strong>Why separate from Session Store:</strong> Session Store is for routing (which server). Presence Cache is for user-facing queries (is this person online?). Separating them avoids coupling.</li>
+</ul>
+</div>
+
+<h3>Group Membership Cache (In-Memory Cache)</h3>
+<div class="card">
+<ul>
+  <li><strong>Purpose:</strong> Caches <code>group_id → [member_ids]</code> to avoid hitting Group DB on every group message.</li>
+  <li><strong>Caching strategy:</strong> <strong>Read-through / Cache-aside.</strong> On cache miss, Group Service fetches from DB and populates cache. On membership changes, cache entry is invalidated.</li>
+  <li><strong>Why this strategy:</strong> Group membership changes are infrequent compared to messages sent. Read-through with invalidation-on-write provides excellent hit rates with minimal staleness.</li>
+  <li><strong>Eviction policy:</strong> <strong>LRU</strong> for capacity + <strong>TTL of 10 minutes</strong> as staleness safety net. Active groups stay cached; dormant groups evicted.</li>
+  <li><strong>Population:</strong> First group message after cache miss → DB read → cache write. Invalidated when Group Service processes add/remove member.</li>
+</ul>
+</div>
+
+<h3>CDN Deep Dive</h3>
+<div class="card">
+<ul>
+  <li><strong>Why appropriate:</strong> Media files (images, videos, audio, documents) range KB to tens of MB. They are immutable once uploaded (content-addressed by media_id). In group chats, the same media is downloaded by multiple recipients from different locations.</li>
+  <li><strong>Why NOT for text messages:</strong> Text is tiny, real-time (WebSocket), unique per recipient — no cache reuse.</li>
+  <li><strong>Cache strategy:</strong> <strong>Pull-based (lazy).</strong> First request → CDN fetches from Object Storage → caches → serves. Subsequent requests hit edge.</li>
+  <li><strong>Eviction:</strong> <strong>LRU</strong> at each edge node. Popular media stays cached; rare media evicted.</li>
+  <li><strong>Expiration:</strong> <strong>TTL of 24 hours.</strong> Media is typically downloaded within minutes of sending.</li>
+  <li><strong>Security:</strong> URLs contain signed tokens with time windows (e.g., 1 hour). Blob is encrypted regardless — only intended recipient has decryption key.</li>
+</ul>
+</div>
+
+<!-- =========== PUB/SUB DEEP DIVE =========== -->
+<h2>11. Pub/Sub Deep Dive</h2>
+<div class="card">
+<h3>Architecture</h3>
+<ul>
+  <li><strong>Topic model:</strong> One topic per user: <code>user_{user_id}</code>. Receives ALL messages for that user (1:1, group, receipts, typing indicators).</li>
+  <li><strong>Why per-user topics:</strong> Each Chat Service subscribes to exactly one topic per connected user. Disconnect = tear down one subscription. Contrast: per-group topics would require 50+ subscriptions for a user in 50 groups, plus management on connect/disconnect.</li>
+  <li><strong>Publishers:</strong> Any Chat Service that processes a send request publishes to recipient's topic(s). Group: 99 publishes for a 100-member group.</li>
+  <li><strong>Subscribers:</strong> Exactly 0 or 1 per topic (user can have one active connection).</li>
+  <li><strong>Delivery guarantee:</strong> At-least-once. Client deduplicates via <code>message_id</code>.</li>
+  <li><strong>Retention:</strong> 7 days if no subscriber. Beyond that, drain consumer moves to offline Message Queue.</li>
+</ul>
+
+<h3>Why Pub/Sub Instead of Alternatives</h3>
+<table>
+  <tr><th>Alternative</th><th>Why Not Chosen</th></tr>
+  <tr><td><strong>Direct server-to-server RPC</strong></td><td>Tight coupling: sender's server must know receiver's server. Fails if receiver's server is down. No built-in retry or buffering.</td></tr>
+  <tr><td><strong>Message queue only</strong></td><td>Queues are pull-based (consumer polls) adding latency. A queue per user is essentially reinventing Pub/Sub.</td></tr>
+  <tr><td><strong>HTTP long polling</strong></td><td>Higher latency, more HTTP overhead, no true real-time push.</td></tr>
+  <tr><td><strong>SSE (Server-Sent Events)</strong></td><td>Unidirectional (server→client only). Sending requires separate HTTP requests.</td></tr>
+</table>
+
+<h3>Pub/Sub + WebSocket Integration</h3>
+<ol>
+  <li><strong>User connects:</strong> Client opens WSS → LB → Chat Service instance (Server-7).</li>
+  <li><strong>Subscribe:</strong> Server-7 subscribes to <code>user_{X_id}</code> with a push subscription.</li>
+  <li><strong>Message arrives:</strong> Another Chat Service (Server-3) publishes to <code>user_{X_id}</code>.</li>
+  <li><strong>Push:</strong> Pub/Sub pushes to Server-7's subscription callback.</li>
+  <li><strong>Deliver:</strong> Server-7 pushes message to User X via WebSocket.</li>
+  <li><strong>Client ACKs:</strong> User X's client sends application-level ACK.</li>
+  <li><strong>Pub/Sub ACK:</strong> Server-7 acknowledges the Pub/Sub message, removing it from the topic.</li>
+</ol>
+</div>
+
+<!-- =========== MESSAGE QUEUE DEEP DIVE =========== -->
+<h2>12. Message Queue Deep Dive</h2>
+<div class="card">
+<h3>Purpose &amp; Role</h3>
+<p>The Message Queue is the <strong>durable offline delivery buffer</strong>. NOT the primary delivery mechanism (that's Pub/Sub + WebSocket). It catches messages the Pub/Sub cannot deliver because the recipient has no active subscription.</p>
+
+<h3>How Messages Enter the Queue</h3>
+<ul>
+  <li>A <strong>drain consumer</strong> monitors Pub/Sub topics. If a message is unacknowledged for 30+ seconds, it's moved to the per-user offline queue.</li>
+  <li>Alternatively, Chat Service checks Session Store <em>before</em> publishing. If user is offline, writes directly to both Message DB and Message Queue.</li>
+</ul>
+
+<h3>How Messages Leave the Queue</h3>
+<ul>
+  <li>On reconnect, Chat Service pulls all messages from the user's offline queue (FIFO).</li>
+  <li>Each is sent via WebSocket. Client ACKs each message.</li>
+  <li>Only after ACK does Chat Service delete from queue (<strong>explicit acknowledgment-based deletion</strong>).</li>
+  <li>If connection drops mid-sync, unACKed messages remain for next reconnect.</li>
+</ul>
+
+<h3>Queue Properties</h3>
+<ul>
+  <li><strong>Ordering:</strong> FIFO per user. Messages delivered in chronological order.</li>
+  <li><strong>Retention:</strong> 30 days. Messages older than 30 days are purged (aligned with E2EE model).</li>
+  <li><strong>Durability:</strong> Replicated across multiple nodes for fault tolerance.</li>
+  <li><strong>Partitioning:</strong> Queues are partitioned by <code>user_id</code> hash. Each user's offline messages are in a single partition for ordered delivery.</li>
+</ul>
+</div>
+
+<!-- =========== SCALING =========== -->
+<h2>13. Scaling Considerations</h2>
+<div class="card">
+<h3>Load Balancers</h3>
+<ul>
+  <li><strong>Where:</strong> Two layers:
+    <ol>
+      <li><strong>WebSocket LB (Layer 4 / TCP):</strong> Front of Chat Service. <strong>Least-connections</strong> strategy — prevents any single server from being overwhelmed with long-lived connections.</li>
+      <li><strong>HTTP LB (Layer 7):</strong> Front of Media, Group, User Services. <strong>Round-robin</strong> — HTTP requests are short-lived and stateless.</li>
+    </ol>
+  </li>
+  <li><strong>Why two LBs:</strong> WebSocket traffic (persistent, bidirectional) has fundamentally different characteristics than HTTP (short-lived, request-response). Separate LBs optimize for each.</li>
+  <li><strong>Auto-scaling:</strong> WebSocket LB scales on connection count; HTTP LB scales on request rate.</li>
+  <li><strong>Health checks:</strong> Periodic checks on backend services. WebSocket LB triggers graceful drain on failure — clients reconnect to a different server.</li>
+</ul>
+<h3>Horizontal Scaling Per Service</h3>
+<table>
+  <tr><th>Component</th><th>Scaling Strategy</th><th>Bottleneck</th></tr>
+  <tr><td>Chat Service</td><td>Horizontal — ~100K concurrent WS connections per instance</td><td>Connection count, CPU</td></tr>
+  <tr><td>Group Service</td><td>Horizontal — stateless, scale on request rate</td><td>Fan-out request rate</td></tr>
+  <tr><td>Media Service</td><td>Horizontal — stateless, scale on throughput</td><td>Network bandwidth</td></tr>
+  <tr><td>Presence Service</td><td>Horizontal — stateless, scale on query rate</td><td>Cache throughput</td></tr>
+  <tr><td>Push Notification Svc</td><td>Horizontal — scale on queue depth</td><td>APNs/FCM rate limits</td></tr>
+  <tr><td>Pub/Sub</td><td>Partition topics by user_id hash across brokers</td><td>Pub/sub throughput</td></tr>
+  <tr><td>Message DB</td><td>Shard by conversation_id; add shards as volume grows</td><td>Write throughput</td></tr>
+  <tr><td>User DB</td><td>Shard by user_id; read replicas for contact sync</td><td>Read throughput</td></tr>
+  <tr><td>Caches</td><td>Shard by key; replicate for reads</td><td>Memory capacity</td></tr>
+</table>
+<h3>Geographic Distribution</h3>
+<ul>
+  <li>Chat Service clusters in multiple regions (US-East, EU-West, Asia-Pacific, South America).</li>
+  <li>Users connect to nearest cluster via GeoDNS.</li>
+  <li>Cross-region: If User A (US) messages User B (Asia), the message is published to User B's Pub/Sub topic in User B's home region.</li>
+  <li>CDN edge nodes in 100+ locations for media.</li>
+</ul>
+<h3>Back-pressure &amp; Rate Limiting</h3>
+<ul>
+  <li>Per-user: Max 60 messages/minute.</li>
+  <li>Group fan-out: Batched (100 publishes at a time) for 500+ member groups.</li>
+  <li>Media upload: Max 10 concurrent per user.</li>
+</ul>
+</div>
+
+<!-- =========== TRADEOFFS =========== -->
+<h2>14. Tradeoffs &amp; Deep Dives</h2>
+<div class="card">
+<h3>Consistency vs. Availability</h3>
+<ul>
+  <li><strong>Messaging (CP):</strong> Messages must never be lost or reordered. Higher latency during partitions is acceptable.</li>
+  <li><strong>Presence (AP):</strong> Stale for up to 60s is acceptable. User may appear "Online" briefly after disconnecting.</li>
+  <li><strong>Conversation list (AP):</strong> Eventually consistent. Unread count may lag a few seconds.</li>
+</ul>
+<h3>Sender-Side Fan-Out vs. Receiver-Side Fan-Out</h3>
+<ul>
+  <li><strong>Chosen: Sender-side.</strong> Chat Service publishes N-1 individual messages for a group. Higher write amplification but simpler delivery (each user's topic is a single stream).</li>
+  <li><strong>Alternative (receiver-side):</strong> Publish once to group topic; each recipient reads. Reduces writes but complicates offline tracking and subscription management.</li>
+  <li><strong>Why sender-side wins:</strong> WhatsApp groups cap at 1024 members. Write amplification is bounded. Per-user topic simplicity outweighs the write overhead.</li>
+</ul>
+<h3>Server-Side vs. Client-Side Message Storage</h3>
+<ul>
+  <li><strong>Chosen: Hybrid.</strong> Server stores temporarily (until delivered), then purges. Clients store permanently on-device.</li>
+  <li><strong>Alternative:</strong> Full server-side storage enables cross-device sync but violates E2EE and costs ~65PB/year at 100B messages/day.</li>
+  <li><strong>Trade-off:</strong> Users lose history when switching devices (unless local backup). Deliberate privacy/cost trade-off.</li>
+</ul>
+<h3>E2EE Impact on Architecture</h3>
+<ul>
+  <li>Server cannot inspect content → no server-side search, spam filtering, or thumbnail generation.</li>
+  <li>Client does encryption/decryption, thumbnail generation, and search indexing locally.</li>
+  <li>Push notifications contain only metadata ("New message from John").</li>
+</ul>
+</div>
+
+<!-- =========== ALTERNATIVES =========== -->
+<h2>15. Alternative Approaches</h2>
+<div class="card">
+<table>
+  <tr><th>Alternative</th><th>Description</th><th>Why Not Chosen</th></tr>
+  <tr><td><strong>HTTP Long Polling</strong></td><td>Client polls server for new messages every few seconds.</td><td>1-5s latency per message. Wastes bandwidth with empty responses. WhatsApp requires sub-200ms delivery.</td></tr>
+  <tr><td><strong>Direct server-to-server RPC</strong></td><td>Chat Service looks up recipient's server and sends directly via gRPC.</td><td>Tight coupling. No retry/buffering. Messages lost if recipient's server is overloaded. Pub/Sub provides decoupling and durability.</td></tr>
+  <tr><td><strong>Per-group Pub/Sub topics</strong></td><td>Each group has its own topic. Members subscribe.</td><td>User in 100 groups = 100 subscriptions. Reconnects rebuild all. Offline tracking per-user within group topic is complex.</td></tr>
+  <tr><td><strong>SQL for messages</strong></td><td>Relational DB for all messages.</td><td>Cannot handle 100B+ writes/day. Write-heavy patterns with simple reads align perfectly with NoSQL wide-column. ACID unnecessary for immutable messages.</td></tr>
+  <tr><td><strong>Push-based presence</strong></td><td>Broadcast online/offline to all contacts.</td><td>500 contacts × 2B users = enormous fan-out. Pull-based (query on chat open) is far more efficient.</td></tr>
+  <tr><td><strong>Permanent server storage</strong></td><td>Keep all messages on server forever.</td><td>~65PB/year at 100B messages/day. Violates E2EE model. Massive cost.</td></tr>
+</table>
+</div>
+
+<!-- =========== WEBSOCKET DEEP DIVE =========== -->
+<h2>16. WebSocket Deep Dive</h2>
+<div class="card">
+<h3>Connection Lifecycle</h3>
+<ol>
+  <li><strong>HTTP Upgrade:</strong> Client sends HTTP GET with <code>Upgrade: websocket</code> header + JWT to WebSocket LB.</li>
+  <li><strong>Auth:</strong> Chat Service validates JWT, extracts <code>user_id</code>, accepts upgrade.</li>
+  <li><strong>Session Registration:</strong> Writes <code>{ user_id → (server_id, connection_id) }</code> to Session Store (90s TTL).</li>
+  <li><strong>Pub/Sub Subscribe:</strong> Subscribes to <code>user_{user_id}</code>.</li>
+  <li><strong>Offline Drain:</strong> Pulls pending messages from offline Message Queue.</li>
+  <li><strong>Steady State:</strong> Bidirectional messages + heartbeat ping/pong every 30s.</li>
+  <li><strong>Disconnect:</strong> Remove from Session Store → Unsubscribe Pub/Sub → Update Presence Cache to OFFLINE.</li>
+</ol>
+<h3>Connection Storage</h3>
+<ul>
+  <li>Each Chat Service: in-memory hash map <code>{ user_id → WebSocket object }</code>.</li>
+  <li>Session Store (distributed cache): global map <code>{ user_id → server_instance_id }</code>.</li>
+</ul>
+<h3>Finding Other WebSockets</h3>
+<ul>
+  <li>Pub/Sub <em>eliminates</em> direct server-to-server discovery. Server-3 publishes to <code>user_{B_id}</code> → Server-7 (subscribed) receives automatically. No lookup needed.</li>
+</ul>
+<h3>Reconnection Strategy</h3>
+<ul>
+  <li><strong>Exponential backoff:</strong> 1s, 2s, 4s, 8s, 16s (max 30s).</li>
+  <li><strong>Jitter:</strong> ±25% random to prevent thundering herd after outage.</li>
+  <li><strong>Resume token:</strong> Client includes <code>last_seen_message_id</code> in reconnect handshake for message replay.</li>
+</ul>
+</div>
+
+<!-- =========== ADDITIONAL =========== -->
+<h2>17. Additional Considerations</h2>
+<div class="card">
+<h3>End-to-End Encryption (E2EE)</h3>
+<ul>
+  <li>Uses the Signal Protocol (Double Ratchet Algorithm). Each message encrypted with a unique key from a ratchet chain.</li>
+  <li><strong>Key exchange:</strong> Uses pre-keys stored on server. Uploaded during registration, periodically replenished.</li>
+  <li><strong>Group E2EE:</strong> Sender Keys protocol — sender generates symmetric key, encrypts message once, sends key encrypted individually to each member.</li>
+  <li><strong>Server impact:</strong> Transports opaque ciphertext only.</li>
+</ul>
+<h3>Message Ordering</h3>
+<ul>
+  <li>Ordered by <code>message_id</code> (TimeUUID) assigned by server at receipt time.</li>
+  <li>Server timestamps establish canonical order even if messages arrive out of order.</li>
+</ul>
+<h3>Handling Duplicates</h3>
+<ul>
+  <li><code>client_message_id</code> deduplicates at server level.</li>
+  <li>At-least-once Pub/Sub → client deduplicates via <code>message_id</code> against local DB.</li>
+</ul>
+<h3>Multi-Device Support</h3>
+<ul>
+  <li>Each device: own WebSocket + Pub/Sub subscription.</li>
+  <li>Session Store: <code>user_id → [{device_id, server_id, connection_id}, ...]</code>.</li>
+  <li>Messages delivered to all active devices. Each sends its own ACKs.</li>
+</ul>
+</div>
+
+<!-- =========== VENDORS =========== -->
+<h2>18. Vendor Section</h2>
+<div class="card">
+<p>The design is vendor-agnostic. Below are potential choices with rationale:</p>
+<table>
+  <tr><th>Component</th><th>Vendor</th><th>Rationale</th></tr>
+  <tr><td>NoSQL (Wide-Column) — Messages</td><td>Apache Cassandra, ScyllaDB</td><td>Proven at 100B+ writes/day. Partition+sort key maps to our schema. ScyllaDB for better per-node throughput.</td></tr>
+  <tr><td>NoSQL (Document) — Groups</td><td>MongoDB, Amazon DynamoDB</td><td>Flexible schema. DynamoDB for managed scalability with GSI.</td></tr>
+  <tr><td>SQL — Users</td><td>PostgreSQL, MySQL/Vitess</td><td>PostgreSQL for advanced indexing. Vitess for sharding at YouTube/Slack scale.</td></tr>
+  <tr><td>In-Memory Cache</td><td>Redis, Dragonfly</td><td>Redis for TTL + rich data structures. Dragonfly for multi-threaded Redis-compatible alternative.</td></tr>
+  <tr><td>Pub/Sub</td><td>Apache Kafka, Apache Pulsar, NATS</td><td>Kafka for durability/throughput. Pulsar for multi-tenancy. NATS for lower latency.</td></tr>
+  <tr><td>Message Queue</td><td>Kafka, RabbitMQ, Amazon SQS</td><td>Kafka dual duty as Pub/Sub + queue. SQS for managed low-ops.</td></tr>
+  <tr><td>Object Storage</td><td>Amazon S3, MinIO</td><td>S3 for 11-nines durability. MinIO for self-hosted S3-compatible.</td></tr>
+  <tr><td>CDN</td><td>Cloudflare, CloudFront, Akamai</td><td>Cloudflare for global edge + signed URLs. CloudFront for S3 integration.</td></tr>
+  <tr><td>Push Notifications</td><td>APNs, FCM</td><td>Required by iOS/Android. No choice — both mandatory.</td></tr>
+  <tr><td>Load Balancer</td><td>HAProxy, Envoy, AWS NLB</td><td>HAProxy for L4 WebSocket. Envoy for L7 gRPC. NLB for managed L4.</td></tr>
+</table>
+</div>
+
+</body>
+</html>
