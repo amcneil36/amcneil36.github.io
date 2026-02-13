@@ -1,400 +1,1262 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Google Docs - System Design</title>
-<style>
-:root{--bg:#0f0f0f;--surface:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--accent:#4285F4;--accent2:#EA4335;}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem;max-width:1400px;margin:0 auto}
-h1{color:var(--accent);font-size:2.2rem;border-bottom:3px solid var(--accent);padding-bottom:.5rem;margin-bottom:1.5rem}
-h2{color:var(--accent2);margin:2rem 0 1rem;font-size:1.5rem}
-h3{color:#81D4FA;margin:1.5rem 0 .75rem}
-h4{color:#CE93D8;margin:1rem 0 .5rem}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
-table{width:100%;border-collapse:collapse;margin:1rem 0}
-th,td{border:1px solid var(--border);padding:.75rem;text-align:left;font-size:.95rem}
-th{background:#1a3a5c;color:var(--accent)}
-pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}
-code{color:#89DDFF;font-size:.9rem}
-svg text{font-family:'Segoe UI',system-ui,sans-serif}
-.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-.pro{border-left:4px solid #4CAF50;padding-left:1rem}
-.con{border-left:4px solid #f44336;padding-left:1rem}
-details{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin:.5rem 0}
-summary{cursor:pointer;font-weight:600;color:var(--accent)}
-.step{margin:.5rem 0;padding:.5rem 1rem;border-left:3px solid var(--accent2)}
-.tag-pk{background:#E91E63;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
-.tag-fk{background:#2196F3;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
-.tag-idx{background:#FF9800;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
-.tag-shard{background:#9C27B0;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design: Google Docs</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #1557b0;
+            --bg: #ffffff;
+            --bg-alt: #f8f9fa;
+            --bg-code: #f1f3f4;
+            --text: #202124;
+            --text-secondary: #5f6368;
+            --border: #dadce0;
+            --accent-green: #0d652d;
+            --accent-red: #c5221f;
+            --accent-orange: #e37400;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Google Sans', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: var(--text);
+            line-height: 1.7;
+            background: var(--bg);
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 32px 80px;
+        }
+        h1 { font-size: 2.4rem; color: var(--primary); margin-bottom: 8px; }
+        h2 { font-size: 1.7rem; color: var(--text); margin-top: 48px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--primary); }
+        h3 { font-size: 1.3rem; color: var(--primary-dark); margin-top: 32px; margin-bottom: 12px; }
+        h4 { font-size: 1.1rem; color: var(--text); margin-top: 24px; margin-bottom: 8px; }
+        p { margin-bottom: 12px; }
+        ul, ol { margin-bottom: 12px; padding-left: 28px; }
+        li { margin-bottom: 6px; }
+        code {
+            background: var(--bg-code);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: 'Roboto Mono', 'Consolas', monospace;
+        }
+        pre {
+            background: var(--bg-code);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+            font-family: 'Roboto Mono', 'Consolas', monospace;
+            font-size: 0.88em;
+            line-height: 1.5;
+        }
+        .subtitle { color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 32px; }
+        .diagram-container {
+            background: var(--bg-alt);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        .example-box {
+            background: #e8f0fe;
+            border-left: 4px solid var(--primary);
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .example-box strong { color: var(--primary-dark); }
+        .callout {
+            background: #fef7e0;
+            border-left: 4px solid var(--accent-orange);
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .callout-green {
+            background: #e6f4ea;
+            border-left: 4px solid var(--accent-green);
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .callout-red {
+            background: #fce8e6;
+            border-left: 4px solid var(--accent-red);
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0 24px;
+            font-size: 0.95em;
+        }
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        tr:nth-child(even) { background: var(--bg-alt); }
+        .toc {
+            background: var(--bg-alt);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px 32px;
+            margin: 24px 0 40px;
+        }
+        .toc h3 { margin-top: 0; color: var(--text); }
+        .toc ol { margin-bottom: 0; }
+        .toc li { margin-bottom: 4px; }
+        .toc a { color: var(--primary); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        .badge-sql { background: #e8f0fe; color: var(--primary); }
+        .badge-nosql { background: #e6f4ea; color: var(--accent-green); }
+        .badge-pk { background: #fef7e0; color: var(--accent-orange); }
+        .badge-fk { background: #fce8e6; color: var(--accent-red); }
+        .protocol-tag {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+    </style>
 </head>
 <body>
 
-<h1>📝 Google Docs — Real-Time Collaborative Document Editor</h1>
-<p>Design a real-time collaborative document editing system where multiple users can simultaneously edit the same document with instant synchronization, conflict resolution, and full revision history.</p>
+<h1>📝 System Design: Google Docs</h1>
+<p class="subtitle">A real-time collaborative document editing platform</p>
 
-<h2>📋 Functional Requirements</h2>
-<div class="card">
-<ul>
-<li><strong>Real-time collaboration</strong> — multiple users edit simultaneously with cursors/selections visible to all</li>
-<li><strong>Conflict resolution</strong> — concurrent edits on same text resolved automatically without data loss</li>
-<li><strong>Rich text editing</strong> — bold, italic, headings, lists, tables, images, comments, suggestions</li>
-<li><strong>Version history</strong> — full revision history with ability to restore any previous version</li>
-<li><strong>Offline editing</strong> — edit without internet, sync changes when reconnected</li>
-<li><strong>Sharing & permissions</strong> — owner, editor, commenter, viewer roles with link sharing</li>
-<li><strong>Comments & suggestions</strong> — inline comments, suggested edits with accept/reject workflow</li>
-</ul>
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+    <h3>Table of Contents</h3>
+    <ol>
+        <li><a href="#functional-requirements">Functional Requirements</a></li>
+        <li><a href="#non-functional-requirements">Non-Functional Requirements</a></li>
+        <li><a href="#flow1">Flow 1 — Document Creation &amp; Retrieval</a></li>
+        <li><a href="#flow2">Flow 2 — Real-Time Collaborative Editing</a></li>
+        <li><a href="#flow3">Flow 3 — Document Sharing &amp; Permissions</a></li>
+        <li><a href="#flow4">Flow 4 — Version History</a></li>
+        <li><a href="#flow5">Flow 5 — Commenting</a></li>
+        <li><a href="#combined-flow">Combined Overall Flow</a></li>
+        <li><a href="#schema">Database Schema</a></li>
+        <li><a href="#cache-cdn">Cache &amp; CDN Strategy</a></li>
+        <li><a href="#websocket-deep-dive">WebSocket Deep Dive</a></li>
+        <li><a href="#pubsub-deep-dive">Pub/Sub Deep Dive</a></li>
+        <li><a href="#mq-deep-dive">Message Queue Deep Dive</a></li>
+        <li><a href="#ot-deep-dive">Operational Transformation (OT) Deep Dive</a></li>
+        <li><a href="#scaling">Scaling Considerations</a></li>
+        <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+        <li><a href="#alternatives">Alternative Approaches</a></li>
+        <li><a href="#additional">Additional Considerations</a></li>
+        <li><a href="#vendors">Vendor Recommendations</a></li>
+    </ol>
 </div>
 
-<h2>📋 Non-Functional Requirements</h2>
-<div class="card">
-<ul>
-<li><strong>Latency</strong> — edits visible to collaborators within 100-200ms</li>
-<li><strong>Consistency</strong> — all clients converge to same document state (strong eventual consistency)</li>
-<li><strong>Scale</strong> — billions of documents, up to 200 concurrent editors per document</li>
-<li><strong>Durability</strong> — zero data loss; every keystroke persisted</li>
-<li><strong>Availability</strong> — 99.99% uptime globally</li>
-<li><strong>Storage efficiency</strong> — billions of documents with full revision history stored compactly</li>
-</ul>
-</div>
+<!-- ============================================================ -->
+<h2 id="functional-requirements">1. Functional Requirements</h2>
+<!-- ============================================================ -->
+<ol>
+    <li><strong>Document CRUD</strong> — Users can create, open, edit, rename, and delete documents.</li>
+    <li><strong>Real-Time Collaborative Editing</strong> — Multiple users can edit the same document simultaneously, and each user sees every other user's changes in real time (&lt;200 ms perceived latency).</li>
+    <li><strong>Cursor &amp; Selection Presence</strong> — Collaborators see each other's cursors and text selections in real time, each highlighted in a distinct colour.</li>
+    <li><strong>Rich Text Formatting</strong> — Bold, italic, underline, headings, lists, tables, embedded images, links, and more.</li>
+    <li><strong>Document Sharing &amp; Permissions</strong> — An owner can share a document with specific users or via link, with roles: <em>Viewer</em>, <em>Commenter</em>, or <em>Editor</em>.</li>
+    <li><strong>Version History</strong> — Users can view a chronological list of document revisions, inspect the document at any point in time, and restore a previous version.</li>
+    <li><strong>Comments &amp; Suggestions</strong> — Users can leave comments anchored to specific text ranges, reply to comment threads, and resolve threads.</li>
+    <li><strong>Offline Editing</strong> — Basic offline support: edits are queued locally and synced to the server when connectivity is restored.</li>
+    <li><strong>Search</strong> — Users can search across their accessible documents by title and content.</li>
+</ol>
 
-<h2>🔄 Flow 1: Real-Time Collaborative Editing (OT)</h2>
-<svg viewBox="0 0 1050 340" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="a1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#4285F4"/></marker></defs>
-<rect x="20" y="50" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="70" text-anchor="middle" fill="white" font-size="12">Client A</text><text x="75" y="85" text-anchor="middle" fill="white" font-size="10">(types "Hello")</text>
-<rect x="20" y="160" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="180" text-anchor="middle" fill="white" font-size="12">Client B</text><text x="75" y="195" text-anchor="middle" fill="white" font-size="10">(types "World")</text>
-<rect x="220" y="100" width="140" height="60" rx="8" fill="#6A1B9A"/><text x="290" y="125" text-anchor="middle" fill="white" font-size="12">WebSocket</text><text x="290" y="140" text-anchor="middle" fill="white" font-size="10">Connection</text>
-<rect x="440" y="100" width="160" height="60" rx="8" fill="#1565C0"/><text x="520" y="120" text-anchor="middle" fill="white" font-size="12">Collaboration Server</text><text x="520" y="140" text-anchor="middle" fill="white" font-size="10">(OT Transform Engine)</text>
-<rect x="680" y="70" width="140" height="50" rx="8" fill="#4E342E"/><text x="750" y="100" text-anchor="middle" fill="white" font-size="12">Document Store</text>
-<rect x="680" y="160" width="140" height="50" rx="8" fill="#00695C"/><text x="750" y="180" text-anchor="middle" fill="white" font-size="12">Operation Log</text><text x="750" y="195" text-anchor="middle" fill="white" font-size="10">(append-only)</text>
-<rect x="440" y="250" width="160" height="50" rx="8" fill="#E65100"/><text x="520" y="280" text-anchor="middle" fill="white" font-size="12">Presence Service</text>
-<line x1="130" y1="75" x2="215" y2="115" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="130" y1="185" x2="215" y2="145" stroke="#34A853" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="360" y1="130" x2="435" y2="130" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="600" y1="115" x2="675" y2="95" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="600" y1="145" x2="675" y2="185" stroke="#FF9800" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="520" y1="160" x2="520" y2="245" stroke="#81D4FA" stroke-width="2" marker-end="url(#a1)"/>
-<text x="420" y="95" fill="#aaa" font-size="10">ops stream</text>
-<text x="640" y="90" fill="#aaa" font-size="10">persist snapshot</text>
-<text x="640" y="175" fill="#aaa" font-size="10">append ops</text>
-</svg>
-
-<div class="step"><strong>Step 1:</strong> Clients A and B connect via WebSocket to Collaboration Server for the same document</div>
-<div class="step"><strong>Step 2:</strong> Each keystroke generates an operation: {type: "insert", position: 5, chars: "H", revision: 42}</div>
-<div class="step"><strong>Step 3:</strong> Server receives ops, applies OT (Operational Transformation) to resolve conflicts</div>
-<div class="step"><strong>Step 4:</strong> Transformed ops broadcast to all other clients; each client applies transformed op locally</div>
-<div class="step"><strong>Step 5:</strong> Operations appended to immutable Operation Log; document snapshot periodically saved</div>
-
-<details><summary>Deep Dive: Operational Transformation (OT)</summary>
-<div class="card">
-<h4>How OT Resolves Concurrent Edits</h4>
-<pre><code>// Problem: Client A inserts "X" at position 3
-//          Client B deletes char at position 1
-//          Both see initial document: "ABCDE"
-
-// Without OT: applying both literally produces different results!
-// Client A sees: "ABCXDE" → delete pos 1 → "BCXDE" ✗
-// Client B sees: "ACDE"   → insert X at 3 → "ACDXE" ✗
-
-// With OT: Transform(Op_A, Op_B) adjusts positions
-// Op_A: insert("X", 3), Op_B: delete(1)
-// Transform: since B deleted before A's insert position,
-//   A' = insert("X", 2)  (position shifted left by 1)
-//   B' = delete(1)        (unaffected by insert after it)
-// Both converge to: "ACXDE" ✓
-
-// OT Transform function (simplified):
-function transform(op1, op2) {
-  if (op1.type === 'insert' && op2.type === 'insert') {
-    if (op1.pos < op2.pos || (op1.pos === op2.pos && op1.clientId < op2.clientId)) {
-      return [op1, {...op2, pos: op2.pos + op1.chars.length}];
-    } else {
-      return [{...op1, pos: op1.pos + op2.chars.length}, op2];
-    }
-  }
-  if (op1.type === 'insert' && op2.type === 'delete') {
-    if (op1.pos <= op2.pos) {
-      return [op1, {...op2, pos: op2.pos + op1.chars.length}];
-    } else {
-      return [{...op1, pos: op1.pos - 1}, op2];
-    }
-  }
-  // ... handle all (insert, delete) × (insert, delete) combinations
-}
-
-// Google Docs uses centralized OT:
-// Server is the single source of truth (total ordering)
-// Server revision number prevents divergence
-// Client buffers ops while awaiting server acknowledgment</code></pre>
-</div>
-</details>
-
-<details><summary>Deep Dive: OT vs CRDT</summary>
-<div class="card">
+<!-- ============================================================ -->
+<h2 id="non-functional-requirements">2. Non-Functional Requirements</h2>
+<!-- ============================================================ -->
 <table>
-<tr><th>Aspect</th><th>OT (Google Docs)</th><th>CRDT (Yjs, Automerge)</th></tr>
-<tr><td>Server requirement</td><td>Central server required</td><td>Peer-to-peer possible</td></tr>
-<tr><td>Complexity</td><td>Transform functions are complex</td><td>Data structure is complex</td></tr>
-<tr><td>Consistency</td><td>Server-ordered (total order)</td><td>Mathematically convergent</td></tr>
-<tr><td>Offline</td><td>Buffer ops, sync on reconnect</td><td>Natively supports offline</td></tr>
-<tr><td>Storage</td><td>Compact (ops are small)</td><td>Larger (metadata per character)</td></tr>
-<tr><td>Proven scale</td><td>Google Docs (billions of docs)</td><td>Figma, newer systems</td></tr>
-<tr><td>Latency</td><td>Server round-trip needed</td><td>Instant local apply</td></tr>
+    <tr><th>Property</th><th>Target</th><th>Rationale</th></tr>
+    <tr><td><strong>Latency</strong></td><td>&lt; 200 ms for operations to appear on collaborator screens</td><td>Real-time feel requires sub-second propagation</td></tr>
+    <tr><td><strong>Consistency</strong></td><td>Strong eventual consistency per document</td><td>All collaborators must converge to the same document state; OT guarantees this</td></tr>
+    <tr><td><strong>Availability</strong></td><td>99.99 % uptime</td><td>Users rely on Docs as their primary authoring tool</td></tr>
+    <tr><td><strong>Durability</strong></td><td>Zero data loss</td><td>Every keystroke must be persisted; documents are often critical business artifacts</td></tr>
+    <tr><td><strong>Scalability</strong></td><td>Hundreds of millions of documents; thousands of concurrent editors per document</td><td>Must support global user base</td></tr>
+    <tr><td><strong>Bandwidth Efficiency</strong></td><td>Send only deltas, not full document state</td><td>Minimise network cost; crucial for mobile and low-bandwidth users</td></tr>
+    <tr><td><strong>Security</strong></td><td>TLS everywhere; fine-grained access control; encryption at rest</td><td>Documents contain sensitive business and personal data</td></tr>
+    <tr><td><strong>Partition Tolerance</strong></td><td>Graceful degradation during network partitions</td><td>Offline editing + sync-on-reconnect</td></tr>
 </table>
-<pre><code>// CRDT example: Each character has a unique ID
-// Insert "H" → {id: "A:1", char: "H", after: "root"}
-// Insert "i" → {id: "A:2", char: "i", after: "A:1"}
-// Concurrent insert by B after same position:
-// Insert "X" → {id: "B:1", char: "X", after: "root"}
-// Resolution: compare IDs (deterministic ordering)
-// Result: either "HXi" or "XHi" — same on all clients
 
-// Google chose OT because:
-// 1. Proven at scale (20+ years)
-// 2. Central server simplifies access control
-// 3. Smaller on-wire format than CRDT metadata</code></pre>
-</div>
-</details>
+<!-- ============================================================ -->
+<h2 id="flow1">3. Flow 1 — Document Creation &amp; Retrieval</h2>
+<!-- ============================================================ -->
 
-<h2>🔄 Flow 2: Document Sharing & Access Control</h2>
-<svg viewBox="0 0 1000 280" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="a2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#EA4335"/></marker></defs>
-<rect x="20" y="60" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="90" text-anchor="middle" fill="white" font-size="12">Owner</text>
-<rect x="175" y="60" width="130" height="50" rx="8" fill="#1565C0"/><text x="240" y="80" text-anchor="middle" fill="white" font-size="12">Sharing Service</text>
-<rect x="350" y="30" width="130" height="50" rx="8" fill="#4E342E"/><text x="415" y="60" text-anchor="middle" fill="white" font-size="12">ACL Store</text>
-<rect x="350" y="100" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="415" y="130" text-anchor="middle" fill="white" font-size="12">Link Token Service</text>
-<rect x="550" y="60" width="130" height="50" rx="8" fill="#E65100"/><text x="615" y="80" text-anchor="middle" fill="white" font-size="12">Notification</text><text x="615" y="95" text-anchor="middle" fill="white" font-size="10">Service</text>
-<rect x="730" y="60" width="120" height="50" rx="8" fill="#2E7D32"/><text x="790" y="90" text-anchor="middle" fill="white" font-size="12">Invitee</text>
-<line x1="130" y1="85" x2="170" y2="85" stroke="#EA4335" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="305" y1="70" x2="345" y2="55" stroke="#EA4335" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="305" y1="100" x2="345" y2="125" stroke="#EA4335" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="480" y1="55" x2="545" y2="75" stroke="#EA4335" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="680" y1="85" x2="725" y2="85" stroke="#EA4335" stroke-width="2" marker-end="url(#a2)"/>
-</svg>
-
-<div class="step"><strong>Step 1:</strong> Owner shares document by entering email addresses or generating shareable link</div>
-<div class="step"><strong>Step 2:</strong> Sharing Service creates ACL entries (user → role mapping) and optional link tokens</div>
-<div class="step"><strong>Step 3:</strong> Link sharing options: "Anyone with link" (viewer/commenter/editor) or restricted to specific users</div>
-<div class="step"><strong>Step 4:</strong> On every document access, ACL checked: owner > editor > commenter > viewer</div>
-<div class="step"><strong>Step 5:</strong> Notification Service sends email invite with direct link to document</div>
-
-<h2>🔄 Flow 3: Version History & Restore</h2>
-<svg viewBox="0 0 1000 260" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="a3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#34A853"/></marker></defs>
-<rect x="20" y="60" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="90" text-anchor="middle" fill="white" font-size="12">User</text>
-<rect x="175" y="60" width="130" height="50" rx="8" fill="#1565C0"/><text x="240" y="80" text-anchor="middle" fill="white" font-size="12">Version Service</text>
-<rect x="350" y="30" width="140" height="50" rx="8" fill="#4E342E"/><text x="420" y="50" text-anchor="middle" fill="white" font-size="12">Operation Log</text><text x="420" y="65" text-anchor="middle" fill="white" font-size="10">(all edits since creation)</text>
-<rect x="350" y="100" width="140" height="50" rx="8" fill="#00695C"/><text x="420" y="120" text-anchor="middle" fill="white" font-size="12">Snapshot Store</text><text x="420" y="135" text-anchor="middle" fill="white" font-size="10">(periodic checkpoints)</text>
-<rect x="550" y="60" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="615" y="80" text-anchor="middle" fill="white" font-size="12">Diff Engine</text><text x="615" y="95" text-anchor="middle" fill="white" font-size="10">(visual diff)</text>
-<line x1="130" y1="85" x2="170" y2="85" stroke="#34A853" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="305" y1="70" x2="345" y2="55" stroke="#34A853" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="305" y1="100" x2="345" y2="125" stroke="#34A853" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="490" y1="80" x2="545" y2="80" stroke="#34A853" stroke-width="2" marker-end="url(#a3)"/>
-</svg>
-
-<div class="step"><strong>Step 1:</strong> User opens version history panel. Version Service retrieves revision timeline</div>
-<div class="step"><strong>Step 2:</strong> For any point in time: load nearest snapshot + replay ops from Operation Log to reconstruct document</div>
-<div class="step"><strong>Step 3:</strong> Diff Engine highlights changes between versions with color-coded per-author annotations</div>
-<div class="step"><strong>Step 4:</strong> "Named versions" let users bookmark important states. Auto-grouping: batch edits within session into one revision</div>
-<div class="step"><strong>Step 5:</strong> Restore creates new version (non-destructive) — old history preserved</div>
-
-<details><summary>Deep Dive: Operation Log & Snapshot Strategy</summary>
-<div class="card">
-<pre><code>// Storing every keystroke for billions of documents:
-// Operation Log: append-only, immutable, compressed
-
-// Storage optimization:
-// 1. Operation compaction: merge sequential inserts by same user
-//    "H" + "e" + "l" + "l" + "o" → insert("Hello", pos: 0)
-// 2. Periodic snapshots: full document state every N ops (e.g., 1000)
-// 3. To reconstruct any version: find nearest snapshot, replay remaining ops
-
-// Snapshot strategy:
-// - Every 1000 operations OR every 30 minutes (whichever first)
-// - Snapshot stored as compressed JSON/protobuf
-// - Old snapshots: keep every 1000th, discard intermediate
-// - Result: O(1) storage per time period, not O(edits)
-
-// Example timeline:
-// t=0:    Snapshot S0 (empty doc)
-// t=1-999: Operations O1...O999
-// t=1000:  Snapshot S1 (current state)
-// t=1001-1999: Operations O1001...O1999
-// t=2000:  Snapshot S2
-
-// To reconstruct version at t=1500:
-// Load S1, replay O1001...O1500 → document at t=1500
-// Max 999 ops to replay (fast reconstruction)
-
-// Garbage collection: after 30 days, compact ops into fewer snapshots
-// Legal hold: some orgs require full edit history for compliance</code></pre>
-</div>
-</details>
-
-<h2>🏗️ Combined Architecture</h2>
-<svg viewBox="0 0 1100 520" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="ac" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#4285F4"/></marker></defs>
-<text x="550" y="25" text-anchor="middle" fill="#4285F4" font-size="16" font-weight="bold">Google Docs Architecture</text>
-<rect x="20" y="50" width="120" height="40" rx="8" fill="#2E7D32"/><text x="80" y="75" text-anchor="middle" fill="white" font-size="11">Web / Mobile Clients</text>
-<rect x="200" y="50" width="130" height="40" rx="8" fill="#6A1B9A"/><text x="265" y="75" text-anchor="middle" fill="white" font-size="11">WebSocket Gateway</text>
-<rect x="400" y="40" width="140" height="35" rx="8" fill="#1565C0"/><text x="470" y="63" text-anchor="middle" fill="white" font-size="11">Collaboration Server (OT)</text>
-<rect x="400" y="85" width="140" height="35" rx="8" fill="#1565C0"/><text x="470" y="108" text-anchor="middle" fill="white" font-size="11">Document Service</text>
-<rect x="400" y="130" width="140" height="35" rx="8" fill="#1565C0"/><text x="470" y="153" text-anchor="middle" fill="white" font-size="11">Version Service</text>
-<rect x="400" y="175" width="140" height="35" rx="8" fill="#1565C0"/><text x="470" y="198" text-anchor="middle" fill="white" font-size="11">Sharing / ACL Service</text>
-<rect x="400" y="220" width="140" height="35" rx="8" fill="#1565C0"/><text x="470" y="243" text-anchor="middle" fill="white" font-size="11">Presence Service</text>
-<rect x="400" y="265" width="140" height="35" rx="8" fill="#1565C0"/><text x="470" y="288" text-anchor="middle" fill="white" font-size="11">Comment Service</text>
-<rect x="620" y="50" width="140" height="40" rx="8" fill="#4E342E"/><text x="690" y="75" text-anchor="middle" fill="white" font-size="11">Spanner (Metadata)</text>
-<rect x="620" y="110" width="140" height="40" rx="8" fill="#4E342E"/><text x="690" y="135" text-anchor="middle" fill="white" font-size="11">Colossus (Operation Log)</text>
-<rect x="620" y="170" width="140" height="40" rx="8" fill="#00695C"/><text x="690" y="195" text-anchor="middle" fill="white" font-size="11">Bigtable (Snapshots)</text>
-<rect x="620" y="230" width="140" height="40" rx="8" fill="#00695C"/><text x="690" y="255" text-anchor="middle" fill="white" font-size="11">Redis (Presence Cache)</text>
-<rect x="620" y="290" width="140" height="40" rx="8" fill="#6A1B9A"/><text x="690" y="315" text-anchor="middle" fill="white" font-size="11">Pub/Sub (Real-Time)</text>
-<rect x="850" y="50" width="140" height="40" rx="8" fill="#607D8B"/><text x="920" y="75" text-anchor="middle" fill="white" font-size="11">Google Drive (Storage)</text>
-<rect x="850" y="110" width="140" height="40" rx="8" fill="#6A1B9A"/><text x="920" y="135" text-anchor="middle" fill="white" font-size="11">Search Indexer</text>
-<rect x="850" y="170" width="140" height="40" rx="8" fill="#E65100"/><text x="920" y="195" text-anchor="middle" fill="white" font-size="11">Export Service (PDF/DOCX)</text>
-<line x1="140" y1="70" x2="195" y2="70" stroke="#4285F4" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="330" y1="70" x2="395" y2="57" stroke="#4285F4" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="540" y1="57" x2="615" y2="70" stroke="#4285F4" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="540" y1="102" x2="615" y2="130" stroke="#4285F4" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="540" y1="147" x2="615" y2="130" stroke="#FF9800" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="540" y1="192" x2="615" y2="70" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="540" y1="237" x2="615" y2="255" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="760" y1="70" x2="845" y2="70" stroke="#FF9800" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="760" y1="130" x2="845" y2="130" stroke="#FF9800" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="760" y1="195" x2="845" y2="195" stroke="#FF9800" stroke-width="2" marker-end="url(#ac)"/>
-</svg>
-
-<h2>💾 Database Schema</h2>
-<div class="grid">
-<div class="card">
-<h3>Spanner — Document Metadata</h3>
-<pre><code>CREATE TABLE documents (
-  doc_id STRING(36) NOT NULL, -- <span class="tag-pk">PK</span>
-  title STRING(500),
-  owner_id STRING(36) NOT NULL, -- <span class="tag-idx">IDX</span>
-  created_at TIMESTAMP NOT NULL,
-  updated_at TIMESTAMP NOT NULL,
-  current_revision INT64 NOT NULL DEFAULT 0,
-  last_snapshot_revision INT64,
-  is_deleted BOOL DEFAULT false,
-  storage_bucket STRING(50)
-) PRIMARY KEY (doc_id);
-
-CREATE TABLE document_acl (
-  doc_id STRING(36) NOT NULL, -- <span class="tag-fk">FK</span>
-  principal_id STRING(100) NOT NULL, -- user email or group
-  role STRING(20) NOT NULL, -- 'owner'|'editor'|'commenter'|'viewer'
-  granted_by STRING(36),
-  granted_at TIMESTAMP,
-) PRIMARY KEY (doc_id, principal_id),
-  INTERLEAVE IN PARENT documents ON DELETE CASCADE;
-
-CREATE TABLE document_links (
-  doc_id STRING(36) NOT NULL,
-  link_token STRING(64) NOT NULL, -- <span class="tag-pk">PK</span>
-  access_level STRING(20) NOT NULL,
-  expires_at TIMESTAMP,
-) PRIMARY KEY (link_token);
--- <span class="tag-idx">IDX</span>: (doc_id) for listing links per doc</code></pre>
-</div>
-<div class="card">
-<h3>Bigtable — Operations & Snapshots</h3>
-<pre><code>// Operation Log (append-only, per document)
-Row Key: {doc_id}#{revision_number (zero-padded)}
-Column Family "op": {
-  "type": "insert" | "delete" | "format",
-  "position": 1234,
-  "content": "Hello",
-  "author_id": "user_abc",
-  "timestamp": 1707500000000,
-  "client_revision": 41
-}
-
-// Example rows for doc "doc_123":
-// doc_123#000000001 → insert("H", 0, user_a)
-// doc_123#000000002 → insert("i", 1, user_a)
-// doc_123#000000003 → insert("!", 0, user_b)
-// doc_123#000000004 → delete(2, 1, user_a)
-
-// Snapshots (periodic checkpoints)
-Row Key: {doc_id}#snapshot#{revision_number}
-Column Family "state": {
-  "content": compressed_document_json,
-  "revision": 1000,
-  "timestamp": 1707400000000,
-  "size_bytes": 45230
-}
-
-// Efficient range scan: get ops 1001-1500 for doc_123
-// Scan: start="doc_123#000001001", end="doc_123#000001500"
-// Bigtable is perfect: sorted by row key, fast range scans</code></pre>
-</div>
+<h3>3.1 Diagram</h3>
+<div class="diagram-container">
+    <pre class="mermaid">
+flowchart LR
+    C["👤 Client\n(Browser)"] -->|"HTTP Request"| LB["⚖️ Load Balancer\n(L7 / Round-Robin)"]
+    LB --> GW["🚪 API Gateway\n(Auth · Rate Limit)"]
+    GW --> DS["📄 Document\nService"]
+    DS <--> Cache[("🗄️ Cache\n(Doc Metadata)")]
+    DS <--> SQL[("💾 SQL DB\n(Metadata)")]
+    DS <--> NoSQL[("💾 NoSQL DB\n(Doc Content)")]
+    </pre>
 </div>
 
-<h2>⚡ Cache & CDN Deep Dive</h2>
-<div class="card">
+<h3>3.2 Examples</h3>
+
+<div class="example-box">
+    <strong>Example 1 — Creating a New Document:</strong><br>
+    User Alice clicks "New Document" in her browser. This triggers an <code>HTTP POST /api/documents</code> request with body <code>{"title": "Q4 Planning"}</code>. The request hits the <strong>Load Balancer</strong>, which forwards it to the <strong>API Gateway</strong>. The API Gateway validates Alice's JWT token and checks rate limits, then routes to the <strong>Document Service</strong>. The Document Service generates a UUID (<code>doc-abc123</code>), writes a row into the <strong>SQL DB</strong> <code>documents</code> table (owner, title, timestamps), creates an empty initial content entry in the <strong>NoSQL DB</strong>, and writes the metadata to the <strong>Cache</strong>. It returns <code>201 Created</code> with the new document ID. Alice's browser redirects to <code>/documents/doc-abc123</code>.
+</div>
+
+<div class="example-box">
+    <strong>Example 2 — Opening an Existing Document:</strong><br>
+    User Bob clicks on "Q4 Planning" from his document list. This triggers an <code>HTTP GET /api/documents/doc-abc123</code> request. After the Load Balancer → API Gateway → Document Service chain, the Document Service first checks the <strong>Cache</strong> for the document metadata. On a cache hit, metadata is returned immediately. For the document content, the service fetches the latest snapshot from the <strong>NoSQL DB</strong> (or Object Storage for large snapshots) plus any operations since that snapshot from the <strong>NoSQL operation log</strong>. The assembled current document state is returned as a <code>200 OK</code> response. Bob's browser renders the document. The client then establishes a WebSocket connection for real-time collaboration (see Flow 2).
+</div>
+
+<div class="example-box">
+    <strong>Example 3 — Listing User's Documents:</strong><br>
+    Alice opens the Docs homepage. This triggers an <code>HTTP GET /api/documents?owner=alice&sort=updated_at&limit=50</code>. The Document Service queries the <strong>SQL DB</strong> using an index on <code>(owner_id, updated_at DESC)</code>. If Alice has a warm cache entry for her document list, it's served from the <strong>Cache</strong> instead. The response is <code>200 OK</code> with an array of document summaries (id, title, last modified, collaborators preview).
+</div>
+
+<h3>3.3 Component Deep Dive</h3>
+
+<h4>Client (Browser)</h4>
+<p>A single-page application (SPA) that renders the rich-text editor, handles local input, queues operations, and communicates with the backend via HTTP and WebSockets. Responsible for local OT transform to optimistically apply the user's own edits before server acknowledgement.</p>
+
+<h4>Load Balancer (L7)</h4>
+<p>A Layer 7 (application-level) load balancer that distributes HTTP traffic across API Gateway instances using a <strong>round-robin</strong> or <strong>least-connections</strong> algorithm. It terminates TLS, performs health checks, and provides sticky sessions where needed (WebSocket flow uses a separate L4 load balancer — see Flow 2).</p>
+
+<h4>API Gateway</h4>
+<p>Sits between the load balancer and backend services. Responsibilities:</p>
+<ul>
+    <li><strong>Authentication</strong> — Validates JWT tokens on every request.</li>
+    <li><strong>Rate Limiting</strong> — Prevents abuse (token-bucket per user).</li>
+    <li><strong>Routing</strong> — Routes to the correct microservice based on the URL path.</li>
+    <li><strong>Request/Response transformation</strong> — Normalises headers, content types.</li>
+</ul>
+
+<h4>Document Service</h4>
+<p>A stateless microservice that handles document CRUD operations.</p>
 <table>
-<tr><th>Layer</th><th>What</th><th>Strategy</th><th>TTL</th></tr>
-<tr><td>Client Memory</td><td>Current document state + pending ops</td><td>In-memory, updated via WebSocket</td><td>Until tab closed</td></tr>
-<tr><td>Redis — Presence</td><td>Active cursors, selections, online users</td><td>Pub/Sub + ephemeral keys</td><td>30s heartbeat TTL</td></tr>
-<tr><td>Redis — Doc Cache</td><td>Hot document snapshots</td><td>LRU, write-through on snapshot</td><td>1 hour</td></tr>
-<tr><td>Memcache — ACL</td><td>Permission lookups</td><td>Write-through, invalidate on share change</td><td>5 minutes</td></tr>
-<tr><td>CDN</td><td>Static editor JS/CSS, fonts, images</td><td>Immutable versioned URLs</td><td>1 year</td></tr>
+    <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th><th>Description</th></tr>
+    <tr><td><code>/api/documents</code></td><td><span class="protocol-tag">POST</span></td><td>JSON body: <code>{title, template_id?}</code></td><td><code>201</code>: <code>{document_id, title, created_at}</code></td><td>Create a new document</td></tr>
+    <tr><td><code>/api/documents</code></td><td><span class="protocol-tag">GET</span></td><td>Query params: <code>owner, sort, limit, cursor</code></td><td><code>200</code>: <code>{documents[], next_cursor}</code></td><td>List documents for a user</td></tr>
+    <tr><td><code>/api/documents/{id}</code></td><td><span class="protocol-tag">GET</span></td><td>Path param: document ID</td><td><code>200</code>: <code>{metadata, content}</code></td><td>Get full document (metadata + assembled content)</td></tr>
+    <tr><td><code>/api/documents/{id}</code></td><td><span class="protocol-tag">PATCH</span></td><td>JSON body: <code>{title?}</code></td><td><code>200</code>: <code>{document_id, title, updated_at}</code></td><td>Update document metadata (e.g., rename)</td></tr>
+    <tr><td><code>/api/documents/{id}</code></td><td><span class="protocol-tag">DELETE</span></td><td>Path param: document ID</td><td><code>204 No Content</code></td><td>Soft-delete document</td></tr>
 </table>
-<h4>WebSocket Connection Management</h4>
-<pre><code>// Each document session maintains WebSocket to Collaboration Server
-// Connection protocol:
-// 1. Client connects with doc_id + auth token
-// 2. Server sends current document state (or last known revision)
-// 3. Bidirectional op streaming begins
 
-// Presence protocol (lightweight):
-// Client sends cursor position every 50ms (throttled)
-// Server fans out to all other clients via Pub/Sub
-// Presence data NOT persisted (ephemeral Redis keys with 30s TTL)
-// Heartbeat: client pings every 10s, server removes on timeout
+<h4>Cache</h4>
+<p>An in-memory distributed cache storing hot document metadata, assembled document state for active documents, and permission data. Details in the <a href="#cache-cdn">Cache &amp; CDN</a> section.</p>
 
-// Reconnection: client stores last confirmed revision
-// On reconnect: request ops since last_revision
-// If gap > threshold: full document re-fetch</code></pre>
+<h4>SQL Database (Metadata)</h4>
+<p>Stores structured, relational data: users, document metadata, permissions, comments. Chosen for ACID guarantees on permission and ownership changes, and for efficient JOIN queries.</p>
+
+<h4>NoSQL Database (Document Content)</h4>
+<p>Stores the operation log and document snapshots. Chosen for high write throughput (every keystroke generates an operation), flexible schema (operations can vary in shape), and partition-by-document access pattern.</p>
+
+<!-- ============================================================ -->
+<h2 id="flow2">4. Flow 2 — Real-Time Collaborative Editing</h2>
+<!-- ============================================================ -->
+
+<h3>4.1 Diagram</h3>
+<div class="diagram-container">
+    <pre class="mermaid">
+flowchart TD
+    A["👤 Client A"] <-->|"WebSocket"| LB["⚖️ Load Balancer\n(L4 · Sticky Sessions)"]
+    B["👤 Client B"] <-->|"WebSocket"| LB
+    LB <--> CS1["🔄 Collaboration\nService · Instance 1\n(OT Engine)"]
+    LB <--> CS2["🔄 Collaboration\nService · Instance 2\n(OT Engine)"]
+    CS1 <-->|"Broadcast Ops"| PS[["📡 Pub/Sub\n(doc channel)"]]
+    CS2 <-->|"Broadcast Ops"| PS
+    CS1 -->|"Persist Ops"| NoSQL[("💾 NoSQL DB\n(Operation Log)")]
+    CS2 -->|"Persist Ops"| NoSQL
+    CS1 <-->|"Doc State"| Cache[("🗄️ Cache\n(Active Doc State)")]
+    CS2 <-->|"Doc State"| Cache
+    </pre>
 </div>
 
-<h2>📈 Scaling Considerations</h2>
-<div class="card">
+<h3>4.2 Examples</h3>
+
+<div class="example-box">
+    <strong>Example 1 — Two Users Editing Simultaneously (Same Instance):</strong><br>
+    Alice and Bob both have document <code>doc-abc123</code> open. Both are routed by the sticky-session Load Balancer to <strong>Collaboration Service Instance 1</strong> via WebSocket. Alice types "Hello" at position 0. Her client creates an OT operation <code>{type: "insert", pos: 0, text: "Hello", rev: 5}</code> and sends it over WebSocket. Instance 1 checks that Alice's revision (5) matches the server's current revision (5), so no transformation is needed. It applies the operation, increments the revision to 6, persists the operation in the <strong>NoSQL operation log</strong>, updates the <strong>Cache</strong> with the new document state, and broadcasts the operation to all other connected clients for this document. Bob's client receives the operation via WebSocket and applies it locally — he sees "Hello" appear at position 0.
+</div>
+
+<div class="example-box">
+    <strong>Example 2 — Conflict Resolution via OT (Same Instance):</strong><br>
+    Continuing from above: at revision 6, Alice and Bob both type simultaneously. Alice inserts "World" at position 5, sending <code>{type: "insert", pos: 5, text: "World", rev: 6}</code>. Bob deletes character at position 0, sending <code>{type: "delete", pos: 0, count: 1, rev: 6}</code>. The server receives Alice's operation first, applies it (revision → 7). When Bob's operation arrives with <code>rev: 6</code> (stale), the <strong>OT Engine</strong> transforms Bob's operation against Alice's (since Alice inserted 5 characters before position 5, and Bob's delete is at position 0 which is before the insert, no position adjustment is needed). The transformed operation is applied (revision → 8). Both transformed operations are broadcast. Both Alice and Bob converge to the same document state.
+</div>
+
+<div class="example-box">
+    <strong>Example 3 — Cross-Instance Collaboration via Pub/Sub:</strong><br>
+    Alice is connected to <strong>Instance 1</strong> and Carol is connected to <strong>Instance 2</strong> (the sticky-session LB routed them to different instances). Alice types "Meeting Notes" at position 0. Instance 1 applies the operation, persists it, and <strong>publishes</strong> the operation to the <strong>Pub/Sub</strong> channel <code>doc:doc-abc123</code>. Instance 2, which <strong>subscribed</strong> to <code>doc:doc-abc123</code> when Carol opened the document, receives the message from Pub/Sub and pushes it to Carol over her WebSocket connection. Carol sees "Meeting Notes" appear.
+</div>
+
+<div class="example-box">
+    <strong>Example 4 — Cursor Presence Updates:</strong><br>
+    As Alice types, her cursor position is sent as a lightweight presence update over the same WebSocket: <code>{type: "presence", user_id: "alice", cursor: 12, selection: null}</code>. The Collaboration Service broadcasts this to other connected clients (via local connections and Pub/Sub for cross-instance). Bob and Carol see Alice's colored cursor move in real time. Presence data is <strong>ephemeral</strong> — stored only in the Collaboration Service's in-memory state and the Cache, never persisted to the database.
+</div>
+
+<div class="example-box">
+    <strong>Example 5 — Client Reconnection After Network Drop:</strong><br>
+    Bob's Wi-Fi disconnects for 30 seconds. His client queues local edits. When connectivity resumes, the client reconnects via WebSocket, sends its last known revision number (<code>rev: 8</code>), and the Collaboration Service replays all operations from rev 8 to the current revision (e.g., rev 15) from the <strong>NoSQL operation log</strong>. Bob's client applies these operations via OT against its locally queued edits, then sends its queued edits to the server. The document converges.
+</div>
+
+<h3>4.3 Component Deep Dive</h3>
+
+<h4>Load Balancer (L4 — Sticky Sessions)</h4>
+<p>A separate Layer 4 (transport-level) load balancer dedicated to WebSocket traffic. Uses <strong>consistent hashing on the document ID</strong> to route connections — this maximises the chance that collaborators on the same document land on the same Collaboration Service instance, minimising cross-instance Pub/Sub chatter. Maintains sticky sessions so that once a WebSocket connection is established, all frames are routed to the same backend instance. Performs TCP-level health checks and drains connections gracefully during rolling deployments.</p>
+
+<h4>Collaboration Service (with OT Engine)</h4>
+<p>A stateful service (state = active WebSocket connections + in-memory document state) that is the heart of real-time editing.</p>
 <ul>
-<li><strong>Document partitioning:</strong> each document assigned to one Collaboration Server instance (consistent hashing on doc_id). All ops for a doc processed by single server (avoids distributed OT). If server dies, another takes over from operation log.</li>
-<li><strong>Hot documents:</strong> a viral document with 200 editors generates 1000s of ops/sec. Solution: batch ops into micro-batches (every 50ms), transform batch together. Presence updates throttled to 5Hz.</li>
-<li><strong>WebSocket scaling:</strong> each server holds ~100K WebSocket connections. Horizontally scale connection servers. Pub/Sub (Google Cloud Pub/Sub) fans out ops to all connection servers for a document.</li>
-<li><strong>Storage:</strong> billions of documents × full revision history. Compression: ops are small (avg ~50 bytes). Snapshots compressed with zstd. Cold documents (not edited in 30 days): compact ops → single snapshot.</li>
+    <li><strong>Protocol:</strong> WebSocket (bidirectional, full-duplex over a single TCP connection).</li>
+    <li><strong>Connection management:</strong> Maintains an in-memory hash map <code>document_id → Set&lt;WebSocket Connection&gt;</code>.</li>
+    <li><strong>OT Engine:</strong> Embedded in each instance. Receives client operations, transforms them against concurrent operations if needed, applies them to the server's authoritative document state, and assigns a monotonically increasing revision number.</li>
+    <li><strong>Persistence:</strong> After applying an operation, writes it to the NoSQL operation log asynchronously (with write-ahead to an in-memory buffer for durability until confirmed written).</li>
+    <li><strong>Broadcasting:</strong> Sends the transformed operation to all local WebSocket connections for the document. Publishes to Pub/Sub for cross-instance propagation.</li>
+    <li><strong>Snapshot creation:</strong> Every N operations (e.g., 100), creates a document snapshot and stores it in NoSQL / Object Storage. This bounds the replay cost on document open.</li>
 </ul>
+
+<table>
+    <tr><th>WebSocket Message</th><th>Direction</th><th>Payload</th><th>Description</th></tr>
+    <tr><td><code>operation</code></td><td>Client → Server</td><td><code>{type, pos, text/count, rev}</code></td><td>A document edit operation</td></tr>
+    <tr><td><code>ack</code></td><td>Server → Client</td><td><code>{rev}</code></td><td>Acknowledgement of a client's operation with the assigned revision</td></tr>
+    <tr><td><code>operation</code></td><td>Server → Client</td><td><code>{type, pos, text/count, rev, user_id}</code></td><td>A peer's transformed operation to apply locally</td></tr>
+    <tr><td><code>presence</code></td><td>Bidirectional</td><td><code>{user_id, cursor, selection, color}</code></td><td>Cursor and selection position updates</td></tr>
+    <tr><td><code>sync</code></td><td>Server → Client</td><td><code>{ops[], from_rev, to_rev}</code></td><td>Batch of missed operations sent on reconnect</td></tr>
+</table>
+
+<h4>Pub/Sub System</h4>
+<p>Enables cross-instance operation broadcasting. See <a href="#pubsub-deep-dive">Pub/Sub Deep Dive</a> for full details.</p>
+
+<h4>NoSQL DB (Operation Log)</h4>
+<p>Append-only log of every operation applied to a document, keyed by <code>(document_id, revision)</code>. Used for replaying operations on document open, conflict resolution, and version history. High write throughput and partition-by-document access pattern make NoSQL ideal.</p>
+
+<h4>Cache (Active Document State)</h4>
+<p>Stores the assembled current state of "hot" (actively edited) documents. When a Collaboration Service instance starts serving a document, it loads the latest snapshot + recent operations, assembles the current state, and writes it to Cache. Subsequent operations update the cached state. This avoids rebuilding from scratch when a different instance needs the document. See <a href="#cache-cdn">Cache &amp; CDN</a> for details.</p>
+
+<!-- ============================================================ -->
+<h2 id="flow3">5. Flow 3 — Document Sharing &amp; Permissions</h2>
+<!-- ============================================================ -->
+
+<h3>5.1 Diagram</h3>
+<div class="diagram-container">
+    <pre class="mermaid">
+flowchart LR
+    C["👤 Client"] -->|"HTTP POST\n/api/documents/{id}/share"| LB["⚖️ Load Balancer"]
+    LB --> GW["🚪 API Gateway"]
+    GW --> PS2["🔐 Permission\nService"]
+    PS2 <--> SQL[("💾 SQL DB\n(Permissions)")]
+    PS2 --> MQ[["📬 Message Queue"]]
+    MQ --> NW["📧 Notification\nWorker"]
+    PS2 --> Cache[("🗄️ Cache\n(Permission Cache)")]
+    </pre>
 </div>
 
-<h2>⚖️ Tradeoffs</h2>
-<div class="tradeoff-grid">
-<div class="card pro"><h4>Centralized OT (Server-Ordered)</h4><ul><li>Strong consistency guarantee</li><li>Simpler client implementation</li><li>Server controls access + ordering</li></ul></div>
-<div class="card con"><h4>Centralized OT (Server-Ordered)</h4><ul><li>Server is bottleneck per document</li><li>Network latency on every edit</li><li>Complex transform function maintenance</li></ul></div>
-<div class="card pro"><h4>Append-Only Operation Log</h4><ul><li>Perfect audit trail (every edit preserved)</li><li>Easy version reconstruction</li><li>Natural event sourcing pattern</li></ul></div>
-<div class="card con"><h4>Append-Only Operation Log</h4><ul><li>Grows unboundedly without compaction</li><li>Reconstruction from ops is slow without snapshots</li><li>Storage cost for rarely-accessed docs</li></ul></div>
+<h3>5.2 Examples</h3>
+
+<div class="example-box">
+    <strong>Example 1 — Sharing via Email:</strong><br>
+    Alice clicks "Share" on document <code>doc-abc123</code>, enters Bob's email (<code>bob@company.com</code>), selects "Editor" role, and clicks "Send". This triggers an <code>HTTP POST /api/documents/doc-abc123/share</code> with body <code>{"email": "bob@company.com", "role": "editor"}</code>. The <strong>Permission Service</strong> resolves Bob's email to his user ID, checks that Alice is the owner (via the <strong>SQL DB</strong> <code>documents</code> table), inserts a row into the <code>document_permissions</code> table, invalidates the permission cache for this document in the <strong>Cache</strong>, and enqueues a notification message <code>{"type": "share_notification", "to": "bob", "doc_id": "doc-abc123", "from": "alice"}</code> on the <strong>Message Queue</strong>. The <strong>Notification Worker</strong> consumes this message and sends Bob an email and/or in-app notification. Response: <code>200 OK</code>.
 </div>
 
-<h2>🔄 Alternative Approaches</h2>
-<div class="grid">
-<div class="card"><h4>CRDT-Based (Yjs / Automerge)</h4><p>CRDTs (Conflict-free Replicated Data Types) mathematically guarantee convergence without a central server. Each character has a unique ID and position in a partial order. Better for offline-first (Figma uses CRDTs). Trade-off: higher metadata overhead per character (~2-4x storage).</p></div>
-<div class="card"><h4>Differential Sync (Neil Fraser)</h4><p>Periodically diff client state vs server state (using Myers diff algorithm). Simpler than OT but less granular — batches changes between sync cycles. Used by earlier collaborative tools. Not suitable for real-time character-by-character sync.</p></div>
+<div class="example-box">
+    <strong>Example 2 — Sharing via Link:</strong><br>
+    Alice selects "Anyone with the link can view" in the sharing dialog. This triggers an <code>HTTP PATCH /api/documents/doc-abc123/share</code> with body <code>{"link_sharing": "viewer"}</code>. The Permission Service updates the <code>documents</code> table to set <code>link_share_role = 'viewer'</code>. Now anyone with the URL <code>/documents/doc-abc123</code> can view the document without needing an explicit permission entry. When a user opens the link, the API Gateway passes the request to the Document Service, which checks: (1) explicit permission in <code>document_permissions</code>, (2) link sharing setting in <code>documents</code>. If link sharing is enabled, the user gets the corresponding role.
 </div>
 
-<h2>📚 Additional Information</h2>
-<div class="card">
+<div class="example-box">
+    <strong>Example 3 — Permission Denied:</strong><br>
+    Eve, who has no permission, tries to open <code>doc-abc123</code> via a direct URL. The Document Service checks the Cache (miss) → SQL DB for Eve's permission on this document. No row found. It also checks link sharing — disabled (or link sharing role is 'none'). The service returns <code>403 Forbidden</code> with a message "You do not have access to this document. Request access?" Eve can click "Request Access", triggering an <code>HTTP POST /api/documents/doc-abc123/access-request</code>, which enqueues a notification to the document owner.
+</div>
+
+<h3>5.3 Component Deep Dive</h3>
+
+<h4>Permission Service</h4>
+<p>A stateless microservice that manages document access control.</p>
+<table>
+    <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th><th>Description</th></tr>
+    <tr><td><code>/api/documents/{id}/share</code></td><td><span class="protocol-tag">POST</span></td><td><code>{email, role}</code></td><td><code>200 OK</code></td><td>Share document with a specific user</td></tr>
+    <tr><td><code>/api/documents/{id}/share</code></td><td><span class="protocol-tag">PATCH</span></td><td><code>{link_sharing: role}</code></td><td><code>200 OK</code></td><td>Update link sharing settings</td></tr>
+    <tr><td><code>/api/documents/{id}/share</code></td><td><span class="protocol-tag">DELETE</span></td><td><code>{user_id}</code></td><td><code>204 No Content</code></td><td>Revoke a user's access</td></tr>
+    <tr><td><code>/api/documents/{id}/share</code></td><td><span class="protocol-tag">GET</span></td><td>Path param: doc ID</td><td><code>{permissions[]}</code></td><td>List all users with access and their roles</td></tr>
+    <tr><td><code>/api/documents/{id}/access-request</code></td><td><span class="protocol-tag">POST</span></td><td><code>{message?}</code></td><td><code>202 Accepted</code></td><td>Request access from the owner</td></tr>
+</table>
+
+<h4>Message Queue</h4>
+<p>Used for asynchronous tasks like sending notifications. Decouples the Permission Service from the Notification Worker so that sharing is fast and notification delivery can retry independently. See <a href="#mq-deep-dive">Message Queue Deep Dive</a>.</p>
+
+<h4>Notification Worker</h4>
+<p>A background consumer that reads from the message queue and sends email, push, or in-app notifications. Idempotent processing ensures at-least-once delivery semantics don't cause duplicate notifications (uses a deduplication key based on notification content hash).</p>
+
+<!-- ============================================================ -->
+<h2 id="flow4">6. Flow 4 — Version History</h2>
+<!-- ============================================================ -->
+
+<h3>6.1 Diagram</h3>
+<div class="diagram-container">
+    <pre class="mermaid">
+flowchart LR
+    C["👤 Client"] -->|"HTTP GET/POST"| LB["⚖️ Load Balancer"]
+    LB --> GW["🚪 API Gateway"]
+    GW --> VS["🕐 Version\nService"]
+    VS <--> SQL[("💾 SQL DB\n(Version Metadata)")]
+    VS <--> NoSQL[("💾 NoSQL DB\n(Operation Log)")]
+    VS <--> OS[("📦 Object Storage\n(Snapshots)")]
+    </pre>
+</div>
+
+<h3>6.2 Examples</h3>
+
+<div class="example-box">
+    <strong>Example 1 — Viewing Version History:</strong><br>
+    Alice clicks "File → Version history → See version history". This triggers an <code>HTTP GET /api/documents/doc-abc123/versions?limit=50</code>. The <strong>Version Service</strong> queries the <strong>SQL DB</strong> for version metadata (snapshot revision numbers, timestamps, author names) for this document, ordered by creation time descending. The response is a <code>200 OK</code> with a list of versions: <code>[{revision: 500, timestamp: "2024-01-15T10:30:00Z", author: "Alice"}, {revision: 400, ...}, ...]</code>. The client renders a sidebar with the version timeline. Versions are automatically created at periodic intervals (every ~100 operations or every ~30 minutes of editing activity).
+</div>
+
+<div class="example-box">
+    <strong>Example 2 — Viewing a Specific Past Version:</strong><br>
+    Alice clicks on the version from "Jan 15, 10:30 AM". This triggers an <code>HTTP GET /api/documents/doc-abc123/versions/500</code>. The Version Service retrieves the snapshot at revision 500 from <strong>Object Storage</strong> (where large snapshots are stored). The full document state at that revision is returned. The client renders it in a read-only diff view, highlighting changes from the previous version by comparing against the snapshot at revision 400.
+</div>
+
+<div class="example-box">
+    <strong>Example 3 — Restoring a Previous Version:</strong><br>
+    Alice decides the document was better at revision 500 and clicks "Restore this version". This triggers an <code>HTTP POST /api/documents/doc-abc123/versions/500/restore</code>. The Version Service loads the snapshot at revision 500 from Object Storage, creates a new operation that replaces the entire document content with that snapshot's content, and submits it through the Collaboration Service as a special "restore" operation. This operation goes through the normal OT pipeline — any users currently editing will see the document content replaced. A new version snapshot is created at the new revision. Response: <code>200 OK</code>.
+</div>
+
+<h3>6.3 Component Deep Dive</h3>
+
+<h4>Version Service</h4>
+<p>A stateless microservice that manages version history and snapshots.</p>
+<table>
+    <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th><th>Description</th></tr>
+    <tr><td><code>/api/documents/{id}/versions</code></td><td><span class="protocol-tag">GET</span></td><td>Query: <code>limit, cursor</code></td><td><code>{versions[]}</code></td><td>List version history</td></tr>
+    <tr><td><code>/api/documents/{id}/versions/{rev}</code></td><td><span class="protocol-tag">GET</span></td><td>Path: doc ID, revision</td><td><code>{content, metadata}</code></td><td>Get document at a specific version</td></tr>
+    <tr><td><code>/api/documents/{id}/versions/{rev}/restore</code></td><td><span class="protocol-tag">POST</span></td><td>Path: doc ID, revision</td><td><code>200 OK</code></td><td>Restore document to a previous version</td></tr>
+    <tr><td><code>/api/documents/{id}/versions</code></td><td><span class="protocol-tag">POST</span></td><td><code>{label?}</code></td><td><code>201 Created</code></td><td>Manually name/save a version</td></tr>
+</table>
+
+<h4>Object Storage</h4>
+<p>Stores document snapshots (serialised full document state). Snapshots can be large (megabytes for documents with many images), so object storage is more cost-effective and scalable than the primary database for this purpose. Each snapshot is stored as a binary blob keyed by <code>{document_id}/{revision}</code>.</p>
+
+<!-- ============================================================ -->
+<h2 id="flow5">7. Flow 5 — Commenting</h2>
+<!-- ============================================================ -->
+
+<h3>7.1 Diagram</h3>
+<div class="diagram-container">
+    <pre class="mermaid">
+flowchart LR
+    C["👤 Client"] -->|"HTTP POST\n/api/documents/{id}/comments"| LB["⚖️ Load Balancer"]
+    LB --> GW["🚪 API Gateway"]
+    GW --> CMS["💬 Comment\nService"]
+    CMS <--> SQL[("💾 SQL DB\n(Comments)")]
+    CMS --> PS[["📡 Pub/Sub\n(doc channel)"]]
+    PS --> CS["🔄 Collaboration\nService"]
+    CS -->|"WebSocket Push"| OC["👥 Other Clients"]
+    </pre>
+</div>
+
+<h3>7.2 Examples</h3>
+
+<div class="example-box">
+    <strong>Example 1 — Adding a Comment:</strong><br>
+    Alice highlights the text "revenue projections" (positions 120–140) and clicks the comment icon. She types "Can we update these numbers?" and clicks "Comment". This triggers an <code>HTTP POST /api/documents/doc-abc123/comments</code> with body <code>{"anchor_start": 120, "anchor_end": 140, "content": "Can we update these numbers?"}</code>. The <strong>Comment Service</strong> writes the comment to the <strong>SQL DB</strong> <code>comments</code> table and <strong>publishes</strong> a message to the <strong>Pub/Sub</strong> channel <code>doc:doc-abc123</code>: <code>{"type": "comment_added", "comment": {...}}</code>. The <strong>Collaboration Service</strong> instances subscribed to this channel push the comment event to all connected clients via WebSocket. Bob, who has the document open, sees the comment appear immediately in the sidebar and the highlighted text.
+</div>
+
+<div class="example-box">
+    <strong>Example 2 — Replying to a Comment Thread:</strong><br>
+    Bob clicks on Alice's comment and types "Done, updated to Q4 actuals." and clicks "Reply". This triggers an <code>HTTP POST /api/documents/doc-abc123/comments</code> with body <code>{"parent_comment_id": "comment-xyz", "content": "Done, updated to Q4 actuals."}</code>. The comment is stored with a foreign key to the parent comment. The same Pub/Sub broadcast mechanism pushes the reply to all connected clients.
+</div>
+
+<div class="example-box">
+    <strong>Example 3 — Resolving a Comment Thread:</strong><br>
+    Alice reads Bob's reply and clicks "Resolve". This triggers an <code>HTTP PATCH /api/documents/doc-abc123/comments/comment-xyz</code> with body <code>{"is_resolved": true}</code>. The Comment Service updates the row in SQL and publishes a resolution event via Pub/Sub. All connected clients update their UI to show the comment as resolved (collapsed/hidden).
+</div>
+
+<h3>7.3 Component Deep Dive</h3>
+
+<h4>Comment Service</h4>
+<table>
+    <tr><th>Endpoint</th><th>Method</th><th>Input</th><th>Output</th><th>Description</th></tr>
+    <tr><td><code>/api/documents/{id}/comments</code></td><td><span class="protocol-tag">POST</span></td><td><code>{anchor_start, anchor_end, content, parent_comment_id?}</code></td><td><code>201 Created</code></td><td>Add a comment or reply</td></tr>
+    <tr><td><code>/api/documents/{id}/comments</code></td><td><span class="protocol-tag">GET</span></td><td>Query: <code>resolved?, limit, cursor</code></td><td><code>{comments[]}</code></td><td>List comments for a document</td></tr>
+    <tr><td><code>/api/documents/{id}/comments/{cid}</code></td><td><span class="protocol-tag">PATCH</span></td><td><code>{content?, is_resolved?}</code></td><td><code>200 OK</code></td><td>Edit or resolve a comment</td></tr>
+    <tr><td><code>/api/documents/{id}/comments/{cid}</code></td><td><span class="protocol-tag">DELETE</span></td><td>Path params</td><td><code>204 No Content</code></td><td>Delete a comment</td></tr>
+</table>
+<p>SQL is used for comments because they have a relational structure (parent-child for threads, user foreign keys) and need transactional integrity. Comment anchors (position offsets) must be updated when the document changes — the Collaboration Service adjusts anchor positions as part of OT processing.</p>
+
+<!-- ============================================================ -->
+<h2 id="combined-flow">8. Combined Overall Flow</h2>
+<!-- ============================================================ -->
+
+<h3>8.1 Diagram</h3>
+<div class="diagram-container">
+    <pre class="mermaid">
+flowchart TD
+    CDN["🌐 CDN\n(Static Assets: JS, CSS, Fonts)"]
+    C1["👤 Client A"]
+    C2["👤 Client B"]
+
+    CDN -.->|"Serve SPA Assets"| C1
+    CDN -.->|"Serve SPA Assets"| C2
+
+    C1 -->|"HTTP"| LB_HTTP["⚖️ HTTP Load Balancer\n(L7 · Round-Robin)"]
+    C2 -->|"HTTP"| LB_HTTP
+    C1 <-->|"WebSocket"| LB_WS["⚖️ WS Load Balancer\n(L4 · Sticky / Consistent Hash)"]
+    C2 <-->|"WebSocket"| LB_WS
+
+    LB_HTTP --> GW["🚪 API Gateway\n(Auth · Rate Limit · Routing)"]
+
+    GW --> DS["📄 Document Service"]
+    GW --> PermS["🔐 Permission Service"]
+    GW --> VS["🕐 Version Service"]
+    GW --> CMS["💬 Comment Service"]
+
+    LB_WS <--> CS1["🔄 Collaboration Service 1\n(OT Engine)"]
+    LB_WS <--> CS2["🔄 Collaboration Service 2\n(OT Engine)"]
+
+    CS1 <-->|"Pub/Sub"| PS[["📡 Pub/Sub System"]]
+    CS2 <-->|"Pub/Sub"| PS
+    CMS --> PS
+
+    DS <--> Cache[("🗄️ Cache")]
+    CS1 <--> Cache
+    CS2 <--> Cache
+    PermS <--> Cache
+
+    DS <--> SQL[("💾 SQL DB\n(Users · Docs · Perms · Comments)")]
+    PermS <--> SQL
+    CMS <--> SQL
+    VS <--> SQL
+
+    DS <--> NoSQL[("💾 NoSQL DB\n(Op Log · Doc Content)")]
+    CS1 --> NoSQL
+    CS2 --> NoSQL
+    VS <--> NoSQL
+
+    VS <--> ObjStore[("📦 Object Storage\n(Snapshots · Images)")]
+    DS <--> ObjStore
+
+    PermS --> MQ[["📬 Message Queue"]]
+    MQ --> Workers["⚙️ Background Workers\n(Notifications · Snapshots\nSearch Indexer)"]
+    Workers --> SearchIdx[("🔍 Search Index")]
+    </pre>
+</div>
+
+<h3>8.2 Combined Flow Examples</h3>
+
+<div class="example-box">
+    <strong>Example — Full End-to-End Collaborative Editing Session:</strong><br>
+    <ol>
+        <li><strong>Load App:</strong> Alice navigates to the Docs URL. Her browser fetches the SPA (JavaScript, CSS, fonts) from the <strong>CDN</strong>.</li>
+        <li><strong>List Documents:</strong> The SPA sends <code>HTTP GET /api/documents</code> through the <strong>HTTP Load Balancer</strong> → <strong>API Gateway</strong> → <strong>Document Service</strong>. The Document Service queries the <strong>Cache</strong> (miss) → <strong>SQL DB</strong> and returns Alice's documents.</li>
+        <li><strong>Open Document:</strong> Alice clicks "Q4 Planning". The SPA sends <code>HTTP GET /api/documents/doc-abc123</code>. The Document Service fetches the latest snapshot from <strong>Object Storage</strong>, replays recent operations from the <strong>NoSQL operation log</strong>, and returns the assembled document.</li>
+        <li><strong>Establish WebSocket:</strong> The SPA opens a WebSocket connection through the <strong>WS Load Balancer</strong> to <strong>Collaboration Service Instance 1</strong>. The instance authenticates Alice, verifies her "editor" permission via <strong>Cache</strong> (or SQL), subscribes to <strong>Pub/Sub</strong> channel <code>doc:doc-abc123</code>, and adds Alice's connection to its local map.</li>
+        <li><strong>Share Document:</strong> Alice shares the doc with Bob via <code>HTTP POST /api/documents/doc-abc123/share</code> → <strong>Permission Service</strong>. A row is inserted in the <strong>SQL DB</strong>. A notification message is enqueued on the <strong>Message Queue</strong>. A <strong>Background Worker</strong> sends Bob an email.</li>
+        <li><strong>Bob Joins:</strong> Bob opens the document. He gets the current state via HTTP and establishes a WebSocket to <strong>Collaboration Service Instance 2</strong>. Instance 2 subscribes to Pub/Sub channel <code>doc:doc-abc123</code>.</li>
+        <li><strong>Collaborative Editing:</strong> Alice types "Agenda". Instance 1 applies the operation via OT, persists to <strong>NoSQL</strong>, updates <strong>Cache</strong>, publishes to <strong>Pub/Sub</strong>. Instance 2 receives the message from Pub/Sub and pushes it to Bob via WebSocket. Bob sees "Agenda".</li>
+        <li><strong>Comment:</strong> Bob highlights "revenue projections" and adds a comment via <code>HTTP POST</code> → <strong>Comment Service</strong> → <strong>SQL DB</strong>. The Comment Service publishes to <strong>Pub/Sub</strong>. Instance 1 pushes the comment to Alice via WebSocket.</li>
+        <li><strong>Version Snapshot:</strong> After 100 operations, the Collaboration Service triggers a snapshot via the <strong>Message Queue</strong>. A <strong>Background Worker</strong> assembles the current document state, serialises it, and stores it in <strong>Object Storage</strong>. Version metadata is written to <strong>SQL DB</strong>.</li>
+        <li><strong>Search Indexing:</strong> The <strong>Background Worker</strong> also updates the <strong>Search Index</strong> with the latest document content so it's searchable.</li>
+    </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="schema">9. Database Schema</h2>
+<!-- ============================================================ -->
+
+<h3>9.1 SQL Tables</h3>
+
+<h4>Table: <code>users</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><span class="badge badge-pk">PK</span></td><td>Unique user identifier</td></tr>
+    <tr><td><code>email</code></td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td><td>User's email address</td></tr>
+    <tr><td><code>display_name</code></td><td>VARCHAR(128)</td><td>NOT NULL</td><td>User's display name</td></tr>
+    <tr><td><code>avatar_url</code></td><td>VARCHAR(512)</td><td>NULLABLE</td><td>URL to user's profile picture</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Account creation time</td></tr>
+    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last update time</td></tr>
+</table>
+<p><strong>Why SQL:</strong> User data is highly structured and relational (users own documents, share with other users, author comments). ACID guarantees are important for user account changes. The data is read-heavy (resolved on nearly every request for display names and avatars) and benefits from JOINs.</p>
+<p><strong>Indexes:</strong></p>
 <ul>
-<li><strong>Jupiter protocol:</strong> Google's internal OT implementation (used in Docs). Uses a state-space graph where each axis represents one client's operations. Traversal from any point to any other always produces the same result (convergence proof).</li>
-<li><strong>Rich text as operations:</strong> formatting is also an operation: format(range: [5,10], bold: true). OT must transform formatting ops against insert/delete ops (e.g., if text inserted within formatted range, extend format range).</li>
-<li><strong>Offline editing:</strong> client queues ops locally (IndexedDB). On reconnect, sends all buffered ops. Server transforms against any concurrent ops that arrived from other clients. Can result in surprising merges for long offline periods.</li>
-<li><strong>Smart Compose / AI:</strong> predictive text suggestions while typing (using LLM). Suggestions are "phantom ops" — not committed until user accepts. Must not interfere with OT stream from other collaborators.</li>
+    <li><code>email</code> — <strong>Hash index</strong> for O(1) lookups when resolving emails during sharing. Users log in and are looked up by email frequently.</li>
 </ul>
+<p><strong>Read from:</strong> Every authenticated request (to resolve user details), sharing (to resolve email → user_id), comment rendering (to show author names).</p>
+<p><strong>Written to:</strong> User registration, profile updates.</p>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code> (hash-based). Users table is relatively small compared to documents, but sharding by user_id ensures even distribution and locality for user-specific queries.</p>
+
+<hr>
+
+<h4>Table: <code>documents</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><code>document_id</code></td><td>UUID</td><td><span class="badge badge-pk">PK</span></td><td>Unique document identifier</td></tr>
+    <tr><td><code>owner_id</code></td><td>UUID</td><td><span class="badge badge-fk">FK → users.user_id</span>, NOT NULL</td><td>Document owner</td></tr>
+    <tr><td><code>title</code></td><td>VARCHAR(512)</td><td>NOT NULL, DEFAULT 'Untitled'</td><td>Document title</td></tr>
+    <tr><td><code>current_revision</code></td><td>INTEGER</td><td>NOT NULL, DEFAULT 0</td><td><em>(Denormalized)</em> Latest revision number from operation log</td></tr>
+    <tr><td><code>latest_snapshot_ref</code></td><td>VARCHAR(512)</td><td>NULLABLE</td><td><em>(Denormalized)</em> Reference to the latest snapshot in Object Storage</td></tr>
+    <tr><td><code>link_share_role</code></td><td>ENUM('none','viewer','commenter','editor')</td><td>DEFAULT 'none'</td><td>Role granted to anyone with the link</td></tr>
+    <tr><td><code>is_deleted</code></td><td>BOOLEAN</td><td>DEFAULT false</td><td>Soft delete flag</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Document creation time</td></tr>
+    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last modification time</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Document metadata is structured, relational (owner FK to users), and requires transactional consistency for ownership and sharing changes. JOINs with users and permissions tables are frequent.</p>
+<p><strong>Denormalization:</strong></p>
+<ul>
+    <li><code>current_revision</code> — Denormalized from the NoSQL operation log. Without this, every incoming operation would require a query to the NoSQL DB to determine the current revision for OT comparison. Since revisions are updated on every edit (very high frequency), storing it in the documents table and updating it atomically avoids this expensive lookup.</li>
+    <li><code>latest_snapshot_ref</code> — Denormalized pointer to the most recent snapshot in Object Storage. Avoids scanning the snapshots table/collection on every document open. Updated only when a new snapshot is created (every ~100 operations).</li>
+</ul>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><code>(owner_id, updated_at DESC)</code> — <strong>Composite B-tree index</strong> for the "My Documents" page sorted by recent activity. B-tree supports range scans and ordering, which is required for <code>ORDER BY updated_at DESC</code> with pagination.</li>
+    <li><code>(owner_id, is_deleted)</code> — <strong>Composite B-tree index</strong> for filtering out deleted documents in list queries.</li>
+</ul>
+<p><strong>Read from:</strong> Opening a document, listing documents, permission checks (to verify ownership and link sharing).</p>
+<p><strong>Written to:</strong> Creating a document, renaming, updating revision (on every edit — batched), soft deleting, changing sharing settings.</p>
+<p><strong>Sharding:</strong> Shard by <code>document_id</code> (hash-based consistent hashing). Most queries access a specific document by ID. The "list by owner" query may need a scatter-gather across shards, but this is acceptable since it's paginated and cached.</p>
+
+<hr>
+
+<h4>Table: <code>document_permissions</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><code>permission_id</code></td><td>UUID</td><td><span class="badge badge-pk">PK</span></td><td>Unique permission record ID</td></tr>
+    <tr><td><code>document_id</code></td><td>UUID</td><td><span class="badge badge-fk">FK → documents.document_id</span>, NOT NULL</td><td>The document being shared</td></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><span class="badge badge-fk">FK → users.user_id</span>, NOT NULL</td><td>The user granted access</td></tr>
+    <tr><td><code>role</code></td><td>ENUM('viewer','commenter','editor')</td><td>NOT NULL</td><td>Access level</td></tr>
+    <tr><td><code>granted_by</code></td><td>UUID</td><td><span class="badge badge-fk">FK → users.user_id</span></td><td>Who granted the permission</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>When the permission was granted</td></tr>
+</table>
+<p><strong>Unique Constraint:</strong> <code>(document_id, user_id)</code> — Each user can have only one permission record per document.</p>
+<p><strong>Why SQL:</strong> Permissions are inherently relational (linking users to documents with roles). ACID guarantees ensure permission changes are atomic and consistent — critical for security. JOINs allow queries like "list all users with access to document X" and "list all documents shared with user Y".</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><code>(document_id, user_id)</code> — <strong>Composite B-tree (unique) index</strong> for checking a specific user's permission on a specific document. This is the most frequent query pattern (executed on every document access). Hash would also work but B-tree supports the unique constraint natively.</li>
+    <li><code>(user_id, document_id)</code> — <strong>Composite B-tree index</strong> for the "Shared with me" document list. Allows efficient lookup of all documents a specific user has access to.</li>
+</ul>
+<p><strong>Read from:</strong> Every document access (permission check), "Shared with me" page, share dialog (listing current collaborators).</p>
+<p><strong>Written to:</strong> Sharing a document, revoking access, changing roles.</p>
+<p><strong>Sharding:</strong> Shard by <code>document_id</code> (hash-based). Permission checks are almost always per-document ("does user X have access to document Y?"). The "Shared with me" query (by user_id) requires cross-shard scatter-gather, but this is infrequent compared to per-document checks and is cached.</p>
+
+<hr>
+
+<h4>Table: <code>comments</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><code>comment_id</code></td><td>UUID</td><td><span class="badge badge-pk">PK</span></td><td>Unique comment identifier</td></tr>
+    <tr><td><code>document_id</code></td><td>UUID</td><td><span class="badge badge-fk">FK → documents.document_id</span>, NOT NULL</td><td>The document this comment belongs to</td></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><span class="badge badge-fk">FK → users.user_id</span>, NOT NULL</td><td>Comment author</td></tr>
+    <tr><td><code>parent_comment_id</code></td><td>UUID</td><td><span class="badge badge-fk">FK → comments.comment_id</span>, NULLABLE</td><td>Parent comment (for replies/threads)</td></tr>
+    <tr><td><code>content</code></td><td>TEXT</td><td>NOT NULL</td><td>Comment body</td></tr>
+    <tr><td><code>anchor_start</code></td><td>INTEGER</td><td>NULLABLE</td><td>Start position in document (only root comments)</td></tr>
+    <tr><td><code>anchor_end</code></td><td>INTEGER</td><td>NULLABLE</td><td>End position in document (only root comments)</td></tr>
+    <tr><td><code>is_resolved</code></td><td>BOOLEAN</td><td>DEFAULT false</td><td>Whether the thread is resolved</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Comment creation time</td></tr>
+    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last edit time</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Comments have a relational structure: they belong to a document, are authored by a user, and form hierarchical threads (parent-child via self-referencing FK). JOINs with users table are needed to display author names and avatars. Transactional consistency ensures thread integrity.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><code>(document_id, is_resolved, created_at)</code> — <strong>Composite B-tree index</strong> for loading all unresolved comments for a document, ordered by time. This is the primary query pattern when opening a document.</li>
+    <li><code>parent_comment_id</code> — <strong>B-tree index</strong> for loading replies to a specific comment thread.</li>
+</ul>
+<p><strong>Read from:</strong> Opening a document (load all comments), expanding a comment thread (load replies).</p>
+<p><strong>Written to:</strong> Adding a comment, replying, resolving, editing, deleting a comment.</p>
+
+<hr>
+
+<h4>Table: <code>version_metadata</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><code>version_id</code></td><td>UUID</td><td><span class="badge badge-pk">PK</span></td><td>Unique version identifier</td></tr>
+    <tr><td><code>document_id</code></td><td>UUID</td><td><span class="badge badge-fk">FK → documents.document_id</span>, NOT NULL</td><td>Document this version belongs to</td></tr>
+    <tr><td><code>revision</code></td><td>INTEGER</td><td>NOT NULL</td><td>Revision number this snapshot represents</td></tr>
+    <tr><td><code>snapshot_ref</code></td><td>VARCHAR(512)</td><td>NOT NULL</td><td>Reference to snapshot in Object Storage</td></tr>
+    <tr><td><code>label</code></td><td>VARCHAR(256)</td><td>NULLABLE</td><td>Optional user-defined name for this version</td></tr>
+    <tr><td><code>created_by</code></td><td>UUID</td><td><span class="badge badge-fk">FK → users.user_id</span></td><td>User who triggered/was active when snapshot was created</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>When this version was created</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Version metadata is structured, relational, and read from infrequently (only when viewing version history). JOINs with users for display. Low write frequency (one row per ~100 operations).</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><code>(document_id, created_at DESC)</code> — <strong>Composite B-tree index</strong> for listing version history chronologically.</li>
+    <li><code>(document_id, revision)</code> — <strong>Composite B-tree (unique) index</strong> for fetching a specific version by revision number.</li>
+</ul>
+<p><strong>Read from:</strong> Viewing version history, restoring a version.</p>
+<p><strong>Written to:</strong> Automatic snapshot creation (every ~100 operations), user manually naming a version.</p>
+
+<hr>
+
+<h3>9.2 NoSQL Tables</h3>
+
+<h4>Table: <code>operation_log</code> <span class="badge badge-nosql">NoSQL</span></h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td><code>document_id</code></td><td>UUID</td><td><span class="badge badge-pk">Partition Key</span></td><td>Document this operation belongs to</td></tr>
+    <tr><td><code>revision</code></td><td>INTEGER</td><td><span class="badge badge-pk">Sort Key</span></td><td>Monotonically increasing revision number</td></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td>Attribute</td><td>Who performed the operation</td></tr>
+    <tr><td><code>operation</code></td><td>JSON</td><td>Attribute</td><td>The OT operation (insert/delete/retain with position and content)</td></tr>
+    <tr><td><code>timestamp</code></td><td>TIMESTAMP</td><td>Attribute</td><td>When the operation was applied</td></tr>
+</table>
+<p><strong>Why NoSQL:</strong></p>
+<ul>
+    <li><strong>Extreme write throughput:</strong> Every keystroke from every user generates an operation. A popular document with 50 concurrent editors could see hundreds of writes per second. NoSQL's partitioned, append-only write path handles this far better than SQL.</li>
+    <li><strong>Simple access pattern:</strong> Always accessed by <code>(document_id, revision range)</code> — fetch operations from revision X to Y. No JOINs needed. This is a classic key-value/wide-column use case.</li>
+    <li><strong>Horizontal scalability:</strong> Partitioning by <code>document_id</code> provides natural sharding. No cross-partition queries.</li>
+    <li><strong>Append-only:</strong> Operations are never updated or deleted (immutable log), which is a perfect fit for NoSQL's write-optimised storage engines.</li>
+</ul>
+<p><strong>Sharding:</strong> Partitioned by <code>document_id</code> using <strong>hash-based consistent hashing</strong>. All operations for a single document are on the same partition, which is critical because OT requires operations to be ordered by revision within a document. Consistent hashing ensures even distribution across nodes and minimal data movement when nodes are added/removed.</p>
+<p><strong>Read from:</strong> Opening a document (replay operations since last snapshot), client reconnection (replay missed operations), version history diff views.</p>
+<p><strong>Written to:</strong> Every edit operation (extremely high frequency).</p>
+
+<hr>
+
+<h4>Table: <code>document_snapshots</code> <span class="badge badge-nosql">NoSQL</span></h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td><code>document_id</code></td><td>UUID</td><td><span class="badge badge-pk">Partition Key</span></td><td>Document identifier</td></tr>
+    <tr><td><code>revision</code></td><td>INTEGER</td><td><span class="badge badge-pk">Sort Key</span></td><td>Revision this snapshot represents</td></tr>
+    <tr><td><code>content</code></td><td>BLOB / JSON</td><td>Attribute</td><td>Serialised full document state (or pointer to Object Storage for large documents)</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>Attribute</td><td>Snapshot creation time</td></tr>
+</table>
+<p><strong>Why NoSQL:</strong> Snapshots are large, semi-structured binary blobs. Access pattern is simple: get the latest snapshot for a document or get a specific snapshot by revision. No relational queries needed. For very large documents, the <code>content</code> field stores a pointer to Object Storage rather than the blob itself.</p>
+<p><strong>Sharding:</strong> Same strategy as operation_log — partition by <code>document_id</code> (hash-based). Co-locating snapshots with operation log data for the same document would be ideal for read performance.</p>
+<p><strong>Read from:</strong> Opening a document (load latest snapshot as base), viewing a specific version.</p>
+<p><strong>Written to:</strong> Periodic snapshot creation (every ~100 operations or ~30 minutes of activity).</p>
+
+<!-- ============================================================ -->
+<h2 id="cache-cdn">10. Cache &amp; CDN Strategy</h2>
+<!-- ============================================================ -->
+
+<h3>10.1 CDN (Content Delivery Network)</h3>
+
+<div class="callout-green">
+    <strong>✅ CDN IS appropriate for this system.</strong>
 </div>
+
+<p><strong>What it serves:</strong> Static assets only — the SPA JavaScript bundle, CSS stylesheets, fonts, images/icons, and the HTML shell. These assets are identical for all users and change only on deployment.</p>
+
+<p><strong>Why appropriate:</strong></p>
+<ul>
+    <li>The SPA bundle can be several MB. Serving from edge nodes near the user dramatically reduces initial page load time.</li>
+    <li>Static assets are highly cacheable — they change only on code deployments (versioned with content hashes).</li>
+    <li>Offloads traffic from origin servers.</li>
+</ul>
+
+<p><strong>Why CDN is NOT used for document content:</strong> Document content is dynamic, user-specific, and real-time. It changes with every keystroke and requires authentication. CDN caching would introduce staleness and access control complexity.</p>
+
+<p><strong>CDN Cache Configuration:</strong></p>
+<ul>
+    <li><strong>Cache-Control:</strong> <code>public, max-age=31536000, immutable</code> for hashed assets (e.g., <code>app.3f7a9b.js</code>).</li>
+    <li><strong>Cache-Control:</strong> <code>no-cache</code> for <code>index.html</code> (so users always get the latest version pointers).</li>
+</ul>
+
+<h3>10.2 In-Memory Cache</h3>
+
+<div class="callout-green">
+    <strong>✅ In-memory cache IS critical for this system.</strong>
+</div>
+
+<p>The cache stores multiple categories of data, each with its own strategy:</p>
+
+<h4>Cache Category 1: Active Document State</h4>
+<table>
+    <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+    <tr><td><strong>Caching Strategy</strong></td><td>Write-through</td><td>Every applied operation updates the cache synchronously. This ensures the cached document state is always up-to-date, which is critical since it's read by every incoming operation for OT processing.</td></tr>
+    <tr><td><strong>Populated by</strong></td><td>Collaboration Service on first document open: loads snapshot from NoSQL/Object Storage, replays recent operations, writes assembled state to cache. Updated on every subsequent operation.</td><td>—</td></tr>
+    <tr><td><strong>Eviction Policy</strong></td><td>LRU (Least Recently Used)</td><td>Documents that haven't been edited recently are the best candidates for eviction. Active documents are naturally "recently used" on every keystroke.</td></tr>
+    <tr><td><strong>Expiration Policy</strong></td><td>TTL = 1 hour of inactivity (no operations)</td><td>If no one has edited or opened the document in 1 hour, the cached state is expired. When someone opens it again, it's rebuilt from snapshot + operation log. 1 hour balances memory usage vs. rebuild cost.</td></tr>
+</table>
+
+<h4>Cache Category 2: Permission Data</h4>
+<table>
+    <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+    <tr><td><strong>Caching Strategy</strong></td><td>Cache-aside (lazy loading)</td><td>Permissions are read far more often than written (checked on every request, changed rarely). Cache-aside avoids writing to cache when permissions change (which is rare) — instead, the cache entry is invalidated, and the next read populates it.</td></tr>
+    <tr><td><strong>Populated by</strong></td><td>First permission check for a (document_id, user_id) pair triggers a SQL lookup, and the result is written to cache.</td><td>—</td></tr>
+    <tr><td><strong>Eviction Policy</strong></td><td>LRU</td><td>Permissions for inactive documents are evicted first.</td></tr>
+    <tr><td><strong>Expiration Policy</strong></td><td>TTL = 5 minutes</td><td>Short TTL ensures permission changes (e.g., revoking access) take effect within 5 minutes at most. Acceptable trade-off between freshness and database load.</td></tr>
+    <tr><td><strong>Invalidation</strong></td><td>The Permission Service explicitly invalidates the cache entry for (document_id, user_id) when a permission is changed.</td><td>Belt-and-suspenders with TTL for safety.</td></tr>
+</table>
+
+<h4>Cache Category 3: Document Metadata</h4>
+<table>
+    <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+    <tr><td><strong>Caching Strategy</strong></td><td>Cache-aside (lazy loading)</td><td>Metadata (title, owner, etc.) is read often (document list, open document) and written infrequently (rename, share).</td></tr>
+    <tr><td><strong>Populated by</strong></td><td>First read for a document_id.</td><td>—</td></tr>
+    <tr><td><strong>Eviction Policy</strong></td><td>LRU</td><td>—</td></tr>
+    <tr><td><strong>Expiration Policy</strong></td><td>TTL = 10 minutes</td><td>Metadata changes are not time-sensitive (a title change appearing 10 minutes late is acceptable).</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="websocket-deep-dive">11. WebSocket Deep Dive</h2>
+<!-- ============================================================ -->
+
+<h3>11.1 Why WebSocket?</h3>
+<p>Collaborative document editing requires <strong>bidirectional, low-latency, real-time communication</strong>. The client needs to send operations to the server AND receive operations from other collaborators, both within milliseconds.</p>
+
+<h4>Why NOT the alternatives?</h4>
+<table>
+    <tr><th>Alternative</th><th>Why Not Chosen</th></tr>
+    <tr><td><strong>Long Polling</strong></td><td>Too much overhead for character-by-character editing. Each poll cycle incurs HTTP overhead (headers, connection setup). At 5+ operations per second, long polling would be impractical.</td></tr>
+    <tr><td><strong>Server-Sent Events (SSE)</strong></td><td>SSE is server→client only. We'd still need HTTP POST for client→server operations. This creates two separate channels, complicates sequencing, and doubles the number of connections. WebSocket provides a single bidirectional channel.</td></tr>
+    <tr><td><strong>Short Polling</strong></td><td>Completely unsuitable. Polling every 100ms would be extremely wasteful and still not guarantee real-time delivery.</td></tr>
+    <tr><td><strong>WebRTC (Data Channels)</strong></td><td>WebRTC enables peer-to-peer communication, which would work for 2-user editing but becomes unmanageable for many collaborators (mesh topology). Also lacks a central authority for OT ordering. Server-mediated OT via WebSocket is simpler and more reliable.</td></tr>
+</table>
+
+<h3>11.2 Connection Lifecycle</h3>
+<ol>
+    <li><strong>HTTP Upgrade Request:</strong> Client sends <code>GET /ws/documents/{document_id}</code> with headers <code>Upgrade: websocket</code>, <code>Connection: Upgrade</code>, and an <code>Authorization: Bearer &lt;JWT&gt;</code> header.</li>
+    <li><strong>Authentication:</strong> The Collaboration Service validates the JWT token. If invalid, it responds with <code>401 Unauthorized</code> and does not upgrade.</li>
+    <li><strong>Permission Check:</strong> The service checks the Cache (or SQL DB) for the user's permission on this document. If no access, responds with <code>403 Forbidden</code>.</li>
+    <li><strong>WebSocket Handshake:</strong> If authorized, the server completes the WebSocket handshake (<code>101 Switching Protocols</code>). The TCP connection is now a persistent WebSocket connection.</li>
+    <li><strong>Register Connection:</strong> The service adds the connection to its in-memory map: <code>document_id → Set&lt;{user_id, ws_connection, color}&gt;</code>.</li>
+    <li><strong>Subscribe to Pub/Sub:</strong> If this is the first connection for this document on this instance, the instance subscribes to the Pub/Sub channel <code>doc:{document_id}</code>.</li>
+    <li><strong>Send Initial State:</strong> The server sends the current presence information (list of connected users, their cursor positions) to the new client.</li>
+    <li><strong>Heartbeat:</strong> The server sends periodic <code>ping</code> frames (every 30 seconds). If no <code>pong</code> is received within 10 seconds, the connection is considered dead and cleaned up.</li>
+    <li><strong>Disconnection:</strong> On WebSocket close (or heartbeat timeout), the connection is removed from the in-memory map. A "user left" presence update is broadcast. If this was the last connection for the document on this instance, the instance unsubscribes from the Pub/Sub channel.</li>
+</ol>
+
+<h3>11.3 Connection Storage</h3>
+<p>Each Collaboration Service instance maintains an <strong>in-memory hash map</strong>:</p>
+<pre>
+Map&lt;document_id, Set&lt;{
+    user_id: string,
+    connection: WebSocketConnection,
+    cursor_position: number,
+    selection: {start: number, end: number} | null,
+    color: string,
+    last_heartbeat: timestamp
+}&gt;&gt;
+</pre>
+<p>This map is local to each instance — it is NOT shared across instances. Cross-instance communication is handled by Pub/Sub.</p>
+
+<h3>11.4 Finding Other WebSockets</h3>
+<ul>
+    <li><strong>Same instance:</strong> Look up the document's Set in the local hash map and iterate over all connections.</li>
+    <li><strong>Cross-instance:</strong> Publish the operation/presence update to the Pub/Sub channel <code>doc:{document_id}</code>. All instances subscribed to that channel receive the message and forward it to their local connections.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="pubsub-deep-dive">12. Pub/Sub Deep Dive</h2>
+<!-- ============================================================ -->
+
+<h3>12.1 Purpose</h3>
+<p>The Pub/Sub system solves the <strong>cross-instance fan-out problem</strong>. When the Collaboration Service is horizontally scaled to multiple instances, users editing the same document may be connected to different instances. Pub/Sub ensures that an operation applied on Instance 1 is propagated to Instance 2 (and all other instances serving that document).</p>
+
+<h3>12.2 Why Pub/Sub (and Not Alternatives)?</h3>
+<table>
+    <tr><th>Alternative</th><th>Why Not Chosen</th></tr>
+    <tr><td><strong>Direct inter-service RPC</strong></td><td>Would require each instance to know about all other instances AND which documents each is serving. This creates tight coupling and an O(n²) communication problem.</td></tr>
+    <tr><td><strong>Shared database polling</strong></td><td>Polling the operation log for new operations would add latency and database load. Not real-time enough.</td></tr>
+    <tr><td><strong>Message Queue</strong></td><td>Message queues are point-to-point (one consumer per message). We need broadcast/fan-out (all instances serving a document must receive the message). Pub/Sub's topic-based broadcast is the right abstraction.</td></tr>
+</table>
+
+<h3>12.3 How It Works</h3>
+<ol>
+    <li><strong>Channel naming:</strong> Each document has a channel named <code>doc:{document_id}</code>.</li>
+    <li><strong>Subscribe:</strong> When a Collaboration Service instance accepts the first WebSocket connection for document <code>X</code>, it subscribes to <code>doc:X</code>.</li>
+    <li><strong>Publish:</strong> When an operation is applied on an instance, the instance publishes the transformed operation to <code>doc:X</code>: <code>{"type": "operation", "revision": 42, "op": {...}, "user_id": "alice"}</code>.</li>
+    <li><strong>Receive:</strong> All other subscribed instances receive the message and push it to their local WebSocket connections for document <code>X</code>.</li>
+    <li><strong>Self-filtering:</strong> The publishing instance ignores its own published messages (or marks them with an instance ID for filtering).</li>
+    <li><strong>Unsubscribe:</strong> When the last WebSocket connection for document <code>X</code> on an instance closes, the instance unsubscribes from <code>doc:X</code>.</li>
+</ol>
+
+<h3>12.4 Message Format</h3>
+<pre>
+{
+    "source_instance_id": "collab-svc-001",
+    "document_id": "doc-abc123",
+    "type": "operation" | "presence" | "comment" | "user_joined" | "user_left",
+    "payload": { ... }  // varies by type
+}
+</pre>
+
+<h3>12.5 Delivery Guarantees</h3>
+<p>Pub/Sub provides <strong>at-most-once delivery</strong> by default. If a message is lost (e.g., network issue between Pub/Sub and a subscriber), the client will detect the gap when it receives an operation with a non-sequential revision number. It will then request the missing operations from the server via the <code>sync</code> WebSocket message, and the server will replay them from the NoSQL operation log. This makes the system tolerant of Pub/Sub message loss.</p>
+
+<!-- ============================================================ -->
+<h2 id="mq-deep-dive">13. Message Queue Deep Dive</h2>
+<!-- ============================================================ -->
+
+<h3>13.1 Purpose</h3>
+<p>The message queue handles <strong>asynchronous, non-real-time tasks</strong> that should not block the synchronous request path. These include: notifications (email, push), periodic snapshot creation, search index updates, and analytics event processing.</p>
+
+<h3>13.2 Why a Message Queue (and Not Alternatives)?</h3>
+<table>
+    <tr><th>Alternative</th><th>Why Not Chosen</th></tr>
+    <tr><td><strong>Synchronous processing</strong></td><td>Sending an email during the <code>POST /share</code> request would add seconds of latency and create a coupling between the Permission Service and the email provider.</td></tr>
+    <tr><td><strong>Cron jobs</strong></td><td>Polling for "things to do" is less efficient than event-driven processing. Would miss time-sensitive notifications.</td></tr>
+    <tr><td><strong>Pub/Sub</strong></td><td>Pub/Sub is fire-and-forget with at-most-once delivery. For tasks like sending notifications, we need <strong>at-least-once delivery</strong> with retry and dead-letter capabilities. Message queues provide durability and acknowledgement semantics.</td></tr>
+</table>
+
+<h3>13.3 How Messages Flow</h3>
+<ol>
+    <li><strong>Enqueue (Producer):</strong> A service (e.g., Permission Service) creates a message and pushes it to a named queue:
+        <pre>Queue: "notifications"
+Message: {
+    "type": "document_shared",
+    "recipient_user_id": "bob",
+    "document_id": "doc-abc123",
+    "sharer_user_id": "alice",
+    "role": "editor",
+    "idempotency_key": "share-abc123-bob-1705312200"
+}</pre>
+    </li>
+    <li><strong>Dequeue (Consumer):</strong> A Notification Worker polls the queue (or receives via push, depending on the queue implementation). It processes the message (sends email, push notification, writes in-app notification). On success, it sends an <strong>acknowledgement (ACK)</strong> to the queue, which removes the message.</li>
+    <li><strong>Retry:</strong> If the worker crashes or fails to ACK within a timeout (e.g., 30 seconds), the queue makes the message visible again for another worker to process.</li>
+    <li><strong>Dead Letter Queue (DLQ):</strong> After N failed attempts (e.g., 3), the message is moved to a DLQ for manual inspection.</li>
+    <li><strong>Idempotency:</strong> Workers check the <code>idempotency_key</code> against a processed-messages set (in cache) to prevent duplicate processing from at-least-once delivery.</li>
+</ol>
+
+<h3>13.4 Queues</h3>
+<table>
+    <tr><th>Queue Name</th><th>Producers</th><th>Consumers</th><th>Message Types</th></tr>
+    <tr><td><code>notifications</code></td><td>Permission Service, Comment Service</td><td>Notification Workers</td><td>document_shared, access_requested, comment_added, comment_resolved</td></tr>
+    <tr><td><code>snapshots</code></td><td>Collaboration Service (every N ops)</td><td>Snapshot Workers</td><td>create_snapshot</td></tr>
+    <tr><td><code>search-indexing</code></td><td>Collaboration Service (debounced)</td><td>Search Index Workers</td><td>index_document</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="ot-deep-dive">14. Operational Transformation (OT) Deep Dive</h2>
+<!-- ============================================================ -->
+
+<h3>14.1 What is OT?</h3>
+<p>Operational Transformation is an algorithm for maintaining consistency in collaborative editing. It resolves conflicts when two users make concurrent edits by <strong>transforming operations</strong> so they can be applied in any order and still produce the same final document state.</p>
+
+<h3>14.2 Operations</h3>
+<p>Each edit is represented as a sequence of three types of operations:</p>
+<table>
+    <tr><th>Operation</th><th>Meaning</th><th>Example</th></tr>
+    <tr><td><code>retain(n)</code></td><td>Skip forward <code>n</code> characters without change</td><td><code>retain(5)</code> — skip first 5 characters</td></tr>
+    <tr><td><code>insert(text)</code></td><td>Insert <code>text</code> at the current position</td><td><code>insert("Hello")</code> — insert "Hello"</td></tr>
+    <tr><td><code>delete(n)</code></td><td>Delete the next <code>n</code> characters</td><td><code>delete(3)</code> — delete 3 characters</td></tr>
+</table>
+<p>An operation is a list of these primitives. For example, inserting "World" at position 5 in a 10-character document: <code>[retain(5), insert("World"), retain(5)]</code>.</p>
+
+<h3>14.3 Transformation Example</h3>
+<div class="callout">
+    <strong>Scenario:</strong> Document content is "ABCDE" (revision 5). Alice inserts "X" at position 2. Bob deletes the character at position 4.<br><br>
+    <strong>Alice's operation (rev 5):</strong> <code>[retain(2), insert("X"), retain(3)]</code> → "AB<strong>X</strong>CDE"<br>
+    <strong>Bob's operation (rev 5):</strong> <code>[retain(4), delete(1)]</code> → "ABCD" (deletes "E")<br><br>
+    <strong>Server receives Alice first:</strong> Applies Alice's op → "ABXCDE" (revision 6).<br>
+    <strong>Server receives Bob at rev 5 (stale):</strong> Must transform Bob's op against Alice's op.<br><br>
+    <strong>Transform:</strong> Alice inserted 1 character before Bob's position 4. So Bob's delete position shifts from 4 to 5.<br>
+    <strong>Bob's transformed operation:</strong> <code>[retain(5), delete(1)]</code> → "ABXCD" (revision 7).<br><br>
+    <strong>Result:</strong> Both Alice and Bob converge to "ABXCD". ✅
+</div>
+
+<h3>14.4 Server-Side OT Flow</h3>
+<ol>
+    <li>Client sends operation with its last known revision number (<code>client_rev</code>).</li>
+    <li>Server compares <code>client_rev</code> with <code>server_rev</code> (the current revision).</li>
+    <li>If <code>client_rev == server_rev</code>: No conflicts. Apply directly. Increment revision.</li>
+    <li>If <code>client_rev < server_rev</code>: Conflict. Fetch all operations from <code>client_rev</code> to <code>server_rev</code> from the operation log. Transform the client's operation against each of these operations sequentially. Apply the transformed operation. Increment revision.</li>
+    <li>Persist the (possibly transformed) operation to the operation log.</li>
+    <li>Send <code>ack</code> with the new revision to the originating client.</li>
+    <li>Broadcast the transformed operation to all other clients.</li>
+</ol>
+
+<h3>14.5 Why OT Over CRDT?</h3>
+<table>
+    <tr><th>Factor</th><th>OT</th><th>CRDT</th></tr>
+    <tr><td>Architecture</td><td>Client-server (central authority)</td><td>Peer-to-peer or client-server</td></tr>
+    <tr><td>Complexity</td><td>Simpler on the client</td><td>Complex data structures on client</td></tr>
+    <tr><td>Proven at scale</td><td>✅ Used by Google Docs for 15+ years</td><td>Emerging (used by Figma for simpler data)</td></tr>
+    <tr><td>Metadata overhead</td><td>Minimal (just position + content)</td><td>Higher (unique IDs per character)</td></tr>
+    <tr><td>Offline support</td><td>Supported but needs server for reconciliation</td><td>Excellent offline support (merge locally)</td></tr>
+    <tr><td>Consistency</td><td>Guaranteed by central server</td><td>Eventual (mathematically proven convergence)</td></tr>
+</table>
+<p>We chose OT because Google Docs is a <strong>server-centric application</strong> where users are typically online, a central server can order operations, and the client implementation should be as simple as possible. OT's 15+ years of production use at Google's scale gives high confidence.</p>
+
+<!-- ============================================================ -->
+<h2 id="scaling">15. Scaling Considerations</h2>
+<!-- ============================================================ -->
+
+<h3>15.1 Load Balancers</h3>
+
+<h4>HTTP Load Balancer (L7)</h4>
+<p><strong>Placement:</strong> Between clients and the API Gateway.</p>
+<ul>
+    <li><strong>Algorithm:</strong> Round-robin or least-connections. HTTP requests are stateless, so any API Gateway instance can handle any request.</li>
+    <li><strong>Health checks:</strong> HTTP health endpoint on each API Gateway instance (<code>GET /health</code>).</li>
+    <li><strong>TLS termination:</strong> At the load balancer to offload encryption/decryption from backend services.</li>
+    <li><strong>Auto-scaling:</strong> Scales based on request rate and latency metrics.</li>
+</ul>
+
+<h4>WebSocket Load Balancer (L4)</h4>
+<p><strong>Placement:</strong> Between clients and Collaboration Service instances.</p>
+<ul>
+    <li><strong>Algorithm:</strong> Consistent hashing on <code>document_id</code> (extracted from the URL path during the HTTP upgrade request). This maximises co-location of same-document users on the same instance, reducing cross-instance Pub/Sub traffic.</li>
+    <li><strong>Sticky sessions:</strong> Once a WebSocket connection is established, all frames are routed to the same backend instance (the TCP connection is persistent).</li>
+    <li><strong>Health checks:</strong> TCP-level health checks + custom WebSocket ping.</li>
+    <li><strong>Connection draining:</strong> During rolling deployments, the LB stops sending new connections to an instance being drained but keeps existing WebSocket connections alive until they naturally close or a timeout (e.g., 5 minutes) elapses.</li>
+</ul>
+
+<h3>15.2 Service Scaling</h3>
+
+<table>
+    <tr><th>Service</th><th>Stateful?</th><th>Scaling Strategy</th><th>Bottleneck</th></tr>
+    <tr><td>API Gateway</td><td>No</td><td>Horizontal. Add instances behind the L7 LB.</td><td>CPU (auth validation, TLS)</td></tr>
+    <tr><td>Document Service</td><td>No</td><td>Horizontal. Any instance can serve any request.</td><td>Database connections</td></tr>
+    <tr><td>Permission Service</td><td>No</td><td>Horizontal.</td><td>Database connections</td></tr>
+    <tr><td>Version Service</td><td>No</td><td>Horizontal.</td><td>Object Storage I/O for large snapshots</td></tr>
+    <tr><td>Comment Service</td><td>No</td><td>Horizontal.</td><td>Database connections</td></tr>
+    <tr><td>Collaboration Service</td><td>Yes (WebSocket connections in memory)</td><td>Horizontal with Pub/Sub for cross-instance sync. Each instance handles ~10K-50K concurrent connections.</td><td>Memory (connection state) and CPU (OT transforms)</td></tr>
+    <tr><td>Background Workers</td><td>No</td><td>Horizontal. Scale based on queue depth.</td><td>Downstream service throughput</td></tr>
+</table>
+
+<h3>15.3 Database Scaling</h3>
+<ul>
+    <li><strong>SQL DB:</strong> Primary-replica topology. The primary handles writes; multiple read replicas handle read-heavy queries (document listing, permission checks). For further scale, shard by <code>document_id</code>.</li>
+    <li><strong>NoSQL DB (Operation Log):</strong> Already partitioned by <code>document_id</code>. Add nodes to the cluster to increase throughput linearly. Hot documents (viral documents with many editors) can become hot partitions — mitigate by further sub-partitioning or rate-limiting operations per document.</li>
+    <li><strong>Cache:</strong> Distributed cache cluster with consistent hashing. Scale by adding nodes. Replicate for read throughput.</li>
+</ul>
+
+<h3>15.4 Hot Document Mitigation</h3>
+<p>A viral document (e.g., a company-wide announcement being edited by 1000+ people) can overload a single Collaboration Service instance and a single NoSQL partition.</p>
+<ul>
+    <li><strong>Rate limiting:</strong> Cap the maximum number of concurrent editors (e.g., 200). Additional users are placed in a "view-only" mode with a queue to become editors.</li>
+    <li><strong>Operation batching:</strong> The Collaboration Service batches operations before persisting to NoSQL (e.g., batch every 50ms), reducing write QPS.</li>
+    <li><strong>Dedicated instances:</strong> Auto-detect hot documents (by connection count) and assign dedicated Collaboration Service instances.</li>
+</ul>
+
+<h3>15.5 Geographic Distribution</h3>
+<ul>
+    <li>Deploy Collaboration Service instances in multiple regions.</li>
+    <li>Route users to the nearest region via DNS-based geographic routing.</li>
+    <li>Cross-region collaboration is handled by the Pub/Sub system (which supports multi-region topics).</li>
+    <li>The operation log is replicated across regions for durability, with one region designated as the "leader" for each document (determined by where the document was created, or where the majority of editors are).</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="tradeoffs">16. Tradeoffs &amp; Deep Dives</h2>
+<!-- ============================================================ -->
+
+<h3>16.1 Consistency vs. Availability</h3>
+<p>For document editing, we prioritize <strong>consistency within a document session</strong> (all users must converge to the same state) over absolute availability. If the Collaboration Service for a document is down, users cannot collaboratively edit (they could fall back to offline mode). This is an acceptable trade-off because inconsistent document state would be far more damaging (data corruption, user frustration) than temporary unavailability.</p>
+
+<h3>16.2 Central Server OT vs. Decentralized CRDT</h3>
+<p>Central server OT creates a single point of ordering but simplifies the client, reduces metadata overhead, and has a proven track record. The trade-off is that the server becomes a bottleneck for very hot documents. CRDT would eliminate this bottleneck but at the cost of increased client complexity and larger payloads.</p>
+
+<h3>16.3 Snapshot Frequency</h3>
+<ul>
+    <li><strong>More frequent snapshots (every 50 ops):</strong> Faster document loading (less replay), more storage cost, more write I/O.</li>
+    <li><strong>Less frequent snapshots (every 500 ops):</strong> Slower document loading (more replay), less storage, less write I/O.</li>
+    <li><strong>Chosen: Every ~100 operations or ~30 minutes</strong> — balances loading speed vs. storage cost. For a typical document, 100 operations is ~30 seconds of active typing, so snapshots are created roughly every 30 seconds to 30 minutes depending on editing intensity.</li>
+</ul>
+
+<h3>16.4 Operation Log Compaction</h3>
+<p>Over time, the operation log for a long-lived document can grow very large (millions of operations). To manage this:</p>
+<ul>
+    <li>Operations older than 90 days are archived to cold object storage.</li>
+    <li>Only operations since the latest snapshot are needed for document loading.</li>
+    <li>Version history can still access archived operations if needed (with higher latency).</li>
+</ul>
+
+<h3>16.5 WebSocket vs. HTTP for Operations</h3>
+<p>Using WebSocket for operations adds complexity (sticky sessions, Pub/Sub for cross-instance, connection state management) but provides the &lt;200ms latency requirement. HTTP round-trip for each keystroke would add 50-200ms overhead per operation, making collaboration feel laggy.</p>
+
+<h3>16.6 SQL vs. NoSQL Split</h3>
+<p>We deliberately split data across SQL and NoSQL based on access patterns:</p>
+<ul>
+    <li><strong>SQL</strong> for relational, read-heavy, transactional data (users, permissions, comments, metadata).</li>
+    <li><strong>NoSQL</strong> for write-heavy, partition-oriented, append-only data (operation log, snapshots).</li>
+</ul>
+<p>A single-database approach would force compromises: SQL would struggle with operation log write throughput; NoSQL would struggle with permission JOINs and transactional consistency.</p>
+
+<!-- ============================================================ -->
+<h2 id="alternatives">17. Alternative Approaches</h2>
+<!-- ============================================================ -->
+
+<table>
+    <tr><th>Alternative</th><th>Description</th><th>Why Not Chosen</th></tr>
+    <tr>
+        <td><strong>CRDT instead of OT</strong></td>
+        <td>Use Conflict-free Replicated Data Types (e.g., Yjs, Automerge) for conflict resolution. CRDTs are decentralized and mathematically guarantee convergence without a central server.</td>
+        <td>Higher metadata overhead per character (unique IDs); more complex client implementation; less mature at Google Docs-scale. OT has a 15+ year track record for exactly this use case. CRDTs would be a better choice for a peer-to-peer or offline-first application.</td>
+    </tr>
+    <tr>
+        <td><strong>Polling instead of WebSocket</strong></td>
+        <td>Clients periodically poll <code>GET /api/documents/{id}/operations?since=rev</code> every 200ms to check for new operations.</td>
+        <td>At 5 operations/second, polling every 200ms wastes bandwidth when there are no new operations (which is most of the time for most users). Also adds 0-200ms latency per operation (average 100ms). WebSocket eliminates both issues.</td>
+    </tr>
+    <tr>
+        <td><strong>Monolithic service instead of microservices</strong></td>
+        <td>A single backend service handles all functionality: document CRUD, collaboration, permissions, comments, versions.</td>
+        <td>The Collaboration Service has fundamentally different scaling characteristics (stateful, WebSocket, high-memory) vs. the Document/Permission services (stateless, HTTP, CPU-bound). A monolith would force us to scale everything together, wasting resources. Microservices allow independent scaling.</td>
+    </tr>
+    <tr>
+        <td><strong>Peer-to-peer (P2P) collaboration</strong></td>
+        <td>Use WebRTC data channels for direct client-to-client communication, eliminating the server from the real-time path.</td>
+        <td>P2P works for 2-3 users but creates a mesh topology that doesn't scale (n*(n-1)/2 connections for n users). No central authority for operation ordering. Harder to persist operations durably. No access control enforcement on the server. Suitable for simple apps, not enterprise document editing.</td>
+    </tr>
+    <tr>
+        <td><strong>Last-write-wins (LWW) instead of OT/CRDT</strong></td>
+        <td>Simply overwrite the document with the latest version received. Conflicting edits are lost.</td>
+        <td>Unacceptable data loss. If Alice and Bob are both typing, one person's edits would be silently overwritten. This is fundamentally incompatible with collaborative editing.</td>
+    </tr>
+    <tr>
+        <td><strong>Locking (pessimistic concurrency)</strong></td>
+        <td>Lock a paragraph or section while a user is editing it, preventing others from editing the same section.</td>
+        <td>Extremely restrictive. Users expect to edit the same sentence simultaneously (Google Docs allows this). Locks would constantly conflict and frustrate users. Also complex to manage lock timeouts and stale locks.</td>
+    </tr>
+    <tr>
+        <td><strong>Storing full document state instead of operation log</strong></td>
+        <td>On every edit, overwrite the entire document content in the database.</td>
+        <td>Wastes bandwidth and storage (sending/storing the full document on every keystroke). Makes conflict resolution impossible (no operation history to transform). Loses version history granularity. The operation log approach is more efficient and enables OT.</td>
+    </tr>
+    <tr>
+        <td><strong>Single-database approach (only SQL or only NoSQL)</strong></td>
+        <td>Use one database technology for everything.</td>
+        <td>SQL alone cannot handle the write throughput of the operation log at scale. NoSQL alone cannot efficiently handle relational permission queries and transactional comment threads. The polyglot approach uses each technology where it excels.</td>
+    </tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="additional">18. Additional Considerations</h2>
+<!-- ============================================================ -->
+
+<h3>18.1 Offline Support</h3>
+<p>The client stores operations in a local queue (IndexedDB in the browser) when offline. On reconnection, the client sends all queued operations to the server. The server applies OT against any operations that occurred during the offline period. This can result in significant transforms if the user was offline for a long time, but OT guarantees convergence.</p>
+
+<h3>18.2 Comment Anchor Adjustment</h3>
+<p>When document content changes, comment anchors (start/end positions) must be updated. The Collaboration Service adjusts anchors using the same OT transform logic: if an insert occurs before a comment's anchor, the anchor shifts right by the insert length; if a delete occurs within or before the anchor range, the anchor shifts or shrinks accordingly. Anchors are updated in the SQL DB periodically (batched, not on every keystroke).</p>
+
+<h3>18.3 Image and Media Handling</h3>
+<p>When a user inserts an image, the client uploads the image binary to Object Storage (via a presigned upload URL from the Document Service). The image is referenced in the document content by its Object Storage URL. The CDN can cache and serve these images for fast loading. Document operations reference images by URL, not by inline binary, keeping the operation log lightweight.</p>
+
+<h3>18.4 Security</h3>
+<ul>
+    <li><strong>TLS everywhere:</strong> All HTTP and WebSocket connections use TLS 1.3.</li>
+    <li><strong>Authentication:</strong> JWT tokens with short expiry (15 minutes) + refresh tokens. WebSocket connections re-authenticate on reconnection.</li>
+    <li><strong>Authorization:</strong> Permission checks on every HTTP request and WebSocket connection establishment. The Collaboration Service also validates that each operation comes from an authenticated user with editor permission.</li>
+    <li><strong>Encryption at rest:</strong> All databases and object storage encrypt data at rest using AES-256.</li>
+    <li><strong>Rate limiting:</strong> Per-user rate limits on the API Gateway to prevent abuse.</li>
+    <li><strong>Input validation:</strong> Operations are validated for well-formedness (e.g., positions within document bounds) before being applied.</li>
+</ul>
+
+<h3>18.5 Search</h3>
+<p>Document content is indexed in a full-text search index (inverted index). A Search Index Worker consumes messages from the <code>search-indexing</code> queue and updates the index. The index is queried by a Search Service behind the API Gateway. Search is debounced — the Collaboration Service enqueues a search indexing message only after a period of inactivity (e.g., 10 seconds since the last operation), not on every keystroke. This prevents overwhelming the search indexer.</p>
+
+<h3>18.6 Monitoring &amp; Observability</h3>
+<ul>
+    <li><strong>Metrics:</strong> Operation latency (p50, p95, p99), WebSocket connection count, OT transform count, cache hit/miss ratio, queue depth, error rates.</li>
+    <li><strong>Logging:</strong> Structured logs for every operation (document_id, user_id, revision, transform applied).</li>
+    <li><strong>Tracing:</strong> Distributed tracing across the HTTP and WebSocket paths to identify latency bottlenecks.</li>
+    <li><strong>Alerting:</strong> Alerts on operation latency &gt; 500ms, queue depth &gt; 10K, WebSocket error rate &gt; 1%, cache hit ratio &lt; 80%.</li>
+</ul>
+
+<h3>18.7 Data Integrity</h3>
+<p>The operation log is the source of truth. If a snapshot is corrupted, it can be rebuilt by replaying the operation log from the beginning (or from an earlier good snapshot). Checksums are stored with each snapshot to detect corruption. Regular integrity checks compare the assembled document from the operation log against the latest snapshot.</p>
+
+<h3>18.8 Protocol Choice: TCP</h3>
+<p>All communication in this system uses <strong>TCP</strong> (via HTTP and WebSocket, which both run on TCP). We do not use UDP because:</p>
+<ul>
+    <li>Document editing requires <strong>reliable, ordered delivery</strong>. Every operation must arrive and be applied in order. Lost or reordered operations would corrupt the document.</li>
+    <li>UDP's performance advantage (lower latency, no head-of-line blocking) is relevant for media streaming or gaming, not for text editing where payloads are tiny and reliability is paramount.</li>
+    <li>WebSocket (over TCP) already provides low-latency bidirectional communication for this use case.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="vendors">19. Vendor Recommendations</h2>
+<!-- ============================================================ -->
+
+<p>The design above is vendor-agnostic. Below are vendor options that would be appropriate for each component, should a specific implementation be needed:</p>
+
+<table>
+    <tr><th>Component</th><th>Vendor Options</th><th>Rationale</th></tr>
+    <tr>
+        <td><strong>SQL Database</strong></td>
+        <td>PostgreSQL, CockroachDB, Google Cloud Spanner</td>
+        <td>PostgreSQL is the industry standard for relational workloads with excellent JSON support and extensions. CockroachDB adds native horizontal sharding and distributed transactions. Spanner provides global consistency at scale.</td>
+    </tr>
+    <tr>
+        <td><strong>NoSQL Database</strong></td>
+        <td>Apache Cassandra, Amazon DynamoDB, ScyllaDB</td>
+        <td>All support high write throughput with partition-key-based distribution. Cassandra and ScyllaDB offer tunable consistency. DynamoDB provides fully managed operations with on-demand scaling.</td>
+    </tr>
+    <tr>
+        <td><strong>In-Memory Cache</strong></td>
+        <td>Redis, Memcached, Dragonfly</td>
+        <td>Redis offers rich data structures (useful for presence state and document metadata caching) and pub/sub capabilities. Memcached is simpler and can be faster for pure key-value caching. Dragonfly is a Redis-compatible option with better multi-core performance.</td>
+    </tr>
+    <tr>
+        <td><strong>Pub/Sub System</strong></td>
+        <td>Redis Pub/Sub, Apache Kafka, NATS, Google Cloud Pub/Sub</td>
+        <td>Redis Pub/Sub is simplest (and the cache layer may already use Redis). Kafka provides durability and replay (useful if we want guaranteed delivery). NATS is lightweight and extremely fast for ephemeral pub/sub.</td>
+    </tr>
+    <tr>
+        <td><strong>Message Queue</strong></td>
+        <td>RabbitMQ, Amazon SQS, Apache Kafka</td>
+        <td>RabbitMQ is battle-tested for task queues with dead-letter support. SQS is fully managed. Kafka can serve as both pub/sub and durable queue (log-based).</td>
+    </tr>
+    <tr>
+        <td><strong>Object Storage</strong></td>
+        <td>Amazon S3, Google Cloud Storage, MinIO</td>
+        <td>All provide highly durable, scalable blob storage. S3 and GCS are fully managed. MinIO is self-hosted and S3-compatible.</td>
+    </tr>
+    <tr>
+        <td><strong>CDN</strong></td>
+        <td>Cloudflare, Amazon CloudFront, Fastly</td>
+        <td>Cloudflare has the largest edge network and offers DDoS protection. CloudFront integrates natively with AWS. Fastly offers real-time cache purging.</td>
+    </tr>
+    <tr>
+        <td><strong>Search Index</strong></td>
+        <td>Elasticsearch, Apache Solr, Meilisearch</td>
+        <td>Elasticsearch is the most widely used full-text search engine with excellent scaling. Meilisearch is simpler and faster for smaller-scale search. Solr is mature with strong enterprise features.</td>
+    </tr>
+    <tr>
+        <td><strong>Load Balancer</strong></td>
+        <td>NGINX, HAProxy, Envoy, AWS ALB/NLB</td>
+        <td>NGINX and HAProxy are proven for both L4 and L7 load balancing. Envoy integrates well with service mesh architectures. AWS ALB/NLB are fully managed.</td>
+    </tr>
+</table>
+
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'base',
+        themeVariables: {
+            primaryColor: '#e8f0fe',
+            primaryTextColor: '#1a73e8',
+            primaryBorderColor: '#1a73e8',
+            lineColor: '#5f6368',
+            secondaryColor: '#e6f4ea',
+            tertiaryColor: '#fef7e0',
+            fontSize: '14px'
+        },
+        flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+            curve: 'basis'
+        }
+    });
+</script>
 
 </body>
 </html>
