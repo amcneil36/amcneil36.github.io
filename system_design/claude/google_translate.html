@@ -3,390 +3,1071 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Google Translate - System Design</title>
+<title>System Design: Google Translate</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 <style>
-:root{--bg:#0f0f0f;--surface:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--accent:#4285F4;--accent2:#34A853;}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem;max-width:1400px;margin:0 auto}
-h1{color:var(--accent);font-size:2.2rem;border-bottom:3px solid var(--accent);padding-bottom:.5rem;margin-bottom:1.5rem}
-h2{color:var(--accent2);margin:2rem 0 1rem;font-size:1.5rem}
-h3{color:#81D4FA;margin:1.5rem 0 .75rem}
-h4{color:#CE93D8;margin:1rem 0 .5rem}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
-table{width:100%;border-collapse:collapse;margin:1rem 0}
-th,td{border:1px solid var(--border);padding:.75rem;text-align:left;font-size:.95rem}
-th{background:#1a3a5c;color:var(--accent)}
-pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}
-code{color:#89DDFF;font-size:.9rem}
-svg text{font-family:'Segoe UI',system-ui,sans-serif}
-.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-.pro{border-left:4px solid #4CAF50;padding-left:1rem}
-.con{border-left:4px solid #f44336;padding-left:1rem}
-details{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin:.5rem 0}
-summary{cursor:pointer;font-weight:600;color:var(--accent)}
-.step{margin:.5rem 0;padding:.5rem 1rem;border-left:3px solid var(--accent2)}
-.tag-pk{background:#E91E63;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
-.tag-idx{background:#FF9800;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
-.tag-shard{background:#9C27B0;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a2e;
+    --accent: #0f3460;
+    --accent2: #16213e;
+    --border: #ccc;
+    --code-bg: #f4f4f8;
+    --table-header: #0f3460;
+    --table-header-fg: #fff;
+    --card-bg: #f9f9fc;
+    --highlight: #e8f0fe;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--fg); background: var(--bg); line-height: 1.7; padding: 2rem; max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 2.2rem; color: var(--accent); border-bottom: 3px solid var(--accent); padding-bottom: .5rem; margin-bottom: 1.5rem; }
+  h2 { font-size: 1.6rem; color: var(--accent2); margin-top: 2.5rem; margin-bottom: 1rem; border-left: 4px solid var(--accent); padding-left: .75rem; }
+  h3 { font-size: 1.25rem; color: var(--accent); margin-top: 1.8rem; margin-bottom: .6rem; }
+  h4 { font-size: 1.05rem; margin-top: 1.2rem; margin-bottom: .4rem; }
+  p, li { margin-bottom: .5rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem 0; }
+  th { background: var(--table-header); color: var(--table-header-fg); padding: .6rem .8rem; text-align: left; }
+  td { border: 1px solid var(--border); padding: .5rem .8rem; vertical-align: top; }
+  tr:nth-child(even) { background: var(--highlight); }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 3px; font-size: .92em; }
+  pre { background: var(--code-bg); padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 1rem 0; }
+  .diagram-container { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+  .example-box { background: #eef6ff; border-left: 4px solid #2196f3; padding: 1rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+  .example-box strong { color: #0d47a1; }
+  .deep-dive { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1rem 0; }
+  .deep-dive h4 { color: var(--accent); }
+  .warn { background: #fff8e1; border-left: 4px solid #ffc107; padding: .8rem 1rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+  .info { background: #e8f5e9; border-left: 4px solid #4caf50; padding: .8rem 1rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+  .mermaid { text-align: center; }
 </style>
 </head>
 <body>
 
-<h1>🌐 Google Translate — Machine Translation System</h1>
-<p>Design a system that translates text, documents, and speech across 130+ languages using neural machine translation, supporting 1B+ daily translations with low latency.</p>
+<h1>System Design: Google Translate</h1>
+<p>A globally distributed, low-latency translation platform supporting 100+ languages across text, speech, image, and document modalities — serving billions of requests per day.</p>
 
-<h2>📋 Functional Requirements</h2>
-<div class="card">
-<ul>
-<li><strong>Text translation</strong> — translate text between 130+ language pairs with context-aware quality</li>
-<li><strong>Language detection</strong> — auto-detect source language from input text</li>
-<li><strong>Document translation</strong> — translate PDF, DOCX, PPTX while preserving formatting</li>
-<li><strong>Speech translation</strong> — speech-to-text → translate → text-to-speech pipeline</li>
-<li><strong>Camera/image translation</strong> — OCR on camera input, translate overlaid text in real-time</li>
-<li><strong>Conversation mode</strong> — real-time bidirectional speech translation</li>
-<li><strong>Offline translation</strong> — download language packs for offline use on mobile</li>
-</ul>
-</div>
+<!-- ============================================================ -->
+<h2>1. Functional Requirements</h2>
+<!-- ============================================================ -->
+<ol>
+  <li><strong>Text Translation</strong> — Translate text input from a source language to a target language (up to ~5,000 characters per request).</li>
+  <li><strong>Auto Language Detection</strong> — Automatically detect the source language when not specified by the user.</li>
+  <li><strong>Speech Translation</strong> — Accept voice input, convert to text, translate, and return both translated text and synthesized audio.</li>
+  <li><strong>Image / Camera Translation</strong> — Accept an image, extract text via OCR, translate extracted text, and return results with bounding-box positions.</li>
+  <li><strong>Document Translation</strong> — Accept an uploaded document (PDF, DOCX, PPTX, etc.), translate contents while preserving formatting, and return the translated document for download.</li>
+  <li><strong>Translation History</strong> — For authenticated users, persist translation history and allow retrieval of past translations.</li>
+  <li><strong>Saved / Starred Translations</strong> — Allow users to bookmark specific translations for quick access later.</li>
+  <li><strong>Alternative Translations &amp; Definitions</strong> — Provide alternative translations, synonyms, definitions, and usage examples for single words or short phrases.</li>
+  <li><strong>Transliteration</strong> — Show the phonetic spelling of the source or target text in Latin characters.</li>
+  <li><strong>Offline Translation</strong> — Allow users to download language packs for on-device translation without internet.</li>
+</ol>
 
-<h2>📋 Non-Functional Requirements</h2>
-<div class="card">
-<ul>
-<li><strong>Latency</strong> — &lt;200ms for text translation, &lt;500ms for speech-to-text per utterance</li>
-<li><strong>Throughput</strong> — 1B+ translations/day, 100K+ QPS at peak</li>
-<li><strong>Quality</strong> — BLEU score &gt;40 for major language pairs, continuous improvement via user feedback</li>
-<li><strong>Availability</strong> — 99.99% uptime globally</li>
-<li><strong>Coverage</strong> — 130+ languages including low-resource languages</li>
-<li><strong>Cost efficiency</strong> — optimize GPU/TPU inference cost per translation</li>
-</ul>
-</div>
-
-<h2>🔄 Flow 1: Text Translation (Neural Machine Translation)</h2>
-<svg viewBox="0 0 1000 300" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="a1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#4285F4"/></marker></defs>
-<rect x="20" y="60" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="90" text-anchor="middle" fill="white" font-size="13">Client</text>
-<rect x="175" y="60" width="130" height="50" rx="8" fill="#E65100"/><text x="240" y="90" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
-<rect x="350" y="30" width="130" height="50" rx="8" fill="#1565C0"/><text x="415" y="60" text-anchor="middle" fill="white" font-size="12">Language Detect</text>
-<rect x="350" y="100" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="415" y="120" text-anchor="middle" fill="white" font-size="12">Translation Cache</text><text x="415" y="135" text-anchor="middle" fill="white" font-size="10">(Redis)</text>
-<rect x="530" y="60" width="140" height="50" rx="8" fill="#1565C0"/><text x="600" y="80" text-anchor="middle" fill="white" font-size="12">NMT Model Server</text><text x="600" y="95" text-anchor="middle" fill="white" font-size="10">(TPU/GPU)</text>
-<rect x="720" y="30" width="130" height="50" rx="8" fill="#4E342E"/><text x="785" y="60" text-anchor="middle" fill="white" font-size="12">Model Registry</text>
-<rect x="720" y="100" width="130" height="50" rx="8" fill="#00695C"/><text x="785" y="130" text-anchor="middle" fill="white" font-size="12">Post-Processing</text>
-<rect x="530" y="200" width="140" height="50" rx="8" fill="#6A1B9A"/><text x="600" y="230" text-anchor="middle" fill="white" font-size="12">Feedback Logger</text>
-<line x1="130" y1="85" x2="170" y2="85" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="305" y1="75" x2="345" y2="55" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="305" y1="95" x2="345" y2="125" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="480" y1="125" x2="525" y2="95" stroke="#4285F4" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="670" y1="85" x2="715" y2="55" stroke="#81D4FA" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="670" y1="95" x2="715" y2="125" stroke="#81D4FA" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="600" y1="110" x2="600" y2="195" stroke="#FF9800" stroke-width="2" marker-end="url(#a1)"/>
-<text x="415" y="170" fill="#aaa" font-size="10">cache miss</text>
-<text x="620" y="160" fill="#aaa" font-size="10">log for training</text>
-</svg>
-
-<div class="step"><strong>Step 1:</strong> Client sends text with optional source/target language. API Gateway authenticates, rate-limits, routes</div>
-<div class="step"><strong>Step 2:</strong> Language Detection runs if source language not specified (fastText classifier, &lt;1ms)</div>
-<div class="step"><strong>Step 3:</strong> Translation Cache checked — common phrases/sentences cached (Redis, ~40% hit rate)</div>
-<div class="step"><strong>Step 4:</strong> On cache miss, NMT Model Server runs Transformer inference on TPU. Text tokenized → encoded → decoded → detokenized</div>
-<div class="step"><strong>Step 5:</strong> Post-processing: fix capitalization, restore named entities, format numbers/dates for target locale</div>
-
-<details><summary>Deep Dive: Transformer Architecture for Translation</summary>
-<div class="card">
-<h4>Encoder-Decoder Transformer (Google's NMT)</h4>
-<pre><code>// Evolution of Google Translate:
-// 2006: Statistical MT (phrase-based, BLEU ~25)
-// 2016: Neural MT (GNMT - LSTM encoder-decoder, BLEU ~35)
-// 2017: Transformer (attention is all you need, BLEU ~40+)
-// 2023: PaLM-based / large multilingual models
-
-// Transformer architecture for translation:
-Input: "The cat sat on the mat"
-  ↓ Tokenization (SentencePiece - subword units)
-  ["▁The", "▁cat", "▁sat", "▁on", "▁the", "▁mat"]
-  ↓ Embedding + Positional Encoding
-  ↓ Encoder (6 layers of self-attention + FFN)
-  → Context-aware representation of source sentence
-  ↓ Decoder (6 layers of masked self-attention + cross-attention + FFN)
-  → Autoregressive generation, one token at a time
-Output: "Le chat était assis sur le tapis"
-
-// Key innovation: Multi-head attention
-// Q, K, V = linear projections of input
-// Attention(Q,K,V) = softmax(QK^T / √d_k) × V
-// 8 heads → 8 different "perspectives" on relationships
-
-// For 130+ languages: Multilingual model
-// Single model handles ALL language pairs
-// Zero-shot: can translate X→Y even if only trained on X→EN and EN→Y
-// Massively multilingual: shared representations improve low-resource languages</code></pre>
-</div>
-</details>
-
-<details><summary>Deep Dive: Language Detection</summary>
-<div class="card">
-<pre><code>// Language detection must be fast (&lt;1ms) and accurate
-// Approach: Character n-gram classifier (fastText)
-
-// 1. Extract character trigrams from input
-// "Hello" → ["Hel", "ell", "llo"]
-// Each language has distinctive character patterns
-
-// 2. fastText linear classifier
-// - Trained on Wikipedia text in 130+ languages
-// - Hash n-grams to fixed vocabulary (buckets)
-// - Single matrix multiply → softmax over languages
-// - 99.5% accuracy for &gt;20 character inputs
-
-// 3. Challenges:
-// - Short text ("ok", "taxi") — ambiguous across languages
-// - Code-mixed text ("I want कॉफ़ी") — multilingual input
-// - Script detection helps: Devanagari → Hindi/Marathi/Sanskrit
-// - Fallback: user's locale as prior probability
-
-// 4. CLD3 (Compact Language Detector 3)
-// Google's production detector
-// Neural network on character sequences
-// Supports 107 languages, runs in ~0.5ms</code></pre>
-</div>
-</details>
-
-<h2>🔄 Flow 2: Speech Translation (Real-Time Conversation)</h2>
-<svg viewBox="0 0 1000 280" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="a2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#34A853"/></marker></defs>
-<rect x="20" y="50" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="80" text-anchor="middle" fill="white" font-size="12">Microphone</text>
-<rect x="170" y="50" width="130" height="50" rx="8" fill="#1565C0"/><text x="235" y="70" text-anchor="middle" fill="white" font-size="12">Speech-to-Text</text><text x="235" y="85" text-anchor="middle" fill="white" font-size="10">(Streaming ASR)</text>
-<rect x="340" y="50" width="120" height="50" rx="8" fill="#6A1B9A"/><text x="400" y="80" text-anchor="middle" fill="white" font-size="12">NMT Engine</text>
-<rect x="500" y="50" width="130" height="50" rx="8" fill="#1565C0"/><text x="565" y="70" text-anchor="middle" fill="white" font-size="12">Text-to-Speech</text><text x="565" y="85" text-anchor="middle" fill="white" font-size="10">(WaveNet/Tacotron)</text>
-<rect x="670" y="50" width="110" height="50" rx="8" fill="#2E7D32"/><text x="725" y="80" text-anchor="middle" fill="white" font-size="12">Speaker</text>
-<rect x="170" y="160" width="130" height="50" rx="8" fill="#E65100"/><text x="235" y="180" text-anchor="middle" fill="white" font-size="12">WebSocket /</text><text x="235" y="195" text-anchor="middle" fill="white" font-size="10">gRPC Streaming</text>
-<line x1="130" y1="75" x2="165" y2="75" stroke="#34A853" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="300" y1="75" x2="335" y2="75" stroke="#34A853" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="460" y1="75" x2="495" y2="75" stroke="#34A853" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="630" y1="75" x2="665" y2="75" stroke="#34A853" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="235" y1="100" x2="235" y2="155" stroke="#FF9800" stroke-width="2" marker-end="url(#a2)"/>
-<text x="130" y="45" fill="#aaa" font-size="10">audio chunks</text>
-<text x="310" y="45" fill="#aaa" font-size="10">partial text</text>
-<text x="470" y="45" fill="#aaa" font-size="10">translated</text>
-<text x="640" y="45" fill="#aaa" font-size="10">synthesized audio</text>
-</svg>
-
-<div class="step"><strong>Step 1:</strong> Audio streamed via WebSocket/gRPC in 100ms chunks (16kHz PCM or Opus codec)</div>
-<div class="step"><strong>Step 2:</strong> Streaming ASR produces partial transcripts in real-time (Conformer model), finalizes on silence detection</div>
-<div class="step"><strong>Step 3:</strong> Finalized text segments sent to NMT engine for translation</div>
-<div class="step"><strong>Step 4:</strong> Translated text synthesized to speech via WaveNet/Tacotron TTS model</div>
-<div class="step"><strong>Step 5:</strong> Audio response streamed back to client for playback</div>
-
-<details><summary>Deep Dive: Streaming ASR & End-of-Utterance Detection</summary>
-<div class="card">
-<pre><code>// Streaming Speech Recognition Pipeline:
-// Audio → Feature Extraction → Acoustic Model → Language Model → Text
-
-// 1. Feature extraction: 25ms windows, 10ms hop
-//    Mel-frequency cepstral coefficients (MFCC) or log-mel filterbanks
-//    80 mel bins → 80-dim feature vector per frame
-
-// 2. Acoustic model: Conformer (Conv + Transformer)
-//    - Convolution captures local audio patterns
-//    - Transformer captures long-range dependencies
-//    - Streaming mode: causal attention (can't look ahead)
-//    - Emits partial hypotheses every ~200ms
-
-// 3. Endpointer: detect when user stops speaking
-//    - Voice Activity Detection (VAD): classify frames as speech/silence
-//    - End-of-query model: predict if user is done or just pausing
-//    - Typical threshold: 700ms silence → finalize
-//    - Challenge: premature cutoff vs excessive wait
-
-// 4. Protocol: bidirectional gRPC streaming
-//    Client → Server: audio chunks (StreamingRecognizeRequest)
-//    Server → Client: partial + final results (StreamingRecognizeResponse)
-//    { "is_final": false, "transcript": "how do you" }  // partial
-//    { "is_final": true,  "transcript": "how do you say hello" }  // final</code></pre>
-</div>
-</details>
-
-<h2>🔄 Flow 3: Camera/Image Translation (Visual Translation)</h2>
-<svg viewBox="0 0 1000 280" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="a3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FBBC04"/></marker></defs>
-<rect x="20" y="60" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="90" text-anchor="middle" fill="white" font-size="12">Camera Feed</text>
-<rect x="175" y="60" width="120" height="50" rx="8" fill="#1565C0"/><text x="235" y="80" text-anchor="middle" fill="white" font-size="12">Text Detection</text><text x="235" y="95" text-anchor="middle" fill="white" font-size="10">(CRAFT/EAST)</text>
-<rect x="340" y="60" width="120" height="50" rx="8" fill="#6A1B9A"/><text x="400" y="80" text-anchor="middle" fill="white" font-size="12">OCR Engine</text><text x="400" y="95" text-anchor="middle" fill="white" font-size="10">(Tesseract/CNN)</text>
-<rect x="505" y="60" width="120" height="50" rx="8" fill="#1565C0"/><text x="565" y="90" text-anchor="middle" fill="white" font-size="12">NMT Engine</text>
-<rect x="670" y="60" width="130" height="50" rx="8" fill="#E65100"/><text x="735" y="80" text-anchor="middle" fill="white" font-size="12">AR Overlay</text><text x="735" y="95" text-anchor="middle" fill="white" font-size="10">(Inpainting+Render)</text>
-<line x1="130" y1="85" x2="170" y2="85" stroke="#FBBC04" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="295" y1="85" x2="335" y2="85" stroke="#FBBC04" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="460" y1="85" x2="500" y2="85" stroke="#FBBC04" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="625" y1="85" x2="665" y2="85" stroke="#FBBC04" stroke-width="2" marker-end="url(#a3)"/>
-</svg>
-
-<div class="step"><strong>Step 1:</strong> Camera captures frame. Text Detection model (CRAFT/EAST) locates text regions as bounding boxes</div>
-<div class="step"><strong>Step 2:</strong> OCR engine recognizes characters within each bounding box (CNN + CTC decoder or attention-based)</div>
-<div class="step"><strong>Step 3:</strong> Recognized text translated via NMT engine</div>
-<div class="step"><strong>Step 4:</strong> AR overlay: inpaint original text region (remove source text), render translated text with matched font/color/perspective</div>
-
-<details><summary>Deep Dive: On-Device vs Cloud Translation</summary>
-<div class="card">
+<!-- ============================================================ -->
+<h2>2. Non-Functional Requirements</h2>
+<!-- ============================================================ -->
 <table>
-<tr><th>Aspect</th><th>On-Device</th><th>Cloud</th></tr>
-<tr><td>Latency</td><td>~50ms (no network)</td><td>~200ms (network RTT)</td></tr>
-<tr><td>Quality</td><td>Good (compressed model)</td><td>Best (full model)</td></tr>
-<tr><td>Model size</td><td>~50MB per language pair</td><td>~1GB+ per model</td></tr>
-<tr><td>Offline</td><td>Yes</td><td>No</td></tr>
-<tr><td>Privacy</td><td>Data stays on device</td><td>Data sent to server</td></tr>
-<tr><td>Languages</td><td>~59 (downloadable packs)</td><td>130+</td></tr>
+  <tr><th>Attribute</th><th>Requirement</th></tr>
+  <tr><td>Latency</td><td>Text translation &lt; 200 ms p99. Speech &lt; 500 ms. Image &lt; 1 s. Document is async (minutes).</td></tr>
+  <tr><td>Availability</td><td>99.99% uptime — translation is a core utility.</td></tr>
+  <tr><td>Throughput</td><td>Handle 10 billion+ text translation requests/day; spikes during global events.</td></tr>
+  <tr><td>Scalability</td><td>Horizontally scalable; support 100+ languages (10,000+ language pairs).</td></tr>
+  <tr><td>Accuracy</td><td>Use Neural Machine Translation (NMT) models; graceful fallback to Statistical MT if NMT is unavailable.</td></tr>
+  <tr><td>Consistency</td><td>Eventual consistency is acceptable for history/cache; strong consistency for user account data.</td></tr>
+  <tr><td>Security</td><td>Encrypt data in transit (TLS) and at rest. Rate-limit API. GDPR-compliant data handling.</td></tr>
+  <tr><td>Internationalization</td><td>Support right-to-left (RTL) languages, CJK characters, emoji, and complex scripts.</td></tr>
+  <tr><td>Fault Tolerance</td><td>Graceful degradation: if NMT fails, fall back to statistical models; if speech fails, offer text-only.</td></tr>
 </table>
-<pre><code>// On-device model optimization:
-// 1. Quantization: FP32 → INT8 (4x smaller, 2-3x faster)
-// 2. Distillation: large teacher → small student model
-// 3. Pruning: remove low-magnitude weights (50-90% sparsity)
-// 4. TFLite / ONNX Runtime for mobile inference
-// 5. Shared encoder across languages, tiny per-language decoder heads
 
-// Google Translate offline packs:
-// ~50MB per language pair (download once)
-// Uses Transformer-based model with 6 encoder + 2 decoder layers
-// Runs on mobile CPU (no GPU required) at ~100 tokens/sec</code></pre>
-</div>
-</details>
+<!-- ============================================================ -->
+<h2>3. Back-of-the-Envelope Estimation</h2>
+<!-- ============================================================ -->
+<ul>
+  <li><strong>Daily text translation requests:</strong> ~10 billion</li>
+  <li><strong>QPS (avg):</strong> ~115,000 QPS; peak ~300,000 QPS</li>
+  <li><strong>Average request payload:</strong> ~500 bytes (source text) → ~500 bytes (translated text)</li>
+  <li><strong>Daily bandwidth (text):</strong> ~10 TB inbound + 10 TB outbound</li>
+  <li><strong>Speech requests:</strong> ~500 million/day (avg audio clip 5 s ≈ 40 KB) → ~20 TB/day</li>
+  <li><strong>Image requests:</strong> ~200 million/day (avg image 200 KB) → ~40 TB/day</li>
+  <li><strong>Document translations:</strong> ~10 million/day (avg doc 500 KB) → ~5 TB/day</li>
+  <li><strong>Translation history records stored:</strong> ~50 billion total (growing)</li>
+  <li><strong>ML model size:</strong> NMT model per language pair ~500 MB–2 GB; total model storage ~5 TB+</li>
+</ul>
 
-<h2>🏗️ Combined Architecture</h2>
-<svg viewBox="0 0 1100 500" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="ac" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#4285F4"/></marker></defs>
-<text x="550" y="25" text-anchor="middle" fill="#4285F4" font-size="16" font-weight="bold">Google Translate Architecture</text>
-<rect x="20" y="50" width="120" height="40" rx="8" fill="#2E7D32"/><text x="80" y="75" text-anchor="middle" fill="white" font-size="11">Web/Mobile/API</text>
-<rect x="200" y="50" width="130" height="40" rx="8" fill="#E65100"/><text x="265" y="75" text-anchor="middle" fill="white" font-size="11">API Gateway + LB</text>
-<rect x="400" y="40" width="130" height="35" rx="8" fill="#1565C0"/><text x="465" y="63" text-anchor="middle" fill="white" font-size="11">Lang Detection</text>
-<rect x="400" y="85" width="130" height="35" rx="8" fill="#00695C"/><text x="465" y="108" text-anchor="middle" fill="white" font-size="11">Translation Cache</text>
-<rect x="400" y="130" width="130" height="35" rx="8" fill="#6A1B9A"/><text x="465" y="153" text-anchor="middle" fill="white" font-size="11">NMT Model Serving</text>
-<rect x="400" y="175" width="130" height="35" rx="8" fill="#1565C0"/><text x="465" y="198" text-anchor="middle" fill="white" font-size="11">Speech-to-Text</text>
-<rect x="400" y="220" width="130" height="35" rx="8" fill="#1565C0"/><text x="465" y="243" text-anchor="middle" fill="white" font-size="11">Text-to-Speech</text>
-<rect x="400" y="265" width="130" height="35" rx="8" fill="#1565C0"/><text x="465" y="288" text-anchor="middle" fill="white" font-size="11">OCR / Vision</text>
-<rect x="600" y="50" width="140" height="40" rx="8" fill="#4E342E"/><text x="670" y="75" text-anchor="middle" fill="white" font-size="11">Model Registry</text>
-<rect x="600" y="110" width="140" height="40" rx="8" fill="#607D8B"/><text x="670" y="135" text-anchor="middle" fill="white" font-size="11">TPU Cluster</text>
-<rect x="600" y="170" width="140" height="40" rx="8" fill="#4E342E"/><text x="670" y="195" text-anchor="middle" fill="white" font-size="11">Training Pipeline</text>
-<rect x="600" y="230" width="140" height="40" rx="8" fill="#6A1B9A"/><text x="670" y="255" text-anchor="middle" fill="white" font-size="11">Feedback / RLHF</text>
-<rect x="830" y="50" width="140" height="40" rx="8" fill="#4E342E"/><text x="900" y="75" text-anchor="middle" fill="white" font-size="11">Parallel Corpora DB</text>
-<rect x="830" y="110" width="140" height="40" rx="8" fill="#4E342E"/><text x="900" y="135" text-anchor="middle" fill="white" font-size="11">Monolingual Data</text>
-<rect x="200" y="370" width="130" height="40" rx="8" fill="#00695C"/><text x="265" y="395" text-anchor="middle" fill="white" font-size="11">CDN (Static Assets)</text>
-<rect x="400" y="370" width="130" height="40" rx="8" fill="#00695C"/><text x="465" y="395" text-anchor="middle" fill="white" font-size="11">Redis Cluster</text>
-<rect x="600" y="370" width="140" height="40" rx="8" fill="#6A1B9A"/><text x="670" y="395" text-anchor="middle" fill="white" font-size="11">Kafka Event Bus</text>
-<line x1="140" y1="70" x2="195" y2="70" stroke="#4285F4" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="330" y1="70" x2="395" y2="57" stroke="#4285F4" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="330" y1="70" x2="395" y2="102" stroke="#4285F4" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="330" y1="70" x2="395" y2="147" stroke="#4285F4" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="530" y1="147" x2="595" y2="70" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="530" y1="147" x2="595" y2="130" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="740" y1="190" x2="825" y2="70" stroke="#FF9800" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="740" y1="190" x2="825" y2="130" stroke="#FF9800" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="670" y1="210" x2="670" y2="225" stroke="#FF9800" stroke-width="2" marker-end="url(#ac)"/>
-</svg>
+<!-- ============================================================ -->
+<h2>4. Flow 1 — Text Translation</h2>
+<!-- ============================================================ -->
+<p>This is the core flow. A user types (or pastes) text, optionally selects source/target languages, and receives a translation.</p>
 
-<h2>💾 Database Schema</h2>
-<div class="grid">
-<div class="card">
-<h3>Translation Cache (Redis)</h3>
-<pre><code>// Key design for translation cache:
-// Key: hash(source_lang + target_lang + normalized_text)
-// Value: translated_text + metadata
+<div class="diagram-container">
+<pre class="mermaid">
+flowchart LR
+    Client["📱 Client<br/>(Web / Mobile)"]
+    LB["⚖️ Load Balancer"]
+    GW["🚪 API Gateway"]
+    LD["🔍 Language<br/>Detection Service"]
+    TS["🌐 Translation<br/>Service"]
+    ML["🧠 ML Model<br/>Serving Layer"]
+    Cache["⚡ Translation<br/>Cache"]
+    MQ["📬 Message<br/>Queue"]
+    HS["📜 History<br/>Service"]
+    DB_H[("📀 History<br/>DB (NoSQL)")]
 
-SET translate:en:fr:sha256(text) {
-  "translation": "Bonjour le monde",
-  "model_version": "nmt-v4.2",
-  "quality_score": 0.95,
-  "cached_at": 1707500000
-} EX 86400  // 24h TTL
-
-// Cache segmentation:
-// - Hot phrases: permanent cache (top 10M translations)
-// - Session cache: 24h TTL for recent translations
-// - Document cache: keyed by (doc_hash + lang_pair), 7d TTL
-
-// Hit rate optimization:
-// - Normalize whitespace, casing before hashing
-// - Sentence-level caching (split paragraphs into sentences)
-// - ~40% cache hit rate for text, ~60% for common phrases</code></pre>
-</div>
-<div class="card">
-<h3>Training Data Store</h3>
-<pre><code>-- Parallel Corpora (Bigtable / Spanner)
--- Billions of aligned sentence pairs
-Key: (language_pair, sentence_hash)
-Columns: {
-  source_text: STRING,
-  target_text: STRING,
-  source: STRING, -- "web_crawl"|"europarl"|"user_feedback"
-  quality_score: FLOAT, -- 0-1 filtering threshold
-  domain: STRING, -- "medical"|"legal"|"general"
-  created_at: TIMESTAMP
-}
-
--- User Feedback (for model improvement)
-Key: (feedback_id)
-Columns: {
-  source_text: STRING,
-  machine_translation: STRING,
-  user_correction: STRING,
-  source_lang: STRING,
-  target_lang: STRING,
-  timestamp: TIMESTAMP,
-  approved: BOOLEAN -- human review for training inclusion
-}
-
--- Model metadata stored in Spanner (globally consistent)
--- Model artifacts stored in GCS (Cloud Storage)</code></pre>
-</div>
+    Client -->|"HTTP POST<br/>/translate"| LB
+    LB --> GW
+    GW --> LD
+    GW --> TS
+    LD -->|"gRPC"| ML
+    LD -->|"detected lang"| TS
+    TS -->|"check cache"| Cache
+    Cache -->|"cache miss"| ML
+    ML -->|"translated text"| TS
+    TS -->|"store result"| Cache
+    TS -->|"async write"| MQ
+    MQ --> HS
+    HS --> DB_H
+    TS -->|"response"| GW
+    GW --> LB
+    LB --> Client
+</pre>
 </div>
 
-<h2>⚡ Cache & CDN Deep Dive</h2>
-<div class="card">
+<h3>Examples</h3>
+
+<div class="example-box">
+  <strong>Example 1 — Happy Path (cache miss, auto-detect):</strong><br>
+  A user in France types "Bonjour le monde" into the translate box without selecting a source language, and selects English as the target language. The client sends an <code>HTTP POST /api/v1/translate</code> with <code>{"text": "Bonjour le monde", "source_lang": "auto", "target_lang": "en"}</code> to the Load Balancer, which routes to the API Gateway. The API Gateway authenticates the request and forwards it to the Translation Service. Since <code>source_lang</code> is "auto", the Translation Service calls the Language Detection Service via gRPC, which runs inference on the ML Model Serving Layer and returns <code>{"detected_lang": "fr", "confidence": 0.98}</code>. The Translation Service constructs a cache key <code>hash("fr:en:bonjour le monde")</code> and checks the Translation Cache — it's a miss. The Translation Service calls the ML Model Serving Layer with the French→English NMT model, which returns <code>"Hello world"</code>. The result is written to the cache (cache-aside pattern) and returned to the user. Simultaneously, an async message is placed on the Message Queue containing the translation record, which the History Service consumes and persists to the History DB.
+</div>
+
+<div class="example-box">
+  <strong>Example 2 — Cache Hit:</strong><br>
+  Another user translates the same phrase "Bonjour le monde" from French to English. After language detection, the Translation Service finds the result in the Translation Cache (<code>cache hit</code>) and immediately returns <code>"Hello world"</code> without invoking the ML Model Serving Layer — reducing latency to &lt; 50 ms. The history write still occurs asynchronously.
+</div>
+
+<div class="example-box">
+  <strong>Example 3 — NMT Fallback:</strong><br>
+  A user translates a phrase from Yoruba to Finnish. The NMT model for the direct Yoruba→Finnish pair is unavailable. The Translation Service detects this and falls back to a <strong>pivot translation</strong>: Yoruba→English (via NMT), then English→Finnish (via NMT). If both NMT models fail, it degrades to a Statistical Machine Translation model. The response includes a flag <code>"model_quality": "fallback"</code> so the client can optionally show a quality disclaimer.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<div class="deep-dive">
+  <h4>📱 Client (Web / Mobile)</h4>
+  <p>The client is a web browser (SPA) or native mobile app (iOS/Android). It provides the translation UI: text input box, language selectors, microphone button, camera button, and document upload. The client debounces keystrokes (e.g., 300 ms) before sending translation requests to avoid excessive API calls during typing. For offline mode, the client uses downloaded NMT model files and runs inference on-device using a lightweight ML runtime.</p>
+</div>
+
+<div class="deep-dive">
+  <h4>⚖️ Load Balancer</h4>
+  <p>Layer 7 (application-level) load balancer that distributes incoming HTTP requests across API Gateway instances using round-robin with health checks. Terminates TLS. Provides geographic routing (anycast) to direct users to the nearest data center. Handles connection pooling and rate limiting at the edge.</p>
+</div>
+
+<div class="deep-dive">
+  <h4>🚪 API Gateway</h4>
+  <p>Central entry point for all client requests. Responsibilities: authentication (API key / OAuth token validation), request validation, rate limiting per user/IP, request routing to downstream microservices, response aggregation, and logging/metrics. Communicates with downstream services via gRPC internally.</p>
+  <ul>
+    <li><strong>Protocol:</strong> HTTP/2 (external), gRPC (internal)</li>
+    <li><strong>Endpoint:</strong> <code>POST /api/v1/translate</code></li>
+    <li><strong>Input:</strong> <code>{"text": string, "source_lang": string|"auto", "target_lang": string}</code></li>
+    <li><strong>Output:</strong> <code>{"translated_text": string, "detected_source_lang": string, "confidence": float, "alternatives": [string], "model_quality": string}</code></li>
+  </ul>
+</div>
+
+<div class="deep-dive">
+  <h4>🔍 Language Detection Service</h4>
+  <p>A stateless microservice that determines the language of input text. Uses a lightweight classification ML model (much smaller than full NMT) that can identify 100+ languages from as few as a couple of words. Returns a ranked list of likely languages with confidence scores.</p>
+  <ul>
+    <li><strong>Protocol:</strong> gRPC (called internally by Translation Service)</li>
+    <li><strong>Input:</strong> <code>{"text": string}</code></li>
+    <li><strong>Output:</strong> <code>{"detections": [{"language": string, "confidence": float}]}</code></li>
+  </ul>
+</div>
+
+<div class="deep-dive">
+  <h4>🌐 Translation Service</h4>
+  <p>Core orchestration service. Receives a translation request, coordinates language detection (if needed), checks the cache, calls the ML Model Serving Layer on cache miss, writes results to cache, and enqueues history writes. Implements the pivot-translation fallback logic for unsupported direct language pairs. Stateless and horizontally scalable.</p>
+  <ul>
+    <li><strong>Protocol:</strong> gRPC (from API Gateway); gRPC (to ML Model Serving Layer, Language Detection Service)</li>
+    <li><strong>Input:</strong> Source text, source language, target language</li>
+    <li><strong>Output:</strong> Translated text, alternatives, metadata</li>
+  </ul>
+</div>
+
+<div class="deep-dive">
+  <h4>🧠 ML Model Serving Layer</h4>
+  <p>A GPU-accelerated serving infrastructure that hosts Neural Machine Translation (NMT) models. Each language pair (or group of pairs for multilingual models) has its own model. Models are loaded into GPU memory and serve inference requests via gRPC with batching to maximize GPU utilization. Models are versioned and can be updated via blue-green deployment without downtime. A model registry tracks which models are active for each language pair.</p>
+  <ul>
+    <li><strong>Protocol:</strong> gRPC</li>
+    <li><strong>Input:</strong> <code>{"text": string, "source_lang": string, "target_lang": string, "model_version": string}</code></li>
+    <li><strong>Output:</strong> <code>{"translated_text": string, "score": float, "alternatives": [{"text": string, "score": float}]}</code></li>
+  </ul>
+</div>
+
+<div class="deep-dive">
+  <h4>⚡ Translation Cache (In-Memory Cache)</h4>
+  <p>A distributed in-memory key-value cache that stores recently/frequently translated text segments. The cache key is a hash of <code>(source_lang, target_lang, normalized_source_text)</code>. This dramatically reduces ML inference calls since many translations are repeated (common phrases, popular queries).</p>
+  <ul>
+    <li><strong>Pattern:</strong> Cache-aside (lazy loading). On a cache miss, the Translation Service fetches from the ML layer and populates the cache.</li>
+    <li><strong>Eviction Policy:</strong> LRU (Least Recently Used) — popular translations stay cached; rare ones are evicted.</li>
+    <li><strong>Expiration (TTL):</strong> 7 days. Translations don't change frequently, but models can be updated, so a TTL ensures stale translations are refreshed.</li>
+    <li><strong>Why Cache-Aside:</strong> Write-through would add latency to every translation request for the cache write. Cache-aside lets us write asynchronously. Write-behind would risk losing cache entries. Cache-aside gives the best balance of freshness and performance.</li>
+    <li><strong>Why Appropriate:</strong> A huge percentage of translations are repeated (e.g., "thank you" in every language). Caching avoids expensive GPU inference. Estimated cache hit ratio: 40–60%.</li>
+  </ul>
+</div>
+
+<div class="deep-dive">
+  <h4>📬 Message Queue</h4>
+  <p>An asynchronous message queue used to decouple the critical translation path from non-critical operations like writing translation history. The Translation Service publishes a message to the queue after each successful translation; the History Service consumes it asynchronously. This ensures that history writes don't add latency to the translation response.</p>
+  <ul>
+    <li><strong>Why Message Queue:</strong> Writing history is not latency-sensitive and should not block the user. The queue provides durability (messages persist if the History Service is temporarily down) and back-pressure handling during traffic spikes.</li>
+    <li><strong>Why Not Pub/Sub:</strong> There is only one consumer (History Service) for these messages, so a simple point-to-point queue suffices. Pub/sub would be overkill.</li>
+    <li><strong>Why Not Synchronous Write:</strong> Would add 10–50 ms latency to every translation response and couple the translation path to history DB availability.</li>
+    <li><strong>Message Format:</strong> <code>{"user_id": string, "source_text": string, "translated_text": string, "source_lang": string, "target_lang": string, "timestamp": ISO8601, "type": "text"}</code></li>
+    <li><strong>How messages are enqueued:</strong> The Translation Service publishes a message after returning the response to the user (fire-and-forget with at-least-once delivery guarantee).</li>
+    <li><strong>How messages are dequeued:</strong> The History Service runs consumer workers that pull messages from the queue, write to the History DB, and acknowledge. Failed messages are retried with exponential backoff and eventually moved to a dead-letter queue.</li>
+  </ul>
+</div>
+
+<div class="deep-dive">
+  <h4>📜 History Service</h4>
+  <p>A service that manages translation history for authenticated users. Consumes messages from the queue and writes to the History DB. Also exposes a read API for fetching a user's translation history.</p>
+  <ul>
+    <li><strong>Protocol:</strong> gRPC (internal); exposed via API Gateway as <code>GET /api/v1/history</code></li>
+  </ul>
+</div>
+
+<div class="deep-dive">
+  <h4>📀 History DB (NoSQL)</h4>
+  <p>Stores translation history records. Detailed schema below in the Schema section.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2>5. Flow 2 — Speech Translation</h2>
+<!-- ============================================================ -->
+<p>User speaks into their microphone; the system converts speech to text, translates it, and synthesizes the translated text back to audio.</p>
+
+<div class="diagram-container">
+<pre class="mermaid">
+flowchart LR
+    Client["📱 Client<br/>(Web / Mobile)"]
+    LB["⚖️ Load Balancer"]
+    GW["🚪 API Gateway"]
+    STT["🎙️ Speech-to-Text<br/>Service"]
+    TS["🌐 Translation<br/>Service"]
+    ML["🧠 ML Model<br/>Serving Layer"]
+    TTS["🔊 Text-to-Speech<br/>Service"]
+    ObjStore[("💾 Object<br/>Storage")]
+    Cache["⚡ Translation<br/>Cache"]
+
+    Client -->|"HTTP POST<br/>/translate/speech<br/>(audio file)"| LB
+    LB --> GW
+    GW --> STT
+    STT -->|"gRPC"| ML
+    STT -->|"transcribed text"| TS
+    TS -->|"check"| Cache
+    Cache -->|"miss"| ML
+    ML -->|"translated text"| TS
+    TS -->|"translated text"| TTS
+    TTS -->|"gRPC"| ML
+    TTS -->|"audio file"| ObjStore
+    TTS -->|"audio URL + text"| GW
+    GW --> LB
+    LB --> Client
+</pre>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+  <strong>Example 1 — Happy Path:</strong><br>
+  A tourist in Japan taps the microphone icon and says "Where is the train station?" in English. The client records the audio, encodes it as an audio file, and sends an <code>HTTP POST /api/v1/translate/speech</code> with <code>multipart/form-data</code> containing the audio blob plus <code>{"source_lang": "en", "target_lang": "ja"}</code>. The API Gateway forwards to the Speech-to-Text (STT) Service, which uses an ASR model on the ML Model Serving Layer to transcribe the audio → <code>"Where is the train station?"</code>. The transcribed text is sent to the Translation Service, which translates it to Japanese → <code>"駅はどこですか？"</code>. The translated text is forwarded to the Text-to-Speech (TTS) Service, which uses a Japanese TTS model to synthesize audio. The audio file is stored in Object Storage and a short-lived signed URL is generated. The response <code>{"source_text": "Where is the train station?", "translated_text": "駅はどこですか？", "audio_url": "https://..."}</code> is returned. The client plays the audio and displays both texts.
+</div>
+
+<div class="example-box">
+  <strong>Example 2 — Noisy Environment / Low Confidence:</strong><br>
+  A user speaks in a noisy café. The STT Service transcribes the audio but with low confidence (<code>0.55</code>). The response includes <code>"stt_confidence": 0.55</code> and the client displays the transcribed text with a warning: "We're not sure we heard you correctly. Please check the text above and edit if needed." The user can manually correct the transcribed text and re-submit as a text translation.
+</div>
+
+<h3>Component Deep Dive (New Components)</h3>
+
+<div class="deep-dive">
+  <h4>🎙️ Speech-to-Text (STT) Service</h4>
+  <p>Converts audio input into text using Automatic Speech Recognition (ASR) models hosted on the ML Model Serving Layer. Accepts audio in common formats (WAV, OGG, MP3, WebM). Performs voice activity detection (VAD) to trim silence. Returns transcribed text with word-level timestamps and confidence scores.</p>
+  <ul>
+    <li><strong>Protocol:</strong> gRPC (internal, called by API Gateway)</li>
+    <li><strong>Input:</strong> Audio binary + <code>{"source_lang": string, "encoding": string, "sample_rate": int}</code></li>
+    <li><strong>Output:</strong> <code>{"transcript": string, "confidence": float, "words": [{"word": string, "start": float, "end": float}]}</code></li>
+  </ul>
+</div>
+
+<div class="deep-dive">
+  <h4>🔊 Text-to-Speech (TTS) Service</h4>
+  <p>Converts translated text into natural-sounding audio using neural TTS models. Supports multiple voices per language. Stores the generated audio file in Object Storage and returns a signed URL. Audio files have a short TTL (1 hour) since they are ephemeral.</p>
+  <ul>
+    <li><strong>Protocol:</strong> gRPC (internal)</li>
+    <li><strong>Input:</strong> <code>{"text": string, "language": string, "voice": string, "speed": float}</code></li>
+    <li><strong>Output:</strong> <code>{"audio_url": string, "duration_seconds": float, "format": "mp3"}</code></li>
+  </ul>
+</div>
+
+<div class="deep-dive">
+  <h4>💾 Object Storage</h4>
+  <p>Stores generated TTS audio files, uploaded images, uploaded documents, and translated documents. Objects are stored with TTLs: TTS audio = 1 hour (ephemeral), uploaded images = 24 hours, documents = 7 days. Lifecycle policies automatically delete expired objects. Provides signed URLs for secure, time-limited access.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2>6. Flow 3 — Image / Camera Translation</h2>
+<!-- ============================================================ -->
+<p>User takes a photo or uploads an image; the system extracts text via OCR, translates it, and returns results with bounding boxes for overlay rendering.</p>
+
+<div class="diagram-container">
+<pre class="mermaid">
+flowchart LR
+    Client["📱 Client<br/>(Web / Mobile)"]
+    LB["⚖️ Load Balancer"]
+    GW["🚪 API Gateway"]
+    OCR["📷 OCR<br/>Service"]
+    TS["🌐 Translation<br/>Service"]
+    ML["🧠 ML Model<br/>Serving Layer"]
+    ObjStore[("💾 Object<br/>Storage")]
+    Cache["⚡ Translation<br/>Cache"]
+
+    Client -->|"HTTP POST<br/>/translate/image<br/>(image file)"| LB
+    LB --> GW
+    GW -->|"store image"| ObjStore
+    GW --> OCR
+    OCR -->|"gRPC"| ML
+    OCR -->|"extracted text<br/>+ bounding boxes"| TS
+    TS -->|"check"| Cache
+    Cache -->|"miss"| ML
+    ML -->|"translations"| TS
+    TS -->|"translated regions"| GW
+    GW --> LB
+    LB --> Client
+</pre>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+  <strong>Example 1 — Restaurant Menu:</strong><br>
+  A traveler in China takes a photo of a restaurant menu written in Chinese. The client sends <code>HTTP POST /api/v1/translate/image</code> with the image and <code>{"target_lang": "en"}</code> (source_lang is auto-detected from the image text). The image is stored in Object Storage. The OCR Service runs a text detection model to find text regions, then an OCR model to extract characters. It returns: <code>[{"text": "宫保鸡丁", "bbox": [10, 20, 200, 50]}, {"text": "麻婆豆腐", "bbox": [10, 60, 200, 90]}, ...]</code>. Each extracted text segment is sent to the Translation Service, which translates them: <code>"Kung Pao Chicken"</code>, <code>"Mapo Tofu"</code>. The response includes the translations with bounding boxes so the client can render an AR-style overlay on the original image.
+</div>
+
+<div class="example-box">
+  <strong>Example 2 — Image with No Text:</strong><br>
+  A user uploads a landscape photo. The OCR Service detects no text regions and returns an empty list. The API returns <code>{"regions": [], "message": "No text detected in the image."}</code> and the client displays an appropriate message.
+</div>
+
+<h3>Component Deep Dive (New Components)</h3>
+
+<div class="deep-dive">
+  <h4>📷 OCR Service</h4>
+  <p>Performs Optical Character Recognition on images. Two-stage pipeline: (1) Text Detection — finds bounding boxes of text regions using a detection model; (2) Text Recognition — extracts characters from each region using a recognition model. Supports 100+ languages and scripts including complex ones (Arabic, Devanagari, CJK). Handles rotated text, curved text, and low-resolution images.</p>
+  <ul>
+    <li><strong>Protocol:</strong> gRPC (internal)</li>
+    <li><strong>Input:</strong> Image binary or Object Storage URL + optional language hint</li>
+    <li><strong>Output:</strong> <code>{"regions": [{"text": string, "language": string, "confidence": float, "bounding_box": [x, y, w, h]}]}</code></li>
+  </ul>
+</div>
+
+
+<!-- ============================================================ -->
+<h2>7. Flow 4 — Document Translation</h2>
+<!-- ============================================================ -->
+<p>User uploads a document (PDF, DOCX, PPTX, etc.) and receives a fully translated document. This is an asynchronous flow because document translation can take minutes.</p>
+
+<div class="diagram-container">
+<pre class="mermaid">
+flowchart LR
+    Client["📱 Client"]
+    LB["⚖️ Load Balancer"]
+    GW["🚪 API Gateway"]
+    DS["📄 Document<br/>Processing Service"]
+    MQ["📬 Document<br/>Job Queue"]
+    Worker["⚙️ Translation<br/>Worker"]
+    TS["🌐 Translation<br/>Service"]
+    ML["🧠 ML Model<br/>Serving Layer"]
+    ObjStore[("💾 Object<br/>Storage")]
+    JobDB[("📀 Job Status<br/>DB (NoSQL)")]
+
+    Client -->|"HTTP POST<br/>/translate/document<br/>(upload file)"| LB
+    LB --> GW
+    GW --> DS
+    DS -->|"store original"| ObjStore
+    DS -->|"enqueue job"| MQ
+    DS -->|"create job record"| JobDB
+    DS -->|"return job_id"| GW
+    GW --> LB
+    LB -->|"job_id + status"| Client
+
+    MQ -->|"dequeue"| Worker
+    Worker -->|"fetch doc"| ObjStore
+    Worker -->|"extract text<br/>segments"| Worker
+    Worker -->|"translate each<br/>segment"| TS
+    TS --> ML
+    Worker -->|"reassemble doc"| Worker
+    Worker -->|"store translated doc"| ObjStore
+    Worker -->|"update status"| JobDB
+
+    Client -.->|"HTTP GET<br/>/translate/document/{job_id}<br/>(poll)"| LB
+    LB -.-> GW
+    GW -.-> DS
+    DS -.->|"read status"| JobDB
+    DS -.->|"return status +<br/>download URL"| GW
+</pre>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+  <strong>Example 1 — PDF Translation:</strong><br>
+  A researcher uploads a 20-page PDF paper written in German and wants it in English. The client sends <code>HTTP POST /api/v1/translate/document</code> with the file and <code>{"source_lang": "de", "target_lang": "en"}</code>. The Document Processing Service stores the original PDF in Object Storage, creates a job record in the Job Status DB with status <code>"processing"</code>, enqueues a job message, and immediately returns <code>{"job_id": "j-abc123", "status": "processing"}</code>. A Translation Worker picks up the job, fetches the PDF from Object Storage, extracts text segments preserving layout metadata (paragraph boundaries, headers, tables), translates each segment via the Translation Service, reassembles the translated PDF preserving the original formatting, stores the result in Object Storage, and updates the Job Status DB to <code>"completed"</code> with the download URL. The client polls <code>GET /api/v1/translate/document/j-abc123</code> every 5 seconds and eventually receives <code>{"status": "completed", "download_url": "https://..."}</code>. The user downloads the translated PDF.
+</div>
+
+<div class="example-box">
+  <strong>Example 2 — Unsupported Format:</strong><br>
+  A user uploads a <code>.sketch</code> file. The Document Processing Service validates the file type, finds it unsupported, and immediately returns <code>HTTP 400</code> with <code>{"error": "Unsupported file format. Supported: PDF, DOCX, PPTX, XLSX, TXT."}</code>. No job is created.
+</div>
+
+<div class="example-box">
+  <strong>Example 3 — Worker Failure:</strong><br>
+  A Translation Worker crashes mid-processing. The message remains on the queue (because it was not acknowledged). After a visibility timeout (e.g., 5 minutes), the message becomes available again and another worker picks it up and retries from the beginning. If a job fails 3 times, it is moved to a dead-letter queue, the Job Status DB is updated to <code>"failed"</code>, and the client sees <code>{"status": "failed", "error": "Translation failed. Please try again."}</code>.
+</div>
+
+<h3>Component Deep Dive (New Components)</h3>
+
+<div class="deep-dive">
+  <h4>📄 Document Processing Service</h4>
+  <p>Handles document upload, format validation, job creation, and status queries. It does not perform the actual translation — that is offloaded to workers via the queue. This keeps the service lightweight and responsive.</p>
+  <ul>
+    <li><strong>Upload Endpoint (HTTP POST):</strong> <code>POST /api/v1/translate/document</code></li>
+    <li><strong>Input:</strong> Multipart: document file + <code>{"source_lang": string, "target_lang": string}</code></li>
+    <li><strong>Output:</strong> <code>{"job_id": string, "status": "processing"}</code></li>
+    <li><strong>Status Endpoint (HTTP GET):</strong> <code>GET /api/v1/translate/document/{job_id}</code></li>
+    <li><strong>Output:</strong> <code>{"job_id": string, "status": "processing|completed|failed", "download_url": string|null, "error": string|null}</code></li>
+  </ul>
+</div>
+
+<div class="deep-dive">
+  <h4>📬 Document Job Queue</h4>
+  <p>A separate message queue dedicated to document translation jobs. Decouples the upload API from the heavy translation processing. Provides at-least-once delivery with visibility timeouts. If a worker fails to acknowledge within the timeout, the message is re-delivered.</p>
+  <ul>
+    <li><strong>Why polling instead of WebSockets/SSE for status:</strong> Document translation is infrequent per user (a user translates maybe 1–2 docs per session). Maintaining persistent connections (WebSocket/SSE) for such rare events wastes resources. Short-polling every 5 seconds is simpler and sufficient. If the product required real-time updates for many concurrent doc translations, SSE would be a better choice.</li>
+  </ul>
+</div>
+
+<div class="deep-dive">
+  <h4>⚙️ Translation Worker</h4>
+  <p>Background worker processes that consume jobs from the Document Job Queue. Each worker: (1) fetches the document from Object Storage, (2) parses it to extract text while preserving structure/formatting metadata, (3) splits text into translation-sized segments, (4) batch-translates all segments via the Translation Service, (5) re-inserts translated text into the document while maintaining original formatting, (6) saves the result to Object Storage, (7) updates the Job Status DB. Workers are autoscaled based on queue depth.</p>
+</div>
+
+<div class="deep-dive">
+  <h4>📀 Job Status DB (NoSQL)</h4>
+  <p>Stores the status and metadata of document translation jobs. Key-value access pattern (lookup by job_id). Schema details below.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2>8. Flow 5 — Translation History</h2>
+<!-- ============================================================ -->
+<p>An authenticated user views their past translations (paginated, reverse chronological order). Users can also star/bookmark specific translations.</p>
+
+<div class="diagram-container">
+<pre class="mermaid">
+flowchart LR
+    Client["📱 Client"]
+    LB["⚖️ Load Balancer"]
+    GW["🚪 API Gateway"]
+    HS["📜 History<br/>Service"]
+    DB_H[("📀 History<br/>DB (NoSQL)")]
+
+    Client -->|"HTTP GET<br/>/history?page=1"| LB
+    LB --> GW
+    GW --> HS
+    HS -->|"query by user_id<br/>ordered by timestamp"| DB_H
+    DB_H -->|"paginated results"| HS
+    HS --> GW
+    GW --> LB
+    LB --> Client
+</pre>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+  <strong>Example 1 — Viewing History:</strong><br>
+  A logged-in user opens the "History" tab in the translate app. The client sends <code>HTTP GET /api/v1/history?limit=20&cursor=null</code> with the user's auth token. The API Gateway validates the token, extracts the <code>user_id</code>, and forwards to the History Service, which queries the History DB: <code>SELECT * FROM translation_history WHERE user_id = 'u-123' ORDER BY timestamp DESC LIMIT 20</code>. The results are returned as a paginated list. The client renders each entry showing source text, translated text, languages, and timestamp. The response includes a <code>next_cursor</code> for loading the next page.
+</div>
+
+<div class="example-box">
+  <strong>Example 2 — Starring a Translation:</strong><br>
+  A user taps the star icon on a history entry. The client sends <code>HTTP PATCH /api/v1/history/{translation_id}</code> with <code>{"starred": true}</code>. The History Service updates the record in the History DB. When the user later filters by starred translations, <code>GET /api/v1/history?starred=true</code> returns only starred entries.
+</div>
+
+<div class="example-box">
+  <strong>Example 3 — Deleting History:</strong><br>
+  A user deletes all translation history. The client sends <code>HTTP DELETE /api/v1/history</code>. The History Service soft-deletes all records for that user (marks as deleted; actual cleanup happens via a background job after a retention period for GDPR compliance).
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<div class="deep-dive">
+  <h4>📜 History Service (Read Path)</h4>
+  <ul>
+    <li><strong>Protocol:</strong> gRPC (internal), exposed as REST via API Gateway</li>
+    <li><strong>GET /api/v1/history:</strong> Input: <code>user_id</code> (from auth token), <code>limit</code>, <code>cursor</code>, <code>starred</code> (optional filter). Output: <code>{"translations": [...], "next_cursor": string|null}</code></li>
+    <li><strong>PATCH /api/v1/history/{id}:</strong> Input: <code>{"starred": bool}</code>. Output: <code>{"success": true}</code></li>
+    <li><strong>DELETE /api/v1/history:</strong> Input: <code>user_id</code>. Output: <code>{"success": true}</code></li>
+  </ul>
+</div>
+
+
+<!-- ============================================================ -->
+<h2>9. Combined Overall System Diagram</h2>
+<!-- ============================================================ -->
+<p>This diagram combines all five flows into a single architecture view.</p>
+
+<div class="diagram-container">
+<pre class="mermaid">
+flowchart TB
+    Client["📱 Client (Web / iOS / Android)"]
+
+    subgraph Edge["Edge Layer"]
+        CDN["🌍 CDN<br/>(Language Packs, Static Assets)"]
+        LB["⚖️ Load Balancer"]
+    end
+
+    subgraph Gateway["Gateway Layer"]
+        GW["🚪 API Gateway<br/>(Auth, Rate Limit, Routing)"]
+    end
+
+    subgraph CoreServices["Core Services"]
+        TS["🌐 Translation Service"]
+        LD["🔍 Language Detection Service"]
+        STT["🎙️ Speech-to-Text Service"]
+        TTS["🔊 Text-to-Speech Service"]
+        OCR["📷 OCR Service"]
+        DS["📄 Document Processing Service"]
+        HS["📜 History Service"]
+        US["👤 User Service"]
+    end
+
+    subgraph ML["ML Infrastructure"]
+        MLS["🧠 ML Model Serving Layer<br/>(NMT, ASR, TTS, OCR Models)"]
+        MR["📋 Model Registry"]
+    end
+
+    subgraph Async["Async Processing"]
+        MQ_H["📬 History<br/>Message Queue"]
+        MQ_D["📬 Document<br/>Job Queue"]
+        Worker["⚙️ Translation<br/>Workers"]
+    end
+
+    subgraph Storage["Data Layer"]
+        Cache["⚡ Translation Cache<br/>(In-Memory)"]
+        DB_U[("👤 User DB<br/>(SQL)")]
+        DB_H[("📀 History DB<br/>(NoSQL)")]
+        DB_J[("📀 Job Status DB<br/>(NoSQL)")]
+        ObjStore[("💾 Object Storage<br/>(Audio, Images, Docs)")]
+    end
+
+    Client --> CDN
+    Client --> LB
+    LB --> GW
+
+    GW --> TS
+    GW --> STT
+    GW --> OCR
+    GW --> DS
+    GW --> HS
+    GW --> US
+
+    TS --> LD
+    TS --> Cache
+    TS --> MLS
+    LD --> MLS
+    STT --> MLS
+    TTS --> MLS
+    OCR --> MLS
+    MLS --> MR
+
+    TS --> MQ_H
+    MQ_H --> HS
+    HS --> DB_H
+
+    DS --> MQ_D
+    DS --> DB_J
+    DS --> ObjStore
+    MQ_D --> Worker
+    Worker --> TS
+    Worker --> ObjStore
+    Worker --> DB_J
+
+    TTS --> ObjStore
+    US --> DB_U
+</pre>
+</div>
+
+<h3>Combined Flow Examples</h3>
+
+<div class="example-box">
+  <strong>Example A — End-to-End Text Translation (Authenticated User):</strong><br>
+  A logged-in user types "Good morning" and selects French as the target. The request hits the <strong>CDN</strong> (cache miss for API calls, pass through), goes to the <strong>Load Balancer</strong> → <strong>API Gateway</strong> (validates OAuth token, extracts user_id, rate-limit check passes) → <strong>Translation Service</strong> (source_lang = "auto", so calls <strong>Language Detection Service</strong> → <strong>ML Model Serving Layer</strong> detects English with 0.99 confidence) → Translation Service checks <strong>Translation Cache</strong> → cache hit! Returns <code>"Bonjour"</code> immediately. The Translation Service publishes a message to the <strong>History Message Queue</strong>. The <strong>History Service</strong> consumes it and writes to the <strong>History DB</strong>. Total latency: ~50 ms.
+</div>
+
+<div class="example-box">
+  <strong>Example B — End-to-End Speech Translation:</strong><br>
+  A user taps the microphone and speaks "Wo ist der Bahnhof?" in German, targeting English. The audio goes through <strong>LB</strong> → <strong>API Gateway</strong> → <strong>STT Service</strong> → <strong>ML Model Serving Layer</strong> (ASR model transcribes to German text) → <strong>Translation Service</strong> → <strong>Translation Cache</strong> (miss) → <strong>ML Model Serving Layer</strong> (NMT German→English) → <code>"Where is the train station?"</code> → <strong>TTS Service</strong> → <strong>ML Model Serving Layer</strong> (English TTS model) → audio stored in <strong>Object Storage</strong> → signed URL returned. History is written asynchronously. Total latency: ~400 ms.
+</div>
+
+<div class="example-box">
+  <strong>Example C — End-to-End Image Translation:</strong><br>
+  A user photographs a Japanese street sign. Image goes through <strong>LB</strong> → <strong>API Gateway</strong> → stored in <strong>Object Storage</strong> → <strong>OCR Service</strong> → <strong>ML Model Serving Layer</strong> (text detection + recognition, extracts "止まれ" with bounding box) → <strong>Translation Service</strong> → <strong>Translation Cache</strong> (hit for common word) → <code>"Stop"</code> returned with bounding box coordinates. Total latency: ~700 ms.
+</div>
+
+<div class="example-box">
+  <strong>Example D — End-to-End Document Translation:</strong><br>
+  A user uploads a Spanish DOCX. Goes through <strong>LB</strong> → <strong>API Gateway</strong> → <strong>Document Processing Service</strong> → file stored in <strong>Object Storage</strong>, job created in <strong>Job Status DB</strong>, message enqueued to <strong>Document Job Queue</strong> → <code>{"job_id": "j-xyz"}</code> returned immediately (~200 ms). A <strong>Translation Worker</strong> dequeues the job, fetches the DOCX, extracts 500 text segments, batch-translates via <strong>Translation Service</strong> → <strong>ML Model Serving Layer</strong>, reassembles the translated DOCX, stores in <strong>Object Storage</strong>, updates <strong>Job Status DB</strong> to "completed". User polls <code>GET /translate/document/j-xyz</code> and gets the download URL after ~90 seconds.
+</div>
+
+
+<!-- ============================================================ -->
+<h2>10. Database Schema</h2>
+<!-- ============================================================ -->
+
+<h3>10.1 SQL: <code>users</code> Table</h3>
 <table>
-<tr><th>Cache Layer</th><th>What</th><th>Strategy</th><th>TTL</th></tr>
-<tr><td>Browser/App</td><td>Recent translations</td><td>LRU local storage</td><td>Session / 7 days</td></tr>
-<tr><td>CDN Edge</td><td>Static assets, language packs</td><td>Pull-based caching</td><td>30 days</td></tr>
-<tr><td>Redis (Regional)</td><td>Translation results</td><td>Write-through on translate</td><td>24 hours</td></tr>
-<tr><td>Model Cache</td><td>Loaded model weights in GPU/TPU memory</td><td>LRU across language pairs</td><td>Permanent (hot)</td></tr>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+  <tr><td><code>user_id</code></td><td>UUID</td><td>PRIMARY KEY</td><td>Unique user identifier</td></tr>
+  <tr><td><code>email</code></td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td><td>User's email address</td></tr>
+  <tr><td><code>name</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Display name</td></tr>
+  <tr><td><code>preferred_source_lang</code></td><td>VARCHAR(10)</td><td></td><td>Default source language code</td></tr>
+  <tr><td><code>preferred_target_lang</code></td><td>VARCHAR(10)</td><td></td><td>Default target language code</td></tr>
+  <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Account creation time</td></tr>
+  <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last update time</td></tr>
 </table>
-<h4>Offline Language Packs (CDN Distribution)</h4>
-<pre><code>// Language packs distributed via CDN:
-// - ~50MB per language pair (quantized INT8 model)
-// - Delta updates: only download changed weights (~5MB)
-// - Stored: GCS → CloudFront/Akamai CDN → device
-// - Version pinning: app requests specific model version
-// - Background download on Wi-Fi, prompt on cellular</code></pre>
-</div>
 
-<h2>📈 Scaling Considerations</h2>
-<div class="card">
+<p><strong>Why SQL:</strong> User data is structured, relational, and requires strong consistency (e.g., unique email constraint). The dataset is relatively small (hundreds of millions of rows, not billions). ACID transactions are needed for account operations. Reads are by primary key (user_id) or by email — both well-suited to B-tree indexes.</p>
+<p><strong>Indexes:</strong></p>
 <ul>
-<li><strong>Model serving at scale:</strong> TPU pods (v4: 4096 chips) for batch inference. GPU clusters (A100/H100) for real-time. Batching: group requests by language pair for efficient GPU utilization (dynamic batching with max 50ms wait).</li>
-<li><strong>Language pair routing:</strong> not all 130×129 = 16,770 pairs have direct models. Use pivot translation through English: X → EN → Y. Trade quality for coverage.</li>
-<li><strong>Auto-scaling:</strong> scale model servers based on QPS per language pair. Popular pairs (EN↔ES, EN↔ZH) get dedicated capacity. Rare pairs share multi-language model instances.</li>
-<li><strong>Global deployment:</strong> model replicas in each GCP region. Route to nearest region. Language-aware routing: Asian language pairs served from asia-east, European from europe-west.</li>
+  <li><code>user_id</code> — Primary key B-tree index (automatic). Used for all authenticated API lookups.</li>
+  <li><code>email</code> — Unique B-tree index. Used during login/signup to check existence and look up user by email.</li>
 </ul>
-</div>
-
-<h2>⚖️ Tradeoffs</h2>
-<div class="tradeoff-grid">
-<div class="card pro"><h4>Multilingual Single Model</h4><ul><li>One model handles all 130+ languages</li><li>Zero-shot translation (unseen pairs)</li><li>Shared representations help low-resource langs</li></ul></div>
-<div class="card con"><h4>Multilingual Single Model</h4><ul><li>"Curse of multilinguality" — quality drops as langs increase</li><li>Large model = higher inference cost</li><li>High-resource languages subsidize low-resource</li></ul></div>
-<div class="card pro"><h4>Pivot Through English</h4><ul><li>Only need N models (X→EN) instead of N² pairs</li><li>English has most training data</li></ul></div>
-<div class="card con"><h4>Pivot Through English</h4><ul><li>Error compounds (two translations)</li><li>English-centric bias in translations</li><li>Double latency</li></ul></div>
-</div>
-
-<h2>🔄 Alternative Approaches</h2>
-<div class="grid">
-<div class="card"><h4>LLM-Based Translation (GPT-4, PaLM)</h4><p>Use general-purpose LLMs for translation. Better context handling, idiom translation, and style matching. Higher latency and cost per token. Competitive quality for high-resource pairs, but specialized NMT still wins on low-resource and speed.</p></div>
-<div class="card"><h4>Retrieval-Augmented Translation</h4><p>Retrieve similar translated sentences from a translation memory (TM), use as additional context for NMT model. Especially useful for domain-specific translation (medical, legal). Combines the consistency of TM with flexibility of NMT.</p></div>
-</div>
-
-<h2>📚 Additional Information</h2>
-<div class="card">
+<p><strong>Read/Write Events:</strong></p>
 <ul>
-<li><strong>BLEU score:</strong> standard metric for translation quality (0-100). Measures n-gram overlap with reference translation. BLEU 40+ = high quality for most language pairs. Human evaluation (MQM) used for nuanced quality assessment.</li>
-<li><strong>SentencePiece tokenization:</strong> language-agnostic subword tokenizer. Handles all scripts without language-specific preprocessing. Shared vocabulary across all languages (~64K tokens).</li>
-<li><strong>Back-translation:</strong> data augmentation for low-resource languages. Translate target monolingual text → source using existing model. Creates synthetic parallel data. 2-3x quality improvement for low-resource pairs.</li>
-<li><strong>Adaptive translation:</strong> user corrections feed back into model fine-tuning (with human review). Google Community contributions for quality improvement.</li>
+  <li><strong>Write:</strong> When a user creates an account (signup) or updates their profile/preferences.</li>
+  <li><strong>Read:</strong> On every authenticated API request (to validate user and load preferences). Typically served from a cache layer in front of the DB.</li>
 </ul>
+<p><strong>Sharding:</strong> Not necessary. Even with 500M users, a single SQL cluster with read replicas can handle the load. If needed, shard by <code>user_id</code> (hash-based consistent hashing) for horizontal scaling.</p>
+
+<hr>
+
+<h3>10.2 NoSQL: <code>translation_history</code> Table</h3>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td><code>user_id</code></td><td>STRING</td><td>PARTITION KEY</td><td>User who performed the translation</td></tr>
+  <tr><td><code>timestamp</code></td><td>TIMESTAMP</td><td>SORT KEY (DESC)</td><td>When the translation occurred</td></tr>
+  <tr><td><code>translation_id</code></td><td>UUID</td><td></td><td>Unique ID for this translation entry</td></tr>
+  <tr><td><code>source_lang</code></td><td>STRING</td><td></td><td>Source language code (e.g., "en")</td></tr>
+  <tr><td><code>target_lang</code></td><td>STRING</td><td></td><td>Target language code (e.g., "fr")</td></tr>
+  <tr><td><code>source_text</code></td><td>STRING</td><td></td><td>Original text (truncated to 500 chars for storage)</td></tr>
+  <tr><td><code>translated_text</code></td><td>STRING</td><td></td><td>Translated text (truncated to 500 chars for storage)</td></tr>
+  <tr><td><code>translation_type</code></td><td>STRING</td><td></td><td>One of: text, speech, image, document</td></tr>
+  <tr><td><code>starred</code></td><td>BOOLEAN</td><td></td><td>Whether the user starred this entry</td></tr>
+  <tr><td><code>deleted</code></td><td>BOOLEAN</td><td></td><td>Soft-delete flag (for GDPR)</td></tr>
+</table>
+
+<p><strong>Why NoSQL (Wide-Column):</strong> Translation history has extremely high write volume (billions of writes/day). The access pattern is simple: partition by <code>user_id</code>, sort by <code>timestamp DESC</code>, and paginate. No complex joins or aggregations are needed. NoSQL wide-column stores excel at this partition-key + sort-key access pattern with high write throughput and horizontal scalability.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>Primary index:</strong> Composite of <code>(user_id, timestamp DESC)</code> — a B-tree/LSM-tree index. Efficiently supports the query "get latest N translations for a user."</li>
+  <li><strong>Secondary index (GSI):</strong> <code>(user_id, starred, timestamp DESC)</code> — supports filtering starred translations per user without scanning all entries.</li>
+</ul>
+<p><strong>Read/Write Events:</strong></p>
+<ul>
+  <li><strong>Write:</strong> Asynchronously after every successful translation (any type). Triggered by the History Service consuming from the Message Queue.</li>
+  <li><strong>Read:</strong> When a user opens the History tab or filters by starred translations.</li>
+</ul>
+<p><strong>Sharding:</strong> Sharded by <code>user_id</code> (partition key). This ensures all of a user's history is co-located on the same shard for efficient queries. Consistent hashing distributes users evenly across shards. Hot users (extremely heavy translators) are handled by the NoSQL store's automatic partition splitting.</p>
+<p><strong>Denormalization:</strong> The <code>source_text</code> and <code>translated_text</code> are stored directly in the history table rather than referenced by a translation cache key. This is intentional denormalization — it avoids a secondary lookup to the Translation Cache (which may have evicted the entry) and ensures history is self-contained. The trade-off is increased storage, but text is small relative to storage costs.</p>
+
+<hr>
+
+<h3>10.3 NoSQL: <code>translation_cache</code> Table</h3>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td><code>cache_key</code></td><td>STRING</td><td>PRIMARY KEY</td><td>Hash of (source_lang, target_lang, normalized_text)</td></tr>
+  <tr><td><code>translated_text</code></td><td>STRING</td><td></td><td>Cached translation result</td></tr>
+  <tr><td><code>alternatives</code></td><td>LIST&lt;STRING&gt;</td><td></td><td>Alternative translations</td></tr>
+  <tr><td><code>model_version</code></td><td>STRING</td><td></td><td>NMT model version that produced this translation</td></tr>
+  <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td></td><td>When this entry was cached</td></tr>
+  <tr><td><code>ttl</code></td><td>TIMESTAMP</td><td></td><td>Expiration time (7 days from creation)</td></tr>
+</table>
+
+<p><strong>Note:</strong> This table backs the in-memory cache as a persistence layer. The primary cache is the in-memory cache (described in the Cache section). This NoSQL table provides durability so that cache entries survive restarts.</p>
+<p><strong>Why NoSQL (Key-Value):</strong> Pure key-value lookup pattern. Extremely high read/write throughput. No relational queries needed. Hash-based access is O(1).</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><code>cache_key</code> — Hash index. O(1) lookups by cache key. No range queries needed.</li>
+</ul>
+<p><strong>Read/Write Events:</strong></p>
+<ul>
+  <li><strong>Write:</strong> On every Translation Cache miss (after ML inference returns a result).</li>
+  <li><strong>Read:</strong> On every translation request (cache lookup before ML inference).</li>
+</ul>
+<p><strong>Sharding:</strong> Sharded by <code>cache_key</code> (hash-based consistent hashing). Cache keys are already hashes, so distribution is naturally uniform.</p>
+
+<hr>
+
+<h3>10.4 NoSQL: <code>document_jobs</code> Table</h3>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+  <tr><td><code>job_id</code></td><td>UUID</td><td>PRIMARY KEY</td><td>Unique job identifier</td></tr>
+  <tr><td><code>user_id</code></td><td>STRING</td><td></td><td>User who submitted the job (FOREIGN KEY conceptually)</td></tr>
+  <tr><td><code>status</code></td><td>STRING</td><td></td><td>processing | completed | failed</td></tr>
+  <tr><td><code>source_lang</code></td><td>STRING</td><td></td><td>Source language</td></tr>
+  <tr><td><code>target_lang</code></td><td>STRING</td><td></td><td>Target language</td></tr>
+  <tr><td><code>original_file_url</code></td><td>STRING</td><td></td><td>Object Storage URL of uploaded file</td></tr>
+  <tr><td><code>translated_file_url</code></td><td>STRING</td><td></td><td>Object Storage URL of translated file (null until completed)</td></tr>
+  <tr><td><code>error_message</code></td><td>STRING</td><td></td><td>Error details if failed (null otherwise)</td></tr>
+  <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td></td><td>Job submission time</td></tr>
+  <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td></td><td>Last status update time</td></tr>
+  <tr><td><code>ttl</code></td><td>TIMESTAMP</td><td></td><td>Auto-delete after 7 days</td></tr>
+</table>
+
+<p><strong>Why NoSQL (Key-Value / Document):</strong> Simple key-value access (lookup by job_id). High write concurrency from workers updating status. No joins needed. Jobs are ephemeral (TTL-based auto-deletion).</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><code>job_id</code> — Hash index (primary key). Used for status polling by the client.</li>
+  <li><strong>Secondary index:</strong> <code>(user_id, created_at DESC)</code> — B-tree index. Used if we ever show a user their recent document jobs.</li>
+</ul>
+<p><strong>Read/Write Events:</strong></p>
+<ul>
+  <li><strong>Write:</strong> When a document is uploaded (create job record), and when a worker updates the job status (processing → completed/failed).</li>
+  <li><strong>Read:</strong> When the client polls for job status (<code>GET /translate/document/{job_id}</code>).</li>
+</ul>
+<p><strong>Sharding:</strong> Sharded by <code>job_id</code>. Jobs are independent, so any sharding strategy works. Hash-based consistent hashing on <code>job_id</code> provides even distribution.</p>
+
+
+<!-- ============================================================ -->
+<h2>11. CDN &amp; Cache Deep Dive</h2>
+<!-- ============================================================ -->
+
+<h3>11.1 CDN</h3>
+<div class="deep-dive">
+  <h4>What is Cached on the CDN</h4>
+  <ul>
+    <li><strong>Language Packs:</strong> Downloadable NMT model files for offline translation (50–200 MB per language pair). These are static, versioned blobs that change only when models are updated (infrequent). Ideal CDN content — large files, high download volume, geographically distributed users.</li>
+    <li><strong>Static Web Assets:</strong> JavaScript bundles, CSS, images, fonts for the web client.</li>
+    <li><strong>TTS Audio Files:</strong> For very common phrases (e.g., "Hello" in 50 languages), pre-generated TTS audio can be served from CDN.</li>
+  </ul>
+  <h4>What is NOT on the CDN</h4>
+  <ul>
+    <li><strong>Dynamic translation API responses:</strong> Each translation request is unique (user-provided text), so CDN caching doesn't apply. The in-memory Translation Cache handles this at the application layer.</li>
+  </ul>
+  <h4>Why CDN is Appropriate</h4>
+  <p>Language packs are downloaded by millions of users globally. Without a CDN, all downloads would hit origin servers, creating a bottleneck. A CDN reduces latency (edge nodes close to users), reduces origin load, and handles bandwidth spikes (e.g., a new model release triggering mass downloads). Cache invalidation is simple since language packs are versioned — new versions get new URLs.</p>
 </div>
 
+<h3>11.2 In-Memory Translation Cache</h3>
+<div class="deep-dive">
+  <h4>Overview</h4>
+  <p>A distributed in-memory key-value store that sits between the Translation Service and the ML Model Serving Layer. It caches translated text to avoid redundant GPU-based inference.</p>
+
+  <h4>Cache Key</h4>
+  <p><code>SHA-256(source_lang + ":" + target_lang + ":" + lowercase(trim(source_text)))</code></p>
+  <p>Text is normalized (lowercased, trimmed, whitespace-collapsed) before hashing to maximize hit rates for equivalent inputs.</p>
+
+  <h4>Caching Strategy: Cache-Aside (Lazy Loading)</h4>
+  <ol>
+    <li>Translation Service receives a request.</li>
+    <li>Computes cache key and queries the cache.</li>
+    <li><strong>Cache Hit:</strong> Returns cached translation immediately. (~1 ms)</li>
+    <li><strong>Cache Miss:</strong> Calls ML Model Serving Layer for inference. Writes the result to the cache. Returns translation.</li>
+  </ol>
+
+  <h4>Why Cache-Aside (vs. alternatives)</h4>
+  <table>
+    <tr><th>Strategy</th><th>Why Not</th></tr>
+    <tr><td>Write-Through</td><td>Would add cache-write latency to every request. ML inference already takes 100+ ms; adding a synchronous cache write would be wasteful since not all translations will be repeated.</td></tr>
+    <tr><td>Write-Behind</td><td>Risk of data loss if the cache node fails before persisting. And we need the cache entry available immediately for subsequent identical requests, which write-behind's async nature might delay.</td></tr>
+    <tr><td>Read-Through</td><td>Would require the cache layer to know how to call the ML service, adding coupling. Cache-aside keeps the logic in the Translation Service.</td></tr>
+  </table>
+
+  <h4>Eviction Policy: LRU (Least Recently Used)</h4>
+  <p>LRU evicts entries that haven't been accessed recently. This is ideal because popular translations (common phrases, frequently translated content) stay in cache, while rare one-off translations are evicted. Estimated cache hit ratio: 40–60%.</p>
+  <p><strong>Why not LFU:</strong> LFU (Least Frequently Used) could work but is more complex and may retain stale entries that were historically popular but no longer requested. LRU's recency bias better matches translation patterns where trending topics drive temporary spikes.</p>
+
+  <h4>Expiration Policy: TTL = 7 days</h4>
+  <p>Even though translations are generally stable, NMT models are periodically updated (improving quality). A 7-day TTL ensures that after a model update, stale translations are refreshed within a week. This balances freshness against cache efficiency.</p>
+  <p>When a new model is deployed, we can also broadcast a targeted cache invalidation for the affected language pair to refresh translations sooner.</p>
+
+  <h4>Size Estimation</h4>
+  <ul>
+    <li>Average cache entry: ~1 KB (key + translated text + metadata)</li>
+    <li>Target cache size: 100 million entries → ~100 GB</li>
+    <li>Distributed across multiple cache nodes with consistent hashing</li>
+  </ul>
+</div>
+
+
+<!-- ============================================================ -->
+<h2>12. Scaling Considerations</h2>
+<!-- ============================================================ -->
+
+<h3>12.1 Load Balancers</h3>
+<div class="deep-dive">
+  <p>Load balancers are critical at multiple points in the architecture:</p>
+  <h4>LB Position 1: Edge Load Balancer (Client → API Gateway)</h4>
+  <ul>
+    <li><strong>Type:</strong> Layer 7 (HTTP-aware), global (anycast IP)</li>
+    <li><strong>Algorithm:</strong> Geographic routing first (route to nearest data center), then round-robin with weighted distribution based on server health/capacity within a data center.</li>
+    <li><strong>Purpose:</strong> Distribute 300K+ QPS across multiple API Gateway instances. Terminate TLS. Perform health checks. Provide DDoS protection at the edge.</li>
+  </ul>
+  <h4>LB Position 2: Internal Service Load Balancers (API Gateway → Microservices)</h4>
+  <ul>
+    <li><strong>Type:</strong> Layer 4/7, internal (service mesh / client-side load balancing)</li>
+    <li><strong>Algorithm:</strong> Least-connections or round-robin, with circuit-breaker patterns for failing instances.</li>
+    <li><strong>Purpose:</strong> Distribute requests across Translation Service, STT, TTS, OCR, History Service instances. Each service is independently scalable. Service discovery ensures new instances are registered automatically.</li>
+  </ul>
+  <h4>LB Position 3: ML Model Serving Load Balancer</h4>
+  <ul>
+    <li><strong>Type:</strong> Layer 4, internal</li>
+    <li><strong>Algorithm:</strong> Least-connections (GPU utilization-aware). Routes requests to the GPU server with the most available capacity.</li>
+    <li><strong>Purpose:</strong> ML inference is the most resource-intensive operation. The LB ensures even distribution across GPU servers, preventing hot spots.</li>
+  </ul>
+</div>
+
+<h3>12.2 Horizontal Scaling</h3>
+<ul>
+  <li><strong>API Gateway:</strong> Stateless; scale by adding more instances behind the edge LB. Auto-scale based on request rate.</li>
+  <li><strong>Translation Service, Language Detection Service, History Service:</strong> All stateless; auto-scale based on CPU/memory utilization and request queue depth.</li>
+  <li><strong>ML Model Serving Layer:</strong> Scale by adding GPU nodes. Use model sharding (split large models across GPUs) and request batching (batch multiple inference requests into one GPU call for throughput). Auto-scale based on GPU utilization and inference latency.</li>
+  <li><strong>Translation Workers:</strong> Scale based on document job queue depth. When the queue grows, spin up more workers.</li>
+  <li><strong>Translation Cache:</strong> Scale by adding cache nodes with consistent hashing. Doubling nodes doubles capacity with minimal cache redistribution.</li>
+  <li><strong>History DB / Job Status DB:</strong> NoSQL stores scale horizontally by adding shards. Partition keys ensure even distribution.</li>
+</ul>
+
+<h3>12.3 Geographic Distribution (Multi-Region)</h3>
+<ul>
+  <li>Deploy the full stack in multiple regions (e.g., US-East, US-West, Europe, Asia).</li>
+  <li>Edge LB routes users to the nearest region (latency-based routing).</li>
+  <li>Each region has its own ML model serving nodes, caches, and databases (with cross-region replication for user data).</li>
+  <li>Language packs served from CDN edge nodes globally.</li>
+</ul>
+
+<h3>12.4 Rate Limiting &amp; Abuse Prevention</h3>
+<ul>
+  <li>Rate limit per API key: 100 requests/second for free tier, higher for paid.</li>
+  <li>Rate limit per IP: prevent unauthenticated abuse.</li>
+  <li>Request size limits: 5,000 characters for text, 10 MB for images, 20 MB for documents.</li>
+  <li>CAPTCHA for excessive anonymous requests.</li>
+</ul>
+
+
+<!-- ============================================================ -->
+<h2>13. Tradeoffs &amp; Deep Dives</h2>
+<!-- ============================================================ -->
+
+<h3>13.1 Pivot Translation vs. Direct Translation</h3>
+<div class="deep-dive">
+  <p>Supporting 100 languages means ~10,000 language pairs. Training a dedicated NMT model for every pair is infeasible. Two approaches:</p>
+  <ul>
+    <li><strong>Direct models for popular pairs</strong> (e.g., English↔Spanish, English↔Chinese): Highest quality. ~100 pairs.</li>
+    <li><strong>Pivot translation for rare pairs</strong> (e.g., Yoruba→Finnish): Translate Yoruba→English, then English→Finnish. Two inference calls, slightly lower quality, higher latency.</li>
+    <li><strong>Multilingual models:</strong> A single large model trained on many languages. Handles rare pairs directly but with lower quality than dedicated models.</li>
+  </ul>
+  <p><strong>Chosen approach:</strong> Hybrid — direct models for top 100 pairs, multilingual model as primary fallback, pivot via English as secondary fallback.</p>
+  <p><strong>Tradeoff:</strong> Pivot adds ~100 ms latency and compounds errors. Multilingual models sacrifice quality for coverage. The hybrid approach balances quality, latency, and coverage.</p>
+</div>
+
+<h3>13.2 Synchronous vs. Asynchronous Architecture</h3>
+<div class="deep-dive">
+  <p><strong>Text/Speech/Image Translation:</strong> Synchronous (request-response). Users expect immediate results. The latency budget (200 ms for text) is achievable with caching and optimized inference.</p>
+  <p><strong>Document Translation:</strong> Asynchronous (job queue). Documents take minutes to process. Blocking the HTTP connection would waste server resources and risk timeouts. The job-queue pattern allows efficient resource utilization and reliable processing.</p>
+  <p><strong>History Writes:</strong> Asynchronous (message queue). History is a non-critical side effect that should not delay the translation response.</p>
+</div>
+
+<h3>13.3 On-Device vs. Server-Side Translation</h3>
+<div class="deep-dive">
+  <p><strong>Server-side (default):</strong> Full-quality NMT models (500 MB–2 GB per pair) running on GPUs provide the best translation quality.</p>
+  <p><strong>On-device (offline mode):</strong> Compressed/quantized models (50–200 MB per pair) running on mobile CPUs/NPUs. Lower quality but works without internet. Language packs are downloaded via CDN.</p>
+  <p><strong>Tradeoff:</strong> On-device models sacrifice quality for availability and privacy (text never leaves the device). The user chooses by toggling offline mode or when connectivity is lost.</p>
+</div>
+
+<h3>13.4 gRPC vs. REST for Internal Communication</h3>
+<div class="deep-dive">
+  <p><strong>Chosen:</strong> gRPC for all internal service-to-service communication.</p>
+  <p><strong>Why gRPC:</strong> Binary serialization (Protocol Buffers) is significantly faster and smaller than JSON. HTTP/2 multiplexing reduces connection overhead. Streaming support (useful for future features like real-time translation). Strong typing via .proto files catches integration errors at compile time.</p>
+  <p><strong>Why not REST internally:</strong> JSON serialization overhead adds unnecessary latency. No built-in streaming. Looser contracts lead to more integration bugs.</p>
+  <p><strong>External API:</strong> REST (JSON over HTTP/2) for the public API because it's universally accessible from browsers and third-party clients. gRPC-Web is considered for advanced web clients.</p>
+</div>
+
+<h3>13.5 Model Serving: Batching &amp; Latency</h3>
+<div class="deep-dive">
+  <p>GPU inference is most efficient when processing batches of requests together. The ML Model Serving Layer implements <strong>dynamic batching</strong>: it collects incoming requests for a short window (e.g., 5–10 ms), batches them, and runs a single GPU inference call. This increases throughput (2–5x) at the cost of a small additional latency (the batching window). Given the 200 ms latency budget, a 5–10 ms batching delay is acceptable.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<h2>14. Alternative Approaches</h2>
+<!-- ============================================================ -->
+
+<table>
+  <tr><th>Alternative</th><th>Description</th><th>Why Not Chosen</th></tr>
+  <tr>
+    <td><strong>Monolithic Architecture</strong></td>
+    <td>Single service handles all translation types (text, speech, image, document).</td>
+    <td>Violates separation of concerns. Different modalities have different resource requirements (GPU for ML, CPU for document parsing) and scaling profiles. A monolith cannot be scaled independently per modality. Also makes deployment and fault isolation harder.</td>
+  </tr>
+  <tr>
+    <td><strong>WebSockets for Real-Time Translation</strong></td>
+    <td>Maintain a persistent WebSocket connection for as-you-type translation.</td>
+    <td>Adds significant infrastructure complexity (WebSocket servers, connection state management, reconnection logic). HTTP with debouncing (300 ms delay after last keystroke) achieves a similar UX with much simpler architecture. WebSockets would be warranted for a "conversation mode" (live bilateral translation) but not for the standard typing UX.</td>
+  </tr>
+  <tr>
+    <td><strong>Server-Sent Events (SSE) for Document Status</strong></td>
+    <td>Push document translation status updates to the client via SSE instead of polling.</td>
+    <td>SSE is more efficient than polling, but document translation is an infrequent use case (1–2 per user session). The overhead of maintaining an SSE connection for a single status update is not justified. Polling every 5 seconds is simpler and uses negligible bandwidth. If document volume increases dramatically, SSE could be reconsidered.</td>
+  </tr>
+  <tr>
+    <td><strong>SQL for Translation History</strong></td>
+    <td>Store history in a relational database.</td>
+    <td>History has billions of writes per day with a simple partition-key + sort-key access pattern. SQL would struggle with this write throughput without extreme sharding complexity. NoSQL wide-column stores handle this natively with built-in partitioning and high write throughput.</td>
+  </tr>
+  <tr>
+    <td><strong>Graph Database for Language Relationships</strong></td>
+    <td>Model language pairs and translation paths as a graph.</td>
+    <td>While conceptually elegant, the "routing" between language pairs (direct vs. pivot) is simple enough to handle in application logic (a lookup table of supported direct pairs). A graph DB adds operational complexity for minimal benefit.</td>
+  </tr>
+  <tr>
+    <td><strong>Pre-compute All Translations</strong></td>
+    <td>Pre-translate a dictionary of common phrases and serve from a static lookup.</td>
+    <td>Works for single words and very common phrases (and we do cache these), but the combinatorial explosion of possible inputs makes full pre-computation infeasible. The cache naturally builds up a "hot set" of common translations over time, achieving a similar effect dynamically.</td>
+  </tr>
+  <tr>
+    <td><strong>Pub/Sub Instead of Message Queue for History</strong></td>
+    <td>Use a pub/sub system instead of a point-to-point message queue.</td>
+    <td>Pub/sub is designed for one-to-many (fan-out) scenarios. History writes have a single consumer (History Service). A point-to-point message queue is simpler, has less overhead, and provides better delivery guarantees for this use case. If we later need to fan out translation events to multiple consumers (e.g., analytics, quality monitoring), pub/sub would be reconsidered.</td>
+  </tr>
+</table>
+
+
+<!-- ============================================================ -->
+<h2>15. Additional Considerations</h2>
+<!-- ============================================================ -->
+
+<h3>15.1 Model Updates &amp; A/B Testing</h3>
+<p>NMT models are continuously improved. The Model Registry supports versioning. New models are deployed via blue-green: the new model version is loaded alongside the old one, and traffic is gradually shifted (canary deployment). A/B testing compares translation quality metrics (BLEU score, user feedback) between old and new models. If the new model regresses, traffic is rolled back instantly.</p>
+
+<h3>15.2 Quality Feedback Loop</h3>
+<p>Users can rate translations ("Suggest an edit" button). These feedback signals are collected and used to fine-tune models. A separate analytics pipeline aggregates feedback by language pair and model version to identify quality regressions.</p>
+
+<h3>15.3 Privacy &amp; Data Handling</h3>
+<ul>
+  <li>Translation text is encrypted in transit (TLS) and at rest.</li>
+  <li>Anonymous (unauthenticated) translations are not persisted — they pass through the system and are cached without user association.</li>
+  <li>Authenticated translations are stored in history per the user's consent. Users can delete their history at any time (GDPR right to erasure).</li>
+  <li>Translation text is NOT used for model training by default. Users must opt-in to contribute their translations to model improvement.</li>
+</ul>
+
+<h3>15.4 Monitoring &amp; Observability</h3>
+<ul>
+  <li><strong>Metrics:</strong> QPS, latency percentiles (p50, p95, p99), cache hit ratio, GPU utilization, queue depth, error rates per service.</li>
+  <li><strong>Tracing:</strong> Distributed tracing across all microservices (from client request to ML inference and back) to identify latency bottlenecks.</li>
+  <li><strong>Alerting:</strong> Alert on latency spikes, error rate increases, cache hit ratio drops (may indicate model update invalidated cache), and queue depth growth (may indicate worker scaling lag).</li>
+</ul>
+
+<h3>15.5 Cost Optimization</h3>
+<ul>
+  <li>GPU inference is the most expensive component. The translation cache (40–60% hit ratio) significantly reduces GPU usage.</li>
+  <li>Batch inference improves GPU throughput 2–5x.</li>
+  <li>Spot/preemptible instances can be used for non-latency-critical workloads (document translation workers).</li>
+  <li>Model quantization (INT8/FP16) reduces GPU memory and speeds up inference with minimal quality loss.</li>
+</ul>
+
+<h3>15.6 Graceful Degradation Strategy</h3>
+<table>
+  <tr><th>Failure</th><th>Degradation</th></tr>
+  <tr><td>NMT model unavailable for a language pair</td><td>Fallback to multilingual model → pivot translation → statistical MT → error with message</td></tr>
+  <tr><td>Translation Cache down</td><td>Bypass cache; all requests go directly to ML inference (higher latency but functional)</td></tr>
+  <tr><td>History DB down</td><td>Translations still work; history writes are buffered in the message queue and replayed when DB recovers</td></tr>
+  <tr><td>TTS/STT service down</td><td>Return text translation only; inform user that voice features are temporarily unavailable</td></tr>
+  <tr><td>Document worker backlog</td><td>Accept uploads but warn of longer processing times; auto-scale workers</td></tr>
+</table>
+
+
+<!-- ============================================================ -->
+<h2>16. Vendor Recommendations</h2>
+<!-- ============================================================ -->
+<p>The design above is vendor-agnostic. Below are specific vendor options for each infrastructure component, should implementation require vendor selection.</p>
+
+<table>
+  <tr><th>Component</th><th>Vendor Options</th><th>Rationale</th></tr>
+  <tr>
+    <td>In-Memory Cache</td>
+    <td>Redis, Memcached, Hazelcast</td>
+    <td><strong>Redis</strong> is preferred for its support of TTL, LRU eviction, clustering, persistence, and rich data structures. Memcached is simpler but lacks persistence and advanced features. Hazelcast offers JVM-native in-memory computing.</td>
+  </tr>
+  <tr>
+    <td>NoSQL (Wide-Column) — History DB</td>
+    <td>Apache Cassandra, ScyllaDB, Google Bigtable, Amazon DynamoDB</td>
+    <td><strong>Cassandra/ScyllaDB</strong> for self-managed: excellent write throughput, tunable consistency, linear scalability. <strong>DynamoDB/Bigtable</strong> for managed: zero operational overhead, automatic scaling, native TTL support.</td>
+  </tr>
+  <tr>
+    <td>NoSQL (Key-Value) — Cache Backing Store / Job DB</td>
+    <td>Amazon DynamoDB, Redis (with persistence), Apache Cassandra</td>
+    <td><strong>DynamoDB</strong> for simple key-value with TTL. <strong>Redis with AOF persistence</strong> if already used for caching.</td>
+  </tr>
+  <tr>
+    <td>SQL — User DB</td>
+    <td>PostgreSQL, MySQL, CockroachDB, Amazon Aurora</td>
+    <td><strong>PostgreSQL</strong> for rich feature set and strong consistency. <strong>CockroachDB</strong> for distributed SQL with global deployments. <strong>Aurora</strong> for managed with high availability.</td>
+  </tr>
+  <tr>
+    <td>Message Queue</td>
+    <td>Apache Kafka, RabbitMQ, Amazon SQS, Apache Pulsar</td>
+    <td><strong>Kafka</strong> for high-throughput history writes (billions/day) with replay capability. <strong>SQS</strong> for simpler document job queue with built-in dead-letter queue and visibility timeout. <strong>RabbitMQ</strong> for lower volume with flexible routing.</td>
+  </tr>
+  <tr>
+    <td>Object Storage</td>
+    <td>Amazon S3, Google Cloud Storage, Azure Blob Storage, MinIO</td>
+    <td><strong>S3</strong> or equivalent managed object storage for durability (99.999999999%), lifecycle policies, signed URLs, and global availability. <strong>MinIO</strong> for self-hosted S3-compatible storage.</td>
+  </tr>
+  <tr>
+    <td>CDN</td>
+    <td>Cloudflare, Amazon CloudFront, Akamai, Fastly</td>
+    <td><strong>Cloudflare</strong> for global edge network, DDoS protection, and competitive pricing. <strong>CloudFront</strong> for tight integration with S3. <strong>Akamai</strong> for enterprise-grade performance.</td>
+  </tr>
+  <tr>
+    <td>ML Model Serving</td>
+    <td>NVIDIA Triton Inference Server, TensorFlow Serving, TorchServe, Seldon Core</td>
+    <td><strong>Triton</strong> for multi-framework support (TensorFlow, PyTorch, ONNX), dynamic batching, GPU optimization, and model ensemble capabilities. <strong>TorchServe</strong> if all models are PyTorch.</td>
+  </tr>
+  <tr>
+    <td>Load Balancer</td>
+    <td>NGINX, Envoy, HAProxy, AWS ALB/NLB, Traefik</td>
+    <td><strong>Envoy</strong> for service mesh integration, observability, and gRPC support. <strong>NGINX</strong> for edge load balancing. <strong>ALB</strong> for managed cloud deployments.</td>
+  </tr>
+  <tr>
+    <td>API Gateway</td>
+    <td>Kong, AWS API Gateway, Envoy, Zuul, Traefik</td>
+    <td><strong>Kong</strong> for plugin ecosystem (rate limiting, auth, logging). <strong>Envoy</strong> if already used as service mesh. <strong>AWS API Gateway</strong> for serverless.</td>
+  </tr>
+  <tr>
+    <td>Container Orchestration</td>
+    <td>Kubernetes, Amazon ECS, Google GKE</td>
+    <td><strong>Kubernetes</strong> for vendor-agnostic container orchestration, auto-scaling (HPA/VPA), service discovery, and mature ecosystem for ML workloads (GPU scheduling).</td>
+  </tr>
+</table>
+
+<hr>
+<p style="text-align:center; color:#888; margin-top:3rem;">System Design: Google Translate — End of Document</p>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', flowchart: { useMaxWidth: true, htmlLabels: true } });
+</script>
 </body>
 </html>
