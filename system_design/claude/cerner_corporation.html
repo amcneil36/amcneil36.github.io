@@ -1,460 +1,1593 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cerner (Healthcare EHR) - System Design</title>
-<style>
-:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--heading:#00A4E4;--accent:#004B87;--accent2:#6CC24A;--accent3:#FF6B35;--muted:#888}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
-h1{color:var(--heading);font-size:2.2rem;border-bottom:3px solid var(--heading);padding-bottom:.5rem;margin-bottom:1.5rem}
-h2{color:var(--accent);margin:2rem 0 1rem;font-size:1.5rem}
-h3{color:var(--accent2);margin:1.5rem 0 .75rem;font-size:1.2rem}
-h4{color:var(--accent3);margin:1rem 0 .5rem}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
-ul,ol{margin:.75rem 0 .75rem 1.5rem}
-li{margin:.4rem 0}
-code{background:#2d2d2d;padding:.2rem .5rem;border-radius:4px;font-size:.9rem;color:#f8f8f2}
-pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:1rem 0}
-pre code{padding:0;background:none}
-.tag{display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600;margin:.2rem}
-.tag-pk{background:#E53935;color:#fff}
-.tag-fk{background:#1E88E5;color:#fff}
-.tag-idx{background:#43A047;color:#fff}
-.tag-shard{background:#FB8C00;color:#fff}
-.tag-cache{background:#8E24AA;color:#fff}
-.tag-ttl{background:#00897B;color:#fff}
-svg text{font-family:'Segoe UI',system-ui,sans-serif}
-.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
-.pro{background:#1b3a1b;border:1px solid #2d5a2d;border-radius:8px;padding:1rem}
-.con{background:#3a1b1b;border:1px solid #5a2d2d;border-radius:8px;padding:1rem}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design: Cerner Corporation (Healthcare EHR Platform)</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+        h1 {
+            text-align: center;
+            color: #0d6efd;
+            border-bottom: 3px solid #0d6efd;
+            padding-bottom: 15px;
+            font-size: 2em;
+        }
+        h2 {
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 8px;
+            margin-top: 50px;
+        }
+        h3 {
+            color: #198754;
+            margin-top: 30px;
+        }
+        h4 {
+            color: #6f42c1;
+            margin-top: 20px;
+        }
+        ul, ol {
+            padding-left: 25px;
+        }
+        li {
+            margin-bottom: 6px;
+        }
+        .mermaid {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 20px 0;
+            text-align: center;
+        }
+        .example-box {
+            background-color: #e7f5ff;
+            border-left: 4px solid #0d6efd;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .example-box strong {
+            color: #0d6efd;
+        }
+        .deep-dive {
+            background-color: #f8f0fc;
+            border-left: 4px solid #6f42c1;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .schema-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .schema-table th {
+            background-color: #343a40;
+            color: #fff;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        .schema-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .schema-table tr:hover {
+            background-color: #f1f3f5;
+        }
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .warning {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        code {
+            background-color: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.95em;
+        }
+        .section-divider {
+            border: none;
+            height: 2px;
+            background: linear-gradient(to right, #0d6efd, #6f42c1, #198754);
+            margin: 40px 0;
+        }
+        .vendor-card {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin: 10px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+    </style>
 </head>
 <body>
 
-<h1>🏥 Cerner Corporation (Healthcare EHR) - System Design</h1>
+<h1>System Design: Cerner Corporation — Healthcare EHR Platform</h1>
 
-<!-- ============ FUNCTIONAL REQUIREMENTS ============ -->
-<div class="card">
-<h2>Functional Requirements</h2>
+<p>
+    Cerner Corporation (now Oracle Health) is a leading health information technology company whose flagship product is a
+    comprehensive <strong>Electronic Health Records (EHR)</strong> platform. The platform enables hospitals, clinics, and
+    health systems to digitally manage patient records, clinical workflows, order entry, billing, and cross-organization
+    data exchange. This document designs the core platform from scratch in a vendor-agnostic manner.
+</p>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- FUNCTIONAL REQUIREMENTS -->
+<!-- ============================================================ -->
+<h2>1. Functional Requirements</h2>
 <ol>
-<li><strong>Electronic Health Records (EHR):</strong> Store, retrieve, and update patient medical records — demographics, diagnoses (ICD-10), medications, lab results, clinical notes, vitals, allergies, immunizations</li>
-<li><strong>Clinical Decision Support & Orders (CPOE):</strong> Computerized Provider Order Entry — physicians order labs, medications, imaging with drug-drug/drug-allergy interaction alerts, evidence-based clinical rules</li>
-<li><strong>Health Information Exchange (HIE):</strong> FHIR/HL7-based interoperability — exchange patient data across hospitals, labs, pharmacies, insurance; patient consent management</li>
-</ol>
-</div>
-
-<!-- ============ NON-FUNCTIONAL REQUIREMENTS ============ -->
-<div class="card">
-<h2>Non-Functional Requirements</h2>
-<ul>
-<li><strong>Availability:</strong> 99.99% uptime — EHR downtime directly impacts patient care; disaster recovery with RTO &lt;15 min</li>
-<li><strong>Compliance:</strong> HIPAA (US), GDPR (EU), HITECH Act — full audit trail, encryption at rest and in transit, BAA with all vendors</li>
-<li><strong>Latency:</strong> Chart load &lt;2s, order entry &lt;1s, lab result display &lt;500ms; alert firing within 100ms of order submission</li>
-<li><strong>Scale:</strong> 25K+ healthcare facilities, 250M+ patient records, 1B+ clinical documents</li>
-<li><strong>Data Integrity:</strong> ACID transactions for clinical data — no partial updates to patient records; strong consistency</li>
-</ul>
-</div>
-
-<!-- ============ FLOW 1: PATIENT CHART ============ -->
-<h2>Flow 1: Patient Chart Retrieval & Clinical Documentation</h2>
-<div class="card">
-<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#00A4E4"/></marker></defs>
-<rect x="20" y="50" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Clinician</text><text x="80" y="87" text-anchor="middle" fill="#fff" font-size="10">(PowerChart)</text>
-<rect x="190" y="50" width="130" height="50" rx="8" fill="#FB8C00"/><text x="255" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">API Gateway</text><text x="255" y="87" text-anchor="middle" fill="#fff" font-size="10">(OAuth2 + RBAC)</text>
-<rect x="370" y="50" width="130" height="50" rx="8" fill="#4285F4"/><text x="435" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Chart Service</text><text x="435" y="87" text-anchor="middle" fill="#fff" font-size="10">(Aggregator)</text>
-<rect x="550" y="20" width="130" height="45" rx="8" fill="#795548"/><text x="615" y="47" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Patient DB (Oracle)</text>
-<rect x="550" y="80" width="130" height="45" rx="8" fill="#795548"/><text x="615" y="107" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Clinical Doc Store</text>
-<rect x="550" y="140" width="130" height="45" rx="8" fill="#00897B"/><text x="615" y="167" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Lab Results Cache</text>
-<rect x="740" y="50" width="130" height="50" rx="8" fill="#9C27B0"/><text x="805" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Audit Log</text><text x="805" y="87" text-anchor="middle" fill="#fff" font-size="10">(HIPAA Trail)</text>
-<rect x="370" y="200" width="130" height="50" rx="8" fill="#E53935"/><text x="435" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">CDS Engine</text><text x="435" y="237" text-anchor="middle" fill="#fff" font-size="10">(Alert Rules)</text>
-<line x1="140" y1="75" x2="185" y2="75" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="320" y1="75" x2="365" y2="75" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="500" y1="65" x2="545" y2="42" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="500" y1="75" x2="545" y2="100" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="500" y1="90" x2="545" y2="155" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="500" y1="100" x2="435" y2="195" stroke="#00A4E4" stroke-width="1.5" marker-end="url(#ah)"/>
-<line x1="435" y1="100" x2="740" y2="65" stroke="#00A4E4" stroke-width="1.5" marker-end="url(#ah)"/>
-</svg>
-</div>
-
-<div class="card">
-<h3>Steps</h3>
-<ol>
-<li>Clinician authenticates via SSO (SAML 2.0) with role-based access — physician, nurse, pharmacist get different views</li>
-<li>Searches patient by MRN (Medical Record Number) or name; API Gateway validates OAuth2 token + RBAC permissions</li>
-<li>Chart Service aggregates data from multiple sources: demographics, problems list, medications, allergies, vitals, labs, notes</li>
-<li>Patient DB (Oracle) queried for demographics and care plan; Clinical Doc Store returns structured notes (CDA/C-CDA format)</li>
-<li>Lab Results Cache (Redis) serves recent results; older results fetched from lab system via HL7v2 interface</li>
-<li>CDS Engine evaluates rules against patient data — displays alerts (drug allergies, overdue screenings, abnormal values)</li>
-<li>Every chart access logged to HIPAA Audit Log with user_id, patient_id, timestamp, action, reason for access</li>
+    <li><strong>Patient Registration &amp; Demographics:</strong> Register new patients, capture demographics (name, DOB, address, insurance, emergency contacts), assign a unique Medical Record Number (MRN), and update patient information.</li>
+    <li><strong>Electronic Health Records (EHR):</strong> Store and retrieve a longitudinal patient record including diagnoses, allergies, immunizations, medications, vitals, problem lists, surgical history, and family history.</li>
+    <li><strong>Clinical Documentation:</strong> Clinicians can author encounter notes (progress notes, history &amp; physical, discharge summaries) using structured and free-text templates.</li>
+    <li><strong>Computerized Physician Order Entry (CPOE):</strong> Physicians can electronically place orders for labs, imaging, procedures, and medications. Orders flow to the appropriate departments (lab, pharmacy, radiology).</li>
+    <li><strong>Clinical Decision Support (CDS):</strong> Real-time alerts for drug-drug interactions, allergy conflicts, dosing errors, duplicate orders, and evidence-based care recommendations triggered during order entry and documentation.</li>
+    <li><strong>Patient Portal:</strong> Patients can log in to view their health records, lab results, medications, upcoming appointments; schedule/cancel appointments; send secure messages to providers; and request prescription refills.</li>
+    <li><strong>Health Information Exchange (HIE):</strong> Exchange patient data with external healthcare organizations using healthcare interoperability standards (HL7 FHIR, HL7 v2, C-CDA documents).</li>
+    <li><strong>Billing &amp; Revenue Cycle Management:</strong> Generate billing codes (ICD-10, CPT) from clinical encounters, create claims, submit to insurance payers, track claim status, handle denials and appeals.</li>
+    <li><strong>Scheduling:</strong> Schedule patient appointments, manage provider calendars, handle recurring appointments, waitlists, and automated reminders (SMS/email).</li>
+    <li><strong>Audit Logging:</strong> Every read, write, and update to patient data is logged with who, what, when, and from where (IP address) for HIPAA compliance.</li>
+    <li><strong>Role-Based Access Control (RBAC):</strong> Granular permissions based on roles (physician, nurse, pharmacist, billing staff, patient, admin). "Break-the-glass" emergency override with mandatory justification.</li>
+    <li><strong>Medication Administration Record (MAR):</strong> Track medication administration in real-time at the bedside, including barcode scanning for patient/medication verification.</li>
 </ol>
 
-<h3>Example</h3>
-<p>Dr. Smith opens patient John Doe (MRN: 12345678). Chart Service fetches: 3 active diagnoses (Diabetes T2, Hypertension, Asthma), 5 active medications, 12 recent lab results (HbA1c: 7.2%), 2 allergies (Penicillin, Sulfa). CDS fires alert: "HbA1c above target — consider medication adjustment." Audit log records Dr. Smith accessed chart at 14:32 UTC.</p>
+<hr class="section-divider">
 
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>HIPAA Audit Trail</h4>
-<p><strong>Requirement:</strong> Every access to PHI (Protected Health Information) must be logged — who, what, when, where, why</p>
-<p><strong>Storage:</strong> Append-only log in dedicated database; tamper-proof with cryptographic hashing (each entry references previous hash)</p>
-<p><strong>Retention:</strong> Minimum 6 years per HIPAA; typically 10 years for legal defensibility</p>
-<p><strong>Monitoring:</strong> Break-the-glass alerts — accessing patient records without treatment relationship triggers immediate review</p>
-</div>
-<div class="card">
-<h4>Role-Based Access Control</h4>
-<p><strong>Model:</strong> RBAC with attribute-based extensions (ABAC) — role + department + care team membership + patient consent</p>
-<p><strong>Roles:</strong> Physician (full chart), Nurse (care notes + vitals), Pharmacist (meds only), Billing (demographics + codes only)</p>
-<p><strong>Consent:</strong> Patient can restrict access to sensitive records (behavioral health, HIV, substance abuse — 42 CFR Part 2)</p>
-</div>
-<div class="card">
-<h4>Clinical Document Architecture (CDA)</h4>
-<p><strong>Standard:</strong> HL7 CDA R2 / C-CDA (Consolidated CDA) — XML-based clinical document format</p>
-<p><strong>Sections:</strong> Problems, Medications, Allergies, Procedures, Results, Vitals, Plan of Care</p>
-<p><strong>Coded Data:</strong> SNOMED CT (problems), RxNorm (medications), LOINC (lab tests), ICD-10 (diagnoses), CPT (procedures)</p>
-</div>
-<div class="card">
-<h4>Clinical Decision Support</h4>
-<p><strong>Engine:</strong> Rule-based system (Arden Syntax MLMs) + ML models for predictive alerts</p>
-<p><strong>Rules:</strong> Drug-drug interactions (3,000+ rules), drug-allergy checks, dosing limits, duplicate orders, care gaps</p>
-<p><strong>Alert Fatigue:</strong> Tiered severity (info → warning → hard stop); suppression logic for previously overridden alerts</p>
-</div>
-</div>
-</div>
-
-<!-- ============ FLOW 2: CPOE ============ -->
-<h2>Flow 2: Computerized Provider Order Entry (CPOE)</h2>
-<div class="card">
-<svg viewBox="0 0 1000 320" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#6CC24A"/></marker></defs>
-<rect x="20" y="60" width="120" height="50" rx="8" fill="#34A853"/><text x="80" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Physician</text><text x="80" y="97" text-anchor="middle" fill="#fff" font-size="10">(PowerOrders)</text>
-<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Order Service</text>
-<rect x="370" y="30" width="130" height="50" rx="8" fill="#E53935"/><text x="435" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">CDS Engine</text><text x="435" y="67" text-anchor="middle" fill="#fff" font-size="10">(Interaction Check)</text>
-<rect x="370" y="100" width="130" height="50" rx="8" fill="#9C27B0"/><text x="435" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Pharmacy Queue</text><text x="435" y="137" text-anchor="middle" fill="#fff" font-size="10">(Verification)</text>
-<rect x="560" y="60" width="130" height="50" rx="8" fill="#795548"/><text x="625" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Orders DB</text><text x="625" y="97" text-anchor="middle" fill="#fff" font-size="10">(Oracle + Event Log)</text>
-<rect x="740" y="30" width="130" height="50" rx="8" fill="#00897B"/><text x="805" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">eMAR</text><text x="805" y="67" text-anchor="middle" fill="#fff" font-size="10">(Medication Admin)</text>
-<rect x="740" y="100" width="130" height="50" rx="8" fill="#FB8C00"/><text x="805" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Lab Interface</text><text x="805" y="137" text-anchor="middle" fill="#fff" font-size="10">(HL7 ORM→Lab)</text>
-<line x1="140" y1="85" x2="185" y2="85" stroke="#6CC24A" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="320" y1="75" x2="365" y2="55" stroke="#6CC24A" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="320" y1="95" x2="365" y2="120" stroke="#6CC24A" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="320" y1="85" x2="555" y2="85" stroke="#6CC24A" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="690" y1="85" x2="735" y2="55" stroke="#6CC24A" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="690" y1="85" x2="735" y2="120" stroke="#6CC24A" stroke-width="2" marker-end="url(#ah2)"/>
-</svg>
-</div>
-
-<div class="card">
-<h3>Steps</h3>
+<!-- ============================================================ -->
+<!-- NON-FUNCTIONAL REQUIREMENTS -->
+<!-- ============================================================ -->
+<h2>2. Non-Functional Requirements</h2>
 <ol>
-<li>Physician selects medication order: Drug (RxNorm code), dose, route, frequency, duration</li>
-<li>Order Service sends to CDS Engine for real-time interaction checking (within 100ms)</li>
-<li>CDS checks: drug-drug interactions, drug-allergy, duplicate therapy, renal/hepatic dose adjustment, weight-based dosing</li>
-<li>If hard-stop alert → order blocked until override with documented reason; soft alert → displayed, can be acknowledged</li>
-<li>Order persisted to Orders DB with status: Ordered → Verified → Dispensed → Administered → Completed</li>
-<li>Medication order routed to Pharmacy Queue for pharmacist verification (required by law for most medications)</li>
-<li>After pharmacist verification, order appears on eMAR (electronic Medication Administration Record) for nurse administration</li>
-<li>Lab orders sent via HL7 ORM message to laboratory information system (LIS) for processing</li>
+    <li><strong>High Availability (99.99%):</strong> Healthcare systems are life-critical. Downtime can directly endanger patient safety. The system must be operational 24/7/365 with &lt; 52 minutes of downtime per year.</li>
+    <li><strong>Low Latency:</strong> Clinical workflows require sub-second response times. Chart loading &lt; 1 second, order entry &lt; 500ms, CDS alerts &lt; 200ms. Clinicians will abandon slow systems.</li>
+    <li><strong>HIPAA Compliance:</strong> All data encrypted at rest (AES-256) and in transit (TLS 1.3). Comprehensive audit logging. Minimum Necessary access principle enforced. BAA (Business Associate Agreements) with all third parties.</li>
+    <li><strong>Data Integrity &amp; Consistency:</strong> Patient records demand strong consistency. An order placed must be immediately visible. Medication changes must propagate in real-time. Eventual consistency is not acceptable for clinical data.</li>
+    <li><strong>Scalability:</strong> Support 500+ hospitals, 100K+ concurrent clinicians, millions of patient records, billions of clinical data points. Handle peak loads during morning rounds, shift changes, and flu season surges.</li>
+    <li><strong>Disaster Recovery:</strong> RPO (Recovery Point Objective) &lt; 1 minute, RTO (Recovery Time Objective) &lt; 15 minutes. Multi-region active-passive replication with automatic failover.</li>
+    <li><strong>Interoperability:</strong> Must support HL7 FHIR R4, HL7 v2.x, C-CDA, DICOM (imaging), X12 (claims), NCPDP (pharmacy). Open APIs for third-party integrations.</li>
+    <li><strong>Security:</strong> Multi-factor authentication, session timeout, IP whitelisting, intrusion detection, vulnerability scanning, penetration testing, SOC 2 Type II compliance.</li>
+    <li><strong>Throughput:</strong> Handle 10,000+ order transactions per second across the entire platform during peak hours.</li>
+    <li><strong>Data Durability:</strong> Zero data loss tolerance. All writes must be durably persisted with replication factor ≥ 3.</li>
+    <li><strong>Regulatory Compliance:</strong> ONC Certified EHR Technology (CEHRT), Meaningful Use / Promoting Interoperability compliance, state-specific regulations (e.g., 42 CFR Part 2 for substance abuse records).</li>
 </ol>
 
-<h3>Example</h3>
-<p>Dr. Smith orders Amoxicillin 500mg PO TID for 10 days. CDS Engine checks: Patient has Penicillin allergy → HARD STOP alert "Cross-reactivity: Amoxicillin is a penicillin-type antibiotic." Dr. Smith cancels order, selects Azithromycin instead. CDS passes. Order sent to pharmacy queue. Pharmacist verifies dose is appropriate. Order appears on nurse's eMAR with barcode for bedside scanning.</p>
+<hr class="section-divider">
 
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>HL7v2 Messaging</h4>
-<p><strong>Protocol:</strong> HL7v2 (pipe-delimited) over MLLP (Minimum Lower Layer Protocol) — TCP with header/trailer bytes</p>
-<p><strong>Messages:</strong> ORM (Order), ORU (Result), ADT (Admit/Discharge/Transfer), SIU (Scheduling)</p>
-<p><strong>Example:</strong> <code>MSH|^~\&|CERNER|HOSPITAL|LAB|LABSYS|202402...|ORM^O01</code></p>
-<p><strong>Ack:</strong> Every message requires ACK response; retry queue with exponential backoff on NACK</p>
-</div>
-<div class="card">
-<h4>Order State Machine</h4>
-<p><strong>States:</strong> Draft → Signed → Verified → Dispensed → Administered → Completed / Discontinued</p>
-<p><strong>Events:</strong> Each transition logged with timestamp, user_id, reason; full audit trail per order</p>
-<p><strong>Idempotency:</strong> Order IDs are globally unique (UUID); duplicate submission detection via order_id dedup</p>
-</div>
-</div>
+<!-- ============================================================ -->
+<!-- FLOW 1: PATIENT REGISTRATION & RECORD MANAGEMENT -->
+<!-- ============================================================ -->
+<h2>3. Flow 1 — Patient Registration &amp; EHR Record Management</h2>
+<p>This flow covers how patients are registered in the system, how their demographic and clinical data is stored, and how clinicians retrieve patient charts.</p>
+
+<div class="mermaid">
+graph LR
+    subgraph Clients
+        A[Registration Clerk<br/>Web App]
+        B[Clinician<br/>Web/Desktop App]
+    end
+
+    subgraph Load Balancer
+        LB[Load Balancer<br/>Layer 7]
+    end
+
+    subgraph API Gateway
+        GW[API Gateway<br/>Auth / Rate Limit / Routing]
+    end
+
+    subgraph Services
+        PS[Patient Service]
+        EHR[EHR Service]
+        AUD[Audit Service]
+    end
+
+    subgraph Data Stores
+        PDB[(Patient DB<br/>SQL)]
+        EHRDB[(EHR DB<br/>SQL)]
+        ADB[(Audit Log DB<br/>Time-Series)]
+        CACHE[(In-Memory Cache)]
+    end
+
+    subgraph Async
+        MQ[Message Queue]
+    end
+
+    A -->|HTTPS| LB
+    B -->|HTTPS| LB
+    LB --> GW
+    GW --> PS
+    GW --> EHR
+    PS -->|Read/Write| PDB
+    PS -->|Publish audit event| MQ
+    EHR -->|Read/Write| EHRDB
+    EHR -->|Read| CACHE
+    EHR -->|Publish audit event| MQ
+    MQ --> AUD
+    AUD -->|Write| ADB
+    EHR -->|Cache miss: populate| CACHE
 </div>
 
-<!-- ============ FLOW 3: HIE / FHIR ============ -->
-<h2>Flow 3: Health Information Exchange (FHIR API)</h2>
-<div class="card">
-<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FF6B35"/></marker></defs>
-<rect x="20" y="60" width="120" height="50" rx="8" fill="#607D8B"/><text x="80" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">External EHR</text><text x="80" y="97" text-anchor="middle" fill="#fff" font-size="10">(Epic, Allscripts)</text>
-<rect x="190" y="60" width="130" height="50" rx="8" fill="#FB8C00"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">FHIR Gateway</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="10">(R4 / SMART)</text>
-<rect x="370" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="435" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Integration Engine</text><text x="435" y="97" text-anchor="middle" fill="#fff" font-size="10">(Transform/Route)</text>
-<rect x="550" y="30" width="130" height="50" rx="8" fill="#9C27B0"/><text x="615" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Consent Service</text><text x="615" y="67" text-anchor="middle" fill="#fff" font-size="10">(Patient Prefs)</text>
-<rect x="550" y="100" width="130" height="50" rx="8" fill="#795548"/><text x="615" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Master Patient</text><text x="615" y="137" text-anchor="middle" fill="#fff" font-size="10">Index (MPI)</text>
-<rect x="740" y="60" width="130" height="50" rx="8" fill="#00897B"/><text x="805" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Patient DB</text><text x="805" y="97" text-anchor="middle" fill="#fff" font-size="10">(Local EHR)</text>
-<line x1="140" y1="85" x2="185" y2="85" stroke="#FF6B35" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="320" y1="85" x2="365" y2="85" stroke="#FF6B35" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="500" y1="75" x2="545" y2="55" stroke="#FF6B35" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="500" y1="95" x2="545" y2="120" stroke="#FF6B35" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="680" y1="85" x2="735" y2="85" stroke="#FF6B35" stroke-width="2" marker-end="url(#ah3)"/>
-</svg>
+<h3>Examples</h3>
+
+<div class="example-box">
+    <strong>Example 1 — New Patient Registration:</strong> A registration clerk at a hospital front desk opens the Registration Web App and enters patient Jane Doe's demographics (name, DOB 1985-03-15, SSN, insurance Blue Cross ID #BC12345, emergency contact John Doe). The clerk clicks "Register Patient." This triggers an <code>HTTP POST /api/v1/patients</code> to the Patient Service via the Load Balancer → API Gateway. The Patient Service validates the data, checks for duplicate patients (matching on name + DOB + SSN), assigns MRN #MRN-0042891, persists the record to the Patient DB (SQL), and publishes a <code>patient_registered</code> audit event to the Message Queue. The Audit Service consumes this event and writes an audit log entry. The clerk receives a 201 Created response with the new MRN.
 </div>
 
-<div class="card">
-<h3>Steps</h3>
+<div class="example-box">
+    <strong>Example 2 — Duplicate Patient Detection:</strong> A clerk tries to register "Jane Doe, DOB 1985-03-15" again. The Patient Service's duplicate-detection logic (matching on normalized name + DOB) finds MRN #MRN-0042891 already exists. The service returns a <code>409 Conflict</code> with the existing MRN, prompting the clerk to review and potentially merge records rather than creating a duplicate.
+</div>
+
+<div class="example-box">
+    <strong>Example 3 — Clinician Opens Patient Chart:</strong> Dr. Smith searches for patient Jane Doe in the clinician desktop app. The app sends <code>HTTP GET /api/v1/patients?name=Jane+Doe</code> to the Patient Service, returning matching patients. Dr. Smith selects MRN #MRN-0042891, which triggers <code>HTTP GET /api/v1/ehr/{mrn}/chart</code> to the EHR Service. The EHR Service first checks the In-Memory Cache for this patient's chart summary. Cache hit → returns immediately in ~50ms. Cache miss → queries the EHR DB, populates the cache with a TTL of 5 minutes, and returns the chart. An audit event <code>chart_accessed</code> is published to the Message Queue.
+</div>
+
+<div class="example-box">
+    <strong>Example 4 — Update Patient Demographics:</strong> Jane Doe changes her insurance from Blue Cross to Aetna. The registration clerk updates the record via <code>HTTP PATCH /api/v1/patients/{mrn}</code> with the new insurance information. The Patient Service updates the SQL record, invalidates the cached chart summary in the In-Memory Cache, and publishes a <code>patient_demographics_updated</code> audit event.
+</div>
+
+<h3>Deep Dive — Flow 1 Components</h3>
+
+<div class="deep-dive">
+    <h4>Registration Clerk Web App / Clinician Web/Desktop App</h4>
+    <p>Browser-based (React/Angular) or thick-client desktop application running on hospital workstations. Communicates over HTTPS (TLS 1.3). Desktop apps in hospital settings may also support smart card authentication (PIV/CAC cards) for clinician login.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>Load Balancer (Layer 7)</h4>
+    <p>An L7 (application-layer) load balancer that terminates TLS, inspects HTTP headers, and distributes requests across API Gateway instances using round-robin or least-connections algorithms. It performs health checks on downstream services every 5 seconds. Sticky sessions are NOT used because all services are stateless; session state lives in a shared session store.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>API Gateway</h4>
+    <p>Centralized entry point that handles: (1) <strong>Authentication</strong> — validates JWT tokens or OAuth 2.0 bearer tokens, verifies MFA claims; (2) <strong>Authorization</strong> — checks RBAC policies (e.g., only "registrar" role can call POST /patients); (3) <strong>Rate Limiting</strong> — protects against abuse (1000 req/min per user); (4) <strong>Request Routing</strong> — routes to the correct microservice; (5) <strong>TLS termination</strong> from internal services. The gateway enforces HIPAA audit headers (user-id, session-id, IP) on every request.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>Patient Service</h4>
+    <p>Microservice responsible for patient demographics and identity management.</p>
+    <ul>
+        <li><code>POST /api/v1/patients</code> — Register new patient. Input: JSON body (name, DOB, SSN, insurance, contacts). Output: 201 Created with MRN and patient object. Includes duplicate detection using probabilistic matching (Soundex on names, exact match on DOB+SSN).</li>
+        <li><code>GET /api/v1/patients?name={name}&amp;dob={dob}</code> — Search patients. Input: query params. Output: 200 OK with list of matching patients (paginated).</li>
+        <li><code>GET /api/v1/patients/{mrn}</code> — Get patient by MRN. Input: path param MRN. Output: 200 OK with patient object.</li>
+        <li><code>PATCH /api/v1/patients/{mrn}</code> — Update demographics. Input: JSON body with fields to update. Output: 200 OK with updated patient.</li>
+    </ul>
+    <p><strong>Protocol:</strong> REST over HTTPS. JSON request/response bodies. Uses gRPC internally for service-to-service communication where needed for performance.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>EHR Service</h4>
+    <p>Microservice responsible for the longitudinal electronic health record.</p>
+    <ul>
+        <li><code>GET /api/v1/ehr/{mrn}/chart</code> — Retrieve full chart summary (problems, meds, allergies, vitals). Output: 200 OK with chart JSON.</li>
+        <li><code>GET /api/v1/ehr/{mrn}/encounters</code> — List patient encounters. Supports pagination and date range filtering.</li>
+        <li><code>POST /api/v1/ehr/{mrn}/problems</code> — Add a diagnosis/problem to the problem list. Input: ICD-10 code, description, onset date, status.</li>
+        <li><code>POST /api/v1/ehr/{mrn}/allergies</code> — Add an allergy. Input: allergen, reaction type, severity.</li>
+    </ul>
+    <p>Reads from In-Memory Cache first (cache-aside pattern). On miss, queries EHR DB and populates cache.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>Audit Service</h4>
+    <p>Asynchronous consumer of audit events from the Message Queue. Writes immutable, append-only audit log entries to the Time-Series DB. Each entry includes: timestamp, user_id, user_role, action (READ/WRITE/UPDATE/DELETE), resource_type (patient, chart, order), resource_id, IP address, session_id, and outcome (success/failure). This is critical for HIPAA compliance — these logs are retained for a minimum of 6 years and are tamper-proof (write-once storage).</p>
+</div>
+
+<div class="deep-dive">
+    <h4>Patient DB (SQL)</h4>
+    <p>Relational database storing patient demographics. SQL chosen because patient identity data is highly structured, requires strong consistency (ACID transactions), and involves complex queries (duplicate detection joins, insurance lookups). More detail in the Schema section.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>EHR DB (SQL)</h4>
+    <p>Relational database storing the longitudinal health record. SQL chosen because clinical data has complex relationships (patient → encounters → orders → results), requires referential integrity, and demands strong consistency (a medication order must be immediately and consistently visible). More detail in the Schema section.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>Audit Log DB (Time-Series)</h4>
+    <p>Time-series database optimized for append-only, time-stamped audit log data. Chosen because audit logs are write-heavy (every single data access generates a log), never updated, queried primarily by time range + user/resource filters, and benefit from time-based partitioning and compression. Retention: 6+ years per HIPAA.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>In-Memory Cache</h4>
+    <p>Distributed in-memory cache storing frequently accessed patient chart summaries. Uses <strong>cache-aside (lazy loading)</strong> strategy: the EHR Service checks the cache first; on miss, it queries the DB and writes the result to the cache. <strong>Eviction Policy:</strong> LRU (Least Recently Used) — charts not accessed recently are evicted first, as clinical activity is bursty (patients are actively viewed during encounters then not again for weeks). <strong>Expiration (TTL):</strong> 5 minutes — clinical data changes frequently during active encounters, so a short TTL ensures clinicians see near-real-time data while still reducing DB load. <strong>Cache invalidation:</strong> On any write to a patient's EHR data (new order, new note, updated allergy), the cache entry for that MRN is explicitly invalidated.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>Message Queue</h4>
+    <p>Asynchronous message queue decoupling audit event production from consumption. Audit logging is critical but should not be in the critical path of clinical workflows (a slow audit write must not slow down a chart retrieval). The queue guarantees at-least-once delivery with idempotent consumers. Messages are persisted to disk for durability. Each message contains: event_type, payload (serialized JSON), timestamp, correlation_id. The Audit Service consumes messages sequentially per partition, with partition key = MRN to maintain per-patient ordering. <strong>Why not pub/sub?</strong> We have a single consumer (Audit Service) for this event, so a simple queue is sufficient. <strong>Why not synchronous logging?</strong> Adding 5-20ms of audit DB write latency to every clinical operation is unacceptable.</p>
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- FLOW 2: CLINICAL DOCUMENTATION & CPOE -->
+<!-- ============================================================ -->
+<h2>4. Flow 2 — Clinical Documentation &amp; Computerized Physician Order Entry (CPOE)</h2>
+<p>This flow covers how clinicians document patient encounters and place orders for labs, medications, imaging, and procedures. Clinical Decision Support (CDS) alerts are triggered in real-time during this flow.</p>
+
+<div class="mermaid">
+graph LR
+    subgraph Clients
+        C[Clinician App<br/>Web/Desktop]
+    end
+
+    subgraph Edge
+        LB[Load Balancer]
+        GW[API Gateway]
+    end
+
+    subgraph Core Services
+        DS[Documentation<br/>Service]
+        OS[Order Service]
+        CDS[CDS Engine]
+    end
+
+    subgraph Downstream Services
+        LS[Lab Service]
+        PHS[Pharmacy Service]
+        RS[Radiology Service]
+    end
+
+    subgraph Data
+        EHRDB[(EHR DB<br/>SQL)]
+        CDSDB[(CDS Rules DB<br/>Document Store)]
+        OQ[Order Queue<br/>Message Queue]
+        CACHE[(In-Memory Cache)]
+    end
+
+    subgraph Async
+        MQ[Audit Queue]
+        AUD[Audit Service]
+        ADB[(Audit Log DB)]
+    end
+
+    C -->|HTTPS| LB --> GW
+    GW --> DS
+    GW --> OS
+    DS -->|Write encounter notes| EHRDB
+    OS -->|Validate order| CDS
+    CDS -->|Query rules| CDSDB
+    CDS -->|Query patient meds/allergies| EHRDB
+    OS -->|Persist order| EHRDB
+    OS -->|Route order| OQ
+    OQ --> LS
+    OQ --> PHS
+    OQ --> RS
+    OS -->|Invalidate chart cache| CACHE
+    DS -->|Audit event| MQ
+    OS -->|Audit event| MQ
+    MQ --> AUD --> ADB
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+    <strong>Example 1 — Clinician Documents an Encounter (No CDS Alerts):</strong> Dr. Smith opens Jane Doe's chart and begins documenting a routine office visit. She selects a "Progress Note" template and types the chief complaint ("annual checkup"), HPI, review of systems, physical exam findings, and assessment/plan. She clicks "Sign &amp; Save." This triggers <code>HTTP POST /api/v1/ehr/{mrn}/encounters</code> to the Documentation Service with the structured note JSON. The Documentation Service persists the encounter to the EHR DB, invalidates the chart cache, and publishes a <code>note_signed</code> audit event. Dr. Smith receives a 201 Created confirmation.
+</div>
+
+<div class="example-box">
+    <strong>Example 2 — Physician Places a Lab Order (No CDS Alert):</strong> Dr. Smith orders a CBC (Complete Blood Count) for Jane Doe. The clinician app sends <code>HTTP POST /api/v1/orders</code> with body: <code>{ mrn: "MRN-0042891", order_type: "LAB", code: "CBC", priority: "ROUTINE" }</code>. The Order Service calls the CDS Engine with the order context. The CDS Engine queries its Rules DB and the patient's current medications/allergies from the EHR DB — no conflicts found, returns <code>{ alerts: [] }</code>. The Order Service persists the order to the EHR DB with status "PENDING," publishes the order to the Order Queue with routing key "LAB," and the Lab Service consumes it and adds it to the lab worklist. Dr. Smith sees confirmation: "CBC order placed successfully."
+</div>
+
+<div class="example-box">
+    <strong>Example 3 — Physician Places a Medication Order (CDS Alert — Drug-Allergy Interaction):</strong> Dr. Smith orders Amoxicillin 500mg for Jane Doe. The Order Service calls the CDS Engine. The CDS Engine queries the EHR DB and finds that Jane Doe has a documented allergy to Penicillin (allergy severity: "SEVERE"). Since Amoxicillin is a penicillin-class antibiotic, the CDS Engine returns <code>{ alerts: [{ severity: "CRITICAL", type: "DRUG_ALLERGY", message: "Patient has SEVERE Penicillin allergy. Amoxicillin is a penicillin-class drug. Consider alternative." }] }</code>. The Order Service returns a <code>422 Unprocessable Entity</code> with the alert. The clinician app displays a modal: "⚠️ CRITICAL: Drug-Allergy Interaction — Patient has severe Penicillin allergy." Dr. Smith must either cancel the order or provide clinical justification to override (which is logged as a <code>cds_override</code> audit event).
+</div>
+
+<div class="example-box">
+    <strong>Example 4 — Physician Places a Medication Order (CDS Alert — Duplicate Order):</strong> Dr. Smith tries to order Lisinopril 10mg for a patient who already has an active Lisinopril 10mg order. The CDS Engine detects the duplicate and returns <code>{ alerts: [{ severity: "WARNING", type: "DUPLICATE_ORDER", message: "Active order for Lisinopril 10mg already exists (Order #ORD-8821)." }] }</code>. The clinician app shows a warning. Dr. Smith cancels the duplicate order.
+</div>
+
+<div class="example-box">
+    <strong>Example 5 — STAT (Urgent) Order Routing:</strong> Dr. Smith orders a Troponin-I lab marked as "STAT" for a patient with chest pain. The order flows through the same path, but the Order Queue message has priority "STAT." The Lab Service processes STAT orders ahead of ROUTINE orders using a priority queue mechanism. The lab technician sees the STAT order at the top of their worklist within seconds.
+</div>
+
+<h3>Deep Dive — Flow 2 Components</h3>
+
+<div class="deep-dive">
+    <h4>Documentation Service</h4>
+    <p>Manages clinical encounter documentation (progress notes, H&amp;P, discharge summaries, operative notes).</p>
+    <ul>
+        <li><code>POST /api/v1/ehr/{mrn}/encounters</code> — Create/sign a new encounter note. Input: JSON with encounter_type, template_id, structured fields, free_text_sections, diagnoses[], signing_provider_id. Output: 201 Created with encounter_id.</li>
+        <li><code>GET /api/v1/ehr/{mrn}/encounters/{encounter_id}</code> — Retrieve a specific encounter. Output: 200 OK with full encounter document.</li>
+        <li><code>PATCH /api/v1/ehr/{mrn}/encounters/{encounter_id}</code> — Amend a signed note (creates an addendum, original is immutable). Input: addendum_text, reason. Output: 200 OK.</li>
+    </ul>
+    <p><strong>Protocol:</strong> REST over HTTPS. Signed notes are immutable — amendments create a new version linked to the original, preserving the legal medical record.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>Order Service</h4>
+    <p>Handles CPOE — the creation, validation, and routing of clinical orders.</p>
+    <ul>
+        <li><code>POST /api/v1/orders</code> — Place a new order. Input: JSON with mrn, order_type (LAB/MED/IMAGING/PROCEDURE), code (CPT/LOINC), priority (ROUTINE/URGENT/STAT), provider_id, and order-specific fields (dose, frequency for meds; instructions for imaging). Output: 201 Created with order_id if no critical CDS alerts; 422 with alerts if critical.</li>
+        <li><code>GET /api/v1/orders?mrn={mrn}&amp;status={status}</code> — List orders for a patient. Supports filtering by type, status, date range.</li>
+        <li><code>PATCH /api/v1/orders/{order_id}</code> — Update order status (e.g., mark as COMPLETED when lab results come back). Input: new status, result data. Output: 200 OK.</li>
+        <li><code>DELETE /api/v1/orders/{order_id}</code> — Cancel/discontinue an order. Input: cancellation_reason. Output: 200 OK. (Soft delete — order is marked CANCELLED, not physically deleted.)</li>
+    </ul>
+    <p>The Order Service always calls the CDS Engine synchronously before persisting an order, because CDS alerts can block order placement (patient safety critical path).</p>
+</div>
+
+<div class="deep-dive">
+    <h4>CDS Engine (Clinical Decision Support)</h4>
+    <p>A stateless rule-evaluation engine that checks orders and clinical actions against a knowledge base of rules.</p>
+    <ul>
+        <li><strong>Internal API (gRPC):</strong> <code>EvaluateOrder(order_context, patient_context) → AlertList</code></li>
+        <li><strong>Rule Types:</strong> Drug-drug interactions, drug-allergy interactions, duplicate order detection, dose range checking, age/weight-based dosing, preventive care reminders, sepsis screening criteria.</li>
+        <li><strong>Data Sources:</strong> (1) CDS Rules DB (Document Store) containing rule definitions in JSON format; (2) EHR DB for real-time patient context (current medications, allergies, lab results, diagnoses).</li>
+    </ul>
+    <p><strong>Why Document Store for rules?</strong> CDS rules are complex, semi-structured JSON documents with nested conditions, and they vary significantly in structure across rule types. A document store allows flexible schemas and fast key-based lookups. Rules are versioned — when a rule is updated, the old version is preserved for auditing.</p>
+    <p><strong>Why synchronous call?</strong> CDS alerts are in the critical safety path. An asynchronous alert that arrives after an order is already placed defeats the purpose. Latency target: &lt;200ms for rule evaluation.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>Order Queue (Message Queue)</h4>
+    <p>After an order is persisted and CDS-cleared, it is published to the Order Queue for routing to downstream department services. The queue uses topic-based routing: orders are published with a routing key matching the order type (LAB, PHARMACY, RADIOLOGY). Each downstream service subscribes to its relevant topic. Priority orders (STAT) are handled via priority queue semantics — STAT messages are consumed before ROUTINE messages. Messages contain: order_id, mrn, order_type, code, priority, ordering_provider, timestamp. Downstream services acknowledge messages after processing; failed messages are retried 3 times then moved to a dead-letter queue for manual review.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>Lab Service / Pharmacy Service / Radiology Service</h4>
+    <p>Downstream departmental services that consume orders from the Order Queue and manage department-specific workflows:</p>
+    <ul>
+        <li><strong>Lab Service:</strong> Maintains lab worklists, interfaces with lab instruments (via HL7 v2 messages over TCP/MLLP), receives results, and calls back <code>PATCH /api/v1/orders/{order_id}</code> to update order status to RESULTED with result values.</li>
+        <li><strong>Pharmacy Service:</strong> Verifies medication orders, checks formulary, manages dispensing workflow, interfaces with automated dispensing cabinets.</li>
+        <li><strong>Radiology Service:</strong> Manages imaging orders, interfaces with PACS (Picture Archiving and Communication System) via DICOM protocol, stores imaging study references.</li>
+    </ul>
+</div>
+
+<div class="deep-dive">
+    <h4>CDS Rules DB (Document Store / NoSQL)</h4>
+    <p>Stores CDS rule definitions as JSON documents. Each rule has: rule_id, rule_type, version, conditions (nested JSON), actions (alert severity, message template), effective_date, expiration_date, evidence_references. Queried by rule_type for batch evaluation. Indexed on rule_type + status for fast retrieval of active rules.</p>
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- FLOW 3: PATIENT PORTAL -->
+<!-- ============================================================ -->
+<h2>5. Flow 3 — Patient Portal</h2>
+<p>This flow covers patients accessing their own health information, scheduling appointments, and communicating securely with providers.</p>
+
+<div class="mermaid">
+graph LR
+    subgraph Patient
+        PA[Patient<br/>Mobile/Web App]
+    end
+
+    subgraph Edge
+        CDN[CDN<br/>Static Assets]
+        LB[Load Balancer]
+        GW[API Gateway<br/>Patient Auth]
+    end
+
+    subgraph Services
+        PPS[Patient Portal<br/>Service]
+        MSG[Messaging<br/>Service]
+        SCHED[Scheduling<br/>Service]
+        NTF[Notification<br/>Service]
+    end
+
+    subgraph Data
+        EHRDB[(EHR DB<br/>SQL — Read Replica)]
+        MSGDB[(Message DB<br/>SQL)]
+        SCHEDDB[(Schedule DB<br/>SQL)]
+        CACHE[(In-Memory Cache)]
+    end
+
+    subgraph Async
+        NQ[Notification Queue<br/>Message Queue]
+    end
+
+    PA -->|Static assets| CDN
+    PA -->|HTTPS| LB --> GW
+    GW --> PPS
+    GW --> MSG
+    GW --> SCHED
+    PPS -->|Read-only| EHRDB
+    PPS -->|Read| CACHE
+    MSG -->|Read/Write| MSGDB
+    SCHED -->|Read/Write| SCHEDDB
+    SCHED -->|Publish reminder| NQ
+    NTF -->|Consume| NQ
+    NTF -->|Send SMS/Email/Push| PA
+    MSG -->|Publish new message notification| NQ
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+    <strong>Example 1 — Patient Views Lab Results:</strong> Jane Doe logs into the patient portal mobile app using her email + password + SMS MFA code. She navigates to "Lab Results." The app sends <code>HTTP GET /api/v1/portal/ehr/{patient_id}/results?type=LAB</code> to the Patient Portal Service. The service checks the In-Memory Cache for recent lab results. Cache miss → queries the EHR DB Read Replica for lab results where status = RESULTED and release_to_patient = true (providers can hold results for 3 days before auto-release). Returns a list of results including her CBC from yesterday: WBC 7.2, RBC 4.5, Hemoglobin 13.8 — all within normal range. Jane sees green checkmarks next to each value.
+</div>
+
+<div class="example-box">
+    <strong>Example 2 — Patient Sends Secure Message to Provider:</strong> Jane Doe navigates to "Messages" and composes a new message to Dr. Smith: "I've been experiencing headaches since starting the new medication. Should I continue taking it?" She clicks "Send." The app sends <code>HTTP POST /api/v1/portal/messages</code> with body: <code>{ from_patient_id: "P-42891", to_provider_id: "DR-1001", subject: "Medication side effect", body: "..." }</code>. The Messaging Service persists the message to the Message DB and publishes a <code>new_patient_message</code> event to the Notification Queue. The Notification Service consumes this and sends a push notification to Dr. Smith's clinician app: "New patient message from Jane Doe." Dr. Smith replies within 4 hours.
+</div>
+
+<div class="example-box">
+    <strong>Example 3 — Patient Schedules an Appointment:</strong> Jane wants to schedule a follow-up with Dr. Smith. She navigates to "Schedule Appointment" and selects Dr. Smith, appointment type "Follow-up Visit (30 min)," and sees available slots. The app calls <code>HTTP GET /api/v1/portal/schedule/availability?provider_id=DR-1001&amp;type=FOLLOWUP&amp;date_range=2025-02-20,2025-03-05</code>. The Scheduling Service queries the Schedule DB for Dr. Smith's available 30-minute slots within the date range, excluding already-booked slots and blocked time. Jane selects February 25 at 2:00 PM and confirms. <code>HTTP POST /api/v1/portal/schedule/appointments</code> books the slot. The Scheduling Service persists the appointment and publishes a <code>appointment_booked</code> event to the Notification Queue. The Notification Service sends Jane a confirmation email and schedules an SMS reminder for February 24 at 2:00 PM ("Reminder: appointment with Dr. Smith tomorrow at 2:00 PM").
+</div>
+
+<div class="example-box">
+    <strong>Example 4 — Patient Views Medications:</strong> Jane navigates to "My Medications" in the portal. <code>HTTP GET /api/v1/portal/ehr/{patient_id}/medications?status=ACTIVE</code> is sent. The Patient Portal Service queries the EHR DB Read Replica for active medication orders. Returns: Lisinopril 10mg daily, Metformin 500mg BID. Jane can click "Request Refill" on Metformin, which triggers <code>HTTP POST /api/v1/portal/refill-requests</code> and publishes a message to the pharmacy for review.
+</div>
+
+<h3>Deep Dive — Flow 3 Components</h3>
+
+<div class="deep-dive">
+    <h4>CDN (Content Delivery Network)</h4>
+    <p><strong>Why a CDN is appropriate here:</strong> The patient portal serves static assets — JavaScript bundles, CSS, images, fonts — to potentially millions of patients across geographic regions. A CDN caches these static assets at edge locations close to patients, reducing latency from ~200ms (origin) to ~20ms (edge). This is especially important for mobile patients on slower connections. The CDN does <strong>NOT</strong> cache any patient data (PHI) — only static application assets. Patient data always flows through the API Gateway and is never cached at the CDN edge, for HIPAA compliance.</p>
+    <p><strong>Cache strategy:</strong> Static assets are versioned (content hash in filename) and cached with long TTLs (1 year). On deployment, new asset versions are published; old versions naturally expire or are explicitly purged.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>Patient Portal Service</h4>
+    <p>Serves as the patient-facing read layer on top of the EHR data. Key distinction: patients see a curated, read-only view of their data — not the full clinical chart.</p>
+    <ul>
+        <li><code>GET /api/v1/portal/ehr/{patient_id}/results</code> — Patient's lab/imaging results. Only returns results marked <code>release_to_patient = true</code>.</li>
+        <li><code>GET /api/v1/portal/ehr/{patient_id}/medications</code> — Active medications.</li>
+        <li><code>GET /api/v1/portal/ehr/{patient_id}/allergies</code> — Allergy list.</li>
+        <li><code>GET /api/v1/portal/ehr/{patient_id}/immunizations</code> — Immunization history.</li>
+        <li><code>GET /api/v1/portal/ehr/{patient_id}/visits</code> — Past encounter summaries (after-visit summaries, not full clinical notes).</li>
+    </ul>
+    <p><strong>Reads from EHR DB Read Replica</strong> to avoid adding patient portal read traffic to the primary clinical DB. Uses In-Memory Cache for frequently accessed data (medications, allergies change infrequently).</p>
+</div>
+
+<div class="deep-dive">
+    <h4>Messaging Service</h4>
+    <p>Manages secure, HIPAA-compliant messaging between patients and care teams.</p>
+    <ul>
+        <li><code>POST /api/v1/portal/messages</code> — Send a message. Input: from, to, subject, body, optional attachments. Output: 201 Created with message_id.</li>
+        <li><code>GET /api/v1/portal/messages?patient_id={id}</code> — List messages (inbox). Paginated, sorted by date descending.</li>
+        <li><code>GET /api/v1/portal/messages/{message_id}</code> — Read a specific message. Marks as read.</li>
+    </ul>
+    <p>Messages are encrypted at rest. Attachments (images, PDFs) are stored in Object Storage with references in the Message DB.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>Scheduling Service</h4>
+    <p>Manages appointment scheduling, provider calendars, and availability.</p>
+    <ul>
+        <li><code>GET /api/v1/portal/schedule/availability</code> — Query available appointment slots. Input: provider_id, appointment_type, date_range. Output: list of available time slots.</li>
+        <li><code>POST /api/v1/portal/schedule/appointments</code> — Book an appointment. Input: patient_id, provider_id, slot_datetime, appointment_type. Output: 201 Created with appointment_id. Uses optimistic locking to handle concurrent booking (two patients booking the same slot).</li>
+        <li><code>DELETE /api/v1/portal/schedule/appointments/{appointment_id}</code> — Cancel an appointment. Enforces cancellation policy (e.g., 24-hour notice).</li>
+    </ul>
+</div>
+
+<div class="deep-dive">
+    <h4>Notification Service</h4>
+    <p>Consumes events from the Notification Queue and sends notifications via multiple channels:</p>
+    <ul>
+        <li><strong>Push Notifications:</strong> To mobile apps (iOS APNs, Android FCM).</li>
+        <li><strong>SMS:</strong> Appointment reminders, two-factor auth codes.</li>
+        <li><strong>Email:</strong> Appointment confirmations, new lab result availability, billing statements.</li>
+    </ul>
+    <p>Notification preferences are stored per patient (opt-in/opt-out per channel per notification type). The service is idempotent — duplicate queue messages result in only one notification. SMS/email content never contains PHI (e.g., "You have new lab results available" NOT "Your HIV test result is negative").</p>
+</div>
+
+<div class="deep-dive">
+    <h4>EHR DB Read Replica</h4>
+    <p>A read-only replica of the EHR DB, replicated asynchronously with &lt;1 second replication lag. Isolates patient portal read traffic from the latency-sensitive clinical write path. Acceptable for the patient portal because a 1-second delay in seeing a lab result is clinically insignificant for patients, whereas clinicians need immediate consistency.</p>
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- FLOW 4: HEALTH INFORMATION EXCHANGE (HIE) -->
+<!-- ============================================================ -->
+<h2>6. Flow 4 — Health Information Exchange (HIE)</h2>
+<p>This flow covers how patient data is exchanged between this EHR system and external healthcare organizations (other hospitals, labs, payers, public health agencies) using healthcare interoperability standards.</p>
+
+<div class="mermaid">
+graph LR
+    subgraph Internal
+        EHR[EHR Service]
+        FHIR[FHIR API<br/>Server]
+        HL7[HL7 v2<br/>Interface Engine]
+        EHRDB[(EHR DB<br/>SQL)]
+    end
+
+    subgraph HIE Layer
+        HIE[HIE Gateway<br/>Service]
+        TQ[Transform Queue<br/>Message Queue]
+        DOC[Document<br/>Repository<br/>Object Storage]
+    end
+
+    subgraph External
+        EXT1[External Hospital<br/>EHR System A]
+        EXT2[External Lab<br/>System B]
+        PHA[Public Health<br/>Agency]
+    end
+
+    EHR --> FHIR
+    EHR --> HL7
+    FHIR -->|Read| EHRDB
+    HL7 -->|Read/Write| EHRDB
+
+    EXT1 -->|FHIR REST API<br/>HTTPS| FHIR
+    EXT2 -->|HL7 v2 Messages<br/>TCP/MLLP| HL7
+
+    HIE -->|Outbound C-CDA docs| TQ
+    TQ -->|Transform & route| DOC
+    DOC -->|Share| EXT1
+    DOC -->|Share| PHA
+
+    FHIR --> HIE
+    HL7 --> HIE
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+    <strong>Example 1 — External Hospital Queries Patient Record via FHIR:</strong> Jane Doe visits an Emergency Department at Hospital B (a different health system). Hospital B's EHR sends a FHIR query: <code>HTTP GET /fhir/Patient?identifier=SSN|123-45-6789</code> to our FHIR API Server. After verifying the request's OAuth 2.0 token and confirming Hospital B has a data sharing agreement, the FHIR Server queries the EHR DB, transforms the patient data into FHIR Patient, Condition, MedicationRequest, and AllergyIntolerance resources, and returns a FHIR Bundle. Hospital B's ED physician can now see Jane's active medications and penicillin allergy — potentially life-saving information.
+</div>
+
+<div class="example-box">
+    <strong>Example 2 — External Lab Sends Results via HL7 v2:</strong> A reference lab (Lab System B) completes Jane Doe's specialized genetic test. Lab System B sends an HL7 v2 ORU^R01 (Observation Result) message over TCP/MLLP to our HL7 Interface Engine. The Interface Engine parses the HL7 message, maps fields to our internal data model (HL7 OBX segments → lab result fields), and calls the Order Service internally to update the corresponding order status to RESULTED and store the result values in the EHR DB. An HL7 ACK (acknowledgment) is sent back to Lab System B confirming receipt.
+</div>
+
+<div class="example-box">
+    <strong>Example 3 — Outbound C-CDA Document to Public Health Agency:</strong> Jane Doe is diagnosed with a reportable disease (e.g., tuberculosis). The system generates a C-CDA (Consolidated Clinical Document Architecture) document containing relevant clinical data. The HIE Gateway publishes a transform job to the Transform Queue. The consumer transforms the internal data model to C-CDA XML format, stores it in the Document Repository (Object Storage), and transmits it to the Public Health Agency's endpoint via secure HTTPS. This is a regulatory requirement for disease surveillance.
+</div>
+
+<h3>Deep Dive — Flow 4 Components</h3>
+
+<div class="deep-dive">
+    <h4>FHIR API Server</h4>
+    <p>Implements the HL7 FHIR R4 specification — a RESTful API standard for healthcare data exchange. Supports FHIR resources: Patient, Encounter, Condition, Observation, MedicationRequest, AllergyIntolerance, Immunization, DiagnosticReport, Procedure, DocumentReference.</p>
+    <ul>
+        <li><code>GET /fhir/{ResourceType}?{search_params}</code> — Search for resources. Supports FHIR search parameters (identifier, name, date, code).</li>
+        <li><code>GET /fhir/{ResourceType}/{id}</code> — Read a specific resource by ID.</li>
+        <li><code>POST /fhir/{ResourceType}</code> — Create a new resource (used by external systems pushing data to us).</li>
+    </ul>
+    <p><strong>Protocol:</strong> REST over HTTPS (TLS 1.3). Authentication: SMART on FHIR (OAuth 2.0 profile for healthcare). Content types: application/fhir+json, application/fhir+xml. The FHIR Server translates between our internal data model and FHIR resource formats.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>HL7 v2 Interface Engine</h4>
+    <p>Handles legacy HL7 v2.x messaging — still the most widely used integration standard in healthcare. Processes message types: ADT (Admit/Discharge/Transfer), ORM (Order), ORU (Result), SIU (Scheduling).</p>
+    <p><strong>Protocol:</strong> HL7 v2 messages over TCP using MLLP (Minimal Lower Layer Protocol) — a thin framing protocol that wraps HL7 messages with start/end bytes. <strong>Why TCP/MLLP?</strong> This is the healthcare industry standard established decades ago. Most lab instruments, medical devices, and legacy EHR systems only support MLLP. We must support it for interoperability. The Interface Engine handles message parsing (pipe-delimited HL7 format), field mapping, transformation, and acknowledgment (ACK/NAK).</p>
+</div>
+
+<div class="deep-dive">
+    <h4>HIE Gateway Service</h4>
+    <p>Orchestrates outbound data sharing: determines which data needs to be shared with which external entity based on data sharing agreements, consent directives, and regulatory requirements (e.g., mandatory disease reporting). Manages partner registries (which external systems, their endpoints, supported formats, credentials).</p>
+</div>
+
+<div class="deep-dive">
+    <h4>Document Repository (Object Storage)</h4>
+    <p>Stores clinical documents (C-CDA XML, PDFs, scanned documents, discharge summaries) as immutable objects. Encrypted at rest. Versioned. Retention policy: permanent (medical records must be retained per state law, typically 7-10 years after last encounter, and permanently for minors). Object Storage is ideal for large, unstructured document blobs that are written once and read occasionally.</p>
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- FLOW 5: BILLING & REVENUE CYCLE -->
+<!-- ============================================================ -->
+<h2>7. Flow 5 — Billing &amp; Revenue Cycle Management</h2>
+<p>This flow covers how clinical encounters are translated into billing codes, claims are generated and submitted to insurance payers, and payments are tracked.</p>
+
+<div class="mermaid">
+graph LR
+    subgraph Clinical Trigger
+        EHR[EHR Service]
+    end
+
+    subgraph Billing Services
+        BQ[Billing Queue<br/>Message Queue]
+        CS[Coding Service]
+        CLS[Claims Service]
+        PS2[Payment Service]
+    end
+
+    subgraph Data
+        EHRDB[(EHR DB<br/>SQL)]
+        BDB[(Billing DB<br/>SQL)]
+        CLDB[(Claims DB<br/>SQL)]
+    end
+
+    subgraph External
+        PAYER[Insurance<br/>Payer Systems]
+        CH[Clearinghouse]
+    end
+
+    subgraph Staff
+        BC[Billing Coder<br/>Web App]
+    end
+
+    EHR -->|Encounter signed event| BQ
+    BQ --> CS
+    CS -->|Read encounter data| EHRDB
+    CS -->|Suggest ICD-10/CPT codes| BDB
+    BC -->|Review/approve codes| CS
+    CS -->|Finalized codes| CLS
+    CLS -->|Generate claim| CLDB
+    CLS -->|Submit claim X12 837| CH
+    CH -->|Route to| PAYER
+    PAYER -->|Remittance X12 835| CH
+    CH -->|Payment/denial| PS2
+    PS2 -->|Update| CLDB
+    BC -->|Review denials| CLS
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+    <strong>Example 1 — Encounter Triggers Billing Workflow (Clean Claim):</strong> Dr. Smith signs a progress note for Jane Doe's office visit (documented diagnoses: Type 2 Diabetes, Hypertension). The EHR Service publishes an <code>encounter_signed</code> event to the Billing Queue. The Coding Service consumes it, reads the encounter from the EHR DB, and uses NLP-assisted coding to suggest ICD-10 codes (E11.9 — Type 2 Diabetes, I10 — Hypertension) and CPT code (99214 — Office Visit, Level 4). A billing coder reviews and approves the codes via the Billing Web App. The Claims Service generates an X12 837 Professional claim, stores it in the Claims DB with status "SUBMITTED," and transmits it to the Clearinghouse over HTTPS. The Clearinghouse routes it to Blue Cross (Jane's insurer). Three days later, Blue Cross sends an X12 835 remittance: claim approved, payment of $150 applied. The Payment Service updates the claim status to "PAID" and posts the payment.
+</div>
+
+<div class="example-box">
+    <strong>Example 2 — Claim Denial &amp; Appeal:</strong> A claim for an MRI is denied by the insurer with reason code "Prior authorization required." The Payment Service receives the X12 835 denial, updates the claim status to "DENIED" in the Claims DB, and publishes a <code>claim_denied</code> notification. The billing coder sees the denial in their worklist, attaches the clinical documentation supporting medical necessity, and resubmits the claim as an appeal via <code>HTTP POST /api/v1/claims/{claim_id}/appeal</code>. The Claims Service generates a corrected X12 837 with the additional documentation reference and resubmits to the Clearinghouse.
+</div>
+
+<h3>Deep Dive — Flow 5 Components</h3>
+
+<div class="deep-dive">
+    <h4>Coding Service</h4>
+    <p>Translates clinical encounter documentation into standardized billing codes.</p>
+    <ul>
+        <li>Uses NLP/ML models to suggest ICD-10 diagnosis codes and CPT procedure codes from clinical text.</li>
+        <li>Suggestions are reviewed and approved by certified medical coders (human-in-the-loop) — regulatory requirement.</li>
+        <li><code>GET /api/v1/billing/encounters/{encounter_id}/suggested-codes</code> — Get ML-suggested codes. Output: list of code suggestions with confidence scores.</li>
+        <li><code>POST /api/v1/billing/encounters/{encounter_id}/finalize-codes</code> — Coder approves/modifies codes. Input: list of finalized ICD-10 and CPT codes.</li>
+    </ul>
+</div>
+
+<div class="deep-dive">
+    <h4>Claims Service</h4>
+    <p>Generates and manages insurance claims.</p>
+    <ul>
+        <li><code>POST /api/v1/claims</code> — Generate a claim from finalized codes. Creates X12 837 Professional or Institutional claim format.</li>
+        <li><code>GET /api/v1/claims?status={status}</code> — List claims by status (SUBMITTED, PAID, DENIED, APPEALED).</li>
+        <li><code>POST /api/v1/claims/{claim_id}/appeal</code> — Resubmit a denied claim with additional documentation.</li>
+    </ul>
+    <p><strong>X12 837/835:</strong> HIPAA-mandated EDI (Electronic Data Interchange) formats for claims submission (837) and payment remittance (835). Transmitted to Clearinghouses over HTTPS with AS2 protocol or SFTP, depending on the payer.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>Clearinghouse</h4>
+    <p>An external intermediary that validates claim formatting, routes claims to the correct payer, and returns remittance responses. <strong>This is an external third-party system</strong> — we integrate with it via HTTPS APIs or SFTP batch file transfers.</p>
+</div>
+
+<div class="deep-dive">
+    <h4>Payment Service</h4>
+    <p>Processes remittance responses (X12 835), posts payments and adjustments, manages patient responsibility (copays, deductibles), generates patient billing statements. Updates claim status in the Claims DB.</p>
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- COMBINED OVERALL DIAGRAM -->
+<!-- ============================================================ -->
+<h2>8. Combined Overall System Diagram</h2>
+<p>This diagram unifies all five flows into one comprehensive architecture.</p>
+
+<div class="mermaid">
+graph TB
+    subgraph Clients
+        RC[Registration Clerk]
+        CLIN[Clinician<br/>Web/Desktop]
+        PAT[Patient<br/>Mobile/Web]
+        BILLER[Billing Coder]
+    end
+
+    subgraph Edge Layer
+        CDN[CDN<br/>Static Assets Only]
+        LB[Load Balancer<br/>L7]
+        GW[API Gateway<br/>Auth / RBAC / Rate Limit]
+    end
+
+    subgraph Core Services
+        PS[Patient Service]
+        EHRS[EHR Service]
+        DS[Documentation<br/>Service]
+        OS[Order Service]
+        CDS[CDS Engine]
+        PPS[Patient Portal<br/>Service]
+        MSG[Messaging Service]
+        SCHED[Scheduling Service]
+        NTF[Notification Service]
+        AUD[Audit Service]
+    end
+
+    subgraph Billing Services
+        CODING[Coding Service]
+        CLAIMS[Claims Service]
+        PAYMENT[Payment Service]
+    end
+
+    subgraph Interoperability
+        FHIR[FHIR API Server]
+        HL7E[HL7 v2 Interface<br/>Engine]
+        HIEG[HIE Gateway]
+    end
+
+    subgraph Data Stores
+        PDB[(Patient DB — SQL)]
+        EHRDB[(EHR DB — SQL<br/>Primary)]
+        EHRR[(EHR DB — SQL<br/>Read Replica)]
+        MSGDB[(Message DB — SQL)]
+        SCHEDDB[(Schedule DB — SQL)]
+        BDB[(Billing DB — SQL)]
+        CLDB[(Claims DB — SQL)]
+        CDSDB[(CDS Rules DB<br/>Document Store)]
+        ALOGDB[(Audit Log DB<br/>Time-Series)]
+        DOCSTORE[Document Repository<br/>Object Storage]
+        CACHE[(In-Memory Cache)]
+    end
+
+    subgraph Message Queues
+        AQ[Audit Queue]
+        OQ[Order Queue]
+        BQ[Billing Queue]
+        NQ[Notification Queue]
+    end
+
+    subgraph Downstream Departments
+        LAB[Lab Service]
+        PHARM[Pharmacy Service]
+        RAD[Radiology Service]
+    end
+
+    subgraph External Systems
+        EXTH[External Hospitals]
+        EXTL[External Labs]
+        PHA2[Public Health<br/>Agencies]
+        CHSE[Clearinghouse]
+        PAYERS[Insurance Payers]
+    end
+
+    RC -->|HTTPS| LB
+    CLIN -->|HTTPS| LB
+    PAT -->|Static| CDN
+    PAT -->|HTTPS| LB
+    BILLER -->|HTTPS| LB
+    LB --> GW
+
+    GW --> PS
+    GW --> EHRS
+    GW --> DS
+    GW --> OS
+    GW --> PPS
+    GW --> MSG
+    GW --> SCHED
+    GW --> CODING
+
+    PS --> PDB
+    EHRS --> EHRDB
+    EHRS --> CACHE
+    DS --> EHRDB
+    OS --> EHRDB
+    OS --> CDS
+    CDS --> CDSDB
+    CDS --> EHRDB
+    PPS --> EHRR
+    PPS --> CACHE
+    MSG --> MSGDB
+    SCHED --> SCHEDDB
+    CODING --> EHRDB
+    CODING --> BDB
+    CLAIMS --> CLDB
+    PAYMENT --> CLDB
+
+    PS -->|Audit| AQ
+    EHRS -->|Audit| AQ
+    DS -->|Audit| AQ
+    OS -->|Audit| AQ
+    AQ --> AUD --> ALOGDB
+
+    OS -->|Route orders| OQ
+    OQ --> LAB
+    OQ --> PHARM
+    OQ --> RAD
+
+    DS -->|Encounter signed| BQ
+    BQ --> CODING
+    CODING --> CLAIMS
+    CLAIMS --> CHSE --> PAYERS
+    PAYERS --> CHSE --> PAYMENT
+
+    SCHED -->|Reminders| NQ
+    MSG -->|New msg alert| NQ
+    NQ --> NTF
+
+    EHRS --> FHIR
+    EHRS --> HL7E
+    FHIR --> HIEG
+    HL7E --> HIEG
+    HIEG --> DOCSTORE
+
+    EXTH -->|FHIR/HTTPS| FHIR
+    EXTL -->|HL7v2/MLLP| HL7E
+    HIEG --> PHA2
+</div>
+
+<h3>Combined Flow Examples</h3>
+
+<div class="example-box">
+    <strong>End-to-End Example — Complete Patient Journey:</strong>
+    <ol>
+        <li><strong>Registration:</strong> Jane Doe arrives at the hospital. The registration clerk registers her via <code>POST /api/v1/patients</code> → Patient Service → Patient DB. MRN #MRN-0042891 is assigned.</li>
+        <li><strong>Clinical Encounter:</strong> Dr. Smith opens Jane's chart (<code>GET /api/v1/ehr/{mrn}/chart</code> → EHR Service → Cache/EHR DB). She documents the encounter (<code>POST /api/v1/ehr/{mrn}/encounters</code> → Documentation Service → EHR DB) and places orders: CBC lab (<code>POST /api/v1/orders</code> → Order Service → CDS Engine [no alerts] → EHR DB → Order Queue → Lab Service) and Amoxicillin medication (→ CDS Engine detects penicillin allergy → 422 returned → Dr. Smith switches to Azithromycin → no alerts → order persisted → Order Queue → Pharmacy Service).</li>
+        <li><strong>Lab Results:</strong> The lab completes the CBC. Lab instruments send HL7 v2 ORU^R01 → HL7 Interface Engine → EHR DB (order updated to RESULTED). The result is also made available to the Patient Portal.</li>
+        <li><strong>Billing:</strong> The signed encounter triggers a <code>encounter_signed</code> event → Billing Queue → Coding Service suggests ICD-10/CPT codes → Billing coder approves → Claims Service generates X12 837 → Clearinghouse → Insurance Payer → X12 835 remittance → Payment Service.</li>
+        <li><strong>Patient Portal:</strong> Jane logs into the patient portal 2 hours later, views her CBC results (<code>GET /api/v1/portal/ehr/{patient_id}/results</code> → Patient Portal Service → EHR Read Replica), messages Dr. Smith with a question → Messaging Service → Notification Queue → Notification Service sends push notification to Dr. Smith.</li>
+        <li><strong>External Sharing:</strong> Jane visits another hospital's ED next month. That hospital queries our FHIR API: <code>GET /fhir/Patient?identifier=...</code> and retrieves Jane's medications, allergies, and recent diagnoses — enabling safe care at the external facility.</li>
+    </ol>
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- SCHEMA -->
+<!-- ============================================================ -->
+<h2>9. Database Schema</h2>
+
+<!-- =================== SQL TABLES =================== -->
+<h3>9.1 SQL Tables</h3>
+
+<h4>Table: patients</h4>
+<p><strong>Why SQL:</strong> Patient identity data is highly structured, requires ACID transactions for registration/updates (cannot have half-registered patients), involves complex queries for duplicate detection (joins on name, DOB, SSN), and demands strong consistency — every part of the system must see the same patient record.</p>
+<p><strong>Read:</strong> When a clinician searches for a patient, when the patient portal loads a patient's data, when external systems query via FHIR. <strong>Write:</strong> When a registration clerk registers a new patient or updates demographics.</p>
+
+<table class="schema-table">
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td>patient_id</td><td>UUID</td><td>PRIMARY KEY</td><td>Internal unique identifier</td></tr>
+    <tr><td>mrn</td><td>VARCHAR(20)</td><td>UNIQUE, NOT NULL, INDEXED (Hash)</td><td>Medical Record Number — human-readable unique ID</td></tr>
+    <tr><td>first_name</td><td>VARCHAR(100)</td><td>NOT NULL</td><td>Patient first name</td></tr>
+    <tr><td>last_name</td><td>VARCHAR(100)</td><td>NOT NULL</td><td>Patient last name</td></tr>
+    <tr><td>date_of_birth</td><td>DATE</td><td>NOT NULL</td><td>Date of birth</td></tr>
+    <tr><td>ssn_hash</td><td>VARCHAR(64)</td><td>INDEXED (Hash)</td><td>SHA-256 hash of SSN (never store plain SSN)</td></tr>
+    <tr><td>gender</td><td>VARCHAR(20)</td><td></td><td>Administrative gender</td></tr>
+    <tr><td>address_line1</td><td>VARCHAR(255)</td><td></td><td>Street address</td></tr>
+    <tr><td>address_city</td><td>VARCHAR(100)</td><td></td><td>City</td></tr>
+    <tr><td>address_state</td><td>VARCHAR(2)</td><td></td><td>State code</td></tr>
+    <tr><td>address_zip</td><td>VARCHAR(10)</td><td></td><td>ZIP code</td></tr>
+    <tr><td>phone</td><td>VARCHAR(20)</td><td></td><td>Primary phone</td></tr>
+    <tr><td>email</td><td>VARCHAR(255)</td><td></td><td>Email address</td></tr>
+    <tr><td>insurance_payer_id</td><td>VARCHAR(50)</td><td>FOREIGN KEY → payers.payer_id</td><td>Primary insurance payer</td></tr>
+    <tr><td>insurance_member_id</td><td>VARCHAR(50)</td><td></td><td>Insurance member/subscriber ID</td></tr>
+    <tr><td>emergency_contact_name</td><td>VARCHAR(200)</td><td></td><td>Emergency contact full name</td></tr>
+    <tr><td>emergency_contact_phone</td><td>VARCHAR(20)</td><td></td><td>Emergency contact phone</td></tr>
+    <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>ACTIVE, INACTIVE, DECEASED, MERGED</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Registration timestamp</td></tr>
+    <tr><td>updated_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last update timestamp</td></tr>
+</table>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>Hash index on <code>mrn</code>:</strong> MRN is the primary lookup key across the entire system. Hash index provides O(1) exact-match lookups, which is the dominant query pattern (no range queries on MRN).</li>
+    <li><strong>Hash index on <code>ssn_hash</code>:</strong> Used for duplicate detection during registration. Exact-match only.</li>
+    <li><strong>Composite B-Tree index on <code>(last_name, first_name, date_of_birth)</code>:</strong> Supports patient search and duplicate detection queries. B-Tree chosen because name searches may use prefix matching (LIKE 'Smi%') and date_of_birth may use range queries.</li>
+</ul>
+
+<p><strong>Sharding:</strong> For a system supporting millions of patients, shard by <code>patient_id</code> (hash-based sharding). Patient_id is a UUID, so hashing distributes evenly. All patient-related queries include patient_id or MRN (which maps 1:1 to patient_id), so queries are routed to the correct shard without scatter-gather. Cross-shard duplicate detection (same patient registered at different shards) is handled by a global uniqueness check on ssn_hash using a separate lightweight lookup table.</p>
+
+<h4>Table: encounters</h4>
+<p><strong>Why SQL:</strong> Encounters have foreign key relationships to patients, providers, and locations. Clinical documentation must be ACID-consistent — a partially saved encounter with missing diagnosis codes would be a compliance risk.</p>
+<p><strong>Read:</strong> When a clinician opens a patient's chart, when the patient portal shows visit history. <strong>Write:</strong> When a clinician signs/saves an encounter note.</p>
+
+<table class="schema-table">
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td>encounter_id</td><td>UUID</td><td>PRIMARY KEY</td><td>Unique encounter identifier</td></tr>
+    <tr><td>patient_id</td><td>UUID</td><td>FOREIGN KEY → patients.patient_id, NOT NULL</td><td>Patient this encounter belongs to</td></tr>
+    <tr><td>provider_id</td><td>UUID</td><td>FOREIGN KEY → providers.provider_id, NOT NULL</td><td>Attending provider</td></tr>
+    <tr><td>encounter_type</td><td>VARCHAR(50)</td><td>NOT NULL</td><td>OFFICE_VISIT, INPATIENT, ED, TELEHEALTH</td></tr>
+    <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>IN_PROGRESS, SIGNED, AMENDED, ADDENDED</td></tr>
+    <tr><td>admit_datetime</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Encounter start</td></tr>
+    <tr><td>discharge_datetime</td><td>TIMESTAMP</td><td></td><td>Encounter end (null if ongoing)</td></tr>
+    <tr><td>chief_complaint</td><td>TEXT</td><td></td><td>Reason for visit</td></tr>
+    <tr><td>note_text</td><td>TEXT</td><td></td><td>Full clinical note (structured + free text)</td></tr>
+    <tr><td>location_id</td><td>UUID</td><td>FOREIGN KEY → locations.location_id</td><td>Facility/department</td></tr>
+    <tr><td>signed_at</td><td>TIMESTAMP</td><td></td><td>When the note was signed (locked)</td></tr>
+    <tr><td>signed_by</td><td>UUID</td><td></td><td>Provider who signed</td></tr>
+    <tr><td>billing_status</td><td>VARCHAR(20)</td><td></td><td>NOT_CODED, CODED, BILLED</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Creation timestamp</td></tr>
+    <tr><td>updated_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last update timestamp</td></tr>
+</table>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>B-Tree index on <code>(patient_id, admit_datetime DESC)</code>:</strong> Primary query pattern is "get all encounters for a patient, most recent first." B-Tree supports range scans and ordering.</li>
+    <li><strong>B-Tree index on <code>(provider_id, admit_datetime DESC)</code>:</strong> Supports provider-centric views ("show me my patients today").</li>
+    <li><strong>B-Tree index on <code>(billing_status, signed_at)</code>:</strong> Supports billing workflow queries ("get all signed encounters that haven't been coded yet").</li>
+</ul>
+
+<h4>Table: orders</h4>
+<p><strong>Why SQL:</strong> Orders have complex relationships (patient, encounter, ordering provider, result) and require transactional integrity (an order must be atomically created with its associated audit trail and CDS evaluation result).</p>
+<p><strong>Read:</strong> When a clinician views active orders, when the lab/pharmacy views their worklist, when patients view orders in the portal. <strong>Write:</strong> When a clinician places an order, when a department updates order status (e.g., lab result received).</p>
+
+<table class="schema-table">
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td>order_id</td><td>UUID</td><td>PRIMARY KEY</td><td>Unique order identifier</td></tr>
+    <tr><td>patient_id</td><td>UUID</td><td>FOREIGN KEY → patients.patient_id, NOT NULL</td><td>Patient</td></tr>
+    <tr><td>encounter_id</td><td>UUID</td><td>FOREIGN KEY → encounters.encounter_id</td><td>Associated encounter</td></tr>
+    <tr><td>ordering_provider_id</td><td>UUID</td><td>FOREIGN KEY → providers.provider_id, NOT NULL</td><td>Physician who placed the order</td></tr>
+    <tr><td>order_type</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>LAB, MEDICATION, IMAGING, PROCEDURE</td></tr>
+    <tr><td>order_code</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>LOINC (lab), NDC (med), CPT (procedure) code</td></tr>
+    <tr><td>order_description</td><td>VARCHAR(500)</td><td>NOT NULL</td><td>Human-readable order description</td></tr>
+    <tr><td>priority</td><td>VARCHAR(10)</td><td>NOT NULL</td><td>ROUTINE, URGENT, STAT</td></tr>
+    <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>PENDING, IN_PROGRESS, RESULTED, COMPLETED, CANCELLED</td></tr>
+    <tr><td>dose</td><td>VARCHAR(50)</td><td></td><td>For medication orders: "500mg"</td></tr>
+    <tr><td>frequency</td><td>VARCHAR(50)</td><td></td><td>For medication orders: "BID", "Q8H"</td></tr>
+    <tr><td>route</td><td>VARCHAR(30)</td><td></td><td>For medication orders: "ORAL", "IV"</td></tr>
+    <tr><td>instructions</td><td>TEXT</td><td></td><td>Special instructions</td></tr>
+    <tr><td>cds_alerts_json</td><td>TEXT</td><td></td><td>JSON array of CDS alerts that were presented (for audit)</td></tr>
+    <tr><td>cds_override_reason</td><td>TEXT</td><td></td><td>If clinician overrode a CDS alert, their justification</td></tr>
+    <tr><td>release_to_patient</td><td>BOOLEAN</td><td>DEFAULT false</td><td>Whether result is visible in patient portal</td></tr>
+    <tr><td>ordered_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>When order was placed</td></tr>
+    <tr><td>resulted_at</td><td>TIMESTAMP</td><td></td><td>When result was received</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Row creation</td></tr>
+    <tr><td>updated_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last update</td></tr>
+</table>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>B-Tree index on <code>(patient_id, order_type, status)</code>:</strong> Supports "get all active lab orders for patient X" — the most common query pattern for duplicate order detection and chart display.</li>
+    <li><strong>B-Tree index on <code>(status, order_type, priority, ordered_at)</code>:</strong> Supports department worklist queries: "get all PENDING LAB orders, STAT first, ordered earliest first."</li>
+</ul>
+
+<p><strong>Sharding:</strong> Shard by <code>patient_id</code>. Orders are overwhelmingly queried in the context of a specific patient. Department worklist queries (across all patients) are handled by the departmental services (Lab Service, Pharmacy Service) which maintain their own local materialized views of their pending orders, populated via the Order Queue events.</p>
+
+<h4>Table: allergies</h4>
+<p><strong>Why SQL:</strong> Critical safety data requiring strong consistency. A missed allergy can be fatal.</p>
+<p><strong>Read:</strong> On every order placement (CDS Engine), when chart is opened, patient portal. <strong>Write:</strong> When clinician documents a new allergy.</p>
+
+<table class="schema-table">
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td>allergy_id</td><td>UUID</td><td>PRIMARY KEY</td><td>Unique allergy identifier</td></tr>
+    <tr><td>patient_id</td><td>UUID</td><td>FOREIGN KEY → patients.patient_id, NOT NULL</td><td>Patient</td></tr>
+    <tr><td>allergen</td><td>VARCHAR(200)</td><td>NOT NULL</td><td>Allergen name (e.g., "Penicillin")</td></tr>
+    <tr><td>allergen_code</td><td>VARCHAR(20)</td><td></td><td>RxNorm or SNOMED code</td></tr>
+    <tr><td>allergen_class</td><td>VARCHAR(100)</td><td></td><td>Drug class (e.g., "Penicillins")</td></tr>
+    <tr><td>reaction</td><td>VARCHAR(200)</td><td></td><td>Reaction description (e.g., "Anaphylaxis")</td></tr>
+    <tr><td>severity</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>MILD, MODERATE, SEVERE</td></tr>
+    <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>ACTIVE, INACTIVE, ENTERED_IN_ERROR</td></tr>
+    <tr><td>documented_by</td><td>UUID</td><td>FOREIGN KEY → providers.provider_id</td><td>Who documented this allergy</td></tr>
+    <tr><td>onset_date</td><td>DATE</td><td></td><td>When allergy was first identified</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Row creation</td></tr>
+</table>
+
+<p><strong>Index:</strong> <strong>B-Tree index on <code>(patient_id, status)</code></strong> — primary query is "get all active allergies for patient X." This is called on every single order placement (critical path).</p>
+
+<h4>Table: medications (Active Medication List)</h4>
+<p><strong>Why SQL:</strong> Same rationale as allergies — critical safety data for CDS interactions.</p>
+<p><strong>Read:</strong> On every medication order (CDS drug-drug interaction check), chart display, patient portal. <strong>Write:</strong> When a medication order is activated/discontinued.</p>
+
+<table class="schema-table">
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td>medication_id</td><td>UUID</td><td>PRIMARY KEY</td><td>Unique identifier</td></tr>
+    <tr><td>patient_id</td><td>UUID</td><td>FOREIGN KEY → patients.patient_id, NOT NULL</td><td>Patient</td></tr>
+    <tr><td>order_id</td><td>UUID</td><td>FOREIGN KEY → orders.order_id</td><td>Originating order</td></tr>
+    <tr><td>drug_name</td><td>VARCHAR(200)</td><td>NOT NULL</td><td>Medication name</td></tr>
+    <tr><td>drug_code</td><td>VARCHAR(20)</td><td></td><td>RxNorm code</td></tr>
+    <tr><td>drug_class</td><td>VARCHAR(100)</td><td></td><td>Drug class for interaction checking</td></tr>
+    <tr><td>dose</td><td>VARCHAR(50)</td><td></td><td>e.g., "10mg"</td></tr>
+    <tr><td>frequency</td><td>VARCHAR(50)</td><td></td><td>e.g., "Daily"</td></tr>
+    <tr><td>route</td><td>VARCHAR(30)</td><td></td><td>e.g., "Oral"</td></tr>
+    <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>ACTIVE, DISCONTINUED, COMPLETED</td></tr>
+    <tr><td>start_date</td><td>DATE</td><td>NOT NULL</td><td>When medication was started</td></tr>
+    <tr><td>end_date</td><td>DATE</td><td></td><td>When discontinued</td></tr>
+    <tr><td>prescriber_id</td><td>UUID</td><td>FOREIGN KEY → providers.provider_id</td><td>Prescribing provider</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Row creation</td></tr>
+    <tr><td>updated_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last update</td></tr>
+</table>
+
+<p><strong>Index:</strong> <strong>B-Tree index on <code>(patient_id, status)</code></strong> — "get all active medications for patient X."</p>
+
+<div class="note">
+    <strong>Denormalization Note — Medications Table:</strong> The <code>medications</code> table contains denormalized data from the <code>orders</code> table (drug_name, dose, frequency, route). This denormalization is intentional:
+    <ul>
+        <li>The medications table is the CDS Engine's primary data source. Denormalization avoids a JOIN to the orders table on every single order placement (critical latency path).</li>
+        <li>The medication list is a clinical "summary view" that may outlive the original order (e.g., a patient reports taking aspirin without a formal order).</li>
+        <li>Tradeoff: slightly more storage and the need to keep medications table in sync when orders are updated. This is acceptable because medication data is small and writes are infrequent relative to reads.</li>
+    </ul>
+</div>
+
+<h4>Table: appointments</h4>
+<p><strong>Why SQL:</strong> Scheduling requires ACID transactions to prevent double-booking (two patients booking the same slot concurrently).</p>
+<p><strong>Read:</strong> When a patient or staff views the schedule, when checking availability. <strong>Write:</strong> When an appointment is booked, cancelled, or rescheduled.</p>
+
+<table class="schema-table">
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td>appointment_id</td><td>UUID</td><td>PRIMARY KEY</td><td>Unique appointment identifier</td></tr>
+    <tr><td>patient_id</td><td>UUID</td><td>FOREIGN KEY → patients.patient_id, NOT NULL</td><td>Patient</td></tr>
+    <tr><td>provider_id</td><td>UUID</td><td>FOREIGN KEY → providers.provider_id, NOT NULL</td><td>Provider</td></tr>
+    <tr><td>appointment_type</td><td>VARCHAR(50)</td><td>NOT NULL</td><td>NEW_PATIENT, FOLLOWUP, PROCEDURE, etc.</td></tr>
+    <tr><td>start_datetime</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Appointment start time</td></tr>
+    <tr><td>end_datetime</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Appointment end time</td></tr>
+    <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>SCHEDULED, CHECKED_IN, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW</td></tr>
+    <tr><td>location_id</td><td>UUID</td><td>FOREIGN KEY → locations.location_id</td><td>Facility/room</td></tr>
+    <tr><td>cancellation_reason</td><td>TEXT</td><td></td><td>If cancelled, reason</td></tr>
+    <tr><td>reminder_sent</td><td>BOOLEAN</td><td>DEFAULT false</td><td>Whether reminder notification was sent</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Booking timestamp</td></tr>
+    <tr><td>updated_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last update</td></tr>
+</table>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>B-Tree index on <code>(provider_id, start_datetime)</code>:</strong> Primary query for availability checks and provider schedule views.</li>
+    <li><strong>Unique constraint on <code>(provider_id, start_datetime)</code>:</strong> Prevents double-booking at the database level (belt-and-suspenders with application-level optimistic locking).</li>
+    <li><strong>B-Tree index on <code>(patient_id, start_datetime DESC)</code>:</strong> Patient appointment history view.</li>
+</ul>
+
+<h4>Table: messages</h4>
+<p><strong>Why SQL:</strong> Messaging requires referential integrity (patient_id, provider_id foreign keys) and transactional message + thread creation.</p>
+<p><strong>Read:</strong> When patient or provider opens their message inbox. <strong>Write:</strong> When a message is sent.</p>
+
+<table class="schema-table">
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td>message_id</td><td>UUID</td><td>PRIMARY KEY</td><td>Unique message ID</td></tr>
+    <tr><td>thread_id</td><td>UUID</td><td>NOT NULL, INDEXED</td><td>Conversation thread ID</td></tr>
+    <tr><td>sender_type</td><td>VARCHAR(10)</td><td>NOT NULL</td><td>PATIENT or PROVIDER</td></tr>
+    <tr><td>sender_id</td><td>UUID</td><td>NOT NULL</td><td>patient_id or provider_id</td></tr>
+    <tr><td>recipient_type</td><td>VARCHAR(10)</td><td>NOT NULL</td><td>PATIENT or PROVIDER</td></tr>
+    <tr><td>recipient_id</td><td>UUID</td><td>NOT NULL</td><td>patient_id or provider_id</td></tr>
+    <tr><td>subject</td><td>VARCHAR(255)</td><td></td><td>Message subject</td></tr>
+    <tr><td>body</td><td>TEXT</td><td>NOT NULL</td><td>Message body (encrypted)</td></tr>
+    <tr><td>is_read</td><td>BOOLEAN</td><td>DEFAULT false</td><td>Whether recipient has read</td></tr>
+    <tr><td>attachment_url</td><td>VARCHAR(500)</td><td></td><td>Object Storage reference for attachments</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Sent timestamp</td></tr>
+</table>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>B-Tree index on <code>(recipient_id, recipient_type, is_read, created_at DESC)</code>:</strong> Supports inbox query "get all unread messages for provider X, newest first."</li>
+    <li><strong>B-Tree index on <code>(thread_id, created_at ASC)</code>:</strong> Supports loading a conversation thread in chronological order.</li>
+</ul>
+
+<h4>Table: claims</h4>
+<p><strong>Why SQL:</strong> Financial data requires ACID transactions. Claim amounts, payment postings, and adjustments must be exactly consistent.</p>
+<p><strong>Read:</strong> Billing staff reviewing claim status, generating financial reports. <strong>Write:</strong> When a claim is created, submitted, paid, or denied.</p>
+
+<table class="schema-table">
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td>claim_id</td><td>UUID</td><td>PRIMARY KEY</td><td>Unique claim ID</td></tr>
+    <tr><td>patient_id</td><td>UUID</td><td>FOREIGN KEY → patients.patient_id, NOT NULL</td><td>Patient</td></tr>
+    <tr><td>encounter_id</td><td>UUID</td><td>FOREIGN KEY → encounters.encounter_id, NOT NULL</td><td>Associated encounter</td></tr>
+    <tr><td>payer_id</td><td>VARCHAR(50)</td><td>FOREIGN KEY → payers.payer_id, NOT NULL</td><td>Insurance payer</td></tr>
+    <tr><td>claim_type</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>PROFESSIONAL (837P) or INSTITUTIONAL (837I)</td></tr>
+    <tr><td>total_charge</td><td>DECIMAL(10,2)</td><td>NOT NULL</td><td>Total billed amount</td></tr>
+    <tr><td>diagnosis_codes</td><td>VARCHAR(500)</td><td>NOT NULL</td><td>Comma-separated ICD-10 codes</td></tr>
+    <tr><td>procedure_codes</td><td>VARCHAR(500)</td><td>NOT NULL</td><td>Comma-separated CPT codes</td></tr>
+    <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>DRAFT, SUBMITTED, ACCEPTED, PAID, DENIED, APPEALED</td></tr>
+    <tr><td>submitted_at</td><td>TIMESTAMP</td><td></td><td>When submitted to payer</td></tr>
+    <tr><td>paid_amount</td><td>DECIMAL(10,2)</td><td></td><td>Amount paid by payer</td></tr>
+    <tr><td>patient_responsibility</td><td>DECIMAL(10,2)</td><td></td><td>Copay + deductible owed by patient</td></tr>
+    <tr><td>denial_reason_code</td><td>VARCHAR(10)</td><td></td><td>Payer denial reason code</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Claim creation</td></tr>
+    <tr><td>updated_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last update</td></tr>
+</table>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>B-Tree index on <code>(status, submitted_at)</code>:</strong> Billing workflow: "get all DENIED claims submitted in the last 30 days."</li>
+    <li><strong>B-Tree index on <code>(patient_id, created_at DESC)</code>:</strong> Patient billing history.</li>
+    <li><strong>B-Tree index on <code>(payer_id, status)</code>:</strong> Payer-specific reporting.</li>
+</ul>
+
+<h4>Table: providers</h4>
+<p><strong>Why SQL:</strong> Provider identity is referenced by many tables (foreign key from encounters, orders, appointments). Relational integrity is essential.</p>
+
+<table class="schema-table">
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td>provider_id</td><td>UUID</td><td>PRIMARY KEY</td><td>Unique provider identifier</td></tr>
+    <tr><td>npi</td><td>VARCHAR(10)</td><td>UNIQUE, NOT NULL</td><td>National Provider Identifier</td></tr>
+    <tr><td>first_name</td><td>VARCHAR(100)</td><td>NOT NULL</td><td>First name</td></tr>
+    <tr><td>last_name</td><td>VARCHAR(100)</td><td>NOT NULL</td><td>Last name</td></tr>
+    <tr><td>specialty</td><td>VARCHAR(100)</td><td></td><td>Medical specialty</td></tr>
+    <tr><td>role</td><td>VARCHAR(50)</td><td>NOT NULL</td><td>PHYSICIAN, NURSE, PHARMACIST, etc.</td></tr>
+    <tr><td>department_id</td><td>UUID</td><td>FOREIGN KEY → departments.department_id</td><td>Department</td></tr>
+    <tr><td>email</td><td>VARCHAR(255)</td><td>UNIQUE</td><td>Provider email</td></tr>
+    <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>ACTIVE, INACTIVE</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Row creation</td></tr>
+</table>
+
+<!-- =================== NoSQL TABLES =================== -->
+<h3>9.2 NoSQL Tables</h3>
+
+<h4>Table: cds_rules (Document Store)</h4>
+<p><strong>Why Document Store (NoSQL):</strong> CDS rules are semi-structured JSON documents with highly variable schemas — a drug-drug interaction rule looks completely different from a sepsis screening rule. Rules have deeply nested conditions, version histories, and evidence references. A document store allows flexible schemas without migrations, fast key-based retrieval by rule_type, and natural versioning. SQL would require a rigid schema with extensive JSON columns, losing the benefits of relational modeling.</p>
+<p><strong>Read:</strong> On every order placement (CDS Engine evaluates relevant rules). <strong>Write:</strong> When clinical informaticists add/update CDS rules (infrequent — maybe weekly).</p>
+
+<table class="schema-table">
+    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+    <tr><td>rule_id</td><td>String (partition key)</td><td>Unique rule identifier</td></tr>
+    <tr><td>version</td><td>Number (sort key)</td><td>Rule version number</td></tr>
+    <tr><td>rule_type</td><td>String</td><td>DRUG_DRUG, DRUG_ALLERGY, DUPLICATE_ORDER, DOSE_RANGE, etc.</td></tr>
+    <tr><td>status</td><td>String</td><td>ACTIVE, INACTIVE, DRAFT</td></tr>
+    <tr><td>conditions</td><td>Nested JSON</td><td>Complex, variable-structure rule conditions</td></tr>
+    <tr><td>actions</td><td>Nested JSON</td><td>Alert severity, message template, recommended alternatives</td></tr>
+    <tr><td>effective_date</td><td>Timestamp</td><td>When rule becomes active</td></tr>
+    <tr><td>expiration_date</td><td>Timestamp</td><td>When rule expires (optional)</td></tr>
+    <tr><td>evidence_references</td><td>Array of Strings</td><td>Clinical evidence citations</td></tr>
+    <tr><td>created_by</td><td>String</td><td>Author</td></tr>
+    <tr><td>created_at</td><td>Timestamp</td><td>Creation time</td></tr>
+</table>
+
+<p><strong>Index:</strong> <strong>Global Secondary Index on <code>(rule_type, status)</code></strong> — CDS Engine queries "get all ACTIVE rules of type DRUG_ALLERGY" to evaluate them against the current order context.</p>
+
+<h4>Table: audit_logs (Time-Series)</h4>
+<p><strong>Why Time-Series (NoSQL):</strong> Audit logs are append-only, immutable, timestamped events. Write-heavy (thousands per second). Queried primarily by time range + filters. Time-series databases are optimized for this pattern with time-based partitioning, automatic compression, and efficient time-range scans. SQL would be overwhelmed by the write volume and would require manual partitioning.</p>
+<p><strong>Read:</strong> HIPAA compliance audits, security investigations ("who accessed patient X's record in the last 30 days?"), legal discovery. <strong>Write:</strong> On every single data access — chart views, order placements, logins, exports, etc.</p>
+
+<table class="schema-table">
+    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+    <tr><td>timestamp</td><td>Timestamp (partition key — time bucket)</td><td>Event timestamp</td></tr>
+    <tr><td>event_id</td><td>UUID</td><td>Unique event ID</td></tr>
+    <tr><td>user_id</td><td>UUID</td><td>User who performed the action</td></tr>
+    <tr><td>user_role</td><td>String</td><td>Role at time of action</td></tr>
+    <tr><td>action</td><td>String</td><td>READ, WRITE, UPDATE, DELETE, LOGIN, EXPORT</td></tr>
+    <tr><td>resource_type</td><td>String</td><td>PATIENT, CHART, ORDER, ENCOUNTER, etc.</td></tr>
+    <tr><td>resource_id</td><td>UUID</td><td>ID of accessed resource</td></tr>
+    <tr><td>patient_id</td><td>UUID</td><td>Patient whose data was accessed (for patient-centric audits)</td></tr>
+    <tr><td>ip_address</td><td>String</td><td>Client IP address</td></tr>
+    <tr><td>session_id</td><td>String</td><td>Session identifier</td></tr>
+    <tr><td>outcome</td><td>String</td><td>SUCCESS, FAILURE, DENIED</td></tr>
+    <tr><td>details</td><td>JSON</td><td>Additional context</td></tr>
+</table>
+
+<p><strong>Index:</strong> <strong>Composite index on <code>(patient_id, timestamp)</code></strong> — supports HIPAA "accounting of disclosures" queries: "show all accesses to patient X's data." Time-series databases typically use time-based partitioning (daily/weekly buckets) with automatic rollup and compression of older data.</p>
+
+<p><strong>Retention:</strong> Raw data retained for 6 years (HIPAA minimum). Data older than 1 year is compressed. Data older than 6 years is archived to cold Object Storage.</p>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- CDN AND CACHE DEEP DIVE -->
+<!-- ============================================================ -->
+<h2>10. CDN &amp; Cache Deep Dive</h2>
+
+<h3>10.1 CDN</h3>
+<p><strong>Where used:</strong> Patient Portal static assets only (JavaScript bundles, CSS, images, fonts).</p>
+<p><strong>Why appropriate:</strong> The patient portal serves millions of patients across diverse geographic locations. Static assets are large (multi-MB JS bundles) and identical for all users. CDN edge caching reduces origin load by ~90% and improves page load times from ~2 seconds to ~200ms for geographically distant users.</p>
+<p><strong>Why NOT used for clinical apps:</strong> Clinician apps are deployed within hospital networks (often on-premise or private cloud). CDN provides no benefit when users are on the same network as the servers. Additionally, clinical data (PHI) must NEVER be cached at CDN edge nodes — HIPAA violation risk.</p>
+<p><strong>Caching Strategy:</strong> Cache-Control headers with long max-age (1 year) for versioned assets. Cache busting via content-hash filenames on each deployment.</p>
+
+<h3>10.2 In-Memory Cache</h3>
+<p><strong>Where used:</strong> Between EHR Service / Patient Portal Service and their respective databases.</p>
+<p><strong>What is cached:</strong></p>
+<ul>
+    <li>Patient chart summaries (problems, meds, allergies, vitals) — keyed by MRN</li>
+    <li>Provider schedules (available slots) — keyed by provider_id + date</li>
+    <li>CDS rules — keyed by rule_type (rules change infrequently)</li>
+    <li>Active medication lists — keyed by patient_id</li>
+</ul>
+<p><strong>Caching Strategy:</strong> <strong>Cache-aside (lazy loading)</strong></p>
+<ul>
+    <li><strong>Read path:</strong> Service checks cache → on hit, return cached data. On miss, query DB, write result to cache with TTL, return data.</li>
+    <li><strong>Write path:</strong> On any write to patient data (new order, updated allergy, new note), the writing service explicitly invalidates the cache entry for that patient/resource. The next read triggers a cache miss and re-populates from DB.</li>
+</ul>
+<p><strong>Why cache-aside over write-through?</strong> Clinical data has a bursty read/write pattern: during an encounter (30-60 minutes), a patient's chart is read dozens of times but written to only a few times. Cache-aside avoids the overhead of writing to cache on every write, which would be wasteful for data that may not be read again (e.g., a patient discharged and not seen again for months). Write-through would add latency to every write operation.</p>
+<p><strong>Why NOT write-through?</strong> In a clinical setting, we need to invalidate stale data as fast as possible (patient safety), not just update it. Explicit invalidation on write + short TTL provides the right balance of freshness and performance.</p>
+<p><strong>Eviction Policy:</strong> <strong>LRU (Least Recently Used)</strong>. Clinical activity follows a "hot patient" pattern — actively hospitalized patients are accessed hundreds of times per day, while discharged patients are rarely accessed. LRU naturally keeps hot patients in cache and evicts cold ones. LFU (Least Frequently Used) was considered but rejected because a patient seen frequently last month but not this month would linger in cache unnecessarily.</p>
+<p><strong>Expiration (TTL):</strong></p>
+<ul>
+    <li>Chart summaries: <strong>5 minutes</strong> — short enough to ensure clinical freshness (worst case, a clinician sees data 5 minutes stale), long enough to absorb burst reads during active encounters.</li>
+    <li>CDS rules: <strong>1 hour</strong> — rules change infrequently (weekly at most). Longer TTL is safe and reduces DB load on the rules database.</li>
+    <li>Provider schedules: <strong>1 minute</strong> — availability changes rapidly as patients book slots.</li>
+</ul>
+<p><strong>Cache Population Trigger:</strong> First read request after a cache miss or after explicit invalidation. NOT pre-warmed (demand-populated only). Pre-warming was considered for "expected" patients (e.g., today's scheduled appointments), but the complexity of maintaining a pre-warm list outweighed the benefit — cache-aside naturally warms as patients are accessed.</p>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- SCALING CONSIDERATIONS -->
+<!-- ============================================================ -->
+<h2>11. Scaling Considerations</h2>
+
+<h3>11.1 Load Balancers</h3>
+<p><strong>Where load balancers should be placed:</strong></p>
 <ol>
-<li>External EHR requests patient data via FHIR R4 API: <code>GET /Patient/{id}/everything</code> with SMART on FHIR OAuth2 token</li>
-<li>FHIR Gateway validates token, scopes (patient/*.read), and enforces rate limiting</li>
-<li>Integration Engine maps internal data model to FHIR Resources (Patient, Condition, MedicationRequest, Observation)</li>
-<li>Consent Service checks patient's data sharing preferences — restricts sensitive categories per consent directives</li>
-<li>Master Patient Index (MPI) resolves patient identity across systems using probabilistic matching (name, DOB, SSN, address)</li>
-<li>Data returned as FHIR Bundle (JSON) with standardized coding (SNOMED, LOINC, ICD-10, RxNorm)</li>
+    <li><strong>Between Clients and API Gateway:</strong> An L7 (HTTP-aware) load balancer distributes incoming HTTPS requests from all client types (clinician apps, patient portal, billing apps) across multiple API Gateway instances. Uses <strong>round-robin</strong> or <strong>least-connections</strong> algorithm. No sticky sessions (all services are stateless). Health checks every 5 seconds; unhealthy instances are removed from the pool within 15 seconds.</li>
+    <li><strong>Between API Gateway and Microservices:</strong> Internal L4/L7 load balancers (or service mesh sidecar proxies) distribute requests from the API Gateway to individual service instances. This layer enables per-service autoscaling — the Order Service might need 20 instances during morning rounds but only 5 overnight.</li>
+    <li><strong>Between HL7 Interface Engine instances:</strong> HL7 v2/MLLP connections from external labs and devices are distributed across multiple Interface Engine instances using L4 (TCP) load balancing. L4 is used because MLLP is not HTTP — the load balancer forwards raw TCP connections.</li>
+</ol>
+<p><strong>Load Balancer Deep Dive:</strong> The external-facing L7 load balancer handles TLS termination (offloading CPU-intensive TLS operations from application servers), HTTP/2 multiplexing, request routing based on URL path (/fhir/* → FHIR Server, /api/v1/portal/* → Portal Service), DDoS protection, and connection draining during deployments (finishing in-flight requests before shutting down an instance). Autoscaling is based on CPU utilization (target 70%) and request queue depth.</p>
+
+<h3>11.2 Horizontal Scaling</h3>
+<ul>
+    <li><strong>Stateless services:</strong> All services (Patient, EHR, Order, Documentation, Portal, Scheduling, Messaging, Billing, CDS, Notification, Audit) are stateless — session state in shared session store, no in-memory state. This enables horizontal scaling by simply adding more instances behind the load balancer.</li>
+    <li><strong>Database read replicas:</strong> The EHR DB and Patient DB use read replicas to handle read-heavy traffic. The Patient Portal reads from a read replica (separating patient traffic from clinical traffic). Clinician chart reads can also be routed to read replicas for non-critical queries.</li>
+    <li><strong>Database sharding:</strong> The EHR DB and Orders table are sharded by patient_id to distribute data and load. All clinical queries are patient-centric, making patient_id an ideal shard key with minimal cross-shard queries.</li>
+</ul>
+
+<h3>11.3 Scaling the Message Queues</h3>
+<ul>
+    <li><strong>Order Queue:</strong> Partitioned by order_type (LAB, PHARMACY, RADIOLOGY). Each partition is consumed by its respective department service. STAT orders use a priority channel within each partition. During peak hours (morning rounds generate a surge of orders), consumer instances auto-scale based on queue depth.</li>
+    <li><strong>Audit Queue:</strong> Partitioned by MRN hash for per-patient ordering. High throughput (thousands of events/second). Consumer parallelism matches the number of partitions.</li>
+    <li><strong>Notification Queue:</strong> Partitioned by notification_channel (PUSH, SMS, EMAIL) to isolate slow channels (SMS has higher latency than push notifications).</li>
+</ul>
+
+<h3>11.4 Peak Load Handling</h3>
+<ul>
+    <li><strong>Morning rounds (7-9 AM):</strong> 5-10x spike in chart openings and order placements. Handled by auto-scaling EHR Service and Order Service instances + warm cache from the previous day's activity.</li>
+    <li><strong>Shift changes (7 AM, 3 PM, 11 PM):</strong> Spike in logins and chart handoffs. API Gateway auth layer is the bottleneck — scale JWT validation horizontally.</li>
+    <li><strong>Flu season:</strong> Sustained 2-3x increase in ED visits and order volume over weeks. Requires pre-provisioned additional database capacity (read replicas, shard splitting).</li>
+</ul>
+
+<h3>11.5 Geographic Scaling</h3>
+<p>For a multi-hospital health system spanning multiple regions:</p>
+<ul>
+    <li><strong>Active-Passive multi-region:</strong> Primary region handles all writes; secondary region has read replicas and can take over within 15 minutes (RTO). Patient portal read traffic can be served from the secondary region.</li>
+    <li><strong>Data residency:</strong> Some jurisdictions require patient data to stay within geographic boundaries. Sharding by hospital/facility enables region-specific data placement.</li>
+</ul>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- TRADEOFFS AND DEEP DIVES -->
+<!-- ============================================================ -->
+<h2>12. Tradeoffs &amp; Deep Dives</h2>
+
+<h3>12.1 Strong Consistency vs. Availability (CAP Theorem)</h3>
+<p><strong>Decision:</strong> Prioritize <strong>consistency</strong> for clinical data (CP). A clinician must always see the most recent medication list and allergy data — eventual consistency could lead to a missed drug-allergy interaction and patient harm. This means accepting slightly higher latency (waiting for write acknowledgment from replicas) and potential unavailability during network partitions (which is mitigated by multi-AZ deployment within a single region).</p>
+<p><strong>Exception:</strong> Audit logs use eventual consistency (AP) — a 1-second delay in audit log visibility does not affect patient safety, and the audit system must remain highly available (never lose an audit event).</p>
+
+<h3>12.2 Microservices vs. Monolith</h3>
+<p><strong>Decision:</strong> Microservices architecture. Healthcare EHR systems have clearly bounded domains (patient registration, clinical documentation, order entry, billing, scheduling, interoperability) that evolve at different rates, are maintained by different teams, and have different scaling requirements. The Order Service needs to handle spikes during morning rounds; the Billing Service has steady load. Microservices enable independent deployment and scaling.</p>
+<p><strong>Tradeoff:</strong> Increased operational complexity (distributed tracing, service discovery, circuit breakers needed). Mitigated by a service mesh and robust observability platform.</p>
+
+<h3>12.3 Synchronous CDS vs. Asynchronous CDS</h3>
+<p><strong>Decision:</strong> Synchronous CDS evaluation on the order critical path. This adds ~100-200ms to every order placement. The tradeoff is worth it because asynchronous alerts (arriving after the order is placed) are frequently ignored by clinicians ("alert fatigue" is already a problem; retroactive alerts would be worse). Synchronous alerts with "hard stops" for critical interactions (drug-allergy with severe reaction) demonstrably reduce medication errors.</p>
+
+<h3>12.4 Read Replica for Patient Portal vs. Direct DB Access</h3>
+<p><strong>Decision:</strong> Patient portal reads from a read replica with ~1-second replication lag. The tradeoff is that patients may see lab results 1 second later than the provider who released them. This is clinically insignificant (patients typically check results hours or days later) and avoids adding potentially millions of patient portal reads to the primary clinical database, which could degrade clinician-facing performance.</p>
+
+<h3>12.5 HL7 FHIR vs. Custom API for Interoperability</h3>
+<p><strong>Decision:</strong> Implement FHIR as the primary interoperability API, with HL7 v2 support for legacy systems. FHIR is a modern REST-based standard that is increasingly mandated by regulation (21st Century Cures Act). HL7 v2 support is necessary because ~90% of existing healthcare integrations still use v2.</p>
+<p><strong>Tradeoff:</strong> FHIR has significant implementation complexity (hundreds of resource types, complex search parameters). But the regulatory requirement makes this non-negotiable.</p>
+
+<h3>12.6 SQL for Nearly Everything</h3>
+<p><strong>Decision:</strong> SQL for all core clinical and financial data. Healthcare data is inherently relational (patients have encounters, encounters have orders, orders have results). Strong consistency and ACID transactions are non-negotiable for clinical safety and financial accuracy. NoSQL is used only where the data model genuinely doesn't fit relational patterns (CDS rules = semi-structured documents, audit logs = time-series events).</p>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- ALTERNATIVE APPROACHES -->
+<!-- ============================================================ -->
+<h2>13. Alternative Approaches</h2>
+
+<h3>13.1 Event Sourcing for Clinical Data</h3>
+<p><strong>Approach:</strong> Instead of storing the current state of a patient record, store every event (allergy added, medication changed, vitals recorded) as an immutable event, and derive the current state by replaying events.</p>
+<p><strong>Why not chosen:</strong> While event sourcing provides a perfect audit trail and temporal queries ("what was the patient's medication list at 3:00 PM yesterday?"), it dramatically increases read complexity (every chart open would require replaying potentially thousands of events or maintaining materialized views). In a latency-sensitive clinical environment where chart load time must be &lt;1 second, the complexity tradeoff is not favorable. We achieve similar auditability through explicit audit logs and encounter versioning (amendments create new versions, originals are immutable).</p>
+
+<h3>13.2 Graph Database for Patient Relationships &amp; Clinical Ontologies</h3>
+<p><strong>Approach:</strong> Use a graph database to model relationships between patients, providers, diagnoses, medications, and drug interactions as a graph.</p>
+<p><strong>Why not chosen:</strong> While graph databases excel at traversing relationships (e.g., "find all patients of Dr. Smith who take Drug X and have Condition Y"), the core EHR use case is patient-centric (retrieve one patient's data), not relationship-centric. Drug interaction rules are better modeled as CDS rules in a document store (they're curated knowledge, not emergent graph relationships). A graph DB could be a useful addition for population health analytics, but it's not the right primary store for transactional clinical data.</p>
+
+<h3>13.3 WebSockets for Real-Time Clinical Updates</h3>
+<p><strong>Approach:</strong> Use WebSocket connections to push real-time updates to clinician apps (new lab results, order status changes, vital sign alerts).</p>
+<p><strong>Why not chosen as primary pattern (but recommended as enhancement):</strong> The core system uses request-response (HTTP) because clinical workflows are primarily user-initiated (clinician opens chart, places order). WebSockets add significant infrastructure complexity (connection management, reconnection logic, message ordering, authentication per message). However, WebSockets would be a valuable <strong>enhancement layer</strong> for specific use cases:
+<ul>
+    <li>Real-time vital sign monitoring (ICU dashboards)</li>
+    <li>Push notifications to clinician app when lab results arrive for their patients</li>
+    <li>Real-time bed board updates</li>
+</ul>
+If implemented: a WebSocket Gateway service would maintain persistent connections, authenticated via the same JWT tokens. Connection state stored in the In-Memory Cache (user_id → WebSocket server instance). When a lab result arrives, the Order Service publishes a <code>result_available</code> event to a pub/sub system; the WebSocket Gateway subscribes and pushes to connected clinicians.</p>
+
+<h3>13.4 Polling for Result Updates</h3>
+<p><strong>Approach:</strong> Patient portal polls for new lab results every N seconds.</p>
+<p><strong>Why not chosen:</strong> Polling is wasteful — most polls return "no new data." For millions of patients, even a 60-second poll interval generates enormous unnecessary load. Instead, we use a notification system (push notification when results are released) that prompts the patient to open the app and fetch results on demand. This is more efficient and provides a better user experience.</p>
+
+<h3>13.5 Single Monolithic Database</h3>
+<p><strong>Approach:</strong> Put all data (patients, encounters, orders, billing, messages, scheduling) in one large SQL database.</p>
+<p><strong>Why not chosen:</strong> While simpler operationally, a monolithic database creates several problems at scale: (1) a billing query generating a large report could lock tables and slow down clinical order entry; (2) the database becomes a single point of failure; (3) scaling a single database vertically has hard limits; (4) different data types have different access patterns (audit logs are write-heavy, patient search is read-heavy). Service-specific databases allow independent scaling and isolation.</p>
+
+<h3>13.6 NoSQL (Document Store) for EHR Data</h3>
+<p><strong>Approach:</strong> Store each patient's entire record as a single document.</p>
+<p><strong>Why not chosen:</strong> Patient records grow over a lifetime (potentially thousands of encounters, orders, and results). A single document would become enormous (hundreds of MB), requiring full-document reads for any access. Partial updates (adding one new order) would require read-modify-write of the entire document. Relational queries across patients (e.g., "find all patients with active Metformin orders" for drug recall) would be extremely inefficient. SQL's row-level access and relational joins are fundamentally better suited for clinical data.</p>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<!-- ADDITIONAL IMPORTANT INFORMATION -->
+<!-- ============================================================ -->
+<h2>14. Additional Important Information</h2>
+
+<h3>14.1 HIPAA Compliance Architecture</h3>
+<ul>
+    <li><strong>Encryption at rest:</strong> All databases use AES-256 encryption. Encryption keys are managed by a dedicated Key Management Service (KMS) with automatic key rotation every 90 days.</li>
+    <li><strong>Encryption in transit:</strong> TLS 1.3 for all external and internal communication. Mutual TLS (mTLS) between microservices to prevent service impersonation.</li>
+    <li><strong>Data masking:</strong> SSN is stored as a one-way hash (SHA-256). Full SSN is never stored or transmitted except during the initial registration flow (in-memory only, never logged).</li>
+    <li><strong>Break-the-glass:</strong> In emergencies, clinicians can access any patient's chart by declaring an emergency and providing justification. This override is logged with a special <code>BREAK_GLASS</code> audit event and flagged for compliance review within 24 hours.</li>
+    <li><strong>42 CFR Part 2:</strong> Substance abuse treatment records have additional federal protections beyond HIPAA. These records are tagged in the EHR and require explicit patient consent for each disclosure. Implemented via row-level security policies on the database.</li>
+</ul>
+
+<h3>14.2 Disaster Recovery</h3>
+<ul>
+    <li><strong>RPO &lt; 1 minute:</strong> Synchronous replication within the primary region (write acknowledged by ≥2 replicas). Asynchronous replication to the DR region with &lt;1 minute lag.</li>
+    <li><strong>RTO &lt; 15 minutes:</strong> Automated failover triggered by health monitoring. DNS-based routing switches traffic to the DR region. Tested quarterly with full DR drills.</li>
+    <li><strong>Backup strategy:</strong> Full database backups daily, incremental backups hourly, transaction log backups every 5 minutes. Backups stored in Object Storage in a separate geographic region. Backup restoration tested monthly.</li>
+</ul>
+
+<h3>14.3 Observability</h3>
+<ul>
+    <li><strong>Distributed tracing:</strong> Every request is assigned a correlation_id at the API Gateway that propagates through all services and into audit logs. This enables end-to-end tracing of a single clinical action (e.g., tracing an order from click → API Gateway → Order Service → CDS Engine → DB → Queue → Lab Service).</li>
+    <li><strong>Metrics:</strong> Service-level metrics (latency p50/p95/p99, error rate, throughput) monitored in real-time. Alert thresholds: p99 latency &gt; 2 seconds triggers an alert; error rate &gt; 1% triggers a page.</li>
+    <li><strong>Clinical-specific monitoring:</strong> CDS alert override rate (if &gt;80% of alerts are overridden, rules may be too sensitive — "alert fatigue"). Order turnaround time (time from order placement to result). Portal login success rate.</li>
+</ul>
+
+<h3>14.4 HL7 v2 over MLLP — Protocol Deep Dive</h3>
+<p>Many healthcare integrations (lab instruments, ADT interfaces, pharmacy systems) use HL7 v2.x messages over TCP using the MLLP (Minimal Lower Layer Protocol). MLLP is a simple framing protocol:</p>
+<ul>
+    <li>Start byte: <code>0x0B</code> (vertical tab)</li>
+    <li>End bytes: <code>0x1C 0x0D</code> (file separator + carriage return)</li>
+    <li>The HL7 message is sandwiched between start and end bytes.</li>
+    <li>After receiving a message, the receiver sends an HL7 ACK or NAK message back using the same framing.</li>
+</ul>
+<p><strong>Why TCP?</strong> HL7 v2 messages contain critical clinical data (lab results, patient admissions). TCP guarantees delivery, ordering, and error detection. UDP would be unacceptable — a dropped lab result could be missed entirely. <strong>Why not HTTPS?</strong> MLLP predates widespread HTTPS adoption in healthcare (1990s). Modern HL7 v2 implementations may use MLLP over TLS ("Secure MLLP"), but the protocol is fundamentally TCP-based, not HTTP-based.</p>
+
+<h3>14.5 FHIR SMART on FHIR — Authentication Deep Dive</h3>
+<p>The FHIR API uses SMART on FHIR (Substitutable Medical Applications, Reusable Technologies) — an OAuth 2.0-based authorization framework specifically designed for healthcare. The flow:</p>
+<ol>
+    <li><strong>Registration:</strong> External systems (e.g., Hospital B's EHR) register as OAuth 2.0 clients with our Authorization Server, specifying requested FHIR scopes (e.g., <code>patient/Patient.read</code>, <code>patient/Observation.read</code>).</li>
+    <li><strong>Authorization:</strong> When Hospital B wants to access a patient's data, it initiates an OAuth 2.0 Authorization Code flow. For patient-facing apps, the patient explicitly grants consent via a consent screen.</li>
+    <li><strong>Token Exchange:</strong> Hospital B exchanges the authorization code for an access token (JWT) containing the granted scopes and the patient context (which patient's data can be accessed).</li>
+    <li><strong>API Call:</strong> Hospital B includes the access token in the Authorization header of FHIR API requests. The FHIR Server validates the token, checks scopes, and returns only the authorized data.</li>
+    <li><strong>Token Expiry:</strong> Access tokens expire in 15 minutes. Refresh tokens (1 hour) allow re-authorization without user interaction.</li>
+</ol>
+<p>This ensures that external systems can only access the specific patient data they are authorized for, with full audit trail of every access.</p>
+
+<h3>14.6 Barcode Scanning for Medication Administration (MAR)</h3>
+<p>At the bedside, nurses use barcode scanning to verify the "5 Rights" of medication administration: right patient, right drug, right dose, right route, right time. The flow:</p>
+<ol>
+    <li>Nurse scans the patient's wristband barcode → resolves to MRN.</li>
+    <li>Nurse scans the medication barcode → resolves to drug NDC code.</li>
+    <li>The clinician app sends <code>HTTP POST /api/v1/mar/verify</code> with MRN + NDC + timestamp.</li>
+    <li>The MAR Service (part of the Order Service) checks: Is this drug ordered for this patient? Is it the right time? Is the dose correct? Returns verification result.</li>
+    <li>If mismatch (wrong patient or wrong drug), the app displays a CRITICAL alert and blocks administration.</li>
+    <li>If verified, the nurse confirms administration, and the event is recorded in the EHR.</li>
 </ol>
 
-<h3>Example</h3>
-<p>Patient transfers from Hospital A (Epic) to Hospital B (Cerner). Hospital A's system calls Cerner's FHIR endpoint for patient records. MPI matches patient across systems (John Doe, DOB 1985-03-15, probabilistic match score 0.98). Consent service confirms patient opted in to data sharing. Returns FHIR Bundle: 5 Conditions, 8 MedicationRequests, 20 Observations, 2 AllergyIntolerances.</p>
+<hr class="section-divider">
 
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>FHIR R4 API</h4>
-<p><strong>Standard:</strong> HL7 FHIR (Fast Healthcare Interoperability Resources) R4 — RESTful API</p>
-<p><strong>Resources:</strong> Patient, Condition, Observation, MedicationRequest, Procedure, DiagnosticReport, AllergyIntolerance</p>
-<p><strong>Auth:</strong> SMART on FHIR — OAuth2 with clinical scopes (patient/Observation.read, user/MedicationRequest.write)</p>
-<p><strong>Mandate:</strong> CMS Interoperability Rule (2020) requires FHIR API for patient data access</p>
-</div>
-<div class="card">
-<h4>Master Patient Index (MPI)</h4>
-<p><strong>Algorithm:</strong> Probabilistic matching using weighted scores: last name (0.3), first name (0.2), DOB (0.25), SSN (0.15), address (0.1)</p>
-<p><strong>Threshold:</strong> Score >0.95 = auto-link; 0.80-0.95 = manual review queue; <0.80 = no match</p>
-<p><strong>Dedup:</strong> Golden record concept — merge duplicate patient records into single longitudinal record</p>
-</div>
-</div>
+<!-- ============================================================ -->
+<!-- VENDOR SECTION -->
+<!-- ============================================================ -->
+<h2>15. Vendor Recommendations</h2>
+<p>The following are potential vendor options for the vendor-agnostic components described in this design. These are recommendations based on the technical requirements of a healthcare EHR platform.</p>
+
+<div class="vendor-card">
+    <h4>SQL Database</h4>
+    <ul>
+        <li><strong>PostgreSQL:</strong> Open-source, strong ACID compliance, excellent JSON support (for semi-structured clinical fields), row-level security (useful for 42 CFR Part 2 consent-based access), mature replication, and extensive healthcare adoption. Free licensing is attractive for a cost-sensitive industry.</li>
+        <li><strong>Oracle Database:</strong> Enterprise-grade, used by Oracle Health (Cerner's parent company). Strong partitioning, RAC (Real Application Clusters) for HA, robust security features. Higher licensing cost but deep healthcare-specific features.</li>
+        <li><strong>Microsoft SQL Server:</strong> Strong enterprise support, HA via Always On Availability Groups, well-integrated with Windows-based hospital IT environments.</li>
+    </ul>
 </div>
 
-<!-- ============ COMBINED ARCHITECTURE ============ -->
-<h2>Combined Architecture</h2>
-<div class="card">
-<svg viewBox="0 0 1050 500" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#00A4E4"/></marker></defs>
-<rect x="20" y="60" width="130" height="50" rx="8" fill="#34A853"/><text x="85" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">PowerChart</text><text x="85" y="97" text-anchor="middle" fill="#fff" font-size="10">(Clinician UI)</text>
-<rect x="20" y="140" width="130" height="50" rx="8" fill="#34A853"/><text x="85" y="162" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Patient Portal</text><text x="85" y="177" text-anchor="middle" fill="#fff" font-size="10">(HealtheLife)</text>
-<rect x="210" y="90" width="130" height="60" rx="8" fill="#FB8C00"/><text x="275" y="115" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">API Gateway</text><text x="275" y="132" text-anchor="middle" fill="#fff" font-size="10">(OAuth2 + HIPAA)</text>
-<rect x="400" y="30" width="130" height="50" rx="8" fill="#4285F4"/><text x="465" y="55" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Chart Service</text>
-<rect x="400" y="100" width="130" height="50" rx="8" fill="#4285F4"/><text x="465" y="125" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Order Service</text>
-<rect x="400" y="170" width="130" height="50" rx="8" fill="#4285F4"/><text x="465" y="195" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">FHIR Gateway</text>
-<rect x="590" y="30" width="130" height="50" rx="8" fill="#E53935"/><text x="655" y="55" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">CDS Engine</text>
-<rect x="590" y="100" width="130" height="50" rx="8" fill="#9C27B0"/><text x="655" y="125" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Integration Engine</text>
-<rect x="590" y="170" width="130" height="50" rx="8" fill="#607D8B"/><text x="655" y="195" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">MPI Service</text>
-<rect x="790" y="60" width="130" height="50" rx="8" fill="#00897B"/><text x="855" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">HL7/FHIR Bus</text><text x="855" y="97" text-anchor="middle" fill="#fff" font-size="10">(Message Broker)</text>
-<rect x="790" y="140" width="130" height="50" rx="8" fill="#607D8B"/><text x="855" y="162" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">External Systems</text><text x="855" y="177" text-anchor="middle" fill="#fff" font-size="10">(Labs, Pharmacy)</text>
-<rect x="400" y="310" width="130" height="55" rx="8" fill="#795548"/><text x="465" y="332" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Oracle RAC</text><text x="465" y="347" text-anchor="middle" fill="#fff" font-size="10">(Patient Data)</text>
-<rect x="590" y="310" width="130" height="55" rx="8" fill="#795548"/><text x="655" y="332" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Document Store</text><text x="655" y="347" text-anchor="middle" fill="#fff" font-size="10">(CDA/C-CDA)</text>
-<rect x="790" y="310" width="130" height="55" rx="8" fill="#9C27B0"/><text x="855" y="332" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Audit DB</text><text x="855" y="347" text-anchor="middle" fill="#fff" font-size="10">(HIPAA Log)</text>
-<rect x="400" y="410" width="130" height="50" rx="8" fill="#00897B"/><text x="465" y="432" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Redis Cache</text><text x="465" y="447" text-anchor="middle" fill="#fff" font-size="10">(Sessions + Labs)</text>
-<line x1="150" y1="85" x2="205" y2="110" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="150" y1="165" x2="205" y2="130" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="340" y1="105" x2="395" y2="55" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="340" y1="120" x2="395" y2="125" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="340" y1="135" x2="395" y2="195" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="530" y1="55" x2="585" y2="55" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="530" y1="125" x2="585" y2="125" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="530" y1="195" x2="585" y2="195" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="720" y1="125" x2="785" y2="85" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="920" y1="85" x2="920" y2="135" stroke="#00A4E4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="465" y1="150" x2="465" y2="305" stroke="#00A4E4" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="530" y1="80" x2="590" y2="310" stroke="#00A4E4" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="720" y1="55" x2="790" y2="320" stroke="#00A4E4" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="465" y1="365" x2="465" y2="405" stroke="#00A4E4" stroke-width="1.5" marker-end="url(#ah4)"/>
-</svg>
+<div class="vendor-card">
+    <h4>Document Store (NoSQL)</h4>
+    <ul>
+        <li><strong>MongoDB:</strong> Flexible JSON document model ideal for CDS rules with variable schemas. Strong indexing, aggregation pipeline for rule evaluation, and mature change streams for event-driven updates. Atlas (managed service) reduces operational burden.</li>
+        <li><strong>Amazon DynamoDB:</strong> Fully managed, single-digit millisecond latency, auto-scaling. Good for high-throughput rule lookups. Limited query flexibility compared to MongoDB but lower operational overhead.</li>
+        <li><strong>Couchbase:</strong> Combines document store with in-memory caching. Could serve dual purpose for CDS rules + caching layer.</li>
+    </ul>
 </div>
 
-<!-- ============ DATABASE SCHEMA ============ -->
-<h2>Database Schema</h2>
-<div class="grid">
-<div class="card">
-<h3>Oracle RAC — Patient & Orders</h3>
-<pre><code>CREATE TABLE patients (
-  patient_id    NUMBER PRIMARY KEY,     <span class="tag tag-pk">PK</span>
-  mrn           VARCHAR2(20) UNIQUE,    <span class="tag tag-idx">INDEX</span>
-  first_name    VARCHAR2(100),
-  last_name     VARCHAR2(100),          <span class="tag tag-idx">INDEX</span>
-  dob           DATE,                   <span class="tag tag-idx">INDEX</span>
-  gender        CHAR(1),
-  ssn_hash      CHAR(64),              -- SHA-256 for matching
-  address       CLOB,
-  phone         VARCHAR2(20),
-  insurance_id  NUMBER REFERENCES insurance_plans, <span class="tag tag-fk">FK</span>
-  created_at    TIMESTAMP WITH TIME ZONE
-);
-
-CREATE TABLE encounters (
-  encounter_id  NUMBER PRIMARY KEY,     <span class="tag tag-pk">PK</span>
-  patient_id    NUMBER REFERENCES patients, <span class="tag tag-fk">FK</span>
-  facility_id   NUMBER,                 <span class="tag tag-fk">FK</span>
-  encounter_type VARCHAR2(20),  -- inpatient, outpatient, ED
-  admit_dt      TIMESTAMP,
-  discharge_dt  TIMESTAMP,
-  attending_id  NUMBER REFERENCES providers, <span class="tag tag-fk">FK</span>
-  status        VARCHAR2(20)
-);
-CREATE INDEX idx_enc_patient ON encounters(patient_id, admit_dt DESC);
-
-CREATE TABLE orders (
-  order_id      NUMBER PRIMARY KEY,     <span class="tag tag-pk">PK</span>
-  encounter_id  NUMBER REFERENCES encounters, <span class="tag tag-fk">FK</span>
-  patient_id    NUMBER,                 <span class="tag tag-fk">FK</span>
-  order_type    VARCHAR2(20),  -- medication, lab, imaging, consult
-  code          VARCHAR2(20),  -- RxNorm / LOINC / CPT
-  code_system   VARCHAR2(30),
-  display_name  VARCHAR2(255),
-  status        VARCHAR2(20),  -- ordered, verified, completed, cancelled
-  ordered_by    NUMBER REFERENCES providers, <span class="tag tag-fk">FK</span>
-  ordered_at    TIMESTAMP,
-  details       CLOB  -- JSON: dose, route, frequency, duration
-);
-CREATE INDEX idx_orders_patient ON orders(patient_id, ordered_at DESC);</code></pre>
-<p><span class="tag tag-shard">SHARD</span> Oracle RAC (Real Application Clusters) — shared-disk architecture with active-active nodes; no application-level sharding needed</p>
+<div class="vendor-card">
+    <h4>Time-Series Database</h4>
+    <ul>
+        <li><strong>TimescaleDB:</strong> PostgreSQL extension for time-series data. Retains SQL query compatibility (important for compliance teams generating audit reports). Automatic partitioning by time, compression, and continuous aggregates. Can share PostgreSQL operational expertise with the primary DB team.</li>
+        <li><strong>InfluxDB:</strong> Purpose-built time-series database with high write throughput, built-in retention policies, and downsampling. Good for audit logs with variable retention requirements.</li>
+        <li><strong>Apache Druid:</strong> Suitable if real-time analytics on audit data is needed (e.g., real-time dashboards showing access patterns for security monitoring).</li>
+    </ul>
 </div>
 
-<div class="card">
-<h3>Clinical Results & Audit</h3>
-<pre><code>CREATE TABLE observations (
-  obs_id        NUMBER PRIMARY KEY,     <span class="tag tag-pk">PK</span>
-  patient_id    NUMBER,                 <span class="tag tag-fk">FK</span>
-  encounter_id  NUMBER,                 <span class="tag tag-fk">FK</span>
-  loinc_code    VARCHAR2(10),          <span class="tag tag-idx">INDEX</span>
-  value_numeric NUMBER(10,3),
-  value_string  VARCHAR2(500),
-  unit          VARCHAR2(20),
-  reference_low NUMBER(10,3),
-  reference_high NUMBER(10,3),
-  status        VARCHAR2(20),
-  performed_at  TIMESTAMP,
-  reported_at   TIMESTAMP
-);
-CREATE INDEX idx_obs_patient ON observations(patient_id, loinc_code, performed_at DESC);
-
-CREATE TABLE audit_log (
-  log_id        NUMBER PRIMARY KEY,     <span class="tag tag-pk">PK</span>
-  user_id       NUMBER,
-  patient_id    NUMBER,                 <span class="tag tag-idx">INDEX</span>
-  action        VARCHAR2(50),  -- view_chart, modify_order, print_record
-  resource_type VARCHAR2(50),
-  resource_id   NUMBER,
-  ip_address    VARCHAR2(45),
-  user_agent    VARCHAR2(500),
-  reason        VARCHAR2(255),  -- treatment, payment, operations, emergency
-  prev_hash     CHAR(64),      -- chain for tamper detection
-  created_at    TIMESTAMP       <span class="tag tag-idx">INDEX</span>
-);</code></pre>
-</div>
+<div class="vendor-card">
+    <h4>In-Memory Cache</h4>
+    <ul>
+        <li><strong>Redis:</strong> Industry standard for distributed caching. Sub-millisecond latency, rich data structures (hashes for patient chart summaries, sorted sets for worklists), built-in TTL, cluster mode for horizontal scaling. Redis Sentinel or Cluster for HA.</li>
+        <li><strong>Memcached:</strong> Simpler, slightly faster for pure key-value caching. Lacks Redis's data structure richness but lower memory overhead per key. Suitable if only simple caching is needed.</li>
+    </ul>
 </div>
 
-<!-- ============ CACHE & CDN ============ -->
-<h2>Cache & CDN Deep Dive</h2>
-<div class="card">
-<div class="grid">
-<div class="card">
-<h4>Clinical Data Cache (Redis)</h4>
-<p><strong>Cached:</strong> Recent lab results, active medication list, allergy list — high-frequency reads during chart review</p>
-<p><strong>Strategy:</strong> Write-through — every new result updates cache and DB simultaneously</p>
-<p><strong>TTL:</strong> 15 minutes for lab results; medication list cached until next order change event</p>
-<p><strong>Encryption:</strong> Redis TLS + application-layer AES-256 encryption for PHI in cache (HIPAA requirement)</p>
-</div>
-<div class="card">
-<h4>Session Cache</h4>
-<p><strong>Storage:</strong> Redis with TLS — stores OAuth2 tokens, user context, active patient context</p>
-<p><strong>TTL:</strong> 15-minute session timeout (HIPAA auto-logoff requirement); refreshed on activity</p>
-<p><strong>Context Switch:</strong> When clinician switches patients, previous patient context evicted immediately</p>
-</div>
-<div class="card">
-<h4>No Public CDN</h4>
-<p><strong>Reason:</strong> HIPAA prohibits caching PHI on public CDN edges — all clinical data served from datacenter</p>
-<p><strong>Static Assets:</strong> Application JS/CSS/images can use CDN with no-store for API responses</p>
-<p><strong>Private CDN:</strong> Internal content delivery within hospital network (Akamai Private Peering or similar)</p>
-</div>
-</div>
+<div class="vendor-card">
+    <h4>Message Queue</h4>
+    <ul>
+        <li><strong>Apache Kafka:</strong> High-throughput, durable, distributed event streaming. Ideal for the Audit Queue (millions of events/day, guaranteed delivery, replay capability for reprocessing). Topic-based routing fits the Order Queue's need to route by order type. Kafka's replication and partition model provides fault tolerance.</li>
+        <li><strong>RabbitMQ:</strong> Lower latency for point-to-point messaging, supports priority queues natively (useful for STAT order priority in the Order Queue). Better for the Notification Queue where message-level priority and flexible routing are important. Simpler to operate than Kafka for smaller deployments.</li>
+        <li><strong>Amazon SQS / Azure Service Bus:</strong> Fully managed, zero operational overhead. Good for organizations that want to minimize infrastructure management. SQS FIFO queues provide ordering guarantees.</li>
+    </ul>
 </div>
 
-<!-- ============ SCALING ============ -->
-<h2>Scaling & Load Balancing</h2>
-<div class="card">
+<div class="vendor-card">
+    <h4>Object Storage</h4>
+    <ul>
+        <li><strong>Amazon S3:</strong> Industry standard for object storage. 99.999999999% (11 nines) durability. Lifecycle policies for moving old documents to cheaper storage tiers (Glacier for archival). Server-side encryption with KMS. HIPAA-eligible.</li>
+        <li><strong>Azure Blob Storage:</strong> Equivalent to S3 in the Azure ecosystem. Immutable blob storage (WORM — Write Once Read Many) is useful for legal medical records that must not be modified.</li>
+        <li><strong>MinIO:</strong> S3-compatible, open-source, self-hosted. Good for on-premise deployments where data cannot leave the hospital's data center.</li>
+    </ul>
+</div>
+
+<div class="vendor-card">
+    <h4>CDN</h4>
+    <ul>
+        <li><strong>Cloudflare:</strong> Global edge network, DDoS protection, Web Application Firewall (WAF). Free tier available. Good for patient portal static assets.</li>
+        <li><strong>AWS CloudFront:</strong> Tight integration with S3 for static asset delivery. HIPAA-eligible (though we only serve non-PHI static assets).</li>
+        <li><strong>Akamai:</strong> Largest CDN network, healthcare-specific compliance offerings. Higher cost but most reliable.</li>
+    </ul>
+</div>
+
+<div class="vendor-card">
+    <h4>API Gateway</h4>
+    <ul>
+        <li><strong>Kong:</strong> Open-source, extensible via plugins (rate limiting, JWT auth, logging). Can run on-premise. Large plugin ecosystem for healthcare-specific needs.</li>
+        <li><strong>AWS API Gateway:</strong> Fully managed, integrates with Cognito for auth. Good for cloud-native deployments.</li>
+        <li><strong>Apigee (Google):</strong> Strong API analytics and developer portal capabilities. Useful if the FHIR API is exposed to third-party developers.</li>
+    </ul>
+</div>
+
+<div class="vendor-card">
+    <h4>Service Mesh / Load Balancer</h4>
+    <ul>
+        <li><strong>Istio + Envoy:</strong> Service mesh for internal mTLS, traffic management, circuit breaking, and observability. Envoy proxies handle internal L7 load balancing.</li>
+        <li><strong>NGINX:</strong> High-performance L7 load balancer/reverse proxy. Well-suited as the external-facing load balancer.</li>
+        <li><strong>HAProxy:</strong> Ultra-high-performance L4/L7 load balancer. Lower latency than NGINX for pure load balancing (no caching needed).</li>
+        <li><strong>AWS ALB/NLB:</strong> Managed load balancers for cloud deployments. ALB for L7 (HTTP routing), NLB for L4 (MLLP/TCP traffic from HL7 interfaces).</li>
+    </ul>
+</div>
+
+<div class="vendor-card">
+    <h4>FHIR Server Implementation</h4>
+    <ul>
+        <li><strong>HAPI FHIR:</strong> Open-source Java-based FHIR server. The most widely adopted FHIR implementation. Full R4 support, SMART on FHIR, subscription capabilities. Can be embedded into the existing microservice architecture.</li>
+        <li><strong>Microsoft FHIR Server:</strong> Open-source, runs on Azure. Good if the infrastructure is Azure-based.</li>
+        <li><strong>Google Cloud Healthcare API:</strong> Managed FHIR service. Reduces implementation effort but creates cloud vendor lock-in.</li>
+    </ul>
+</div>
+
+<div class="vendor-card">
+    <h4>HL7 Interface Engine</h4>
+    <ul>
+        <li><strong>Mirth Connect (NextGen):</strong> Open-source healthcare integration engine. Supports HL7 v2, FHIR, C-CDA, DICOM, X12. Visual channel-based message routing and transformation. The de facto standard for healthcare integration.</li>
+        <li><strong>Rhapsody (InterOperability):</strong> Enterprise-grade integration engine with strong HL7 v2 support. Better GUI tooling but commercial license.</li>
+        <li><strong>Microsoft BizTalk / Azure Integration Services:</strong> Enterprise integration platform with HL7 accelerator.</li>
+    </ul>
+</div>
+
+<hr class="section-divider">
+
+<h2>16. Summary</h2>
+<p>This design covers a comprehensive Healthcare EHR platform modeled after Cerner Corporation's capabilities. The architecture uses a microservices approach with clearly bounded domains (patient registration, clinical documentation, order entry, clinical decision support, patient portal, health information exchange, and billing). Key architectural decisions include:</p>
 <ul>
-<li><strong>Oracle RAC:</strong> Active-active cluster (2-4 nodes) with shared storage — automatic failover; transparent application routing (TAR) redistributes connections on node failure</li>
-<li><strong>Application Tier:</strong> Stateless microservices behind F5 BIG-IP load balancers; health-based routing; SSL offloading</li>
-<li><strong>Multi-Tenant:</strong> Each healthcare organization gets logical tenant isolation (separate schemas or databases) — data never co-mingled across organizations</li>
-<li><strong>Disaster Recovery:</strong> Active-passive across datacenters with Oracle Data Guard (synchronous redo log shipping); RTO <15 minutes, RPO near-zero</li>
-<li><strong>Integration Bus:</strong> HL7 interface engine (Rhapsody / Mirth Connect) scaled horizontally; message queues (RabbitMQ) buffer during downstream outages</li>
-<li><strong>Peak Handling:</strong> Morning rounding (7-9 AM) creates 5x normal load — pre-warmed caches and auto-scaled compute</li>
+    <li><strong>SQL-first data model</strong> for clinical and financial data requiring ACID transactions and strong consistency.</li>
+    <li><strong>Document Store</strong> for semi-structured CDS rules and <strong>Time-Series DB</strong> for audit logs — choosing the right database type for each workload.</li>
+    <li><strong>Message queues</strong> for decoupling non-critical-path operations (audit logging, department order routing, notifications) from the clinical critical path.</li>
+    <li><strong>Synchronous CDS evaluation</strong> on the order critical path for patient safety, despite the latency cost.</li>
+    <li><strong>FHIR and HL7 v2 interoperability</strong> for cross-organization data exchange, meeting regulatory mandates.</li>
+    <li><strong>Cache-aside caching</strong> with short TTLs and explicit invalidation to balance performance with clinical data freshness.</li>
+    <li><strong>Comprehensive audit logging</strong> for HIPAA compliance, using asynchronous event-driven architecture to avoid impacting clinical workflows.</li>
+    <li><strong>Read replicas</strong> to isolate patient portal traffic from clinical workflows.</li>
+    <li><strong>Horizontal scaling</strong> via stateless services, database sharding by patient_id, and auto-scaling based on clinical workflow patterns.</li>
 </ul>
-</div>
 
-<!-- ============ TRADEOFFS ============ -->
-<h2>Tradeoffs</h2>
-<div class="tradeoff-grid">
-<div class="pro">
-<h4>✅ Oracle RAC</h4>
-<ul>
-<li>Proven in healthcare for 20+ years — regulatory acceptance</li>
-<li>Strong ACID guarantees — critical for clinical data integrity</li>
-<li>Active-active HA without application-level sharding</li>
-</ul>
-</div>
-<div class="con">
-<h4>❌ Oracle RAC</h4>
-<ul>
-<li>Extremely expensive licensing ($47K/core)</li>
-<li>Vertical scaling limitations — shared-disk architecture</li>
-<li>Vendor lock-in; migration to cloud-native databases is painful</li>
-</ul>
-</div>
-<div class="pro">
-<h4>✅ HL7v2 (Legacy Protocol)</h4>
-<ul>
-<li>Universal adoption — every healthcare system supports it</li>
-<li>Battle-tested over 30+ years; well-understood failure modes</li>
-<li>Simple pipe-delimited format — easy to debug and parse</li>
-</ul>
-</div>
-<div class="con">
-<h4>❌ HL7v2 (Legacy Protocol)</h4>
-<ul>
-<li>Optionality nightmare — same message interpreted differently by vendors</li>
-<li>No standardized transport (MLLP is fragile, no built-in encryption)</li>
-<li>Point-to-point integration doesn't scale (N×M interface problem)</li>
-</ul>
-</div>
-</div>
-
-<!-- ============ ALTERNATIVES ============ -->
-<h2>Alternative Approaches</h2>
-<div class="grid">
-<div class="card">
-<h4>Cloud-Native (AWS HealthLake)</h4>
-<p>FHIR-native data store on AWS with built-in HIPAA compliance. Eliminates Oracle licensing, enables elastic scaling. But nascent technology with less proven track record in critical care settings and potential data sovereignty concerns.</p>
-</div>
-<div class="card">
-<h4>OpenEHR Architecture</h4>
-<p>Archetype-based data modeling — separates clinical knowledge from software. Extremely flexible for evolving clinical requirements. Used by NHS in UK. More complex than FHIR but richer clinical modeling capability.</p>
-</div>
-<div class="card">
-<h4>Event-Sourced EHR</h4>
-<p>Store all clinical events as immutable log (patient_admitted, medication_ordered, vitals_recorded). Current state computed from events. Perfect audit trail, temporal queries ("what was the med list at time T?"), but complex read path and regulatory acceptance uncertain.</p>
-</div>
-</div>
-
-<!-- ============ ADDITIONAL INFO ============ -->
-<h2>Additional Information</h2>
-<div class="card">
-<ul>
-<li><strong>Meaningful Use / Promoting Interoperability:</strong> CMS incentive program requiring EHRs to meet specific functionality criteria — CPOE, CDS, e-prescribing, care coordination. Cerner is ONC-certified.</li>
-<li><strong>Oracle Acquisition (2022):</strong> Oracle acquired Cerner for $28.3B — integrating with Oracle Cloud Infrastructure (OCI) and Oracle Autonomous Database; moving from on-premise to cloud-hosted model.</li>
-<li><strong>Millennium vs Oracle Health:</strong> Cerner Millennium is the legacy platform; Oracle Health (renamed 2023) is the cloud-native successor leveraging Oracle DB, Kubernetes, and FHIR-first architecture.</li>
-<li><strong>Barcode Medication Administration (BCMA):</strong> Nurses scan patient wristband barcode + medication barcode before administration — 5 Rights verification (right patient, drug, dose, route, time). Reduces medication errors by ~50%.</li>
-<li><strong>Downtime Procedures:</strong> Every hospital must have paper-based fallback procedures when EHR is unavailable — pre-printed order sheets, medication administration logs. EHR downtime directly threatens patient safety.</li>
-</ul>
-</div>
+<p style="text-align:center; margin-top:40px; color:#6c757d; font-size:0.9em;">
+    — End of System Design Document —<br>
+    Cerner Corporation Healthcare EHR Platform
+</p>
 
 </body>
 </html>
