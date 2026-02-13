@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>System Design: Real-Time Stock Ticker</title>
-<style>body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:20px;background:#f5f5f5;color:#333}.container{max-width:1200px;margin:0 auto;background:#fff;padding:40px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.1)}h1{color:#1a73e8;border-bottom:3px solid #1a73e8;padding-bottom:10px}h2{color:#2c3e50;margin-top:40px;border-left:4px solid #1a73e8;padding-left:12px}h3{color:#34495e}h4{color:#555}.diagram{background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:20px;margin:20px 0;overflow-x:auto}.example{background:#e8f5e9;border-left:4px solid #4caf50;padding:15px;margin:15px 0;border-radius:4px}.deep-dive{background:#e3f2fd;border-left:4px solid #2196f3;padding:15px;margin:15px 0;border-radius:4px}.tradeoff{background:#fff3e0;border-left:4px solid #ff9800;padding:15px;margin:15px 0;border-radius:4px}.alternative{background:#fce4ec;border-left:4px solid #e91e63;padding:15px;margin:15px 0;border-radius:4px}table{border-collapse:collapse;width:100%;margin:15px 0}th,td{border:1px solid #ddd;padding:10px 14px;text-align:left}th{background:#1a73e8;color:#fff}tr:nth-child(even){background:#f9f9f9}code{background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:.9em}.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.85em;margin:2px}.tag-pk{background:#ffeb3b;color:#333}.tag-idx{background:#80cbc4;color:#333}ul,ol{line-height:1.8}svg text{font-family:'Segoe UI',Arial,sans-serif}</style>
+<style>body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:20px;background:#f5f5f5;color:#333}.container{max-width:1200px;margin:0 auto;background:#fff;padding:40px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.1)}h1{color:#1a73e8;border-bottom:3px solid #1a73e8;padding-bottom:10px}h2{color:#2c3e50;margin-top:40px;border-left:4px solid #1a73e8;padding-left:12px}h3{color:#34495e}h4{color:#555}.diagram{background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:20px;margin:20px 0;overflow-x:auto}.example{background:#e8f5e9;border-left:4px solid #4caf50;padding:15px;margin:15px 0;border-radius:4px}.deep-dive{background:#e3f2fd;border-left:4px solid #2196f3;padding:15px;margin:15px 0;border-radius:4px}.tradeoff{background:#fff3e0;border-left:4px solid #ff9800;padding:15px;margin:15px 0;border-radius:4px}.alternative{background:#fce4ec;border-left:4px solid #e91e63;padding:15px;margin:15px 0;border-radius:4px}.anti-pattern{background:#f3e5f5;border-left:4px solid #9c27b0;padding:15px;margin:15px 0;border-radius:4px}table{border-collapse:collapse;width:100%;margin:15px 0}th,td{border:1px solid #ddd;padding:10px 14px;text-align:left}th{background:#1a73e8;color:#fff}tr:nth-child(even){background:#f9f9f9}code{background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:.9em}.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.85em;margin:2px}.tag-pk{background:#ffeb3b;color:#333}.tag-idx{background:#80cbc4;color:#333}.tag-shard{background:#ce93d8;color:#333}ul,ol{line-height:1.8}svg text{font-family:'Segoe UI',Arial,sans-serif}</style>
 </head>
 <body>
 <div class="container">
@@ -194,21 +194,60 @@
 </div>
 
 <h2>Database Schema</h2>
-<h3>Time-Series DB (InfluxDB)</h3>
+
+<h3>Time-Series DB (InfluxDB) — NoSQL</h3>
+<div class="deep-dive">
+<h4>Why NoSQL / Time-Series DB?</h4>
+<p>Stock tick data is <strong>append-only, time-indexed, and write-heavy</strong> (100K+ inserts/sec). A relational database would buckle under this write load and struggle with time-range aggregations. InfluxDB is purpose-built for this workload:</p>
+<ul>
+  <li><strong>Columnar storage</strong> — compresses time-series data efficiently (10–20× better than row-based SQL).</li>
+  <li><strong>Built-in downsampling</strong> — continuous queries automatically aggregate ticks into 1-min, 5-min, 1-hour, and 1-day OHLCV candles.</li>
+  <li><strong>Time-based retention policies</strong> — tick data retained for 30 days, minute data for 1 year, daily aggregates forever. Automatic expiration with no manual cleanup.</li>
+  <li><strong>Native time-range queries</strong> — <code>WHERE time &gt; now() - 30d</code> is a first-class operation, far faster than SQL <code>BETWEEN</code> on a B-tree index.</li>
+</ul>
+<p><strong>Why not SQL?</strong> PostgreSQL could store tick data, but at 100K writes/sec it would require significant tuning (partitioned tables, no foreign keys on hot path). Time-range aggregations (OHLCV candles) require complex SQL <code>GROUP BY</code> queries vs. InfluxDB's native <code>MEAN()</code>, <code>MAX()</code>, <code>MIN()</code> over time windows. SQL is the wrong paradigm for append-only, immutable, time-indexed data.</p>
+</div>
+
 <h4>1. price_ticks</h4>
 <table>
   <tr><th>Field</th><th>Type</th><th>Description</th></tr>
   <tr><td>time</td><td>TIMESTAMP (ns)</td><td>Nanosecond-precision timestamp <span class="tag tag-pk">Time Key</span></td></tr>
-  <tr><td>symbol</td><td>TAG</td><td>Ticker symbol (indexed) <span class="tag tag-pk">Tag Key</span></td></tr>
-  <tr><td>exchange</td><td>TAG</td><td>Exchange (NYSE, NASDAQ)</td></tr>
+  <tr><td>symbol</td><td>TAG</td><td>Ticker symbol <span class="tag tag-pk">Tag Key</span> <span class="tag tag-idx">Inverted Index</span></td></tr>
+  <tr><td>exchange</td><td>TAG</td><td>Exchange (NYSE, NASDAQ) <span class="tag tag-idx">Inverted Index</span></td></tr>
   <tr><td>price</td><td>FLOAT</td><td>Trade price</td></tr>
   <tr><td>volume</td><td>INT</td><td>Trade volume</td></tr>
   <tr><td>bid</td><td>FLOAT</td><td>Best bid price</td></tr>
   <tr><td>ask</td><td>FLOAT</td><td>Best ask price</td></tr>
 </table>
-<p><strong>Why Time-Series DB:</strong> Stock tick data is append-only, time-indexed, and requires time-range aggregations (OHLCV candles). InfluxDB is purpose-built for this: columnar storage, built-in downsampling (continuous queries), and time-based retention policies (keep tick data for 30 days, daily aggregates forever).</p>
 
-<h3>SQL (PostgreSQL)</h3>
+<div class="deep-dive">
+<h4>Indexing Strategy</h4>
+<ul>
+  <li><strong>Time index (automatic)</strong> — InfluxDB automatically indexes all data by timestamp using a <strong>Time-Structured Merge Tree (TSM)</strong>. Every query includes a time range, so this is always used.</li>
+  <li><strong>Tag indexes (automatic)</strong> — <code>symbol</code> and <code>exchange</code> are declared as TAGs, which means InfluxDB builds an <strong>inverted index</strong> on them. Querying <code>WHERE symbol = 'AAPL'</code> is O(1) lookup, not a scan.</li>
+  <li><strong>Fields (price, volume, bid, ask)</strong> — are <em>not</em> indexed. They are stored in compressed columnar format. This is intentional: you never query <code>WHERE price &gt; 100</code> — you always query by symbol + time range and then read the field values.</li>
+</ul>
+
+<h4>Sharding Strategy</h4>
+<ul>
+  <li><strong>Time-based sharding (shard groups)</strong> — InfluxDB automatically creates shard groups by time interval (default: 1 day for retention &lt; 6 months, 1 week for longer). Each shard group holds all data for that time window. Old shards are dropped entirely when the retention policy expires — no row-by-row deletion. <span class="tag tag-shard">Auto-Sharded</span></li>
+  <li><strong>Symbol-based sharding (cluster mode)</strong> — In a clustered deployment, data is distributed across nodes by hashing the <code>symbol</code> tag. All AAPL ticks go to the same shard, ensuring ordering and enabling efficient per-symbol queries. With ~10K symbols across 4 nodes, each node handles ~2,500 symbols.</li>
+</ul>
+</div>
+
+<h3>SQL (PostgreSQL) — Relational</h3>
+<div class="deep-dive">
+<h4>Why SQL / Relational?</h4>
+<p>Watchlists and price alerts are <strong>user-centric, relational data</strong> with CRUD operations, transactional guarantees, and well-defined relationships:</p>
+<ul>
+  <li><strong>ACID transactions</strong> — when a user adds a stock to their watchlist or creates an alert, we need guaranteed consistency. A partial write (alert created but not linked to user) is unacceptable.</li>
+  <li><strong>Relational queries</strong> — "Get all active alerts for user X" or "Get all users watching AAPL" are natural JOINs / WHERE clauses.</li>
+  <li><strong>Low write volume</strong> — users modify watchlists and alerts infrequently (a few writes/day per user). PostgreSQL handles this trivially.</li>
+  <li><strong>Schema enforcement</strong> — ENUMs for direction (<code>'above'</code>, <code>'below'</code>), NOT NULL constraints, and foreign keys prevent invalid data.</li>
+</ul>
+<p><strong>Why not NoSQL?</strong> Watchlists and alerts don't benefit from NoSQL's strengths (high write throughput, flexible schema, horizontal scaling). The data is structured, relational, and low-volume. A document store (MongoDB) would work but adds unnecessary complexity without benefit. A key-value store (DynamoDB) would make queries like "find all alerts for symbol TSLA" require a secondary index, which PostgreSQL handles natively.</p>
+</div>
+
 <h4>2. watchlists</h4>
 <table>
   <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
@@ -216,6 +255,20 @@
   <tr><td>symbol</td><td>VARCHAR(10)</td><td><span class="tag tag-pk">PK</span></td><td>Ticker symbol</td></tr>
   <tr><td>added_at</td><td>TIMESTAMP</td><td></td><td>When added</td></tr>
 </table>
+
+<div class="deep-dive">
+<h4>Indexing Strategy</h4>
+<ul>
+  <li><strong>Primary key: <code>(user_id, symbol)</code></strong> — composite PK serves double duty: enforces uniqueness (a user can't add the same stock twice) and provides a clustered index for the most common query: "Get all stocks for user X" (<code>WHERE user_id = ?</code> scans a contiguous range). <span class="tag tag-pk">Clustered Index</span></li>
+  <li><strong>Reverse index: <code>(symbol, user_id)</code></strong> — B-tree index on <code>(symbol, user_id)</code> enables the reverse query: "Get all users watching AAPL" — useful for broadcasting when a symbol is delisted or for analytics. <span class="tag tag-idx">B-tree</span></li>
+</ul>
+
+<h4>Sharding Strategy</h4>
+<ul>
+  <li><strong>Shard by <code>user_id</code></strong> — hash-based sharding on <code>user_id</code> distributes load evenly. All watchlist entries for a single user reside on the same shard, so "Get my watchlist" is a single-shard query (no scatter-gather). <span class="tag tag-shard">Hash Sharded</span></li>
+  <li><strong>Scale estimate:</strong> 10M users × avg 15 stocks = 150M rows. At ~100 bytes/row, this is ~15 GB — fits comfortably on a single PostgreSQL instance. Sharding is a future optimization when user base exceeds 100M+.</li>
+</ul>
+</div>
 
 <h4>3. price_alerts</h4>
 <table>
@@ -227,6 +280,49 @@
   <tr><td>direction</td><td>ENUM('above','below')</td><td></td><td>Trigger direction</td></tr>
   <tr><td>is_active</td><td>BOOLEAN</td><td></td><td>Whether alert is active</td></tr>
 </table>
+
+<div class="deep-dive">
+<h4>Indexing Strategy</h4>
+<ul>
+  <li><strong>Primary key: <code>alert_id</code></strong> — auto-incrementing BIGINT for fast single-row lookups and updates (e.g., deactivating a triggered alert). <span class="tag tag-pk">Clustered Index</span></li>
+  <li><strong>Index: <code>(user_id, is_active)</code></strong> — B-tree index for "Get all active alerts for user X" (<code>WHERE user_id = ? AND is_active = true</code>). This is the primary user-facing query. <span class="tag tag-idx">B-tree</span></li>
+  <li><strong>Index: <code>(symbol, is_active, direction, target_price)</code></strong> — covering index for the Alert Service's hot path: "Find all active alerts for TSLA where direction = 'above' AND target_price &lt;= 250.25." This query runs on every price tick for every symbol, so it must be fast. The covering index avoids heap lookups entirely. <span class="tag tag-idx">Covering B-tree</span></li>
+</ul>
+
+<h4>Sharding Strategy</h4>
+<ul>
+  <li><strong>Shard by <code>symbol</code></strong> — unlike watchlists, alerts are queried by symbol on the hot path (Alert Service processes every price tick). Sharding by <code>symbol</code> ensures the Alert Service's per-tick query hits a single shard. <span class="tag tag-shard">Hash Sharded</span></li>
+  <li><strong>Tradeoff:</strong> "Get all alerts for user X" now requires a scatter-gather across shards. This is acceptable because user-facing alert management is low-frequency (occasional reads), while the Alert Service's per-symbol query runs 100K+ times/second.</li>
+  <li><strong>Scale estimate:</strong> 10M users × avg 3 alerts = 30M rows. ~3 GB — single node is sufficient initially.</li>
+</ul>
+</div>
+
+<h3>In-Memory Cache (Redis) — Key-Value NoSQL</h3>
+<div class="deep-dive">
+<h4>Why Redis?</h4>
+<p>The Price Cache stores the <strong>latest price for every active symbol</strong> — a pure key-value lookup pattern that Redis excels at:</p>
+<ul>
+  <li><strong>Sub-millisecond reads</strong> — clients that just connected need the current price instantly, without waiting for the next Kafka tick. Redis serves this in &lt;1ms.</li>
+  <li><strong>Write-through from Kafka</strong> — every price tick updates Redis. At ~10K unique symbols updating a few times/second each, the write load is trivial for Redis (~50K writes/sec).</li>
+  <li><strong>Tiny dataset</strong> — ~10K symbols × ~200 bytes = ~2MB. Fits entirely in RAM with no eviction needed.</li>
+  <li><strong>Pub/Sub for fan-out</strong> — Redis Pub/Sub distributes price updates across multiple WebSocket Hub instances without additional infrastructure.</li>
+</ul>
+<p><strong>Why not SQL or InfluxDB?</strong> Querying PostgreSQL or InfluxDB for "latest AAPL price" on every client connection would add 1–5ms latency and unnecessary load on databases designed for different access patterns. Redis is the right tool for a hot, frequently-read, small-keyspace cache.</p>
+
+<h4>Schema</h4>
+<ul>
+  <li><strong>Key:</strong> <code>price:{symbol}</code> (e.g., <code>price:AAPL</code>)</li>
+  <li><strong>Value:</strong> JSON — <code>{price, volume, change, changePercent, timestamp}</code></li>
+  <li><strong>Eviction:</strong> None needed (dataset is tiny).</li>
+  <li><strong>Expiration:</strong> No TTL during market hours. After hours, TTL = 12 hours.</li>
+</ul>
+
+<h4>Sharding Strategy</h4>
+<ul>
+  <li><strong>Redis Cluster with hash slots</strong> — Redis Cluster automatically distributes keys across 16,384 hash slots. With ~10K keys, a 3-node cluster provides redundancy without being necessary for capacity. <span class="tag tag-shard">Hash Slots</span></li>
+  <li><strong>Replication:</strong> Each primary has 1 read replica for failover. Price data is ephemeral (regenerated from Kafka on restart), so data loss on failover is acceptable — the cache self-heals within seconds.</li>
+</ul>
+</div>
 
 <h2>Cache Deep Dive</h2>
 <div class="deep-dive">
@@ -258,11 +354,171 @@
 <p>Kafka adds ~5ms latency compared to direct push from ingester to WebSocket Hub. The benefit is decoupling, durability, and ability to replay data. For ultra-low-latency trading systems (not a ticker app), direct UDP multicast would be used instead.</p>
 </div>
 
-<h2>Alternative Approaches</h2>
+<h2>Alternative Approaches to FIX Protocol (Ingester)</h2>
+<p>The Market Data Ingester uses <strong>TCP/FIX</strong> as the primary protocol for connecting to stock exchanges. If FIX is unavailable or unsuitable, the following alternatives can be considered:</p>
+
+<h3>Viable Alternatives</h3>
+
 <div class="alternative">
-<h4>UDP Multicast (for HFT systems)</h4>
-<p>Financial exchanges use UDP multicast for the lowest latency (~microseconds). Not chosen for a consumer app because: (1) requires specialized network infrastructure, (2) no delivery guarantees, (3) our target latency (&lt;100ms) is achievable with TCP/Kafka/WebSocket.</p>
+<h4>1. gRPC over HTTP/2 (Best Alternative)</h4>
+<p><strong>How it works:</strong> The exchange exposes a gRPC streaming service. The Ingester opens a persistent HTTP/2 connection and receives a stream of <code>PriceTick</code> messages serialized with Protocol Buffers.</p>
+<p><strong>Strengths:</strong></p>
+<ul>
+  <li><strong>Bidirectional streaming</strong> — the Ingester can subscribe/unsubscribe to symbols dynamically over the same connection.</li>
+  <li><strong>Protocol Buffers</strong> — binary serialization is 3–10× more compact and faster to parse than FIX's tag-value text format.</li>
+  <li><strong>Strongly typed schema</strong> — <code>.proto</code> files enforce a strict contract between exchange and Ingester, catching breaking changes at compile time.</li>
+  <li><strong>Built-in flow control</strong> — HTTP/2 flow control prevents the exchange from overwhelming the Ingester.</li>
+  <li><strong>Multiplexing</strong> — multiple logical streams over a single TCP connection (e.g., one stream per exchange).</li>
+</ul>
+<p><strong>Weaknesses:</strong> Slightly higher latency than raw TCP (~1–2ms overhead from HTTP/2 framing). Not yet the industry standard for exchange feeds — requires the exchange to offer a gRPC API.</p>
+<p><strong>Best for:</strong> Modern data providers (Polygon.io, Alpaca) and internal microservice-to-microservice communication.</p>
 </div>
+
+<div class="alternative">
+<h4>2. WebSocket</h4>
+<p><strong>How it works:</strong> The Ingester opens a persistent WebSocket connection to the exchange's data feed endpoint. The exchange pushes JSON or binary-encoded price messages over the connection.</p>
+<p><strong>Strengths:</strong></p>
+<ul>
+  <li><strong>Persistent, full-duplex</strong> — similar to TCP but with HTTP-friendly handshake (works through proxies and firewalls).</li>
+  <li><strong>Widely available</strong> — many third-party data providers (Finnhub, Binance, Coinbase) already offer WebSocket APIs.</li>
+  <li><strong>Simple to implement</strong> — well-supported across all languages with mature client libraries.</li>
+  <li><strong>Dynamic subscriptions</strong> — send subscribe/unsubscribe messages over the same connection.</li>
+</ul>
+<p><strong>Weaknesses:</strong> No built-in schema enforcement (you define your own message format, typically JSON). No native backpressure mechanism — if the Ingester falls behind, messages may queue up or be dropped. JSON payloads are larger than FIX or Protobuf.</p>
+<p><strong>Best for:</strong> Consuming from third-party data providers that don't offer FIX or gRPC.</p>
+</div>
+
+<div class="alternative">
+<h4>3. Raw TCP with Binary Protocol (e.g., NASDAQ ITCH, OUCH)</h4>
+<p><strong>How it works:</strong> The exchange sends a proprietary binary data stream over a raw TCP socket. The Ingester decodes fixed-width binary messages according to the exchange's published specification.</p>
+<p><strong>Strengths:</strong></p>
+<ul>
+  <li><strong>Lowest possible latency</strong> — no HTTP framing, no text parsing. Messages are decoded by reading bytes at fixed offsets (~microseconds per message).</li>
+  <li><strong>Maximum throughput</strong> — binary encoding is the most compact format.</li>
+  <li><strong>Used by real exchanges</strong> — NASDAQ ITCH and OUCH are production protocols used by high-frequency trading firms.</li>
+</ul>
+<p><strong>Weaknesses:</strong> You must implement framing, message parsing, sequence number tracking, and reconnection logic from scratch. Highly coupled to a specific exchange — each exchange has its own binary format. No schema evolution (changes require code updates on both sides).</p>
+<p><strong>Best for:</strong> Direct exchange feeds where latency is measured in microseconds (HFT systems).</p>
+</div>
+
+<div class="alternative">
+<h4>4. UDP Multicast</h4>
+<p>Financial exchanges use UDP multicast for the lowest latency (~microseconds). The exchange broadcasts market data to a multicast group; the Ingester joins the group and receives every message with zero handshake overhead.</p>
+<p><strong>Strengths:</strong> Absolute lowest latency. No connection overhead. One-to-many broadcast is efficient for multiple consumers.</p>
+<p><strong>Weaknesses:</strong> No delivery guarantees — packet loss means missed ticks. Requires specialized network infrastructure (multicast-capable routers, co-location). Out-of-order delivery possible.</p>
+<p><strong>Not chosen</strong> for this consumer ticker app because: (1) requires co-location with the exchange, (2) no delivery guarantees, (3) our target latency (&lt;100ms) is achievable with TCP-based protocols.</p>
+</div>
+
+<div class="alternative">
+<h4>5. AMQP (e.g., RabbitMQ)</h4>
+<p><strong>How it works:</strong> The exchange publishes market data to an AMQP broker. The Ingester subscribes to queues/topics for the symbols it cares about.</p>
+<p><strong>Strengths:</strong> Built-in acknowledgments and delivery guarantees. Message routing and filtering at the broker level. Could replace both the exchange connection and Kafka in simpler architectures.</p>
+<p><strong>Weaknesses:</strong> Adds a broker hop (~5–10ms latency). Not a standard protocol for exchange data feeds. Broker becomes a single point of failure unless clustered.</p>
+<p><strong>Best for:</strong> Simpler architectures or internal systems where a message broker is already in place.</p>
+</div>
+
+<h3>Poor Alternatives (Anti-Patterns)</h3>
+
+<div class="anti-pattern">
+<h4>❌ Server-Sent Events (SSE)</h4>
+<p>SSE is a <strong>browser-facing protocol</strong> built on HTTP/1.1 for server-to-client push. It is a poor choice for the Ingester because:</p>
+<ul>
+  <li><strong>Unidirectional only</strong> — the Ingester cannot send acknowledgments, request retransmissions, or dynamically subscribe/unsubscribe over the same connection.</li>
+  <li><strong>Text-only (UTF-8)</strong> — no native binary support. Market data would pay a serialization tax on every message.</li>
+  <li><strong>No backpressure</strong> — if the Ingester falls behind, there's no mechanism to signal the exchange to slow down.</li>
+  <li><strong>HTTP overhead</strong> — each event carries HTTP framing. At 100K+ messages/sec, the overhead is significant.</li>
+</ul>
+<p><strong>Where SSE does make sense:</strong> The client-facing side (WebSocket Hub → browsers), since price display is inherently one-directional. But not for server-to-server ingestion.</p>
+</div>
+
+<div class="anti-pattern">
+<h4>❌ Webhooks (HTTP Callbacks)</h4>
+<p>Webhooks require the exchange to POST an HTTP request to the Ingester for every price update. This is <strong>fundamentally unsuitable</strong> for high-throughput data ingestion:</p>
+<ul>
+  <li><strong>Per-event HTTP overhead</strong> — each webhook is a full HTTP request (DNS, TCP handshake, TLS handshake, headers, body, response). At 100K+ events/second, the connection overhead alone would overwhelm the Ingester.</li>
+  <li><strong>No ordering guarantees</strong> — HTTP requests can arrive out of order, especially under load. Stock tick ordering is critical for accurate price display.</li>
+  <li><strong>No streaming</strong> — webhooks are discrete, one-shot events. Market data is a continuous stream. You'd be fighting the paradigm.</li>
+  <li><strong>Retry semantics are messy</strong> — failed deliveries cause retries, leading to duplicates and further out-of-order ticks.</li>
+  <li><strong>Estimated max throughput:</strong> ~100–1,000 events/sec vs. the 100K+/sec requirement.</li>
+</ul>
+<p><strong>Where webhooks do make sense:</strong> Low-frequency, event-driven notifications — like the Alert Service notifying a user's device that a price threshold was crossed.</p>
+</div>
+
+<h3>Protocol Comparison Summary</h3>
+<table>
+  <tr>
+    <th>Protocol</th>
+    <th>Throughput</th>
+    <th>Latency</th>
+    <th>Connection Model</th>
+    <th>Schema</th>
+    <th>Ingester Fit</th>
+  </tr>
+  <tr>
+    <td><strong>TCP/FIX</strong></td>
+    <td>100K+/sec</td>
+    <td>~μs–ms</td>
+    <td>Persistent stream</td>
+    <td>Tag-value (text)</td>
+    <td>✅ Industry standard</td>
+  </tr>
+  <tr>
+    <td><strong>gRPC</strong></td>
+    <td>100K+/sec</td>
+    <td>~1–2ms</td>
+    <td>Persistent stream (HTTP/2)</td>
+    <td>Protobuf (binary, typed)</td>
+    <td>✅ Best modern alternative</td>
+  </tr>
+  <tr>
+    <td><strong>WebSocket</strong></td>
+    <td>100K+/sec</td>
+    <td>~1–2ms</td>
+    <td>Persistent full-duplex</td>
+    <td>Custom (JSON/binary)</td>
+    <td>✅ Good for 3rd-party providers</td>
+  </tr>
+  <tr>
+    <td><strong>Raw TCP/Binary</strong></td>
+    <td>1M+/sec</td>
+    <td>~μs</td>
+    <td>Persistent stream</td>
+    <td>Fixed-width binary</td>
+    <td>✅ Best for HFT</td>
+  </tr>
+  <tr>
+    <td><strong>UDP Multicast</strong></td>
+    <td>1M+/sec</td>
+    <td>~μs</td>
+    <td>Connectionless broadcast</td>
+    <td>Exchange-specific binary</td>
+    <td>⚠️ Needs co-location</td>
+  </tr>
+  <tr>
+    <td><strong>AMQP</strong></td>
+    <td>50K+/sec</td>
+    <td>~5–10ms</td>
+    <td>Broker-mediated</td>
+    <td>Custom</td>
+    <td>⚠️ Simpler architectures only</td>
+  </tr>
+  <tr>
+    <td><strong>SSE</strong></td>
+    <td>~1K/sec</td>
+    <td>~10ms</td>
+    <td>Persistent unidirectional</td>
+    <td>Text (UTF-8)</td>
+    <td>❌ Wrong layer</td>
+  </tr>
+  <tr>
+    <td><strong>Webhooks</strong></td>
+    <td>~100–1K/sec</td>
+    <td>~50–200ms</td>
+    <td>New connection per event</td>
+    <td>Custom (JSON)</td>
+    <td>❌ Fundamentally wrong model</td>
+  </tr>
+</table>
 
 <h2>Additional Information</h2>
 <h3>Data Downsampling</h3>
