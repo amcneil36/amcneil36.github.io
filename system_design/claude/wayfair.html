@@ -1,406 +1,1613 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wayfair - System Design</title>
-<style>
-:root{--bg:#0f0f0f;--surface:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--accent:#7B2D8E;--accent2:#E67E22;}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem;max-width:1400px;margin:0 auto}
-h1{color:var(--accent);font-size:2.2rem;border-bottom:3px solid var(--accent);padding-bottom:.5rem;margin-bottom:1.5rem}
-h2{color:var(--accent2);margin:2rem 0 1rem;font-size:1.5rem}
-h3{color:#81D4FA;margin:1.5rem 0 .75rem}
-h4{color:#CE93D8;margin:1rem 0 .5rem}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
-table{width:100%;border-collapse:collapse;margin:1rem 0}
-th,td{border:1px solid var(--border);padding:.75rem;text-align:left;font-size:.95rem}
-th{background:#3d1a4e;color:var(--accent)}
-pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}
-code{color:#89DDFF;font-size:.9rem}
-svg text{font-family:'Segoe UI',system-ui,sans-serif}
-.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-.pro{border-left:4px solid #4CAF50;padding-left:1rem}
-.con{border-left:4px solid #f44336;padding-left:1rem}
-details{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin:.5rem 0}
-summary{cursor:pointer;font-weight:600;color:var(--accent)}
-.step{margin:.5rem 0;padding:.5rem 1rem;border-left:3px solid var(--accent2)}
-.tag-pk{background:#E91E63;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
-.tag-fk{background:#2196F3;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
-.tag-idx{background:#FF9800;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
-.tag-shard{background:#9C27B0;color:#fff;padding:2px 8px;border-radius:4px;font-size:.8rem}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design: Wayfair</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --heading: #e6edf3;
+            --accent: #58a6ff;
+            --accent2: #7ee787;
+            --accent3: #d2a8ff;
+            --warn: #d29922;
+            --code-bg: #1c2128;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 { color: var(--accent); font-size: 2.4rem; border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+        h2 { color: var(--accent2); font-size: 1.8rem; margin-top: 2.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+        h3 { color: var(--accent3); font-size: 1.4rem; margin-top: 1.8rem; margin-bottom: 0.7rem; }
+        h4 { color: var(--warn); font-size: 1.15rem; margin-top: 1.3rem; margin-bottom: 0.5rem; }
+        p, li { margin-bottom: 0.6rem; }
+        ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        .example {
+            background: #1a2332;
+            border-left: 4px solid var(--accent);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .example strong { color: var(--accent); }
+        .warn-box {
+            background: #2a2000;
+            border-left: 4px solid var(--warn);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .warn-box strong { color: var(--warn); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: var(--card);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 0.7rem 1rem;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+        th { background: #21262d; color: var(--accent); font-weight: 600; }
+        code {
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--accent3);
+        }
+        .mermaid {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        .toc {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .toc a { color: var(--accent); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .toc ul { list-style: none; padding-left: 1rem; }
+        .toc > ul { padding-left: 0; }
+        .tag {
+            display: inline-block;
+            padding: 0.15rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-right: 0.3rem;
+        }
+        .tag-sql { background: #1f3a1f; color: #7ee787; }
+        .tag-nosql { background: #3a2a1f; color: #d29922; }
+        .tag-read { background: #1f2a3a; color: #58a6ff; }
+        .tag-write { background: #3a1f2a; color: #f778ba; }
+        hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+    </style>
 </head>
 <body>
 
-<h1>🛋️ Wayfair — E-Commerce for Home Goods</h1>
-<p>Design an e-commerce platform specializing in furniture and home goods with visual search, AR room visualization, complex shipping logistics for oversized items, and supplier drop-ship model.</p>
+<h1>🏠 System Design: Wayfair</h1>
+<p>A large-scale e-commerce platform specializing in home goods, furniture, décor, and home improvement products. Wayfair connects millions of customers to over 30,000 suppliers, serving 100+ million product listings with features like visual search, room planning, AR visualization, and complex logistics for oversized item delivery.</p>
 
-<h2>📋 Functional Requirements</h2>
-<div class="card">
+<div class="toc">
+<h3>Table of Contents</h3>
 <ul>
-<li><strong>Product catalog</strong> — browse/search 30M+ SKUs across furniture, decor, appliances with rich attributes (dimensions, material, color, style)</li>
-<li><strong>Visual search & AR</strong> — upload photo to find similar products; AR placement to visualize furniture in room</li>
-<li><strong>Faceted search & filtering</strong> — filter by price, dimensions, color, material, style, rating, delivery speed</li>
-<li><strong>Shopping cart & checkout</strong> — cart with multi-supplier items, split shipping, tax calculation</li>
-<li><strong>Supplier drop-ship</strong> — 80% of orders shipped directly from 12K+ suppliers, not Wayfair warehouses</li>
-<li><strong>Delivery scheduling</strong> — white-glove delivery for large items (room of choice, assembly), LTL freight tracking</li>
-<li><strong>Reviews & ratings</strong> — verified purchase reviews with photo uploads</li>
+    <li><a href="#fr">1. Functional Requirements</a></li>
+    <li><a href="#nfr">2. Non-Functional Requirements</a></li>
+    <li><a href="#flow1">3. Flow 1: Product Search &amp; Browse</a></li>
+    <li><a href="#flow2">4. Flow 2: Product Detail Page</a></li>
+    <li><a href="#flow3">5. Flow 3: Cart &amp; Checkout (Order Placement)</a></li>
+    <li><a href="#flow4">6. Flow 4: Order Tracking &amp; Fulfillment</a></li>
+    <li><a href="#flow5">7. Flow 5: Seller/Supplier Product Management</a></li>
+    <li><a href="#flow6">8. Flow 6: Reviews &amp; Ratings</a></li>
+    <li><a href="#combined">9. Combined Overall Architecture Diagram</a></li>
+    <li><a href="#schema">10. Database Schema</a></li>
+    <li><a href="#cdn-cache">11. CDN &amp; Caching Deep Dive</a></li>
+    <li><a href="#mq">12. Message Queue Deep Dive</a></li>
+    <li><a href="#scaling">13. Scaling Considerations</a></li>
+    <li><a href="#tradeoffs">14. Tradeoffs &amp; Deep Dives</a></li>
+    <li><a href="#alternatives">15. Alternative Approaches</a></li>
+    <li><a href="#additional">16. Additional Considerations</a></li>
+    <li><a href="#vendors">17. Vendor Recommendations</a></li>
 </ul>
 </div>
 
-<h2>📋 Non-Functional Requirements</h2>
+<!-- ============================================================ -->
+<h2 id="fr">1. Functional Requirements</h2>
+<!-- ============================================================ -->
 <div class="card">
-<ul>
-<li><strong>Search latency</strong> — &lt;200ms for search results including facet counts</li>
-<li><strong>Catalog scale</strong> — 30M+ products, 100K+ daily catalog updates from suppliers</li>
-<li><strong>Availability</strong> — 99.99% for browse/search, 99.999% for checkout</li>
-<li><strong>Image processing</strong> — 3D model rendering, AR compatibility, 10+ images per product</li>
-<li><strong>Logistics complexity</strong> — handle LTL freight, parcel, white-glove across 12K+ suppliers</li>
-<li><strong>Peak handling</strong> — Way Day sales (10x normal traffic), Black Friday</li>
-</ul>
+<ol>
+    <li><strong>Product Search &amp; Browse:</strong> Users can search for products by keyword, apply filters (category, price range, color, material, dimensions, brand, room type, customer rating), sort results, and browse categories. Autocomplete and search suggestions are supported.</li>
+    <li><strong>Product Detail Page:</strong> Users can view detailed product information including high-resolution images, 360° views, dimensions, materials, weight, assembly requirements, shipping info, price, availability, seller info, related products, and customer Q&amp;A.</li>
+    <li><strong>Shopping Cart:</strong> Users can add/remove/update items in their cart. The cart persists across sessions for logged-in users. Guest users get a session-based cart that merges upon login.</li>
+    <li><strong>Checkout &amp; Order Placement:</strong> Users can enter shipping information, select a shipping method, apply promo codes, choose a payment method, and place an order. Inventory is reserved at checkout to prevent overselling.</li>
+    <li><strong>Order Tracking &amp; Fulfillment:</strong> Users can view order status, tracking information, estimated delivery dates. The system processes fulfillment events from carriers and suppliers.</li>
+    <li><strong>Seller/Supplier Product Management:</strong> Suppliers can list new products (with images, descriptions, attributes, pricing), update inventory/pricing, and manage their catalog.</li>
+    <li><strong>Reviews &amp; Ratings:</strong> Authenticated users who purchased a product can submit reviews with text, ratings (1–5 stars), and photos. Other users can view aggregate ratings and browse reviews.</li>
+    <li><strong>Personalized Recommendations:</strong> The system generates product recommendations based on browsing history, purchase history, and collaborative filtering.</li>
+    <li><strong>User Account Management:</strong> Users can register, log in, manage profiles, view order history, save addresses, and manage wishlists.</li>
+</ol>
 </div>
 
-<h2>🔄 Flow 1: Product Search & Discovery</h2>
-<svg viewBox="0 0 1000 300" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="a1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#7B2D8E"/></marker></defs>
-<rect x="20" y="60" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="90" text-anchor="middle" fill="white" font-size="13">Customer</text>
-<rect x="175" y="60" width="130" height="50" rx="8" fill="#E65100"/><text x="240" y="90" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
-<rect x="350" y="30" width="130" height="50" rx="8" fill="#1565C0"/><text x="415" y="60" text-anchor="middle" fill="white" font-size="12">Search Service</text>
-<rect x="350" y="100" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="415" y="120" text-anchor="middle" fill="white" font-size="12">Visual Search</text><text x="415" y="135" text-anchor="middle" fill="white" font-size="10">(CNN Embedding)</text>
-<rect x="530" y="30" width="140" height="50" rx="8" fill="#4E342E"/><text x="600" y="60" text-anchor="middle" fill="white" font-size="12">Elasticsearch</text>
-<rect x="530" y="100" width="140" height="50" rx="8" fill="#1565C0"/><text x="600" y="120" text-anchor="middle" fill="white" font-size="12">Ranking Service</text><text x="600" y="135" text-anchor="middle" fill="white" font-size="10">(LambdaMART)</text>
-<rect x="720" y="60" width="130" height="50" rx="8" fill="#00695C"/><text x="785" y="90" text-anchor="middle" fill="white" font-size="12">Personalization</text>
-<line x1="130" y1="85" x2="170" y2="85" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="305" y1="75" x2="345" y2="55" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="305" y1="95" x2="345" y2="125" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="480" y1="55" x2="525" y2="55" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="670" y1="75" x2="715" y2="85" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="480" y1="125" x2="525" y2="115" stroke="#E67E22" stroke-width="2" marker-end="url(#a1)"/>
-<text x="415" y="175" fill="#aaa" font-size="10">image → embedding → ANN search</text>
-</svg>
-
-<div class="step"><strong>Step 1:</strong> Customer enters text query or uploads image for visual search</div>
-<div class="step"><strong>Step 2:</strong> Text search: Elasticsearch with custom analyzers for furniture attributes (dimensions, materials, style synonyms)</div>
-<div class="step"><strong>Step 3:</strong> Visual search: CNN extracts 512-dim embedding from image, nearest-neighbor search in vector DB (FAISS/Milvus)</div>
-<div class="step"><strong>Step 4:</strong> Ranking Service re-ranks results using LambdaMART with features: relevance, margin, conversion rate, delivery speed, supplier reliability</div>
-<div class="step"><strong>Step 5:</strong> Personalization layer boosts based on user style preferences, browsing history, room context</div>
-
-<details><summary>Deep Dive: Visual Search & Style Matching</summary>
-<div class="card">
-<pre><code>// Visual Search Pipeline:
-// 1. User uploads photo of furniture they like
-// 2. CNN (ResNet-50 fine-tuned on furniture) extracts feature embedding
-// 3. ANN (Approximate Nearest Neighbor) finds similar products
-
-// Embedding model: trained on Wayfair's product image corpus
-// Triplet loss: anchor (product) → positive (same style) → negative
-// Result: similar-looking furniture maps to nearby embeddings
-
-// ANN search: FAISS with IVF-PQ index
-// 30M products → 30M 512-dim vectors
-// IVF (Inverted File): cluster vectors into 4096 cells
-// PQ (Product Quantization): compress 512-dim to 64 bytes
-// Total index size: ~2GB (fits in memory)
-// Search: probe 32 nearest cells, return top-50 in ~5ms
-
-// Style attributes extracted by CNN:
-// - Material: wood, metal, fabric, leather, glass
-// - Style: modern, traditional, farmhouse, mid-century
-// - Color: dominant + accent colors (HSV histogram)
-// - Shape: silhouette features for matching form factor
-
-// AR Visualization:
-// ARKit (iOS) / ARCore (Android) detects floor plane
-// 3D model (USDZ/GLB) placed at user-selected position
-// Real-time occlusion and lighting estimation</code></pre>
-</div>
-</details>
-
-<details><summary>Deep Dive: Faceted Search with Elasticsearch</summary>
-<div class="card">
-<pre><code>// Furniture-specific search challenges:
-// 1. Dimensional search: "couch under 80 inches wide"
-// 2. Material synonyms: "wood" = oak, walnut, pine, bamboo
-// 3. Style matching: "modern farmhouse" (compound style)
-// 4. Color search: "blue" should match navy, teal, cerulean
-
-// Elasticsearch mapping:
-{
-  "product": {
-    "properties": {
-      "title": { "type": "text", "analyzer": "furniture_analyzer" },
-      "category_path": { "type": "keyword" }, // "Furniture/Living Room/Sofas"
-      "dimensions": {
-        "width_inches": { "type": "float" },
-        "height_inches": { "type": "float" },
-        "depth_inches": { "type": "float" },
-        "weight_lbs": { "type": "float" }
-      },
-      "price": { "type": "scaled_float", "scaling_factor": 100 },
-      "materials": { "type": "keyword" }, // multi-valued
-      "style_tags": { "type": "keyword" },
-      "color_family": { "type": "keyword" },
-      "supplier_id": { "type": "keyword" },
-      "in_stock": { "type": "boolean" },
-      "avg_rating": { "type": "float" },
-      "image_embedding": { "type": "dense_vector", "dims": 512 }
-    }
-  }
-}
-
-// Aggregations for facet counts:
-// "aggs": { "materials": { "terms": { "field": "materials" } } }
-// Returns: { "wood": 1234, "metal": 567, "fabric": 890 }
-// Fast because keyword fields use doc_values (columnar)</code></pre>
-</div>
-</details>
-
-<h2>🔄 Flow 2: Order & Drop-Ship Fulfillment</h2>
-<svg viewBox="0 0 1050 320" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="a2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#E67E22"/></marker></defs>
-<rect x="20" y="50" width="110" height="50" rx="8" fill="#2E7D32"/><text x="75" y="80" text-anchor="middle" fill="white" font-size="12">Customer</text>
-<rect x="175" y="50" width="120" height="50" rx="8" fill="#1565C0"/><text x="235" y="80" text-anchor="middle" fill="white" font-size="12">Order Service</text>
-<rect x="340" y="30" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="405" y="50" text-anchor="middle" fill="white" font-size="12">Order Splitter</text><text x="405" y="65" text-anchor="middle" fill="white" font-size="10">(per supplier)</text>
-<rect x="520" y="30" width="130" height="50" rx="8" fill="#E65100"/><text x="585" y="50" text-anchor="middle" fill="white" font-size="12">Supplier Portal</text><text x="585" y="65" text-anchor="middle" fill="white" font-size="10">(EDI / API)</text>
-<rect x="700" y="30" width="130" height="50" rx="8" fill="#4E342E"/><text x="765" y="60" text-anchor="middle" fill="white" font-size="12">Supplier</text>
-<rect x="340" y="120" width="130" height="50" rx="8" fill="#1565C0"/><text x="405" y="140" text-anchor="middle" fill="white" font-size="12">Shipping</text><text x="405" y="155" text-anchor="middle" fill="white" font-size="10">Orchestrator</text>
-<rect x="520" y="120" width="130" height="50" rx="8" fill="#00695C"/><text x="585" y="140" text-anchor="middle" fill="white" font-size="12">LTL Freight</text><text x="585" y="155" text-anchor="middle" fill="white" font-size="10">Broker</text>
-<rect x="700" y="120" width="130" height="50" rx="8" fill="#00695C"/><text x="765" y="140" text-anchor="middle" fill="white" font-size="12">White Glove</text><text x="765" y="155" text-anchor="middle" fill="white" font-size="10">Delivery</text>
-<rect x="340" y="230" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="405" y="260" text-anchor="middle" fill="white" font-size="12">Tracking Service</text>
-<line x1="130" y1="75" x2="170" y2="75" stroke="#E67E22" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="295" y1="65" x2="335" y2="55" stroke="#E67E22" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="470" y1="55" x2="515" y2="55" stroke="#E67E22" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="650" y1="55" x2="695" y2="55" stroke="#E67E22" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="405" y1="80" x2="405" y2="115" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="470" y1="145" x2="515" y2="140" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="650" y1="140" x2="695" y2="140" stroke="#81D4FA" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="405" y1="170" x2="405" y2="225" stroke="#FF9800" stroke-width="2" marker-end="url(#a2)"/>
-<text x="405" y="200" fill="#aaa" font-size="10">shipment events</text>
-</svg>
-
-<div class="step"><strong>Step 1:</strong> Customer places order with items from multiple suppliers. Order Service validates inventory, processes payment</div>
-<div class="step"><strong>Step 2:</strong> Order Splitter breaks order into sub-orders per supplier. Each sub-order sent via EDI 850 (purchase order) or API</div>
-<div class="step"><strong>Step 3:</strong> Supplier ships directly to customer. Shipping Orchestrator selects carrier: parcel (FedEx/UPS) for small items, LTL freight for furniture, white-glove for premium delivery</div>
-<div class="step"><strong>Step 4:</strong> Tracking Service aggregates shipment events from multiple carriers into unified tracking for customer</div>
-
-<details><summary>Deep Dive: Drop-Ship Model & EDI Integration</summary>
-<div class="card">
-<pre><code>// Wayfair's drop-ship model:
-// - Wayfair does NOT hold inventory for 80% of products
-// - Supplier stores, picks, packs, and ships directly
-// - Wayfair handles: discovery, checkout, customer service, returns
-
-// EDI (Electronic Data Interchange) — B2B protocol:
-// EDI 850 = Purchase Order (Wayfair → Supplier)
-// EDI 855 = PO Acknowledgment (Supplier → Wayfair)
-// EDI 856 = Advance Ship Notice (Supplier → Wayfair)
-// EDI 810 = Invoice (Supplier → Wayfair)
-
-// Modern alternative: REST API for smaller suppliers
-POST /api/v1/supplier/orders
-{
-  "po_number": "WF-2025-8839201",
-  "ship_to": { "name": "John Doe", "street": "123 Main St", ... },
-  "items": [
-    { "sku": "SUP-SOFA-8822", "qty": 1, "unit_price": 450.00 }
-  ],
-  "ship_method": "LTL_FREIGHT",
-  "ship_by_date": "2025-02-14",
-  "deliver_by_date": "2025-02-21"
-}
-
-// Inventory feed: suppliers push stock levels every 15 min
-// Critical for preventing overselling on Way Day (10x traffic)</code></pre>
-</div>
-</details>
-
-<h2>🔄 Flow 3: AR Room Visualization</h2>
-<svg viewBox="0 0 950 250" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="a3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#7B2D8E"/></marker></defs>
-<rect x="20" y="60" width="120" height="50" rx="8" fill="#2E7D32"/><text x="80" y="80" text-anchor="middle" fill="white" font-size="12">Mobile Camera</text><text x="80" y="95" text-anchor="middle" fill="white" font-size="10">(ARKit/ARCore)</text>
-<rect x="190" y="60" width="130" height="50" rx="8" fill="#1565C0"/><text x="255" y="80" text-anchor="middle" fill="white" font-size="12">Plane Detection</text><text x="255" y="95" text-anchor="middle" fill="white" font-size="10">& Scene Understanding</text>
-<rect x="370" y="60" width="130" height="50" rx="8" fill="#6A1B9A"/><text x="435" y="80" text-anchor="middle" fill="white" font-size="12">3D Model Loader</text><text x="435" y="95" text-anchor="middle" fill="white" font-size="10">(USDZ / GLB)</text>
-<rect x="550" y="60" width="130" height="50" rx="8" fill="#E65100"/><text x="615" y="80" text-anchor="middle" fill="white" font-size="12">Real-time Render</text><text x="615" y="95" text-anchor="middle" fill="white" font-size="10">(PBR + Lighting)</text>
-<rect x="730" y="60" width="130" height="50" rx="8" fill="#2E7D32"/><text x="795" y="90" text-anchor="middle" fill="white" font-size="12">AR Display</text>
-<line x1="140" y1="85" x2="185" y2="85" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="320" y1="85" x2="365" y2="85" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="500" y1="85" x2="545" y2="85" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="680" y1="85" x2="725" y2="85" stroke="#7B2D8E" stroke-width="2" marker-end="url(#a3)"/>
-</svg>
-
-<div class="step"><strong>Step 1:</strong> ARKit/ARCore detects floor plane and room geometry from camera feed</div>
-<div class="step"><strong>Step 2:</strong> User selects product; 3D model downloaded from CDN (USDZ for iOS, GLB for Android, ~5-15MB)</div>
-<div class="step"><strong>Step 3:</strong> Model placed on detected surface with real-world scale (actual product dimensions)</div>
-<div class="step"><strong>Step 4:</strong> PBR (Physically Based Rendering) with environment lighting estimation for realistic appearance</div>
-
-<h2>🏗️ Combined Architecture</h2>
-<svg viewBox="0 0 1100 480" style="width:100%;background:#111;border-radius:12px;margin:1rem 0">
-<defs><marker id="ac" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#7B2D8E"/></marker></defs>
-<text x="550" y="25" text-anchor="middle" fill="#7B2D8E" font-size="16" font-weight="bold">Wayfair E-Commerce Architecture</text>
-<rect x="20" y="50" width="120" height="40" rx="8" fill="#2E7D32"/><text x="80" y="75" text-anchor="middle" fill="white" font-size="11">Web / Mobile</text>
-<rect x="200" y="50" width="130" height="40" rx="8" fill="#E65100"/><text x="265" y="75" text-anchor="middle" fill="white" font-size="11">API Gateway / CDN</text>
-<rect x="400" y="40" width="120" height="35" rx="8" fill="#1565C0"/><text x="460" y="63" text-anchor="middle" fill="white" font-size="11">Search Service</text>
-<rect x="400" y="85" width="120" height="35" rx="8" fill="#1565C0"/><text x="460" y="108" text-anchor="middle" fill="white" font-size="11">Catalog Service</text>
-<rect x="400" y="130" width="120" height="35" rx="8" fill="#1565C0"/><text x="460" y="153" text-anchor="middle" fill="white" font-size="11">Cart / Checkout</text>
-<rect x="400" y="175" width="120" height="35" rx="8" fill="#1565C0"/><text x="460" y="198" text-anchor="middle" fill="white" font-size="11">Order Service</text>
-<rect x="400" y="220" width="120" height="35" rx="8" fill="#1565C0"/><text x="460" y="243" text-anchor="middle" fill="white" font-size="11">Inventory Service</text>
-<rect x="580" y="50" width="130" height="40" rx="8" fill="#4E342E"/><text x="645" y="75" text-anchor="middle" fill="white" font-size="11">Elasticsearch</text>
-<rect x="580" y="110" width="130" height="40" rx="8" fill="#4E342E"/><text x="645" y="135" text-anchor="middle" fill="white" font-size="11">PostgreSQL</text>
-<rect x="580" y="170" width="130" height="40" rx="8" fill="#00695C"/><text x="645" y="195" text-anchor="middle" fill="white" font-size="11">Redis Cluster</text>
-<rect x="580" y="230" width="130" height="40" rx="8" fill="#6A1B9A"/><text x="645" y="255" text-anchor="middle" fill="white" font-size="11">Kafka Event Bus</text>
-<rect x="780" y="50" width="140" height="40" rx="8" fill="#E65100"/><text x="850" y="75" text-anchor="middle" fill="white" font-size="11">Supplier Portal (EDI)</text>
-<rect x="780" y="110" width="140" height="40" rx="8" fill="#1565C0"/><text x="850" y="135" text-anchor="middle" fill="white" font-size="11">Shipping Orchestrator</text>
-<rect x="780" y="170" width="140" height="40" rx="8" fill="#6A1B9A"/><text x="850" y="195" text-anchor="middle" fill="white" font-size="11">ML Ranking & Recs</text>
-<rect x="780" y="230" width="140" height="40" rx="8" fill="#4E342E"/><text x="850" y="255" text-anchor="middle" fill="white" font-size="11">3D Model / Image CDN</text>
-<line x1="140" y1="70" x2="195" y2="70" stroke="#7B2D8E" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="330" y1="70" x2="395" y2="57" stroke="#7B2D8E" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="520" y1="57" x2="575" y2="70" stroke="#7B2D8E" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="520" y1="102" x2="575" y2="130" stroke="#7B2D8E" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="520" y1="147" x2="575" y2="190" stroke="#E67E22" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="520" y1="192" x2="575" y2="250" stroke="#E67E22" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="710" y1="70" x2="775" y2="70" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="710" y1="130" x2="775" y2="130" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="710" y1="195" x2="775" y2="195" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
-<line x1="710" y1="250" x2="775" y2="250" stroke="#81D4FA" stroke-width="2" marker-end="url(#ac)"/>
-</svg>
-
-<h2>💾 Database Schema</h2>
-<div class="grid">
-<div class="card">
-<h3>PostgreSQL — Products & Orders</h3>
-<pre><code>CREATE TABLE products (
-  id BIGSERIAL PRIMARY KEY, -- <span class="tag-pk">PK</span>
-  sku VARCHAR(50) UNIQUE NOT NULL, -- <span class="tag-idx">IDX</span>
-  supplier_id INT NOT NULL, -- <span class="tag-fk">FK</span> <span class="tag-shard">SHARD</span>
-  title TEXT NOT NULL,
-  category_path TEXT NOT NULL, -- <span class="tag-idx">IDX</span>
-  price_cents BIGINT NOT NULL,
-  width_inches DECIMAL(6,1),
-  height_inches DECIMAL(6,1),
-  depth_inches DECIMAL(6,1),
-  weight_lbs DECIMAL(7,1),
-  materials TEXT[], -- array: ['solid wood','metal']
-  style_tags TEXT[], -- ['modern','farmhouse']
-  color_family VARCHAR(30), -- <span class="tag-idx">IDX</span>
-  has_3d_model BOOLEAN DEFAULT false,
-  avg_rating DECIMAL(3,2),
-  review_count INT DEFAULT 0,
-  in_stock BOOLEAN DEFAULT true, -- <span class="tag-idx">IDX</span>
-  created_at TIMESTAMPTZ DEFAULT now()
-);
--- <span class="tag-idx">IDX</span>: (category_path, in_stock, price_cents)
--- <span class="tag-idx">IDX</span>: GIN on materials, style_tags for array containment
-
-CREATE TABLE orders (
-  id BIGSERIAL PRIMARY KEY, -- <span class="tag-pk">PK</span>
-  customer_id BIGINT NOT NULL, -- <span class="tag-fk">FK</span> <span class="tag-idx">IDX</span>
-  status VARCHAR(20) DEFAULT 'pending',
-  total_cents BIGINT NOT NULL,
-  tax_cents BIGINT NOT NULL,
-  shipping_cents BIGINT NOT NULL,
-  payment_intent_id VARCHAR(50),
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
-CREATE TABLE order_items (
-  id BIGSERIAL PRIMARY KEY,
-  order_id BIGINT NOT NULL REFERENCES orders(id), -- <span class="tag-fk">FK</span>
-  product_id BIGINT NOT NULL, -- <span class="tag-fk">FK</span>
-  supplier_id INT NOT NULL,
-  quantity INT NOT NULL,
-  unit_price_cents BIGINT NOT NULL,
-  sub_order_id VARCHAR(50), -- split per supplier
-  ship_method VARCHAR(30), -- 'parcel'|'ltl_freight'|'white_glove'
-  tracking_number VARCHAR(50)
-);</code></pre>
-</div>
-<div class="card">
-<h3>Inventory (Redis + PostgreSQL)</h3>
-<pre><code>-- Real-time inventory in Redis (for checkout validation)
--- Key: inventory:{sku}
--- Value: { "available": 45, "reserved": 3, "supplier_id": 8821 }
--- Atomic decrement on order placement (DECRBY)
-
--- Inventory history in PostgreSQL
-CREATE TABLE inventory_feeds (
-  id BIGSERIAL PRIMARY KEY,
-  supplier_id INT NOT NULL, -- <span class="tag-fk">FK</span>
-  sku VARCHAR(50) NOT NULL, -- <span class="tag-idx">IDX</span>
-  available_qty INT NOT NULL,
-  warehouse_location VARCHAR(50),
-  lead_time_days INT,
-  received_at TIMESTAMPTZ DEFAULT now()
-);
--- Suppliers push feed every 15 min via EDI 846 or API
--- Stale inventory (>30 min) triggers "limited stock" badge
-
--- 3D Model Assets (metadata in DB, files on CDN)
-CREATE TABLE product_3d_models (
-  product_id BIGINT PRIMARY KEY REFERENCES products(id),
-  usdz_url TEXT, -- iOS AR format
-  glb_url TEXT,  -- Android/web AR format
-  thumbnail_url TEXT,
-  poly_count INT,
-  file_size_bytes BIGINT,
-  status VARCHAR(20) DEFAULT 'processing'
-);</code></pre>
-</div>
-</div>
-
-<h2>⚡ Cache & CDN Deep Dive</h2>
+<!-- ============================================================ -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
+<!-- ============================================================ -->
 <div class="card">
 <table>
-<tr><th>Layer</th><th>What</th><th>Strategy</th><th>TTL</th></tr>
-<tr><td>CDN (CloudFront)</td><td>Product images, 3D models, static assets</td><td>Long-lived with versioned URLs</td><td>30 days</td></tr>
-<tr><td>Redis — Inventory</td><td>Real-time stock levels</td><td>Write-through from supplier feed</td><td>30 min max</td></tr>
-<tr><td>Redis — Search</td><td>Popular search results</td><td>LRU with invalidation on catalog change</td><td>5 min</td></tr>
-<tr><td>Redis — Sessions</td><td>Cart, user preferences</td><td>Write-through</td><td>24 hours</td></tr>
-<tr><td>Varnish</td><td>Category pages, PDP (product detail)</td><td>Stale-while-revalidate</td><td>60 seconds</td></tr>
+    <tr><th>Requirement</th><th>Target</th><th>Rationale</th></tr>
+    <tr><td><strong>Availability</strong></td><td>99.99% uptime</td><td>Downtime directly translates to lost revenue; peak events like Way Day sales are critical.</td></tr>
+    <tr><td><strong>Latency (Search)</strong></td><td>&lt; 200ms P95</td><td>Users abandon slow search results; fast search is critical for conversion.</td></tr>
+    <tr><td><strong>Latency (Product Page)</strong></td><td>&lt; 300ms P95 (above the fold)</td><td>Image-heavy pages must load quickly; lazy-load below-the-fold content.</td></tr>
+    <tr><td><strong>Latency (Checkout)</strong></td><td>&lt; 500ms P95</td><td>Checkout must feel responsive but correctness matters more than raw speed.</td></tr>
+    <tr><td><strong>Consistency (Orders/Payments/Inventory)</strong></td><td>Strong consistency</td><td>Cannot oversell, double-charge, or lose orders. ACID transactions required.</td></tr>
+    <tr><td><strong>Consistency (Catalog/Search)</strong></td><td>Eventual consistency (seconds)</td><td>Slight delay in search index updates is acceptable.</td></tr>
+    <tr><td><strong>Scalability</strong></td><td>~30M daily active users, ~100M+ product listings, peak 10x during sales</td><td>Must handle flash-sale traffic bursts (Way Day, Black Friday).</td></tr>
+    <tr><td><strong>Durability</strong></td><td>Zero order/payment data loss</td><td>Financial transactions cannot be lost.</td></tr>
+    <tr><td><strong>Image Performance</strong></td><td>Optimized delivery globally</td><td>Home goods are visual—high-quality images are critical for purchase decisions.</td></tr>
+    <tr><td><strong>Security</strong></td><td>PCI-DSS compliance, encryption at rest &amp; in transit</td><td>Handles payment data and personal information.</td></tr>
 </table>
-<pre><code>// Image processing pipeline:
-// Supplier uploads high-res image (4000x4000 JPEG)
-// → Background removal (U-Net segmentation)
-// → Generate 6 renditions: thumbnail, listing, detail, zoom, social, AR-preview
-// → WebP/AVIF conversion for modern browsers
-// → Push to CDN with immutable URLs
-// → Product page references CDN URLs with responsive srcset</code></pre>
 </div>
 
-<h2>📈 Scaling Considerations</h2>
+<!-- ============================================================ -->
+<h2 id="flow1">3. Flow 1: Product Search &amp; Browse</h2>
+<!-- ============================================================ -->
+
+<h3>3.1 Diagram</h3>
+<div class="mermaid">
+graph LR
+    subgraph Client
+        A[Web / Mobile App]
+    end
+
+    subgraph Edge
+        CDN[CDN<br/>Thumbnail Images]
+    end
+
+    subgraph Backend
+        LB[Load Balancer]
+        SS[Search Service]
+        AC[Autocomplete<br/>Service]
+        SC[Search Cache<br/>In-Memory Cache]
+        SI[(Search Index<br/>Inverted Index)]
+        PDB[(Product DB<br/>NoSQL)]
+    end
+
+    A -- "GET /search?q=...&filters=..." --> LB
+    A -- "GET /autocomplete?prefix=..." --> LB
+    LB --> SS
+    LB --> AC
+    AC --> SI
+    SS --> SC
+    SC -- "cache miss" --> SI
+    SI -- "product_ids" --> SS
+    SS -- "hydrate results" --> PDB
+    A -- "image requests" --> CDN
+</div>
+
+<h3>3.2 Flow Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Keyword search with filters:</strong> A user types "mid-century modern sofa" into the search bar and presses enter. The client sends <code>GET /api/v1/search?q=mid-century+modern+sofa&category=sofas&price_min=500&price_max=2000&sort=relevance&page=1&limit=48</code> to the Load Balancer. The Load Balancer routes the request to one of the Search Service instances. The Search Service first checks the In-Memory Cache for this exact query+filter combination. On a cache miss, it queries the Search Index (inverted index), which returns a ranked list of <code>product_ids</code>. The Search Service then hydrates these IDs by fetching product summaries (title, price, thumbnail URL, rating, free shipping badge) from the Product DB. The response is cached and returned to the client. Product thumbnail images are loaded from the CDN. The user sees 48 results with pagination controls.
+</div>
+
+<div class="example">
+<strong>Example 2 — Autocomplete:</strong> As the user types "mid-c" into the search bar, the client sends <code>GET /api/v1/autocomplete?prefix=mid-c&limit=8</code> to the Load Balancer, which routes to the Autocomplete Service. The Autocomplete Service queries the Search Index using a prefix trie / n-gram index and returns the top 8 suggestions: "mid-century modern sofa", "mid-century coffee table", "mid-century dresser", etc. These appear as a dropdown beneath the search bar within ~50ms.
+</div>
+
+<div class="example">
+<strong>Example 3 — Category browse (no keyword):</strong> A user clicks "Living Room → Sofas &amp; Couches" from the navigation menu. The client sends <code>GET /api/v1/search?category=sofas-and-couches&sort=popular&page=1&limit=48</code>. The Search Service executes a category filter query against the Search Index (no full-text search needed), retrieves matching product IDs sorted by popularity score, hydrates from the Product DB, and returns results. This path is highly cacheable since category pages don't change frequently.
+</div>
+
+<div class="example">
+<strong>Example 4 — Cache hit (popular query):</strong> During a Black Friday sale, thousands of users search for "sectional sofa". The first request populates the In-Memory Cache. All subsequent identical requests (same query, same filters, same sort, same page) are served directly from cache in &lt;10ms, bypassing the Search Index entirely.
+</div>
+
+<h3>3.3 Component Deep Dive</h3>
+
 <div class="card">
+<h4>Search Service</h4>
 <ul>
-<li><strong>Way Day preparation:</strong> pre-warm CDN caches with deal products, pre-scale search cluster 3x, freeze catalog changes during event, dedicated checkout capacity.</li>
-<li><strong>Supplier integration scale:</strong> 12K+ suppliers with varying tech capabilities. EDI for large suppliers, REST API for mid-size, CSV upload for small. All normalized to internal event format.</li>
-<li><strong>Search cluster:</strong> Elasticsearch with 30M products across 20+ shards. Shard by category for co-located search. Replica shards for read scaling (3 replicas during Way Day).</li>
-<li><strong>3D model generation:</strong> automated pipeline from product photos → 3D mesh using photogrammetry + AI. Scale bottleneck: GPU rendering farm. Prioritize top-selling products for 3D models.</li>
+    <li><strong>Protocol:</strong> HTTP REST</li>
+    <li><strong>Endpoint:</strong> <code>GET /api/v1/search</code></li>
+    <li><strong>Input:</strong> Query string params: <code>q</code> (keyword), <code>category</code>, <code>price_min</code>, <code>price_max</code>, <code>color</code>, <code>material</code>, <code>brand</code>, <code>width_min/max</code>, <code>height_min/max</code>, <code>depth_min/max</code>, <code>rating_min</code>, <code>room_type</code>, <code>sort</code> (relevance | price_asc | price_desc | rating | newest | popular), <code>page</code>, <code>limit</code></li>
+    <li><strong>Output:</strong> JSON: <code>{ results: [{ product_id, title, price, original_price, thumbnail_url, avg_rating, review_count, free_shipping, seller_name }], total_count, facets: { categories: [...], price_ranges: [...], colors: [...] }, page, total_pages }</code></li>
+    <li><strong>Behavior:</strong> Checks cache first. On miss, queries the Search Index for matching product IDs with relevance scores, then hydrates with product summary data from the Product DB. Also computes faceted counts for filter UI. Caches the response.</li>
+</ul>
+
+<h4>Autocomplete Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP REST</li>
+    <li><strong>Endpoint:</strong> <code>GET /api/v1/autocomplete</code></li>
+    <li><strong>Input:</strong> <code>prefix</code> (string, the partial query), <code>limit</code> (int, max suggestions)</li>
+    <li><strong>Output:</strong> JSON: <code>{ suggestions: [{ text, category_hint, result_count }] }</code></li>
+    <li><strong>Behavior:</strong> Uses a prefix trie / n-gram index in the Search Index to quickly find completions. Also considers popular queries, trending items, and user personalization. Must respond in &lt;50ms.</li>
+</ul>
+
+<h4>Search Index (Inverted Index)</h4>
+<ul>
+    <li><strong>Type:</strong> Inverted index with support for full-text search, faceted search, n-gram matching, and prefix queries.</li>
+    <li><strong>Data:</strong> Indexed fields: title, description, category hierarchy, brand, color, material, dimensions (as ranges), price, average rating, popularity score, seller info. Documents are product records.</li>
+    <li><strong>Updated by:</strong> Asynchronous indexing pipeline triggered by product create/update events from the Message Queue.</li>
+</ul>
+
+<h4>In-Memory Cache (Search Cache)</h4>
+<ul>
+    <li><strong>Purpose:</strong> Cache search results for frequently-executed queries.</li>
+    <li><strong>Key:</strong> Hash of (query + all filter params + sort + page).</li>
+    <li><strong>Details:</strong> See <a href="#cdn-cache">CDN &amp; Caching Deep Dive</a> section.</li>
+</ul>
+
+<h4>Product DB (NoSQL)</h4>
+<ul>
+    <li><strong>Used here for:</strong> Hydrating search results with product summary data. Optimized for fast point-reads by <code>product_id</code> or batch multi-get.</li>
+</ul>
+
+<h4>CDN</h4>
+<ul>
+    <li><strong>Used here for:</strong> Serving product thumbnail images. The client loads images by URL which resolves to the nearest CDN edge node.</li>
+</ul>
+
+<h4>Load Balancer</h4>
+<ul>
+    <li><strong>Algorithm:</strong> Round-robin or least-connections across Search Service / Autocomplete Service instances.</li>
+    <li><strong>Responsibility:</strong> TLS termination, request routing, health checks, rate limiting.</li>
 </ul>
 </div>
 
-<h2>⚖️ Tradeoffs</h2>
-<div class="tradeoff-grid">
-<div class="card pro"><h4>Drop-Ship Model</h4><ul><li>Zero inventory holding cost</li><li>Infinite catalog scalability</li><li>Low capital requirements</li></ul></div>
-<div class="card con"><h4>Drop-Ship Model</h4><ul><li>Less control over shipping quality</li><li>Complex returns across suppliers</li><li>Inventory accuracy depends on supplier feeds</li></ul></div>
-<div class="card pro"><h4>Visual Search (CNN)</h4><ul><li>Discover products without words</li><li>Cross-sell from inspiration photos</li><li>Higher engagement, +15% conversion</li></ul></div>
-<div class="card con"><h4>Visual Search (CNN)</h4><ul><li>GPU inference cost per query</li><li>Requires large training dataset</li><li>Style subjective — not always accurate</li></ul></div>
+<!-- ============================================================ -->
+<h2 id="flow2">4. Flow 2: Product Detail Page</h2>
+<!-- ============================================================ -->
+
+<h3>4.1 Diagram</h3>
+<div class="mermaid">
+graph LR
+    subgraph Client
+        A[Web / Mobile App]
+    end
+
+    subgraph Edge
+        CDN[CDN<br/>HD Images / 3D Assets]
+    end
+
+    subgraph Backend
+        LB[Load Balancer]
+        PS[Product Service]
+        PC[Product Cache<br/>In-Memory Cache]
+        PDB[(Product DB<br/>NoSQL)]
+        RS[Review Service]
+        RDB[(Review DB<br/>NoSQL)]
+        REC[Recommendation<br/>Service]
+        RECDB[(Recommendation<br/>Store / NoSQL)]
+        IS[Inventory Service]
+        IDB[(Inventory DB<br/>SQL)]
+    end
+
+    subgraph Storage
+        OBJ[(Object Storage<br/>Images / 3D)]
+    end
+
+    A -- "GET /products/:id" --> LB
+    LB --> PS
+    PS --> PC
+    PC -- "cache miss" --> PDB
+    PS -- "GET /reviews?product_id=..." --> RS
+    RS --> RDB
+    PS -- "GET /recommendations?product_id=..." --> REC
+    REC --> RECDB
+    PS -- "GET /inventory/:product_id" --> IS
+    IS --> IDB
+    A -- "images / 3D assets" --> CDN
+    CDN -- "origin pull" --> OBJ
 </div>
 
-<h2>🔄 Alternative Approaches</h2>
-<div class="grid">
-<div class="card"><h4>First-Party Fulfillment (Amazon FBA model)</h4><p>Hold inventory in Wayfair warehouses for faster, more reliable delivery. Higher capital expenditure but better customer experience. CastleGate (Wayfair's forward warehouse program) is a hybrid — suppliers pre-position inventory in Wayfair facilities.</p></div>
-<div class="card"><h4>Generative AI for Room Design</h4><p>Instead of AR placement, use diffusion models to generate complete room renders with selected products. Customer uploads room photo, AI redesigns with Wayfair products. Requires style-transfer and product-faithful generation.</p></div>
+<h3>4.2 Flow Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Viewing a product page:</strong> A user clicks on "Ainsley 87" Rolled Arm Sofa" from search results. The client sends <code>GET /api/v1/products/prod_83921</code> to the Load Balancer. The Product Service first checks the Product Cache. On a cache miss, it queries the Product DB for full product details (title, description, price, images, dimensions, materials, assembly info, seller info, shipping options). In parallel, it makes internal calls to: (1) the Review Service for the top reviews and aggregate rating, (2) the Recommendation Service for "similar items" and "customers also viewed", (3) the Inventory Service to check real-time stock/availability. The client separately loads high-resolution images and 3D assets from the CDN. The full product page renders with all information.
 </div>
 
-<h2>📚 Additional Information</h2>
+<div class="example">
+<strong>Example 2 — Out-of-stock product:</strong> A user navigates to a product page for a popular dining table that has sold out. The Product Service returns the product data as normal, but the Inventory Service returns <code>{ available: false, restock_date: "2025-03-15" }</code>. The client displays "Out of Stock — Expected back March 15" with an option to "Get notified when available." The Add to Cart button is disabled.
+</div>
+
+<div class="example">
+<strong>Example 3 — CDN cache hit for images:</strong> A popular product's images have already been requested by other users. When the current user's browser requests the image URLs, the CDN edge node closest to the user serves the images directly from its cache without contacting the origin Object Storage. This results in image load times of ~30–80ms regardless of the user's location.
+</div>
+
+<h3>4.3 Component Deep Dive</h3>
+
 <div class="card">
+<h4>Product Service</h4>
 <ul>
-<li><strong>CastleGate warehousing:</strong> Wayfair's forward-deployment network. Suppliers pre-ship popular SKUs to regional Wayfair facilities. Enables 2-day delivery while keeping drop-ship cost structure.</li>
-<li><strong>LTL freight:</strong> Less-Than-Truckload. For items 150-10,000 lbs. Requires freight class determination based on dimensions, weight, density. White-glove adds room placement + assembly (+$100-300).</li>
-<li><strong>Tax calculation:</strong> complex for furniture (varies by state, item type — some states exempt certain home goods). Use tax engine (Avalara/Vertex) with product tax codes.</li>
-<li><strong>Return logistics:</strong> furniture returns are expensive ($50-200 per return in shipping). Wayfair often issues refund without return for items under $50 (cheaper than reverse logistics).</li>
+    <li><strong>Protocol:</strong> HTTP REST</li>
+    <li><strong>Endpoint:</strong> <code>GET /api/v1/products/{product_id}</code></li>
+    <li><strong>Input:</strong> Path param: <code>product_id</code></li>
+    <li><strong>Output:</strong> JSON: <code>{ product_id, title, description, price, original_price, discount_pct, images: [{ url, alt, width, height }], dimensions: { width, height, depth, weight }, materials, colors, assembly_required, seller: { id, name, rating }, shipping_options: [...], avg_rating, review_count, top_reviews: [...], recommendations: { similar: [...], also_viewed: [...] }, availability: { in_stock, qty, restock_date }, breadcrumb: [...] }</code></li>
+    <li><strong>Behavior:</strong> Orchestrates parallel calls to Product DB (or cache), Review Service, Recommendation Service, and Inventory Service. Aggregates responses into a single payload.</li>
+</ul>
+
+<h4>Review Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP REST (internal service-to-service)</li>
+    <li><strong>Endpoint:</strong> <code>GET /api/v1/reviews?product_id={id}&sort=helpful&limit=5</code></li>
+    <li><strong>Input:</strong> <code>product_id</code>, <code>sort</code> (helpful | newest | rating_high | rating_low), <code>limit</code>, <code>page</code></li>
+    <li><strong>Output:</strong> JSON: <code>{ avg_rating, rating_distribution: {1: n, 2: n, ...}, total_reviews, reviews: [{ review_id, user_name, rating, title, body, images, helpful_count, verified_purchase, created_at }] }</code></li>
+</ul>
+
+<h4>Recommendation Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP REST (internal)</li>
+    <li><strong>Endpoint:</strong> <code>GET /api/v1/recommendations?product_id={id}&user_id={uid}&limit=12</code></li>
+    <li><strong>Input:</strong> <code>product_id</code>, <code>user_id</code> (optional, for personalization), <code>limit</code></li>
+    <li><strong>Output:</strong> JSON: <code>{ similar_items: [{ product_id, title, price, thumbnail_url, avg_rating }], also_viewed: [...], complete_the_room: [...] }</code></li>
+    <li><strong>Behavior:</strong> Uses pre-computed recommendation models (collaborative filtering, content-based). Results are read from a Recommendation Store (NoSQL) where batch jobs have pre-computed product-to-product recommendations. For personalized recommendations, the user's recent browsing/purchase history is factored in.</li>
+</ul>
+
+<h4>Inventory Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP REST (internal)</li>
+    <li><strong>Endpoint:</strong> <code>GET /api/v1/inventory/{product_id}</code></li>
+    <li><strong>Input:</strong> <code>product_id</code></li>
+    <li><strong>Output:</strong> JSON: <code>{ product_id, in_stock: bool, quantity: int, restock_date: date|null, supplier_lead_time_days: int }</code></li>
+    <li><strong>Behavior:</strong> Reads from the Inventory SQL DB. This is real-time data that should NOT be cached aggressively (short TTL only) to avoid displaying stale availability.</li>
+</ul>
+
+<h4>Object Storage</h4>
+<ul>
+    <li><strong>Purpose:</strong> Stores original and processed product images (multiple resolutions), 3D model assets, and AR assets.</li>
+    <li><strong>Access pattern:</strong> Write-once (at product creation), read-many via CDN origin-pull.</li>
 </ul>
 </div>
+
+<!-- ============================================================ -->
+<h2 id="flow3">5. Flow 3: Cart &amp; Checkout (Order Placement)</h2>
+<!-- ============================================================ -->
+
+<h3>5.1 Diagram</h3>
+<div class="mermaid">
+graph LR
+    subgraph Client
+        A[Web / Mobile App]
+    end
+
+    subgraph Backend
+        LB[Load Balancer]
+        CS[Cart Service]
+        CDB[(Cart DB<br/>NoSQL)]
+        OS[Order Service]
+        ODB[(Order DB<br/>SQL)]
+        IS[Inventory Service]
+        IDB[(Inventory DB<br/>SQL)]
+        PAY[Payment Service]
+        EXT[External Payment<br/>Gateway]
+        MQ[Message Queue]
+    end
+
+    subgraph Async Workers
+        NW[Notification Worker]
+        FW[Fulfillment Worker]
+        AW[Analytics Worker]
+    end
+
+    A -- "POST /cart/items" --> LB
+    A -- "PATCH /cart/items/:id" --> LB
+    A -- "DELETE /cart/items/:id" --> LB
+    A -- "GET /cart" --> LB
+    LB --> CS
+    CS --> CDB
+
+    A -- "POST /orders" --> LB
+    LB --> OS
+    OS -- "reserve inventory" --> IS
+    IS --> IDB
+    OS -- "charge payment" --> PAY
+    PAY --> EXT
+    OS -- "persist order" --> ODB
+    OS -- "publish events" --> MQ
+    MQ --> NW
+    MQ --> FW
+    MQ --> AW
+</div>
+
+<h3>5.2 Flow Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Adding item to cart:</strong> A user clicks "Add to Cart" on the Ainsley Sofa (prod_83921, quantity: 1, color: "Navy Blue"). The client sends <code>POST /api/v1/cart/items</code> with body <code>{ product_id: "prod_83921", quantity: 1, variant: "navy-blue" }</code>. The Load Balancer routes to the Cart Service, which writes the item to the Cart DB (NoSQL, keyed by <code>user_id</code>). The Cart Service returns the updated cart with the new item count. No inventory reservation happens at this point (only at checkout).
+</div>
+
+<div class="example">
+<strong>Example 2 — Successful checkout:</strong> The user proceeds to checkout with 2 items in the cart (a sofa and a throw pillow). The client sends <code>POST /api/v1/orders</code> with body <code>{ shipping_address: {...}, payment_method_id: "pm_4821", promo_code: "SAVE20", items: [{ product_id: "prod_83921", qty: 1 }, { product_id: "prod_12045", qty: 2 }] }</code>. The Order Service executes the following in a coordinated sequence: (1) Calls the Inventory Service to reserve stock for both items — the Inventory Service decrements available quantity in the Inventory DB within a SQL transaction. (2) Calls the Payment Service to authorize and capture the total amount ($1,247.98) via the External Payment Gateway. (3) On payment success, persists the order to the Order DB with status "CONFIRMED". (4) Publishes order events to the Message Queue: <code>order.confirmed</code> (consumed by Notification Worker to send email confirmation, Fulfillment Worker to initiate supplier fulfillment, and Analytics Worker to record the sale). (5) Clears the cart in the Cart DB. Returns <code>{ order_id: "ord_90281", status: "CONFIRMED", estimated_delivery: "2025-02-25" }</code>.
+</div>
+
+<div class="example">
+<strong>Example 3 — Checkout with insufficient inventory:</strong> A user tries to check out but the sofa went out of stock between when they added it to cart and when they clicked "Place Order". The Order Service calls the Inventory Service, which returns <code>{ product_id: "prod_83921", reserved: false, reason: "OUT_OF_STOCK" }</code>. The Order Service aborts the order (no payment is charged), returns a 409 Conflict response: <code>{ error: "INVENTORY_UNAVAILABLE", unavailable_items: [{ product_id: "prod_83921", title: "Ainsley Sofa" }] }</code>. The client displays "Sorry, the Ainsley Sofa is no longer available" and offers alternatives.
+</div>
+
+<div class="example">
+<strong>Example 4 — Payment failure:</strong> Inventory is successfully reserved, but the Payment Service returns a payment decline from the External Payment Gateway. The Order Service rolls back the inventory reservation (re-increments quantity) and returns a 402 Payment Required response: <code>{ error: "PAYMENT_DECLINED", reason: "INSUFFICIENT_FUNDS" }</code>. The client prompts the user to try a different payment method.
+</div>
+
+<div class="example">
+<strong>Example 5 — Guest cart merging:</strong> A guest user browses and adds 3 items to their cart (stored in session/cookie-based Cart DB entry). They then decide to log in. The Cart Service detects the guest session, merges the guest cart items with any existing items in the user's persistent cart (de-duplicating and summing quantities), deletes the guest cart entry, and returns the merged cart.
+</div>
+
+<h3>5.3 Component Deep Dive</h3>
+
+<div class="card">
+<h4>Cart Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP REST</li>
+    <li><strong>Endpoints:</strong>
+        <ul>
+            <li><code>GET /api/v1/cart</code> — Retrieve current user's cart. Output: <code>{ items: [{ product_id, title, price, quantity, variant, thumbnail_url, in_stock }], subtotal, item_count }</code></li>
+            <li><code>POST /api/v1/cart/items</code> — Add item. Input: <code>{ product_id, quantity, variant }</code>. Output: Updated cart.</li>
+            <li><code>PATCH /api/v1/cart/items/{item_id}</code> — Update quantity. Input: <code>{ quantity }</code>. Output: Updated cart.</li>
+            <li><code>DELETE /api/v1/cart/items/{item_id}</code> — Remove item. Output: Updated cart.</li>
+        </ul>
+    </li>
+    <li><strong>Behavior:</strong> CRUD operations on the Cart DB. Hydrates product info (price, availability, thumbnails) from the Product DB on read. Supports guest carts (keyed by session ID) and authenticated carts (keyed by user ID), with a merge operation on login.</li>
+</ul>
+
+<h4>Order Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP REST</li>
+    <li><strong>Endpoint:</strong> <code>POST /api/v1/orders</code></li>
+    <li><strong>Input:</strong> <code>{ items: [{ product_id, quantity }], shipping_address, payment_method_id, promo_code? }</code></li>
+    <li><strong>Output:</strong> <code>{ order_id, status, total, tax, shipping_cost, estimated_delivery, items: [...] }</code></li>
+    <li><strong>Behavior:</strong> Orchestrates the checkout flow:
+        <ol>
+            <li>Validates the order (items exist, quantities valid, promo code valid).</li>
+            <li>Calls Inventory Service to reserve stock (synchronous).</li>
+            <li>Calls Payment Service to charge (synchronous).</li>
+            <li>Persists the order in the Order DB (SQL, ACID transaction).</li>
+            <li>Publishes <code>order.confirmed</code> event to Message Queue (asynchronous).</li>
+            <li>Clears the user's cart.</li>
+        </ol>
+        If any step fails, compensating actions are taken (e.g., release inventory if payment fails).
+    </li>
+    <li><strong>Idempotency:</strong> Uses an idempotency key (sent by client) to prevent duplicate orders on retries.</li>
+</ul>
+
+<h4>Payment Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP REST (internal), communicates with External Payment Gateway via HTTPS</li>
+    <li><strong>Endpoint:</strong> <code>POST /api/v1/payments</code></li>
+    <li><strong>Input:</strong> <code>{ order_id, amount, currency, payment_method_id, idempotency_key }</code></li>
+    <li><strong>Output:</strong> <code>{ payment_id, status: "SUCCESS"|"DECLINED"|"ERROR", transaction_ref }</code></li>
+    <li><strong>Behavior:</strong> Wraps the External Payment Gateway (Stripe, Adyen, etc.). Stores payment records in the Order DB for audit. Supports authorize-then-capture for orders that ship later.</li>
+</ul>
+
+<h4>Message Queue</h4>
+<ul>
+    <li><strong>Purpose:</strong> Decouples order placement from downstream processing (notifications, fulfillment, analytics).</li>
+    <li><strong>Details:</strong> See <a href="#mq">Message Queue Deep Dive</a> section.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="flow4">6. Flow 4: Order Tracking &amp; Fulfillment</h2>
+<!-- ============================================================ -->
+
+<h3>6.1 Diagram</h3>
+<div class="mermaid">
+graph LR
+    subgraph Client
+        A[Web / Mobile App]
+    end
+
+    subgraph Backend
+        LB[Load Balancer]
+        OTS[Order Tracking<br/>Service]
+        ODB[(Order DB<br/>SQL)]
+        MQ[Message Queue]
+    end
+
+    subgraph External
+        SUP[Supplier Systems]
+        CAR[Carrier APIs]
+    end
+
+    subgraph Async Workers
+        FW[Fulfillment Worker]
+        NW[Notification Worker]
+        TW[Tracking Ingestion<br/>Worker]
+    end
+
+    A -- "GET /orders/:id/tracking" --> LB
+    LB --> OTS
+    OTS --> ODB
+
+    SUP -- "shipment events" --> MQ
+    CAR -- "tracking updates" --> MQ
+    MQ --> TW
+    TW -- "update status" --> ODB
+    TW -- "publish notification" --> MQ
+    MQ --> NW
+    NW -- "push / email" --> A
+
+    FW -- "trigger supplier<br/>fulfillment" --> SUP
+</div>
+
+<h3>6.2 Flow Examples</h3>
+
+<div class="example">
+<strong>Example 1 — User checks order status:</strong> A user navigates to "My Orders" and clicks on order ord_90281. The client sends <code>GET /api/v1/orders/ord_90281/tracking</code> to the Load Balancer. The Order Tracking Service queries the Order DB and returns: <code>{ order_id: "ord_90281", status: "SHIPPED", items: [{ product_id: "prod_83921", status: "IN_TRANSIT", carrier: "XPO Logistics", tracking_number: "XPO-9281734", estimated_delivery: "2025-02-25", events: [{ status: "LABEL_CREATED", timestamp: "2025-02-14T10:00Z" }, { status: "PICKED_UP", timestamp: "2025-02-15T08:30Z" }, { status: "IN_TRANSIT", timestamp: "2025-02-16T14:00Z", location: "Memphis, TN" }] }] }</code>. The client renders a timeline visualization of the shipment progress.
+</div>
+
+<div class="example">
+<strong>Example 2 — Carrier delivers a tracking update:</strong> The carrier's system pushes a webhook or the Tracking Ingestion Worker polls the carrier API and receives a status update: the sofa has arrived at the local distribution center. The worker publishes this event to the Message Queue. The Tracking Ingestion Worker consumes it, updates the order item status in the Order DB to "OUT_FOR_DELIVERY", and publishes an <code>order.tracking_updated</code> event. The Notification Worker consumes this and sends a push notification to the user's phone: "Your Ainsley Sofa is out for delivery! Expected today by 5 PM."
+</div>
+
+<div class="example">
+<strong>Example 3 — Multi-item order with split shipments:</strong> An order contains a sofa (ships from Supplier A via freight) and throw pillows (ships from Supplier B via parcel). Each item has independent tracking. The user sees two separate shipment timelines on the tracking page, each with their own carrier, tracking number, and delivery estimate. The system models this as separate <code>shipment</code> records linked to the order.
+</div>
+
+<h3>6.3 Component Deep Dive</h3>
+
+<div class="card">
+<h4>Order Tracking Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP REST</li>
+    <li><strong>Endpoint:</strong> <code>GET /api/v1/orders/{order_id}/tracking</code></li>
+    <li><strong>Input:</strong> Path param: <code>order_id</code>. Auth: User's JWT token (validates ownership).</li>
+    <li><strong>Output:</strong> <code>{ order_id, overall_status, shipments: [{ shipment_id, items: [...], carrier, tracking_number, status, estimated_delivery, events: [{ status, timestamp, location }] }] }</code></li>
+    <li><strong>Behavior:</strong> Reads from the Order DB. Joins order, order_items, shipments, and shipment_events tables.</li>
+</ul>
+
+<h4>Fulfillment Worker</h4>
+<ul>
+    <li><strong>Trigger:</strong> Consumes <code>order.confirmed</code> events from the Message Queue.</li>
+    <li><strong>Behavior:</strong> Sends fulfillment requests to the appropriate Supplier Systems (via their APIs or EDI). Each supplier receives their items from the order. Creates <code>shipment</code> records in the Order DB with status "PENDING_FULFILLMENT".</li>
+</ul>
+
+<h4>Tracking Ingestion Worker</h4>
+<ul>
+    <li><strong>Trigger:</strong> Receives tracking updates via carrier webhooks or polls carrier APIs on a schedule.</li>
+    <li><strong>Behavior:</strong> Parses carrier-specific tracking data, normalizes it into a standard format, writes shipment events to the Order DB, and publishes <code>order.tracking_updated</code> events to the Message Queue for notification delivery.</li>
+</ul>
+
+<h4>Notification Worker</h4>
+<ul>
+    <li><strong>Trigger:</strong> Consumes events like <code>order.confirmed</code>, <code>order.shipped</code>, <code>order.tracking_updated</code>, <code>order.delivered</code> from the Message Queue.</li>
+    <li><strong>Behavior:</strong> Sends push notifications (via APNs/FCM), emails, and SMS based on user notification preferences. Templates are selected based on event type.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="flow5">7. Flow 5: Seller/Supplier Product Management</h2>
+<!-- ============================================================ -->
+
+<h3>7.1 Diagram</h3>
+<div class="mermaid">
+graph LR
+    subgraph Seller
+        SP[Seller Portal<br/>Web App]
+    end
+
+    subgraph Backend
+        LB[Load Balancer]
+        PIS[Product Ingestion<br/>Service]
+        PDB[(Product DB<br/>NoSQL)]
+        IS[Inventory Service]
+        IDB[(Inventory DB<br/>SQL)]
+        MQ[Message Queue]
+    end
+
+    subgraph Async Workers
+        IPW[Image Processing<br/>Worker]
+        SIW[Search Index<br/>Worker]
+    end
+
+    subgraph Storage
+        OBJ[(Object Storage)]
+        SI[(Search Index)]
+    end
+
+    SP -- "POST /products" --> LB
+    SP -- "PUT /products/:id" --> LB
+    SP -- "PATCH /products/:id/inventory" --> LB
+    LB --> PIS
+    PIS -- "save product" --> PDB
+    PIS -- "update inventory" --> IS
+    IS --> IDB
+    PIS -- "publish events" --> MQ
+    MQ --> IPW
+    IPW -- "resize, optimize,<br/>generate thumbnails" --> OBJ
+    MQ --> SIW
+    SIW -- "index product" --> SI
+</div>
+
+<h3>7.2 Flow Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Seller lists a new product:</strong> A supplier logs into the Seller Portal and creates a new product listing for a "Farmhouse Oak Dining Table". They fill in title, description, price ($849), category (Dining Tables), dimensions (72"×36"×30"), weight (95 lbs), materials (solid oak), assembly required (yes), and upload 8 high-resolution photos. The Seller Portal sends <code>POST /api/v1/products</code> with the product data and image file references. The Product Ingestion Service validates the data, writes the product record to the Product DB with status "PROCESSING", and publishes two events to the Message Queue: <code>product.images_uploaded</code> and <code>product.created</code>. The Image Processing Worker consumes the image event, downloads the original images, generates multiple resolutions (thumbnail: 200px, medium: 800px, large: 1600px, zoom: 3200px), converts to WebP format, and stores all variants in Object Storage. The Search Index Worker consumes the created event, builds the search document, and indexes it in the Search Index. Once processing completes, the product status is updated to "ACTIVE" and it appears in search results.
+</div>
+
+<div class="example">
+<strong>Example 2 — Seller updates inventory:</strong> A supplier receives a new shipment of 50 dining tables. They update the inventory via the Seller Portal: <code>PATCH /api/v1/products/prod_44821/inventory</code> with body <code>{ quantity_delta: +50 }</code>. The Product Ingestion Service routes this to the Inventory Service, which atomically increments the quantity in the Inventory DB. If the product was previously out-of-stock, an <code>inventory.restocked</code> event is published to the Message Queue, triggering notifications to users who opted into restock alerts.
+</div>
+
+<div class="example">
+<strong>Example 3 — Seller updates price:</strong> A supplier runs a sale and reduces the dining table price from $849 to $649. They send <code>PUT /api/v1/products/prod_44821</code> with the updated price. The Product Ingestion Service updates the Product DB and publishes <code>product.updated</code> to the Message Queue. The Search Index Worker re-indexes the product with the new price. The Product Cache is invalidated for this product. Users browsing the category page will see the new price within seconds (eventual consistency).
+</div>
+
+<h3>7.3 Component Deep Dive</h3>
+
+<div class="card">
+<h4>Product Ingestion Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP REST</li>
+    <li><strong>Endpoints:</strong>
+        <ul>
+            <li><code>POST /api/v1/products</code> — Create product. Input: <code>{ title, description, price, category_id, dimensions, weight, materials, images: [file_refs], attributes: {...}, seller_id }</code>. Output: <code>{ product_id, status: "PROCESSING" }</code></li>
+            <li><code>PUT /api/v1/products/{product_id}</code> — Full update. Input: Full product object. Output: Updated product.</li>
+            <li><code>PATCH /api/v1/products/{product_id}/inventory</code> — Update stock. Input: <code>{ quantity_delta }</code> or <code>{ quantity_absolute }</code>. Output: <code>{ product_id, new_quantity }</code></li>
+        </ul>
+    </li>
+    <li><strong>Auth:</strong> Seller authentication via API key or OAuth. Seller can only modify their own products.</li>
+    <li><strong>Behavior:</strong> Validates input, writes to Product DB and/or Inventory DB, and publishes events to the Message Queue for async processing (image processing, search indexing, cache invalidation).</li>
+</ul>
+
+<h4>Image Processing Worker</h4>
+<ul>
+    <li><strong>Trigger:</strong> Consumes <code>product.images_uploaded</code> events from Message Queue.</li>
+    <li><strong>Behavior:</strong> Downloads original images, generates multiple resolutions and formats (JPEG, WebP, AVIF), applies quality optimization, and uploads all variants to Object Storage. Updates the Product DB with the generated image URLs. Also invalidates CDN cache for updated images.</li>
+</ul>
+
+<h4>Search Index Worker</h4>
+<ul>
+    <li><strong>Trigger:</strong> Consumes <code>product.created</code>, <code>product.updated</code>, <code>product.deleted</code> events from Message Queue.</li>
+    <li><strong>Behavior:</strong> Builds/updates/deletes the search document in the Search Index. Ensures the inverted index stays in sync with the Product DB (eventual consistency, typically within 1-5 seconds).</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="flow6">8. Flow 6: Reviews &amp; Ratings</h2>
+<!-- ============================================================ -->
+
+<h3>8.1 Diagram</h3>
+<div class="mermaid">
+graph LR
+    subgraph Client
+        A[Web / Mobile App]
+    end
+
+    subgraph Backend
+        LB[Load Balancer]
+        RS[Review Service]
+        RDB[(Review DB<br/>NoSQL)]
+        MQ[Message Queue]
+    end
+
+    subgraph Async Workers
+        RAW[Rating Aggregation<br/>Worker]
+        CMW[Content Moderation<br/>Worker]
+        SIUW[Search Index<br/>Update Worker]
+    end
+
+    subgraph Storage
+        PDB[(Product DB<br/>NoSQL)]
+        SI[(Search Index)]
+        OBJ[(Object Storage)]
+    end
+
+    A -- "POST /reviews" --> LB
+    A -- "GET /reviews?product_id=..." --> LB
+    LB --> RS
+    RS --> RDB
+    RS -- "upload review images" --> OBJ
+    RS -- "publish event" --> MQ
+    MQ --> RAW
+    RAW -- "update avg_rating,<br/>review_count" --> PDB
+    MQ --> CMW
+    MQ --> SIUW
+    SIUW -- "update rating in index" --> SI
+</div>
+
+<h3>8.2 Flow Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Submitting a review:</strong> A user who purchased the Ainsley Sofa navigates to the product page and clicks "Write a Review." They give 4 stars, write a title ("Great comfort, minor assembly issues"), a body review, and upload 2 photos of the sofa in their living room. The client sends <code>POST /api/v1/reviews</code> with body <code>{ product_id: "prod_83921", rating: 4, title: "Great comfort, minor assembly issues", body: "The sofa is incredibly comfortable...", images: [file1, file2] }</code>. The Review Service validates that the user purchased this product (checks Order DB), stores the review in the Review DB with status "PENDING_MODERATION", uploads images to Object Storage, and publishes a <code>review.submitted</code> event to the Message Queue. The Content Moderation Worker checks the review text and images for policy violations. If approved, the review status is updated to "PUBLISHED". The Rating Aggregation Worker recalculates the product's average rating and review count, updating the Product DB. The Search Index Update Worker updates the rating data in the Search Index so search results reflect the new rating.
+</div>
+
+<div class="example">
+<strong>Example 2 — Reading reviews:</strong> A user on the product detail page scrolls to the reviews section. The client sends <code>GET /api/v1/reviews?product_id=prod_83921&sort=helpful&page=1&limit=10</code>. The Review Service queries the Review DB for published reviews of this product, sorted by helpfulness score (a combination of "helpful" votes and recency). Returns the reviews along with the aggregate rating distribution.
+</div>
+
+<div class="example">
+<strong>Example 3 — Review rejected by moderation:</strong> A user submits a review containing profanity. The Content Moderation Worker flags the review. The review status is updated to "REJECTED" in the Review DB. The review is not published and does not affect the product's aggregate rating. The user receives an email explaining that their review did not meet community guidelines.
+</div>
+
+<h3>8.3 Component Deep Dive</h3>
+
+<div class="card">
+<h4>Review Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP REST</li>
+    <li><strong>Endpoints:</strong>
+        <ul>
+            <li><code>POST /api/v1/reviews</code> — Submit review. Input: <code>{ product_id, rating, title, body, images[] }</code>. Output: <code>{ review_id, status: "PENDING_MODERATION" }</code></li>
+            <li><code>GET /api/v1/reviews?product_id={id}&sort={sort}&page={p}&limit={l}</code> — Read reviews. Output: <code>{ avg_rating, rating_distribution, total_reviews, reviews: [...] }</code></li>
+            <li><code>POST /api/v1/reviews/{review_id}/helpful</code> — Mark review as helpful. Input: (none, uses auth user). Output: <code>{ helpful_count }</code></li>
+        </ul>
+    </li>
+    <li><strong>Auth:</strong> Write operations require authentication. Submitting a review also requires a verified purchase of the product.</li>
+</ul>
+
+<h4>Rating Aggregation Worker</h4>
+<ul>
+    <li><strong>Trigger:</strong> Consumes <code>review.published</code>, <code>review.deleted</code> events from Message Queue.</li>
+    <li><strong>Behavior:</strong> Queries all published reviews for the product from the Review DB, recalculates <code>avg_rating</code> and <code>review_count</code>, and updates these denormalized fields on the product record in the Product DB. This avoids expensive aggregation queries on every product page load.</li>
+</ul>
+
+<h4>Content Moderation Worker</h4>
+<ul>
+    <li><strong>Trigger:</strong> Consumes <code>review.submitted</code> events from Message Queue.</li>
+    <li><strong>Behavior:</strong> Runs the review text through NLP-based profanity/spam detection and checks images through an image moderation model. Updates review status to "PUBLISHED" or "REJECTED" in the Review DB.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="combined">9. Combined Overall Architecture Diagram</h2>
+<!-- ============================================================ -->
+
+<h3>9.1 Diagram</h3>
+<div class="mermaid">
+graph TB
+    subgraph Clients
+        WEB[Web App]
+        MOB[Mobile App]
+        SELL[Seller Portal]
+    end
+
+    subgraph Edge Layer
+        CDN[CDN]
+        GLB[Global Load Balancer]
+    end
+
+    subgraph API Gateway & Load Balancers
+        APIGW[API Gateway / LB]
+    end
+
+    subgraph Core Services
+        SS[Search Service]
+        AC[Autocomplete Service]
+        PS[Product Service]
+        CS[Cart Service]
+        OS[Order Service]
+        IS[Inventory Service]
+        PAY[Payment Service]
+        OTS[Order Tracking Service]
+        RS[Review Service]
+        REC[Recommendation Service]
+        PIS[Product Ingestion Service]
+        AUTH[Auth Service]
+    end
+
+    subgraph Message Queue Layer
+        MQ[Message Queue]
+    end
+
+    subgraph Async Workers
+        IPW[Image Processing]
+        SIW[Search Indexing]
+        NW[Notifications]
+        FW[Fulfillment]
+        TW[Tracking Ingestion]
+        RAW[Rating Aggregation]
+        CMW[Content Moderation]
+        AW[Analytics]
+    end
+
+    subgraph Data Stores
+        PDB[(Product DB<br/>NoSQL)]
+        ODB[(Order DB<br/>SQL)]
+        IDB[(Inventory DB<br/>SQL)]
+        CDB[(Cart DB<br/>NoSQL)]
+        RDB[(Review DB<br/>NoSQL)]
+        RECDB[(Recommendation<br/>Store - NoSQL)]
+        UDB[(User DB<br/>SQL)]
+        SI[(Search Index)]
+        CACHE[(In-Memory Cache)]
+    end
+
+    subgraph External Storage
+        OBJ[(Object Storage)]
+    end
+
+    subgraph External Services
+        EXT_PAY[Payment Gateway]
+        EXT_CAR[Carrier APIs]
+        EXT_SUP[Supplier Systems]
+    end
+
+    WEB --> CDN
+    MOB --> CDN
+    WEB --> GLB
+    MOB --> GLB
+    SELL --> GLB
+    CDN -- "origin pull" --> OBJ
+    GLB --> APIGW
+
+    APIGW --> AUTH
+    APIGW --> SS
+    APIGW --> AC
+    APIGW --> PS
+    APIGW --> CS
+    APIGW --> OS
+    APIGW --> OTS
+    APIGW --> RS
+    APIGW --> PIS
+
+    SS --> CACHE
+    SS --> SI
+    SS --> PDB
+    AC --> SI
+    PS --> CACHE
+    PS --> PDB
+    PS --> RS
+    PS --> REC
+    PS --> IS
+    CS --> CDB
+    OS --> IS
+    OS --> PAY
+    OS --> ODB
+    OS --> MQ
+    IS --> IDB
+    PAY --> EXT_PAY
+    OTS --> ODB
+    RS --> RDB
+    RS --> OBJ
+    RS --> MQ
+    REC --> RECDB
+    PIS --> PDB
+    PIS --> IS
+    PIS --> MQ
+    AUTH --> UDB
+
+    MQ --> IPW
+    MQ --> SIW
+    MQ --> NW
+    MQ --> FW
+    MQ --> TW
+    MQ --> RAW
+    MQ --> CMW
+    MQ --> AW
+
+    IPW --> OBJ
+    SIW --> SI
+    RAW --> PDB
+    FW --> EXT_SUP
+    TW --> EXT_CAR
+    TW --> ODB
+</div>
+
+<h3>9.2 Combined Flow Examples</h3>
+
+<div class="example">
+<strong>Example 1 — End-to-end purchase journey:</strong> (1) A user opens the Wayfair app and searches "farmhouse dining table". The request goes through the Global Load Balancer → API Gateway → Search Service → Search Index → Product DB hydration. Thumbnails load from CDN. (2) The user taps on a result. API Gateway → Product Service → Product Cache (hit) → also fetches reviews from Review Service and recommendations from Recommendation Service. HD images load from CDN. (3) The user adds the table to their cart. API Gateway → Cart Service → Cart DB. (4) The user checks out. API Gateway → Order Service → Inventory Service reserves stock → Payment Service charges card via External Payment Gateway → Order DB stores order → Message Queue receives <code>order.confirmed</code>. (5) Fulfillment Worker sends fulfillment request to Supplier System. (6) Notification Worker sends order confirmation email. (7) Days later, Tracking Ingestion Worker receives shipping updates from Carrier API → updates Order DB → Notification Worker sends "Your order has shipped" push notification. (8) The user checks tracking: API Gateway → Order Tracking Service → Order DB.
+</div>
+
+<div class="example">
+<strong>Example 2 — Seller lists product, user finds and reviews it:</strong> (1) A seller logs into the Seller Portal and creates a product listing. API Gateway → Product Ingestion Service → Product DB (writes product) → Message Queue. (2) Image Processing Worker generates thumbnails → Object Storage. Search Index Worker indexes the product → Search Index. (3) A buyer searches for the product category, finds the new listing in search results. (4) After purchasing and receiving the item, the buyer writes a review. API Gateway → Review Service → Review DB → Message Queue. (5) Content Moderation Worker approves the review. Rating Aggregation Worker updates the product's avg_rating in the Product DB. Search Index Update Worker re-indexes the product with the new rating. (6) Future buyers see the updated rating in search results and on the product page.
+</div>
+
+<div class="example">
+<strong>Example 3 — Flash sale (Way Day) traffic burst:</strong> Wayfair announces a site-wide sale. Traffic spikes 10x. (1) The CDN absorbs the majority of image requests — thumbnail and product image traffic doesn't hit origin. (2) The In-Memory Cache serves repeated search queries — "living room furniture sale", "sofa deals" are cached. (3) The API Gateway / Load Balancer distributes traffic across auto-scaled service instances. (4) The Inventory Service handles high write throughput as thousands of orders flow in. Inventory SQL DB uses row-level locking to prevent overselling. (5) The Message Queue buffers order events, smoothing the spike for downstream workers (fulfillment, notifications, analytics). Workers scale independently based on queue depth.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="schema">10. Database Schema</h2>
+<!-- ============================================================ -->
+
+<h3>10.1 SQL Tables</h3>
+
+<div class="card">
+<h4>users (SQL — User DB)</h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>email</code></td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td></tr>
+    <tr><td><code>password_hash</code></td><td>VARCHAR(255)</td><td>NOT NULL</td></tr>
+    <tr><td><code>first_name</code></td><td>VARCHAR(100)</td><td></td></tr>
+    <tr><td><code>last_name</code></td><td>VARCHAR(100)</td><td></td></tr>
+    <tr><td><code>phone</code></td><td>VARCHAR(20)</td><td></td></tr>
+    <tr><td><code>default_shipping_address_id</code></td><td>UUID</td><td>FK → addresses.address_id</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td></td></tr>
+    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td></td></tr>
+</table>
+<p><strong>Why SQL:</strong> User data has a fixed, relational schema. Requires ACID transactions for account operations (e.g., email change with uniqueness constraint). Strong consistency is needed — a user must not be able to create duplicate accounts.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><code>email</code> — <strong>Hash index</strong> (exact-match lookups on login; emails are always looked up by exact value, never range-scanned).</li>
+</ul>
+<p><strong>Read:</strong> User login, profile page, checkout (for address). <strong>Write:</strong> User registration, profile update.</p>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code> (hash-based). Users access their own data, so user_id is the ideal partition key — all queries for a single user go to one shard. This distributes write and read load evenly.</p>
+</div>
+
+<div class="card">
+<h4>addresses (SQL — User DB)</h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>address_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><strong>FK → users.user_id</strong>, NOT NULL</td></tr>
+    <tr><td><code>label</code></td><td>VARCHAR(50)</td><td>(e.g., "Home", "Office")</td></tr>
+    <tr><td><code>street_address</code></td><td>VARCHAR(255)</td><td></td></tr>
+    <tr><td><code>city</code></td><td>VARCHAR(100)</td><td></td></tr>
+    <tr><td><code>state</code></td><td>VARCHAR(50)</td><td></td></tr>
+    <tr><td><code>zip_code</code></td><td>VARCHAR(20)</td><td></td></tr>
+    <tr><td><code>country</code></td><td>VARCHAR(50)</td><td></td></tr>
+</table>
+<p><strong>Why SQL:</strong> Co-located with the users table in the same relational database. Addresses have a fixed schema and are referenced by orders.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><code>user_id</code> — <strong>B-tree index</strong> (range-friendly; a user may have multiple addresses, and we fetch all addresses for a user).</li>
+</ul>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code> (same shard as the user record) to enable local joins.</p>
+<p><strong>Read:</strong> Checkout page (load saved addresses), profile page. <strong>Write:</strong> User adds/edits an address.</p>
+</div>
+
+<div class="card">
+<h4>orders (SQL — Order DB)</h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>order_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><strong>FK → users.user_id</strong>, NOT NULL</td></tr>
+    <tr><td><code>status</code></td><td>ENUM</td><td>('PENDING','CONFIRMED','PARTIALLY_SHIPPED','SHIPPED','DELIVERED','CANCELLED','RETURNED')</td></tr>
+    <tr><td><code>subtotal</code></td><td>DECIMAL(12,2)</td><td></td></tr>
+    <tr><td><code>tax</code></td><td>DECIMAL(12,2)</td><td></td></tr>
+    <tr><td><code>shipping_cost</code></td><td>DECIMAL(12,2)</td><td></td></tr>
+    <tr><td><code>discount</code></td><td>DECIMAL(12,2)</td><td></td></tr>
+    <tr><td><code>total</code></td><td>DECIMAL(12,2)</td><td></td></tr>
+    <tr><td><code>promo_code</code></td><td>VARCHAR(50)</td><td>NULLABLE</td></tr>
+    <tr><td><code>shipping_address_snapshot</code></td><td>JSON</td><td>NOT NULL (denormalized snapshot at time of order)</td></tr>
+    <tr><td><code>idempotency_key</code></td><td>VARCHAR(64)</td><td>UNIQUE</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td></td></tr>
+    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td></td></tr>
+</table>
+<p><strong>Why SQL:</strong> Financial/transactional data requires ACID guarantees. Orders involve multi-table transactions (order + order_items + payments + inventory). Correctness is paramount — we cannot lose or duplicate an order.</p>
+<p><strong>Denormalization note:</strong> <code>shipping_address_snapshot</code> is a denormalized copy of the shipping address at order time. This is intentional — if the user later updates their address, the order should still reflect the address it was shipped to. <code>total</code> is also denormalized (could be computed from subtotal + tax + shipping - discount) for fast reads and to preserve the exact calculated amount.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><code>user_id</code> — <strong>B-tree index</strong> (range queries for "My Orders" page, which lists orders sorted by date for a given user).</li>
+    <li><code>(user_id, created_at DESC)</code> — <strong>Composite B-tree index</strong> (optimizes the common query pattern: "get this user's most recent orders").</li>
+    <li><code>idempotency_key</code> — <strong>Hash index</strong> (exact-match lookup to detect duplicate order submissions).</li>
+    <li><code>status</code> — <strong>B-tree index</strong> (admin queries filtering by order status).</li>
+</ul>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code> (hash-based). A user's order history lives on a single shard. Cross-shard queries (e.g., admin reporting) are handled by a separate analytics pipeline, not the OLTP database.</p>
+<p><strong>Read:</strong> User views "My Orders", user views order detail, admin dashboards. <strong>Write:</strong> User places an order, order status updates from fulfillment/tracking events.</p>
+</div>
+
+<div class="card">
+<h4>order_items (SQL — Order DB)</h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>order_item_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>order_id</code></td><td>UUID</td><td><strong>FK → orders.order_id</strong>, NOT NULL</td></tr>
+    <tr><td><code>product_id</code></td><td>VARCHAR(64)</td><td>NOT NULL</td></tr>
+    <tr><td><code>product_title_snapshot</code></td><td>VARCHAR(500)</td><td>NOT NULL</td></tr>
+    <tr><td><code>variant</code></td><td>VARCHAR(100)</td><td></td></tr>
+    <tr><td><code>quantity</code></td><td>INT</td><td>NOT NULL</td></tr>
+    <tr><td><code>unit_price</code></td><td>DECIMAL(12,2)</td><td>NOT NULL</td></tr>
+    <tr><td><code>seller_id</code></td><td>VARCHAR(64)</td><td>NOT NULL</td></tr>
+    <tr><td><code>status</code></td><td>ENUM</td><td>('PENDING','PROCESSING','SHIPPED','DELIVERED','CANCELLED','RETURNED')</td></tr>
+    <tr><td><code>shipment_id</code></td><td>UUID</td><td>FK → shipments.shipment_id, NULLABLE</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Same transactional DB as orders. Created atomically with the order.</p>
+<p><strong>Denormalization note:</strong> <code>product_title_snapshot</code> and <code>unit_price</code> are snapshots at time of purchase. This preserves the historical record even if the product title or price changes later.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><code>order_id</code> — <strong>B-tree index</strong> (fetch all items for an order).</li>
+    <li><code>product_id</code> — <strong>B-tree index</strong> (used to check if a user purchased a product, for review eligibility: <code>WHERE product_id = ? AND order_id IN (SELECT order_id FROM orders WHERE user_id = ?)</code>).</li>
+</ul>
+<p><strong>Sharding:</strong> Shard by <code>order_id</code> (same shard as the parent order, which is itself sharded by <code>user_id</code> — order_id includes the user_id shard key or they're on the same shard via consistent hashing).</p>
+<p><strong>Read:</strong> Order detail page, fulfillment processing. <strong>Write:</strong> Order placement, status updates from fulfillment events.</p>
+</div>
+
+<div class="card">
+<h4>shipments (SQL — Order DB)</h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>shipment_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>order_id</code></td><td>UUID</td><td><strong>FK → orders.order_id</strong>, NOT NULL</td></tr>
+    <tr><td><code>carrier</code></td><td>VARCHAR(100)</td><td></td></tr>
+    <tr><td><code>tracking_number</code></td><td>VARCHAR(100)</td><td></td></tr>
+    <tr><td><code>status</code></td><td>ENUM</td><td>('PENDING','LABEL_CREATED','PICKED_UP','IN_TRANSIT','OUT_FOR_DELIVERY','DELIVERED','EXCEPTION')</td></tr>
+    <tr><td><code>estimated_delivery</code></td><td>DATE</td><td></td></tr>
+    <tr><td><code>actual_delivery</code></td><td>TIMESTAMP</td><td>NULLABLE</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td></td></tr>
+    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td></td></tr>
+</table>
+<p><strong>Why SQL:</strong> Co-located with orders for transactional integrity and join-based queries (order detail page includes shipment info).</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><code>order_id</code> — <strong>B-tree index</strong> (get all shipments for an order).</li>
+    <li><code>tracking_number</code> — <strong>Hash index</strong> (carrier webhook updates come with tracking_number as identifier).</li>
+</ul>
+<p><strong>Read:</strong> Order tracking page. <strong>Write:</strong> Fulfillment worker creates shipment, Tracking Ingestion Worker updates status.</p>
+</div>
+
+<div class="card">
+<h4>shipment_events (SQL — Order DB)</h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>event_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>shipment_id</code></td><td>UUID</td><td><strong>FK → shipments.shipment_id</strong>, NOT NULL</td></tr>
+    <tr><td><code>status</code></td><td>VARCHAR(50)</td><td></td></tr>
+    <tr><td><code>location</code></td><td>VARCHAR(200)</td><td></td></tr>
+    <tr><td><code>description</code></td><td>TEXT</td><td></td></tr>
+    <tr><td><code>occurred_at</code></td><td>TIMESTAMP</td><td></td></tr>
+</table>
+<p><strong>Why SQL:</strong> Append-only event log for shipment tracking; co-located with shipments table.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><code>(shipment_id, occurred_at)</code> — <strong>Composite B-tree index</strong> (fetch events for a shipment in chronological order).</li>
+</ul>
+<p><strong>Read:</strong> Order tracking page (timeline view). <strong>Write:</strong> Tracking Ingestion Worker appends new events.</p>
+</div>
+
+<div class="card">
+<h4>payments (SQL — Order DB)</h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>payment_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>order_id</code></td><td>UUID</td><td><strong>FK → orders.order_id</strong>, NOT NULL</td></tr>
+    <tr><td><code>amount</code></td><td>DECIMAL(12,2)</td><td></td></tr>
+    <tr><td><code>currency</code></td><td>CHAR(3)</td><td>(e.g., 'USD')</td></tr>
+    <tr><td><code>payment_method</code></td><td>VARCHAR(50)</td><td></td></tr>
+    <tr><td><code>status</code></td><td>ENUM</td><td>('AUTHORIZED','CAPTURED','DECLINED','REFUNDED','PARTIALLY_REFUNDED')</td></tr>
+    <tr><td><code>gateway_transaction_id</code></td><td>VARCHAR(100)</td><td></td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td></td></tr>
+</table>
+<p><strong>Why SQL:</strong> Financial records require ACID guarantees and audit trail integrity. Must be consistent with order records.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><code>order_id</code> — <strong>B-tree index</strong> (look up payment for an order).</li>
+    <li><code>gateway_transaction_id</code> — <strong>Hash index</strong> (reconciliation with external payment gateway).</li>
+</ul>
+<p><strong>Read:</strong> Order detail (payment status), refund processing, financial reconciliation. <strong>Write:</strong> Checkout (payment creation), refund processing.</p>
+</div>
+
+<div class="card">
+<h4>inventory (SQL — Inventory DB)</h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+    <tr><td><code>product_id</code></td><td>VARCHAR(64)</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>seller_id</code></td><td>VARCHAR(64)</td><td>NOT NULL</td></tr>
+    <tr><td><code>quantity_available</code></td><td>INT</td><td>NOT NULL, CHECK >= 0</td></tr>
+    <tr><td><code>quantity_reserved</code></td><td>INT</td><td>NOT NULL, DEFAULT 0</td></tr>
+    <tr><td><code>restock_date</code></td><td>DATE</td><td>NULLABLE</td></tr>
+    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td></td></tr>
+</table>
+<p><strong>Why SQL:</strong> Inventory updates must be atomic. The <code>CHECK >= 0</code> constraint prevents overselling at the database level. Row-level locking ensures concurrent checkout requests don't create race conditions. This is the most critical write-path table.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><code>product_id</code> — <strong>Primary key (hash)</strong> (all queries are point lookups by product_id).</li>
+    <li><code>seller_id</code> — <strong>B-tree index</strong> (seller dashboard shows inventory levels for all their products).</li>
+</ul>
+<p><strong>Sharding:</strong> Shard by <code>product_id</code> (hash-based). Each product's inventory lives on one shard. Since checkout involves multiple products, a distributed transaction or saga pattern is used for multi-item orders.</p>
+<p><strong>Read:</strong> Product detail page (availability check), seller dashboard. <strong>Write:</strong> Checkout (reserve/decrement), seller inventory update, order cancellation (release).</p>
+</div>
+
+<h3>10.2 NoSQL Tables</h3>
+
+<div class="card">
+<h4>products (NoSQL Document Store — Product DB)</h4>
+<table>
+    <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+    <tr><td><code>product_id</code></td><td>String</td><td><strong>Partition Key</strong></td></tr>
+    <tr><td><code>seller_id</code></td><td>String</td><td>Indexed (GSI)</td></tr>
+    <tr><td><code>title</code></td><td>String</td><td></td></tr>
+    <tr><td><code>description</code></td><td>String</td><td>Rich text / HTML</td></tr>
+    <tr><td><code>price</code></td><td>Number</td><td></td></tr>
+    <tr><td><code>original_price</code></td><td>Number</td><td>Nullable (for sale items)</td></tr>
+    <tr><td><code>currency</code></td><td>String</td><td></td></tr>
+    <tr><td><code>category_path</code></td><td>List&lt;String&gt;</td><td>e.g., ["Furniture", "Living Room", "Sofas"]</td></tr>
+    <tr><td><code>brand</code></td><td>String</td><td></td></tr>
+    <tr><td><code>colors</code></td><td>List&lt;String&gt;</td><td></td></tr>
+    <tr><td><code>materials</code></td><td>List&lt;String&gt;</td><td></td></tr>
+    <tr><td><code>dimensions</code></td><td>Map</td><td>{ width, height, depth, weight }</td></tr>
+    <tr><td><code>assembly_required</code></td><td>Boolean</td><td></td></tr>
+    <tr><td><code>images</code></td><td>List&lt;Map&gt;</td><td>[{ url, alt, width, height, type }]</td></tr>
+    <tr><td><code>variants</code></td><td>List&lt;Map&gt;</td><td>[{ variant_id, color, size, price_modifier, images }]</td></tr>
+    <tr><td><code>attributes</code></td><td>Map</td><td>Flexible key-value (e.g., { "seat_depth": "22in", "cushion_fill": "foam" })</td></tr>
+    <tr><td><code>avg_rating</code></td><td>Number</td><td><strong>Denormalized</strong> (updated by Rating Aggregation Worker)</td></tr>
+    <tr><td><code>review_count</code></td><td>Number</td><td><strong>Denormalized</strong> (updated by Rating Aggregation Worker)</td></tr>
+    <tr><td><code>shipping_info</code></td><td>Map</td><td>{ free_shipping, estimated_days, freight_required }</td></tr>
+    <tr><td><code>status</code></td><td>String</td><td>PROCESSING | ACTIVE | INACTIVE | DELETED</td></tr>
+    <tr><td><code>created_at</code></td><td>String (ISO 8601)</td><td></td></tr>
+    <tr><td><code>updated_at</code></td><td>String (ISO 8601)</td><td></td></tr>
+</table>
+<p><strong>Why NoSQL:</strong> Product data is read-heavy (thousands of reads per second for popular products), has a flexible/nested schema (dimensions, variants, attributes vary by category — a sofa has "seat_depth" while a lamp has "wattage"), and doesn't require multi-record transactions. The document model naturally fits the hierarchical product data structure. Horizontal scaling via partition key is straightforward.</p>
+<p><strong>Denormalization explanation:</strong> <code>avg_rating</code> and <code>review_count</code> are denormalized from the Review DB. This is done because the product detail page and search results display the rating, and computing it on-the-fly from potentially thousands of reviews per request would be prohibitively expensive. The Rating Aggregation Worker maintains this asynchronously, and a slight delay (seconds) in rating updates is acceptable.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><code>product_id</code> — <strong>Partition key (hash)</strong>. Primary access pattern.</li>
+    <li><code>seller_id</code> — <strong>Global Secondary Index (hash)</strong>. Enables seller to list all their products.</li>
+    <li><code>category_path + created_at</code> — <strong>GSI (hash + range)</strong>. Enables category browsing sorted by newest.</li>
+</ul>
+<p><strong>Sharding:</strong> Naturally sharded by <code>product_id</code> (partition key). NoSQL document stores distribute data across nodes based on the hash of the partition key. Hot products are handled by the caching layer, not the DB directly.</p>
+<p><strong>Read:</strong> Product detail page, search result hydration, cart hydration. <strong>Write:</strong> Seller creates/updates product, Rating Aggregation Worker updates rating fields.</p>
+</div>
+
+<div class="card">
+<h4>carts (NoSQL Key-Value — Cart DB)</h4>
+<table>
+    <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+    <tr><td><code>user_id</code> (or <code>session_id</code>)</td><td>String</td><td><strong>Partition Key</strong></td></tr>
+    <tr><td><code>items</code></td><td>List&lt;Map&gt;</td><td>[{ product_id, variant, quantity, added_at }]</td></tr>
+    <tr><td><code>updated_at</code></td><td>String (ISO 8601)</td><td></td></tr>
+    <tr><td><code>ttl</code></td><td>Number (epoch)</td><td>Auto-expire guest carts after 30 days</td></tr>
+</table>
+<p><strong>Why NoSQL:</strong> Cart data is ephemeral, has a simple access pattern (read/write by user_id), needs low latency, and doesn't require joins or complex queries. A key-value store or document store is ideal. Guest carts use TTL for automatic cleanup.</p>
+<p><strong>Read:</strong> User views cart, checkout initiation. <strong>Write:</strong> Add/remove/update cart items, cart cleared on order placement.</p>
+</div>
+
+<div class="card">
+<h4>reviews (NoSQL Document Store — Review DB)</h4>
+<table>
+    <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+    <tr><td><code>review_id</code></td><td>String</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>product_id</code></td><td>String</td><td><strong>Partition Key</strong> (GSI or composite key)</td></tr>
+    <tr><td><code>user_id</code></td><td>String</td><td></td></tr>
+    <tr><td><code>user_name</code></td><td>String</td><td><strong>Denormalized</strong> (avoids joining with User DB)</td></tr>
+    <tr><td><code>rating</code></td><td>Number (1-5)</td><td></td></tr>
+    <tr><td><code>title</code></td><td>String</td><td></td></tr>
+    <tr><td><code>body</code></td><td>String</td><td></td></tr>
+    <tr><td><code>images</code></td><td>List&lt;String&gt;</td><td>URLs to Object Storage</td></tr>
+    <tr><td><code>verified_purchase</code></td><td>Boolean</td><td></td></tr>
+    <tr><td><code>helpful_count</code></td><td>Number</td><td></td></tr>
+    <tr><td><code>status</code></td><td>String</td><td>PENDING_MODERATION | PUBLISHED | REJECTED</td></tr>
+    <tr><td><code>created_at</code></td><td>String (ISO 8601)</td><td></td></tr>
+</table>
+<p><strong>Why NoSQL:</strong> Reviews are read-heavy, always queried by <code>product_id</code>, don't require joins, and the schema is flexible (may add video reviews, structured pros/cons later). The access pattern is simple: write a review, read reviews by product. NoSQL scales well for this append-heavy, partition-by-product pattern.</p>
+<p><strong>Denormalization explanation:</strong> <code>user_name</code> is denormalized to avoid a cross-database join with the User DB on every review read. User names rarely change, and if they do, an eventual consistency update is acceptable.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><code>product_id + created_at</code> — <strong>Composite key (hash + range)</strong>. Primary access pattern: get all reviews for a product sorted by date.</li>
+    <li><code>product_id + helpful_count</code> — <strong>GSI (hash + range)</strong>. Enables sorting reviews by helpfulness.</li>
+    <li><code>user_id</code> — <strong>GSI (hash)</strong>. Enables "My Reviews" page.</li>
+</ul>
+<p><strong>Sharding:</strong> Partition by <code>product_id</code>. All reviews for a product are on the same partition, enabling efficient reads. Hot products (many reviews) are mitigated by the cache layer.</p>
+<p><strong>Read:</strong> Product detail page (top reviews), browse all reviews. <strong>Write:</strong> User submits a review, moderation status update, helpful vote increment.</p>
+</div>
+
+<div class="card">
+<h4>recommendations (NoSQL Key-Value — Recommendation Store)</h4>
+<table>
+    <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+    <tr><td><code>product_id</code></td><td>String</td><td><strong>Partition Key</strong></td></tr>
+    <tr><td><code>similar_items</code></td><td>List&lt;String&gt;</td><td>Ordered list of product_ids</td></tr>
+    <tr><td><code>also_viewed</code></td><td>List&lt;String&gt;</td><td>Ordered list of product_ids</td></tr>
+    <tr><td><code>complete_the_room</code></td><td>List&lt;String&gt;</td><td>Ordered list of product_ids</td></tr>
+    <tr><td><code>updated_at</code></td><td>String (ISO 8601)</td><td></td></tr>
+</table>
+<p><strong>Why NoSQL:</strong> Pre-computed recommendations are simple key-value lookups by <code>product_id</code>. No relational queries needed. Write pattern is batch-oriented (ML pipeline updates periodically). Read pattern is high-throughput point lookups.</p>
+<p><strong>Read:</strong> Product detail page. <strong>Write:</strong> ML recommendation pipeline (batch job, e.g., daily).</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="cdn-cache">11. CDN &amp; Caching Deep Dive</h2>
+<!-- ============================================================ -->
+
+<h3>11.1 CDN</h3>
+<div class="card">
+<p><strong>Why a CDN is critical:</strong> Wayfair is an extremely image-heavy platform. A single product page may have 8-15 high-resolution images, 3D model assets, and thumbnail variants. With ~30M daily active users browsing products, image traffic would overwhelm origin servers without a CDN. The CDN also provides geographic distribution — users in Europe, Asia, etc. get images served from nearby edge nodes rather than from a US-based origin.</p>
+
+<h4>What the CDN serves:</h4>
+<ul>
+    <li>Product images (thumbnails, medium, large, zoom, 3D assets)</li>
+    <li>Static web assets (JS bundles, CSS, fonts, icons)</li>
+    <li>Category page banners and promotional images</li>
+</ul>
+
+<h4>CDN Configuration:</h4>
+<ul>
+    <li><strong>Origin:</strong> Object Storage (for images/media) and application servers (for static web assets).</li>
+    <li><strong>Cache-Control headers:</strong> Product images: <code>Cache-Control: public, max-age=31536000, immutable</code> (1 year). Images are versioned via URL (e.g., <code>/images/prod_83921/v3/hero.webp</code>), so when an image changes, the URL changes, and the old cache entry naturally expires. Static assets use content-hash URLs.</li>
+    <li><strong>Eviction policy:</strong> LRU (Least Recently Used). The CDN has finite edge storage; infrequently accessed product images are evicted first. This naturally keeps popular product images cached.</li>
+    <li><strong>Expiration policy:</strong> Based on Cache-Control headers (1 year for versioned images). In practice, LRU eviction kicks in before TTL expiration for unpopular products. Cache invalidation is done by URL versioning (new URL = new cache entry), not by purging.</li>
+    <li><strong>Image optimization:</strong> The CDN performs on-the-fly format conversion (WebP for Chrome, AVIF where supported, JPEG fallback) and responsive resizing based on client hints (viewport width, DPR). This reduces bandwidth significantly on mobile devices.</li>
+</ul>
+</div>
+
+<h3>11.2 In-Memory Cache</h3>
+<div class="card">
+<p><strong>Why a cache is appropriate:</strong> Wayfair's read-to-write ratio is extremely high. Millions of users browse the same popular products and execute similar search queries. Without caching, the Search Index and Product DB would face unsustainable read load, especially during sales events.</p>
+
+<h4>Cache 1: Search Results Cache</h4>
+<ul>
+    <li><strong>Caching strategy:</strong> <strong>Cache-Aside (Lazy Loading)</strong>. The Search Service checks the cache first. On a miss, it queries the Search Index, stores the result in cache, and returns it. This was chosen over Write-Through because search results are derived from a complex query pipeline (not a simple DB read), and not all possible query combinations need to be pre-warmed.</li>
+    <li><strong>Key:</strong> Hash of <code>(query + all filter/sort/page params)</code></li>
+    <li><strong>Value:</strong> Serialized search response (product IDs, facets, total count)</li>
+    <li><strong>Populated by:</strong> Cache miss on a search query.</li>
+    <li><strong>Eviction policy:</strong> <strong>LRU (Least Recently Used)</strong>. Popular queries stay cached; obscure long-tail queries are evicted. LRU is ideal because search query popularity follows a power-law distribution.</li>
+    <li><strong>Expiration policy:</strong> <strong>TTL of 5 minutes</strong>. Short TTL ensures search results reflect recent product/price changes, new listings, and inventory changes within an acceptable window. During sales events, TTL may be reduced to 1-2 minutes.</li>
+    <li><strong>Invalidation:</strong> TTL-based expiration (not explicit invalidation). The 5-minute staleness window is acceptable for search results. Products that go out of stock show a badge on the product page (real-time check), not in search results.</li>
+</ul>
+
+<h4>Cache 2: Product Data Cache</h4>
+<ul>
+    <li><strong>Caching strategy:</strong> <strong>Cache-Aside (Lazy Loading)</strong> with <strong>explicit invalidation on write</strong>. When the Product Ingestion Service updates a product, it publishes a <code>product.updated</code> event. A cache invalidation listener clears the cache entry for that <code>product_id</code>. Cache-Aside was chosen because only a fraction of the 100M+ products are actively viewed (cache only what's needed).</li>
+    <li><strong>Key:</strong> <code>product:{product_id}</code></li>
+    <li><strong>Value:</strong> Serialized product document (full product detail).</li>
+    <li><strong>Populated by:</strong> Cache miss on a product detail request.</li>
+    <li><strong>Eviction policy:</strong> <strong>LRU</strong>. Keeps hot products (frequently viewed) in cache. Long-tail products that are rarely viewed get evicted.</li>
+    <li><strong>Expiration policy:</strong> <strong>TTL of 15 minutes</strong> as a safety net. Even if an invalidation event is missed, the cache self-heals within 15 minutes. Longer TTL than search cache because product data changes less frequently than search relevance.</li>
+</ul>
+
+<h4>Cache 3: Inventory Cache (Optional, Short TTL)</h4>
+<ul>
+    <li><strong>Caching strategy:</strong> <strong>Cache-Aside</strong> with <strong>very short TTL (10 seconds)</strong>. Inventory is critical for correctness, so aggressive caching is dangerous. This thin cache layer only prevents thundering herd on extremely popular items. The actual checkout path always reads from the SQL Inventory DB (strong consistency).</li>
+    <li><strong>Used for:</strong> Product detail page "In Stock" display only (not for checkout decisions).</li>
+    <li><strong>Why not Write-Through for inventory:</strong> Inventory changes happen at checkout (high-write, transactional). Write-through would add latency to the checkout critical path and could cause inconsistency if the cache write succeeds but the DB write fails (or vice versa).</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="mq">12. Message Queue Deep Dive</h2>
+<!-- ============================================================ -->
+<div class="card">
+<h3>Why a Message Queue?</h3>
+<p>A message queue is essential for decoupling synchronous user-facing operations from asynchronous background processing. Without it:</p>
+<ul>
+    <li>Placing an order would block until email confirmation, fulfillment requests, and analytics recording all complete — adding seconds of latency.</li>
+    <li>Uploading a product would block until all image resolutions are generated and the search index is updated — taking 10-30 seconds.</li>
+    <li>If any downstream system is down (notification service, analytics), the primary operation would fail.</li>
+</ul>
+<p>The message queue provides: <strong>decoupling</strong> (producer doesn't know about consumers), <strong>buffering</strong> (absorbs traffic spikes), <strong>reliability</strong> (messages persist until processed), and <strong>fan-out</strong> (one event triggers multiple consumers).</p>
+
+<h3>Why not alternatives?</h3>
+<ul>
+    <li><strong>Why not synchronous HTTP calls?</strong> Would couple services together, increase latency, and make the system fragile (if one downstream service is slow or down, the whole chain fails).</li>
+    <li><strong>Why not WebSockets?</strong> WebSockets are for real-time client-server communication, not service-to-service async processing.</li>
+    <li><strong>Why not polling?</strong> Workers would waste resources polling for new work. Push-based message delivery (queue → consumer) is more efficient.</li>
+    <li><strong>Why a message queue over a pub/sub system?</strong> We use the message queue in a <strong>pub/sub-like topic pattern</strong> — events are published to topics, and multiple consumer groups subscribe independently. The distinction is that we need <strong>durable, at-least-once delivery with consumer group semantics</strong> (each consumer group processes each message exactly once, but multiple groups can independently consume the same message). This is a message queue with topic/consumer-group support, which is the standard pattern for event-driven microservices.</li>
+</ul>
+
+<h3>Message Queue Architecture</h3>
+<ul>
+    <li><strong>Topics:</strong>
+        <ul>
+            <li><code>order-events</code> — Messages: <code>order.confirmed</code>, <code>order.cancelled</code>, <code>order.refunded</code></li>
+            <li><code>product-events</code> — Messages: <code>product.created</code>, <code>product.updated</code>, <code>product.deleted</code>, <code>product.images_uploaded</code></li>
+            <li><code>inventory-events</code> — Messages: <code>inventory.restocked</code>, <code>inventory.low_stock</code></li>
+            <li><code>review-events</code> — Messages: <code>review.submitted</code>, <code>review.published</code>, <code>review.deleted</code></li>
+            <li><code>tracking-events</code> — Messages: <code>order.shipped</code>, <code>order.tracking_updated</code>, <code>order.delivered</code></li>
+        </ul>
+    </li>
+    <li><strong>Producers:</strong> Services publish events after completing their primary operation (e.g., Order Service publishes <code>order.confirmed</code> after persisting the order).</li>
+    <li><strong>Consumers (Consumer Groups):</strong> Each worker type is a consumer group. Within a group, messages are distributed across worker instances for parallel processing. Across groups, each group gets a copy of every message.
+        <ul>
+            <li><code>notification-group</code> subscribes to <code>order-events</code>, <code>tracking-events</code>, <code>inventory-events</code></li>
+            <li><code>fulfillment-group</code> subscribes to <code>order-events</code></li>
+            <li><code>search-indexing-group</code> subscribes to <code>product-events</code>, <code>review-events</code></li>
+            <li><code>image-processing-group</code> subscribes to <code>product-events</code></li>
+            <li><code>analytics-group</code> subscribes to <code>order-events</code>, <code>product-events</code>, <code>review-events</code></li>
+            <li><code>rating-aggregation-group</code> subscribes to <code>review-events</code></li>
+            <li><code>moderation-group</code> subscribes to <code>review-events</code></li>
+        </ul>
+    </li>
+    <li><strong>Delivery guarantee:</strong> At-least-once. Consumers must be idempotent (processing the same message twice is safe). For example, re-sending a confirmation email is better than never sending one.</li>
+    <li><strong>How messages are put on the queue:</strong> The producing service serializes the event (JSON) and publishes it to the appropriate topic via the queue's client SDK after committing its database transaction. For critical flows (orders), the <strong>transactional outbox pattern</strong> is used: the event is first written to an outbox table in the same DB transaction as the order, and a separate relay process publishes it to the queue. This ensures the event is published if and only if the order is committed.</li>
+    <li><strong>How messages are removed from the queue:</strong> Consumers pull messages (or receive push from the queue), process them, and then acknowledge (ack) the message. The queue removes acknowledged messages. If a consumer crashes before acking, the message becomes visible again after a visibility timeout and is redelivered to another consumer instance.</li>
+    <li><strong>Ordering:</strong> Messages within a partition (keyed by <code>order_id</code> or <code>product_id</code>) are ordered. This ensures events for the same order are processed in sequence.</li>
+    <li><strong>Dead letter queue (DLQ):</strong> Messages that fail processing after N retries are moved to a DLQ for manual investigation. This prevents poison messages from blocking the queue.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="scaling">13. Scaling Considerations</h2>
+<!-- ============================================================ -->
+<div class="card">
+
+<h3>13.1 Load Balancers</h3>
+<p>Load balancers are critical for scaling this system. They are placed at the following points:</p>
+
+<h4>Layer 1: Global Load Balancer (DNS-based / Anycast)</h4>
+<ul>
+    <li><strong>Position:</strong> Between clients and regional data centers.</li>
+    <li><strong>Purpose:</strong> Routes users to the nearest healthy data center based on geographic proximity (latency-based routing). Provides failover — if one region goes down, traffic is rerouted.</li>
+    <li><strong>Algorithm:</strong> GeoDNS or Anycast routing.</li>
+    <li><strong>Deep dive:</strong> The client resolves <code>api.wayfair.com</code> via DNS, which returns the IP of the nearest regional load balancer. This is a stateless operation — no session affinity at this layer.</li>
+</ul>
+
+<h4>Layer 2: Regional Application Load Balancer</h4>
+<ul>
+    <li><strong>Position:</strong> Between the Global LB and the backend microservices (or API Gateway).</li>
+    <li><strong>Purpose:</strong> Distributes requests across instances of each service. Performs TLS termination, health checks, request routing (path-based: <code>/search/*</code> → Search Service, <code>/products/*</code> → Product Service, etc.), and rate limiting.</li>
+    <li><strong>Algorithm:</strong> Least Connections (preferred over Round Robin because some requests like search are more CPU-intensive than others, and Least Connections naturally adapts to uneven processing times).</li>
+    <li><strong>Deep dive:</strong> The LB maintains a pool of healthy instances per service. Health checks ping <code>/health</code> every 10 seconds. Unhealthy instances are removed from the pool. New instances added by auto-scalers are automatically registered. Connection draining ensures in-flight requests complete before instance termination.</li>
+</ul>
+
+<h4>Layer 3: Internal Service Mesh Load Balancing</h4>
+<ul>
+    <li><strong>Position:</strong> Between microservices (e.g., Product Service → Inventory Service).</li>
+    <li><strong>Purpose:</strong> Client-side load balancing for internal service-to-service calls. Avoids a single chokepoint for internal traffic.</li>
+    <li><strong>Algorithm:</strong> Round Robin with health checks. Services discover each other via a service registry.</li>
+</ul>
+
+<h3>13.2 Horizontal Scaling per Service</h3>
+<table>
+    <tr><th>Component</th><th>Scaling Strategy</th><th>Scale Trigger</th></tr>
+    <tr><td>Search Service</td><td>Horizontal auto-scale</td><td>CPU &gt; 60% or request queue depth &gt; threshold</td></tr>
+    <tr><td>Product Service</td><td>Horizontal auto-scale</td><td>Request latency P95 &gt; 200ms</td></tr>
+    <tr><td>Cart Service</td><td>Horizontal auto-scale</td><td>Request rate</td></tr>
+    <tr><td>Order Service</td><td>Horizontal auto-scale (careful — limited by DB connections)</td><td>Request rate, with connection pool limits</td></tr>
+    <tr><td>Search Index</td><td>Add read replicas / shards</td><td>Query latency or throughput ceiling</td></tr>
+    <tr><td>Product DB (NoSQL)</td><td>Add nodes (auto-sharding)</td><td>Storage or throughput limits</td></tr>
+    <tr><td>Order DB (SQL)</td><td>Read replicas + sharding</td><td>Write throughput limits</td></tr>
+    <tr><td>Inventory DB (SQL)</td><td>Sharding by product_id</td><td>Write throughput (checkout spikes)</td></tr>
+    <tr><td>Message Queue</td><td>Add partitions per topic</td><td>Consumer lag increasing</td></tr>
+    <tr><td>Workers</td><td>Horizontal auto-scale</td><td>Queue depth / consumer lag</td></tr>
+    <tr><td>CDN</td><td>Managed by CDN provider</td><td>Automatic edge scaling</td></tr>
+    <tr><td>Cache</td><td>Add nodes (consistent hashing)</td><td>Memory usage &gt; 70% or eviction rate too high</td></tr>
+</table>
+
+<h3>13.3 Flash Sale (Way Day / Black Friday) Preparation</h3>
+<ul>
+    <li><strong>Pre-warm caches:</strong> Before the sale, populate caches with featured/promoted products and popular search queries.</li>
+    <li><strong>Pre-scale services:</strong> Increase minimum instance counts for all services 2-3x before the event begins.</li>
+    <li><strong>Queue buffering:</strong> The message queue absorbs order spikes, smoothing the load for downstream workers.</li>
+    <li><strong>Database read replicas:</strong> Add additional read replicas for the Order DB and Inventory DB before peak events.</li>
+    <li><strong>Circuit breakers:</strong> Non-essential features (recommendations, reviews) have circuit breakers that open under extreme load, returning degraded but functional pages.</li>
+    <li><strong>Rate limiting:</strong> Per-user rate limits at the API Gateway prevent abuse. Bot detection prevents inventory hoarding.</li>
+</ul>
+
+<h3>13.4 Database Scaling Summary</h3>
+<ul>
+    <li><strong>User DB (SQL):</strong> Sharded by <code>user_id</code>. Read replicas for profile reads.</li>
+    <li><strong>Order DB (SQL):</strong> Sharded by <code>user_id</code>. Read replicas for order history reads. Write-heavy path (checkout) hits the primary.</li>
+    <li><strong>Inventory DB (SQL):</strong> Sharded by <code>product_id</code>. This is the hottest write path. Row-level locking + sharding provides the needed write throughput. No read replicas for checkout (must read primary for consistency). Read replicas can serve the product detail page "in stock" display.</li>
+    <li><strong>Product DB (NoSQL):</strong> Naturally horizontally scaled via partition key (<code>product_id</code>). Add nodes as data grows.</li>
+    <li><strong>Cart DB (NoSQL):</strong> Key-value store, horizontally scaled. Lightweight — not a bottleneck.</li>
+    <li><strong>Review DB (NoSQL):</strong> Partitioned by <code>product_id</code>. Hot products (many reviews) may create hot partitions — mitigated by caching top reviews.</li>
+    <li><strong>Search Index:</strong> Sharded across nodes. Each shard holds a subset of the product index. Query coordinator fans out to all shards and merges results. Add shards for more capacity.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="tradeoffs">14. Tradeoffs &amp; Deep Dives</h2>
+<!-- ============================================================ -->
+<div class="card">
+
+<h3>14.1 Consistency vs. Availability</h3>
+<p>The system applies different consistency models based on data criticality:</p>
+<ul>
+    <li><strong>Strong consistency:</strong> Inventory (prevent overselling), Orders (no lost orders), Payments (no double charges). These use SQL with ACID transactions. The tradeoff is higher write latency and lower write throughput compared to NoSQL.</li>
+    <li><strong>Eventual consistency:</strong> Product catalog, search index, ratings, recommendations, carts. These use NoSQL and async processing. The tradeoff is that a newly listed product might take a few seconds to appear in search, or a new review's impact on the average rating is delayed. This is acceptable and dramatically improves scalability.</li>
+</ul>
+
+<h3>14.2 Denormalization Tradeoffs</h3>
+<ul>
+    <li><strong><code>avg_rating</code> / <code>review_count</code> on Product:</strong> Trade: Write amplification (every review triggers an update to the product record) and slight staleness. Benefit: Eliminates an expensive aggregation query on every product page load and search result rendering. The tradeoff is overwhelmingly in favor of denormalization given the read:write ratio (1000:1+).</li>
+    <li><strong><code>shipping_address_snapshot</code> on Order:</strong> Trade: Data duplication. Benefit: Historical accuracy — the order record permanently reflects the address it was shipped to, even if the user later deletes or changes that address. This is a business requirement, not just a performance optimization.</li>
+    <li><strong><code>user_name</code> on Review:</strong> Trade: Stale name if user changes it. Benefit: Avoids cross-database join between Review DB (NoSQL) and User DB (SQL) on every review read, which would be architecturally complex and slow.</li>
+</ul>
+
+<h3>14.3 Monolith vs. Microservices</h3>
+<p>This design uses microservices. The tradeoff:</p>
+<ul>
+    <li><strong>Pros:</strong> Independent scaling (Search Service scales differently than Order Service), independent deployment, team autonomy, fault isolation (Search Service failure doesn't break checkout).</li>
+    <li><strong>Cons:</strong> Distributed system complexity (network failures, eventual consistency), operational overhead (monitoring, tracing, deployment pipelines), data consistency across services requires patterns like the Saga pattern or transactional outbox.</li>
+</ul>
+<p>For a platform of Wayfair's scale (100M+ products, 30M+ DAU), the microservice benefits clearly outweigh the costs.</p>
+
+<h3>14.4 SQL vs. NoSQL Decisions</h3>
+<ul>
+    <li><strong>Orders/Payments/Inventory in SQL:</strong> ACID transactions are non-negotiable for financial data. The "reserve inventory → charge payment → create order" flow requires transactional guarantees.</li>
+    <li><strong>Products in NoSQL:</strong> Product data has a highly variable schema (furniture has dimensions, lighting has wattage, rugs have pile height). A rigid SQL schema would require constant ALTER TABLE operations or an unwieldy EAV (Entity-Attribute-Value) pattern. NoSQL's flexible document model is a natural fit. Additionally, the access pattern is almost entirely point-reads by <code>product_id</code> — no complex joins needed.</li>
+    <li><strong>Reviews in NoSQL:</strong> Simple access pattern (read/write by product_id), no transactions needed, append-heavy workload. NoSQL handles this efficiently.</li>
+</ul>
+
+<h3>14.5 Search Architecture</h3>
+<p>The search index is a critical component. It uses an inverted index that maps terms to product IDs. Key design decisions:</p>
+<ul>
+    <li><strong>Separate from the primary Product DB:</strong> Search requires specialized data structures (inverted indexes, n-gram indexes) optimized for full-text search, faceted filtering, and relevance ranking. A general-purpose NoSQL DB cannot provide this efficiently.</li>
+    <li><strong>Asynchronous updates:</strong> The search index is updated via the Message Queue (eventual consistency). This decouples search indexing performance from the product write path. The tradeoff is a few seconds of delay before a new/updated product appears in search.</li>
+    <li><strong>Relevance ranking:</strong> Uses TF-IDF / BM25 for text relevance, boosted by popularity score, seller rating, price competitiveness, and personalization signals.</li>
+</ul>
+
+<h3>14.6 Idempotency in Checkout</h3>
+<p>The checkout flow is designed to be idempotent using an <code>idempotency_key</code>. If a user clicks "Place Order" twice (e.g., due to network flakiness), the second request detects the existing <code>idempotency_key</code> and returns the already-created order instead of creating a duplicate. This is critical for payment correctness.</p>
+
+<h3>14.7 Inventory Reservation Strategy</h3>
+<p>Inventory is reserved at checkout time, not when added to cart. The tradeoffs:</p>
+<ul>
+    <li><strong>Reserve at cart-add:</strong> Guarantees the item is available when the user checks out. But: Users abandon carts frequently (70%+ cart abandonment in e-commerce). Reserving at cart-add would hold inventory hostage, creating a denial-of-service on legitimate buyers. Would require complex reservation timeouts.</li>
+    <li><strong>Reserve at checkout (chosen):</strong> Maximizes inventory availability. The small risk is that an item goes out of stock between cart-add and checkout, resulting in a checkout-time error. This is mitigated by showing real-time availability on the product and cart pages.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="alternatives">15. Alternative Approaches</h2>
+<!-- ============================================================ -->
+<div class="card">
+
+<h3>15.1 Monolithic Architecture</h3>
+<p><strong>Description:</strong> A single codebase handling all functionality (search, products, orders, payments, etc.).</p>
+<p><strong>Why not chosen:</strong> Wayfair's scale (100M+ products, 30M DAU, 30K+ suppliers) makes a monolith unviable. Search needs to scale independently during traffic spikes. Orders need independent fault isolation. Different teams need to deploy independently. A monolith would become a deployment bottleneck and single point of failure.</p>
+
+<h3>15.2 GraphQL Instead of REST</h3>
+<p><strong>Description:</strong> Use GraphQL for the client-to-server API, allowing clients to query exactly the data they need.</p>
+<p><strong>Why not chosen as primary:</strong> GraphQL excels for flexible frontend queries (mobile vs. web may need different fields). However, for this design, REST is simpler to reason about for system design purposes, easier to cache at the HTTP level (GET requests), and more straightforward for the CDN and load balancer layers. In practice, Wayfair could use a GraphQL gateway on top of these REST microservices — the two are not mutually exclusive. A real implementation might use GraphQL at the BFF (Backend-for-Frontend) layer.</p>
+
+<h3>15.3 Event Sourcing for Orders</h3>
+<p><strong>Description:</strong> Instead of storing the current order state, store an append-only log of order events (created, paid, shipped, delivered) and derive the current state.</p>
+<p><strong>Why not chosen:</strong> Event sourcing adds significant complexity (projections, snapshots, eventual consistency of views). For orders, the current-state model with a status field + shipment_events table provides sufficient auditability. Event sourcing would be overkill for this use case, though it could be valuable for analytics or debugging complex order state transitions in a future iteration.</p>
+
+<h3>15.4 CQRS (Command Query Responsibility Segregation)</h3>
+<p><strong>Description:</strong> Separate the write model (commands: place order) from the read model (queries: view order history) with different databases optimized for each.</p>
+<p><strong>Why partially adopted:</strong> We do use a form of CQRS — the Search Index is a read-optimized projection of the Product DB, kept in sync via the Message Queue. However, full CQRS for orders (separate write DB and read DB) was not adopted because the read and write patterns for orders are not divergent enough to justify the complexity. Orders are written once and read relatively infrequently.</p>
+
+<h3>15.5 WebSockets for Real-Time Inventory</h3>
+<p><strong>Description:</strong> Push real-time inventory updates to users viewing a product page via WebSocket connections.</p>
+<p><strong>Why not chosen:</strong> The engineering cost of maintaining millions of WebSocket connections for a feature that only matters at scale during flash sales is high. A simple polling approach (re-check inventory when user clicks "Add to Cart" or proceeds to checkout) provides sufficient real-time accuracy. For the product page "In Stock" badge, a short-TTL cache (10 seconds) is a good-enough approximation. WebSockets would be appropriate if Wayfair were a bidding/auction platform where prices change in real-time, but for a standard e-commerce catalog, it's unnecessary complexity.</p>
+
+<h3>15.6 Server-Side Rendering (SSR) for SEO</h3>
+<p><strong>Description:</strong> Render product pages on the server for better SEO and initial page load performance.</p>
+<p><strong>Why mentioned but not detailed:</strong> SSR is a frontend concern rather than a backend system design decision. In practice, Wayfair would likely use SSR or static site generation for product and category pages to improve SEO (Google indexing of product pages is critical for organic traffic). This would be handled at the CDN edge or a rendering service, but it doesn't fundamentally change the backend architecture described above.</p>
+
+<h3>15.7 SQL for Products with EAV Pattern</h3>
+<p><strong>Description:</strong> Store products in SQL using an Entity-Attribute-Value pattern to handle varying attributes.</p>
+<p><strong>Why not chosen:</strong> EAV in SQL is notoriously difficult to query, leads to poor performance for attribute-based filtering, and is hard to maintain. NoSQL's document model naturally handles the varying schema (a sofa has "seat_depth" while a lamp has "wattage") without the EAV anti-pattern.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="additional">16. Additional Considerations</h2>
+<!-- ============================================================ -->
+<div class="card">
+
+<h3>16.1 AR (Augmented Reality) / 3D Visualization</h3>
+<p>Wayfair is known for its "View in Room" AR feature. 3D model assets (.glTF, .USDZ) are stored in Object Storage and served via CDN. The client-side AR rendering happens natively on iOS (ARKit) and Android (ARCore). The backend's role is storing and serving the assets efficiently. 3D model generation may be a separate ML pipeline that creates 3D models from 2D product photos.</p>
+
+<h3>16.2 Wayfair's Drop-Ship Model</h3>
+<p>Wayfair primarily operates as a marketplace — most products are drop-shipped directly from suppliers. This means: (a) inventory data comes from supplier systems (updated via batch feeds or real-time APIs), (b) fulfillment is handled by suppliers, not Wayfair warehouses, (c) the Fulfillment Worker sends orders to the appropriate supplier's system. This model scales well because Wayfair doesn't need warehouse capacity, but it introduces dependency on supplier system reliability.</p>
+
+<h3>16.3 Fraud Detection</h3>
+<p>A fraud detection service should sit in the checkout pipeline (after the Order Service creates the order intent, before payment capture). It evaluates signals like: order velocity, shipping address anomalies, payment method risk score, and device fingerprinting. This is implemented as an async check for most orders (don't block checkout) with synchronous blocking only for high-risk signals.</p>
+
+<h3>16.4 Analytics &amp; Data Pipeline</h3>
+<p>The Analytics Worker consumes all events from the Message Queue and writes to a data warehouse / data lake for: business intelligence dashboards, conversion funnel analysis, recommendation model training, search relevance tuning, and supplier performance metrics. This is a separate analytical system from the OLTP databases.</p>
+
+<h3>16.5 Observability</h3>
+<ul>
+    <li><strong>Distributed tracing:</strong> Each request gets a trace ID propagated across all service calls. This enables debugging slow requests that span multiple services.</li>
+    <li><strong>Metrics:</strong> Each service emits latency, error rate, and throughput metrics. Auto-scaling decisions are based on these.</li>
+    <li><strong>Alerting:</strong> Alerts on P99 latency spikes, error rate increases, queue depth growth, and cache hit rate drops.</li>
+    <li><strong>Log aggregation:</strong> Centralized logging for all services with structured log format for searchability.</li>
+</ul>
+
+<h3>16.6 Security Considerations</h3>
+<ul>
+    <li><strong>Authentication:</strong> JWT-based authentication. Tokens issued by the Auth Service, validated at the API Gateway.</li>
+    <li><strong>Authorization:</strong> Role-based access control (RBAC). Sellers can only modify their own products. Users can only view their own orders.</li>
+    <li><strong>Payment security:</strong> Payment data never touches Wayfair's servers directly. The client communicates with the External Payment Gateway via tokenization. Wayfair stores only payment tokens, not card numbers. PCI-DSS scope is minimized.</li>
+    <li><strong>Data encryption:</strong> TLS for all data in transit. AES-256 encryption at rest for all databases and object storage. Encryption keys are managed via a centralized key management service (KMS).</li>
+    <li><strong>Input validation:</strong> All API inputs are validated and sanitized at the API Gateway and service level to prevent injection attacks (SQL injection, XSS, etc.).</li>
+    <li><strong>DDoS protection:</strong> Rate limiting at the API Gateway, CDN-level DDoS mitigation, and WAF (Web Application Firewall) rules to block malicious traffic patterns.</li>
+</ul>
+
+<h3>16.7 Internationalization</h3>
+<p>Wayfair operates in multiple countries (US, Canada, UK, Germany, Ireland). Multi-region considerations include: currency conversion, localized content, tax calculation per jurisdiction, multi-language support, and compliance with regional data protection regulations (GDPR in EU). Product prices may vary by region, requiring a region-aware pricing layer.</p>
+
+<h3>16.8 Promo Code &amp; Pricing Engine</h3>
+<p>A dedicated Pricing/Promo Service evaluates promo codes, dynamic pricing, bundle discounts, loyalty rewards, and sale events. It is called during cart display (to show discounted prices) and during checkout (to apply final prices). This service is kept separate to allow flexible pricing strategies without modifying the Order Service.</p>
+
+<h3>16.9 Wishlist</h3>
+<p>A lightweight feature stored in a NoSQL table (keyed by <code>user_id</code>, value is a list of <code>product_id</code>s). Similar access pattern to carts but with no expiration. Wishlists can trigger "price drop" notifications when a saved product's price decreases, powered by a <code>product.updated</code> event consumer that checks wishlists.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="vendors">17. Vendor Recommendations</h2>
+<!-- ============================================================ -->
+<div class="card">
+<p>The architecture above is vendor-agnostic. Below are potential vendor choices with rationale, grouped by component:</p>
+
+<table>
+    <tr><th>Component</th><th>Vendor Options</th><th>Rationale</th></tr>
+    <tr>
+        <td><strong>SQL Database</strong> (User DB, Order DB, Inventory DB)</td>
+        <td>PostgreSQL, MySQL, Amazon Aurora, CockroachDB</td>
+        <td><strong>PostgreSQL</strong> is the most versatile open-source option with excellent JSON support, rich indexing, and strong ACID compliance. <strong>Amazon Aurora</strong> offers PostgreSQL/MySQL compatibility with managed scaling, automatic failover, and up to 15 read replicas. <strong>CockroachDB</strong> is ideal if globally distributed SQL with automatic sharding is needed (multi-region Wayfair).</td>
+    </tr>
+    <tr>
+        <td><strong>NoSQL Document Store</strong> (Product DB, Review DB)</td>
+        <td>Amazon DynamoDB, MongoDB, Apache Cassandra</td>
+        <td><strong>DynamoDB</strong> offers single-digit millisecond latency, auto-scaling, and managed operations — ideal for the product catalog's simple access patterns. <strong>MongoDB</strong> offers richer query capabilities (ad-hoc queries, aggregation pipelines) which is useful for product attribute filtering if done at the DB level. <strong>Cassandra</strong> excels at write-heavy workloads and multi-region replication.</td>
+    </tr>
+    <tr>
+        <td><strong>NoSQL Key-Value</strong> (Cart DB)</td>
+        <td>Amazon DynamoDB, Redis (with persistence)</td>
+        <td><strong>DynamoDB</strong> with TTL support handles ephemeral cart data well. <strong>Redis with AOF persistence</strong> provides sub-millisecond reads for cart operations if ultra-low latency is prioritized.</td>
+    </tr>
+    <tr>
+        <td><strong>In-Memory Cache</strong></td>
+        <td>Redis, Memcached</td>
+        <td><strong>Redis</strong> is preferred due to its richer data structures (sorted sets for leaderboards, hash maps for product data), TTL support, and built-in eviction policies. <strong>Memcached</strong> is simpler and slightly faster for pure key-value caching if advanced data structures aren't needed.</td>
+    </tr>
+    <tr>
+        <td><strong>Search Index</strong></td>
+        <td>Elasticsearch, OpenSearch, Apache Solr</td>
+        <td><strong>Elasticsearch / OpenSearch</strong> is the industry standard for e-commerce search. Supports inverted indexes, faceted search, autocomplete (n-gram), fuzzy matching, and relevance tuning (BM25 + custom scoring). <strong>OpenSearch</strong> is the AWS-managed fork with identical capabilities.</td>
+    </tr>
+    <tr>
+        <td><strong>Message Queue</strong></td>
+        <td>Apache Kafka, Amazon SQS/SNS, RabbitMQ, Pulsar</td>
+        <td><strong>Apache Kafka</strong> is ideal for this architecture due to its support for topics with consumer groups, high throughput, durability, message ordering within partitions, and replay capability (useful for rebuilding search indexes or fixing downstream errors). <strong>Amazon SQS/SNS</strong> is a simpler managed alternative if operational simplicity is prioritized over throughput and replay.</td>
+    </tr>
+    <tr>
+        <td><strong>Object Storage</strong></td>
+        <td>Amazon S3, Google Cloud Storage, Azure Blob Storage</td>
+        <td><strong>Amazon S3</strong> is the de-facto standard for object storage — virtually unlimited capacity, 99.999999999% durability, lifecycle policies for cost optimization (move infrequently accessed images to cheaper storage tiers). All major CDNs integrate natively with S3 as an origin.</td>
+    </tr>
+    <tr>
+        <td><strong>CDN</strong></td>
+        <td>CloudFront, Cloudflare, Fastly, Akamai</td>
+        <td><strong>Cloudflare</strong> offers excellent global coverage, image optimization (automatic WebP/AVIF conversion, resizing), and DDoS protection at the edge. <strong>Fastly</strong> provides edge compute (VCL/Wasm) for custom logic at the CDN layer (e.g., A/B testing, personalized image selection). <strong>Akamai</strong> has the largest edge network, beneficial for Wayfair's global footprint.</td>
+    </tr>
+    <tr>
+        <td><strong>Container Orchestration</strong></td>
+        <td>Kubernetes (EKS/GKE/AKS), Amazon ECS</td>
+        <td><strong>Kubernetes</strong> is the standard for microservice orchestration. Provides auto-scaling (HPA), service discovery, rolling deployments, and resource management. All major clouds offer managed Kubernetes.</td>
+    </tr>
+    <tr>
+        <td><strong>API Gateway</strong></td>
+        <td>Kong, AWS API Gateway, Envoy, NGINX</td>
+        <td><strong>Kong</strong> or <strong>Envoy</strong> provide robust API gateway capabilities: rate limiting, authentication, request routing, circuit breaking, and observability. Envoy is often used as a service mesh sidecar proxy in Kubernetes environments.</td>
+    </tr>
+    <tr>
+        <td><strong>Monitoring / Observability</strong></td>
+        <td>Datadog, Grafana + Prometheus, New Relic, Jaeger (tracing)</td>
+        <td><strong>Datadog</strong> provides unified metrics, logs, and traces in one platform. <strong>Grafana + Prometheus</strong> is the open-source alternative with strong Kubernetes integration. <strong>Jaeger</strong> is the standard for distributed tracing in microservice architectures.</td>
+    </tr>
+</table>
+</div>
+
+<hr>
+
+<p style="text-align: center; color: #484f58; margin-top: 3rem;">
+    System Design Document — Wayfair | Generated February 2025
+</p>
+
+<script>
+    mermaid.initialize({ 
+        startOnLoad: true, 
+        theme: 'default',
+        flowchart: { 
+            useMaxWidth: true, 
+            htmlLabels: true,
+            curve: 'basis'
+        }
+    });
+</script>
 
 </body>
 </html>
