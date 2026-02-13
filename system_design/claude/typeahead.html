@@ -1,314 +1,1238 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>System Design: Typeahead / Autocomplete</title>
-<style>
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: #e0e0e0; line-height: 1.7; }
-h1 { color: #00aaff; border-bottom: 3px solid #00aaff; padding-bottom: 10px; font-size: 2.2em; }
-h2 { color: #00ccff; margin-top: 40px; font-size: 1.6em; border-left: 4px solid #00ccff; padding-left: 12px; }
-h3 { color: #66ddff; font-size: 1.3em; }
-h4 { color: #88eeff; }
-.section { background: #1a1a2e; border-radius: 10px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
-.diagram-container { background: #0d1117; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
-.example { background: #1e293b; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
-.example strong { color: #f59e0b; }
-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-th { background: #2a2a4a; color: #00ccff; padding: 12px; text-align: left; border: 1px solid #444; }
-td { padding: 10px 12px; border: 1px solid #333; }
-tr:nth-child(even) { background: #1a1a2e; }
-tr:nth-child(odd) { background: #151528; }
-code { background: #2d2d4d; padding: 2px 8px; border-radius: 4px; color: #ff79c6; font-size: 0.95em; }
-.tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
-.tag-pk { background: #4a1a6b; color: #d4a5ff; }
-.tag-fk { background: #1a4a3b; color: #a5ffd4; }
-.tag-idx { background: #4a3a1a; color: #ffd4a5; }
-.tag-shard { background: #1a2a4a; color: #a5d4ff; }
-ul { padding-left: 25px; }
-li { margin: 5px 0; }
-.tradeoff { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-.pro { background: #0a2a1a; border: 1px solid #2a5a3a; padding: 15px; border-radius: 8px; }
-.con { background: #2a0a1a; border: 1px solid #5a2a3a; padding: 15px; border-radius: 8px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design: Typeahead / Autocomplete</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --surface2: #1c2333;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --accent2: #3fb950;
+            --accent3: #d2a8ff;
+            --accent4: #f0883e;
+            --accent5: #ff7b72;
+            --accent6: #79c0ff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 0 0 80px 0;
+        }
+        .hero {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 60px 40px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+        .hero h1 { font-size: 2.8em; margin-bottom: 10px; background: linear-gradient(90deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { color: var(--text-secondary); font-size: 1.2em; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 30px; }
+        .toc {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px 40px;
+            margin: 40px 0;
+        }
+        .toc h2 { color: var(--accent); margin-bottom: 15px; font-size: 1.4em; }
+        .toc ol { padding-left: 20px; }
+        .toc li { margin: 6px 0; }
+        .toc a { color: var(--accent6); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        section { margin: 50px 0; }
+        h2 {
+            font-size: 1.8em;
+            color: var(--accent);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+        }
+        h3 { font-size: 1.3em; color: var(--accent3); margin: 25px 0 12px 0; }
+        h4 { font-size: 1.1em; color: var(--accent4); margin: 20px 0 10px 0; }
+        p { margin: 10px 0; color: var(--text); }
+        ul, ol { padding-left: 25px; margin: 10px 0; }
+        li { margin: 5px 0; color: var(--text); }
+        .diagram-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 25px 0;
+            overflow-x: auto;
+        }
+        .diagram-box .mermaid { display: flex; justify-content: center; }
+        .example-box {
+            background: linear-gradient(135deg, #1a2332 0%, #162030 100%);
+            border-left: 4px solid var(--accent2);
+            border-radius: 0 10px 10px 0;
+            padding: 20px 25px;
+            margin: 20px 0;
+        }
+        .example-box strong { color: var(--accent2); }
+        .example-box .label {
+            display: inline-block;
+            background: #1a3a1a;
+            color: var(--accent2);
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+        }
+        .callout {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px 25px;
+            margin: 20px 0;
+        }
+        .callout.info { border-left: 4px solid var(--accent); }
+        .callout.warn { border-left: 4px solid var(--accent4); }
+        .callout.critical { border-left: 4px solid var(--accent5); }
+        .callout .callout-title { font-weight: 700; margin-bottom: 6px; }
+        .callout.info .callout-title { color: var(--accent); }
+        .callout.warn .callout-title { color: var(--accent4); }
+        .callout.critical .callout-title { color: var(--accent5); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.95em;
+        }
+        th {
+            background: var(--surface2);
+            color: var(--accent6);
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        td {
+            padding: 10px 15px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+        }
+        code {
+            background: var(--surface2);
+            color: var(--accent4);
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+        pre {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px 20px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        pre code { background: none; padding: 0; }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .badge-sql { background: #1a3a5c; color: #79c0ff; }
+        .badge-nosql { background: #3a1a3a; color: #d2a8ff; }
+        .badge-cache { background: #1a3a1a; color: #3fb950; }
+        .badge-obj { background: #3a2a1a; color: #f0883e; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .grid-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .grid-item h4 { margin-top: 0; }
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 2em; }
+            .container { padding: 0 15px; }
+        }
+    </style>
 </head>
 <body>
-<h1>System Design: Typeahead / Autocomplete</h1>
 
-<div class="section">
-<h2>Functional Requirements</h2>
-<ul>
-<li>As a user types, suggest top-N completions (5-10 results) in real-time</li>
-<li>Suggestions ranked by popularity/relevance (frequency of past queries)</li>
-<li>Support for personalized suggestions based on user's search history</li>
-<li>Filter offensive/inappropriate suggestions</li>
-<li>Update suggestion corpus based on trending queries</li>
-</ul>
+<div class="hero">
+    <h1>🔍 Typeahead / Autocomplete</h1>
+    <p>System Design — Comprehensive Deep Dive</p>
 </div>
 
-<div class="section">
-<h2>Non-Functional Requirements</h2>
-<ul>
-<li><strong>Ultra-low Latency:</strong> &lt;50ms response time (must feel instantaneous as user types)</li>
-<li><strong>High Availability:</strong> 99.99% — search box unusable without typeahead</li>
-<li><strong>Scalability:</strong> Billions of queries/day, millions of unique suggestions</li>
-<li><strong>Freshness:</strong> Trending topics appear within minutes (e.g., breaking news)</li>
-<li><strong>Read-heavy:</strong> Read:Write ratio ~1000:1 (every keystroke triggers a read)</li>
-</ul>
+<div class="container">
+
+    <!-- ============================================================ -->
+    <!-- TABLE OF CONTENTS -->
+    <!-- ============================================================ -->
+    <div class="toc">
+        <h2>📑 Table of Contents</h2>
+        <ol>
+            <li><a href="#fr">Functional Requirements</a></li>
+            <li><a href="#nfr">Non-Functional Requirements</a></li>
+            <li><a href="#flow1">Flow 1 — Suggestion Retrieval (Read Path)</a></li>
+            <li><a href="#flow2">Flow 2 — Data Collection &amp; Trie Building (Write Path)</a></li>
+            <li><a href="#combined">Combined System Diagram</a></li>
+            <li><a href="#schema">Schema Design</a></li>
+            <li><a href="#cdn-cache">CDN &amp; Cache Deep Dive</a></li>
+            <li><a href="#trie">Trie Data Structure Deep Dive</a></li>
+            <li><a href="#mq">Message Queue Deep Dive</a></li>
+            <li><a href="#lb">Load Balancer Deep Dive</a></li>
+            <li><a href="#scaling">Scaling Considerations</a></li>
+            <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+            <li><a href="#alternatives">Alternative Approaches</a></li>
+            <li><a href="#additional">Additional Considerations</a></li>
+            <li><a href="#vendors">Vendor Suggestions</a></li>
+        </ol>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- FUNCTIONAL REQUIREMENTS -->
+    <!-- ============================================================ -->
+    <section id="fr">
+        <h2>1. Functional Requirements</h2>
+        <ol>
+            <li><strong>Prefix-based suggestions:</strong> As a user types characters into a search input, the system must return a ranked list of suggestions that match the typed prefix.</li>
+            <li><strong>Ranked by popularity:</strong> Suggestions must be ordered by global popularity (search frequency), so the most commonly searched terms appear first.</li>
+            <li><strong>Personalized suggestions:</strong> For logged-in users, recently searched queries matching the current prefix should be merged into the suggestion list and boosted in ranking.</li>
+            <li><strong>Real-time feel:</strong> Suggestions must appear in near-real-time as the user types, with no perceptible delay for common prefixes.</li>
+            <li><strong>Trending term ingestion:</strong> Newly popular or trending search terms should eventually appear in the suggestion results (does not need to be instantaneous).</li>
+            <li><strong>Multi-platform:</strong> Support web browsers and mobile clients (iOS, Android).</li>
+        </ol>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- NON-FUNCTIONAL REQUIREMENTS -->
+    <!-- ============================================================ -->
+    <section id="nfr">
+        <h2>2. Non-Functional Requirements</h2>
+        <table>
+            <tr><th>Requirement</th><th>Target</th><th>Rationale</th></tr>
+            <tr><td>Read Latency (p99)</td><td>&lt; 100 ms end-to-end</td><td>Users expect instant suggestions; anything above 200 ms feels sluggish.</td></tr>
+            <tr><td>Availability</td><td>99.99 %</td><td>Typeahead is a core user-facing feature; downtime degrades search UX severely.</td></tr>
+            <tr><td>Throughput</td><td>Billions of queries / day</td><td>Each keystroke from every user can trigger a suggestion request.</td></tr>
+            <tr><td>Consistency Model</td><td>Eventual consistency</td><td>New trending terms appearing minutes later is acceptable; strong consistency is unnecessary.</td></tr>
+            <tr><td>Freshness</td><td>15 min – 1 hour lag</td><td>Popularity data is aggregated in periodic batch windows; minute-level lag is fine.</td></tr>
+            <tr><td>Fault Tolerance</td><td>Graceful degradation</td><td>If the typeahead service is down, the search box still works — the user just doesn't see suggestions.</td></tr>
+            <tr><td>Scalability</td><td>Horizontal</td><td>Must scale by adding nodes, not upgrading individual machines.</td></tr>
+        </table>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- FLOW 1 — SUGGESTION RETRIEVAL -->
+    <!-- ============================================================ -->
+    <section id="flow1">
+        <h2>3. Flow 1 — Suggestion Retrieval (Read Path)</h2>
+        <p>This is the <strong>hot path</strong>. It is triggered every time the user pauses briefly while typing in the search box. It is extremely read-heavy and latency-sensitive.</p>
+
+        <div class="diagram-box">
+            <div class="mermaid">
+graph TD
+    subgraph Client Side
+        A["👤 Client App<br/>(Browser / Mobile)"]
+    end
+
+    A -->|"1 — HTTP GET<br/>/api/v1/suggestions?q=face&limit=10&user_id=u42"| B["🌐 CDN<br/>Edge Cache"]
+
+    B -->|"2a — Cache HIT → return cached JSON"| A
+    B -->|"2b — Cache MISS → forward"| C["⚖️ Load Balancer"]
+
+    C -->|"3 — Route (round-robin)"| D["🔧 Suggestion Service<br/>(Stateless)"]
+
+    D -->|"4 — Traverse prefix 'face'"| E["🌳 In-Memory Trie<br/>(Pre-computed Top-K at each node)"]
+    D -->|"5 — GET user_id=u42<br/>recent searches"| F["📦 Distributed Cache"]
+    F -->|"Cache MISS → query DB"| G[("👤 User Search<br/>History Store<br/><i>NoSQL</i>")]
+
+    E -->|"Return top-K generic results"| D
+    F -->|"Return user's recent queries<br/>matching prefix"| D
+
+    D -->|"6 — Merge, rank,<br/>return JSON array"| C
+    C --> B
+    B -->|"7 — Cache &amp; respond"| A
+
+    style A fill:#1a3050,stroke:#58a6ff,color:#e6edf3
+    style B fill:#2a2a1a,stroke:#f0883e,color:#e6edf3
+    style C fill:#1a2a3a,stroke:#58a6ff,color:#e6edf3
+    style D fill:#1a3a2a,stroke:#3fb950,color:#e6edf3
+    style E fill:#2a1a3a,stroke:#d2a8ff,color:#e6edf3
+    style F fill:#1a3a1a,stroke:#3fb950,color:#e6edf3
+    style G fill:#3a1a3a,stroke:#d2a8ff,color:#e6edf3
+            </div>
+        </div>
+
+        <!-- EXAMPLES -->
+        <h3>Flow 1 — Examples</h3>
+
+        <div class="example-box">
+            <div class="label">Example 1 — CDN Cache Hit (Anonymous User)</div>
+            <p>An anonymous user opens a search engine and types <code>wea</code>. The client debounces for 200 ms after the last keystroke and fires <code>HTTP GET /api/v1/suggestions?q=wea&limit=10</code>. The request hits the <strong>CDN edge node</strong> closest to the user. Because <code>"wea"</code> is an extremely popular prefix (matching "weather", "weather today", "weather tomorrow", etc.), the CDN has a cached response from a previous request within the last hour. The CDN immediately returns the cached JSON array: <code>["weather", "weather today", "weather tomorrow", "weather radar", …]</code>. The client displays the dropdown. <strong>No request reaches the origin Suggestion Service.</strong></p>
+        </div>
+
+        <div class="example-box">
+            <div class="label">Example 2 — CDN Cache Miss + Personalization</div>
+            <p>A logged-in user (user_id=u42) types <code>pyth</code>. The client sends <code>HTTP GET /api/v1/suggestions?q=pyth&limit=10&user_id=u42</code>. The CDN does not cache personalized results (the cache key includes user_id, but per-user caching would have a very low hit rate, so personalized requests are forwarded). The request passes through the <strong>Load Balancer</strong> to a <strong>Suggestion Service</strong> node. The service traverses its <strong>In-Memory Trie</strong> to the node for prefix <code>"pyth"</code> and retrieves the pre-computed top-10: <code>["python", "python download", "python tutorial", "python for beginners", …]</code>. Simultaneously, it queries the <strong>Distributed Cache</strong> for user u42's recent search history. The cache returns that u42 recently searched <code>"python asyncio guide"</code> and <code>"python 3.12 release"</code>. The service merges these into the list, boosting the user's recent queries to positions 2 and 3. The final response is returned to the client.</p>
+        </div>
+
+        <div class="example-box">
+            <div class="label">Example 3 — User History Cache Miss → DB Fallback</div>
+            <p>A logged-in user (user_id=u99) types <code>rec</code>. The request reaches the Suggestion Service. The trie returns generic results: <code>["recipes", "record screen", "recover gmail account", …]</code>. The service queries the Distributed Cache for u99's history, but it's a cache miss (perhaps user u99 hasn't searched in days, so their entry was evicted via LRU). The service falls back to the <strong>User Search History NoSQL store</strong>, finds that u99 previously searched <code>"recursive backtracking"</code>, populates the Distributed Cache for future requests, and merges the result into the suggestion list.</p>
+        </div>
+
+        <!-- COMPONENT DEEP DIVE -->
+        <h3>Flow 1 — Component Deep Dive</h3>
+
+        <h4>Client App (Browser / Mobile)</h4>
+        <ul>
+            <li><strong>Debouncing:</strong> The client waits 150–300 ms after the last keystroke before sending a request. This prevents firing a request on every single key press, reducing server load by ~70–80%.</li>
+            <li><strong>Request cancellation:</strong> If the user types another character before the previous response arrives, the client cancels the in-flight HTTP request (using <code>AbortController</code> in browsers) and starts a new debounce timer.</li>
+            <li><strong>Local filtering:</strong> If results for prefix <code>"py"</code> are already cached client-side, and the user types <code>"pyt"</code>, the client can immediately filter the existing results locally and display them — while also sending a new server request for a more precise result set. This gives an "instant" feel.</li>
+            <li><strong>Protocol:</strong> <code>HTTP GET</code> over HTTPS (TLS 1.3). HTTP/2 is preferred for connection multiplexing, reducing overhead of repeated requests from the same page.</li>
+        </ul>
+
+        <h4>CDN (Edge Cache)</h4>
+        <ul>
+            <li>Sits between the client and the origin servers. Caches suggestion responses at edge locations worldwide.</li>
+            <li><strong>Cache key:</strong> The full query string for non-personalized requests (e.g., <code>/api/v1/suggestions?q=wea&limit=10</code>).</li>
+            <li><strong>Personalized requests:</strong> Forwarded to origin (not cached by CDN) because per-user cache keys yield extremely low hit rates.</li>
+            <li><strong>TTL:</strong> 1 hour. Popularity shifts slowly enough that 1-hour staleness is acceptable.</li>
+            <li><strong>Eviction:</strong> LRU. Rarely-queried prefixes are evicted first.</li>
+            <li>Detailed CDN analysis in the <a href="#cdn-cache">CDN &amp; Cache section</a>.</li>
+        </ul>
+
+        <h4>Load Balancer</h4>
+        <ul>
+            <li>Distributes incoming requests across Suggestion Service nodes.</li>
+            <li><strong>Algorithm:</strong> Round-robin (all nodes hold the same trie, so any node can serve any prefix). Weighted round-robin can be used if nodes have different capacities.</li>
+            <li>Performs health checks (HTTP health endpoint) every 5–10 seconds; removes unhealthy nodes from rotation.</li>
+            <li>Operates at Layer 7 (HTTP) so it can inspect the request path and headers.</li>
+            <li>Detailed analysis in the <a href="#lb">Load Balancer section</a>.</li>
+        </ul>
+
+        <h4>Suggestion Service (Stateless)</h4>
+        <ul>
+            <li><strong>Protocol:</strong> HTTP REST</li>
+            <li><strong>Endpoint:</strong> <code>GET /api/v1/suggestions?q={prefix}&limit={n}&user_id={uid}</code></li>
+            <li><strong>Input:</strong> <code>q</code> (prefix string, 1–100 chars), <code>limit</code> (int, default 10), <code>user_id</code> (optional string)</li>
+            <li><strong>Output:</strong> JSON array of suggestion objects: <code>[{ "text": "python", "score": 98500 }, ...]</code></li>
+            <li><strong>Logic:</strong>
+                <ol>
+                    <li>Traverse the in-memory trie to the node matching the prefix.</li>
+                    <li>Retrieve the pre-computed top-K suggestions stored at that node.</li>
+                    <li>If <code>user_id</code> is provided, fetch the user's recent search history from the Distributed Cache (or DB on cache miss).</li>
+                    <li>Merge personalized results into the generic top-K. Personalized results matching the prefix are boosted by a configurable weight.</li>
+                    <li>Return the final ranked list, truncated to <code>limit</code>.</li>
+                </ol>
+            </li>
+            <li><strong>Stateless:</strong> All state is in the trie (loaded into memory from a snapshot) and external cache/DB. Any node can serve any request.</li>
+            <li><strong>Trie reloading:</strong> Every 15–60 minutes, the service checks for a new trie snapshot in Object Storage. If found, it loads the new trie into memory in a background thread, then atomically swaps the pointer (so no downtime or stale reads during the swap).</li>
+        </ul>
+
+        <h4>In-Memory Trie</h4>
+        <ul>
+            <li>Loaded into each Suggestion Service node's heap memory on startup.</li>
+            <li>Each node in the trie represents a character; each edge represents a transition.</li>
+            <li><strong>Pre-computed Top-K:</strong> At every trie node, the top-K (e.g., K=10–25) most popular completions for that prefix are stored. This makes lookup O(L) where L = prefix length, with no need to traverse the subtree at query time.</li>
+            <li>Detailed trie analysis in the <a href="#trie">Trie Deep Dive section</a>.</li>
+        </ul>
+
+        <h4>Distributed Cache</h4>
+        <ul>
+            <li>An in-memory key-value cache cluster used primarily for <strong>user search history</strong>.</li>
+            <li><strong>Key:</strong> <code>user:{user_id}:history</code></li>
+            <li><strong>Value:</strong> JSON array of the user's last N searches (e.g., N=50) with timestamps.</li>
+            <li><strong>Strategy:</strong> Cache-aside (lazy loading). Populated on first access from the DB, invalidated/updated when the user performs a new search.</li>
+            <li><strong>Eviction:</strong> LRU (active searchers stay cached; inactive users are evicted).</li>
+            <li><strong>TTL:</strong> 24 hours. If a user hasn't searched in 24 hours, the entry expires and will be re-fetched from DB on next access.</li>
+            <li>Detailed analysis in the <a href="#cdn-cache">CDN &amp; Cache section</a>.</li>
+        </ul>
+
+        <h4>User Search History Store (NoSQL)</h4>
+        <ul>
+            <li>Persistent storage for each user's recent search queries.</li>
+            <li>Access pattern: Always by <code>user_id</code> (point lookup).</li>
+            <li>Schema details in the <a href="#schema">Schema section</a>.</li>
+        </ul>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- FLOW 2 — DATA COLLECTION & TRIE BUILDING -->
+    <!-- ============================================================ -->
+    <section id="flow2">
+        <h2>4. Flow 2 — Data Collection &amp; Trie Building (Write Path)</h2>
+        <p>This is the <strong>background / offline path</strong>. It collects search events, aggregates popularity, builds the trie, and deploys it to the Suggestion Service nodes. It runs periodically (batch) and does not affect user-facing latency.</p>
+
+        <div class="diagram-box">
+            <div class="mermaid">
+graph TD
+    subgraph User Action
+        A["👤 User completes a search<br/>(presses Enter)"]
+    end
+
+    A -->|"1 — HTTP POST /api/v1/search<br/>{ query: 'python asyncio' }"| B["⚖️ Load Balancer"]
+    B --> C["🔧 Search API Service"]
+    C -->|"2 — Return search results<br/>to user"| B
+    B --> A
+
+    C -->|"3 — Publish search event<br/>to message queue"| D["📬 Message Queue<br/>(Search Events Topic)"]
+    C -->|"3b — Update user history"| UH[("👤 User Search<br/>History Store<br/><i>NoSQL</i>")]
+
+    D -->|"4 — Consume events"| E["📝 Log Consumer<br/>Service"]
+    E -->|"5 — Batch write logs"| F[("📊 Search Log<br/>Storage<br/><i>NoSQL — Time Series</i>")]
+
+    subgraph Periodic Batch Pipeline
+        G["⚙️ Aggregation Pipeline<br/>(Scheduled: every 15–60 min)"]
+        G -->|"6 — Read logs for<br/>current window"| F
+        G -->|"7 — Write aggregated<br/>query frequencies"| H[("📈 Query Frequency<br/>Store<br/><i>NoSQL — KV</i>")]
+    end
+
+    subgraph Trie Build &amp; Deploy
+        I["🏗️ Trie Builder<br/>(Triggered after aggregation)"]
+        I -->|"8 — Read all query<br/>frequencies"| H
+        I -->|"9 — Serialize &amp; upload<br/>new trie snapshot"| J[("💾 Trie Snapshot<br/>Storage<br/><i>Object Storage</i>")]
+        I -->|"10 — Notify nodes:<br/>new trie available"| K["🔧 Suggestion Service<br/>Nodes"]
+    end
+
+    style A fill:#1a3050,stroke:#58a6ff,color:#e6edf3
+    style B fill:#1a2a3a,stroke:#58a6ff,color:#e6edf3
+    style C fill:#1a3a2a,stroke:#3fb950,color:#e6edf3
+    style D fill:#2a2a1a,stroke:#f0883e,color:#e6edf3
+    style E fill:#1a3a2a,stroke:#3fb950,color:#e6edf3
+    style F fill:#3a1a3a,stroke:#d2a8ff,color:#e6edf3
+    style G fill:#2a2a3a,stroke:#79c0ff,color:#e6edf3
+    style H fill:#3a1a3a,stroke:#d2a8ff,color:#e6edf3
+    style I fill:#2a2a3a,stroke:#79c0ff,color:#e6edf3
+    style J fill:#3a2a1a,stroke:#f0883e,color:#e6edf3
+    style K fill:#1a3a2a,stroke:#3fb950,color:#e6edf3
+    style UH fill:#3a1a3a,stroke:#d2a8ff,color:#e6edf3
+            </div>
+        </div>
+
+        <!-- EXAMPLES -->
+        <h3>Flow 2 — Examples</h3>
+
+        <div class="example-box">
+            <div class="label">Example 1 — Normal Search Event Ingestion</div>
+            <p>User u42 types <code>python asyncio</code> and presses Enter. The client sends <code>HTTP POST /api/v1/search</code> with body <code>{ "query": "python asyncio", "user_id": "u42" }</code>. The <strong>Search API Service</strong> processes the search and returns results. Concurrently, it publishes a search event <code>{ "query": "python asyncio", "user_id": "u42", "timestamp": 1707840000 }</code> to the <strong>Message Queue</strong>. It also writes to the <strong>User Search History Store</strong>, appending "python asyncio" to u42's recent searches and evicting the oldest entry if the list exceeds 50. The <strong>Log Consumer Service</strong> picks up the event from the queue and batch-writes it to <strong>Search Log Storage</strong>.</p>
+        </div>
+
+        <div class="example-box">
+            <div class="label">Example 2 — Aggregation Pipeline Runs</div>
+            <p>At the top of every hour, the <strong>Aggregation Pipeline</strong> (a scheduled batch job) wakes up. It reads all search log entries from the last hour from <strong>Search Log Storage</strong> (partitioned by time, so the read is efficient). It counts the frequency of each unique query. For example, it finds that <code>"python"</code> was searched 45,200 times, <code>"python tutorial"</code> was searched 12,300 times, etc. It merges these counts with existing lifetime frequency data using exponential decay (older counts are weighted less), and writes the updated per-query frequency to the <strong>Query Frequency Store</strong>.</p>
+        </div>
+
+        <div class="example-box">
+            <div class="label">Example 3 — Trie Build &amp; Deployment</div>
+            <p>After the Aggregation Pipeline completes, the <strong>Trie Builder</strong> is triggered. It reads all entries from the <strong>Query Frequency Store</strong> (e.g., 10 million popular queries with their frequency scores). For each query, it inserts the query into a trie structure. At each node along the insertion path, it updates the top-K list (maintaining only the K most popular completions at each prefix). Once the full trie is built, it is serialized into a binary format and uploaded to <strong>Trie Snapshot Object Storage</strong>. The Trie Builder then sends a notification (e.g., via a lightweight pub-sub or a flag in a coordination service) to all <strong>Suggestion Service nodes</strong>. Each node downloads the new snapshot in the background, deserializes it into memory, and atomically swaps the old trie pointer with the new one. Users immediately begin receiving suggestions based on the latest popularity data.</p>
+        </div>
+
+        <!-- COMPONENT DEEP DIVE -->
+        <h3>Flow 2 — Component Deep Dive</h3>
+
+        <h4>Search API Service</h4>
+        <ul>
+            <li><strong>Protocol:</strong> HTTP REST</li>
+            <li><strong>Endpoint:</strong> <code>POST /api/v1/search</code></li>
+            <li><strong>Input:</strong> <code>{ "query": string, "user_id": string (optional) }</code></li>
+            <li><strong>Output:</strong> Search results (this is the main search system, not typeahead itself — but it is the source of search events).</li>
+            <li><strong>Side effects:</strong> Publishes a search event to the Message Queue and updates the User Search History Store.</li>
+            <li>Note: This service is part of the broader search system. For the typeahead design, we are primarily interested in its role as the <em>event producer</em>.</li>
+        </ul>
+
+        <h4>Message Queue (Search Events Topic)</h4>
+        <ul>
+            <li>Decouples the real-time search path from the batch analytics path.</li>
+            <li>The Search API Service publishes events; the Log Consumer Service consumes them.</li>
+            <li>Provides buffering during traffic spikes (e.g., during major events, search volume can spike 10x).</li>
+            <li><strong>Delivery guarantee:</strong> At-least-once. Duplicate events are tolerable because they only slightly inflate frequency counts, which are aggregated over millions of events.</li>
+            <li><strong>Partitioning:</strong> By query hash for even distribution across consumer instances.</li>
+            <li>Detailed analysis in the <a href="#mq">Message Queue section</a>.</li>
+        </ul>
+
+        <h4>Log Consumer Service</h4>
+        <ul>
+            <li>Consumes search events from the Message Queue in micro-batches.</li>
+            <li>Writes events to Search Log Storage in batch (e.g., every 5 seconds or every 1,000 events).</li>
+            <li>Stateless; horizontally scalable by adding more consumer instances (one per queue partition).</li>
+        </ul>
+
+        <h4>Search Log Storage (NoSQL — Time Series)</h4>
+        <ul>
+            <li>Append-only store for raw search events.</li>
+            <li>Partitioned by time (hourly or daily buckets) for efficient range reads during aggregation.</li>
+            <li>Old data is archived or deleted after a configurable retention period (e.g., 30 days).</li>
+            <li>Schema details in the <a href="#schema">Schema section</a>.</li>
+        </ul>
+
+        <h4>Aggregation Pipeline</h4>
+        <ul>
+            <li>A scheduled batch job that runs every 15–60 minutes.</li>
+            <li>Reads search logs for the current time window.</li>
+            <li>Performs a MapReduce-style aggregation: counts the number of occurrences of each unique query.</li>
+            <li>Applies <strong>exponential time decay</strong>: recent searches are weighted more heavily than older searches, so the system naturally adapts to trending terms.</li>
+            <li>Writes the updated frequency map to the Query Frequency Store.</li>
+        </ul>
+
+        <h4>Query Frequency Store (NoSQL — Key-Value)</h4>
+        <ul>
+            <li>Simple key-value store: <code>query_text → weighted_frequency_score</code>.</li>
+            <li>Read by the Trie Builder during trie construction.</li>
+            <li>Written by the Aggregation Pipeline after each batch run.</li>
+            <li>Schema details in the <a href="#schema">Schema section</a>.</li>
+        </ul>
+
+        <h4>Trie Builder</h4>
+        <ul>
+            <li>Triggered after each aggregation run completes.</li>
+            <li>Reads the full Query Frequency Store (all entries above a minimum threshold).</li>
+            <li>Constructs a trie in memory:
+                <ol>
+                    <li>For each query, insert all characters as nodes.</li>
+                    <li>At each node along the path, update the top-K list (a min-heap of size K, where the heap property is based on frequency score).</li>
+                </ol>
+            </li>
+            <li>Serializes the completed trie to a compact binary format.</li>
+            <li>Uploads to Object Storage and notifies Suggestion Service nodes.</li>
+        </ul>
+
+        <h4>Trie Snapshot Storage (Object Storage)</h4>
+        <ul>
+            <li>Stores serialized trie snapshots as versioned binary blobs.</li>
+            <li>Each snapshot is immutable; new versions are uploaded alongside old ones.</li>
+            <li>Old snapshots are garbage-collected after N newer versions exist (e.g., keep last 5).</li>
+            <li>Suggestion Service nodes download the latest snapshot URI on notification.</li>
+        </ul>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- COMBINED SYSTEM DIAGRAM -->
+    <!-- ============================================================ -->
+    <section id="combined">
+        <h2>5. Combined System Diagram</h2>
+        <p>This diagram merges both the <strong>Read Path</strong> (suggestion retrieval) and the <strong>Write Path</strong> (data collection &amp; trie building) into a single view.</p>
+
+        <div class="diagram-box">
+            <div class="mermaid">
+graph TD
+    subgraph Client
+        U["👤 User"]
+    end
+
+    subgraph ReadPath ["Read Path — Suggestion Retrieval"]
+        CDN["🌐 CDN<br/>Edge Cache"]
+        LB1["⚖️ Load Balancer"]
+        SS["🔧 Suggestion Service<br/>(In-Memory Trie)"]
+        DC["📦 Distributed Cache<br/>(User History)"]
+    end
+
+    subgraph WritePath ["Write Path — Data Collection"]
+        LB2["⚖️ Load Balancer"]
+        SAS["🔧 Search API Service"]
+        MQ["📬 Message Queue"]
+        LC["📝 Log Consumer"]
+    end
+
+    subgraph Batch Pipeline
+        AP["⚙️ Aggregation<br/>Pipeline"]
+        TB["🏗️ Trie Builder"]
+    end
+
+    subgraph Data Stores
+        SL[("📊 Search Log<br/><i>NoSQL TS</i>")]
+        QF[("📈 Query Frequency<br/><i>NoSQL KV</i>")]
+        USH[("👤 User History<br/><i>NoSQL Doc</i>")]
+        OBJ[("💾 Trie Snapshots<br/><i>Object Storage</i>")]
+    end
+
+    %% Read Path
+    U -->|"GET /suggestions?q=..."| CDN
+    CDN -->|"Cache MISS"| LB1
+    LB1 --> SS
+    SS --> DC
+    DC -->|"Cache MISS"| USH
+    SS -->|"Return suggestions"| LB1
+    LB1 --> CDN
+    CDN -->|"Respond"| U
+
+    %% Write Path
+    U -->|"POST /search { query }"| LB2
+    LB2 --> SAS
+    SAS -->|"Search results"| U
+    SAS -->|"Publish event"| MQ
+    SAS -->|"Update history"| USH
+    MQ --> LC
+    LC --> SL
+
+    %% Batch Pipeline
+    AP -->|"Read logs"| SL
+    AP -->|"Write frequencies"| QF
+    TB -->|"Read frequencies"| QF
+    TB -->|"Upload snapshot"| OBJ
+    TB -->|"Notify: reload trie"| SS
+    SS -.->|"Download snapshot<br/>on notification"| OBJ
+
+    style U fill:#1a3050,stroke:#58a6ff,color:#e6edf3
+    style CDN fill:#2a2a1a,stroke:#f0883e,color:#e6edf3
+    style LB1 fill:#1a2a3a,stroke:#58a6ff,color:#e6edf3
+    style LB2 fill:#1a2a3a,stroke:#58a6ff,color:#e6edf3
+    style SS fill:#1a3a2a,stroke:#3fb950,color:#e6edf3
+    style DC fill:#1a3a1a,stroke:#3fb950,color:#e6edf3
+    style SAS fill:#1a3a2a,stroke:#3fb950,color:#e6edf3
+    style MQ fill:#2a2a1a,stroke:#f0883e,color:#e6edf3
+    style LC fill:#1a3a2a,stroke:#3fb950,color:#e6edf3
+    style AP fill:#2a2a3a,stroke:#79c0ff,color:#e6edf3
+    style TB fill:#2a2a3a,stroke:#79c0ff,color:#e6edf3
+    style SL fill:#3a1a3a,stroke:#d2a8ff,color:#e6edf3
+    style QF fill:#3a1a3a,stroke:#d2a8ff,color:#e6edf3
+    style USH fill:#3a1a3a,stroke:#d2a8ff,color:#e6edf3
+    style OBJ fill:#3a2a1a,stroke:#f0883e,color:#e6edf3
+            </div>
+        </div>
+
+        <h3>Combined Flow — Examples</h3>
+
+        <div class="example-box">
+            <div class="label">Example — Full Lifecycle</div>
+            <p><strong>Step A (Write Path):</strong> At 2:00 PM, user u42 searches for <code>"python asyncio"</code>. The client sends <code>POST /search</code> to the Search API Service. The service returns search results, publishes a search event to the Message Queue, and appends <code>"python asyncio"</code> to u42's User Search History in the NoSQL store (and invalidates the distributed cache entry for u42).</p>
+            <p><strong>Step B (Batch Pipeline):</strong> At 3:00 PM, the Aggregation Pipeline runs. It reads the last hour's search logs (including u42's event) from Search Log Storage, counts that <code>"python asyncio"</code> was searched 8,700 times this hour, and writes an updated frequency score to the Query Frequency Store. The Trie Builder then reads all frequencies, builds a new trie (where <code>"python asyncio"</code> now ranks higher at the <code>"pyth"</code> node), serializes it, uploads to Object Storage, and notifies all Suggestion Service nodes.</p>
+            <p><strong>Step C (Read Path):</strong> At 3:05 PM, user u99 types <code>"pyth"</code> in the search box. The client sends <code>GET /suggestions?q=pyth&limit=10</code>. The CDN has no cached entry for this prefix (or the TTL expired). The request reaches a Suggestion Service node that has already loaded the updated trie. The service returns <code>["python", "python tutorial", "python asyncio", …]</code> — reflecting the newly elevated popularity of "python asyncio".</p>
+        </div>
+
+        <div class="example-box">
+            <div class="label">Example — Personalized + Generic Merge</div>
+            <p><strong>Write:</strong> User u42 searches for <code>"react hooks tutorial"</code>. The event flows through the write path as above, and <code>"react hooks tutorial"</code> is added to u42's search history.</p>
+            <p><strong>Read (later):</strong> User u42 types <code>"rea"</code>. The CDN forwards the personalized request. The Suggestion Service fetches generic top-K from the trie: <code>["real estate", "realtor", "reading", "real madrid", …]</code>. It also fetches u42's history from the Distributed Cache: <code>["react hooks tutorial", "react native setup"]</code>. Both match prefix <code>"rea"</code>, so they are merged and boosted: <code>["react hooks tutorial", "react native setup", "real estate", "realtor", "reading", …]</code>. This personalized list is returned to u42.</p>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SCHEMA DESIGN -->
+    <!-- ============================================================ -->
+    <section id="schema">
+        <h2>6. Schema Design</h2>
+
+        <!-- ---- NoSQL Table 1: Search Log ---- -->
+        <h3><span class="badge badge-nosql">NoSQL — Time Series</span> Search Log</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+            <tr><td><code>event_id</code></td><td>UUID</td><td>Sort Key</td><td>Unique identifier for the search event.</td></tr>
+            <tr><td><code>date_hour</code></td><td>String (YYYYMMDDHH)</td><td><strong>Partition Key</strong></td><td>Hourly bucket for time-range partitioning.</td></tr>
+            <tr><td><code>query_text</code></td><td>String</td><td>—</td><td>The full search query entered by the user.</td></tr>
+            <tr><td><code>user_id</code></td><td>String (nullable)</td><td>—</td><td>The user who performed the search (null if anonymous).</td></tr>
+            <tr><td><code>timestamp</code></td><td>Long (epoch ms)</td><td>—</td><td>Exact time of the search event.</td></tr>
+            <tr><td><code>locale</code></td><td>String</td><td>—</td><td>User's locale/language for region-specific aggregation.</td></tr>
+        </table>
+        <div class="callout info">
+            <div class="callout-title">Why NoSQL (Time-Series)?</div>
+            <p><strong>Write pattern:</strong> Extremely high write throughput — every search across all users generates an event. Time-series NoSQL databases are optimized for append-only, time-partitioned writes.</p>
+            <p><strong>Read pattern:</strong> The Aggregation Pipeline reads entire time windows (e.g., "all events from 2 PM to 3 PM today") — time-partitioned storage makes this a sequential scan of a single partition, which is very efficient.</p>
+            <p><strong>No joins needed:</strong> Events are self-contained documents. No relational queries are required.</p>
+            <p><strong>Retention:</strong> Old partitions can be dropped entirely after the retention period (e.g., 30 days) — much simpler than row-level deletion in SQL.</p>
+        </div>
+        <div class="callout warn">
+            <div class="callout-title">Sharding Strategy</div>
+            <p><strong>Shard by <code>date_hour</code> (time-based partitioning).</strong> Each hourly bucket maps to a partition. This aligns with the access pattern: the Aggregation Pipeline reads one hour at a time. Old shards can be archived or dropped cheaply. Hot partition risk is minimal because writes distribute across the current hour's partition, and reads access completed (cold) partitions.</p>
+        </div>
+        <div class="callout info">
+            <div class="callout-title">Index</div>
+            <p><strong>No secondary indexes needed.</strong> The partition key (<code>date_hour</code>) and sort key (<code>event_id</code>) handle the only access pattern (range scan within a time window). Adding indexes would slow down the write path unnecessarily.</p>
+        </div>
+        <div class="callout info">
+            <div class="callout-title">Read / Write Events</div>
+            <p><strong>Written:</strong> When a user performs a search (presses Enter or selects a suggestion). Events flow through the Message Queue and Log Consumer.</p>
+            <p><strong>Read:</strong> By the Aggregation Pipeline during each scheduled batch run (every 15–60 minutes).</p>
+        </div>
+
+        <!-- ---- NoSQL Table 2: Query Frequency ---- -->
+        <h3><span class="badge badge-nosql">NoSQL — Key-Value</span> Query Frequency Store</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+            <tr><td><code>query_text</code></td><td>String</td><td><strong>Primary Key (Hash)</strong></td><td>The unique search query string.</td></tr>
+            <tr><td><code>frequency_score</code></td><td>Float</td><td>—</td><td>Weighted popularity score (with exponential time decay applied).</td></tr>
+            <tr><td><code>raw_count_last_window</code></td><td>Long</td><td>—</td><td>Raw count from the most recent aggregation window (for debugging).</td></tr>
+            <tr><td><code>last_updated</code></td><td>Long (epoch ms)</td><td>—</td><td>Timestamp of the last aggregation that updated this entry.</td></tr>
+        </table>
+        <div class="callout info">
+            <div class="callout-title">Why NoSQL (Key-Value)?</div>
+            <p><strong>Access pattern:</strong> Pure key-value. The Aggregation Pipeline writes by query_text; the Trie Builder reads by scanning all entries (or by query_text). A simple key-value store is the most efficient and cost-effective choice.</p>
+            <p><strong>No relationships:</strong> Each entry is independent. No joins, no foreign keys, no transactions required.</p>
+            <p><strong>Scalability:</strong> Key-value stores scale horizontally with ease via hash-based sharding on the primary key.</p>
+        </div>
+        <div class="callout warn">
+            <div class="callout-title">Sharding Strategy</div>
+            <p><strong>Hash-based sharding on <code>query_text</code>.</strong> The hash of the query string determines which shard stores the entry. This provides even distribution since query strings have high cardinality and vary widely. The Trie Builder performs a full scan across all shards in parallel during trie construction.</p>
+        </div>
+        <div class="callout info">
+            <div class="callout-title">Index</div>
+            <p><strong>Primary key hash index on <code>query_text</code></strong> (inherent in key-value stores). No secondary indexes needed — all access is either by exact key or by full scan.</p>
+        </div>
+        <div class="callout info">
+            <div class="callout-title">Read / Write Events</div>
+            <p><strong>Written:</strong> By the Aggregation Pipeline after each batch run.</p>
+            <p><strong>Read:</strong> By the Trie Builder when constructing a new trie (full scan).</p>
+        </div>
+
+        <!-- ---- NoSQL Table 3: User Search History ---- -->
+        <h3><span class="badge badge-nosql">NoSQL — Document</span> User Search History</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+            <tr><td><code>user_id</code></td><td>String</td><td><strong>Primary Key (Hash)</strong></td><td>The user's unique identifier.</td></tr>
+            <tr><td><code>recent_searches</code></td><td>Array of Objects</td><td>—</td><td>Ordered list (most recent first) of up to 50 entries: <code>[{ "query": "python asyncio", "ts": 1707840000 }, …]</code></td></tr>
+            <tr><td><code>updated_at</code></td><td>Long (epoch ms)</td><td>—</td><td>Timestamp of the last update.</td></tr>
+        </table>
+        <div class="callout info">
+            <div class="callout-title">Why NoSQL (Document)?</div>
+            <p><strong>Access pattern:</strong> Always by <code>user_id</code> (single-key lookup). The value is a nested array of objects — a natural fit for a document store.</p>
+            <p><strong>Flexible schema:</strong> The <code>recent_searches</code> array can vary in length per user. No rigid schema needed.</p>
+            <p><strong>No joins:</strong> Each user's history is self-contained. No relational queries required.</p>
+            <p><strong>Scale:</strong> Billions of users each with a small document — document stores handle this well with hash-based sharding.</p>
+        </div>
+        <div class="callout warn">
+            <div class="callout-title">Sharding Strategy</div>
+            <p><strong>Hash-based sharding on <code>user_id</code> (consistent hashing).</strong> User IDs have high cardinality and are uniformly distributed (especially if UUIDs). Consistent hashing ensures even distribution and minimal rebalancing when nodes are added/removed.</p>
+        </div>
+        <div class="callout info">
+            <div class="callout-title">Index</div>
+            <p><strong>Primary key hash index on <code>user_id</code></strong> (inherent). No secondary indexes needed since all access is by user_id.</p>
+        </div>
+        <div class="callout info">
+            <div class="callout-title">Read / Write Events</div>
+            <p><strong>Written:</strong> When a user performs a search. The Search API Service appends the query to the user's <code>recent_searches</code> array (and trims to 50 entries).</p>
+            <p><strong>Read:</strong> By the Suggestion Service when a logged-in user requests personalized suggestions (after a Distributed Cache miss).</p>
+        </div>
+
+        <!-- ---- Denormalization Note ---- -->
+        <h3>Denormalization</h3>
+        <div class="callout warn">
+            <div class="callout-title">Pre-computed Top-K in the Trie (Denormalization)</div>
+            <p>The most significant denormalization in this system is <strong>pre-computing and storing the top-K suggestions at every node of the trie</strong>. In a normalized design, you would store only the trie structure and the per-query frequency, then at query time traverse the entire subtree below the prefix node to find the top-K completions — an operation that could visit millions of nodes for short prefixes.</p>
+            <p>Instead, we denormalize by pre-computing the top-K list during the offline Trie Builder phase and embedding it directly in each trie node. This trades <strong>increased memory and build time</strong> for <strong>O(1) query-time lookups</strong> (after O(L) prefix traversal). Given that the read path is the hot path (billions of queries/day) and the build path runs only every 15–60 minutes, this is an excellent tradeoff.</p>
+        </div>
+        <div class="callout info">
+            <div class="callout-title">User History in Both DB and Cache (Denormalization)</div>
+            <p>User search history exists in both the NoSQL document store (persistent, source of truth) and the Distributed Cache (fast access). This is a standard cache-aside denormalization. The cache is populated on first access and invalidated on write. The tradeoff is a brief window of staleness after a write (mitigated by write-through or immediate cache invalidation).</p>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- CDN & CACHE DEEP DIVE -->
+    <!-- ============================================================ -->
+    <section id="cdn-cache">
+        <h2>7. CDN &amp; Cache Deep Dive</h2>
+
+        <h3>CDN — Why Appropriate</h3>
+        <p>A CDN is <strong>highly appropriate</strong> for typeahead because:</p>
+        <ul>
+            <li><strong>Extreme read-heaviness:</strong> The suggestion retrieval path is ~99.9% reads. CDNs are designed for read-heavy workloads.</li>
+            <li><strong>High cache hit rate for popular prefixes:</strong> Short prefixes (1–3 characters) account for a disproportionate share of requests, and their results are the same for all non-personalized users. A single CDN edge node can serve thousands of users with the cached result for prefix <code>"a"</code>.</li>
+            <li><strong>Latency reduction:</strong> Serving from an edge node 20 ms away vs. an origin server 150 ms away is a significant UX improvement for an interaction where every millisecond matters.</li>
+            <li><strong>Cost reduction:</strong> Offloading popular prefix queries to CDN reduces origin server load dramatically.</li>
+        </ul>
+
+        <table>
+            <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+            <tr><td>Cache Key</td><td><code>/api/v1/suggestions?q={prefix}&limit={n}</code> (non-personalized only)</td><td>Personalized requests bypass CDN to avoid per-user key explosion.</td></tr>
+            <tr><td>Caching Strategy</td><td>Write-through (on origin response)</td><td>When the origin Suggestion Service returns a response, the CDN caches it before forwarding to the client. No separate write step needed.</td></tr>
+            <tr><td>TTL (Expiration)</td><td>1 hour</td><td>Popularity data changes slowly (trie is rebuilt every 15–60 min). 1-hour TTL balances freshness and hit rate.</td></tr>
+            <tr><td>Eviction Policy</td><td>LRU (Least Recently Used)</td><td>Rare prefixes are evicted first. Popular prefixes like "wea", "fac", "you" stay cached.</td></tr>
+        </table>
+
+        <h3>Distributed Cache — Why Appropriate</h3>
+        <p>A distributed in-memory cache is appropriate for <strong>user search history</strong> because:</p>
+        <ul>
+            <li>User history lookups happen on the hot read path — adding a database round-trip (~5–20 ms) per suggestion request would blow the latency budget.</li>
+            <li>The data per user is small (~50 recent searches ≈ a few KB). The working set of active users fits comfortably in memory.</li>
+            <li>Most users have "session locality" — once a user starts searching, they'll type multiple queries in a short window, all requiring their history.</li>
+        </ul>
+
+        <table>
+            <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+            <tr><td>Cache Key</td><td><code>user:{user_id}:history</code></td><td>Simple, unique per user.</td></tr>
+            <tr><td>Caching Strategy</td><td>Cache-aside (lazy loading)</td><td>On read: check cache → on miss, query DB and populate cache. On write: update DB, then invalidate cache entry (next read will repopulate). This avoids unnecessary cache writes for users who never request personalized suggestions.</td></tr>
+            <tr><td>TTL (Expiration)</td><td>24 hours</td><td>If a user hasn't searched in 24 hours, their history is evicted. This keeps the cache warm only for active users.</td></tr>
+            <tr><td>Eviction Policy</td><td>LRU (Least Recently Used)</td><td>Under memory pressure, the least recently accessed user histories are evicted first. This naturally keeps active users cached and evicts dormant users.</td></tr>
+            <tr><td>Write Behavior</td><td>Invalidate on write</td><td>When the Search API Service updates a user's history in the DB, it also deletes the cache key. The next suggestion request will trigger a cache miss and repopulate with fresh data. Alternative: write-through (update cache immediately), but invalidation is simpler and avoids race conditions.</td></tr>
+        </table>
+
+        <h3>Why Not a Distributed Cache for Trie Lookups?</h3>
+        <p>The trie is stored <strong>in-memory on each Suggestion Service node</strong> rather than in a distributed cache because:</p>
+        <ul>
+            <li><strong>Latency:</strong> An in-memory trie lookup is ~0.1 ms. A distributed cache lookup requires a network hop (~1–5 ms). For typeahead, this difference matters.</li>
+            <li><strong>Throughput:</strong> In-memory lookups don't contend on a shared network resource. Each node can independently serve thousands of requests per second without cache cluster bottlenecks.</li>
+            <li><strong>Simplicity:</strong> The trie is read-only (rebuilt periodically). There's no cache invalidation complexity — just swap the entire trie atomically.</li>
+            <li><strong>Tradeoff:</strong> Each node uses more RAM (~10–50 GB for the trie), but modern servers have 128+ GB RAM, so this is acceptable.</li>
+        </ul>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TRIE DATA STRUCTURE DEEP DIVE -->
+    <!-- ============================================================ -->
+    <section id="trie">
+        <h2>8. Trie Data Structure Deep Dive</h2>
+
+        <h3>What Is a Trie?</h3>
+        <p>A <strong>Trie</strong> (pronounced "try", from re<em>trie</em>val) is a tree-like data structure where each node represents a character, and paths from the root to nodes represent prefixes. It is the ideal data structure for prefix matching because it shares common prefixes, reducing memory usage compared to storing all prefixes independently.</p>
+
+        <div class="diagram-box">
+            <div class="mermaid">
+graph TD
+    Root["(root)"] --> f["f"]
+    Root --> w["w"]
+    f --> fa["a"]
+    f --> fo["o"]
+    fa --> fac["c"]
+    fac --> face["e → Top-K: facebook, facetime, face swap"]
+    face --> faceb["b"]
+    faceb --> facebo["o"]
+    facebo --> faceboo["o"]
+    faceboo --> facebook["k ✓ 'facebook'"]
+    fo --> foo["o"]
+    foo --> food["d ✓ 'food'"]
+    w --> we["e"]
+    we --> wea["a → Top-K: weather, weather today, weather radar"]
+    wea --> weat["t"]
+    weat --> weath["h"]
+    weath --> weathe["e"]
+    weathe --> weather["r ✓ 'weather'"]
+
+    style Root fill:#2a2a3a,stroke:#79c0ff,color:#e6edf3
+    style face fill:#1a3a2a,stroke:#3fb950,color:#e6edf3
+    style wea fill:#1a3a2a,stroke:#3fb950,color:#e6edf3
+    style facebook fill:#3a1a1a,stroke:#ff7b72,color:#e6edf3
+    style food fill:#3a1a1a,stroke:#ff7b72,color:#e6edf3
+    style weather fill:#3a1a1a,stroke:#ff7b72,color:#e6edf3
+            </div>
+        </div>
+
+        <h3>Pre-computed Top-K at Each Node</h3>
+        <p>The key optimization for typeahead is <strong>pre-computing the top-K suggestions at every node</strong> during the offline trie build phase. Without this, answering a query for prefix <code>"a"</code> would require traversing the entire subtree below <code>"a"</code> — potentially millions of nodes. With pre-computed top-K, the answer is immediately available at the node.</p>
+
+        <h4>How Top-K Is Maintained During Build</h4>
+        <ol>
+            <li>For each query (e.g., <code>"facebook"</code>, score: 1,000,000), insert characters one by one into the trie.</li>
+            <li>At each node along the path (root → <code>"f"</code> → <code>"fa"</code> → <code>"fac"</code> → …), update the top-K list.</li>
+            <li>The top-K list at each node is a <strong>min-heap of size K</strong>. If the new query's score exceeds the minimum in the heap, replace it.</li>
+            <li>Result: Every node stores exactly the K most popular completions for its prefix.</li>
+        </ol>
+
+        <h3>Memory Estimation</h3>
+        <table>
+            <tr><th>Parameter</th><th>Value</th></tr>
+            <tr><td>Number of popular queries (above threshold)</td><td>~10 million</td></tr>
+            <tr><td>Average query length</td><td>~20 characters</td></tr>
+            <tr><td>Unique trie nodes (with prefix sharing)</td><td>~100 million</td></tr>
+            <tr><td>Per node: character + children pointers</td><td>~50 bytes</td></tr>
+            <tr><td>Per node: top-K list (K=15, each entry ~60 bytes)</td><td>~900 bytes</td></tr>
+            <tr><td>Total per node</td><td>~950 bytes</td></tr>
+            <tr><td><strong>Total trie memory</strong></td><td><strong>~95 GB</strong> (upper bound, before compression)</td></tr>
+        </table>
+        <p>With optimizations (compressed trie / Patricia trie to merge single-child chains, short-string optimization, and compact serialization), the actual memory usage is typically <strong>10–30 GB</strong>, well within the capacity of a single server with 64–128 GB RAM.</p>
+
+        <h3>Compressed Trie (Patricia Trie / Radix Tree)</h3>
+        <p>A <strong>Patricia trie</strong> compresses chains of single-child nodes into a single node with a multi-character label. For example, the chain <code>w → e → a → t → h → e → r</code> becomes a single node labeled <code>"weather"</code>. This reduces the number of nodes by 5–10x, dramatically cutting memory usage.</p>
+
+        <h3>Trie Sharding (If Needed)</h3>
+        <p>If the trie exceeds a single node's memory, shard by prefix range:</p>
+        <ul>
+            <li>Shard 1: prefixes starting with <code>a–f</code></li>
+            <li>Shard 2: prefixes starting with <code>g–m</code></li>
+            <li>Shard 3: prefixes starting with <code>n–s</code></li>
+            <li>Shard 4: prefixes starting with <code>t–z</code> and numeric/special</li>
+        </ul>
+        <p>The Load Balancer routes based on the first character of the prefix. Hot prefixes (e.g., <code>s</code>) may require further splitting.</p>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- MESSAGE QUEUE DEEP DIVE -->
+    <!-- ============================================================ -->
+    <section id="mq">
+        <h2>9. Message Queue Deep Dive</h2>
+
+        <h3>Why a Message Queue?</h3>
+        <p>The Message Queue sits between the <strong>Search API Service</strong> (producer) and the <strong>Log Consumer Service</strong> (consumer). Its purpose:</p>
+        <ul>
+            <li><strong>Decoupling:</strong> The search path (user-facing, latency-critical) is decoupled from the analytics path (background, throughput-critical). If the Log Consumer or Search Log Storage is temporarily slow or down, search requests are unaffected.</li>
+            <li><strong>Buffering spikes:</strong> During viral events (e.g., breaking news), search volume can spike 10–50x. The message queue absorbs the spike; consumers process at their own pace.</li>
+            <li><strong>Reliability:</strong> Messages are persisted in the queue until acknowledged by the consumer. If a consumer crashes, messages are redelivered.</li>
+        </ul>
+
+        <h3>Why Not Alternatives?</h3>
+        <table>
+            <tr><th>Alternative</th><th>Why Not Used</th></tr>
+            <tr><td><strong>Direct DB writes from Search API Service</strong></td><td>Couples the search path to database write latency. A slow DB write would increase search response time. Also, no buffering for spikes.</td></tr>
+            <tr><td><strong>Pub/Sub system</strong></td><td>Pub/Sub is designed for fan-out (one message to many subscribers). Here, we have one producer and one consumer group for the analytics path — a simple message queue is sufficient and has less overhead. If future consumers need the same events (e.g., a fraud detection pipeline), we could switch to pub/sub.</td></tr>
+            <tr><td><strong>HTTP webhooks / callbacks</strong></td><td>No built-in buffering, retry, or ordering. Would require building all of this on top of HTTP, which is reinventing a message queue.</td></tr>
+        </table>
+
+        <h3>How Messages Flow</h3>
+        <ol>
+            <li><strong>Produce:</strong> The Search API Service serializes the search event as a message (JSON or binary) and publishes it to the <code>search-events</code> topic/queue. The message includes <code>{ query_text, user_id, timestamp, locale }</code>.</li>
+            <li><strong>Partition:</strong> The message is routed to a partition based on a hash of the query text. This ensures that events for the same query land on the same partition, though this isn't strictly required (it just helps if we want per-partition ordering).</li>
+            <li><strong>Consume:</strong> Log Consumer Service instances subscribe to partitions. Each consumer instance handles one or more partitions. Consumers read messages in order, batch them (e.g., 1,000 messages or 5 seconds), and write the batch to Search Log Storage.</li>
+            <li><strong>Acknowledge:</strong> After a successful batch write to the DB, the consumer acknowledges (commits the offset). This ensures at-least-once delivery.</li>
+        </ol>
+
+        <h3>Delivery Semantics</h3>
+        <p><strong>At-least-once delivery</strong> is chosen because:</p>
+        <ul>
+            <li>Duplicate search events are tolerable — they only marginally inflate query frequency counts, which are aggregated over millions of events.</li>
+            <li>Exactly-once delivery would require expensive distributed transactions or idempotency keys, adding complexity and latency for negligible benefit in this context.</li>
+        </ul>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- LOAD BALANCER DEEP DIVE -->
+    <!-- ============================================================ -->
+    <section id="lb">
+        <h2>10. Load Balancer Deep Dive</h2>
+
+        <h3>Where Load Balancers Are Placed</h3>
+        <ol>
+            <li><strong>Between CDN and Suggestion Service:</strong> Distributes suggestion retrieval requests across Suggestion Service nodes.</li>
+            <li><strong>Between Client and Search API Service:</strong> Distributes search requests across Search API Service nodes.</li>
+        </ol>
+
+        <h3>Configuration</h3>
+        <table>
+            <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+            <tr><td>Layer</td><td>Layer 7 (HTTP)</td><td>Needs to inspect HTTP path and headers (e.g., to distinguish <code>/suggestions</code> from <code>/search</code>, or to route sharded prefixes).</td></tr>
+            <tr><td>Algorithm</td><td>Round-robin (default) / Prefix-based routing (if trie is sharded)</td><td>All Suggestion Service nodes hold the same trie (if not sharded), so any node can handle any request → round-robin is simple and effective. If the trie is sharded, the LB routes based on the first character(s) of the prefix.</td></tr>
+            <tr><td>Health Checks</td><td>HTTP GET /health every 10 seconds</td><td>Unhealthy nodes (failed health check 3 consecutive times) are removed from rotation.</td></tr>
+            <tr><td>Connection Draining</td><td>30 seconds</td><td>When a node is taken out of rotation (e.g., during trie reload), existing connections are allowed to complete within 30 seconds.</td></tr>
+            <tr><td>SSL Termination</td><td>At the LB</td><td>The LB terminates TLS, reducing the CPU burden on backend services.</td></tr>
+        </table>
+
+        <h3>Why Not Client-Side Load Balancing?</h3>
+        <p>Client-side load balancing (e.g., the client randomly picking a server) would expose internal server IPs to the client, complicate health-check logic, and make it harder to add/remove nodes. A centralized (or distributed) server-side LB keeps the client simple.</p>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SCALING CONSIDERATIONS -->
+    <!-- ============================================================ -->
+    <section id="scaling">
+        <h2>11. Scaling Considerations</h2>
+
+        <h3>Traffic Estimation</h3>
+        <table>
+            <tr><th>Metric</th><th>Estimate</th></tr>
+            <tr><td>Daily active users (DAU)</td><td>500 million</td></tr>
+            <tr><td>Average searches per user per day</td><td>5</td></tr>
+            <tr><td>Average keystrokes per search</td><td>10</td></tr>
+            <tr><td>Debounce reduction factor</td><td>~60% (reduces requests by 60%)</td></tr>
+            <tr><td>Suggestion requests per day</td><td>500M × 5 × 10 × 0.4 = <strong>10 billion / day</strong></td></tr>
+            <tr><td>Peak QPS (2x average)</td><td>~230,000 QPS</td></tr>
+        </table>
+
+        <h3>Component Scaling Strategy</h3>
+
+        <h4>1. Suggestion Service</h4>
+        <ul>
+            <li><strong>Horizontal scaling:</strong> Stateless (the trie is loaded identically on each node). Add more nodes behind the Load Balancer to handle more QPS.</li>
+            <li>Each node can handle ~5,000–10,000 QPS (in-memory trie lookup is CPU-light).</li>
+            <li>At 230K peak QPS: ~25–50 nodes needed. With redundancy: 50–100 nodes.</li>
+        </ul>
+
+        <h4>2. CDN</h4>
+        <ul>
+            <li>CDN inherently scales by having edge nodes worldwide. No manual scaling needed.</li>
+            <li>Expected CDN hit rate for non-personalized requests: 50–70% (short prefixes are very cacheable).</li>
+            <li>This reduces origin traffic to ~70K–115K QPS.</li>
+        </ul>
+
+        <h4>3. Load Balancers</h4>
+        <ul>
+            <li>Deploy multiple LB instances per region for redundancy.</li>
+            <li>DNS-based load balancing across LB instances.</li>
+            <li>Locations: (a) Between CDN and Suggestion Service, (b) Between Client and Search API Service.</li>
+        </ul>
+
+        <h4>4. Search API Service</h4>
+        <ul>
+            <li>Horizontally scalable. Write load is much lower than read load (only triggered when a user presses Enter, not on every keystroke).</li>
+            <li>Estimated write QPS: 500M × 5 / 86400 ≈ ~29,000 QPS.</li>
+        </ul>
+
+        <h4>5. Message Queue</h4>
+        <ul>
+            <li>Scale by adding partitions. At 29K QPS, a modest number of partitions (e.g., 32–64) is sufficient.</li>
+        </ul>
+
+        <h4>6. Databases</h4>
+        <ul>
+            <li><strong>Search Log Storage:</strong> Shard by time. Write-optimized. Add nodes if write throughput increases.</li>
+            <li><strong>Query Frequency Store:</strong> Shard by query hash. Read load is low (only Trie Builder reads, and it does so infrequently).</li>
+            <li><strong>User Search History:</strong> Shard by user_id. Read/write load scales linearly with DAU.</li>
+        </ul>
+
+        <h4>7. Distributed Cache</h4>
+        <ul>
+            <li>Scale by adding cache nodes. The key space (user_ids) distributes evenly via consistent hashing.</li>
+            <li>Memory estimation: 100 million active users × 5 KB per entry = ~500 GB total cache footprint.</li>
+        </ul>
+
+        <h4>8. Trie Builder / Aggregation Pipeline</h4>
+        <ul>
+            <li>These are batch jobs. Scale by running on larger compute instances or parallelizing (MapReduce-style).</li>
+            <li>Not on the critical path; can take 5–30 minutes without impacting user experience.</li>
+        </ul>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TRADEOFFS & DEEP DIVES -->
+    <!-- ============================================================ -->
+    <section id="tradeoffs">
+        <h2>12. Tradeoffs &amp; Deep Dives</h2>
+
+        <div class="grid">
+            <div class="grid-item">
+                <h4>Freshness vs. Performance</h4>
+                <p>The trie is rebuilt every 15–60 minutes. This means a brand-new trending term won't appear in suggestions instantly. However, this offline build approach allows the read path to be <strong>blazing fast</strong> (O(L) lookup with no database query). For most use cases, a 15–60 minute lag is imperceptible to users.</p>
+            </div>
+            <div class="grid-item">
+                <h4>In-Memory Trie vs. Distributed Cache</h4>
+                <p>Storing the trie in each node's memory costs more RAM (~10–30 GB per node × 50 nodes = 500–1500 GB total). A shared distributed cache would reduce total memory but add a network hop (~1–5 ms) per lookup. For typeahead, the latency savings of in-memory storage justify the extra RAM cost.</p>
+            </div>
+            <div class="grid-item">
+                <h4>Personalization vs. CDN Effectiveness</h4>
+                <p>Personalized suggestions can't be served from the CDN (unless per-user caching is done, which has poor hit rate). A mixed approach works: the CDN serves generic results, and the Suggestion Service merges personalized results for logged-in users. This keeps CDN hit rate high for anonymous users while still offering personalization.</p>
+            </div>
+            <div class="grid-item">
+                <h4>Client-Side vs. Server-Side Filtering</h4>
+                <p>If the client has results for <code>"py"</code>, it can filter locally for <code>"pyt"</code> without a server call. This provides instant feedback but may miss results that are specific to <code>"pyt"</code> but not in the top-K for <code>"py"</code>. The approach: filter locally for instant UX, fire a background request for authoritative results, and swap if different.</p>
+            </div>
+            <div class="grid-item">
+                <h4>Debounce Interval</h4>
+                <p><strong>Short (50–100 ms):</strong> More responsive, but generates more server load. <strong>Long (300–500 ms):</strong> Fewer requests, but feels sluggish. A common sweet spot is <strong>150–250 ms</strong>, combined with client-side filtering to mask any perceived delay.</p>
+            </div>
+            <div class="grid-item">
+                <h4>Top-K Size (K)</h4>
+                <p>A larger K means more suggestions are pre-computed at each trie node (more memory, longer build time) but better coverage when merging with personalization or filtering. K = 10–25 is typically sufficient.</p>
+            </div>
+        </div>
+
+        <h3>Deep Dive: Exponential Time Decay for Popularity</h3>
+        <p>Raw query counts would be dominated by historically popular queries forever. To ensure trending terms surface, we apply <strong>exponential time decay</strong>:</p>
+        <pre><code>score(query) = Σ count_in_window(i) × decay^(age_of_window(i))
+
+Example: decay = 0.9, hourly windows
+  - This hour: 1,000 searches × 0.9^0 = 1,000
+  - Last hour:   800 searches × 0.9^1 =   720
+  - 2 hours ago: 500 searches × 0.9^2 =   405
+  - Total score = 2,125</code></pre>
+        <p>This naturally down-weights older data, allowing newly trending terms to overtake historically popular ones. The decay factor is tunable: a higher decay (e.g., 0.95) favors stability; a lower decay (e.g., 0.8) favors trendiness.</p>
+
+        <h3>Deep Dive: HTTP vs. WebSocket for Suggestion Retrieval</h3>
+        <table>
+            <tr><th>Approach</th><th>Pros</th><th>Cons</th></tr>
+            <tr><td><strong>HTTP (chosen)</strong></td><td>Stateless, easy to scale, CDN-cacheable, simple client implementation, works with standard load balancers.</td><td>Connection overhead per request (mitigated by HTTP/2 connection reuse).</td></tr>
+            <tr><td><strong>WebSocket</strong></td><td>Persistent connection, no per-request overhead, server could push suggestions proactively.</td><td>Stateful connection must be maintained (harder to scale, LB must support sticky sessions), not CDN-cacheable, unnecessary for a request-response pattern.</td></tr>
+        </table>
+        <p><strong>Verdict:</strong> HTTP is clearly superior for typeahead. The request-response pattern is simple, CDN caching is critical for performance, and HTTP/2 eliminates most connection overhead concerns. WebSocket adds complexity for no tangible benefit in this use case.</p>
+
+        <h3>Deep Dive: TCP (Underlying Protocol)</h3>
+        <p>All communication in this system uses <strong>TCP</strong> (via HTTP/HTTPS). TCP is appropriate because:</p>
+        <ul>
+            <li><strong>Reliability:</strong> Suggestion results must arrive intact. A missing or corrupted suggestion list would be a poor user experience. TCP's guaranteed delivery and ordering ensure this.</li>
+            <li><strong>Ordering:</strong> HTTP responses must arrive in order.</li>
+            <li><strong>Why not UDP:</strong> UDP would save a tiny amount of latency (no handshake), but the lack of delivery guarantees means suggestions could be lost. For typeahead, the TCP handshake overhead is negligible (especially with HTTP/2 persistent connections), and the reliability is essential.</li>
+        </ul>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- ALTERNATIVE APPROACHES -->
+    <!-- ============================================================ -->
+    <section id="alternatives">
+        <h2>13. Alternative Approaches</h2>
+
+        <table>
+            <tr><th>Approach</th><th>Description</th><th>Why Not Chosen</th></tr>
+            <tr>
+                <td><strong>Full-Text Search Engine (Inverted Index)</strong></td>
+                <td>Use a full-text search engine with prefix/edge-ngram indexing. The engine would store all popular queries and support prefix queries natively.</td>
+                <td>Full-text search engines are powerful but have higher query latency (~5–50 ms) compared to an in-memory trie (~0.1 ms). They are better suited for fuzzy matching, typo correction, and semantic search — which are nice-to-have but not the core typeahead requirement. For pure prefix matching at scale, a trie is simpler and faster. However, a full-text engine could complement the trie for fuzzy/typo-tolerant suggestions (see Additional Considerations).</td>
+            </tr>
+            <tr>
+                <td><strong>Hash Map of All Prefixes</strong></td>
+                <td>Pre-compute a hash map where every possible prefix of every popular query maps to its top-K suggestions.</td>
+                <td>This works and provides O(1) lookups, but uses significantly more memory than a trie. For a query <code>"facebook"</code> (8 chars), the trie shares nodes with <code>"facetime"</code>, <code>"face swap"</code>, etc. A hash map would store separate entries for <code>"f"</code>, <code>"fa"</code>, <code>"fac"</code>, <code>"face"</code>, <code>"faceb"</code>, … for every query, resulting in ~5–10x more memory. At scale (10M queries), this becomes prohibitive.</td>
+            </tr>
+            <tr>
+                <td><strong>SQL Database with LIKE Queries</strong></td>
+                <td>Store popular queries in a SQL table and use <code>SELECT * FROM queries WHERE query_text LIKE 'face%' ORDER BY frequency DESC LIMIT 10</code>.</td>
+                <td>LIKE queries with a leading wildcard character are not the issue here (we use prefix, not <code>%face%</code>), but even <code>LIKE 'face%'</code> requires a B-tree range scan, which is much slower than an in-memory trie. At 230K QPS, the database would be overwhelmed. SQL is designed for complex relational queries, not high-throughput prefix lookups.</td>
+            </tr>
+            <tr>
+                <td><strong>Client-Side Only (Pre-load All Suggestions)</strong></td>
+                <td>Download the entire suggestion dataset to the client on page load and perform all prefix matching locally.</td>
+                <td>Works for small, static datasets (e.g., a dropdown of 50 countries). For a search engine with 10 million popular queries, the data would be ~100+ MB, making this infeasible for mobile clients and slow even on desktop. Also, the data would be stale immediately after download.</td>
+            </tr>
+            <tr>
+                <td><strong>Streaming / Server-Sent Events (SSE)</strong></td>
+                <td>The client opens a persistent connection (SSE or WebSocket), and the server streams suggestions as the user types.</td>
+                <td>Adds connection management complexity. SSE is one-directional (server → client), so the client would still need to send each prefix via HTTP. WebSocket is bidirectional but adds stateful connections. For a simple request-response pattern, HTTP/2 is simpler and equally fast.</td>
+            </tr>
+            <tr>
+                <td><strong>Bloom Filter for Prefix Existence</strong></td>
+                <td>Use a Bloom filter to quickly check if a prefix has any suggestions before querying the trie.</td>
+                <td>Bloom filters can check membership but can't return the actual suggestions. They could be used as an optimization layer (skip trie lookup for prefixes with no suggestions), but this adds complexity for a marginal benefit. In practice, most typed prefixes do have suggestions, so the Bloom filter would rarely save work.</td>
+            </tr>
+        </table>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- ADDITIONAL CONSIDERATIONS -->
+    <!-- ============================================================ -->
+    <section id="additional">
+        <h2>14. Additional Considerations</h2>
+
+        <h3>Offensive / Sensitive Content Filtering</h3>
+        <p>The typeahead system must <strong>not suggest offensive, harmful, or illegal content</strong>. This is implemented via:</p>
+        <ul>
+            <li><strong>Blocklist:</strong> A curated list of banned queries that are excluded during trie building. The Trie Builder filters out any query matching the blocklist before insertion.</li>
+            <li><strong>Real-time override:</strong> A lightweight in-memory blocklist on each Suggestion Service node that is checked before returning results. This allows immediate suppression of newly discovered offensive terms without waiting for a trie rebuild.</li>
+            <li><strong>Human + ML moderation:</strong> The blocklist is maintained by a combination of automated ML classifiers and human content moderators.</li>
+        </ul>
+
+        <h3>Internationalization (i18n)</h3>
+        <ul>
+            <li>Different locales need different suggestion sets (e.g., Japanese users expect Japanese suggestions).</li>
+            <li>Build separate tries per locale (or per language). The client sends the user's locale with each request, and the Suggestion Service routes to the appropriate trie.</li>
+            <li>For CJK (Chinese, Japanese, Korean) languages, the trie may need to operate on characters/tokens rather than individual bytes, since CJK characters are multi-byte.</li>
+        </ul>
+
+        <h3>Typo Tolerance / Fuzzy Matching</h3>
+        <p>A pure prefix trie does not handle typos (e.g., <code>"pythn"</code> won't match <code>"python"</code>). To add fuzzy matching:</p>
+        <ul>
+            <li><strong>Edit-distance calculation:</strong> At query time, allow matches within edit distance 1–2 of the prefix. This is expensive in a trie (requires exploring many branches).</li>
+            <li><strong>Hybrid approach:</strong> Use the trie for exact prefix matching (fast path) and fall back to a full-text search engine for fuzzy matching (slow path) if the trie returns no results.</li>
+            <li><strong>Phonetic matching:</strong> Use Soundex or Metaphone algorithms for phonetic similarity.</li>
+        </ul>
+
+        <h3>Analytics &amp; A/B Testing</h3>
+        <ul>
+            <li>Track which suggestions users click on (suggestion click-through rate) to improve ranking.</li>
+            <li>A/B test different ranking algorithms (e.g., pure popularity vs. personalized) to measure impact on search engagement.</li>
+            <li>Log suggestion impressions and clicks to a separate analytics pipeline.</li>
+        </ul>
+
+        <h3>Rate Limiting</h3>
+        <ul>
+            <li>Even with debouncing, malicious clients could flood the suggestion endpoint.</li>
+            <li>Implement rate limiting at the Load Balancer layer: e.g., 50 requests per second per IP or per user_id.</li>
+            <li>Return <code>HTTP 429 Too Many Requests</code> when the limit is exceeded.</li>
+        </ul>
+
+        <h3>Monitoring &amp; Alerting</h3>
+        <ul>
+            <li><strong>Key metrics:</strong> p50/p99 latency, QPS, CDN hit rate, trie build duration, cache hit rate, error rate.</li>
+            <li><strong>Alerts:</strong> p99 latency > 100 ms, CDN hit rate drops below 40%, trie build fails, Suggestion Service node becomes unhealthy.</li>
+            <li><strong>Dashboards:</strong> Real-time dashboards showing suggestion quality (top suggestions per popular prefix) and system health.</li>
+        </ul>
+
+        <h3>Graceful Degradation</h3>
+        <ul>
+            <li>If the Suggestion Service is completely down, the CDN still serves cached results for popular prefixes.</li>
+            <li>If the CDN is also down, the client can fall back to client-side filtering of any locally cached results.</li>
+            <li>If no suggestions can be served at all, the search box still functions — the user can type and press Enter to search. Typeahead enhances UX but is not required for core search functionality.</li>
+        </ul>
+
+        <h3>Privacy</h3>
+        <ul>
+            <li>User search history is PII (Personally Identifiable Information). It must be encrypted at rest and in transit.</li>
+            <li>Users must be able to delete their search history (right to erasure / GDPR compliance).</li>
+            <li>Search logs should be anonymized or pseudonymized before aggregation where possible.</li>
+            <li>The aggregated query frequency data is inherently anonymous (no user-level data).</li>
+        </ul>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- VENDOR SUGGESTIONS -->
+    <!-- ============================================================ -->
+    <section id="vendors">
+        <h2>15. Vendor Suggestions</h2>
+        <p>The design above is vendor-agnostic. Below are concrete vendor options for each component, should an implementation be needed.</p>
+
+        <table>
+            <tr><th>Component</th><th>Vendor Options</th><th>Rationale</th></tr>
+            <tr>
+                <td>Search Log Storage<br/><span class="badge badge-nosql">NoSQL — Time Series</span></td>
+                <td>Apache Cassandra, Amazon DynamoDB, InfluxDB, Apache Druid</td>
+                <td><strong>Cassandra:</strong> Excellent write throughput, tunable consistency, time-partitioning via TTL/compaction. <strong>DynamoDB:</strong> Fully managed, auto-scales, native TTL. <strong>InfluxDB:</strong> Purpose-built for time-series data.</td>
+            </tr>
+            <tr>
+                <td>Query Frequency Store<br/><span class="badge badge-nosql">NoSQL — KV</span></td>
+                <td>Amazon DynamoDB, Apache Cassandra, Aerospike</td>
+                <td><strong>DynamoDB:</strong> Simple KV access, managed. <strong>Aerospike:</strong> Ultra-low latency KV, SSD-optimized. <strong>Cassandra:</strong> Consistent with Search Log Storage choice.</td>
+            </tr>
+            <tr>
+                <td>User Search History<br/><span class="badge badge-nosql">NoSQL — Document</span></td>
+                <td>MongoDB, Amazon DynamoDB, Couchbase</td>
+                <td><strong>MongoDB:</strong> Native document model, flexible schema, rich query language. <strong>DynamoDB:</strong> If already using it elsewhere. <strong>Couchbase:</strong> Built-in cache layer.</td>
+            </tr>
+            <tr>
+                <td>Distributed Cache<br/><span class="badge badge-cache">Cache</span></td>
+                <td>Redis, Memcached, Hazelcast</td>
+                <td><strong>Redis:</strong> Rich data structures (lists for search history), pub/sub for notifications, widely adopted. <strong>Memcached:</strong> Simpler, slightly faster for pure KV caching.</td>
+            </tr>
+            <tr>
+                <td>Message Queue</td>
+                <td>Apache Kafka, Amazon SQS/SNS, RabbitMQ, Apache Pulsar</td>
+                <td><strong>Kafka:</strong> High throughput, persistent log, replay capability (useful for reprocessing). <strong>Pulsar:</strong> Multi-tenancy, geo-replication. <strong>SQS:</strong> Fully managed, simple.</td>
+            </tr>
+            <tr>
+                <td>Object Storage</td>
+                <td>Amazon S3, Google Cloud Storage, Azure Blob Storage, MinIO (self-hosted)</td>
+                <td><strong>S3:</strong> Industry standard, highly durable (11 9s), versioning built-in. <strong>GCS/Azure:</strong> If using those cloud providers. <strong>MinIO:</strong> S3-compatible, self-hosted option.</td>
+            </tr>
+            <tr>
+                <td>CDN</td>
+                <td>Cloudflare, Amazon CloudFront, Akamai, Fastly</td>
+                <td><strong>Cloudflare:</strong> Global edge network, built-in DDoS protection. <strong>CloudFront:</strong> Deep AWS integration. <strong>Fastly:</strong> Real-time cache purging, edge compute.</td>
+            </tr>
+            <tr>
+                <td>Load Balancer</td>
+                <td>NGINX, HAProxy, AWS ALB, Envoy</td>
+                <td><strong>NGINX:</strong> Battle-tested, high performance, Layer 7. <strong>Envoy:</strong> Modern, gRPC support, observability. <strong>AWS ALB:</strong> Managed, auto-scaling.</td>
+            </tr>
+            <tr>
+                <td>Aggregation Pipeline</td>
+                <td>Apache Spark, Apache Flink, AWS Lambda + Step Functions</td>
+                <td><strong>Spark:</strong> Industry standard for batch processing, scales to petabytes. <strong>Flink:</strong> If real-time streaming aggregation is desired later. <strong>Lambda:</strong> Serverless, pay-per-invocation.</td>
+            </tr>
+        </table>
+    </section>
+
 </div>
 
-<!-- Flow 1: Query Suggestions -->
-<div class="section">
-<h2>Flow 1: Serving Typeahead Suggestions (Read Path)</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1050 400" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00aaff"/></marker></defs>
-<rect x="20" y="160" width="120" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="80" y="188" text-anchor="middle" fill="white" font-size="12">User Client</text><text x="80" y="205" text-anchor="middle" fill="white" font-size="11">(Browser)</text>
-<rect x="190" y="160" width="130" height="60" rx="10" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="255" y="188" text-anchor="middle" fill="white" font-size="12">API Gateway /</text><text x="255" y="205" text-anchor="middle" fill="white" font-size="12">CDN Edge</text>
-<rect x="380" y="160" width="150" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="455" y="188" text-anchor="middle" fill="white" font-size="12">Typeahead Service</text><text x="455" y="205" text-anchor="middle" fill="white" font-size="11">(Trie in Memory)</text>
-<rect x="600" y="100" width="140" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="670" y="130" text-anchor="middle" fill="white" font-size="12">Redis Cache</text>
-<rect x="600" y="220" width="140" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="670" y="248" text-anchor="middle" fill="white" font-size="11">Personalization</text><text x="670" y="262" text-anchor="middle" fill="white" font-size="10">Service</text>
-<rect x="600" y="320" width="140" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="670" y="350" text-anchor="middle" fill="white" font-size="12">Filter Service</text>
-<rect x="830" y="160" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="900" y="188" text-anchor="middle" fill="white" font-size="11">Ranking/Blending</text>
-<line x1="140" y1="190" x2="188" y2="190" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="320" y1="190" x2="378" y2="190" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="530" y1="175" x2="598" y2="130" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="530" y1="195" x2="598" y2="240" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="530" y1="210" x2="598" y2="340" stroke="#00aaff" stroke-width="1.5" marker-end="url(#arrow1)"/>
-<line x1="740" y1="125" x2="828" y2="175" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow1)"/>
-<line x1="740" y1="245" x2="828" y2="190" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow1)"/>
-<text x="520" y="30" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Typeahead: Serving Suggestions (Read Path)</text>
-</svg>
-</div>
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'dark',
+        themeVariables: {
+            primaryColor: '#1a3a2a',
+            primaryTextColor: '#e6edf3',
+            primaryBorderColor: '#3fb950',
+            lineColor: '#58a6ff',
+            secondaryColor: '#2a2a3a',
+            tertiaryColor: '#1a2a3a',
+            fontSize: '14px'
+        },
+        flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+            curve: 'basis'
+        }
+    });
+</script>
 
-<h3>Step-by-Step</h3>
-<ol>
-<li><strong>User types "fac"</strong> → client debounces (50ms) → sends <code>GET /v1/suggestions?q=fac&limit=10</code></li>
-<li><strong>CDN edge check:</strong> Popular prefixes (e.g., "fac") cached at CDN edge. If hit, return immediately (~5ms)</li>
-<li><strong>Typeahead Service:</strong> Traverses in-memory Trie to node "f" → "a" → "c", collects top-K suggestions stored at each node</li>
-<li><strong>Redis cache:</strong> Prefix → top-10 suggestions cached. Reduces Trie traversal for hot prefixes</li>
-<li><strong>Personalization:</strong> If user logged in, blend user's recent searches + global suggestions (e.g., user searched "facebook marketplace" recently → boost it)</li>
-<li><strong>Filter:</strong> Remove blocked/offensive terms from results</li>
-<li><strong>Ranking/Blending:</strong> Merge global + personalized results, rank by weighted score, return top 10</li>
-</ol>
-
-<div class="example">
-<strong>Example:</strong> User types "fac" → debounce 50ms → request hits CDN edge (cache miss) → Typeahead Service traverses Trie → finds ["facebook", "facebook login", "face mask", "facebook marketplace", "factory reset", "facetime", "facebook messenger", "facial recognition", "facts", "face swap"] → Filter removes none → Personalization boosts "facebook marketplace" (user searched it yesterday) → Returns ordered: ["facebook", "facebook marketplace", "facebook login", "facetime", "face mask", ...]. Total latency: ~30ms.
-</div>
-
-<h3>Deep Dive: Trie Data Structure</h3>
-<ul>
-<li><strong>Structure:</strong> Each node represents a character. Path from root to node = prefix. Each node stores top-K suggestions (precomputed) for that prefix</li>
-<li><strong>Memory:</strong> ~26 children per node (English alphabet + digits + space). For 10M unique queries, Trie uses ~10-50GB RAM depending on implementation</li>
-<li><strong>Top-K at each node:</strong> Instead of traversing all leaf descendants (O(n)), store precomputed top-10 suggestions at each prefix node. Lookup is O(prefix_length) — typically O(3-5)</li>
-<li><strong>Compressed Trie (Radix Tree):</strong> Merge single-child chains. "facebook" takes 1 node instead of 8. Reduces memory by ~60%</li>
-</ul>
-
-<h3>Deep Dive: Client-Side Optimization</h3>
-<ul>
-<li><strong>Debouncing:</strong> Don't send request on every keystroke. Wait 50-100ms after last keystroke</li>
-<li><strong>Client-side caching:</strong> Cache prefix → results in browser. If user types "fac" then "face", the "fac" results can be filtered client-side for "face" without a network request</li>
-<li><strong>Prefix reuse:</strong> If "fac" results include "facebook", and user types "face", client filters locally first. Only sends network request if local results are insufficient</li>
-</ul>
-</div>
-
-<!-- Flow 2: Updating Suggestions -->
-<div class="section">
-<h2>Flow 2: Updating Suggestion Corpus (Write Path)</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1050 380" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffaa00"/></marker></defs>
-<rect x="20" y="150" width="130" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="85" y="178" text-anchor="middle" fill="white" font-size="12">Search Queries</text><text x="85" y="195" text-anchor="middle" fill="white" font-size="11">(user searches)</text>
-<rect x="200" y="150" width="140" height="60" rx="10" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="270" y="178" text-anchor="middle" fill="white" font-size="12">Kafka Stream</text><text x="270" y="195" text-anchor="middle" fill="white" font-size="11">(Query Events)</text>
-<rect x="400" y="80" width="150" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="475" y="108" text-anchor="middle" fill="white" font-size="12">Aggregation Svc</text><text x="475" y="122" text-anchor="middle" fill="white" font-size="10">(Flink/Spark)</text>
-<rect x="400" y="220" width="150" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="475" y="248" text-anchor="middle" fill="white" font-size="11">Trending Detector</text><text x="475" y="262" text-anchor="middle" fill="white" font-size="10">(Count-Min Sketch)</text>
-<ellipse cx="700" cy="105" rx="75" ry="30" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="700" y="110" text-anchor="middle" fill="white" font-size="12">Frequency DB</text>
-<rect x="620" y="220" width="160" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="700" y="248" text-anchor="middle" fill="white" font-size="11">Trie Builder (Offline)</text>
-<rect x="860" y="150" width="150" height="60" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="935" y="178" text-anchor="middle" fill="white" font-size="12">Typeahead Servers</text><text x="935" y="195" text-anchor="middle" fill="white" font-size="11">(Hot-swap Trie)</text>
-<line x1="150" y1="180" x2="198" y2="180" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="340" y1="168" x2="398" y2="108" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="340" y1="192" x2="398" y2="242" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="550" y1="105" x2="623" y2="105" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="550" y1="250" x2="618" y2="250" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="700" y1="135" x2="700" y2="218" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow2)"/>
-<line x1="780" y1="240" x2="858" y2="185" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<text x="520" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Typeahead: Updating Suggestions (Write Path)</text>
-</svg>
-</div>
-
-<h3>Step-by-Step</h3>
-<ol>
-<li><strong>Search queries</strong> published to Kafka as events: <code>{ query: "facebook marketplace", timestamp: ..., user_id: ... }</code></li>
-<li><strong>Aggregation Service (Flink):</strong> Counts query frequencies in tumbling windows (5-minute windows). Outputs: <code>{ query: "facebook marketplace", count: 15420, window: "2024-01-15T10:00-10:05" }</code></li>
-<li><strong>Trending Detector:</strong> Uses Count-Min Sketch to identify queries with sudden frequency spikes (e.g., "super bowl" → 100x normal rate)</li>
-<li><strong>Frequency DB:</strong> Stores historical query frequencies. Aggregation service merges new counts with existing. Exponential decay applied (recent queries weighted more)</li>
-<li><strong>Trie Builder (offline, every 15 min):</strong> Reads top-N queries from Frequency DB, builds new compressed Trie with precomputed top-K per node</li>
-<li><strong>Hot-swap:</strong> New Trie pushed to Typeahead Servers. Servers swap atomic pointer from old Trie to new Trie (zero-downtime update)</li>
-</ol>
-
-<div class="example">
-<strong>Example:</strong> Breaking news: "earthquake california" trends suddenly. Within 5 minutes, Flink aggregation detects 50K searches for "earthquake california". Trending Detector flags it. Frequency DB updated. Next Trie build (15 min cycle) includes "earthquake california" with high score. All Typeahead Servers get updated Trie. Users typing "ear" now see "earthquake california" in suggestions.
-</div>
-
-<h3>Deep Dive: Count-Min Sketch</h3>
-<ul>
-<li><strong>Purpose:</strong> Probabilistic data structure to count frequencies of items in a stream using sub-linear memory</li>
-<li><strong>How it works:</strong> 2D array of counters with d hash functions. Each item hashed d times, increment counters. Query: take minimum of d counter values (overcounts possible, undercounts impossible)</li>
-<li><strong>Memory:</strong> ~10MB can track millions of unique queries with <1% error rate</li>
-<li><strong>Why not HashMap:</strong> Millions of unique queries = GBs of memory. Count-Min Sketch uses constant memory regardless of cardinality</li>
-</ul>
-</div>
-
-<!-- Combined -->
-<div class="section">
-<h2>Combined Overall Architecture</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1100 550" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00aaff"/></marker></defs>
-<rect x="20" y="220" width="110" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="255" text-anchor="middle" fill="white" font-size="13">Client</text>
-<rect x="170" y="100" width="120" height="50" rx="8" fill="#888" stroke="#aaa" stroke-width="2"/><text x="230" y="130" text-anchor="middle" fill="white" font-size="12">CDN Edge</text>
-<rect x="170" y="220" width="120" height="50" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="230" y="250" text-anchor="middle" fill="white" font-size="12">API Gateway</text>
-<rect x="350" y="130" width="150" height="60" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="425" y="158" text-anchor="middle" fill="white" font-size="12">Typeahead Svc</text><text x="425" y="175" text-anchor="middle" fill="white" font-size="11">(In-Memory Trie)</text>
-<rect x="350" y="260" width="150" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="425" y="290" text-anchor="middle" fill="white" font-size="12">Personalization</text>
-<rect x="350" y="370" width="150" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="425" y="400" text-anchor="middle" fill="white" font-size="12">Filter Service</text>
-<rect x="570" y="130" width="120" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="630" y="160" text-anchor="middle" fill="white" font-size="12">Redis Cache</text>
-<rect x="570" y="260" width="120" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="630" y="290" text-anchor="middle" fill="white" font-size="12">User History</text>
-<rect x="170" y="420" width="130" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="235" y="450" text-anchor="middle" fill="white" font-size="12">Kafka Stream</text>
-<rect x="350" y="480" width="150" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="425" y="505" text-anchor="middle" fill="white" font-size="11">Aggregation (Flink)</text>
-<ellipse cx="630" cy="420" rx="75" ry="30" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="630" y="425" text-anchor="middle" fill="white" font-size="12">Frequency DB</text>
-<rect x="780" y="405" width="140" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="850" y="435" text-anchor="middle" fill="white" font-size="12">Trie Builder</text>
-<line x1="130" y1="240" x2="168" y2="130" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="130" y1="250" x2="168" y2="245" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="290" y1="240" x2="348" y2="165" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="500" y1="160" x2="568" y2="155" stroke="#00aaff" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="290" y1="260" x2="348" y2="280" stroke="#00aaff" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="500" y1="285" x2="568" y2="285" stroke="#00aaff" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="130" y1="270" x2="168" y2="440" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="300" y1="445" x2="348" y2="500" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="500" y1="505" x2="558" y2="430" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="705" y1="420" x2="778" y2="425" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow3)"/>
-<line x1="850" y1="405" x2="500" y2="170" stroke="#ff6b6b" stroke-width="1.5" stroke-dasharray="5,5" marker-end="url(#arrow3)"/>
-<text x="530" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">Typeahead: Combined Architecture</text>
-<text x="200" y="70" fill="#66ff66" font-size="12">READ PATH (green)</text>
-<text x="500" y="70" fill="#ffaa00" font-size="12">WRITE PATH (yellow)</text>
-</svg>
-</div>
-
-<div class="example">
-<strong>Example — Combined flow:</strong> User types "wor" → CDN cache miss → API Gateway routes to Typeahead Service → Trie lookup returns ["world cup", "world news", "wordle", "workout", "world map"] → Personalization checks user history (user searched "workout routine" before) → boosts "workout" → Final: ["workout", "world cup", "wordle", "world news", "world map"]. Meanwhile, user's completed search "workout at home" flows to Kafka → Flink aggregates → Frequency DB updates → Next Trie build incorporates updated counts.
-</div>
-</div>
-
-<!-- Database Schema -->
-<div class="section">
-<h2>Database Schema</h2>
-
-<h3>NoSQL — Cassandra / DynamoDB (Query Frequencies)</h3>
-<table>
-<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
-<tr><td rowspan="4"><strong>query_frequencies</strong></td><td>query_prefix</td><td>TEXT</td><td><span class="tag tag-pk">Partition Key</span> (first 3 chars)</td></tr>
-<tr><td>query_text</td><td>TEXT</td><td><span class="tag tag-pk">Clustering Key</span></td></tr>
-<tr><td>frequency</td><td>BIGINT</td><td>Decayed count (recent weighted more)</td></tr>
-<tr><td>last_updated</td><td>TIMESTAMP</td><td></td></tr>
-<tr><td rowspan="4"><strong>trending_queries</strong></td><td>time_bucket</td><td>TEXT</td><td><span class="tag tag-pk">Partition Key</span> (hourly bucket)</td></tr>
-<tr><td>rank</td><td>INT</td><td><span class="tag tag-pk">Clustering Key</span> (ASC)</td></tr>
-<tr><td>query_text</td><td>TEXT</td><td></td></tr>
-<tr><td>spike_score</td><td>FLOAT</td><td>current_rate / baseline_rate</td></tr>
-</table>
-
-<h3>SQL — PostgreSQL (Blocked Terms, User History)</h3>
-<table>
-<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
-<tr><td rowspan="3"><strong>blocked_terms</strong></td><td>term_id</td><td>SERIAL</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>term</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>reason</td><td>VARCHAR(50)</td><td>offensive, legal, spam</td></tr>
-<tr><td rowspan="4"><strong>user_search_history</strong></td><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK (composite)</span></td></tr>
-<tr><td>query_text</td><td>VARCHAR(255)</td><td><span class="tag tag-pk">PK (composite)</span></td></tr>
-<tr><td>search_count</td><td>INT</td><td></td></tr>
-<tr><td>last_searched</td><td>TIMESTAMP</td><td><span class="tag tag-idx">INDEX</span></td></tr>
-</table>
-
-<h4>Sharding Strategy</h4>
-<ul>
-<li><strong>query_frequencies:</strong> Partition by first 3 characters of query (prefix-based sharding). All queries starting with "fac" on same partition. Trie Builder reads partitions in parallel</li>
-<li><strong>user_search_history:</strong> Shard by <code>user_id</code> — all history for one user co-located</li>
-<li><strong>In-memory Trie:</strong> Each Typeahead Server holds complete Trie replica (fits in ~50GB RAM). No sharding needed — full replication for speed</li>
-</ul>
-
-<h3>Indexes</h3>
-<ul>
-<li><code>blocked_terms.term</code> — Hash index for O(1) lookup during filtering</li>
-<li><code>user_search_history.last_searched</code> — B-tree index for "recent searches" feature (ORDER BY last_searched DESC LIMIT 10)</li>
-<li>Trie itself acts as the primary "index" — no traditional DB indexes needed for the read path</li>
-</ul>
-</div>
-
-<!-- Cache -->
-<div class="section">
-<h2>Cache Deep Dive</h2>
-<table>
-<tr><th>Cache Layer</th><th>What</th><th>Strategy</th><th>Eviction</th><th>TTL</th></tr>
-<tr><td>CDN Edge</td><td>Popular prefix results (e.g., "fac" → top 10)</td><td>Pull-based</td><td>TTL-based</td><td>5 min</td></tr>
-<tr><td>Redis (L1)</td><td>Hot prefix → suggestions mapping</td><td>Write-through (on Trie rebuild)</td><td>LRU</td><td>15 min</td></tr>
-<tr><td>In-Memory Trie</td><td>Complete suggestion corpus</td><td>Full rebuild every 15 min</td><td>N/A (replaced)</td><td>N/A</td></tr>
-<tr><td>Browser Cache</td><td>Recently fetched prefix results</td><td>Client-side HashMap</td><td>LRU (100 entries)</td><td>Session duration</td></tr>
-</table>
-
-<h3>CDN Deep Dive</h3>
-<ul>
-<li><strong>What's cached:</strong> Top ~100K most common prefixes (covers ~95% of all typeahead requests). E.g., "fac", "goo", "ama", "you" are extremely popular</li>
-<li><strong>Cache key:</strong> <code>typeahead:v2:{prefix}:{locale}</code> (locale because suggestions differ by country)</li>
-<li><strong>TTL: 5 minutes</strong> — balance between freshness (trending queries) and cache hit ratio</li>
-<li><strong>Cache hit ratio:</strong> ~85-90% at CDN edge (Zipf's law — small number of prefixes dominate)</li>
-<li><strong>Invalidation:</strong> Trending queries trigger targeted CDN invalidation for affected prefixes</li>
-</ul>
-</div>
-
-<!-- Scaling -->
-<div class="section">
-<h2>Scaling Considerations</h2>
-<ul>
-<li><strong>Typeahead Servers:</strong> Full Trie replicated on every server (read-only). Horizontally scale by adding more replicas. L7 load balancer distributes requests</li>
-<li><strong>Memory optimization:</strong> Compressed Trie (radix tree) + store only top-K per node (not all descendants). ~50GB for 100M unique queries</li>
-<li><strong>Trie sharding (for very large corpora):</strong> Shard by prefix range. Servers A-M handle "a"-"m", Servers N-Z handle "n"-"z". API Gateway routes by first character. Doubles available memory</li>
-<li><strong>Geographic replication:</strong> Trie replicas in every region. Trie Builder in central region pushes to all edges via S3 + notification</li>
-<li><strong>Kafka partitioning:</strong> Query events partitioned by query hash. Flink aggregation parallelized across partitions</li>
-<li><strong>Debounce + client caching reduces server load by ~60%</strong> (most keystrokes resolved client-side)</li>
-</ul>
-</div>
-
-<!-- Tradeoffs -->
-<div class="section">
-<h2>Tradeoffs & Deep Dives</h2>
-<div class="tradeoff">
-<div class="pro"><h4>✅ In-Memory Trie</h4><ul><li>O(prefix_length) lookup — ~10μs per query</li><li>Pre-computed top-K eliminates sorting at query time</li><li>No disk I/O, no network call to DB</li></ul></div>
-<div class="con"><h4>❌ In-Memory Trie Downsides</h4><ul><li>High memory cost (50GB per server × N replicas)</li><li>Cold start: loading Trie from disk takes minutes</li><li>Staleness: 15-min rebuild cycle means trending queries delayed</li></ul></div>
-</div>
-<div class="tradeoff">
-<div class="pro"><h4>✅ Periodic Rebuild</h4><ul><li>Simple: batch process, atomic swap</li><li>No real-time Trie mutations (avoid concurrent modification)</li><li>Consistent state across all servers after swap</li></ul></div>
-<div class="con"><h4>❌ Alternative: Real-time Trie Update</h4><ul><li>Lower staleness (seconds vs minutes)</li><li>But: concurrent mutations require locking, complex consistency</li><li>Difficult to maintain sorted top-K during live updates</li></ul></div>
-</div>
-</div>
-
-<!-- Alternatives -->
-<div class="section">
-<h2>Alternative Approaches</h2>
-<ul>
-<li><strong>Elasticsearch prefix queries:</strong> Use <code>prefix</code> or <code>completion suggester</code> instead of custom Trie. Pros: built-in fuzzy matching, scoring, easy to operate. Cons: higher latency (~5-10ms vs ~1ms Trie), more resource-heavy, less control over ranking</li>
-<li><strong>Ternary Search Tree:</strong> More memory-efficient than standard Trie (pointers: left/equal/right). Trades slightly slower lookup for ~30% memory savings</li>
-<li><strong>Bloom filter pre-check:</strong> Before Trie lookup, check if prefix exists in Bloom filter. Quickly reject nonsensical prefixes (e.g., "xzqw") without Trie traversal</li>
-<li><strong>ML-based ranking:</strong> Instead of frequency-based ranking, use a small neural network (BERT-tiny) to rank suggestions based on context (time of day, user demographics, location). Higher relevance but adds ~10ms latency</li>
-</ul>
-</div>
-
-<div class="section">
-<h2>Additional Information</h2>
-<ul>
-<li><strong>Spelling correction:</strong> "facebok" → "facebook". Edit distance (Levenshtein) computed against known queries. Stored as aliases in the Trie: "facebok" node points to "facebook" suggestions</li>
-<li><strong>Multi-language support:</strong> Separate Tries per locale. Japanese/Chinese use word-level tokenization instead of character-level Trie. Unicode normalization (NFC) applied to all inputs</li>
-<li><strong>Privacy:</strong> Individual search queries anonymized before aggregation. Only aggregate counts stored. User search history encrypted and deletable (GDPR right to erasure)</li>
-<li><strong>A/B testing:</strong> Different ranking models tested by routing % of traffic to experimental Typeahead servers with different Tries or ranking weights</li>
-</ul>
-</div>
 </body>
 </html>
