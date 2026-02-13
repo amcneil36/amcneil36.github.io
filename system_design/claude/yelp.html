@@ -1,622 +1,1019 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>System Design: Yelp</title>
-<style>
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #e0e0e0; margin: 0; padding: 20px; line-height: 1.7; }
-  h1 { color: #d32323; font-size: 2.2em; border-bottom: 3px solid #d32323; padding-bottom: 10px; }
-  h2 { color: #ff6666; margin-top: 40px; }
-  h3 { color: #ff9999; }
-  h4 { color: #ffaaaa; }
-  .section { background: #1a1a1a; padding: 25px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #d32323; }
-  .subsection { background: #222; padding: 15px; border-radius: 8px; margin: 15px 0; }
-  .diagram-container { background: #1e1e1e; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; overflow-x: auto; }
-  .tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.85em; margin: 2px 4px; }
-  .tag-pk { background: #4a9eff33; color: #4a9eff; border: 1px solid #4a9eff66; }
-  .tag-fk { background: #ff4a4a33; color: #ff4a4a; border: 1px solid #ff4a4a66; }
-  .tag-idx { background: #4aff4a33; color: #4aff4a; border: 1px solid #4aff4a66; }
-  .tag-shard { background: #ffa54a33; color: #ffa54a; border: 1px solid #ffa54a66; }
-  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-  th, td { padding: 12px; text-align: left; border: 1px solid #333; }
-  th { background: #2a2a2a; color: #d32323; }
-  tr:nth-child(even) { background: #1a1a1a; }
-  code { background: #2a2a2a; padding: 2px 8px; border-radius: 4px; color: #ff6666; font-family: 'Fira Code', monospace; }
-  pre { background: #1a1a1a; padding: 20px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; }
-  .example { background: #0d2818; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #4aff4a; }
-  .tradeoff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-  .tradeoff-pro { background: #0d2818; padding: 15px; border-radius: 8px; border-left: 3px solid #4aff4a; }
-  .tradeoff-con { background: #2d1018; padding: 15px; border-radius: 8px; border-left: 3px solid #ff4a4a; }
-  ul, ol { padding-left: 25px; }
-  li { margin: 6px 0; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Design: Yelp</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root { --bg: #ffffff; --fg: #1a1a2e; --accent: #d32323; --accent2: #0073bb; --code-bg: #f4f4f8; --border: #ddd; --card-bg: #fafafa; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--fg); line-height: 1.7; max-width: 1100px; margin: 0 auto; padding: 30px 40px 80px; background: var(--bg); }
+    h1 { font-size: 2.4em; color: var(--accent); border-bottom: 3px solid var(--accent); padding-bottom: 12px; margin-bottom: 10px; }
+    h2 { font-size: 1.8em; color: var(--accent2); margin-top: 50px; margin-bottom: 16px; border-bottom: 2px solid var(--accent2); padding-bottom: 8px; }
+    h3 { font-size: 1.35em; color: #333; margin-top: 30px; margin-bottom: 10px; }
+    h4 { font-size: 1.1em; color: #555; margin-top: 20px; margin-bottom: 8px; }
+    p, li { font-size: 1.02em; margin-bottom: 8px; }
+    ul, ol { padding-left: 24px; margin-bottom: 14px; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.95em; }
+    th, td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+    th { background: var(--accent2); color: #fff; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.93em; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; }
+    pre { background: var(--code-bg); padding: 16px; border-radius: 8px; overflow-x: auto; margin: 12px 0; border: 1px solid var(--border); }
+    pre code { background: none; padding: 0; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 16px 0; }
+    .example { background: #fff8e1; border-left: 4px solid #ffc107; padding: 16px 20px; margin: 14px 0; border-radius: 0 8px 8px 0; }
+    .example strong { color: #e65100; }
+    .note { background: #e3f2fd; border-left: 4px solid var(--accent2); padding: 14px 20px; margin: 14px 0; border-radius: 0 8px 8px 0; }
+    .warn { background: #fce4ec; border-left: 4px solid var(--accent); padding: 14px 20px; margin: 14px 0; border-radius: 0 8px 8px 0; }
+    .mermaid { margin: 20px 0; text-align: center; }
+    .toc { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px 30px; margin: 20px 0; }
+    .toc a { color: var(--accent2); text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .toc ol { margin-bottom: 0; }
+    .toc li { margin-bottom: 4px; }
+    hr { border: none; border-top: 1px solid #ddd; margin: 30px 0; }
+  </style>
 </head>
 <body>
+<script>mermaid.initialize({startOnLoad:true, theme:'default', flowchart:{useMaxWidth:true, htmlLabels:true, curve:'basis'}});</script>
 
-<h1>🍽️ System Design: Yelp (Local Business Search & Reviews)</h1>
-
-<div class="section">
-<h2>📋 Functional Requirements</h2>
-<ul>
-  <li>Users can search for businesses by name, category, or location (with radius)</li>
-  <li>Users can view business details (hours, photos, menu, contact info)</li>
-  <li>Users can write reviews with ratings (1-5 stars), text, and photos</li>
-  <li>Users can discover nearby businesses on a map view</li>
-</ul>
-</div>
-
-<div class="section">
-<h2>🔒 Non-Functional Requirements</h2>
-<ul>
-  <li><strong>Low latency search:</strong> &lt;200ms for proximity-based queries with ranking</li>
-  <li><strong>High read throughput:</strong> Read-heavy system — search:write ratio ~100:1</li>
-  <li><strong>Geospatial accuracy:</strong> Precise distance calculations and radius filtering</li>
-  <li><strong>Availability:</strong> 99.9% uptime, eventual consistency acceptable for reviews</li>
-  <li><strong>Scalability:</strong> ~250M businesses globally, billions of reviews</li>
-</ul>
-</div>
+<h1>🍽️ System Design: Yelp</h1>
+<p><em>A local business discovery, review, and rating platform</em></p>
 
 <!-- ============================================================ -->
-<h2>🔄 Flow 1 — Business Search (Nearby + Text)</h2>
+<!-- TABLE OF CONTENTS -->
 <!-- ============================================================ -->
-
-<div class="diagram-container">
-<svg viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="160" width="120" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="80" y="195" text-anchor="middle" fill="white" font-size="14">Mobile / Web</text>
-  <line x1="140" y1="190" x2="210" y2="190" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="220" y="160" width="130" height="60" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="285" y="188" text-anchor="middle" fill="white" font-size="13">API Gateway</text>
-  <text x="285" y="205" text-anchor="middle" fill="white" font-size="10">(Rate Limit)</text>
-  <line x1="350" y1="190" x2="420" y2="190" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="430" y="160" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="500" y="188" text-anchor="middle" fill="white" font-size="13">Search Service</text>
-  <text x="500" y="205" text-anchor="middle" fill="white" font-size="10">(Query Parser)</text>
-  <line x1="570" y1="190" x2="640" y2="150" stroke="#aaa" marker-end="url(#ah1)"/>
-  <line x1="570" y1="190" x2="640" y2="240" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="650" y="120" width="150" height="55" rx="10" fill="#8a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="725" y="145" text-anchor="middle" fill="white" font-size="12">Elasticsearch</text>
-  <text x="725" y="162" text-anchor="middle" fill="white" font-size="10">(Geospatial + Text)</text>
-  <rect x="650" y="215" width="150" height="55" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
-  <text x="725" y="240" text-anchor="middle" fill="white" font-size="12">Redis Cache</text>
-  <text x="725" y="257" text-anchor="middle" fill="white" font-size="10">(Popular Queries)</text>
-  <line x1="800" y1="148" x2="870" y2="190" stroke="#aaa" marker-end="url(#ah1)"/>
-  <line x1="800" y1="243" x2="870" y2="200" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="880" y="165" width="150" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="955" y="188" text-anchor="middle" fill="white" font-size="12">Ranking Service</text>
-  <text x="955" y="205" text-anchor="middle" fill="white" font-size="10">(ML Relevance)</text>
-</svg>
-</div>
-
-<div class="section">
-<h3>Step-by-Step</h3>
+<div class="toc">
+<h3>Table of Contents</h3>
 <ol>
-  <li><strong>Client sends search:</strong> <code>GET /api/v1/search?q=sushi&lat=37.77&lng=-122.42&radius=5000&sort=best_match</code></li>
-  <li><strong>API Gateway</strong> validates auth, applies rate limits per user/IP, routes to Search Service</li>
-  <li><strong>Search Service</strong> parses the query — extracts text terms, geolocation, filters (price, open_now, categories)</li>
-  <li><strong>Cache check:</strong> Hash the normalized query → check Redis for cached result set (TTL 5 min for popular queries)</li>
-  <li><strong>Elasticsearch geo_distance query:</strong> Combines <code>bool</code> with <code>geo_distance</code> filter and <code>multi_match</code> for text, using <code>function_score</code> to blend relevance + distance + rating</li>
-  <li><strong>Ranking Service</strong> re-ranks top-100 candidates using ML model considering user preferences, review recency, response rate, sponsor bids</li>
-  <li><strong>Return paginated results</strong> with business summaries, ratings, distance, snippet of top review</li>
+  <li><a href="#fr">Functional Requirements</a></li>
+  <li><a href="#nfr">Non-Functional Requirements</a></li>
+  <li><a href="#capacity">Capacity Estimation</a></li>
+  <li><a href="#flow1">Flow 1 — Search for Businesses</a></li>
+  <li><a href="#flow2">Flow 2 — View Business Details &amp; Reviews</a></li>
+  <li><a href="#flow3">Flow 3 — Write a Review</a></li>
+  <li><a href="#flow4">Flow 4 — Register / Manage a Business</a></li>
+  <li><a href="#combined">Combined Overall Diagram</a></li>
+  <li><a href="#schema">Database Schema</a></li>
+  <li><a href="#cache">Caching Strategy</a></li>
+  <li><a href="#cdn">CDN Strategy</a></li>
+  <li><a href="#mq">Message Queue Deep Dive</a></li>
+  <li><a href="#lb">Load Balancing</a></li>
+  <li><a href="#scaling">Scaling Considerations</a></li>
+  <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+  <li><a href="#alternatives">Alternative Approaches</a></li>
+  <li><a href="#additional">Additional Considerations</a></li>
+  <li><a href="#vendors">Vendor Recommendations</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- 1. FUNCTIONAL REQUIREMENTS -->
+<!-- ============================================================ -->
+<h2 id="fr">1. Functional Requirements</h2>
+<ol>
+  <li><strong>Search for Businesses:</strong> Users can search for businesses by keyword, category, and/or geographic proximity (city, zip code, or current GPS coordinates). Results are ranked by relevance, rating, and distance.</li>
+  <li><strong>View Business Details:</strong> Users can view a business's profile including name, address, phone number, hours of operation, category, photos, average star rating, and total review count.</li>
+  <li><strong>Read Reviews:</strong> Users can browse paginated reviews for a business, sorted by recency, usefulness, or rating.</li>
+  <li><strong>Write Reviews:</strong> Authenticated users can submit a review consisting of a 1–5 star rating, free-text body, and optional photos.</li>
+  <li><strong>Register / Manage a Business:</strong> Business owners can create a business listing, upload photos, update hours, and edit business information.</li>
+  <li><strong>Photo Upload:</strong> Both users and business owners can upload photos associated with a business.</li>
+  <li><strong>Map View:</strong> Users can view search results plotted on an interactive map.</li>
 </ol>
 
+<!-- ============================================================ -->
+<!-- 2. NON-FUNCTIONAL REQUIREMENTS -->
+<!-- ============================================================ -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
+<ul>
+  <li><strong>Low Latency:</strong> Search results returned in &lt;&thinsp;200 ms (p99); business detail pages in &lt;&thinsp;300 ms.</li>
+  <li><strong>High Availability:</strong> 99.9 % uptime — users should always be able to search and read.</li>
+  <li><strong>Read-Heavy:</strong> Expected read-to-write ratio ~1000:1. The system is optimized for reads (searches, page views) over writes (new reviews, business updates).</li>
+  <li><strong>Eventual Consistency:</strong> A newly submitted review does not need to appear globally within milliseconds; seconds-to-low-minute staleness is acceptable.</li>
+  <li><strong>Scalability:</strong> Support ~5 million businesses, ~200 million reviews, ~30 million monthly active users.</li>
+  <li><strong>Durability:</strong> Zero data loss for reviews and business listings.</li>
+  <li><strong>Geo-Aware:</strong> Must efficiently answer "businesses near me" queries across the globe.</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- 3. CAPACITY ESTIMATION -->
+<!-- ============================================================ -->
+<h2 id="capacity">3. Capacity Estimation</h2>
+<div class="card">
+<table>
+  <tr><th>Metric</th><th>Estimate</th></tr>
+  <tr><td>Businesses</td><td>~5 million</td></tr>
+  <tr><td>Reviews</td><td>~200 million total; ~50 K new reviews/day</td></tr>
+  <tr><td>Photos</td><td>~500 million; avg 500 KB each ≈ 250 TB storage</td></tr>
+  <tr><td>Monthly Active Users</td><td>~30 million</td></tr>
+  <tr><td>Peak Search QPS</td><td>~50,000</td></tr>
+  <tr><td>Peak Business-Detail QPS</td><td>~30,000</td></tr>
+  <tr><td>Peak Review-Write QPS</td><td>~600</td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<!-- 4. FLOW 1 — SEARCH FOR BUSINESSES -->
+<!-- ============================================================ -->
+<h2 id="flow1">4. Flow 1 — Search for Businesses</h2>
+
+<div class="mermaid">
+flowchart LR
+    Client(["📱 Client<br/>(Web / Mobile)"])
+    LB1["Load Balancer"]
+    GW["API Gateway"]
+    SC["Search Service"]
+    Cache1[("In-Memory<br/>Cache<br/>(Search Results)")]
+    SI[("Search Index<br/>(Geo + Full-Text)")]
+
+    Client -->|"HTTP GET /search"| LB1
+    LB1 --> GW
+    GW --> SC
+    SC -->|"cache hit?"| Cache1
+    SC -->|"query"| SI
+    SI -->|"ranked results"| SC
+    SC -->|"results JSON"| GW
+    GW --> LB1
+    LB1 --> Client
+</div>
+
+<h3>Examples</h3>
+
 <div class="example">
-<strong>Example:</strong> User in San Francisco searches "sushi" within 5km → Elasticsearch returns 200 candidates within geo_distance circle → Ranking re-ranks with ML (considering user's past preferences for high-end sushi, price filter, open now) → Returns top 20 with paginated results: "Sushi Ran — ⭐4.6 — 2.3 mi — $$$"
-</div>
+  <strong>Example 1 — Keyword + Location search:</strong><br/>
+  User opens the Yelp app in San Francisco and types "sushi" in the search bar. The client sends <code>HTTP GET /api/v1/search?q=sushi&lat=37.7749&lng=-122.4194&radius=5000&page=1&limit=20</code> to the Load Balancer, which forwards to the API Gateway. The API Gateway authenticates the request and routes it to the <em>Search Service</em>. The Search Service first checks the <em>In-Memory Cache</em> for a cached result set keyed on a hash of the normalized query parameters. On a cache miss, it queries the <em>Search Index</em> using a geospatial filter (geohash prefix matching for the 5 km radius) combined with a full-text match on "sushi" across business name, category, and description fields. The Search Index returns the top 20 results ranked by a composite score of relevance, average rating, and distance. The Search Service populates the cache with these results (TTL 5 minutes) and returns a JSON array of business summaries (id, name, address, thumbnail URL, average rating, review count, distance) back through the API Gateway and Load Balancer to the client.
 </div>
 
-<div class="section">
-<h3>🔍 Component Deep Dives — Search Flow</h3>
+<div class="example">
+  <strong>Example 2 — Category browse (cache hit):</strong><br/>
+  Another user in the same area searches for "Restaurants" — a very common query. The Search Service finds a fresh cache entry (populated 2 minutes ago by a previous identical query) and returns the cached results immediately, avoiding a round-trip to the Search Index. Response time is &lt;&thinsp;50 ms.
+</div>
 
-<div class="subsection">
-<h4>Elasticsearch Geospatial Query</h4>
-<p><strong>Protocol:</strong> HTTP/REST to Elasticsearch cluster</p>
-<p><strong>Index Mapping:</strong> <code>geo_point</code> field for lat/lng, <code>text</code> fields with custom analyzers (synonym expansion, ngrams for autocomplete)</p>
-<pre>
-POST /businesses/_search
-{
-  "query": {
-    "function_score": {
-      "query": {
-        "bool": {
-          "must": [
-            { "multi_match": { "query": "sushi", "fields": ["name^3", "categories^2", "description"] } }
-          ],
-          "filter": [
-            { "geo_distance": { "distance": "5km", "location": { "lat": 37.77, "lon": -122.42 } } },
-            { "term": { "is_open": true } }
-          ]
-        }
-      },
-      "functions": [
-        { "field_value_factor": { "field": "avg_rating", "modifier": "log1p", "factor": 2 } },
-        { "gauss": { "location": { "origin": "37.77,-122.42", "scale": "2km", "decay": 0.5 } } },
-        { "field_value_factor": { "field": "review_count", "modifier": "log1p", "factor": 0.5 } }
-      ],
-      "score_mode": "sum",
-      "boost_mode": "multiply"
-    }
+<div class="example">
+  <strong>Example 3 — Map-based search:</strong><br/>
+  The user drags the map viewport to a new area in downtown. The client sends <code>HTTP GET /api/v1/search?bounds=37.78,-122.42,37.77,-122.40&category=coffee&limit=50</code>. The Search Service converts the bounding box into a set of geohash prefixes covering the viewport, queries the Search Index for businesses matching "coffee" in those geohashes, and returns up to 50 pins with lat/lng and summary data for map rendering.
+</div>
+
+<h3>Component Deep Dive — Flow 1</h3>
+
+<h4>Client (Web / Mobile)</h4>
+<p>The user-facing application (React web app, iOS/Android native app). Sends HTTP requests to the backend. For search, the client provides query text, GPS coordinates or a selected location, optional category filters, and pagination parameters. The client renders results as a list or as pins on a map.</p>
+
+<h4>Load Balancer</h4>
+<p>Distributes incoming traffic across multiple API Gateway instances using round-robin or least-connections. Provides SSL termination, health checks, and DDoS protection. Operates at Layer 7 (HTTP-aware) so it can route based on URL path.</p>
+
+<h4>API Gateway</h4>
+<p>Single entry point for all client requests. Responsibilities: authentication/authorization (validates JWT tokens), rate limiting, request routing to downstream microservices, request/response transformation, and logging. Routes <code>/search</code> requests to the Search Service.</p>
+
+<h4>Search Service</h4>
+<p><strong>Protocol:</strong> HTTP REST (internal gRPC also acceptable between services).<br/>
+<strong>Endpoint:</strong> <code>GET /api/v1/search</code><br/>
+<strong>Input:</strong> Query string params — <code>q</code> (keyword), <code>lat</code>/<code>lng</code> (coordinates), <code>radius</code> (meters), <code>bounds</code> (bounding box), <code>category</code>, <code>sort</code> (relevance | rating | distance), <code>page</code>, <code>limit</code>.<br/>
+<strong>Output:</strong> JSON array of business summaries: <code>{ business_id, name, address, thumbnail_url, average_rating, review_count, latitude, longitude, distance_m, category }</code>.<br/>
+<strong>Logic:</strong> Normalizes query parameters, computes geohash prefixes for the search area, checks cache, queries the Search Index, ranks/merges results, and returns paginated response.</p>
+
+<h4>In-Memory Cache (Search Results)</h4>
+<p>Caches the results of popular search queries. Key = hash of normalized query parameters. Value = serialized result set. TTL = 5 minutes. Eviction = LRU. This is a <strong>cache-aside (lazy-loading)</strong> strategy: the Search Service checks the cache before querying the Search Index, and populates the cache on a miss. Short TTL ensures recently updated ratings or new businesses appear within minutes. Detailed discussion in the <a href="#cache">Caching Strategy</a> section.</p>
+
+<h4>Search Index (Geospatial + Full-Text)</h4>
+<p>A specialized search engine that maintains a denormalized copy of business data optimized for geospatial and full-text queries. It stores each business as a document with fields: <code>business_id, name, description, category, address, city, state, latitude, longitude, geohash, average_rating, review_count, photo_thumbnail_url</code>. Uses a <strong>geohash-based geospatial index</strong> for proximity queries and an <strong>inverted index</strong> for full-text keyword matching on name/description/category. Ranking uses a composite score combining text relevance (BM25), distance, and average rating. The index is updated asynchronously via a message queue whenever a business is created/updated or a review changes its rating. Detailed discussion on geospatial indexing in the <a href="#tradeoffs">Tradeoffs</a> section.</p>
+
+<!-- ============================================================ -->
+<!-- 5. FLOW 2 — VIEW BUSINESS DETAILS & REVIEWS -->
+<!-- ============================================================ -->
+<h2 id="flow2">5. Flow 2 — View Business Details &amp; Reviews</h2>
+
+<div class="mermaid">
+flowchart LR
+    Client(["📱 Client"])
+    LB["Load Balancer"]
+    GW["API Gateway"]
+    BS["Business Service"]
+    RS["Review Service"]
+    Cache2[("In-Memory<br/>Cache<br/>(Business Detail)")]
+    DB1[("SQL Database<br/>(Businesses)")]
+    DB2[("SQL Database<br/>(Reviews)")]
+    CDN["CDN<br/>(Photos)"]
+    OBJ[("Object<br/>Storage")]
+
+    Client -->|"GET /businesses/:id"| LB
+    LB --> GW
+    GW --> BS
+    BS -->|"cache hit?"| Cache2
+    BS -->|"query"| DB1
+    DB1 --> BS
+    GW -->|"GET /businesses/:id/reviews"| RS
+    RS -->|"query"| DB2
+    DB2 --> RS
+    Client -->|"photo URLs"| CDN
+    CDN -->|"miss"| OBJ
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+  <strong>Example 1 — Viewing a popular restaurant:</strong><br/>
+  The user taps on "Sushi Zen" from the search results. The client fires two parallel requests: <code>HTTP GET /api/v1/businesses/biz_12345</code> and <code>HTTP GET /api/v1/businesses/biz_12345/reviews?page=1&limit=10&sort=recent</code>. The API Gateway routes the first to the <em>Business Service</em>, which checks the In-Memory Cache for <code>biz_12345</code>. Since Sushi Zen is popular, it's a cache hit — the service returns the cached business detail (name, address, hours, phone, category, average_rating=4.5, review_count=832, photo URLs). The second request goes to the <em>Review Service</em>, which queries the SQL Reviews database using the composite index <code>(business_id, created_at DESC)</code> to fetch the 10 most recent reviews. The client renders the page and loads business photos from the <em>CDN</em>; the CDN serves cached photo assets directly from edge servers.
+</div>
+
+<div class="example">
+  <strong>Example 2 — Viewing an obscure business (cache miss):</strong><br/>
+  The user finds "Bob's Bait Shop" which gets very few views. The Business Service finds a cache miss, queries the SQL Businesses database by primary key <code>business_id = biz_99887</code>, receives the full business row, populates the cache (TTL 1 hour), and returns the result. The Review Service similarly queries SQL. Since this business has only 3 reviews, the query is fast regardless.
+</div>
+
+<div class="example">
+  <strong>Example 3 — Paginating older reviews:</strong><br/>
+  The user scrolls to the bottom of the reviews list and taps "Load More." The client sends <code>HTTP GET /api/v1/businesses/biz_12345/reviews?page=3&limit=10&sort=recent</code>. The Review Service performs an offset-based query on the SQL Reviews table (<code>OFFSET 20 LIMIT 10</code>, ordered by <code>created_at DESC</code>) and returns the next batch. For deeply paginated results, cursor-based pagination (keyed on <code>review_id</code>) is preferred to avoid performance degradation with large offsets.
+</div>
+
+<h3>Component Deep Dive — Flow 2</h3>
+
+<h4>Business Service</h4>
+<p><strong>Protocol:</strong> HTTP REST.<br/>
+<strong>Endpoint:</strong> <code>GET /api/v1/businesses/{business_id}</code><br/>
+<strong>Input:</strong> Path param <code>business_id</code>.<br/>
+<strong>Output:</strong> JSON object: <code>{ business_id, name, description, address, city, state, zip, latitude, longitude, phone, website, hours (JSON), category, average_rating, review_count, photos: [{ photo_id, url, caption }], owner_id, created_at }</code>.<br/>
+<strong>Logic:</strong> Checks in-memory cache first (cache-aside). On miss, queries the Businesses SQL table by primary key, fetches associated photos from the Photos table (or their URLs), caches the assembled response, and returns it.</p>
+
+<h4>Review Service</h4>
+<p><strong>Protocol:</strong> HTTP REST.<br/>
+<strong>Endpoint:</strong> <code>GET /api/v1/businesses/{business_id}/reviews</code><br/>
+<strong>Input:</strong> Path param <code>business_id</code>, query params <code>page</code>, <code>limit</code>, <code>sort</code> (recent | rating | useful).<br/>
+<strong>Output:</strong> JSON array: <code>{ reviews: [{ review_id, user_id, username, user_photo_url, rating, text, photos: [...], created_at, useful_count }], total_count, page, limit }</code>.<br/>
+<strong>Logic:</strong> Queries the Reviews SQL table using the composite index on <code>(business_id, created_at DESC)</code>. Joins with user info (or fetches from a lightweight user cache) for display names and avatars. Returns paginated results.</p>
+
+<h4>SQL Database (Businesses)</h4>
+<p>The authoritative relational store for business listings. Schema detailed in the <a href="#schema">Schema</a> section. Chosen SQL for ACID guarantees on business data and well-defined relational structure (businesses have owners, categories, etc.).</p>
+
+<h4>SQL Database (Reviews)</h4>
+<p>Stores all review data. Relational integrity (foreign keys to businesses and users). SQL chosen for transactional writes (a review must atomically reference a valid business and user) and complex sorted/paginated queries.</p>
+
+<h4>In-Memory Cache (Business Detail)</h4>
+<p>Caches assembled business detail responses for frequently viewed businesses. Key = <code>business_id</code>. TTL = 1 hour. Eviction = LRU. Strategy = cache-aside. Invalidated or updated asynchronously when a business is edited or a new review changes its average rating (via message queue consumer). Details in <a href="#cache">Caching</a> section.</p>
+
+<h4>CDN (Content Delivery Network)</h4>
+<p>Serves business photos and static web assets from edge servers geographically close to the user, minimizing latency. Pull-based: on a cache miss, the CDN pulls from the origin Object Storage. Photos are served with long <code>Cache-Control</code> headers since photo content is immutable (content-addressed URLs). Details in <a href="#cdn">CDN</a> section.</p>
+
+<h4>Object Storage</h4>
+<p>Stores original and resized versions of business photos. Highly durable (11 nines) and cost-effective for large binary blobs. Photos are uploaded here via the Media/Business Service and served to users through the CDN.</p>
+
+<!-- ============================================================ -->
+<!-- 6. FLOW 3 — WRITE A REVIEW -->
+<!-- ============================================================ -->
+<h2 id="flow3">6. Flow 3 — Write a Review</h2>
+
+<div class="mermaid">
+flowchart LR
+    Client(["📱 Client"])
+    LB["Load Balancer"]
+    GW["API Gateway"]
+    RS["Review Service"]
+    DB2[("SQL Database<br/>(Reviews)")]
+    MQ["Message Queue"]
+    RW["Rating<br/>Aggregation<br/>Worker"]
+    SIW["Search Index<br/>Update Worker"]
+    DB1[("SQL Database<br/>(Businesses)")]
+    SI[("Search Index")]
+    CW["Cache<br/>Invalidation<br/>Worker"]
+    Cache2[("In-Memory<br/>Cache")]
+
+    Client -->|"POST /reviews"| LB
+    LB --> GW
+    GW --> RS
+    RS -->|"INSERT review"| DB2
+    RS -->|"publish event"| MQ
+    MQ --> RW
+    MQ --> SIW
+    MQ --> CW
+    RW -->|"UPDATE avg rating"| DB1
+    SIW -->|"update doc"| SI
+    CW -->|"invalidate"| Cache2
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+  <strong>Example 1 — Happy path (new review):</strong><br/>
+  User "alice" visits Sushi Zen's page and taps "Write a Review." She selects 5 stars, writes "Amazing omakase experience!", and taps Submit. The client sends <code>HTTP POST /api/v1/businesses/biz_12345/reviews</code> with body <code>{ "rating": 5, "text": "Amazing omakase experience!" }</code> and the user's JWT in the Authorization header. The API Gateway validates the token, extracts <code>user_id = u_42</code>, and routes to the <em>Review Service</em>. The Review Service validates the input (rating 1–5, text length ≤ 5000 chars), checks that alice hasn't already reviewed this business (unique constraint on <code>(business_id, user_id)</code>), and INSERTs the review into the SQL Reviews table. It then publishes a <code>review_created</code> event to the <em>Message Queue</em> containing <code>{ business_id: biz_12345, review_id: rev_999, rating: 5 }</code>. The Review Service returns <code>HTTP 201 Created</code> with the new review object. Asynchronously, three workers consume the event: (1) the <em>Rating Aggregation Worker</em> recalculates Sushi Zen's average rating (<code>UPDATE businesses SET average_rating = ..., review_count = review_count + 1 WHERE business_id = biz_12345</code>), (2) the <em>Search Index Update Worker</em> updates the rating/review_count in the Search Index document, and (3) the <em>Cache Invalidation Worker</em> deletes the stale business detail from the in-memory cache so the next read fetches fresh data.
+</div>
+
+<div class="example">
+  <strong>Example 2 — Duplicate review (edge case):</strong><br/>
+  User "bob" tries to submit a second review for Sushi Zen. The Review Service checks the unique constraint on <code>(business_id, user_id)</code> and finds an existing review. It returns <code>HTTP 409 Conflict</code> with message "You have already reviewed this business. You may edit your existing review." No event is published to the message queue.
+</div>
+
+<div class="example">
+  <strong>Example 3 — Review with photos:</strong><br/>
+  User "carol" writes a review and attaches 3 photos. The client first uploads photos via <code>HTTP POST /api/v1/photos/upload</code> (multipart form-data), receiving back <code>photo_ids</code>. Then she submits the review with <code>{ "rating": 4, "text": "Great ambiance!", "photo_ids": ["p_101", "p_102", "p_103"] }</code>. The Review Service INSERTs the review and links the photo records to the review via the <code>review_id</code> foreign key in the photos table.
+</div>
+
+<h3>Component Deep Dive — Flow 3</h3>
+
+<h4>Review Service (Write Path)</h4>
+<p><strong>Protocol:</strong> HTTP REST.<br/>
+<strong>Endpoint:</strong> <code>POST /api/v1/businesses/{business_id}/reviews</code><br/>
+<strong>Input:</strong> Path param <code>business_id</code>; JSON body <code>{ rating (int, 1-5), text (string, max 5000 chars), photo_ids (optional, array of strings) }</code>; JWT token in header providing <code>user_id</code>.<br/>
+<strong>Output (success):</strong> <code>HTTP 201 Created</code> — <code>{ review_id, business_id, user_id, rating, text, photo_ids, created_at }</code>.<br/>
+<strong>Output (duplicate):</strong> <code>HTTP 409 Conflict</code>.<br/>
+<strong>Output (invalid):</strong> <code>HTTP 400 Bad Request</code> with validation error details.<br/>
+<strong>Logic:</strong> Validates input, enforces unique review per user per business, performs a transactional INSERT into the Reviews SQL table, publishes an asynchronous event to the Message Queue, and returns the created review.</p>
+
+<h4>Message Queue</h4>
+<p>A durable, distributed message queue that decouples the synchronous write path from asynchronous downstream processing. The Review Service acts as a <strong>producer</strong>, publishing <code>review_created</code>, <code>review_updated</code>, and <code>review_deleted</code> events. Three independent <strong>consumer groups</strong> process these events: Rating Aggregation Worker, Search Index Update Worker, and Cache Invalidation Worker. Each consumer group processes independently and at its own pace. Messages are persisted to disk for durability and support at-least-once delivery with idempotent consumers. Full deep dive in <a href="#mq">Message Queue</a> section.</p>
+
+<h4>Rating Aggregation Worker</h4>
+<p>Consumes <code>review_created/updated/deleted</code> events. Recalculates the business's average rating and review count. There are two strategies: (a) incremental update using a running sum and count, or (b) full recompute via <code>SELECT AVG(rating), COUNT(*) FROM reviews WHERE business_id = ?</code>. Strategy (a) is faster but susceptible to drift; strategy (b) is accurate but slightly more expensive. In practice, use incremental for most events and a periodic full recompute as a consistency reconciliation job. Updates the <code>average_rating</code> and <code>review_count</code> columns on the <code>businesses</code> table.</p>
+
+<h4>Search Index Update Worker</h4>
+<p>Consumes events and updates the corresponding business document in the Search Index with the new <code>average_rating</code> and <code>review_count</code>. This ensures search results reflect recent reviews within seconds to a few minutes.</p>
+
+<h4>Cache Invalidation Worker</h4>
+<p>Consumes events and invalidates (deletes) the affected business's entry from the In-Memory Cache. The next read request will trigger a cache miss and repopulate the cache with fresh data from the database. This is simpler and more reliable than trying to update the cache in place.</p>
+
+<!-- ============================================================ -->
+<!-- 7. FLOW 4 — REGISTER / MANAGE A BUSINESS -->
+<!-- ============================================================ -->
+<h2 id="flow4">7. Flow 4 — Register / Manage a Business</h2>
+
+<div class="mermaid">
+flowchart LR
+    Owner(["🏪 Business<br/>Owner"])
+    LB["Load Balancer"]
+    GW["API Gateway"]
+    BS["Business Service"]
+    MS["Media Service"]
+    DB1[("SQL Database<br/>(Businesses)")]
+    DB3[("SQL Database<br/>(Photos)")]
+    OBJ[("Object<br/>Storage")]
+    MQ["Message Queue"]
+    SIW["Search Index<br/>Update Worker"]
+    SI[("Search Index")]
+    CW["Cache Inv.<br/>Worker"]
+    Cache[("In-Memory<br/>Cache")]
+
+    Owner -->|"POST /businesses"| LB
+    LB --> GW
+    GW --> BS
+    BS -->|"INSERT business"| DB1
+    BS -->|"publish event"| MQ
+    Owner -->|"POST /photos/upload"| LB
+    LB --> GW
+    GW --> MS
+    MS -->|"store"| OBJ
+    MS -->|"INSERT metadata"| DB3
+    MQ --> SIW
+    MQ --> CW
+    SIW -->|"index new doc"| SI
+    CW -->|"invalidate"| Cache
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+  <strong>Example 1 — New business registration:</strong><br/>
+  A restaurant owner, Maria, wants to list her new restaurant "Taqueria Maria" on Yelp. She signs in, navigates to "Add Your Business," and fills out the form with: name, address (123 Main St, Austin, TX 78701), phone, website, category (Mexican), and hours. She also uploads 5 photos. The client first uploads the photos via <code>HTTP POST /api/v1/photos/upload</code> (multipart form-data, one request per photo or a batch upload). The <em>Media Service</em> stores each photo in <em>Object Storage</em>, generates thumbnails (via an image processing pipeline or worker), records metadata in the Photos SQL table, and returns <code>photo_ids</code>. The client then sends <code>HTTP POST /api/v1/businesses</code> with the full business details and the <code>photo_ids</code>. The <em>Business Service</em> geocodes the address to obtain <code>latitude/longitude</code> (via an external geocoding API or an internal geocoding service), computes the geohash, INSERTs the business into the SQL Businesses table, links the photos, and publishes a <code>business_created</code> event to the Message Queue. The Search Index Update Worker picks up the event and indexes the new business document in the Search Index. Maria's restaurant is now searchable.
+</div>
+
+<div class="example">
+  <strong>Example 2 — Updating business hours:</strong><br/>
+  Maria's restaurant now closes at 11 PM instead of 10 PM on Fridays. She edits the hours via the business management dashboard. The client sends <code>HTTP PUT /api/v1/businesses/biz_55555</code> with the updated hours JSON. The Business Service validates that <code>user_id</code> matches the <code>owner_id</code>, updates the row in SQL, publishes a <code>business_updated</code> event, and returns <code>HTTP 200 OK</code>. The Cache Invalidation Worker evicts the stale cache entry, and the Search Index Worker updates the document.
+</div>
+
+<div class="example">
+  <strong>Example 3 — Unauthorized edit attempt (edge case):</strong><br/>
+  A random user tries to <code>PUT /api/v1/businesses/biz_55555</code> to change the description. The Business Service checks that the requesting user's <code>user_id</code> does not match the business's <code>owner_id</code> and returns <code>HTTP 403 Forbidden</code>. No changes are made.
+</div>
+
+<h3>Component Deep Dive — Flow 4</h3>
+
+<h4>Business Service (Write Path)</h4>
+<p><strong>Protocol:</strong> HTTP REST.<br/>
+<strong>Endpoints:</strong></p>
+<ul>
+  <li><code>POST /api/v1/businesses</code> — Create a new business listing.</li>
+  <li><code>PUT /api/v1/businesses/{business_id}</code> — Update an existing listing (owner only).</li>
+  <li><code>DELETE /api/v1/businesses/{business_id}</code> — Remove a listing (owner or admin).</li>
+</ul>
+<p><strong>Input (POST):</strong> JSON body: <code>{ name, description, address, city, state, zip, phone, website, category, hours (JSON), photo_ids }</code>.<br/>
+<strong>Output (POST):</strong> <code>HTTP 201 Created</code> — full business object with generated <code>business_id</code>, geocoded <code>latitude/longitude</code>, and <code>geohash</code>.<br/>
+<strong>Input (PUT):</strong> Partial or full business fields to update.<br/>
+<strong>Output (PUT):</strong> <code>HTTP 200 OK</code> — updated business object.<br/>
+<strong>Logic:</strong> Validates input, geocodes address (for new listings or address changes), performs SQL INSERT or UPDATE, publishes async event to Message Queue.</p>
+
+<h4>Media Service</h4>
+<p><strong>Protocol:</strong> HTTP REST (multipart form-data for uploads).<br/>
+<strong>Endpoint:</strong> <code>POST /api/v1/photos/upload</code><br/>
+<strong>Input:</strong> Multipart form-data with one or more image files; query param <code>business_id</code>.<br/>
+<strong>Output:</strong> <code>HTTP 201 Created</code> — <code>{ photos: [{ photo_id, url, thumbnail_url }] }</code>.<br/>
+<strong>Logic:</strong> Validates file type (JPEG, PNG, WebP) and size (max 10 MB), generates a unique filename, stores the original in Object Storage, triggers async thumbnail/resize processing (via message queue or inline), records metadata (photo_id, business_id, user_id, URL, created_at) in the Photos SQL table, and returns the photo details. The URL points to the CDN path, not directly to object storage.</p>
+
+<h4>Object Storage</h4>
+<p>Stores all photo binary data. Organized by path: <code>/photos/{business_id}/{photo_id}.{ext}</code>. Provides high durability (11 nines) and scalability. Not accessed directly by clients — all reads go through the CDN.</p>
+
+<!-- ============================================================ -->
+<!-- 8. COMBINED OVERALL DIAGRAM -->
+<!-- ============================================================ -->
+<h2 id="combined">8. Combined Overall Diagram</h2>
+
+<div class="mermaid">
+flowchart TB
+    subgraph Clients
+        Web(["🌐 Web Client"])
+        Mobile(["📱 Mobile Client"])
+    end
+
+    LB["⚖️ Load Balancer"]
+
+    subgraph API Layer
+        GW["API Gateway<br/>(Auth · Rate Limit · Routing)"]
+    end
+
+    subgraph Services
+        SS["Search<br/>Service"]
+        BS["Business<br/>Service"]
+        RS["Review<br/>Service"]
+        MS["Media<br/>Service"]
+    end
+
+    subgraph "Async Processing"
+        MQ["Message Queue"]
+        RAW["Rating Aggregation<br/>Worker"]
+        SIUW["Search Index<br/>Update Worker"]
+        CIW["Cache Invalidation<br/>Worker"]
+    end
+
+    subgraph Data Stores
+        SQLB[("SQL DB<br/>(Businesses,<br/>Users, Photos)")]
+        SQLR[("SQL DB<br/>(Reviews)")]
+        SI[("Search Index<br/>(Geo + Full-Text)")]
+        OBJ[("Object<br/>Storage<br/>(Photos)")]
+    end
+
+    subgraph Caching Layer
+        CSR[("Cache<br/>(Search<br/>Results)")]
+        CBD[("Cache<br/>(Business<br/>Detail)")]
+    end
+
+    CDN["🌍 CDN<br/>(Edge Servers)"]
+
+    Web & Mobile --> LB
+    LB --> GW
+
+    GW --> SS
+    GW --> BS
+    GW --> RS
+    GW --> MS
+
+    SS --> CSR
+    SS --> SI
+
+    BS --> CBD
+    BS --> SQLB
+
+    RS --> SQLR
+    RS -->|"publish event"| MQ
+
+    MS --> OBJ
+    MS --> SQLB
+
+    BS -->|"publish event"| MQ
+
+    MQ --> RAW
+    MQ --> SIUW
+    MQ --> CIW
+
+    RAW --> SQLB
+    SIUW --> SI
+    CIW --> CBD
+    CIW --> CSR
+
+    Web & Mobile -->|"photo/static assets"| CDN
+    CDN -->|"origin pull"| OBJ
+</div>
+
+<h3>Combined Flow Examples</h3>
+
+<div class="example">
+  <strong>End-to-end Example — Full user journey:</strong><br/>
+  <strong>Step 1 (Search):</strong> User opens the Yelp app in Chicago and searches "deep dish pizza." The request flows through the Load Balancer → API Gateway → Search Service, which queries the Search Index (geospatial filter around Chicago + full-text "deep dish pizza") and returns a ranked list of 20 pizzerias with names, ratings, thumbnails, and distances.<br/><br/>
+  <strong>Step 2 (View Details):</strong> The user taps on "Lou's Pizzeria." Two parallel requests fetch the business details (Business Service → cache hit → returns business JSON) and the first page of reviews (Review Service → SQL Reviews → returns 10 reviews sorted by recency). Photos load from the CDN.<br/><br/>
+  <strong>Step 3 (Write Review):</strong> The user writes a 4-star review: "Crispy crust, gooey cheese. Will be back!" and submits. Review Service INSERTs the review, publishes <code>review_created</code> to the Message Queue. The Rating Aggregation Worker recalculates Lou's average rating, the Search Index Worker updates the search document, and the Cache Invalidation Worker evicts the stale business cache entry.<br/><br/>
+  <strong>Step 4 (Subsequent Search):</strong> Another user searches "pizza Chicago" 3 minutes later. The Search Index now reflects Lou's updated review count and rating. The search cache (TTL 5 min) may still serve slightly stale data for identical queries, but within 5 minutes the new data is reflected everywhere.
+</div>
+
+<div class="example">
+  <strong>End-to-end Example — Business owner journey:</strong><br/>
+  <strong>Step 1 (Register):</strong> Owner creates a new listing for "Naan & Curry" via <code>POST /businesses</code>. Business Service geocodes the address, stores in SQL, publishes event. Search Index Worker indexes the new business.<br/>
+  <strong>Step 2 (Upload Photos):</strong> Owner uploads 8 photos via <code>POST /photos/upload</code>. Media Service stores them in Object Storage, records metadata in SQL. CDN will cache them on first user access.<br/>
+  <strong>Step 3 (First Review):</strong> A customer finds "Naan & Curry" via search, visits, and writes a 5-star review. The entire write flow (review → queue → rating update → index update → cache invalidation) executes asynchronously. The business now shows 5.0 stars with 1 review in search results.
+</div>
+
+<!-- ============================================================ -->
+<!-- 9. DATABASE SCHEMA -->
+<!-- ============================================================ -->
+<h2 id="schema">9. Database Schema</h2>
+
+<h3>9.1 SQL Tables</h3>
+<p class="note"><strong>Why SQL?</strong> Yelp's core data (users, businesses, reviews) is highly relational — reviews reference both a user and a business, businesses have owners, photos belong to businesses and/or reviews. ACID transactions are important for writes (e.g., ensuring a review atomically references valid entities). The query patterns (paginated sorted reviews, aggregations) are well-served by SQL's indexing and query planning.</p>
+
+<h4>Table: <code>users</code></h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+  <tr><td><code>user_id</code></td><td>UUID / BIGINT</td><td><strong>PRIMARY KEY</strong></td><td>Unique user identifier</td></tr>
+  <tr><td><code>username</code></td><td>VARCHAR(50)</td><td>NOT NULL, UNIQUE</td><td>Display name</td></tr>
+  <tr><td><code>email</code></td><td>VARCHAR(255)</td><td>NOT NULL, UNIQUE</td><td>Login email</td></tr>
+  <tr><td><code>password_hash</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Bcrypt hash</td></tr>
+  <tr><td><code>profile_photo_url</code></td><td>VARCHAR(500)</td><td>NULLABLE</td><td>CDN URL for avatar</td></tr>
+  <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL, DEFAULT NOW</td><td>Account creation time</td></tr>
+  <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL, DEFAULT NOW</td><td>Last profile update</td></tr>
+</table>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><code>PRIMARY KEY (user_id)</code> — B-tree. Used for all lookups by ID (O(log n)).</li>
+  <li><code>UNIQUE INDEX ON email</code> — B-tree. Used for login authentication lookups and enforcing uniqueness.</li>
+</ul>
+<p><strong>Read events:</strong> Login (email lookup), review display (user_id lookup for name/avatar).<br/>
+<strong>Write events:</strong> User registration (INSERT), profile update (UPDATE).</p>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code> (hash-based). Even distribution since user_ids are random UUIDs. Cross-shard lookups by email handled by a global secondary index or a small email-to-user_id mapping table.</p>
+
+<h4>Table: <code>businesses</code></h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+  <tr><td><code>business_id</code></td><td>UUID / BIGINT</td><td><strong>PRIMARY KEY</strong></td><td>Unique business identifier</td></tr>
+  <tr><td><code>owner_id</code></td><td>UUID / BIGINT</td><td><strong>FOREIGN KEY → users.user_id</strong></td><td>Business owner</td></tr>
+  <tr><td><code>name</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Business name</td></tr>
+  <tr><td><code>description</code></td><td>TEXT</td><td>NULLABLE</td><td>Free-text description</td></tr>
+  <tr><td><code>address</code></td><td>VARCHAR(500)</td><td>NOT NULL</td><td>Street address</td></tr>
+  <tr><td><code>city</code></td><td>VARCHAR(100)</td><td>NOT NULL</td><td>City</td></tr>
+  <tr><td><code>state</code></td><td>VARCHAR(50)</td><td>NOT NULL</td><td>State / province</td></tr>
+  <tr><td><code>zip_code</code></td><td>VARCHAR(20)</td><td>NOT NULL</td><td>Postal code</td></tr>
+  <tr><td><code>latitude</code></td><td>DECIMAL(10,7)</td><td>NOT NULL</td><td>Geocoded latitude</td></tr>
+  <tr><td><code>longitude</code></td><td>DECIMAL(10,7)</td><td>NOT NULL</td><td>Geocoded longitude</td></tr>
+  <tr><td><code>geohash</code></td><td>VARCHAR(12)</td><td>NOT NULL</td><td>Geohash for proximity lookups</td></tr>
+  <tr><td><code>category</code></td><td>VARCHAR(100)</td><td>NOT NULL</td><td>Primary category (e.g., "Mexican")</td></tr>
+  <tr><td><code>phone</code></td><td>VARCHAR(20)</td><td>NULLABLE</td><td>Phone number</td></tr>
+  <tr><td><code>website</code></td><td>VARCHAR(500)</td><td>NULLABLE</td><td>Website URL</td></tr>
+  <tr><td><code>hours</code></td><td>JSON / TEXT</td><td>NULLABLE</td><td>Operating hours as structured JSON</td></tr>
+  <tr><td><code>average_rating</code></td><td>DECIMAL(2,1)</td><td>NOT NULL, DEFAULT 0.0</td><td><strong>(Denormalized)</strong> Avg star rating</td></tr>
+  <tr><td><code>review_count</code></td><td>INT</td><td>NOT NULL, DEFAULT 0</td><td><strong>(Denormalized)</strong> Total reviews</td></tr>
+  <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Listing creation time</td></tr>
+  <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last update time</td></tr>
+</table>
+
+<p><strong>Denormalization Explanation:</strong> <code>average_rating</code> and <code>review_count</code> are denormalized from the <code>reviews</code> table onto the <code>businesses</code> table. Without denormalization, every business detail page view and every search result would require a <code>SELECT AVG(rating), COUNT(*) FROM reviews WHERE business_id = ?</code> join/subquery — at 30,000+ QPS for business details alone, this would be extremely expensive. By maintaining these as precomputed columns updated asynchronously by the Rating Aggregation Worker, we reduce business detail reads to a single-row primary key lookup. The tradeoff is slight staleness (seconds) and the need for an async update pipeline, which is acceptable given our eventual-consistency non-functional requirement.</p>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><code>PRIMARY KEY (business_id)</code> — B-tree. All detail lookups by ID.</li>
+  <li><code>INDEX ON owner_id</code> — B-tree. Fetch all businesses owned by a user (for the business management dashboard). <code>SELECT * FROM businesses WHERE owner_id = ?</code>.</li>
+  <li><code>COMPOSITE INDEX ON (city, category)</code> — B-tree. Supports queries like "all Mexican restaurants in Austin" when used as a fallback to the Search Index.</li>
+  <li><code>SPATIAL INDEX ON (latitude, longitude)</code> — R-tree. Enables proximity queries directly in SQL as a fallback. R-tree chosen because it efficiently supports range/nearest-neighbor queries on 2D coordinate data, unlike B-tree which can only index one dimension at a time.</li>
+  <li><code>INDEX ON geohash</code> — B-tree with prefix matching. Supports geohash-prefix proximity queries: <code>WHERE geohash LIKE 'dp3w6z%'</code>. Geohash is a string, so B-tree prefix matching works naturally.</li>
+</ul>
+
+<p><strong>Read events:</strong> View business details (PK lookup), owner dashboard (owner_id lookup), search fallback (geo/category).<br/>
+<strong>Write events:</strong> Business registration (INSERT), business update (UPDATE), rating aggregation (UPDATE average_rating, review_count).</p>
+
+<p><strong>Sharding:</strong> Shard by <code>business_id</code> (hash-based). Hash-based sharding ensures even data distribution across shards, avoiding hot spots. We do <em>not</em> shard by <code>geohash</code> because geographic distribution is highly uneven (Manhattan would be a massive hot spot while rural areas would be nearly empty). Geospatial queries are handled by the Search Index, not by querying the SQL table directly, so the SQL sharding strategy can optimize for even distribution and single-row lookups.</p>
+
+<h4>Table: <code>reviews</code></h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+  <tr><td><code>review_id</code></td><td>UUID / BIGINT</td><td><strong>PRIMARY KEY</strong></td><td>Unique review identifier</td></tr>
+  <tr><td><code>business_id</code></td><td>UUID / BIGINT</td><td><strong>FOREIGN KEY → businesses.business_id</strong>, NOT NULL</td><td>Reviewed business</td></tr>
+  <tr><td><code>user_id</code></td><td>UUID / BIGINT</td><td><strong>FOREIGN KEY → users.user_id</strong>, NOT NULL</td><td>Review author</td></tr>
+  <tr><td><code>rating</code></td><td>SMALLINT</td><td>NOT NULL, CHECK (1 ≤ rating ≤ 5)</td><td>Star rating</td></tr>
+  <tr><td><code>text</code></td><td>TEXT</td><td>NOT NULL</td><td>Review body (max 5000 chars)</td></tr>
+  <tr><td><code>useful_count</code></td><td>INT</td><td>NOT NULL, DEFAULT 0</td><td>How many users found this review useful</td></tr>
+  <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Review creation time</td></tr>
+  <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last edit time</td></tr>
+</table>
+<p><strong>Unique constraint:</strong> <code>UNIQUE (business_id, user_id)</code> — one review per user per business.</p>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><code>PRIMARY KEY (review_id)</code> — B-tree. Direct review lookups.</li>
+  <li><code>COMPOSITE INDEX ON (business_id, created_at DESC)</code> — B-tree. The most critical index: supports the dominant query pattern <code>SELECT * FROM reviews WHERE business_id = ? ORDER BY created_at DESC LIMIT 10 OFFSET ?</code>. The composite B-tree allows the database to seek directly to the business's reviews and then scan in sorted order without a separate sort step.</li>
+  <li><code>INDEX ON user_id</code> — B-tree. Supports "all reviews by this user" for user profile pages: <code>SELECT * FROM reviews WHERE user_id = ? ORDER BY created_at DESC</code>.</li>
+  <li><code>UNIQUE INDEX ON (business_id, user_id)</code> — B-tree. Enforces the one-review-per-user constraint and allows fast duplicate checks on write.</li>
+</ul>
+
+<p><strong>Read events:</strong> View business reviews page (business_id + created_at lookup), view user's review history (user_id lookup).<br/>
+<strong>Write events:</strong> Submit new review (INSERT), edit review (UPDATE), delete review (DELETE).</p>
+
+<p><strong>Sharding:</strong> Shard by <code>business_id</code> (hash-based). This co-locates all reviews for a single business on the same shard, which is critical because the dominant query pattern is "get reviews for business X sorted by date." Without this co-location, fetching a business's reviews would require scatter-gather across all shards. The tradeoff: querying "all reviews by user Y" requires a scatter-gather across shards, but this is a less frequent access pattern (user profile page) and can be accelerated with a secondary index or a separate denormalized table if needed.</p>
+
+<h4>Table: <code>photos</code></h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+  <tr><td><code>photo_id</code></td><td>UUID / BIGINT</td><td><strong>PRIMARY KEY</strong></td><td>Unique photo identifier</td></tr>
+  <tr><td><code>business_id</code></td><td>UUID / BIGINT</td><td><strong>FOREIGN KEY → businesses.business_id</strong>, NOT NULL</td><td>Associated business</td></tr>
+  <tr><td><code>user_id</code></td><td>UUID / BIGINT</td><td><strong>FOREIGN KEY → users.user_id</strong>, NOT NULL</td><td>Uploader</td></tr>
+  <tr><td><code>review_id</code></td><td>UUID / BIGINT</td><td>FOREIGN KEY → reviews.review_id, NULLABLE</td><td>Associated review (if any)</td></tr>
+  <tr><td><code>url</code></td><td>VARCHAR(500)</td><td>NOT NULL</td><td>CDN URL for original photo</td></tr>
+  <tr><td><code>thumbnail_url</code></td><td>VARCHAR(500)</td><td>NOT NULL</td><td>CDN URL for thumbnail</td></tr>
+  <tr><td><code>caption</code></td><td>VARCHAR(500)</td><td>NULLABLE</td><td>User-provided caption</td></tr>
+  <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Upload time</td></tr>
+</table>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><code>PRIMARY KEY (photo_id)</code> — B-tree.</li>
+  <li><code>INDEX ON business_id</code> — B-tree. Fetch all photos for a business: <code>SELECT * FROM photos WHERE business_id = ? ORDER BY created_at DESC</code>.</li>
+  <li><code>INDEX ON review_id</code> — B-tree. Fetch photos associated with a specific review.</li>
+</ul>
+
+<p><strong>Read events:</strong> View business detail page (fetch photos by business_id), view review (fetch photos by review_id).<br/>
+<strong>Write events:</strong> Photo upload (INSERT).</p>
+
+<h3>9.2 Search Index (NoSQL — Search-Optimized Document Store)</h3>
+
+<p class="note"><strong>Why a separate Search Index?</strong> SQL databases are not optimized for full-text search combined with geospatial queries and custom relevance ranking at scale. A dedicated search engine provides inverted indexes for text, geospatial indexes for proximity, and custom scoring functions — all optimized for sub-200 ms query response times over millions of documents.</p>
+
+<h4>Document: <code>business_search</code></h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Index Type</th><th>Description</th></tr>
+  <tr><td><code>business_id</code></td><td>string</td><td>keyword (exact match)</td><td>Links back to SQL</td></tr>
+  <tr><td><code>name</code></td><td>text</td><td><strong>Inverted index</strong> (full-text, analyzed)</td><td>Full-text searchable name</td></tr>
+  <tr><td><code>description</code></td><td>text</td><td><strong>Inverted index</strong> (full-text, analyzed)</td><td>Full-text searchable desc</td></tr>
+  <tr><td><code>category</code></td><td>keyword</td><td><strong>Inverted index</strong> (exact + analyzed)</td><td>Filterable category</td></tr>
+  <tr><td><code>address</code></td><td>text</td><td>Inverted index</td><td>Searchable address text</td></tr>
+  <tr><td><code>city</code></td><td>keyword</td><td>keyword (exact match)</td><td>Filterable city</td></tr>
+  <tr><td><code>state</code></td><td>keyword</td><td>keyword (exact match)</td><td>Filterable state</td></tr>
+  <tr><td><code>location</code></td><td>geo_point</td><td><strong>Geospatial index (geohash-based)</strong></td><td>lat/lng for proximity</td></tr>
+  <tr><td><code>average_rating</code></td><td>float</td><td>numeric (B-tree)</td><td>For sorting/filtering by rating</td></tr>
+  <tr><td><code>review_count</code></td><td>integer</td><td>numeric (B-tree)</td><td>For sorting by popularity</td></tr>
+  <tr><td><code>thumbnail_url</code></td><td>keyword</td><td>not indexed (stored only)</td><td>For display in results</td></tr>
+</table>
+
+<p><strong>Geospatial Index Deep Dive:</strong> The <code>location</code> field uses a geohash-based geospatial index. A geohash encodes a (latitude, longitude) pair into a string where shared prefixes indicate spatial proximity. For example, geohash "dp3w6z" might represent a ~150m × 150m area. To find businesses within a 5 km radius, the search engine computes all geohash prefixes that overlap with the circle and retrieves matching documents via prefix queries on the inverted index. It then applies an exact-distance post-filter to remove results outside the circle (since geohash cells are rectangular, not circular). This approach is highly efficient because prefix matching on an inverted index is a fast operation.</p>
+
+<p><strong>Relevance Scoring:</strong> Results are ranked by a composite score: <code>score = w1 × text_relevance(BM25) + w2 × (1 / distance_km) + w3 × normalized_rating + w4 × log(review_count + 1)</code>. Weights are tunable and may vary by query type (e.g., distance matters more for "near me" queries).</p>
+
+<p><strong>Populated by:</strong> Search Index Update Worker consuming events from the Message Queue. On <code>business_created</code>: new document is indexed. On <code>business_updated</code>: document is updated. On <code>review_created/updated/deleted</code>: <code>average_rating</code> and <code>review_count</code> fields are updated. The index is eventually consistent with the SQL database (lag typically &lt; 5 seconds).</p>
+
+<!-- ============================================================ -->
+<!-- 10. CACHING STRATEGY -->
+<!-- ============================================================ -->
+<h2 id="cache">10. Caching Strategy</h2>
+
+<h3>Why Cache?</h3>
+<p>Yelp is an extremely read-heavy system (~1000:1 read-to-write ratio). Popular businesses (chain restaurants, highly rated local spots) receive disproportionately high traffic. Caching hot data in-memory avoids redundant database queries and significantly reduces p99 latency.</p>
+
+<h3>Cache 1: Business Detail Cache</h3>
+<div class="card">
+<table>
+  <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+  <tr><td>Strategy</td><td><strong>Cache-Aside (Lazy Loading)</strong></td><td>Only hot data enters the cache. In a write-through or write-behind scheme, we'd cache <em>every</em> business — including the millions that are rarely viewed — wasting memory. Cache-aside ensures we only cache what's actually requested.</td></tr>
+  <tr><td>Key</td><td><code>biz:{business_id}</code></td><td>Simple, unique, and deterministic.</td></tr>
+  <tr><td>Value</td><td>Serialized business detail JSON</td><td>The full assembled response object, so on a hit we skip all DB queries.</td></tr>
+  <tr><td>TTL (Expiration Policy)</td><td>1 hour</td><td>Business data changes infrequently (hours updates, new photos). 1-hour TTL provides a safety net ensuring stale data is evicted even if invalidation events are missed. Short enough that changes propagate within an hour worst case; long enough to provide strong cache hit rates.</td></tr>
+  <tr><td>Eviction Policy</td><td>LRU (Least Recently Used)</td><td>Naturally evicts businesses that haven't been viewed recently, keeping hot businesses cached. Well-suited for a Zipfian access pattern where a small % of businesses receive the majority of views.</td></tr>
+  <tr><td>Invalidation</td><td>Event-driven via Cache Invalidation Worker</td><td>When a review changes a business's rating, or the owner updates business info, the worker deletes the cache entry. The next read triggers a cache miss and repopulates with fresh data. Deletion (rather than update) is simpler and avoids race conditions.</td></tr>
+  <tr><td>Population</td><td>On cache miss during a <code>GET /businesses/:id</code> request</td><td>Business Service queries SQL, assembles the response, writes it to cache, and returns.</td></tr>
+</table>
+</div>
+
+<h3>Cache 2: Search Results Cache</h3>
+<div class="card">
+<table>
+  <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+  <tr><td>Strategy</td><td><strong>Cache-Aside (Lazy Loading)</strong></td><td>Same reasoning — only popular queries are cached.</td></tr>
+  <tr><td>Key</td><td>Hash of normalized query parameters<br/><code>search:{hash(q,lat,lng,radius,category,sort,page,limit)}</code></td><td>Normalized (lowercased, sorted params) to maximize cache hit rate for equivalent queries.</td></tr>
+  <tr><td>Value</td><td>Serialized search results JSON (list of business summaries)</td><td>Complete response to serve directly on cache hit.</td></tr>
+  <tr><td>TTL (Expiration Policy)</td><td>5 minutes</td><td>Shorter than business detail cache because search results should reflect recently added/updated businesses and rating changes. 5 minutes is short enough for freshness but long enough to absorb bursts of identical queries (e.g., many users in the same city searching "restaurants").</td></tr>
+  <tr><td>Eviction Policy</td><td>LRU</td><td>Common queries stay cached; rare/unique queries (long-tail) are evicted first.</td></tr>
+  <tr><td>Invalidation</td><td>TTL-based only (no active invalidation)</td><td>Actively invalidating search caches on every business/review update would be impractical — a single review could affect hundreds of cached search result sets. The 5-minute TTL provides acceptable staleness.</td></tr>
+  <tr><td>Population</td><td>On cache miss during a <code>GET /search</code> request</td><td>Search Service queries the Search Index, writes results to cache, and returns.</td></tr>
+</table>
+</div>
+
+<h3>Why Not Write-Through Cache?</h3>
+<p>A write-through cache populates the cache on every write. For Yelp, this would mean caching every newly created business and every search query variation — the vast majority of which may never be read. Given that only ~20% of businesses receive ~80% of traffic (Zipfian distribution), cache-aside is far more memory-efficient because it only caches data that is actually requested.</p>
+
+<!-- ============================================================ -->
+<!-- 11. CDN STRATEGY -->
+<!-- ============================================================ -->
+<h2 id="cdn">11. CDN Strategy</h2>
+
+<h3>Why a CDN?</h3>
+<p>Yelp is photo-heavy — business pages display multiple photos, and search results include thumbnails. With 30 million monthly users globally, serving photos directly from a centralized Object Storage would introduce high latency for distant users and would overwhelm the storage's bandwidth. A CDN replicates photo content at edge servers worldwide, delivering photos from the nearest edge to the user with sub-50 ms latency.</p>
+
+<div class="card">
+<table>
+  <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+  <tr><td>Type</td><td>Pull-based CDN</td><td>Edge servers pull from the origin (Object Storage) on first request. Simpler than push-based; photos are only replicated to edges that actually need them.</td></tr>
+  <tr><td>Origin</td><td>Object Storage</td><td>The authoritative store for all photos.</td></tr>
+  <tr><td>Cache-Control</td><td><code>max-age=31536000, immutable</code></td><td>Photos are immutable once uploaded (content-addressed URLs like <code>/photos/biz_12345/abc123.jpg</code>). The URL changes if the photo changes, so we can cache aggressively (1 year). No cache-busting needed.</td></tr>
+  <tr><td>Content Served</td><td>Business photos (original + thumbnails), user avatars, static web assets (JS, CSS, fonts)</td><td>All static, immutable, or infrequently changing assets benefit from CDN edge caching.</td></tr>
+  <tr><td>Cache Hit Rate</td><td>Expected &gt; 95%</td><td>Photos for popular businesses will be frequently requested and remain warm on edge servers. Long max-age ensures minimal origin fetches.</td></tr>
+</table>
+</div>
+
+<p><strong>Photo URL Structure:</strong> URLs are structured as <code>https://cdn.yelp-example.com/photos/{business_id}/{photo_id}_{size}.jpg</code> where <code>size</code> is <code>thumb</code> (150×150), <code>medium</code> (600×400), or <code>original</code>. Multiple sizes are pre-generated during upload by the image processing pipeline, stored separately in Object Storage, and served via separate CDN URLs. The client requests the appropriate size for its viewport.</p>
+
+<!-- ============================================================ -->
+<!-- 12. MESSAGE QUEUE DEEP DIVE -->
+<!-- ============================================================ -->
+<h2 id="mq">12. Message Queue Deep Dive</h2>
+
+<h3>Why a Message Queue?</h3>
+<p>Several operations triggered by writes (review submission, business update) are not latency-sensitive and can be processed asynchronously:</p>
+<ul>
+  <li>Recalculating average rating and review count.</li>
+  <li>Updating the search index.</li>
+  <li>Invalidating caches.</li>
+  <li>Processing/resizing uploaded photos.</li>
+  <li>Sending notification emails to business owners about new reviews.</li>
+</ul>
+<p>If these were done synchronously in the write path, a review submission would need to: insert the review AND update the business's avg rating AND update the search index AND invalidate the cache — all before returning a response. This would increase write latency from ~50 ms to ~500+ ms and introduce tight coupling between services.</p>
+
+<h3>Why Not Alternatives?</h3>
+<ul>
+  <li><strong>Pub/Sub:</strong> A pub/sub system (topic-based broadcasting) would also work here and is conceptually similar. The distinction is that a message queue provides <strong>competing consumers</strong> (only one consumer in a group processes each message), while pub/sub broadcasts to all subscribers. For our workers, we want competing consumers (e.g., 5 Rating Aggregation Worker instances share the load, each processing a subset of messages). A message queue with consumer groups achieves this naturally. In practice, many modern message brokers support both patterns, so this is a soft distinction.</li>
+  <li><strong>Synchronous HTTP calls:</strong> Rejected because they increase latency, create tight coupling, and don't provide retry/backpressure. If the search index is temporarily down, the review write would fail — unacceptable.</li>
+  <li><strong>Polling:</strong> Workers could poll the database for new reviews, but this is wasteful (constant queries even when no new data) and adds latency (polling interval delay). Event-driven via message queue is more efficient.</li>
+</ul>
+
+<h3>Message Queue Architecture</h3>
+<div class="card">
+<p><strong>Producers:</strong></p>
+<ul>
+  <li><strong>Review Service:</strong> Publishes <code>review_created</code>, <code>review_updated</code>, <code>review_deleted</code> events after successful database writes.</li>
+  <li><strong>Business Service:</strong> Publishes <code>business_created</code>, <code>business_updated</code>, <code>business_deleted</code> events.</li>
+  <li><strong>Media Service:</strong> Publishes <code>photo_uploaded</code> events for async image processing.</li>
+</ul>
+<p><strong>Event Schema Example (<code>review_created</code>):</strong></p>
+<pre><code>{
+  "event_type": "review_created",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "payload": {
+    "review_id": "rev_999",
+    "business_id": "biz_12345",
+    "user_id": "u_42",
+    "rating": 5
   }
-}
-</pre>
-<p><strong>Key:</strong> <code>gauss</code> decay function — businesses closer to user get exponentially higher scores. <code>log1p</code> on review_count prevents businesses with 10,000 reviews from dominating over newer ones with 50 quality reviews.</p>
-</div>
+}</code></pre>
 
-<div class="subsection">
-<h4>Geospatial Indexing Strategy</h4>
-<p><strong>Geohash:</strong> Elasticsearch uses geohash internally for geo_point fields — encodes lat/lng into base-32 string prefixes for efficient bounding-box filtering</p>
-<p><strong>Precision levels:</strong> geohash-6 (~1.2km cells) used for proximity search, geohash-4 (~39km) for broader city searches</p>
-<p><strong>Quadtree alternative:</strong> For in-memory spatial index (e.g., Redis), quadtree divides space recursively — O(log n) point lookup</p>
-<p><strong>S2 Geometry (Google):</strong> Maps sphere to unit cube faces → Hilbert curve space-filling → S2 Cell IDs with hierarchical levels — better for covering irregular regions</p>
-</div>
+<p><strong>Consumer Groups:</strong></p>
+<ul>
+  <li><strong>rating-aggregation-group:</strong> Consumes review events. Multiple worker instances share the load. Each message is processed by exactly one worker in the group. Workers are stateless and horizontally scalable.</li>
+  <li><strong>search-index-update-group:</strong> Consumes both business and review events. Updates the Search Index.</li>
+  <li><strong>cache-invalidation-group:</strong> Consumes business and review events. Invalidates affected cache entries.</li>
+  <li><strong>photo-processing-group:</strong> Consumes <code>photo_uploaded</code> events. Generates thumbnails and resized versions.</li>
+  <li><strong>notification-group:</strong> Consumes <code>review_created</code> events. Sends email/push notifications to business owners.</li>
+</ul>
 
-<div class="subsection">
-<h4>Ranking Service (ML)</h4>
-<p><strong>Protocol:</strong> gRPC from Search Service to Ranking Service</p>
-<p><strong>Input:</strong> Candidate list (business IDs + features), user context (location, history, time-of-day)</p>
-<p><strong>Model:</strong> LambdaMART or neural learning-to-rank — features include: distance, avg_rating, review_count, price_match, category_match, is_sponsored, recency_of_reviews, user_personalization_score</p>
-<p><strong>Output:</strong> Re-ranked list with predicted click-through probability</p>
-</div>
+<p><strong>How messages are enqueued:</strong> After a successful database write, the service serializes the event as JSON and sends it to a named topic/queue in the message broker. The broker persists the message to disk and acknowledges receipt.</p>
+<p><strong>How messages are dequeued:</strong> Consumer workers maintain long-lived connections to the broker, pulling messages in batches. After successfully processing a message (e.g., updating the rating in SQL), the worker sends an acknowledgment (ACK) to the broker, which marks the message as consumed. If the worker crashes before ACK, the broker redelivers the message to another worker in the group (at-least-once delivery).</p>
+<p><strong>Idempotency:</strong> Since delivery is at-least-once, consumers must be idempotent. The Rating Aggregation Worker, for example, uses an idempotency key (<code>review_id + event_type</code>) to skip duplicate processing, or recalculates the full average (which is naturally idempotent).</p>
+<p><strong>Ordering:</strong> Messages for the same <code>business_id</code> are routed to the same partition (partitioned by <code>business_id</code>), ensuring events for a single business are processed in order. This prevents race conditions like a rating update being processed before the review insert.</p>
 </div>
 
 <!-- ============================================================ -->
-<h2>🔄 Flow 2 — Review Submission</h2>
+<!-- 13. LOAD BALANCING -->
 <!-- ============================================================ -->
+<h2 id="lb">13. Load Balancing</h2>
 
-<div class="diagram-container">
-<svg viewBox="0 0 1100 350" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="140" width="120" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="80" y="175" text-anchor="middle" fill="white" font-size="14">User Client</text>
-  <line x1="140" y1="170" x2="210" y2="170" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="220" y="140" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="290" y="168" text-anchor="middle" fill="white" font-size="13">Review Service</text>
-  <text x="290" y="185" text-anchor="middle" fill="white" font-size="10">(Validation)</text>
-  <line x1="360" y1="170" x2="420" y2="110" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="360" y1="170" x2="420" y2="170" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="360" y1="170" x2="420" y2="240" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="430" y="80" width="150" height="55" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="505" y="105" text-anchor="middle" fill="white" font-size="12">Fraud Detection</text>
-  <text x="505" y="122" text-anchor="middle" fill="white" font-size="10">(ML Pipeline)</text>
-  <rect x="430" y="145" width="150" height="55" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="505" y="168" text-anchor="middle" fill="white" font-size="12">Kafka</text>
-  <text x="505" y="185" text-anchor="middle" fill="white" font-size="10">(review-events)</text>
-  <rect x="430" y="215" width="150" height="55" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="505" y="238" text-anchor="middle" fill="white" font-size="12">Photo Service</text>
-  <text x="505" y="255" text-anchor="middle" fill="white" font-size="10">(S3 Upload)</text>
-  <line x1="580" y1="172" x2="660" y2="120" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="580" y1="172" x2="660" y2="172" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="580" y1="172" x2="660" y2="240" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="670" y="90" width="140" height="55" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
-  <text x="740" y="115" text-anchor="middle" fill="white" font-size="12">PostgreSQL</text>
-  <text x="740" y="132" text-anchor="middle" fill="white" font-size="10">(Reviews)</text>
-  <rect x="670" y="150" width="140" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="740" y="175" text-anchor="middle" fill="white" font-size="12">Rating Aggregator</text>
-  <text x="740" y="192" text-anchor="middle" fill="white" font-size="10">(Recalculate Avg)</text>
-  <rect x="670" y="215" width="140" height="55" rx="10" fill="#8a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="740" y="238" text-anchor="middle" fill="white" font-size="12">Elasticsearch</text>
-  <text x="740" y="255" text-anchor="middle" fill="white" font-size="10">(Index Update)</text>
-</svg>
-</div>
-
-<div class="section">
-<h3>Step-by-Step</h3>
+<h3>Where Load Balancers Are Placed</h3>
 <ol>
-  <li><strong>Client submits review:</strong> <code>POST /api/v1/businesses/{id}/reviews</code> with JSON body: <code>{ "rating": 5, "text": "Best sushi in the city...", "photos": [presigned_urls] }</code></li>
-  <li><strong>Review Service</strong> validates: user is authenticated, hasn't already reviewed this business, text length within limits, profanity filter</li>
-  <li><strong>Fraud Detection (async):</strong> ML model scores review — checks for patterns: review velocity (many reviews in short time), IP/device clustering, text similarity to known fake reviews, user review history anomalies</li>
-  <li><strong>Photo Service:</strong> Presigned S3 upload URLs provided, photos uploaded directly from client, thumbnails generated via Lambda</li>
-  <li><strong>Write to PostgreSQL:</strong> Insert review row with initial status <code>pending</code> (if fraud score > threshold) or <code>published</code></li>
-  <li><strong>Kafka event:</strong> <code>review-created</code> event triggers consumers — Rating Aggregator recalculates business avg_rating, Elasticsearch updates business document with new review count/rating</li>
-  <li><strong>Business owner notified</strong> of new review via push notification</li>
+  <li><strong>Between Clients and API Gateway:</strong> The primary load balancer. Distributes all incoming HTTP traffic across multiple API Gateway instances. This is the most critical LB as it handles the full ~80K peak QPS (search + detail + writes combined).</li>
+  <li><strong>Between API Gateway and Microservices:</strong> Internal load balancers (or service mesh / service discovery with client-side load balancing) distribute requests across instances of each service (Search Service, Business Service, Review Service, Media Service). Alternatively, the API Gateway can perform this role using a service registry.</li>
+  <li><strong>Between Message Queue and Workers:</strong> Not a traditional load balancer — the message broker itself distributes messages across consumer instances within each consumer group via partition assignment.</li>
 </ol>
 
-<div class="example">
-<strong>Example:</strong> User writes a 5-star review for "Sushi Ran" with 2 photos → Fraud ML scores 0.15 (low risk) → Published immediately → Rating Aggregator: business had 1,247 reviews at 4.58 avg → new avg = (1247*4.58 + 5)/1248 = 4.5803 → Elasticsearch updated → Next search query reflects new rating
-</div>
+<h3>Load Balancer Deep Dive</h3>
+<div class="card">
+<table>
+  <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+  <tr><td>Layer</td><td>Layer 7 (Application Layer)</td><td>Needs to inspect HTTP paths to route traffic (e.g., <code>/search</code> vs <code>/businesses</code>). Also enables SSL termination, header inspection, and HTTP-aware health checks.</td></tr>
+  <tr><td>Algorithm (External LB)</td><td>Least Connections</td><td>For the external LB, least-connections is preferred over round-robin because search queries and detail page queries have different processing times. Least-connections ensures slow requests don't cause one instance to become overloaded while others are idle.</td></tr>
+  <tr><td>Algorithm (Internal LBs)</td><td>Round-Robin or Consistent Hashing</td><td>Internal services are more homogeneous in request processing time, so round-robin is sufficient. Consistent hashing can be used if service-level caching benefits from request affinity (e.g., business detail requests for the same business_id routed to the same instance for local cache hits).</td></tr>
+  <tr><td>Health Checks</td><td>HTTP GET /health every 10 seconds</td><td>Each service exposes a health endpoint. The LB removes unhealthy instances from the pool within 30 seconds (3 failed checks).</td></tr>
+  <tr><td>SSL Termination</td><td>At the external Load Balancer</td><td>Decrypts HTTPS at the LB so internal traffic can use plain HTTP (or mutual TLS for security-sensitive environments), reducing CPU load on application servers.</td></tr>
+  <tr><td>Sticky Sessions</td><td>Not required</td><td>All services are stateless — any instance can handle any request. No session affinity needed.</td></tr>
+</table>
 </div>
 
-<div class="section">
-<h3>🔍 Component Deep Dives — Review Flow</h3>
+<!-- ============================================================ -->
+<!-- 14. SCALING CONSIDERATIONS -->
+<!-- ============================================================ -->
+<h2 id="scaling">14. Scaling Considerations</h2>
 
-<div class="subsection">
-<h4>Fraud Detection ML</h4>
-<p><strong>Features used:</strong></p>
+<h3>14.1 Read Path Scaling</h3>
 <ul>
-  <li><strong>User signals:</strong> Account age, review count, profile completeness, device fingerprint</li>
-  <li><strong>Behavioral signals:</strong> Time between reviews, geographic plausibility (reviewing in 5 cities in 1 day), copy-paste text detection</li>
-  <li><strong>Text signals:</strong> NLP sentiment analysis, similarity to known spam templates, excessive superlatives</li>
-  <li><strong>Network signals:</strong> IP clustering (many reviews from same IP), social graph isolation</li>
-</ul>
-<p><strong>Recommendation Filter:</strong> Yelp's "Recommended Reviews" system filters ~25% of reviews as "not recommended" — they're still visible but collapsed and don't count toward rating</p>
-</div>
-
-<div class="subsection">
-<h4>Rating Aggregation</h4>
-<p><strong>Bayesian Average:</strong> Rather than simple mean, use Bayesian average to handle businesses with few reviews:</p>
-<pre>bayesian_avg = (C * m + sum_of_ratings) / (C + review_count)
-where C = minimum reviews threshold (e.g., 10)
-      m = global mean rating across all businesses (~3.7)</pre>
-<p>This pulls businesses with very few reviews toward the global mean, preventing a single 5-star review from ranking #1.</p>
-</div>
-</div>
-
-<!-- ============================================================ -->
-<h2>🔄 Flow 3 — Nearby Business Discovery (Map View)</h2>
-<!-- ============================================================ -->
-
-<div class="diagram-container">
-<svg viewBox="0 0 1000 350" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="140" width="120" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="80" y="168" text-anchor="middle" fill="white" font-size="13">Mobile App</text>
-  <text x="80" y="185" text-anchor="middle" fill="white" font-size="10">(Map View)</text>
-  <line x1="140" y1="170" x2="210" y2="170" stroke="#aaa" marker-end="url(#ah3)"/>
-  <rect x="220" y="140" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="290" y="168" text-anchor="middle" fill="white" font-size="13">Discovery Service</text>
-  <text x="290" y="185" text-anchor="middle" fill="white" font-size="10">(Viewport Query)</text>
-  <line x1="360" y1="170" x2="430" y2="120" stroke="#aaa" marker-end="url(#ah3)"/>
-  <line x1="360" y1="170" x2="430" y2="220" stroke="#aaa" marker-end="url(#ah3)"/>
-  <rect x="440" y="90" width="160" height="55" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
-  <text x="520" y="115" text-anchor="middle" fill="white" font-size="12">Geohash Grid Cache</text>
-  <text x="520" y="132" text-anchor="middle" fill="white" font-size="10">(Redis — precomputed)</text>
-  <rect x="440" y="195" width="160" height="55" rx="10" fill="#8a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="520" y="218" text-anchor="middle" fill="white" font-size="12">Elasticsearch</text>
-  <text x="520" y="235" text-anchor="middle" fill="white" font-size="10">(geo_bounding_box)</text>
-  <line x1="600" y1="118" x2="680" y2="170" stroke="#aaa" marker-end="url(#ah3)"/>
-  <line x1="600" y1="222" x2="680" y2="175" stroke="#aaa" marker-end="url(#ah3)"/>
-  <rect x="690" y="145" width="150" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="765" y="168" text-anchor="middle" fill="white" font-size="12">Map Tile Service</text>
-  <text x="765" y="185" text-anchor="middle" fill="white" font-size="10">(Pin Clustering)</text>
-</svg>
-</div>
-
-<div class="section">
-<h3>Step-by-Step</h3>
-<ol>
-  <li><strong>Client sends viewport:</strong> <code>GET /api/v1/discover?sw_lat=37.75&sw_lng=-122.45&ne_lat=37.80&ne_lng=-122.40&zoom=14&category=restaurants</code></li>
-  <li><strong>Discovery Service</strong> calculates geohash cells covering the viewport bounding box</li>
-  <li><strong>Geohash Grid Cache:</strong> At popular zoom levels, precomputed Redis hashes store top businesses per geohash cell — O(1) lookup per cell</li>
-  <li><strong>Cache miss → Elasticsearch:</strong> <code>geo_bounding_box</code> query returns all businesses in viewport, limited to top 200</li>
-  <li><strong>Pin Clustering:</strong> At low zoom levels (zoomed out), cluster nearby pins into numbered circles (e.g., "23 restaurants") using server-side grid clustering or client-side supercluster.js</li>
-  <li><strong>Return pin data:</strong> Array of {id, lat, lng, name, rating, price_level, category_icon} for map rendering</li>
-</ol>
-
-<div class="example">
-<strong>Example:</strong> User views downtown SF at zoom=14 → viewport covers 12 geohash-6 cells → Redis has cached top-20 businesses per cell → Returns 240 pins → Client renders pin icons with star ratings on map tiles → User taps a pin → Business detail sheet slides up
-</div>
-</div>
-
-<!-- ============================================================ -->
-<h2>🏗️ Combined Architecture</h2>
-<!-- ============================================================ -->
-
-<div class="diagram-container">
-<svg viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ahc" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="50" width="130" height="50" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="85" y="80" text-anchor="middle" fill="white" font-size="13">Mobile App</text>
-  <rect x="20" y="120" width="130" height="50" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="85" y="150" text-anchor="middle" fill="white" font-size="13">Web Browser</text>
-  <line x1="150" y1="80" x2="230" y2="150" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="150" y1="145" x2="230" y2="150" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="240" y="120" width="140" height="60" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="310" y="148" text-anchor="middle" fill="white" font-size="13">API Gateway / LB</text>
-  <text x="310" y="165" text-anchor="middle" fill="white" font-size="10">(L7 + CDN)</text>
-  <!-- Search path -->
-  <line x1="380" y1="140" x2="460" y2="80" stroke="#4a9eff" marker-end="url(#ahc)"/>
-  <rect x="470" y="50" width="140" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="540" y="75" text-anchor="middle" fill="white" font-size="12">Search Service</text>
-  <text x="540" y="92" text-anchor="middle" fill="white" font-size="10">(Query + Rank)</text>
-  <!-- Review path -->
-  <line x1="380" y1="155" x2="460" y2="160" stroke="#ff4a4a" marker-end="url(#ahc)"/>
-  <rect x="470" y="130" width="140" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="540" y="155" text-anchor="middle" fill="white" font-size="12">Review Service</text>
-  <text x="540" y="172" text-anchor="middle" fill="white" font-size="10">(Write + Moderate)</text>
-  <!-- Business path -->
-  <line x1="380" y1="165" x2="460" y2="235" stroke="#ffa54a" marker-end="url(#ahc)"/>
-  <rect x="470" y="210" width="140" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="540" y="235" text-anchor="middle" fill="white" font-size="12">Business Service</text>
-  <text x="540" y="252" text-anchor="middle" fill="white" font-size="10">(CRUD + Hours)</text>
-  <!-- Discovery -->
-  <line x1="380" y1="170" x2="460" y2="310" stroke="#4afff0" marker-end="url(#ahc)"/>
-  <rect x="470" y="290" width="140" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="540" y="315" text-anchor="middle" fill="white" font-size="12">Discovery Service</text>
-  <text x="540" y="332" text-anchor="middle" fill="white" font-size="10">(Map + Nearby)</text>
-  <!-- Elasticsearch -->
-  <line x1="610" y1="78" x2="700" y2="78" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="610" y1="315" x2="700" y2="315" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="710" y="50" width="160" height="55" rx="10" fill="#8a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="790" y="73" text-anchor="middle" fill="white" font-size="12">Elasticsearch Cluster</text>
-  <text x="790" y="90" text-anchor="middle" fill="white" font-size="10">(Geo + Full-Text)</text>
-  <!-- PostgreSQL -->
-  <line x1="610" y1="158" x2="700" y2="200" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="610" y1="238" x2="700" y2="210" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="710" y="170" width="160" height="55" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
-  <text x="790" y="195" text-anchor="middle" fill="white" font-size="12">PostgreSQL (Primary)</text>
-  <text x="790" y="212" text-anchor="middle" fill="white" font-size="10">(Users, Reviews, Biz)</text>
-  <!-- Redis -->
-  <line x1="610" y1="310" x2="700" y2="310" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="710" y="285" width="160" height="55" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
-  <text x="790" y="308" text-anchor="middle" fill="white" font-size="12">Redis Cluster</text>
-  <text x="790" y="325" text-anchor="middle" fill="white" font-size="10">(Cache + Geo Grid)</text>
-  <!-- Kafka -->
-  <line x1="540" y1="185" x2="540" y2="410" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="470" y="420" width="140" height="55" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="540" y="445" text-anchor="middle" fill="white" font-size="12">Apache Kafka</text>
-  <text x="540" y="462" text-anchor="middle" fill="white" font-size="10">(Event Bus)</text>
-  <!-- Consumers -->
-  <line x1="610" y1="448" x2="700" y2="430" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="610" y1="448" x2="700" y2="490" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="610" y1="448" x2="700" y2="550" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="710" y="405" width="160" height="45" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="790" y="432" text-anchor="middle" fill="white" font-size="11">Rating Aggregator</text>
-  <rect x="710" y="465" width="160" height="45" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="790" y="492" text-anchor="middle" fill="white" font-size="11">Fraud Detector (ML)</text>
-  <rect x="710" y="525" width="160" height="45" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="790" y="552" text-anchor="middle" fill="white" font-size="11">Notification Service</text>
-  <!-- S3 -->
-  <rect x="950" y="170" width="140" height="55" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="1020" y="195" text-anchor="middle" fill="white" font-size="12">S3 + CDN</text>
-  <text x="1020" y="212" text-anchor="middle" fill="white" font-size="10">(Photos / Static)</text>
-  <line x1="870" y1="197" x2="940" y2="197" stroke="#aaa" marker-end="url(#ahc)"/>
-</svg>
-</div>
-
-<div class="example">
-<strong>End-to-End Example:</strong> User opens Yelp in SF → Map view loads pins from Redis geohash cache → Types "best tacos" → Search Service queries Elasticsearch with geo_distance + text match → ML ranker re-ranks by personalized relevance → User picks "La Taqueria" → Business detail page loaded from PostgreSQL + cached in Redis → User writes 5-star review → Review Service writes to PostgreSQL → Kafka event triggers: rating recalculation, Elasticsearch update, owner notification → Next user searching "tacos" sees updated rating
-</div>
-
-<!-- ============================================================ -->
-<h2>🗄️ Database Schema</h2>
-<!-- ============================================================ -->
-
-<div class="section">
-<h3>PostgreSQL — Relational Data (ACID)</h3>
-
-<h4>businesses</h4>
-<table>
-<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-<tr><td>id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>name</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>slug</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">UNIQUE INDEX</span></td></tr>
-<tr><td>latitude</td><td>DECIMAL(10,7)</td><td>GiST spatial index</td></tr>
-<tr><td>longitude</td><td>DECIMAL(10,7)</td><td>GiST spatial index</td></tr>
-<tr><td>address</td><td>TEXT</td><td></td></tr>
-<tr><td>city</td><td>VARCHAR(100)</td><td><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>state</td><td>VARCHAR(50)</td><td></td></tr>
-<tr><td>country</td><td>VARCHAR(3)</td><td></td></tr>
-<tr><td>zip_code</td><td>VARCHAR(20)</td><td></td></tr>
-<tr><td>phone</td><td>VARCHAR(20)</td><td></td></tr>
-<tr><td>website</td><td>TEXT</td><td></td></tr>
-<tr><td>category_ids</td><td>BIGINT[]</td><td><span class="tag tag-idx">GIN INDEX</span></td></tr>
-<tr><td>price_level</td><td>SMALLINT</td><td>1-4 ($-$$$$)</td></tr>
-<tr><td>avg_rating</td><td>DECIMAL(3,2)</td><td>Denormalized, updated async</td></tr>
-<tr><td>review_count</td><td>INTEGER</td><td>Denormalized</td></tr>
-<tr><td>is_claimed</td><td>BOOLEAN</td><td></td></tr>
-<tr><td>owner_user_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → users</span></td></tr>
-<tr><td>created_at</td><td>TIMESTAMPTZ</td><td></td></tr>
-<tr><td>updated_at</td><td>TIMESTAMPTZ</td><td></td></tr>
-</table>
-
-<h4>business_hours</h4>
-<table>
-<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-<tr><td>business_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span><span class="tag tag-fk">FK → businesses</span></td></tr>
-<tr><td>day_of_week</td><td>SMALLINT</td><td><span class="tag tag-pk">PK</span> 0=Monday</td></tr>
-<tr><td>open_time</td><td>TIME</td><td></td></tr>
-<tr><td>close_time</td><td>TIME</td><td></td></tr>
-</table>
-
-<h4>reviews</h4>
-<table>
-<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-<tr><td>id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>business_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → businesses</span><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → users</span><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>rating</td><td>SMALLINT</td><td>1-5</td></tr>
-<tr><td>text</td><td>TEXT</td><td></td></tr>
-<tr><td>photo_urls</td><td>TEXT[]</td><td></td></tr>
-<tr><td>useful_count</td><td>INTEGER</td><td>Denormalized</td></tr>
-<tr><td>funny_count</td><td>INTEGER</td><td>Denormalized</td></tr>
-<tr><td>cool_count</td><td>INTEGER</td><td>Denormalized</td></tr>
-<tr><td>status</td><td>VARCHAR(20)</td><td>published / pending / not_recommended</td></tr>
-<tr><td>fraud_score</td><td>DECIMAL(5,4)</td><td>ML confidence score</td></tr>
-<tr><td>created_at</td><td>TIMESTAMPTZ</td><td><span class="tag tag-idx">INDEX</span></td></tr>
-</table>
-<p><span class="tag tag-idx">UNIQUE INDEX</span> on (business_id, user_id) — one review per user per business</p>
-
-<h4>users</h4>
-<table>
-<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-<tr><td>id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>email</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">UNIQUE</span></td></tr>
-<tr><td>display_name</td><td>VARCHAR(100)</td><td></td></tr>
-<tr><td>avatar_url</td><td>TEXT</td><td></td></tr>
-<tr><td>review_count</td><td>INTEGER</td><td>Denormalized</td></tr>
-<tr><td>elite_year</td><td>INTEGER</td><td>NULL if not elite</td></tr>
-<tr><td>home_location</td><td>POINT</td><td>GiST index</td></tr>
-<tr><td>created_at</td><td>TIMESTAMPTZ</td><td></td></tr>
-</table>
-
-<h4>categories</h4>
-<table>
-<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-<tr><td>id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>name</td><td>VARCHAR(100)</td><td><span class="tag tag-idx">UNIQUE</span></td></tr>
-<tr><td>parent_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → categories (self)</span></td></tr>
-<tr><td>alias</td><td>VARCHAR(100)</td><td>URL-safe slug</td></tr>
-</table>
-
-<h3>Sharding Strategy</h3>
-<p><strong>businesses:</strong> Shard by <code>city</code> or geographic region — businesses are heavily locality-bound, queries are always scoped to a region <span class="tag tag-shard">GEO SHARD</span></p>
-<p><strong>reviews:</strong> Shard by <code>business_id</code> — keeps all reviews for a business on one shard for efficient aggregation <span class="tag tag-shard">HASH SHARD</span></p>
-<p><strong>users:</strong> Shard by <code>user_id</code> hash — uniform distribution <span class="tag tag-shard">HASH SHARD</span></p>
-
-<h3>Indexes Explained</h3>
-<ul>
-  <li><strong>GiST spatial index</strong> on (latitude, longitude): Enables efficient proximity queries in PostgreSQL — R-tree based structure for multi-dimensional data</li>
-  <li><strong>GIN index</strong> on category_ids[]: Generalized Inverted Index — indexes each element of the array, enabling "find businesses in category X" queries</li>
-  <li><strong>B-tree composite</strong> on reviews(business_id, created_at DESC): Efficiently fetches recent reviews for a business page</li>
-  <li><strong>Partial index</strong> on reviews WHERE status = 'published': Only indexes recommended reviews, reduces index size by ~25%</li>
+  <li><strong>Horizontal scaling of services:</strong> All services (Search, Business, Review, Media) are stateless and can be horizontally scaled by adding instances behind load balancers. During peak hours, auto-scaling policies spin up additional instances based on CPU/memory/request-count metrics.</li>
+  <li><strong>SQL Read Replicas:</strong> Deploy read replicas for the SQL databases. Business detail and review read queries are routed to replicas, reducing load on the primary. The primary handles all writes. Replication lag is acceptable given our eventual-consistency model.</li>
+  <li><strong>Search Index Sharding:</strong> The search index is sharded across multiple nodes. Sharding by geohash prefix distributes businesses geographically. Query coordination fans out to relevant shards and merges results. Each shard can also have replicas for read scaling.</li>
+  <li><strong>Caching:</strong> The in-memory cache absorbs a significant portion of read traffic. For popular businesses and common searches, cache hit rates &gt; 90% are expected, effectively reducing database/index QPS by 10×.</li>
+  <li><strong>CDN:</strong> Offloads all photo and static asset traffic, which constitutes the majority of bandwidth. &gt; 95% cache hit rate at CDN edges.</li>
 </ul>
 
-<h3>Denormalization Decisions</h3>
+<h3>14.2 Write Path Scaling</h3>
 <ul>
-  <li><strong>avg_rating + review_count on businesses:</strong> Avoids JOIN + AVG() on every search result — updated asynchronously by Rating Aggregator consumer</li>
-  <li><strong>useful/funny/cool counts on reviews:</strong> Avoids COUNT() on reactions table for every review display</li>
-  <li><strong>review_count on users:</strong> Profile badge display without counting reviews table</li>
+  <li><strong>Write QPS is low:</strong> ~600 reviews/second at peak. This is manageable for a single SQL primary with proper indexing. If write volume grows, we can shard the reviews table by <code>business_id</code>.</li>
+  <li><strong>Message Queue as a buffer:</strong> The message queue absorbs write bursts and decouples producers from consumers. If rating aggregation workers are temporarily slow, messages queue up without affecting the write path latency.</li>
+  <li><strong>Async workers scale independently:</strong> If the search index update lags behind, we add more Search Index Update Worker instances to the consumer group. The message broker redistributes partitions automatically.</li>
 </ul>
-</div>
 
-<div class="section">
-<h3>Elasticsearch — Search Index</h3>
-<pre>
-Index: businesses
-{
-  "name": { "type": "text", "analyzer": "custom_business_analyzer" },
-  "categories": { "type": "keyword" },          // facetable
-  "location": { "type": "geo_point" },           // lat/lng
-  "city": { "type": "keyword" },
-  "avg_rating": { "type": "float" },
-  "review_count": { "type": "integer" },
-  "price_level": { "type": "integer" },
-  "is_open_now": { "type": "boolean" },          // updated by cron
-  "hours": { "type": "nested" },                 // day + open/close
-  "amenities": { "type": "keyword" },            // outdoor_seating, wifi, etc.
-  "photos_count": { "type": "integer" }
-}
-Sharding: 12 primary shards (by geohash region prefix), 1 replica each
-</pre>
-</div>
+<h3>14.3 Storage Scaling</h3>
+<ul>
+  <li><strong>SQL Databases:</strong> Sharded by primary key (hash-based) as described in the schema section. Each shard runs on its own server with its own replicas.</li>
+  <li><strong>Search Index:</strong> Sharded by geohash (for geographic distribution of query load) with replicas per shard.</li>
+  <li><strong>Object Storage:</strong> Inherently scalable (object stores scale horizontally by design). No special action needed.</li>
+  <li><strong>Cache:</strong> Distributed across multiple cache nodes using consistent hashing. Adding nodes redistributes a minimal number of keys.</li>
+</ul>
+
+<h3>14.4 Load Balancer Scaling</h3>
+<ul>
+  <li>The external load balancer can be deployed in an active-passive or active-active pair for high availability.</li>
+  <li>DNS-based load balancing can distribute traffic across multiple load balancer IP addresses in different data centers for geographic distribution and failover.</li>
+  <li>Cloud-managed load balancers auto-scale to handle traffic spikes.</li>
+</ul>
 
 <!-- ============================================================ -->
-<h2>💾 Cache & CDN Deep Dive</h2>
+<!-- 15. TRADEOFFS & DEEP DIVES -->
 <!-- ============================================================ -->
+<h2 id="tradeoffs">15. Tradeoffs &amp; Deep Dives</h2>
 
-<div class="section">
-<h3>Redis Caching Strategy</h3>
+<h3>15.1 Geospatial Indexing: Geohash vs. QuadTree vs. R-tree</h3>
+<div class="card">
 <table>
-<tr><th>Cache</th><th>Key Pattern</th><th>TTL</th><th>Strategy</th></tr>
-<tr><td>Search Results</td><td><code>search:{hash(query)}</code></td><td>5 min</td><td>Read-through</td></tr>
-<tr><td>Business Detail</td><td><code>biz:{id}</code></td><td>15 min</td><td>Read-through, invalidate on write</td></tr>
-<tr><td>Geohash Grid</td><td><code>geo:{geohash6}:{category}</code></td><td>30 min</td><td>Precomputed, batch refresh</td></tr>
-<tr><td>User Session</td><td><code>session:{token}</code></td><td>24 hr</td><td>Write-through</td></tr>
-<tr><td>Popular Reviews</td><td><code>reviews:{biz_id}:top</code></td><td>10 min</td><td>Read-through</td></tr>
+  <tr><th>Approach</th><th>Pros</th><th>Cons</th><th>Chosen?</th></tr>
+  <tr>
+    <td><strong>Geohash</strong></td>
+    <td>Simple string representation; natural prefix-based proximity; easy to shard and index in standard inverted indexes; fast prefix queries; well-understood.</td>
+    <td>Edge effects at cell boundaries (a nearby business across a boundary might have a very different geohash prefix); cells are rectangular, not circular, requiring post-filtering for radius queries.</td>
+    <td><strong>✅ Yes (for Search Index)</strong></td>
+  </tr>
+  <tr>
+    <td><strong>QuadTree</strong></td>
+    <td>Adapts well to non-uniform density (subdivides more in dense areas); good for in-memory spatial queries.</td>
+    <td>Harder to distribute across nodes; more complex to serialize/persist; not naturally supported by standard search engines; single-server bottleneck if not carefully distributed.</td>
+    <td>❌ No</td>
+  </tr>
+  <tr>
+    <td><strong>R-tree</strong></td>
+    <td>Excellent for range and nearest-neighbor queries; supported natively in many SQL databases as spatial indexes.</td>
+    <td>More complex to distribute; write-heavy rebalancing; better suited for SQL spatial extensions than for distributed search engines.</td>
+    <td><strong>✅ Yes (for SQL backup spatial index)</strong></td>
+  </tr>
+</table>
+<p><strong>Decision:</strong> Use <strong>geohash-based indexing in the Search Index</strong> (primary query path) for its simplicity, distribution-friendliness, and compatibility with inverted index infrastructure. Use an <strong>R-tree spatial index in the SQL database</strong> as a fallback for direct database queries. Edge effects of geohash are mitigated by querying neighboring geohash cells (typically 8 neighbors) in addition to the target cell.</p>
+</div>
+
+<h3>15.2 Denormalized Rating vs. Computed On-the-Fly</h3>
+<div class="card">
+<table>
+  <tr><th>Approach</th><th>Pros</th><th>Cons</th></tr>
+  <tr>
+    <td><strong>Denormalized (chosen)</strong></td>
+    <td>O(1) read for business detail; search results include rating without joins; massively reduces read-path load.</td>
+    <td>Slight staleness (seconds); requires async update pipeline; risk of drift without periodic reconciliation.</td>
+  </tr>
+  <tr>
+    <td><strong>Computed on-the-fly</strong></td>
+    <td>Always perfectly accurate; no update pipeline needed.</td>
+    <td><code>SELECT AVG(rating)</code> on every read is expensive at scale (30K QPS × potentially thousands of reviews per business). Would require heavy caching anyway, reintroducing staleness.</td>
+  </tr>
+</table>
+<p><strong>Decision:</strong> Denormalize. The read-heavy nature of the system (1000:1 read-to-write) makes the cost of redundant computation on every read far outweigh the complexity of the async update pipeline. A periodic reconciliation job (e.g., nightly batch that recomputes all ratings from scratch) serves as a safety net against drift.</p>
+</div>
+
+<h3>15.3 SQL vs. NoSQL for Primary Data</h3>
+<div class="card">
+<table>
+  <tr><th>Aspect</th><th>SQL (chosen)</th><th>NoSQL (wide-column or document)</th></tr>
+  <tr><td>Schema</td><td>Well-defined relational schema; enforces constraints</td><td>Flexible schema; denormalized per access pattern</td></tr>
+  <tr><td>Transactions</td><td>ACID transactions for review writes</td><td>Limited transactional support</td></tr>
+  <tr><td>Queries</td><td>Complex queries (JOINs, aggregations, sorted pagination)</td><td>Optimized for simple key-value or key-range queries</td></tr>
+  <tr><td>Scalability</td><td>Vertical + sharding; more operational overhead</td><td>Natively distributed; easier horizontal scaling</td></tr>
+</table>
+<p><strong>Decision:</strong> SQL for primary data. Yelp's core data is inherently relational (users → reviews → businesses). ACID transactions ensure data integrity for writes. Complex queries (paginated sorted reviews, owner's businesses) are well-served by SQL. The write volume (~600 QPS) is well within SQL's capability even with sharding. Read scaling is handled by replicas and caching.</p>
+</div>
+
+<h3>15.4 Single Search Index vs. Separate Geo + Text Indexes</h3>
+<div class="card">
+<p><strong>Option A (Chosen):</strong> A single search engine that supports both geospatial and full-text queries. Queries combine geo filters with text relevance in a single query plan.</p>
+<p><strong>Option B:</strong> Separate geospatial service (returns business IDs within radius) and text search service (returns business IDs matching keywords), then intersect results in the Search Service.</p>
+<p><strong>Decision:</strong> Option A. A single index avoids the complexity of intersecting results from two different systems, produces better ranking (unified scoring across geo + text relevance), and reduces operational burden. Modern search engines natively support both geo and text indexing.</p>
+</div>
+
+<h3>15.5 Pagination: Offset vs. Cursor</h3>
+<div class="card">
+<p><strong>Offset-based:</strong> <code>SELECT ... OFFSET 20 LIMIT 10</code>. Simple, supports random page access, but degrades for large offsets (DB must scan and discard all preceding rows).</p>
+<p><strong>Cursor-based (keyset):</strong> <code>SELECT ... WHERE created_at &lt; ? ORDER BY created_at DESC LIMIT 10</code>. Consistent performance regardless of depth, but doesn't support random page access (only "next page").</p>
+<p><strong>Decision:</strong> Use offset-based for the first few pages (most users don't scroll past page 3) and switch to cursor-based for deep pagination. The API returns a <code>next_cursor</code> token that the client can use for the next page request.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- 16. ALTERNATIVE APPROACHES -->
+<!-- ============================================================ -->
+<h2 id="alternatives">16. Alternative Approaches</h2>
+
+<h3>16.1 Graph Database for Social Features</h3>
+<p><strong>Approach:</strong> Use a graph database to model user relationships (friends, followers) and surface "reviews from friends" on business pages.</p>
+<p><strong>Why not chosen:</strong> Yelp's primary value proposition is discovery and reviews, not social networking. While friend recommendations are a nice-to-have, they don't justify the complexity of a graph database for the core data model. If social features become important, a graph can be added as a supplementary system that references user and review IDs from the SQL database.</p>
+
+<h3>16.2 Pre-Computed Search Tiles (Google Maps Style)</h3>
+<p><strong>Approach:</strong> Pre-compute search results for every geohash cell and category combination, stored as static JSON. On search, simply fetch the pre-computed tile.</p>
+<p><strong>Why not chosen:</strong> Yelp queries are too diverse — keyword search, multi-category filters, sorting options, and radius variations make pre-computation of all possible queries impractical. The combinatorial explosion of (geohash × category × keyword × sort × page) is too large. Dynamic search indexing is more flexible and handles long-tail queries gracefully.</p>
+
+<h3>16.3 NoSQL (Wide-Column) for Reviews</h3>
+<p><strong>Approach:</strong> Store reviews in a wide-column NoSQL database with <code>business_id</code> as the partition key and <code>created_at</code> as the sort key. Optimized for the dominant query pattern (reviews for business X sorted by time).</p>
+<p><strong>Why not chosen:</strong> While this would perform well for the primary access pattern, it sacrifices ACID transactions, makes "reviews by user" queries require a secondary index (or scatter-gather), and loses the ability to enforce relational integrity (foreign keys). Given that write QPS is low (~600) and SQL handles this workload with proper sharding, the relational model is preferred for data integrity. If review volume grows dramatically (billions), this approach could be reconsidered.</p>
+
+<h3>16.4 WebSockets / Server-Sent Events for Real-Time Review Updates</h3>
+<p><strong>Approach:</strong> Push new reviews to users currently viewing a business page in real-time.</p>
+<p><strong>Why not chosen:</strong> Yelp is not a real-time application. Users don't expect to see reviews appear instantly while they're on a page — they're making a one-time decision about where to eat. The engineering complexity of maintaining millions of persistent WebSocket connections for a feature with marginal user value is not justified. Standard HTTP request/response is sufficient.</p>
+
+<h3>16.5 Full-Text Search in SQL Instead of a Separate Search Index</h3>
+<p><strong>Approach:</strong> Use SQL's built-in full-text search and spatial extensions for all search queries.</p>
+<p><strong>Why not chosen:</strong> SQL full-text search is adequate for small-scale systems but doesn't scale to 50K search QPS with complex relevance scoring, geospatial filtering, and faceted results. A dedicated search engine is purpose-built for this workload with inverted indexes, geospatial indexes, and custom scoring — all optimized for sub-200 ms response times. The SQL spatial index serves as a useful fallback but not as the primary search path.</p>
+
+<!-- ============================================================ -->
+<!-- 17. ADDITIONAL CONSIDERATIONS -->
+<!-- ============================================================ -->
+<h2 id="additional">17. Additional Considerations</h2>
+
+<h3>17.1 Spam and Fake Review Detection</h3>
+<p>A machine-learning pipeline (running offline or as a stream processor on the message queue) analyzes new reviews for spam, fake patterns, and policy violations. Factors include: account age, review velocity, text sentiment analysis, IP address patterns, and reviewer behavioral signals. Flagged reviews are hidden pending human moderator review. This pipeline consumes <code>review_created</code> events from the message queue.</p>
+
+<h3>17.2 Geocoding</h3>
+<p>When a business is registered or its address changes, the Business Service calls an external geocoding API (or an internal geocoding microservice) to convert the street address to latitude/longitude coordinates. The geohash is then computed from these coordinates. Geocoding results can be cached to avoid redundant API calls for the same address.</p>
+
+<h3>17.3 Rate Limiting</h3>
+<p>The API Gateway enforces rate limits per user/IP to prevent abuse. Write endpoints (review submission, business creation) have stricter limits (e.g., 5 reviews/hour/user) than read endpoints. Rate limits are implemented using a sliding window counter stored in the in-memory cache.</p>
+
+<h3>17.4 Data Consistency Reconciliation</h3>
+<p>A nightly batch job runs <code>SELECT business_id, AVG(rating), COUNT(*) FROM reviews GROUP BY business_id</code> and compares results against the denormalized <code>average_rating</code> and <code>review_count</code> on the <code>businesses</code> table. Any discrepancies (due to missed events, race conditions, or bugs) are corrected. This acts as a safety net for the async pipeline.</p>
+
+<h3>17.5 Internationalization</h3>
+<p>Business listings and reviews may be in multiple languages. The search index should support language-specific analyzers (stemmers, tokenizers) for accurate full-text search in different languages. The <code>businesses</code> and <code>reviews</code> tables store text in UTF-8 to support all character sets.</p>
+
+<h3>17.6 Autocomplete / Typeahead</h3>
+<p>The search bar provides autocomplete suggestions as the user types. This can be implemented as a separate lightweight service backed by a prefix trie or an n-gram index on business names and categories, served from an in-memory cache with TTL-based expiration. The autocomplete service is separate from the main Search Service to optimize for the different query pattern (high QPS, very low latency, prefix-only).</p>
+
+<h3>17.7 Analytics and Monitoring</h3>
+<p>All services emit structured logs, metrics (latency, error rate, QPS), and distributed traces. A time-series database stores metrics for dashboarding and alerting. Anomaly detection triggers alerts for unusual patterns (e.g., spike in review submissions indicating a spam attack, or elevated search latency indicating index degradation).</p>
+
+<h3>17.8 Disaster Recovery</h3>
+<p>SQL databases use synchronous replication to a standby in a different availability zone for zero-RPO failover. Asynchronous cross-region replication provides geographic redundancy. The search index can be rebuilt from the SQL source of truth if corrupted. Object storage provides built-in cross-region replication.</p>
+
+<!-- ============================================================ -->
+<!-- 18. VENDOR RECOMMENDATIONS -->
+<!-- ============================================================ -->
+<h2 id="vendors">18. Vendor Recommendations</h2>
+<p>The system design above is vendor-agnostic. Below are potential vendors for key components, should you wish to use managed services.</p>
+
+<table>
+  <tr><th>Component</th><th>Potential Vendors</th><th>Rationale</th></tr>
+  <tr>
+    <td>SQL Database</td>
+    <td>PostgreSQL, MySQL, Amazon Aurora, Google Cloud Spanner</td>
+    <td>PostgreSQL offers excellent spatial extensions (PostGIS) and full-text search for the SQL fallback path. Aurora provides managed MySQL/PostgreSQL with auto-scaling replicas. Spanner provides globally distributed SQL if multi-region strong consistency is needed.</td>
+  </tr>
+  <tr>
+    <td>Search Index</td>
+    <td>Elasticsearch, Apache Solr, Typesense, Meilisearch</td>
+    <td>Elasticsearch is the industry standard for combined full-text + geospatial search at scale. Native support for geohash, geo_point, BM25 scoring, and distributed sharding. Solr is a mature alternative with similar capabilities.</td>
+  </tr>
+  <tr>
+    <td>In-Memory Cache</td>
+    <td>Redis, Memcached, Dragonfly</td>
+    <td>Redis supports rich data structures (strings, hashes, sorted sets), TTL, LRU eviction, and clustering. Memcached is simpler and slightly faster for pure key-value caching. Redis is preferred for its versatility (also useful for rate limiting counters).</td>
+  </tr>
+  <tr>
+    <td>Message Queue</td>
+    <td>Apache Kafka, RabbitMQ, Amazon SQS/SNS, Pulsar</td>
+    <td>Kafka provides durable, partitioned, high-throughput event streaming with consumer groups — ideal for the multi-consumer pattern. RabbitMQ is simpler for traditional task queues. Kafka is preferred at Yelp's scale for its durability and replayability.</td>
+  </tr>
+  <tr>
+    <td>Object Storage</td>
+    <td>Amazon S3, Google Cloud Storage, Azure Blob Storage, MinIO</td>
+    <td>All major cloud providers offer 11-nines durability object storage with CDN integration. S3 is the most widely used. MinIO for on-premises deployments.</td>
+  </tr>
+  <tr>
+    <td>CDN</td>
+    <td>Cloudflare, AWS CloudFront, Akamai, Fastly</td>
+    <td>Cloudflare offers a global edge network with generous free tier and DDoS protection. CloudFront integrates natively with S3. Akamai and Fastly offer premium edge computing capabilities.</td>
+  </tr>
+  <tr>
+    <td>Load Balancer</td>
+    <td>Nginx, HAProxy, AWS ALB/NLB, Envoy</td>
+    <td>Nginx and HAProxy are proven open-source L7 load balancers. AWS ALB is managed and auto-scaling. Envoy is preferred in microservice/service-mesh architectures (used as a sidecar proxy).</td>
+  </tr>
+  <tr>
+    <td>API Gateway</td>
+    <td>Kong, Nginx, AWS API Gateway, Envoy</td>
+    <td>Kong provides rate limiting, auth, logging, and routing as a plugin-based API gateway. AWS API Gateway is managed. Envoy can serve as a combined LB + API gateway in a service mesh.</td>
+  </tr>
 </table>
 
-<h4>Eviction Policy</h4>
-<p><strong>allkeys-lfu:</strong> Least Frequently Used — popular search queries and business pages stay cached, rarely-accessed ones evicted first. LFU is better than LRU here because search traffic is highly skewed (popular businesses/queries dominate).</p>
-
-<h3>CDN Strategy</h3>
-<ul>
-  <li><strong>Photo CDN:</strong> Business photos served via CloudFront/Akamai — aggressive caching with content-hash URLs (immutable). Thumbnails generated at upload in multiple sizes (150x150, 300x300, 600x600)</li>
-  <li><strong>Static assets:</strong> JS/CSS/fonts on CDN with 1-year cache + content hashing</li>
-  <li><strong>API responses:</strong> NOT cached on CDN — personalized, geo-dependent results. Exception: popular city landing pages (e.g., "Best Restaurants in NYC") served as pre-rendered HTML from CDN</li>
-  <li><strong>Pull-based CDN:</strong> Origin pull on cache miss — CDN requests from origin server, caches response at edge</li>
-</ul>
-</div>
-
-<!-- ============================================================ -->
-<h2>⚖️ Scaling Considerations</h2>
-<!-- ============================================================ -->
-
-<div class="section">
-<ul>
-  <li><strong>Elasticsearch scaling:</strong> Shard by geographic region — US-West, US-East, Europe, Asia clusters. Cross-cluster search for global queries. Hot-warm architecture: recent/popular data on SSD (hot), older data on HDD (warm)</li>
-  <li><strong>Read replicas:</strong> PostgreSQL read replicas per region for business detail page reads (read-heavy). Writes go to primary, replicated async</li>
-  <li><strong>Connection pooling:</strong> PgBouncer in front of PostgreSQL — reduces connection overhead from hundreds of service instances</li>
-  <li><strong>L7 Load Balancer:</strong> Route by request type — search queries to search pods, review writes to review pods. Separate scaling groups per service</li>
-  <li><strong>Rate limiting:</strong> Per-user and per-IP rate limits at API Gateway — prevents scraping and abuse. Stricter limits on write endpoints (reviews)</li>
-  <li><strong>Auto-scaling:</strong> Elasticsearch and service pods scale on CPU/query-latency metrics. Weekday lunch hours and weekends see 3x traffic spikes</li>
-</ul>
-</div>
-
-<!-- ============================================================ -->
-<h2>⚖️ Tradeoffs</h2>
-<!-- ============================================================ -->
-
-<div class="section">
-<div class="tradeoff-grid">
-  <div class="tradeoff-pro">
-    <h4>✅ Elasticsearch for Search</h4>
-    <p>Rich query DSL, built-in geo support, facets/aggregations, fast full-text search with custom scoring</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Elasticsearch for Search</h4>
-    <p>Not a primary datastore — requires syncing from PostgreSQL (CDC or dual-write), eventual consistency, complex cluster management, expensive memory for indices</p>
-  </div>
-  <div class="tradeoff-pro">
-    <h4>✅ Denormalized avg_rating</h4>
-    <p>Avoids expensive aggregation on every search, sub-millisecond read from index</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Denormalized avg_rating</h4>
-    <p>Brief staleness after new review — acceptable (seconds of delay). Requires extra write-path complexity (Kafka consumer for aggregation)</p>
-  </div>
-  <div class="tradeoff-pro">
-    <h4>✅ Bayesian Average Rating</h4>
-    <p>Prevents rating manipulation — new businesses with 1 five-star review don't rank #1</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Bayesian Average Rating</h4>
-    <p>New businesses are penalized until they accumulate enough reviews — cold start problem for new listings</p>
-  </div>
-  <div class="tradeoff-pro">
-    <h4>✅ Geohash Grid Pre-computation</h4>
-    <p>O(1) lookup for map view pins, dramatically reduces Elasticsearch load for map browsing</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Geohash Grid Pre-computation</h4>
-    <p>Memory overhead for storing grid cells, staleness (30-min refresh), edge effects at geohash boundaries</p>
-  </div>
-</div>
-</div>
-
-<!-- ============================================================ -->
-<h2>🔄 Alternative Approaches</h2>
-<!-- ============================================================ -->
-
-<div class="section">
-<div class="subsection">
-<h4>PostGIS Instead of Elasticsearch for Geo</h4>
-<p>PostgreSQL + PostGIS extension provides robust geospatial queries (ST_DWithin, ST_Distance) with GiST/SP-GiST indexes. Simpler stack (no Elasticsearch sync needed). Works well up to ~10M businesses but doesn't scale horizontally as easily as Elasticsearch for full-text + geo combined queries.</p>
-</div>
-<div class="subsection">
-<h4>Quadtree / KD-Tree In-Memory Index</h4>
-<p>Build in-memory spatial index for nearby discovery — O(log n) range queries. Used by Uber's H3 for hexagonal spatial indexing. Better for real-time updates (driver locations) but overkill for relatively static business data.</p>
-</div>
-<div class="subsection">
-<h4>Graph-Based Recommendation</h4>
-<p>Model user-business interactions as a graph (Neo4j or Amazon Neptune). Enables collaborative filtering: "Users who liked Sushi Ran also liked..." — better personalization but adds graph DB complexity and doesn't replace text search.</p>
-</div>
-</div>
-
-<!-- ============================================================ -->
-<h2>📚 Additional Information</h2>
-<!-- ============================================================ -->
-
-<div class="section">
-<h3>Yelp's Recommendation Engine</h3>
-<p>Yelp's "Recommended Reviews" system is a distinguishing feature — approximately 25% of reviews are filtered as "not recommended." The ML model considers:</p>
-<ul>
-  <li>User's established review history (new accounts penalized)</li>
-  <li>Review quality signals (length, specificity, photo attachment)</li>
-  <li>Social connections (isolated accounts flagged)</li>
-  <li>Temporal patterns (burst of reviews for one business = suspicious)</li>
-</ul>
-
-<h3>SEO & Server-Side Rendering</h3>
-<p>Yelp relies heavily on organic search traffic. Business pages are server-side rendered (SSR) with structured data (JSON-LD schema.org LocalBusiness markup). This ensures Google can index business details, reviews, and ratings — showing rich snippets (star ratings) in search results.</p>
-
-<h3>Business Owner Dashboard</h3>
-<p>Claimed businesses get analytics: page views, customer leads (calls, directions, website clicks), review response rate. This data is stored in a time-series database (InfluxDB or TimescaleDB) and aggregated for dashboard display.</p>
-
-<h3>Content Moderation Pipeline</h3>
-<p>Reviews pass through: (1) automated profanity/hate speech detection, (2) ML spam classifier, (3) human moderation queue for edge cases. Business owners can flag reviews, which triggers manual review. Appeals process with SLA of 48 hours.</p>
-</div>
+<hr/>
+<p style="text-align:center; color:#999; font-size:0.9em;"><em>System Design: Yelp — Generated for interview preparation. All architectural decisions should be validated against actual production requirements.</em></p>
 
 </body>
 </html>
