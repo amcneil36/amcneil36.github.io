@@ -1,432 +1,1235 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Web Crawler - System Design</title>
-<style>
-:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--heading:#FF6B6B;--accent:#4ECDC4;--accent2:#45B7D1;--accent3:#96CEB4;--muted:#888}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
-h1{color:var(--heading);font-size:2.2rem;border-bottom:3px solid var(--heading);padding-bottom:.5rem;margin-bottom:1.5rem}
-h2{color:var(--accent);margin:2rem 0 1rem;font-size:1.5rem}
-h3{color:var(--accent2);margin:1.5rem 0 .75rem;font-size:1.2rem}
-h4{color:var(--accent3);margin:1rem 0 .5rem}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1rem 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem}
-ul,ol{margin:.75rem 0 .75rem 1.5rem}
-li{margin:.4rem 0}
-code{background:#2d2d2d;padding:.2rem .5rem;border-radius:4px;font-size:.9rem;color:#f8f8f2}
-pre{background:#1e1e1e;padding:1rem;border-radius:8px;overflow-x:auto;margin:1rem 0}
-pre code{padding:0;background:none}
-.tag{display:inline-block;padding:.2rem .6rem;border-radius:6px;font-size:.75rem;font-weight:600;margin:.2rem}
-.tag-pk{background:#E53935;color:#fff}
-.tag-fk{background:#1E88E5;color:#fff}
-.tag-idx{background:#43A047;color:#fff}
-.tag-shard{background:#FB8C00;color:#fff}
-svg text{font-family:'Segoe UI',system-ui,sans-serif}
-.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
-.pro{background:#1b3a1b;border:1px solid #2d5a2d;border-radius:8px;padding:1rem}
-.con{background:#3a1b1b;border:1px solid #5a2d2d;border-radius:8px;padding:1rem}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design: Web Crawler</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg: #fdfdfd;
+            --fg: #1a1a1a;
+            --accent: #2563eb;
+            --accent-light: #dbeafe;
+            --border: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --heading-color: #111827;
+            --section-bg: #f9fafb;
+            --table-header-bg: #eef2ff;
+            --callout-bg: #fffbeb;
+            --callout-border: #f59e0b;
+            --deep-dive-bg: #f0fdf4;
+            --deep-dive-border: #22c55e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.7;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+        }
+
+        h1 { font-size: 2.2rem; color: var(--heading-color); margin-bottom: 8px; }
+        h2 { font-size: 1.6rem; color: var(--accent); margin-top: 48px; margin-bottom: 16px; border-bottom: 2px solid var(--accent-light); padding-bottom: 6px; }
+        h3 { font-size: 1.25rem; color: var(--heading-color); margin-top: 32px; margin-bottom: 12px; }
+        h4 { font-size: 1.05rem; color: #374151; margin-top: 20px; margin-bottom: 8px; }
+
+        p { margin-bottom: 12px; }
+
+        ul, ol { margin: 0 0 16px 24px; }
+        li { margin-bottom: 6px; }
+
+        code {
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.92em;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+        }
+
+        pre {
+            background: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+            font-size: 0.9em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0 24px;
+            font-size: 0.95em;
+        }
+
+        th, td {
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            text-align: left;
+        }
+
+        th { background: var(--table-header-bg); font-weight: 600; }
+
+        .subtitle { color: #6b7280; font-size: 1.1rem; margin-bottom: 32px; }
+
+        .toc {
+            background: var(--section-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px 32px;
+            margin-bottom: 40px;
+        }
+
+        .toc h2 { margin-top: 0; border-bottom: none; }
+        .toc ol { margin-bottom: 0; }
+        .toc a { color: var(--accent); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+
+        .diagram-container {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .example-box {
+            background: var(--callout-bg);
+            border-left: 4px solid var(--callout-border);
+            border-radius: 0 8px 8px 0;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+
+        .example-box strong { color: #92400e; }
+
+        .deep-dive {
+            background: var(--deep-dive-bg);
+            border-left: 4px solid var(--deep-dive-border);
+            border-radius: 0 8px 8px 0;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+
+        .deep-dive strong { color: #166534; }
+
+        .callout {
+            background: #eff6ff;
+            border-left: 4px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+
+        .tag {
+            display: inline-block;
+            background: var(--accent-light);
+            color: var(--accent);
+            font-size: 0.8em;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 12px;
+            margin-right: 6px;
+        }
+
+        .section { margin-bottom: 40px; }
+    </style>
 </head>
 <body>
 
-<h1>🕷️ Web Crawler - System Design</h1>
+<h1>🕷️ System Design: Web Crawler</h1>
+<p class="subtitle">A distributed, polite, and scalable system for discovering and downloading web pages across the internet.</p>
 
-<div class="card">
-<h2>Functional Requirements</h2>
-<ol>
-<li><strong>URL Discovery & Crawling:</strong> Start from seed URLs, discover new URLs via link extraction, recursively crawl web pages respecting robots.txt, download HTML/JS-rendered content</li>
-<li><strong>Content Storage & Processing:</strong> Store raw HTML, extract text/metadata, detect duplicates (near-duplicate and exact), maintain freshness by re-crawling based on change frequency</li>
-<li><strong>Politeness & Scheduling:</strong> Rate limit per domain (respect Crawl-delay), URL prioritization (PageRank, freshness, domain authority), frontier queue management, DNS caching</li>
-</ol>
-</div>
-
-<div class="card">
-<h2>Non-Functional Requirements</h2>
-<ul>
-<li><strong>Scale:</strong> Crawl 5B+ pages, discover 100M+ new URLs/day, re-crawl changed pages within hours</li>
-<li><strong>Throughput:</strong> 10,000+ pages/second across distributed crawler fleet</li>
-<li><strong>Politeness:</strong> Max 1 request/second per domain (configurable); respect robots.txt and nofollow/noindex directives</li>
-<li><strong>Robustness:</strong> Handle spider traps, infinite URL spaces, malformed HTML, timeouts, DNS failures gracefully</li>
-<li><strong>Freshness:</strong> High-priority pages (news sites) re-crawled every 15 minutes; average pages daily-weekly</li>
-</ul>
-</div>
-
-<!-- ============ FLOW 1: URL FRONTIER & FETCHING ============ -->
-<h2>Flow 1: URL Frontier & Page Fetching</h2>
-<div class="card">
-<svg viewBox="0 0 1050 350" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#4ECDC4"/></marker></defs>
-<rect x="20" y="50" width="120" height="50" rx="8" fill="#FF6B6B"/><text x="80" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Seed URLs</text><text x="80" y="87" text-anchor="middle" fill="#fff" font-size="10">(Initial Set)</text>
-<rect x="190" y="50" width="140" height="55" rx="8" fill="#9C27B0"/><text x="260" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">URL Frontier</text><text x="260" y="87" text-anchor="middle" fill="#fff" font-size="10">(Priority Queues)</text>
-<rect x="380" y="20" width="130" height="45" rx="8" fill="#4285F4"/><text x="445" y="47" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">URL Deduplicator</text>
-<rect x="380" y="80" width="130" height="45" rx="8" fill="#00897B"/><text x="445" y="100" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Politeness Queue</text><text x="445" y="115" text-anchor="middle" fill="#fff" font-size="10">(Per-Domain)</text>
-<rect x="560" y="50" width="130" height="50" rx="8" fill="#FB8C00"/><text x="625" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">robots.txt</text><text x="625" y="87" text-anchor="middle" fill="#fff" font-size="10">Cache & Parser</text>
-<rect x="740" y="50" width="130" height="50" rx="8" fill="#4ECDC4"/><text x="805" y="72" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">HTTP Fetcher</text><text x="805" y="87" text-anchor="middle" fill="#fff" font-size="10">(Async Workers)</text>
-<rect x="560" y="160" width="130" height="50" rx="8" fill="#607D8B"/><text x="625" y="182" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">DNS Resolver</text><text x="625" y="197" text-anchor="middle" fill="#fff" font-size="10">(Cache + Prefetch)</text>
-<rect x="740" y="160" width="130" height="50" rx="8" fill="#795548"/><text x="805" y="182" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Raw Store</text><text x="805" y="197" text-anchor="middle" fill="#fff" font-size="10">(S3 / HDFS)</text>
-<line x1="140" y1="75" x2="185" y2="75" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="330" y1="65" x2="375" y2="42" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="330" y1="85" x2="375" y2="100" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="510" y1="100" x2="555" y2="75" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="690" y1="75" x2="735" y2="75" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="625" y1="100" x2="625" y2="155" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah)"/>
-<line x1="805" y1="100" x2="805" y2="155" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah)"/>
-</svg>
+<!-- ============================================================ -->
+<!-- TABLE OF CONTENTS                                            -->
+<!-- ============================================================ -->
+<div class="toc">
+    <h2>Table of Contents</h2>
+    <ol>
+        <li><a href="#fr">Functional Requirements</a></li>
+        <li><a href="#nfr">Non-Functional Requirements</a></li>
+        <li><a href="#flow1">Flow 1: Core Crawl Flow</a></li>
+        <li><a href="#flow2">Flow 2: Recrawl / Freshness Flow</a></li>
+        <li><a href="#combined">Combined Overall Flow</a></li>
+        <li><a href="#schema">Database Schema</a></li>
+        <li><a href="#cdn-cache">CDN &amp; Cache Strategy</a></li>
+        <li><a href="#mq">Message Queue Deep Dive</a></li>
+        <li><a href="#scaling">Scaling Considerations</a></li>
+        <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+        <li><a href="#alternatives">Alternative Approaches</a></li>
+        <li><a href="#additional">Additional Information</a></li>
+        <li><a href="#vendors">Vendor Section</a></li>
+    </ol>
 </div>
 
-<div class="card">
-<h3>Steps</h3>
-<ol>
-<li>Seed URLs loaded into URL Frontier — initial set of high-authority domains (news, Wikipedia, popular sites)</li>
-<li>URL Deduplicator checks Bloom filter (billions of URLs, ~1% false positive) — skips already-crawled URLs</li>
-<li>Politeness Queue ensures per-domain rate limiting: separate FIFO queue per domain with configurable delay</li>
-<li>robots.txt fetched and cached per domain (TTL: 24h); rules parsed to check if URL path is allowed</li>
-<li>DNS Resolver resolves hostname → IP; results cached locally (TTL from DNS) with async prefetch for queued domains</li>
-<li>HTTP Fetcher (async I/O workers) downloads page: HTTP/1.1 or HTTP/2, follows redirects (max 5), timeout 30s</li>
-<li>Raw HTML stored in blob storage (S3/HDFS) keyed by URL hash; metadata (status code, headers, fetch time) stored separately</li>
-<li>Discovered URLs from page extracted and fed back into URL Frontier (recursive loop)</li>
-</ol>
-
-<h3>Example</h3>
-<p>Frontier dequeues <code>https://www.nytimes.com/2024/news/article</code>. Bloom filter check: not seen. Politeness queue for nytimes.com: last request was 1.2s ago, Crawl-delay: 1 → allowed. robots.txt cached: path /2024/news/* is allowed. DNS cached: nytimes.com → 151.101.1.164. Fetcher downloads 45KB HTML in 180ms. Stored to S3. Link extractor finds 23 outgoing URLs → fed back to frontier.</p>
-
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>URL Frontier Architecture</h4>
-<p><strong>Front Queues:</strong> Priority-based — URLs scored by PageRank, domain authority, freshness signal; higher priority dequeued first</p>
-<p><strong>Back Queues:</strong> Politeness-based — one FIFO queue per domain; ensures no domain hit faster than allowed rate</p>
-<p><strong>Routing:</strong> URL enters front queue by priority → assigned to back queue by domain hash → dequeued when politeness timer allows</p>
-<p><strong>Implementation:</strong> RocksDB for disk-backed queues (can't fit billions of URLs in memory); Redis for active/hot domains</p>
-</div>
-<div class="card">
-<h4>URL Deduplication (Bloom Filter)</h4>
-<p><strong>Type:</strong> Counting Bloom filter or Cuckoo filter — ~10 bytes per URL, supports billions of URLs in ~10GB memory</p>
-<p><strong>False Positive:</strong> ~1% — some URLs skipped unnecessarily (acceptable tradeoff vs. memory)</p>
-<p><strong>Canonical:</strong> URLs canonicalized before hashing: lowercase host, remove fragments, sort query params, resolve relative paths</p>
-<p><strong>Persistent:</strong> Bloom filter checkpointed to disk periodically; rebuilt from URL database on cold start</p>
-</div>
-<div class="card">
-<h4>DNS Caching</h4>
-<p><strong>Local Cache:</strong> In-memory DNS cache with TTL from DNS response (min 5min, max 24hr)</p>
-<p><strong>Prefetch:</strong> When domain enters frontier queue, DNS prefetched asynchronously before fetch time</p>
-<p><strong>Scale:</strong> ~100M unique domains → cache hit rate ~95% after warm-up</p>
-<p><strong>Fallback:</strong> Multiple DNS resolvers (Google 8.8.8.8, Cloudflare 1.1.1.1) for redundancy</p>
-</div>
-<div class="card">
-<h4>robots.txt Compliance</h4>
-<p><strong>Standard:</strong> Robots Exclusion Protocol (REP) — parsed per User-agent, Disallow, Allow, Crawl-delay, Sitemap directives</p>
-<p><strong>Cache:</strong> robots.txt cached per domain (24h TTL); re-fetched on 4xx/5xx expiry</p>
-<p><strong>Sitemap:</strong> Sitemap URLs extracted from robots.txt → priority boost for listed URLs</p>
-<p><strong>Edge Cases:</strong> No robots.txt (allow all), 5xx (assume allow, retry later), very large robots.txt (truncate at 500KB)</p>
-</div>
-</div>
+<!-- ============================================================ -->
+<!-- 1. FUNCTIONAL REQUIREMENTS                                    -->
+<!-- ============================================================ -->
+<div class="section" id="fr">
+    <h2>1. Functional Requirements</h2>
+    <ol>
+        <li><strong>Seed URL Ingestion</strong> — The system accepts a set of seed URLs as the starting point for crawling.</li>
+        <li><strong>Web Page Fetching</strong> — The system downloads web page content (HTML) over HTTP/HTTPS.</li>
+        <li><strong>Link Extraction</strong> — The system parses downloaded HTML to extract hyperlinks (<code>&lt;a href&gt;</code>).</li>
+        <li><strong>URL Discovery &amp; Frontier Management</strong> — Extracted URLs are normalized, deduplicated, and added to a crawl frontier (priority queue) for future crawling.</li>
+        <li><strong>Content Storage</strong> — Downloaded raw HTML is stored persistently for downstream consumers (search indexing, analytics, etc.).</li>
+        <li><strong>Robots.txt Compliance</strong> — The system respects <code>robots.txt</code> rules and <code>Crawl-delay</code> directives for each domain.</li>
+        <li><strong>URL Deduplication</strong> — The system avoids re-crawling URLs that have already been fetched (within the same crawl cycle).</li>
+        <li><strong>Recrawl / Freshness</strong> — The system periodically re-crawls previously fetched pages to detect content changes and keep stored data fresh.</li>
+        <li><strong>URL Prioritization</strong> — The system prioritizes which URLs to crawl based on factors such as domain authority, page importance, and freshness needs.</li>
+    </ol>
 </div>
 
-<!-- ============ FLOW 2: CONTENT PROCESSING ============ -->
-<h2>Flow 2: Content Processing & Deduplication</h2>
-<div class="card">
-<svg viewBox="0 0 1000 280" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#45B7D1"/></marker></defs>
-<rect x="20" y="60" width="120" height="50" rx="8" fill="#795548"/><text x="80" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Raw HTML</text><text x="80" y="97" text-anchor="middle" fill="#fff" font-size="10">(From Store)</text>
-<rect x="190" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="255" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">HTML Parser</text><text x="255" y="97" text-anchor="middle" fill="#fff" font-size="10">(Extract + Clean)</text>
-<rect x="370" y="30" width="130" height="50" rx="8" fill="#E53935"/><text x="435" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">SimHash / MinHash</text><text x="435" y="67" text-anchor="middle" fill="#fff" font-size="10">(Near-Duplicate)</text>
-<rect x="370" y="100" width="130" height="50" rx="8" fill="#4ECDC4"/><text x="435" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Link Extractor</text><text x="435" y="137" text-anchor="middle" fill="#fff" font-size="10">(URL Discovery)</text>
-<rect x="560" y="30" width="130" height="50" rx="8" fill="#9C27B0"/><text x="625" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Content Index</text><text x="625" y="67" text-anchor="middle" fill="#fff" font-size="10">(Inverted Index)</text>
-<rect x="560" y="100" width="130" height="50" rx="8" fill="#9C27B0"/><text x="625" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">URL Frontier</text><text x="625" y="137" text-anchor="middle" fill="#fff" font-size="10">(Feedback Loop)</text>
-<line x1="140" y1="85" x2="185" y2="85" stroke="#45B7D1" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="320" y1="75" x2="365" y2="55" stroke="#45B7D1" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="320" y1="95" x2="365" y2="120" stroke="#45B7D1" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="500" y1="55" x2="555" y2="55" stroke="#45B7D1" stroke-width="2" marker-end="url(#ah2)"/>
-<line x1="500" y1="125" x2="555" y2="125" stroke="#45B7D1" stroke-width="2" marker-end="url(#ah2)"/>
-</svg>
+<!-- ============================================================ -->
+<!-- 2. NON-FUNCTIONAL REQUIREMENTS                                -->
+<!-- ============================================================ -->
+<div class="section" id="nfr">
+    <h2>2. Non-Functional Requirements</h2>
+    <ol>
+        <li><strong>Scalability</strong> — Must handle crawling billions of web pages. The system should scale horizontally by adding more fetcher workers.</li>
+        <li><strong>Politeness</strong> — Must not overwhelm any single web server. Enforce per-domain rate limits (e.g., 1 request per second per domain) and honor <code>robots.txt</code>.</li>
+        <li><strong>Robustness / Fault Tolerance</strong> — Must gracefully handle network failures, malformed HTML, HTTP errors (4xx, 5xx), DNS failures, server timeouts, and spider traps. No single worker failure should cause data loss.</li>
+        <li><strong>Extensibility</strong> — Easy to add support for new content types (PDF, images), new protocols (FTP), or new processing pipelines (e.g., sentiment analysis) without redesigning the core system.</li>
+        <li><strong>Freshness</strong> — High-priority pages (e.g., news sites) should be recrawled within minutes to hours; lower-priority static pages can be recrawled within days to weeks.</li>
+        <li><strong>Consistency</strong> — Eventual consistency is acceptable. It is fine if a URL is briefly processed by two workers (at-least-once semantics) as long as idempotent storage prevents duplicated content.</li>
+        <li><strong>Throughput</strong> — Target thousands of pages per second across all workers combined.</li>
+        <li><strong>Low Operational Overhead</strong> — The system should be observable (metrics, logging) and require minimal manual intervention during normal operation.</li>
+    </ol>
+
+    <h3>Back-of-the-Envelope Estimates</h3>
+    <table>
+        <tr><th>Metric</th><th>Estimate</th><th>Rationale</th></tr>
+        <tr><td>Total pages to crawl</td><td>~5 billion</td><td>Approximate size of the indexable web</td></tr>
+        <tr><td>Crawl cycle duration</td><td>~4 weeks</td><td>Full web crawl in one month</td></tr>
+        <tr><td>Pages/second</td><td>~2,000</td><td>5B pages ÷ (4 weeks × 7 × 86400) ≈ 2,066 pages/sec</td></tr>
+        <tr><td>Average page size</td><td>~100 KB</td><td>Compressed HTML + headers</td></tr>
+        <tr><td>Bandwidth</td><td>~200 MB/s (≈ 1.6 Gbps)</td><td>2,000 pages/sec × 100 KB</td></tr>
+        <tr><td>Storage per crawl cycle</td><td>~500 TB</td><td>5B pages × 100 KB</td></tr>
+        <tr><td>Unique domains</td><td>~200 million</td><td>Rough estimate of active domains</td></tr>
+        <tr><td>URLs per page (avg)</td><td>~50 links</td><td>Average extracted outbound links</td></tr>
+    </table>
 </div>
 
-<div class="card">
-<h3>Steps</h3>
-<ol>
-<li>Raw HTML consumed from blob store by processing pipeline (MapReduce / Spark / Flink)</li>
-<li>HTML Parser extracts: title, meta description, body text (boilerplate removed), headings, images alt text, structured data (schema.org)</li>
-<li>Near-duplicate detection: SimHash (64-bit fingerprint, Hamming distance ≤3 = duplicate) or MinHash + LSH for Jaccard similarity</li>
-<li>Exact duplicate: MD5/SHA-256 of normalized text content — identical pages from different URLs</li>
-<li>Link Extractor: parses all <code>&lt;a href&gt;</code> tags, resolves relative URLs, filters nofollow, discovered URLs fed back to Frontier</li>
-<li>Clean text + metadata written to Content Index (inverted index) for search engine consumption</li>
-</ol>
+<!-- ============================================================ -->
+<!-- 3. FLOW 1: CORE CRAWL FLOW                                    -->
+<!-- ============================================================ -->
+<div class="section" id="flow1">
+    <h2>3. Flow 1: Core Crawl Flow</h2>
+    <p>This is the primary crawl loop — the heart of the web crawler. Seed URLs (or newly discovered URLs) enter the URL Frontier, and Fetcher Workers process them one by one: checking robots.txt, resolving DNS, fetching the page, storing the content, extracting links, deduplicating, and feeding new URLs back into the Frontier.</p>
 
-<h3>Example</h3>
-<p>Page <code>example.com/article</code> processed: 2,500 words extracted (nav/footer/ads removed via boilerplate detection). SimHash: 0xA3F1...B7 — compared against fingerprint store, Hamming distance 0 with previously crawled version → duplicate flagged (page hasn't changed, skip re-indexing). Link extractor finds 15 new outgoing URLs → 12 pass dedup filter → added to frontier.</p>
+    <div class="diagram-container">
+        <div class="mermaid">
+graph TD
+    A["🌱 Seed URLs / New URLs"] -->|"Enqueue"| B["URL Frontier<br/>(Distributed Priority Queue)"]
+    B -->|"Dequeue next URL<br/>(respecting priority)"| C["Politeness Enforcer<br/>(Per-Domain Rate Limiter)"]
+    C -->|"URL cleared for fetch"| D{"Robots.txt<br/>Check"}
 
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>SimHash (Near-Duplicate Detection)</h4>
-<p><strong>Algorithm:</strong> Hash each word/shingle → weighted sum of bit positions → sign determines final 64-bit fingerprint</p>
-<p><strong>Similarity:</strong> Hamming distance ≤3 between two SimHashes → pages are near-duplicates (~95% similar)</p>
-<p><strong>Advantage:</strong> Single 64-bit comparison instead of full text diff — O(1) per comparison</p>
-<p><strong>Scale:</strong> 5 billion pages × 8 bytes = 40GB — fits in memory on single machine</p>
-</div>
-<div class="card">
-<h4>Boilerplate Removal</h4>
-<p><strong>Algorithm:</strong> DOM-based text density analysis — paragraphs with high text-to-HTML ratio = content; low ratio = navigation/ads</p>
-<p><strong>Tools:</strong> Readability algorithm (Mozilla), Dragnet, or ML-based content extraction</p>
-<p><strong>Signal:</strong> Text block length, link density, DOM depth, semantic tags (article, main, aside)</p>
-</div>
-</div>
-</div>
+    D -->|"Disallowed"| E["Mark URL as SKIPPED<br/>in URL Metadata Store"]
+    E --> F[("URL Metadata Store<br/>(NoSQL)")]
 
-<!-- ============ FLOW 3: SCHEDULING & FRESHNESS ============ -->
-<h2>Flow 3: Re-Crawl Scheduling & Freshness</h2>
-<div class="card">
-<svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#96CEB4"/></marker></defs>
-<rect x="20" y="60" width="130" height="50" rx="8" fill="#795548"/><text x="85" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Crawl History DB</text><text x="85" y="97" text-anchor="middle" fill="#fff" font-size="10">(Change Freq)</text>
-<rect x="200" y="60" width="130" height="50" rx="8" fill="#4285F4"/><text x="265" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Scheduler</text><text x="265" y="97" text-anchor="middle" fill="#fff" font-size="10">(Freshness Model)</text>
-<rect x="380" y="30" width="130" height="50" rx="8" fill="#E53935"/><text x="445" y="52" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Priority Scorer</text><text x="445" y="67" text-anchor="middle" fill="#fff" font-size="10">(Importance × Age)</text>
-<rect x="380" y="100" width="130" height="50" rx="8" fill="#00897B"/><text x="445" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Sitemap Parser</text><text x="445" y="137" text-anchor="middle" fill="#fff" font-size="10">(changefreq Hints)</text>
-<rect x="570" y="60" width="130" height="50" rx="8" fill="#9C27B0"/><text x="635" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">URL Frontier</text><text x="635" y="97" text-anchor="middle" fill="#fff" font-size="10">(Re-Crawl Queue)</text>
-<line x1="150" y1="85" x2="195" y2="85" stroke="#96CEB4" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="330" y1="75" x2="375" y2="55" stroke="#96CEB4" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="330" y1="95" x2="375" y2="120" stroke="#96CEB4" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="510" y1="55" x2="565" y2="75" stroke="#96CEB4" stroke-width="2" marker-end="url(#ah3)"/>
-<line x1="510" y1="125" x2="565" y2="95" stroke="#96CEB4" stroke-width="2" marker-end="url(#ah3)"/>
-</svg>
-</div>
+    D -->|"Allowed"| G["DNS Resolver"]
 
-<div class="card">
-<h3>Steps</h3>
-<ol>
-<li>Crawl History DB stores per-URL: last_crawled, change_frequency (estimated from past crawls), importance score</li>
-<li>Scheduler runs periodically — scans URLs whose re-crawl time has passed based on estimated change frequency</li>
-<li>Priority Scorer computes: <code>priority = importance × staleness</code> where staleness = (now - last_crawled) / expected_change_interval</li>
-<li>Sitemap changefreq hints (always, hourly, daily, weekly, monthly, yearly) used as initial estimate; refined by observed changes</li>
-<li>Exponential backoff for unchanged pages: if page hasn't changed in 3 consecutive crawls, double the re-crawl interval (max: 30 days)</li>
-<li>Prioritized URLs enqueued into URL Frontier for re-crawling; high-priority (news homepages) bypass normal queue</li>
-</ol>
+    G -->|"Resolved IP"| H["HTTP Fetcher<br/>(HTTP GET over TCP)"]
 
-<h3>Example</h3>
-<p><code>nytimes.com</code> homepage: estimated change frequency = 15 minutes (changes constantly). Last crawled 20min ago → staleness = 1.33 × importance 0.99 = priority 1.32 → HIGH. <code>example.com/about</code>: hasn't changed in 3 crawls, change_freq doubled from 7d to 14d. Last crawled 10d ago → staleness 0.71 × importance 0.2 = priority 0.14 → LOW.</p>
+    H -->|"HTTP 200 OK"| I["Content Parser<br/>(Link Extractor)"]
+    H -->|"4xx / 5xx / Timeout"| J{"Retry<br/>Limit<br/>Reached?"}
+    J -->|"No"| K["Re-enqueue with<br/>Exponential Backoff"]
+    K --> B
+    J -->|"Yes"| L["Mark URL as FAILED"]
+    L --> F
 
-<h3>Deep Dives</h3>
-<div class="grid">
-<div class="card">
-<h4>Change Detection</h4>
-<p><strong>Method:</strong> Compare SimHash of new page vs. stored SimHash from previous crawl</p>
-<p><strong>Conditional:</strong> HTTP If-Modified-Since / If-None-Match (ETag) headers — server returns 304 Not Modified if unchanged (saves bandwidth)</p>
-<p><strong>Estimation:</strong> Poisson process model for change frequency: λ estimated from observed change history using MLE</p>
-</div>
-<div class="card">
-<h4>Adaptive Crawl Rate</h4>
-<p><strong>Budget:</strong> Total crawl capacity (10K pages/sec) allocated across domains by importance</p>
-<p><strong>Allocation:</strong> High-authority domains (news, Wikipedia) get 60% of budget; long-tail gets 40%</p>
-<p><strong>Feedback:</strong> If server returns 429 (Too Many Requests) or slow response, back off crawl rate for that domain</p>
-</div>
-</div>
-</div>
+    I -->|"Raw HTML"| M[("Object Storage<br/>(Content Store)")]
+    I -->|"Update metadata"| F
+    I -->|"Extracted URLs"| N["URL Normalizer"]
 
-<!-- ============ COMBINED ARCHITECTURE ============ -->
-<h2>Combined Architecture</h2>
-<div class="card">
-<svg viewBox="0 0 1050 450" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="ah4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#4ECDC4"/></marker></defs>
-<rect x="20" y="60" width="130" height="50" rx="8" fill="#FF6B6B"/><text x="85" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Seed URLs +</text><text x="85" y="97" text-anchor="middle" fill="#fff" font-size="10">Sitemaps</text>
-<rect x="200" y="60" width="140" height="55" rx="8" fill="#9C27B0"/><text x="270" y="82" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">URL Frontier</text><text x="270" y="100" text-anchor="middle" fill="#fff" font-size="10">(Priority + Politeness)</text>
-<rect x="400" y="30" width="130" height="45" rx="8" fill="#4285F4"/><text x="465" y="57" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">URL Dedup (Bloom)</text>
-<rect x="400" y="90" width="130" height="45" rx="8" fill="#FB8C00"/><text x="465" y="117" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">robots.txt Cache</text>
-<rect x="590" y="60" width="130" height="50" rx="8" fill="#4ECDC4"/><text x="655" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">HTTP Fetchers</text><text x="655" y="97" text-anchor="middle" fill="#fff" font-size="10">(Async Pool)</text>
-<rect x="780" y="60" width="130" height="50" rx="8" fill="#607D8B"/><text x="845" y="82" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">DNS Cache</text>
-<rect x="400" y="200" width="130" height="50" rx="8" fill="#4285F4"/><text x="465" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">HTML Parser</text><text x="465" y="237" text-anchor="middle" fill="#fff" font-size="10">(Content Extract)</text>
-<rect x="590" y="200" width="130" height="50" rx="8" fill="#E53935"/><text x="655" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Dedup Engine</text><text x="655" y="237" text-anchor="middle" fill="#fff" font-size="10">(SimHash/MinHash)</text>
-<rect x="780" y="200" width="130" height="50" rx="8" fill="#4285F4"/><text x="845" y="222" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Link Extractor</text>
-<rect x="200" y="330" width="140" height="55" rx="8" fill="#795548"/><text x="270" y="352" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Raw Store</text><text x="270" y="370" text-anchor="middle" fill="#fff" font-size="10">(S3 / HDFS)</text>
-<rect x="400" y="330" width="130" height="55" rx="8" fill="#795548"/><text x="465" y="352" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Crawl DB</text><text x="465" y="370" text-anchor="middle" fill="#fff" font-size="10">(HBase / Cassandra)</text>
-<rect x="590" y="330" width="130" height="55" rx="8" fill="#795548"/><text x="655" y="352" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Content Index</text><text x="655" y="370" text-anchor="middle" fill="#fff" font-size="10">(Search Engine)</text>
-<rect x="780" y="330" width="130" height="55" rx="8" fill="#00897B"/><text x="845" y="352" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Kafka</text><text x="845" y="370" text-anchor="middle" fill="#fff" font-size="10">(URL Pipeline)</text>
-<line x1="150" y1="85" x2="195" y2="85" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="340" y1="75" x2="395" y2="52" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="340" y1="95" x2="395" y2="110" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="530" y1="75" x2="585" y2="80" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="720" y1="85" x2="775" y2="85" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="655" y1="110" x2="465" y2="195" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="530" y1="225" x2="585" y2="225" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="720" y1="225" x2="775" y2="225" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="845" y1="250" x2="845" y2="325" stroke="#4ECDC4" stroke-width="2" marker-end="url(#ah4)"/>
-<line x1="655" y1="110" x2="270" y2="325" stroke="#4ECDC4" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="465" y1="250" x2="465" y2="325" stroke="#4ECDC4" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="655" y1="250" x2="655" y2="325" stroke="#4ECDC4" stroke-width="1.5" marker-end="url(#ah4)"/>
-<line x1="910" y1="355" x2="340" y2="95" stroke="#4ECDC4" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ah4)"/>
-</svg>
-</div>
+    N --> O["URL Deduplicator<br/>(Bloom Filter + DB Check)"]
+    O -->|"New unique URLs"| A
 
-<!-- ============ DATABASE SCHEMA ============ -->
-<h2>Database Schema</h2>
-<div class="grid">
-<div class="card">
-<h3>HBase / Cassandra — Crawl Database</h3>
-<pre><code>Row Key: reverse_domain + url_hash
-  e.g., "com.nytimes.www/article/123" → SHA-256 prefix
+    D -.->|"Cache miss → fetch robots.txt"| P[("Robots.txt Cache<br/>(In-Memory)")]
+    G -.->|"Cache miss → DNS lookup"| Q[("DNS Cache<br/>(In-Memory)")]
 
-Column Families:
-  fetch:
-    - status_code     (int)
-    - content_type    (string)
-    - content_length  (int)
-    - response_time_ms (int)
-    - redirect_url    (string)
-    - last_fetched_at (timestamp)  <span class="tag tag-idx">INDEX</span>
-    - fetch_count     (int)
-  content:
-    - raw_html_ref    (string → S3/HDFS key)
-    - text_hash       (char64, SHA-256 of extracted text)
-    - simhash         (bigint, 64-bit fingerprint)
-    - title           (string)
-    - language        (string, ISO 639-1)
-    - word_count      (int)
-  schedule:
-    - priority        (float)
-    - change_freq_hrs (float, estimated)
-    - next_crawl_at   (timestamp)  <span class="tag tag-idx">INDEX</span>
-    - consecutive_unchanged (int)
-  links:
-    - outgoing_urls   (list of strings)
-    - incoming_count  (int, backlink count)</code></pre>
-<p><span class="tag tag-shard">SHARD</span> Sharded by reverse domain prefix — all URLs from same domain co-located for efficient per-domain queries</p>
-</div>
+    style A fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    style B fill:#fef3c7,stroke:#f59e0b,color:#78350f
+    style M fill:#d1fae5,stroke:#10b981,color:#065f46
+    style F fill:#d1fae5,stroke:#10b981,color:#065f46
+    style P fill:#fce7f3,stroke:#ec4899,color:#831843
+    style Q fill:#fce7f3,stroke:#ec4899,color:#831843
+        </div>
+    </div>
 
-<div class="card">
-<h3>Frontier Queue (RocksDB + Redis)</h3>
-<pre><code># Priority Front Queue (Redis Sorted Set)
-ZADD frontier:priority {score} {url_hash}
-# Score = importance × staleness
+    <!-- EXAMPLES -->
+    <h3>Flow 1 Examples</h3>
 
-# Politeness Back Queue (per-domain FIFO)
-LPUSH domain:{domain_hash}:queue {url_hash}
-# One list per domain
+    <div class="example-box">
+        <strong>Example 1 — Happy Path (New Page Crawled Successfully):</strong><br/>
+        An administrator configures the seed URL <code>https://en.wikipedia.org/wiki/Main_Page</code>. The URL Normalizer canonicalizes it (lowercases the scheme/host, removes the trailing fragment if any). The Bloom Filter confirms it has not been seen before. The URL is enqueued into the URL Frontier with high priority (seed URLs start with maximum priority). A Fetcher Worker dequeues it. The Politeness Enforcer confirms no request has been made to <code>en.wikipedia.org</code> recently. The Robots.txt Service checks the in-memory Robots.txt Cache — cache miss — so it fetches <code>https://en.wikipedia.org/robots.txt</code> via HTTP GET over TCP, parses the rules, caches them for 24 hours, and confirms <code>/wiki/Main_Page</code> is allowed. The DNS Resolver checks the DNS Cache — cache miss — resolves <code>en.wikipedia.org</code> to <code>208.80.154.224</code>, and caches the result with a 300-second TTL. The HTTP Fetcher sends an <code>HTTP GET</code> request to <code>208.80.154.224</code>, receives a <code>200 OK</code> with ~80 KB of HTML. The raw HTML is stored in Object Storage keyed by the URL's SHA-256 hash. URL metadata (<code>status=CRAWLED</code>, <code>last_crawled_at=now</code>, <code>content_hash=sha256_of_body</code>) is written to the NoSQL URL Metadata Store. The Content Parser extracts ~500 hyperlinks from the HTML. Each link is normalized, and ~400 pass the Bloom Filter as new/unique. These 400 URLs are enqueued into the URL Frontier for future crawling.
+    </div>
 
-# Domain Rate Limiter (Redis)
-SET domain:{domain_hash}:last_fetch {timestamp}
-SET domain:{domain_hash}:crawl_delay {seconds}
+    <div class="example-box">
+        <strong>Example 2 — Robots.txt Disallowed:</strong><br/>
+        The URL <code>https://example.com/admin/dashboard</code> is dequeued from the URL Frontier. The Politeness Enforcer clears it. The Robots.txt Service checks the cache, finds a cached <code>robots.txt</code> for <code>example.com</code> that contains <code>Disallow: /admin/</code>. The URL is immediately marked as <code>SKIPPED</code> in the URL Metadata Store. No HTTP fetch is made. No content is stored. The worker moves on to the next URL in the Frontier.
+    </div>
 
-# Bloom Filter (Redis / RocksDB)
-BF.EXISTS seen_urls {url_hash}
-BF.ADD seen_urls {url_hash}
+    <div class="example-box">
+        <strong>Example 3 — Fetch Failure with Retry:</strong><br/>
+        The URL <code>https://slow-server.com/page1</code> is dequeued. Robots.txt allows it. DNS resolves successfully. The HTTP Fetcher sends an <code>HTTP GET</code> but receives a <code>503 Service Unavailable</code>. Since <code>retry_count=0</code> is below the max retry limit (e.g., 3), the URL is re-enqueued into the URL Frontier with a backoff delay of 30 seconds and <code>retry_count</code> incremented to 1. On the next dequeue (after 30s), the fetch succeeds with <code>200 OK</code> and normal processing continues — the content is stored, metadata updated, and links extracted.
+    </div>
 
-# robots.txt Cache (Redis Hash)
-HSET robots:{domain_hash} rules {parsed_rules_json}
-HSET robots:{domain_hash} fetched_at {timestamp}
-EXPIRE robots:{domain_hash} 86400  # 24hr TTL
+    <div class="example-box">
+        <strong>Example 4 — Max Retries Exhausted:</strong><br/>
+        The URL <code>https://dead-site.com/broken</code> has already been retried 3 times, each returning <code>500 Internal Server Error</code>. On the 4th failure, the retry limit is reached. The URL is marked as <code>FAILED</code> in the URL Metadata Store with the last HTTP status code recorded. No content is stored. The Recrawl Scheduler may attempt this URL again in a future crawl cycle.
+    </div>
 
-# DNS Cache (Redis)
-SET dns:{hostname} {ip_address}
-EXPIRE dns:{hostname} {ttl_from_dns}</code></pre>
-</div>
-</div>
+    <div class="example-box">
+        <strong>Example 5 — Spider Trap Detection:</strong><br/>
+        The URL <code>https://trap-site.com/calendar?date=2025-01-01</code> is crawled successfully. Its page contains links to <code>?date=2025-01-02</code>, <code>?date=2025-01-03</code>, etc. — potentially infinite dates. After the system has crawled 50 URLs from this path pattern (<code>/calendar?date=*</code>), the URL depth/pattern detector triggers. URLs matching this pattern are deprioritized to the lowest priority in the Frontier. Subsequent URLs from this pattern are effectively starved and may never be crawled in this cycle, breaking the spider trap.
+    </div>
 
-<!-- ============ CACHE ============ -->
-<h2>Cache Deep Dive</h2>
-<div class="card">
-<div class="grid">
-<div class="card">
-<h4>DNS Cache</h4>
-<p><strong>Strategy:</strong> Local in-memory cache (100M+ entries) + Redis shared cache across crawler fleet</p>
-<p><strong>Hit Rate:</strong> ~95% after warm-up — most URLs resolve to previously seen domains</p>
-<p><strong>Prefetch:</strong> When URL enters frontier, DNS prefetched asynchronously in background</p>
-</div>
-<div class="card">
-<h4>robots.txt Cache</h4>
-<p><strong>Strategy:</strong> Cache-aside — fetch on first access per domain, cache in Redis with 24hr TTL</p>
-<p><strong>Refresh:</strong> Re-fetched when TTL expires or on 4xx/5xx response</p>
-<p><strong>Size:</strong> ~100M domains × ~2KB avg = ~200GB (mostly in Redis cluster)</p>
-</div>
-<div class="card">
-<h4>Content Hash Store</h4>
-<p><strong>Purpose:</strong> Store SimHash fingerprints for dedup — 5B pages × 8 bytes = 40GB</p>
-<p><strong>Strategy:</strong> In-memory hashtable (SimHash → URL list) for exact-match dedup</p>
-<p><strong>Near-Dup:</strong> Bit-sampling technique: split 64-bit SimHash into 4×16-bit blocks, index by each block for fast Hamming neighbor lookup</p>
-</div>
-</div>
+    <!-- COMPONENT DEEP DIVE -->
+    <h3>Flow 1 — Component Deep Dive</h3>
+
+    <div class="deep-dive">
+        <strong>🌱 Seed URLs / New URLs</strong><br/>
+        The entry point. Seed URLs are provided by an administrator via a configuration file or admin API (<code>HTTP POST /api/seeds</code>, body: <code>{"urls": [...]}</code>). New URLs are discovered during crawling. All URLs pass through normalization and deduplication before entering the Frontier.
+    </div>
+
+    <div class="deep-dive">
+        <strong>📋 URL Frontier (Distributed Priority Queue)</strong><br/>
+        The URL Frontier is the core scheduling data structure. It determines <em>which</em> URL to crawl <em>next</em> and <em>when</em>. Internally, it has two layers:
+        <ul>
+            <li><strong>Front Queues (Prioritizer):</strong> Multiple queues bucketed by priority level (e.g., high / medium / low). URLs are assigned to a queue based on page importance (domain authority, PageRank-like score, freshness urgency). A biased selector picks from higher-priority queues more often.</li>
+            <li><strong>Back Queues (Politeness Enforcer):</strong> One queue per domain. A mapping table maps each domain to its back queue. A min-heap sorts back queues by "next allowed fetch time." When a worker requests a URL, the heap pops the queue with the earliest allowed time, dequeues one URL, and updates the next allowed time (<code>now + crawl_delay</code>).</li>
+        </ul>
+        The Frontier is backed by a <strong>persistent message queue</strong> for durability (see <a href="#mq">Message Queue Deep Dive</a>). If a worker crashes after dequeuing, the message is re-delivered (at-least-once semantics).<br/>
+        <em>Protocol:</em> Workers interact with the Frontier via an internal <strong>pull-based model</strong>: workers send <code>HTTP GET /api/frontier/next</code> or consume directly from the message queue.
+    </div>
+
+    <div class="deep-dive">
+        <strong>🚦 Politeness Enforcer (Per-Domain Rate Limiter)</strong><br/>
+        Ensures no single web server is overwhelmed. Maintains a <strong>per-domain timestamp</strong> of the last request. If the time since the last request to a domain is less than the configured delay (default: 1 second, or as specified by the domain's <code>Crawl-delay</code> in robots.txt), the URL is held until the delay expires. Implemented as part of the URL Frontier's back-queue heap.<br/>
+        <em>Data structure:</em> In-memory hash map of <code>domain → last_request_timestamp</code>.
+    </div>
+
+    <div class="deep-dive">
+        <strong>🤖 Robots.txt Service</strong><br/>
+        Before fetching any URL, this service checks whether the URL path is allowed by the domain's <code>robots.txt</code>. The flow:
+        <ol>
+            <li>Check the in-memory Robots.txt Cache for the domain.</li>
+            <li>If <strong>cache hit</strong>: parse the rules and return allowed/disallowed.</li>
+            <li>If <strong>cache miss</strong>: fetch <code>https://{domain}/robots.txt</code> via <code>HTTP GET</code> over TCP. Parse the response. Store in cache with a 24-hour TTL. Return the result.</li>
+            <li>If the fetch fails (404, timeout): assume all paths are allowed (graceful degradation).</li>
+        </ol>
+        <em>Protocol:</em> Outbound <code>HTTP GET</code> over TCP to external servers. Internal: library call within the fetcher worker process.<br/>
+        <em>Input:</em> URL to check. <em>Output:</em> <code>ALLOWED</code> or <code>DISALLOWED</code>.
+    </div>
+
+    <div class="deep-dive">
+        <strong>🌐 DNS Resolver</strong><br/>
+        Resolves domain names to IP addresses. DNS is on the critical path of every fetch, so aggressive caching is essential.
+        <ol>
+            <li>Check the in-memory DNS Cache.</li>
+            <li>If <strong>cache hit</strong> and TTL not expired: return the cached IP.</li>
+            <li>If <strong>cache miss</strong>: perform a DNS lookup using the system's DNS resolver (UDP protocol, port 53). Cache the result with the DNS TTL (typically 60–3600 seconds).</li>
+        </ol>
+        <em>Protocol:</em> <strong>DNS over UDP</strong> (fallback to TCP for responses &gt; 512 bytes).<br/>
+        <em>Input:</em> Domain name. <em>Output:</em> IP address(es).
+    </div>
+
+    <div class="deep-dive">
+        <strong>📥 HTTP Fetcher</strong><br/>
+        The workhorse that downloads web pages from the internet. Each Fetcher Worker runs on a separate machine (or container) and processes one URL at a time.
+        <ul>
+            <li><em>Protocol:</em> <strong>HTTP/HTTPS GET over TCP</strong>. TCP is required because web page content must be received reliably and in order. UDP would lose packets and deliver out-of-order data, producing corrupt HTML.</li>
+            <li><em>Input:</em> URL + resolved IP address.</li>
+            <li><em>Output:</em> HTTP response (status code + headers + body).</li>
+            <li><em>Timeout:</em> 30-second connection timeout, 60-second read timeout.</li>
+            <li><em>User-Agent:</em> Identifies itself as the crawler (e.g., <code>MyCrawlerBot/1.0</code>).</li>
+            <li><em>Redirects:</em> Follows up to 5 HTTP 3xx redirects. The final URL is recorded.</li>
+            <li><em>Compression:</em> Sends <code>Accept-Encoding: gzip, deflate</code> to reduce bandwidth.</li>
+        </ul>
+    </div>
+
+    <div class="deep-dive">
+        <strong>🔍 Content Parser (Link Extractor)</strong><br/>
+        Parses the downloaded HTML to extract outbound hyperlinks and to compute a content fingerprint.
+        <ul>
+            <li><em>Input:</em> Raw HTML body + base URL.</li>
+            <li><em>Output:</em> List of extracted absolute URLs + content hash (SHA-256 of the body).</li>
+            <li>Extracts <code>&lt;a href="..."&gt;</code> links. Resolves relative URLs to absolute using the base URL.</li>
+            <li>Filters out non-HTTP schemes (<code>mailto:</code>, <code>javascript:</code>, <code>tel:</code>).</li>
+            <li>Computes a SHA-256 hash of the page body for change detection during recrawl.</li>
+        </ul>
+    </div>
+
+    <div class="deep-dive">
+        <strong>🔗 URL Normalizer</strong><br/>
+        Converts URLs into a canonical form to prevent duplicate crawling of the same resource under different URL representations.
+        <ul>
+            <li>Lowercases the scheme and hostname (<code>HTTP://Example.COM → http://example.com</code>).</li>
+            <li>Removes default ports (<code>:80</code> for HTTP, <code>:443</code> for HTTPS).</li>
+            <li>Removes URL fragments (<code>#section</code>).</li>
+            <li>Resolves <code>.</code> and <code>..</code> path segments.</li>
+            <li>Sorts query parameters alphabetically.</li>
+            <li>Decodes unnecessary percent-encoding.</li>
+        </ul>
+        <em>Input:</em> Raw URL string. <em>Output:</em> Normalized URL string.
+    </div>
+
+    <div class="deep-dive">
+        <strong>🧹 URL Deduplicator (Bloom Filter + DB Check)</strong><br/>
+        Prevents the same URL from being crawled more than once per cycle. Uses a two-tier approach:
+        <ol>
+            <li><strong>Bloom Filter (in-memory):</strong> A probabilistic data structure. If the Bloom Filter says "not seen," the URL is guaranteed new → add it. If it says "seen," it <em>might</em> be a false positive, so we proceed to the next tier.</li>
+            <li><strong>URL Metadata Store lookup (NoSQL):</strong> A definitive check. Query by <code>url_hash</code>. If a record exists with <code>status=CRAWLED</code> and <code>last_crawled_at</code> is recent, skip it. Otherwise, it's new or stale → add it.</li>
+        </ol>
+        The Bloom Filter eliminates ~99% of duplicate checks from hitting the database, dramatically reducing DB load.<br/>
+        <em>Input:</em> Normalized URL. <em>Output:</em> <code>IS_NEW</code> or <code>IS_DUPLICATE</code>.
+    </div>
+
+    <div class="deep-dive">
+        <strong>💾 Object Storage (Content Store)</strong><br/>
+        Stores the raw HTML content of each crawled page. This is an append-heavy, read-occasionally store.
+        <ul>
+            <li><em>Key:</em> SHA-256 hash of the normalized URL.</li>
+            <li><em>Value:</em> Raw HTML body + HTTP response headers + metadata (timestamp, HTTP status code, content type).</li>
+            <li><em>Access pattern:</em> Write-once on crawl, read by downstream consumers (search indexer, analytics).</li>
+            <li><em>Why Object Storage:</em> Extremely cost-effective for large blobs. Virtually unlimited capacity. No need for complex queries on content.</li>
+        </ul>
+    </div>
+
+    <div class="deep-dive">
+        <strong>🗃️ URL Metadata Store (NoSQL)</strong><br/>
+        Stores metadata about every URL the crawler has ever encountered.
+        <ul>
+            <li><em>Access pattern:</em> Lookup by <code>url_hash</code> (point queries), scan by <code>last_crawled_at</code> (range queries for recrawl scheduler).</li>
+            <li><em>Write events:</em> Written when a URL is first discovered, and updated when it is crawled, skipped, or fails.</li>
+            <li><em>Why NoSQL:</em> Billions of rows, simple access patterns, no joins needed, high write throughput, easy horizontal sharding.</li>
+            <li>See <a href="#schema">Schema</a> section for full details.</li>
+        </ul>
+    </div>
 </div>
 
-<!-- ============ SCALING ============ -->
-<h2>Scaling & Load Balancing</h2>
-<div class="card">
-<ul>
-<li><strong>Crawler Fleet:</strong> Hundreds of machines, each running 1000+ async HTTP connections; geographically distributed for lower latency to target servers</li>
-<li><strong>URL Partitioning:</strong> URL Frontier partitioned by domain hash — each crawler instance responsible for set of domains (avoids duplicate fetches and ensures politeness)</li>
-<li><strong>Processing Pipeline:</strong> Spark/Flink cluster for HTML parsing, content extraction, dedup — horizontally scaled with data parallelism</li>
-<li><strong>Storage:</strong> HDFS/S3 for raw HTML (5B pages × ~50KB = ~250TB); HBase for crawl metadata (sharded by reverse domain)</li>
-<li><strong>Kafka:</strong> URL discovery pipeline — newly discovered URLs published to Kafka topic, consumed by URL dedup + frontier workers</li>
-<li><strong>Monitoring:</strong> Crawl rate per domain, error rates, queue depth, duplicate rate, content quality metrics tracked in real-time dashboard</li>
-</ul>
+<!-- ============================================================ -->
+<!-- 4. FLOW 2: RECRAWL / FRESHNESS FLOW                          -->
+<!-- ============================================================ -->
+<div class="section" id="flow2">
+    <h2>4. Flow 2: Recrawl / Freshness Flow</h2>
+    <p>Over time, web pages change. The Recrawl Flow ensures the crawler revisits previously crawled pages and updates their stored content. A Recrawl Scheduler periodically identifies stale URLs and re-injects them into the URL Frontier so that Flow 1 re-fetches them.</p>
+
+    <div class="diagram-container">
+        <div class="mermaid">
+graph TD
+    A["⏰ Recrawl Scheduler<br/>(Periodic Cron Job)"] -->|"Scan for stale URLs<br/>(now − last_crawled_at &gt; recrawl_interval)"| B[("URL Metadata Store<br/>(NoSQL)")]
+
+    B -->|"List of stale URLs<br/>with priority scores"| C["Priority Calculator"]
+
+    C -->|"Assign recrawl priority<br/>(based on change frequency,<br/>domain authority)"| D["URL Frontier<br/>(Distributed Priority Queue)"]
+
+    D -->|"Dequeue &amp; Crawl<br/>(same as Flow 1)"| E["HTTP Fetcher"]
+
+    E -->|"Downloaded HTML"| F["Content Parser"]
+
+    F -->|"Compute new content_hash"| G{"Content<br/>Changed?"}
+
+    G -->|"Yes — hash differs"| H["Store new content<br/>in Object Storage"]
+    H --> I["Update URL Metadata<br/>(new hash, new timestamp)"]
+    I --> B
+
+    G -->|"No — hash matches"| J["Update only<br/>last_crawled_at timestamp"]
+    J --> B
+
+    style A fill:#e0e7ff,stroke:#6366f1,color:#3730a3
+    style B fill:#d1fae5,stroke:#10b981,color:#065f46
+    style D fill:#fef3c7,stroke:#f59e0b,color:#78350f
+    style H fill:#d1fae5,stroke:#10b981,color:#065f46
+        </div>
+    </div>
+
+    <!-- EXAMPLES -->
+    <h3>Flow 2 Examples</h3>
+
+    <div class="example-box">
+        <strong>Example 1 — Content Changed (News Site Front Page):</strong><br/>
+        The Recrawl Scheduler runs its periodic scan (every 10 minutes) and queries the URL Metadata Store for URLs where <code>now - last_crawled_at > recrawl_interval</code>. It finds <code>https://news.site.com/front-page</code>, which was last crawled 2 hours ago but has a recrawl interval of 1 hour (because it is tagged as a high-change-frequency domain). The Priority Calculator assigns it a high recrawl priority. The URL is enqueued into the URL Frontier. A Fetcher Worker dequeues it and performs the standard Flow 1 fetch. After download, the Content Parser computes the SHA-256 hash of the new HTML body: <code>abc999</code>. Comparing with the stored <code>content_hash</code> of <code>abc123</code>, they differ — the page has changed. The new HTML is written to Object Storage (overwriting or versioning the old content). The URL Metadata Store is updated with <code>content_hash=abc999</code> and <code>last_crawled_at=now</code>.
+    </div>
+
+    <div class="example-box">
+        <strong>Example 2 — Content Unchanged (Static About Page):</strong><br/>
+        The Recrawl Scheduler finds <code>https://company.com/about</code>, last crawled 10 days ago with a recrawl interval of 7 days. The URL is re-enqueued with low priority (static pages are less urgent). After fetching, the Content Parser computes the SHA-256 hash and finds it <em>matches</em> the stored hash exactly. The page has not changed. Only the <code>last_crawled_at</code> timestamp is updated in the URL Metadata Store. No new content is written to Object Storage, saving storage and write I/O.
+    </div>
+
+    <div class="example-box">
+        <strong>Example 3 — Adaptive Recrawl Interval:</strong><br/>
+        The page <code>https://blog.example.com/post/123</code> has been recrawled 5 times, and the content hash has never changed. The Priority Calculator notices this pattern and increases the recrawl interval from 3 days to 14 days. Conversely, the page <code>https://twitter-clone.com/trending</code> changes on every recrawl. Its recrawl interval is decreased from 6 hours to 1 hour. This adaptive approach optimizes crawl bandwidth by focusing resources on pages that actually change.
+    </div>
+
+    <!-- COMPONENT DEEP DIVE (only new/unique components) -->
+    <h3>Flow 2 — Component Deep Dive</h3>
+
+    <div class="deep-dive">
+        <strong>⏰ Recrawl Scheduler</strong><br/>
+        A periodic background process (cron-like) that identifies stale URLs and re-injects them into the crawl pipeline.
+        <ul>
+            <li><em>Frequency:</em> Runs every 5–10 minutes.</li>
+            <li><em>Query:</em> Scans the URL Metadata Store's secondary index on <code>(status, last_crawled_at)</code> where <code>status = CRAWLED</code> and <code>last_crawled_at &lt; now - recrawl_interval</code>.</li>
+            <li><em>Batch size:</em> Processes URLs in batches (e.g., 10,000 at a time) to avoid overwhelming the Frontier.</li>
+            <li><em>Distributed:</em> Multiple scheduler instances can run in parallel, each responsible for a shard of the URL Metadata Store, to avoid bottlenecking.</li>
+        </ul>
+    </div>
+
+    <div class="deep-dive">
+        <strong>📊 Priority Calculator</strong><br/>
+        Assigns a priority score to each URL being re-enqueued for recrawl. Factors include:
+        <ul>
+            <li><strong>Change frequency:</strong> Pages that change often get higher priority. Estimated from the ratio of recrawls that detected changes.</li>
+            <li><strong>Domain authority:</strong> URLs from high-authority domains (e.g., major news sites, government sites) get higher priority.</li>
+            <li><strong>Page depth:</strong> Pages closer to the root (fewer path segments) are generally more important.</li>
+            <li><strong>Time since last crawl:</strong> The longer a page has been stale, the higher its recrawl urgency.</li>
+        </ul>
+        <em>Input:</em> URL metadata (change history, domain, depth, timestamps).<br/>
+        <em>Output:</em> Priority score (integer, e.g., 1–100).
+    </div>
+
+    <div class="deep-dive">
+        <strong>Content Change Detection</strong><br/>
+        After a page is re-fetched, the new content's SHA-256 hash is compared to the previously stored <code>content_hash</code> in the URL Metadata Store.
+        <ul>
+            <li><strong>If hashes differ:</strong> Content has changed → store new HTML in Object Storage, update <code>content_hash</code> and <code>last_crawled_at</code>.</li>
+            <li><strong>If hashes match:</strong> Content is unchanged → only update <code>last_crawled_at</code>.</li>
+        </ul>
+        This avoids unnecessary writes to Object Storage when content hasn't changed, saving storage and I/O costs.
+    </div>
 </div>
 
-<!-- ============ TRADEOFFS ============ -->
-<h2>Tradeoffs</h2>
-<div class="tradeoff-grid">
-<div class="pro">
-<h4>✅ BFS (Breadth-First) Crawl</h4>
-<ul>
-<li>Discovers high-quality pages first (closer to seed URLs)</li>
-<li>Natural politeness — spreads requests across many domains</li>
-<li>Better coverage of the web graph at each depth level</li>
-</ul>
-</div>
-<div class="con">
-<h4>❌ BFS (Breadth-First) Crawl</h4>
-<ul>
-<li>Frontier queue grows rapidly (billions of URLs in queue)</li>
-<li>May crawl many low-value pages at same depth level</li>
-<li>Priority inversion — important deep pages discovered late</li>
-</ul>
-</div>
-<div class="pro">
-<h4>✅ Bloom Filter (vs. Hash Set)</h4>
-<ul>
-<li>10x less memory than exact hash set (10 bytes vs. 100 bytes per URL)</li>
-<li>O(1) lookup and insertion — constant time regardless of size</li>
-<li>No false negatives — if URL is seen, Bloom filter guarantees detection</li>
-</ul>
-</div>
-<div class="con">
-<h4>❌ Bloom Filter</h4>
-<ul>
-<li>False positives (~1%) — some new URLs skipped (lost coverage)</li>
-<li>Cannot delete entries (standard Bloom) — counting Bloom filter is 4x larger</li>
-<li>Fixed capacity — must be sized for maximum expected URLs</li>
-</ul>
-</div>
+<!-- ============================================================ -->
+<!-- 5. COMBINED OVERALL FLOW                                      -->
+<!-- ============================================================ -->
+<div class="section" id="combined">
+    <h2>5. Combined Overall Flow</h2>
+    <p>This diagram merges the Core Crawl Flow and the Recrawl/Freshness Flow into a single unified view, showing how all components interact.</p>
+
+    <div class="diagram-container">
+        <div class="mermaid">
+graph TD
+    SEED["🌱 Seed URLs<br/>(Admin Config / API)"] -->|"Initial load"| NORM1["URL Normalizer"]
+
+    SCHED["⏰ Recrawl Scheduler<br/>(Periodic Job)"] -->|"Scan stale URLs"| URLDB[("URL Metadata Store<br/>(NoSQL)")]
+    URLDB -->|"Stale URLs"| PRIO["Priority Calculator"]
+    PRIO -->|"Scored URLs"| FRONTIER
+
+    NORM1 --> DEDUP["URL Deduplicator<br/>(Bloom Filter)"]
+    DEDUP -->|"New URLs"| FRONTIER["URL Frontier<br/>(Distributed Priority Queue<br/>backed by Message Queue)"]
+
+    FRONTIER -->|"Dequeue"| POLITE["Politeness Enforcer"]
+    POLITE --> ROBOTS{"Robots.txt<br/>Check"}
+
+    ROBOTS -->|"Disallowed"| SKIP["Mark SKIPPED"]
+    SKIP --> URLDB
+
+    ROBOTS -->|"Allowed"| DNS["DNS Resolver"]
+    DNS --> FETCH["HTTP Fetcher<br/>(GET over TCP)"]
+
+    FETCH -->|"Success (2xx)"| PARSE["Content Parser<br/>(Link Extractor)"]
+    FETCH -->|"Failure"| RETRY{"Retries<br/>Left?"}
+    RETRY -->|"Yes"| FRONTIER
+    RETRY -->|"No"| FAIL["Mark FAILED"]
+    FAIL --> URLDB
+
+    PARSE -->|"Raw HTML"| OBJ[("Object Storage<br/>(Content Store)")]
+    PARSE -->|"Metadata update"| URLDB
+    PARSE -->|"Extracted links"| NORM2["URL Normalizer"]
+    NORM2 --> DEDUP2["URL Deduplicator<br/>(Bloom Filter)"]
+    DEDUP2 -->|"New unique URLs"| FRONTIER
+
+    ROBOTS -.-> RCACHE[("Robots.txt Cache")]
+    DNS -.-> DCACHE[("DNS Cache")]
+
+    PARSE -->|"Compute content_hash"| CHANGE{"Content<br/>Changed?<br/>(Recrawl only)"}
+    CHANGE -->|"Yes"| OBJ
+    CHANGE -->|"No"| TSONLY["Update only<br/>last_crawled_at"]
+    TSONLY --> URLDB
+
+    style SEED fill:#dbeafe,stroke:#2563eb
+    style SCHED fill:#e0e7ff,stroke:#6366f1
+    style FRONTIER fill:#fef3c7,stroke:#f59e0b
+    style OBJ fill:#d1fae5,stroke:#10b981
+    style URLDB fill:#d1fae5,stroke:#10b981
+    style RCACHE fill:#fce7f3,stroke:#ec4899
+    style DCACHE fill:#fce7f3,stroke:#ec4899
+        </div>
+    </div>
+
+    <h3>Combined Flow Examples</h3>
+
+    <div class="example-box">
+        <strong>Example 1 — Full Lifecycle of a URL (First Crawl → Recrawl with Change):</strong><br/>
+        <strong>Step 1 (Seed):</strong> An admin adds <code>https://example-news.com</code> as a seed URL via <code>HTTP POST /api/seeds</code>. The URL Normalizer canonicalizes it. The Bloom Filter confirms it's unseen. It enters the URL Frontier with maximum priority.<br/>
+        <strong>Step 2 (First Crawl):</strong> A Fetcher Worker dequeues the URL. Politeness Enforcer clears it. Robots.txt allows <code>/</code>. DNS resolves. HTTP GET returns 200 OK with HTML. Content is stored in Object Storage. Metadata is written: <code>status=CRAWLED, last_crawled_at=T1, content_hash=hash_v1</code>. Parser extracts 200 links, which flow through normalization, deduplication, and into the Frontier.<br/>
+        <strong>Step 3 (Recrawl):</strong> 6 hours later, the Recrawl Scheduler scans for stale URLs. <code>https://example-news.com</code> has a recrawl interval of 4 hours, so it qualifies. The Priority Calculator assigns high priority (news domain + high change frequency). The URL is re-enqueued. A worker fetches it again. The new <code>content_hash=hash_v2</code> differs from <code>hash_v1</code> — the page changed. New content is stored. Metadata is updated: <code>content_hash=hash_v2, last_crawled_at=T2</code>.
+    </div>
+
+    <div class="example-box">
+        <strong>Example 2 — URL Discovered → Blocked by robots.txt → Never Fetched:</strong><br/>
+        During crawling of <code>https://shop.com/products</code>, the Content Parser extracts the link <code>https://shop.com/internal/admin</code>. The URL is normalized and passes the Bloom Filter (it's new). It enters the Frontier. When a worker dequeues it, the Robots.txt Service checks the cached robots.txt for <code>shop.com</code>, which contains <code>Disallow: /internal/</code>. The URL is marked as <code>SKIPPED</code> in the URL Metadata Store. No HTTP request is made to the target server. The Bloom Filter is updated so this URL won't be re-enqueued.
+    </div>
+
+    <div class="example-box">
+        <strong>Example 3 — Failure Cascade → Permanent Failure:</strong><br/>
+        <code>https://flaky-server.com/data</code> is dequeued. Robots.txt allows it. DNS resolves. But the HTTP Fetcher gets a connection timeout (30s). Retry count is 0 → URL is re-enqueued with a 30s backoff delay. Second attempt: <code>502 Bad Gateway</code>. Re-enqueued with 60s delay. Third attempt: connection timeout again. Re-enqueued with 120s delay. Fourth attempt: connection refused. Retry limit (3 retries) is exhausted. The URL is marked as <code>FAILED</code> in the URL Metadata Store with <code>last_http_status=0</code> (connection refused). The Recrawl Scheduler may try again in the next crawl cycle.
+    </div>
 </div>
 
-<!-- ============ ALTERNATIVES ============ -->
-<h2>Alternative Approaches</h2>
-<div class="grid">
-<div class="card">
-<h4>Headless Browser Rendering (Googlebot WRS)</h4>
-<p>Use headless Chrome to render JavaScript-heavy pages (SPAs, React apps). Captures dynamically-loaded content invisible to simple HTTP fetch. But 10-100x more resource-intensive per page, requires managing browser instances at scale, and introduces rendering latency (2-5s per page).</p>
-</div>
-<div class="card">
-<h4>Focused Crawling</h4>
-<p>Crawl only pages relevant to a specific topic (e.g., medical papers, legal documents). Use classifier to score page relevance, only follow links from relevant pages. Much more efficient but requires topic-specific training data and risks missing relevant pages in unexpected locations.</p>
-</div>
-<div class="card">
-<h4>Distributed Hash Table (DHT) Frontier</h4>
-<p>Use DHT (like Chord/Kademlia) for URL frontier distribution across crawler nodes. Each node responsible for domain hash range. Self-organizing, fault-tolerant, but added complexity and potential hotspots for popular domains.</p>
-</div>
+<!-- ============================================================ -->
+<!-- 6. DATABASE SCHEMA                                            -->
+<!-- ============================================================ -->
+<div class="section" id="schema">
+    <h2>6. Database Schema</h2>
+
+    <!-- URL METADATA TABLE -->
+    <h3>6.1 URL Metadata Table <span class="tag">NoSQL</span> <span class="tag">Wide-Column</span></h3>
+    <p><strong>Why NoSQL (Wide-Column)?</strong> This table will hold billions of rows (one per URL discovered). The access patterns are simple: point lookups by <code>url_hash</code> and range scans by <code>last_crawled_at</code>. There are no complex joins, no multi-table transactions, and no need for strict ACID guarantees. NoSQL wide-column stores excel at this scale with fast writes, easy horizontal sharding, and efficient range scans on sorted keys. SQL would struggle with the write throughput at this scale and would require significant effort to shard.</p>
+
+    <table>
+        <tr>
+            <th>Column</th>
+            <th>Type</th>
+            <th>Key</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td><code>url_hash</code></td>
+            <td>STRING (64 chars)</td>
+            <td><strong>Primary Key (Partition Key)</strong></td>
+            <td>SHA-256 hash of the normalized URL. Used as the partition key for sharding.</td>
+        </tr>
+        <tr>
+            <td><code>url</code></td>
+            <td>STRING (2048 chars max)</td>
+            <td>—</td>
+            <td>The full normalized URL. Stored for human readability and debugging.</td>
+        </tr>
+        <tr>
+            <td><code>domain</code></td>
+            <td>STRING</td>
+            <td>—</td>
+            <td>Extracted domain (e.g., <code>en.wikipedia.org</code>). Used for analytics and domain-level reporting.</td>
+        </tr>
+        <tr>
+            <td><code>status</code></td>
+            <td>ENUM</td>
+            <td>—</td>
+            <td>One of: <code>PENDING</code>, <code>CRAWLING</code>, <code>CRAWLED</code>, <code>FAILED</code>, <code>SKIPPED</code>.</td>
+        </tr>
+        <tr>
+            <td><code>last_crawled_at</code></td>
+            <td>TIMESTAMP</td>
+            <td>—</td>
+            <td>When the URL was last successfully crawled. <code>NULL</code> if never crawled.</td>
+        </tr>
+        <tr>
+            <td><code>content_hash</code></td>
+            <td>STRING (64 chars)</td>
+            <td>—</td>
+            <td>SHA-256 hash of the downloaded page body. Used for change detection during recrawl.</td>
+        </tr>
+        <tr>
+            <td><code>content_store_key</code></td>
+            <td>STRING</td>
+            <td>—</td>
+            <td>Key/path in Object Storage where the raw HTML is stored.</td>
+        </tr>
+        <tr>
+            <td><code>http_status_code</code></td>
+            <td>INT</td>
+            <td>—</td>
+            <td>Last HTTP status code received (e.g., 200, 404, 503). <code>0</code> for connection failures.</td>
+        </tr>
+        <tr>
+            <td><code>retry_count</code></td>
+            <td>INT</td>
+            <td>—</td>
+            <td>Number of consecutive failed retry attempts. Reset to 0 on success.</td>
+        </tr>
+        <tr>
+            <td><code>priority</code></td>
+            <td>INT</td>
+            <td>—</td>
+            <td>Crawl/recrawl priority score (1–100). Higher = more important.</td>
+        </tr>
+        <tr>
+            <td><code>recrawl_interval_sec</code></td>
+            <td>INT</td>
+            <td>—</td>
+            <td>How often this URL should be recrawled (in seconds). Adaptive based on change frequency.</td>
+        </tr>
+        <tr>
+            <td><code>change_count</code></td>
+            <td>INT</td>
+            <td>—</td>
+            <td>Number of times the content_hash changed across recrawls. Used for adaptive recrawl intervals.</td>
+        </tr>
+        <tr>
+            <td><code>crawl_count</code></td>
+            <td>INT</td>
+            <td>—</td>
+            <td>Total number of times this URL has been crawled. Used for adaptive recrawl intervals.</td>
+        </tr>
+        <tr>
+            <td><code>discovered_at</code></td>
+            <td>TIMESTAMP</td>
+            <td>—</td>
+            <td>When this URL was first discovered by the crawler.</td>
+        </tr>
+        <tr>
+            <td><code>depth</code></td>
+            <td>INT</td>
+            <td>—</td>
+            <td>Number of hops from the nearest seed URL. Used for spider trap detection.</td>
+        </tr>
+    </table>
+
+    <h4>Indexes</h4>
+    <table>
+        <tr><th>Index</th><th>Column(s)</th><th>Index Type</th><th>Rationale</th></tr>
+        <tr>
+            <td>Primary Key</td>
+            <td><code>url_hash</code></td>
+            <td><strong>Hash Index</strong></td>
+            <td>O(1) point lookups by URL hash. This is the partition key in the NoSQL store, giving us fast reads and writes for any specific URL.</td>
+        </tr>
+        <tr>
+            <td>Secondary Index (Recrawl)</td>
+            <td><code>(status, last_crawled_at)</code></td>
+            <td><strong>B-Tree (sorted) Index</strong></td>
+            <td>The Recrawl Scheduler needs to efficiently find all URLs where <code>status = CRAWLED</code> and <code>last_crawled_at</code> is older than a threshold. A B-Tree index on this compound key enables range scans: seek to the partition where <code>status = CRAWLED</code>, then scan <code>last_crawled_at</code> in ascending order to find the oldest/stalest URLs first. Without this index, the scheduler would need to full-scan billions of rows.</td>
+        </tr>
+        <tr>
+            <td>Secondary Index (Domain)</td>
+            <td><code>domain</code></td>
+            <td><strong>Hash Index</strong></td>
+            <td>Useful for domain-level analytics: counting URLs per domain, finding all URLs for a specific domain (e.g., for domain-wide recrawl or compliance deletion requests). Hash index provides O(1) domain lookups.</td>
+        </tr>
+    </table>
+
+    <h4>Sharding Strategy</h4>
+    <div class="callout">
+        <strong>Shard by <code>url_hash</code> using consistent hashing.</strong><br/>
+        <ul>
+            <li><strong>Why <code>url_hash</code>?</strong> The SHA-256 hash is uniformly distributed, guaranteeing even data distribution across shards. This avoids hotspots.</li>
+            <li><strong>Why not shard by <code>domain</code>?</strong> Domain-based sharding would cause severe hotspots: a popular domain like <code>wikipedia.org</code> could have hundreds of millions of URLs, overwhelming a single shard. Hash-based sharding distributes wikipedia.org URLs evenly across all shards.</li>
+            <li><strong>Consistent hashing:</strong> Enables adding/removing shards without reshuffling all data. Only ~1/N of the data moves when a shard is added (where N = number of shards).</li>
+            <li><strong>Replication:</strong> Each shard is replicated 3x for fault tolerance (leader-follower replication). Writes go to the leader; reads can go to followers for higher throughput.</li>
+        </ul>
+    </div>
+
+    <h4>Read/Write Events</h4>
+    <table>
+        <tr><th>Event</th><th>Operation</th><th>Details</th></tr>
+        <tr><td>URL first discovered (link extraction)</td><td>WRITE (INSERT)</td><td>New row with <code>status=PENDING</code>, <code>discovered_at=now</code></td></tr>
+        <tr><td>URL fetched successfully</td><td>WRITE (UPDATE)</td><td>Update <code>status=CRAWLED</code>, <code>last_crawled_at=now</code>, <code>content_hash</code>, <code>http_status_code=200</code>, <code>retry_count=0</code></td></tr>
+        <tr><td>URL fetch failed</td><td>WRITE (UPDATE)</td><td>Update <code>status=FAILED</code>, <code>retry_count++</code>, <code>http_status_code</code></td></tr>
+        <tr><td>URL blocked by robots.txt</td><td>WRITE (UPDATE)</td><td>Update <code>status=SKIPPED</code></td></tr>
+        <tr><td>Recrawl Scheduler scanning for stale URLs</td><td>READ (RANGE SCAN)</td><td>Query secondary index <code>(status=CRAWLED, last_crawled_at &lt; threshold)</code></td></tr>
+        <tr><td>URL deduplication check</td><td>READ (POINT QUERY)</td><td>Lookup by <code>url_hash</code> to check if URL already exists</td></tr>
+        <tr><td>Recrawl — content unchanged</td><td>WRITE (UPDATE)</td><td>Update only <code>last_crawled_at=now</code>, <code>crawl_count++</code></td></tr>
+        <tr><td>Recrawl — content changed</td><td>WRITE (UPDATE)</td><td>Update <code>content_hash</code>, <code>last_crawled_at=now</code>, <code>crawl_count++</code>, <code>change_count++</code></td></tr>
+    </table>
+
+    <!-- CONTENT STORE -->
+    <h3>6.2 Content Store <span class="tag">Object Storage</span></h3>
+    <p><strong>Why Object Storage?</strong> HTML pages are large blobs (10 KB – 10 MB). The access pattern is write-once-read-occasionally: content is written when crawled and read by downstream systems (search indexer, ML pipeline). Object storage is orders of magnitude cheaper than databases for large blob storage, offers virtually unlimited capacity, and doesn't need querying capabilities — we only access by key.</p>
+
+    <table>
+        <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td><code>key</code> (path)</td>
+            <td>STRING</td>
+            <td>Derived from <code>url_hash</code>: <code>{prefix}/{url_hash}</code>. Prefix distributes keys across partitions for parallel I/O.</td>
+        </tr>
+        <tr>
+            <td><code>body</code></td>
+            <td>BLOB</td>
+            <td>Raw HTML content (gzip-compressed to save storage).</td>
+        </tr>
+        <tr>
+            <td><code>content_type</code></td>
+            <td>STRING (metadata)</td>
+            <td>MIME type (e.g., <code>text/html</code>).</td>
+        </tr>
+        <tr>
+            <td><code>fetched_at</code></td>
+            <td>TIMESTAMP (metadata)</td>
+            <td>When the content was downloaded.</td>
+        </tr>
+        <tr>
+            <td><code>http_status_code</code></td>
+            <td>INT (metadata)</td>
+            <td>HTTP status from the fetch.</td>
+        </tr>
+        <tr>
+            <td><code>response_headers</code></td>
+            <td>STRING (metadata)</td>
+            <td>Serialized HTTP response headers.</td>
+        </tr>
+    </table>
+
+    <h4>Read/Write Events</h4>
+    <table>
+        <tr><th>Event</th><th>Operation</th></tr>
+        <tr><td>Page crawled successfully (first crawl or recrawl with changed content)</td><td>WRITE (PUT object)</td></tr>
+        <tr><td>Downstream consumer needs page content (search indexer, analytics pipeline)</td><td>READ (GET object by key)</td></tr>
+    </table>
+
+    <h4>Denormalization Note</h4>
+    <div class="callout">
+        The <code>content_hash</code> is stored in both the URL Metadata Store and (implicitly) derivable from the Object Storage blob. This is intentional <strong>denormalization</strong>: the Recrawl Flow needs to compare content hashes <em>without</em> downloading the full blob from Object Storage. Storing <code>content_hash</code> in the URL Metadata Store allows a quick in-database comparison, saving the bandwidth and latency of fetching potentially large HTML blobs from Object Storage just to compute a hash.
+    </div>
+
+    <!-- ROBOTS.TXT CACHE is in-memory only, no persistent table needed -->
+    <h3>6.3 Robots.txt Data (No Persistent Table)</h3>
+    <p>Robots.txt data is <strong>not</strong> stored in a persistent database. It is held only in the in-memory cache (see <a href="#cdn-cache">Cache Strategy</a>). Robots.txt files change infrequently and can always be re-fetched from the origin server. Persisting them would add unnecessary complexity with negligible benefit.</p>
 </div>
 
-<!-- ============ ADDITIONAL INFO ============ -->
-<h2>Additional Information</h2>
-<div class="card">
-<ul>
-<li><strong>Spider Traps:</strong> Infinite URL generators (calendars, session IDs in URLs, query parameter permutations). Mitigation: max URL length (2048), max depth per domain (15), max pages per domain (100K), URL pattern detection (regex dedup).</li>
-<li><strong>Ethical Crawling:</strong> Beyond robots.txt — respect meta noindex/nofollow, X-Robots-Tag headers, avoid crawling during business hours for small sites, identify crawler via User-Agent string with contact info.</li>
-<li><strong>Legal Considerations:</strong> hiQ Labs v. LinkedIn (2022) — scraping publicly available data generally legal under CFAA, but Terms of Service violations may create civil liability. GDPR considerations for personal data in crawled content.</li>
-<li><strong>Mercator Crawler:</strong> Foundational academic crawler architecture (Heydon & Najork, 1999) — introduced the front/back queue politeness model used by most modern crawlers including Googlebot.</li>
-<li><strong>Common Crawl:</strong> Non-profit providing free monthly crawl dataset — 3.6B pages, 380TB compressed. Alternative to running your own crawler for many use cases (ML training data, research).</li>
-</ul>
+<!-- ============================================================ -->
+<!-- 7. CDN & CACHE STRATEGY                                       -->
+<!-- ============================================================ -->
+<div class="section" id="cdn-cache">
+    <h2>7. CDN &amp; Cache Strategy</h2>
+
+    <h3>7.1 CDN — Not Applicable</h3>
+    <div class="callout">
+        A CDN is <strong>not appropriate</strong> for the web crawler itself. CDNs cache and serve static content closer to end-users to reduce latency. A web crawler is a backend data pipeline that <em>consumes</em> content from the internet — it does not serve content to end-users. There is no user-facing read path that would benefit from a CDN. If a separate system (e.g., a search engine) serves the crawled content to users, <em>that</em> system might use a CDN, but the crawler itself does not.
+    </div>
+
+    <h3>7.2 DNS Cache <span class="tag">In-Memory Cache</span></h3>
+    <table>
+        <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+        <tr>
+            <td>Caching Strategy</td>
+            <td><strong>Cache-Aside (Lazy Loading)</strong></td>
+            <td>The application checks the cache first. On miss, it performs a DNS lookup and writes the result to cache. This is the standard pattern for DNS because entries arrive naturally via lookups — there's no separate "write" path to use write-through.</td>
+        </tr>
+        <tr>
+            <td>Populated By</td>
+            <td>DNS resolution on cache miss</td>
+            <td>Each Fetcher Worker checks the cache before DNS lookup. On miss, the resolved IP is stored.</td>
+        </tr>
+        <tr>
+            <td>Eviction Policy</td>
+            <td><strong>LRU (Least Recently Used)</strong></td>
+            <td>Domains not accessed recently are least likely to be accessed soon (temporal locality). LRU efficiently evicts cold entries to make room for active domains.</td>
+        </tr>
+        <tr>
+            <td>Expiration Policy</td>
+            <td><strong>TTL-based (respects DNS TTL)</strong></td>
+            <td>Each DNS record has an authoritative TTL (typically 60s – 86400s). The cache honors this TTL to ensure IP changes (e.g., a domain migrating servers) are picked up. If no TTL is provided, a default of 300s (5 minutes) is used.</td>
+        </tr>
+        <tr>
+            <td>Scope</td>
+            <td>Per-worker (local) or shared (centralized)</td>
+            <td>Per-worker caches avoid network overhead. A centralized shared cache can be used if workers process diverse domains (reduces total DNS queries).</td>
+        </tr>
+    </table>
+
+    <h3>7.3 Robots.txt Cache <span class="tag">In-Memory Cache</span></h3>
+    <table>
+        <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+        <tr>
+            <td>Caching Strategy</td>
+            <td><strong>Cache-Aside (Lazy Loading)</strong></td>
+            <td>On first encounter with a domain, the robots.txt is fetched and cached. Subsequent checks for URLs on the same domain hit the cache.</td>
+        </tr>
+        <tr>
+            <td>Populated By</td>
+            <td>HTTP GET to <code>/{domain}/robots.txt</code> on cache miss</td>
+            <td>Only fetched when a URL from an uncached domain is about to be crawled.</td>
+        </tr>
+        <tr>
+            <td>Eviction Policy</td>
+            <td><strong>LRU (Least Recently Used)</strong></td>
+            <td>Millions of domains exist, but only a fraction are actively being crawled at any moment. LRU keeps hot domains cached and evicts domains not currently being crawled.</td>
+        </tr>
+        <tr>
+            <td>Expiration Policy</td>
+            <td><strong>TTL of 24 hours</strong></td>
+            <td>Robots.txt files change infrequently (days to weeks). A 24-hour TTL balances freshness with minimizing unnecessary re-fetches. If a site changes its robots.txt, the crawler will pick it up within 24 hours.</td>
+        </tr>
+        <tr>
+            <td>Failure Handling</td>
+            <td>If fetch fails (404, timeout), cache a "permissive" entry (allow all)</td>
+            <td>Graceful degradation: if we can't get robots.txt, assume crawling is allowed. This prevents a broken robots.txt from blocking an entire domain.</td>
+        </tr>
+    </table>
+
+    <h3>7.4 URL Bloom Filter <span class="tag">In-Memory</span></h3>
+    <table>
+        <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+        <tr>
+            <td>Type</td>
+            <td><strong>Bloom Filter</strong> (probabilistic set membership)</td>
+            <td>A Bloom Filter can tell us "definitely not seen" or "probably seen" using far less memory than a full hash set. For 5 billion URLs, a Bloom Filter with 1% false-positive rate uses only ~5.7 GB of memory (vs. ~320 GB for a full hash set of 64-byte hashes).</td>
+        </tr>
+        <tr>
+            <td>Eviction Policy</td>
+            <td><strong>None</strong> (append-only)</td>
+            <td>Bloom Filters do not support deletion. Once a URL is added, it stays. This is acceptable because the cost of a false positive (re-adding a URL to the frontier, which will be caught by the DB check) is low.</td>
+        </tr>
+        <tr>
+            <td>Expiration Policy</td>
+            <td><strong>Reset per crawl cycle</strong></td>
+            <td>At the start of each full crawl cycle, the Bloom Filter is cleared. This ensures URLs can be recrawled in new cycles and prevents the false-positive rate from growing unboundedly.</td>
+        </tr>
+        <tr>
+            <td>False Positives</td>
+            <td>~1%</td>
+            <td>A 1% false-positive rate means ~1% of new URLs are mistakenly considered "seen" and must fall back to the DB check. This is an acceptable tradeoff for the massive memory savings.</td>
+        </tr>
+    </table>
 </div>
+
+<!-- ============================================================ -->
+<!-- 8. MESSAGE QUEUE DEEP DIVE                                    -->
+<!-- ============================================================ -->
+<div class="section" id="mq">
+    <h2>8. Message Queue Deep Dive</h2>
+
+    <h3>Why a Message Queue?</h3>
+    <p>The URL Frontier is the central coordination point between URL discovery and URL fetching. It must handle extremely high throughput (thousands of URLs/sec enqueued + dequeued), survive worker crashes without losing URLs, and support priority-based ordering. A <strong>persistent message queue</strong> provides exactly these guarantees:</p>
+    <ul>
+        <li><strong>Durability:</strong> URLs are persisted to disk. If a worker crashes after dequeueing but before processing, the message is re-delivered (at-least-once semantics).</li>
+        <li><strong>Decoupling:</strong> The Content Parser (producer) and Fetcher Worker (consumer) run at different speeds. The queue absorbs bursts.</li>
+        <li><strong>Work Distribution:</strong> Multiple Fetcher Workers pull from the queue, achieving natural load balancing without a central coordinator.</li>
+        <li><strong>Scalability:</strong> The queue can be partitioned/sharded for higher throughput.</li>
+    </ul>
+
+    <h3>How Messages Are Enqueued (Produced)</h3>
+    <ol>
+        <li><strong>Seed URL Ingestion:</strong> The admin API publishes seed URLs as messages to the queue. Each message contains the URL, its priority score, and metadata (domain, depth).</li>
+        <li><strong>Link Extraction:</strong> After the Content Parser extracts URLs and they pass deduplication, new URLs are published as messages to the queue.</li>
+        <li><strong>Recrawl Scheduler:</strong> Stale URLs identified by the scheduler are published to the queue with their recrawl priority.</li>
+    </ol>
+    <p><em>Message format:</em></p>
+    <pre><code>{
+  "url": "https://example.com/page",
+  "url_hash": "a3f2...",
+  "domain": "example.com",
+  "priority": 75,
+  "depth": 2,
+  "retry_count": 0,
+  "enqueued_at": "2025-01-15T10:30:00Z"
+}</code></pre>
+
+    <h3>How Messages Are Dequeued (Consumed)</h3>
+    <ol>
+        <li>Fetcher Workers act as <strong>consumers</strong> pulling messages from the queue.</li>
+        <li>The queue delivers messages in priority order (higher priority first, FIFO within same priority).</li>
+        <li>The worker processes the URL (robots check → DNS → fetch → parse → store).</li>
+        <li>On <strong>success</strong>: the worker sends an <strong>acknowledgment (ACK)</strong> to the queue, which removes the message permanently.</li>
+        <li>On <strong>failure</strong>: the worker either NACKs the message (returned to the queue for retry) or lets the visibility timeout expire (message automatically re-appears).</li>
+    </ol>
+
+    <h3>Why Not Alternatives?</h3>
+    <table>
+        <tr><th>Alternative</th><th>Why Not Chosen</th></tr>
+        <tr>
+            <td><strong>Pub/Sub</strong></td>
+            <td>Pub/Sub broadcasts messages to <em>all</em> subscribers. We need each URL to be processed by <em>exactly one</em> worker (competing consumers pattern). Pub/Sub would cause every worker to process every URL — massively wasteful.</td>
+        </tr>
+        <tr>
+            <td><strong>Polling a Database</strong></td>
+            <td>Workers could poll the URL Metadata Store directly (<code>SELECT ... WHERE status=PENDING LIMIT 1</code>). But this creates high database load (constant polling queries), contention (multiple workers grabbing the same row), and higher latency. A message queue is purpose-built for this pattern.</td>
+        </tr>
+        <tr>
+            <td><strong>WebSockets</strong></td>
+            <td>WebSockets provide bidirectional real-time communication, typically between client and server. The crawler is a backend system with no interactive clients. WebSockets add unnecessary complexity for a task that is fundamentally a producer-consumer queue pattern.</td>
+        </tr>
+        <tr>
+            <td><strong>In-Memory Queue (no persistence)</strong></td>
+            <td>An in-memory queue is fast but loses all URLs on process crash. At the scale of billions of URLs, losing the frontier on a crash would be catastrophic. Persistence is required.</td>
+        </tr>
+    </table>
+
+    <h3>Queue Partitioning</h3>
+    <p>The message queue is <strong>partitioned by domain</strong> (hash of domain name → partition). This naturally groups URLs for the same domain into the same partition, enabling the Politeness Enforcer to rate-limit per-domain within a single consumer, rather than coordinating across consumers.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- 9. SCALING CONSIDERATIONS                                     -->
+<!-- ============================================================ -->
+<div class="section" id="scaling">
+    <h2>9. Scaling Considerations</h2>
+
+    <h3>9.1 Horizontal Scaling of Fetcher Workers</h3>
+    <p>The HTTP Fetcher is the primary bottleneck — it's I/O-bound (waiting on network responses from external servers). Scaling is achieved by adding more Fetcher Workers. Each worker runs on a separate machine or container, pulls from the message queue, and processes URLs independently.</p>
+    <ul>
+        <li><strong>Auto-scaling:</strong> Monitor the queue depth (number of pending messages). When the queue grows beyond a threshold, spin up more workers. When it shrinks, scale down.</li>
+        <li><strong>Target:</strong> To achieve 2,000 pages/sec, if each worker handles ~10 pages/sec (accounting for DNS, fetch, parse latency), we need ~200 workers.</li>
+    </ul>
+
+    <h3>9.2 Load Balancers</h3>
+    <div class="deep-dive">
+        <strong>Load Balancer 1 — In Front of Fetcher Workers (Not Needed)</strong><br/>
+        Fetcher Workers <em>pull</em> from the message queue. They don't receive inbound requests, so a traditional load balancer is unnecessary. The message queue itself acts as the work distributor.
+    </div>
+
+    <div class="deep-dive">
+        <strong>Load Balancer 2 — In Front of the Admin/Seed URL API</strong><br/>
+        If the admin API (<code>POST /api/seeds</code>) receives traffic from multiple clients or automated systems, a <strong>Layer 7 (HTTP) load balancer</strong> distributes requests across multiple API server instances.
+        <ul>
+            <li><strong>Algorithm:</strong> Round Robin (requests are stateless, any instance can handle any request).</li>
+            <li><strong>Health checks:</strong> HTTP health check (<code>GET /health</code>) every 10 seconds. Unhealthy instances are removed from the pool.</li>
+            <li><strong>Placement:</strong> Between the admin clients and the API servers.</li>
+        </ul>
+        <em>However:</em> The admin API is low-traffic (seed URLs are added infrequently), so a single instance may suffice. A load balancer is more of a availability measure than a scaling one here.
+    </div>
+
+    <div class="deep-dive">
+        <strong>Load Balancer 3 — In Front of the URL Metadata Store (Built-In)</strong><br/>
+        NoSQL databases at this scale use built-in client-side load balancing or a cluster proxy. The NoSQL cluster handles routing reads to replicas and writes to leaders based on the partition key. No external load balancer is needed — this is handled at the database driver/client level.
+    </div>
+
+    <h3>9.3 Scaling the URL Frontier / Message Queue</h3>
+    <ul>
+        <li>Partition the queue into <strong>N partitions</strong> (e.g., 256). Each partition handles a subset of domains.</li>
+        <li>As throughput demands increase, add more partitions and reassign consumer workers.</li>
+    </ul>
+
+    <h3>9.4 Scaling the URL Metadata Store</h3>
+    <ul>
+        <li>Already sharded by <code>url_hash</code> via consistent hashing. Adding more shards redistributes ~1/N of data.</li>
+        <li>Read replicas can be added for the Recrawl Scheduler's range scans, offloading read load from the write path.</li>
+    </ul>
+
+    <h3>9.5 Scaling Object Storage</h3>
+    <ul>
+        <li>Object storage is inherently scalable — designed to handle petabytes. No special scaling action needed.</li>
+        <li>Use prefixed keys (e.g., first 2 chars of hash as directory prefix) to distribute I/O across storage partitions.</li>
+    </ul>
+
+    <h3>9.6 Scaling DNS Resolution</h3>
+    <ul>
+        <li>Each worker maintains a local DNS cache. This reduces external DNS queries by 80%+.</li>
+        <li>For further scaling, deploy a shared DNS cache service (centralized in-memory cache) that all workers query before hitting external DNS. This service itself can be horizontally scaled behind a load balancer.</li>
+    </ul>
+
+    <h3>9.7 Geographic Distribution</h3>
+    <ul>
+        <li>Deploy crawler clusters in multiple geographic regions (e.g., US, Europe, Asia).</li>
+        <li>Assign domains to the geographically nearest cluster to reduce fetch latency.</li>
+        <li>Each cluster has its own Fetcher Workers, DNS cache, and Robots.txt cache. They share a global URL Metadata Store and Object Storage.</li>
+    </ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- 10. TRADEOFFS & DEEP DIVES                                    -->
+<!-- ============================================================ -->
+<div class="section" id="tradeoffs">
+    <h2>10. Tradeoffs &amp; Deep Dives</h2>
+
+    <h3>10.1 Politeness vs. Throughput</h3>
+    <p><strong>Tradeoff:</strong> Crawling faster yields fresher data, but hammering a single server can cause denial-of-service, get the crawler's IP blocked, or violate robots.txt <code>Crawl-delay</code>.</p>
+    <p><strong>Resolution:</strong> The back-queue architecture enforces per-domain rate limits while allowing high aggregate throughput by interleaving requests across millions of domains. We sacrifice per-domain speed for overall system throughput and legal/ethical compliance.</p>
+
+    <h3>10.2 Breadth-First vs. Depth-First vs. Priority-Based</h3>
+    <p><strong>Tradeoff:</strong></p>
+    <ul>
+        <li><strong>BFS:</strong> Discovers diverse content quickly, avoids spider traps, but treats all URLs equally.</li>
+        <li><strong>DFS:</strong> Fully explores one site before moving on, which is useful for site-specific crawling but terrible for web-scale (gets stuck in deep sites).</li>
+        <li><strong>Priority-based:</strong> The best of both worlds — breadth-first in nature but biased toward high-value pages. More complex to implement.</li>
+    </ul>
+    <p><strong>Resolution:</strong> We use <strong>priority-based</strong> traversal. The added implementation complexity is justified by the significantly better crawl quality — high-value pages are crawled first.</p>
+
+    <h3>10.3 Bloom Filter False Positives vs. Memory Usage</h3>
+    <p><strong>Tradeoff:</strong> A lower false-positive rate requires more memory. A higher false-positive rate means more unnecessary DB lookups.</p>
+    <p><strong>Resolution:</strong> We use a 1% false-positive rate, consuming ~5.7 GB for 5 billion URLs. The 1% of URLs that produce false positives fall back to a DB lookup — an acceptable and small overhead. Going lower (e.g., 0.1%) would require ~8.5 GB without meaningfully improving performance.</p>
+
+    <h3>10.4 At-Least-Once vs. Exactly-Once Processing</h3>
+    <p><strong>Tradeoff:</strong> Exactly-once delivery is expensive (requires distributed transactions or deduplication). At-least-once is simpler but can result in duplicate work.</p>
+    <p><strong>Resolution:</strong> We use <strong>at-least-once</strong> semantics. If a URL is accidentally crawled twice, the second crawl is idempotent: the same content is re-stored (PUT is idempotent in object storage), and the URL metadata is updated to the same values. The wasted work is minimal and far cheaper than implementing exactly-once guarantees.</p>
+
+    <h3>10.5 Content Deduplication: Exact Hash vs. Near-Duplicate Detection (SimHash)</h3>
+    <p><strong>Tradeoff:</strong></p>
+    <ul>
+        <li><strong>Exact SHA-256 hash:</strong> Detects only byte-identical pages. Two pages with the same content but a different ad or timestamp are considered different.</li>
+        <li><strong>SimHash / MinHash:</strong> Detects near-duplicates (pages that are ~90% similar). Much more complex, requires computing and comparing fingerprints.</li>
+    </ul>
+    <p><strong>Resolution:</strong> We use <strong>exact SHA-256 hash</strong> for the core change detection in recrawling. Near-duplicate detection is deferred to the downstream search indexer, which is better positioned to assess content similarity. Adding SimHash to the crawler would increase complexity without a proportional benefit to the crawling task itself.</p>
+
+    <h3>10.6 Recrawl Strategy: Fixed Interval vs. Adaptive</h3>
+    <p><strong>Tradeoff:</strong> Fixed intervals are simple but waste bandwidth on pages that rarely change and under-serve pages that change frequently. Adaptive intervals are smarter but require tracking change history per URL.</p>
+    <p><strong>Resolution:</strong> We use <strong>adaptive recrawl intervals</strong> based on the ratio of <code>change_count / crawl_count</code>. The added storage of two integers per URL is negligible, and the bandwidth savings are substantial: pages that never change are recrawled less often, freeing capacity for dynamic pages.</p>
+
+    <h3>10.7 TCP for Web Page Fetching</h3>
+    <p><strong>Why TCP?</strong> Web pages are delivered via HTTP, which runs on TCP. TCP provides:</p>
+    <ul>
+        <li><strong>Reliable delivery:</strong> Every byte of HTML arrives. Missing data would produce corrupt, unparseable pages.</li>
+        <li><strong>Ordered delivery:</strong> HTML must be received in order to be correctly parsed.</li>
+        <li><strong>Congestion control:</strong> TCP backs off when the network is congested, preventing collapse.</li>
+    </ul>
+    <p><strong>Why not UDP?</strong> UDP provides no reliability or ordering. We would need to re-implement these at the application layer, essentially recreating TCP poorly. For large payloads like web pages, TCP is the only reasonable choice.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- 11. ALTERNATIVE APPROACHES                                    -->
+<!-- ============================================================ -->
+<div class="section" id="alternatives">
+    <h2>11. Alternative Approaches</h2>
+
+    <h3>11.1 Single-Machine Crawler</h3>
+    <p><strong>Approach:</strong> Run the entire crawler on one powerful machine with a local queue, local storage, and multi-threaded fetchers.</p>
+    <p><strong>Why not chosen:</strong> A single machine can crawl at most ~100 pages/sec (limited by CPU, memory, and network bandwidth). To crawl 5 billion pages in 4 weeks, we need ~2,000 pages/sec — impossible on one machine. Additionally, a single machine is a single point of failure. The distributed architecture provides horizontal scalability and fault tolerance.</p>
+
+    <h3>11.2 MapReduce-Based Crawling</h3>
+    <p><strong>Approach:</strong> Use a batch processing framework where each Map task fetches a batch of URLs and each Reduce task consolidates results and generates the next frontier.</p>
+    <p><strong>Why not chosen:</strong> MapReduce is designed for batch processing, not continuous streaming workloads. The crawler needs to run continuously, and the overhead of launching MapReduce jobs for each batch would introduce high latency between discovery and crawling. The message-queue + worker pool architecture provides much lower latency and continuous operation.</p>
+
+    <h3>11.3 Serverless / Function-as-a-Service Fetchers</h3>
+    <p><strong>Approach:</strong> Each URL triggers a serverless function that fetches, parses, and stores the page.</p>
+    <p><strong>Why not chosen:</strong> While serverless provides automatic scaling, it has drawbacks for web crawling: (1) cold start latency adds overhead to each fetch, (2) no persistent state for DNS cache / robots.txt cache / Bloom Filter, requiring external services for each, (3) hard to maintain per-domain politeness (rate limiting) when functions are ephemeral and stateless. The persistent worker model is more efficient for this workload.</p>
+
+    <h3>11.4 URL Frontier in a SQL Database (Instead of Message Queue)</h3>
+    <p><strong>Approach:</strong> Store the frontier as rows in a SQL table (<code>SELECT url FROM frontier WHERE status='PENDING' ORDER BY priority DESC LIMIT 1 FOR UPDATE</code>).</p>
+    <p><strong>Why not chosen:</strong> At 2,000+ URLs/sec dequeued, the <code>FOR UPDATE</code> lock contention would be severe. Even with row-level locking, the index updates on priority reordering would be expensive. A message queue is purpose-built for high-throughput producer-consumer patterns with ordering and acknowledgment.</p>
+
+    <h3>11.5 Graph Database for URL Relationships</h3>
+    <p><strong>Approach:</strong> Store URLs and their link relationships in a graph database to enable PageRank-like computations for crawl prioritization.</p>
+    <p><strong>Why not chosen:</strong> While link graphs are useful for ranking, they are expensive to maintain at crawl-time. The crawler's primary job is to fetch and store pages. Link analysis and PageRank computation are better suited to a separate offline batch pipeline that processes the crawled data. Adding a graph database to the critical path would slow down the crawling pipeline and add operational complexity.</p>
+
+    <h3>11.6 Peer-to-Peer Distributed Crawling</h3>
+    <p><strong>Approach:</strong> Instead of a centralized Frontier, each worker maintains its own URL queue and workers exchange URLs via peer-to-peer protocols (e.g., consistent hashing ring where each worker owns a range of domains).</p>
+    <p><strong>Why not chosen:</strong> P2P architectures are harder to monitor, debug, and enforce politeness globally. If two workers independently decide to crawl the same domain, rate limits can be violated. The centralized Frontier (backed by a partitioned message queue) provides better coordination, observability, and politeness enforcement.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- 12. ADDITIONAL INFORMATION                                    -->
+<!-- ============================================================ -->
+<div class="section" id="additional">
+    <h2>12. Additional Information</h2>
+
+    <h3>12.1 URL Normalization Edge Cases</h3>
+    <ul>
+        <li><code>http://example.com</code> and <code>http://example.com/</code> → same page (trailing slash normalization).</li>
+        <li><code>http://example.com/page?a=1&amp;b=2</code> and <code>http://example.com/page?b=2&amp;a=1</code> → same page (query param sorting).</li>
+        <li><code>http://example.com/%7Euser</code> and <code>http://example.com/~user</code> → same page (percent-encoding normalization).</li>
+        <li>URL normalization must be deterministic — the same URL must always produce the same canonical form.</li>
+    </ul>
+
+    <h3>12.2 Spider Trap Mitigation Strategies</h3>
+    <ul>
+        <li><strong>URL depth limit:</strong> Don't crawl URLs more than N hops from any seed URL (e.g., depth &gt; 15).</li>
+        <li><strong>URL length limit:</strong> Reject URLs longer than 2048 characters.</li>
+        <li><strong>Pattern detection:</strong> If the same URL template (e.g., <code>/calendar?date=*</code>) produces more than K unique URLs, deprioritize or blacklist it.</li>
+        <li><strong>Domain URL count limit:</strong> Cap the number of URLs crawled from a single domain per cycle (e.g., 1 million).</li>
+    </ul>
+
+    <h3>12.3 Handling Different Content Types</h3>
+    <ul>
+        <li>The crawler should check <code>Content-Type</code> response headers. Only parse HTML for link extraction.</li>
+        <li>Non-HTML content (PDF, images, JSON) can be stored but not parsed for links.</li>
+        <li>Very large responses (&gt; 10 MB) should be truncated or skipped to avoid memory issues.</li>
+    </ul>
+
+    <h3>12.4 Legal &amp; Ethical Considerations</h3>
+    <ul>
+        <li>Always respect <code>robots.txt</code> and <code>Crawl-delay</code>.</li>
+        <li>Honor <code>nofollow</code> and <code>noindex</code> meta tags (for downstream indexing, not crawling).</li>
+        <li>Identify the crawler with a descriptive <code>User-Agent</code> string and provide a contact URL.</li>
+        <li>Comply with regional laws (GDPR, CCPA) regarding data collection.</li>
+    </ul>
+
+    <h3>12.5 Monitoring &amp; Observability</h3>
+    <ul>
+        <li><strong>Key metrics:</strong> Pages crawled/sec, error rate (4xx, 5xx, timeouts), queue depth, Bloom Filter false-positive rate, DNS cache hit rate, robots.txt cache hit rate, average fetch latency.</li>
+        <li><strong>Alerting:</strong> Alert if crawl throughput drops below threshold, if error rate exceeds 10%, if queue depth grows uncontrollably, or if a specific domain is consuming disproportionate resources.</li>
+        <li><strong>Logging:</strong> Structured logs for each fetch (URL, status code, latency, content size). Sampled at high rates (e.g., 1% of fetches) to avoid log volume explosion.</li>
+    </ul>
+
+    <h3>12.6 Checkpointing &amp; Recovery</h3>
+    <ul>
+        <li>The URL Metadata Store serves as the authoritative checkpoint. On system restart, the state of every URL is known.</li>
+        <li>The Bloom Filter can be rebuilt from the URL Metadata Store (scan all <code>url_hash</code> values and insert into a fresh Bloom Filter). This takes time at scale, so periodic Bloom Filter snapshots to disk can speed up recovery.</li>
+        <li>The message queue's durability ensures in-flight URLs are re-delivered after a worker crash.</li>
+    </ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- 13. VENDOR SECTION                                            -->
+<!-- ============================================================ -->
+<div class="section" id="vendors">
+    <h2>13. Vendor Section</h2>
+    <p>The design is vendor-agnostic. Below are potential vendor choices with rationale, should you need to select specific technologies:</p>
+
+    <table>
+        <tr><th>Component</th><th>Vendor Options</th><th>Rationale</th></tr>
+        <tr>
+            <td><strong>NoSQL (URL Metadata Store)</strong></td>
+            <td>Apache Cassandra, Amazon DynamoDB, Google Bigtable, ScyllaDB</td>
+            <td><strong>Cassandra/ScyllaDB:</strong> Wide-column store designed for high write throughput and billions of rows. Tunable consistency. Built-in partitioning and replication. ScyllaDB is a C++ rewrite of Cassandra with lower latency.<br/><strong>DynamoDB:</strong> Fully managed, auto-scaling, single-digit-ms latency. Good for teams wanting zero operational overhead.<br/><strong>Bigtable:</strong> Google's managed wide-column store. Excellent for massive scale and integrates with Google Cloud.</td>
+        </tr>
+        <tr>
+            <td><strong>Object Storage (Content Store)</strong></td>
+            <td>Amazon S3, Google Cloud Storage, Azure Blob Storage, MinIO (self-hosted)</td>
+            <td><strong>S3/GCS/Azure Blob:</strong> Industry-standard object storage with 11 9's durability, petabyte scale, low cost ($0.02/GB/month), and strong ecosystem integration.<br/><strong>MinIO:</strong> S3-compatible self-hosted option for on-premises deployments.</td>
+        </tr>
+        <tr>
+            <td><strong>Message Queue (URL Frontier)</strong></td>
+            <td>Apache Kafka, Amazon SQS, RabbitMQ, Apache Pulsar</td>
+            <td><strong>Kafka:</strong> High-throughput distributed log. Excellent for the URL Frontier because it supports partitioning (by domain hash), durability, and replay. Consumer groups provide competing-consumer semantics.<br/><strong>Pulsar:</strong> Similar to Kafka with added features like multi-tenancy and tiered storage.<br/><strong>SQS:</strong> Fully managed, supports FIFO and priority (with multiple queues). Simpler but less flexible.<br/><strong>RabbitMQ:</strong> Good for priority queues natively, but less scalable than Kafka at billions of messages.</td>
+        </tr>
+        <tr>
+            <td><strong>In-Memory Cache (DNS, Robots.txt)</strong></td>
+            <td>Redis, Memcached, Hazelcast</td>
+            <td><strong>Redis:</strong> Rich data structures (hash maps for DNS cache, sorted sets for priority). Supports TTL natively. Cluster mode for sharding. Persistence options for recovery.<br/><strong>Memcached:</strong> Simpler and faster for pure key-value caching. Less feature-rich but sufficient for DNS/robots.txt caching.<br/><strong>Hazelcast:</strong> Embedded Java cache, good if the crawler is Java-based and wants in-process caching without network hops.</td>
+        </tr>
+        <tr>
+            <td><strong>Bloom Filter</strong></td>
+            <td>Custom in-memory implementation, Redis (with RedisBloom module), Apache Spark (for distributed)</td>
+            <td><strong>Custom in-memory:</strong> Most performant, no network overhead. Ideal if workers are long-lived and memory is available.<br/><strong>Redis + RedisBloom:</strong> Shared Bloom Filter across all workers. Adds network latency but ensures global deduplication without synchronization issues.</td>
+        </tr>
+        <tr>
+            <td><strong>Container Orchestration (Worker Scaling)</strong></td>
+            <td>Kubernetes, Amazon ECS, Docker Swarm</td>
+            <td><strong>Kubernetes:</strong> Industry standard for container orchestration. Horizontal Pod Autoscaler can scale workers based on queue depth metrics. Self-healing (restarts crashed workers).<br/><strong>ECS:</strong> AWS-native, simpler than Kubernetes for AWS-only deployments.</td>
+        </tr>
+    </table>
+</div>
+
+<hr style="margin-top: 60px; border: none; border-top: 2px solid var(--border);">
+<p style="text-align: center; color: #9ca3af; font-size: 0.9em; margin-top: 20px;">
+    System Design: Web Crawler — Generated on <script>document.write(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }))</script>
+</p>
+
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'neutral',
+        themeVariables: {
+            primaryColor: '#dbeafe',
+            primaryTextColor: '#1e3a5f',
+            primaryBorderColor: '#2563eb',
+            lineColor: '#6b7280',
+            secondaryColor: '#fef3c7',
+            tertiaryColor: '#d1fae5',
+            fontSize: '14px'
+        },
+        flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+            curve: 'basis'
+        }
+    });
+</script>
 
 </body>
 </html>

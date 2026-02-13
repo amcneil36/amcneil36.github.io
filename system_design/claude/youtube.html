@@ -4,518 +4,1256 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>System Design: YouTube</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <style>
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #e0e0e0; margin: 0; padding: 20px; line-height: 1.7; }
-  h1 { color: #ff0000; font-size: 2.2em; border-bottom: 3px solid #ff0000; padding-bottom: 10px; }
-  h2 { color: #ff4444; margin-top: 40px; }
-  h3 { color: #ff7777; }
-  h4 { color: #ffaaaa; }
-  .section { background: #1a1a1a; padding: 25px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #ff0000; }
-  .subsection { background: #222; padding: 15px; border-radius: 8px; margin: 15px 0; }
-  .diagram-container { background: #1e1e1e; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; overflow-x: auto; }
-  .tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.85em; margin: 2px 4px; }
-  .tag-pk { background: #4a9eff33; color: #4a9eff; border: 1px solid #4a9eff66; }
-  .tag-fk { background: #ff4a4a33; color: #ff4a4a; border: 1px solid #ff4a4a66; }
-  .tag-idx { background: #4aff4a33; color: #4aff4a; border: 1px solid #4aff4a66; }
-  .tag-shard { background: #ffa54a33; color: #ffa54a; border: 1px solid #ffa54a66; }
-  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-  th, td { padding: 12px; text-align: left; border: 1px solid #333; }
-  th { background: #2a2a2a; color: #ff4444; }
-  tr:nth-child(even) { background: #1a1a1a; }
-  code { background: #2a2a2a; padding: 2px 8px; border-radius: 4px; color: #ff7777; font-family: 'Fira Code', monospace; }
-  pre { background: #1a1a1a; padding: 20px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; }
-  .example { background: #0d2818; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #4aff4a; }
-  .tradeoff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-  .tradeoff-pro { background: #0d2818; padding: 15px; border-radius: 8px; border-left: 3px solid #4aff4a; }
-  .tradeoff-con { background: #2d1018; padding: 15px; border-radius: 8px; border-left: 3px solid #ff4a4a; }
-  ul, ol { padding-left: 25px; }
-  li { margin: 6px 0; }
+  :root { --bg: #0f1117; --card: #1a1d27; --border: #2a2d3a; --text: #e0e0e0; --muted: #8b8fa3; --accent: #6c8cff; --accent2: #a78bfa; --green: #34d399; --orange: #fb923c; --red: #f87171; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; padding: 2rem; max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 2.4rem; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.7rem; color: var(--accent); margin-top: 3rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.3rem; color: var(--accent2); margin-top: 2rem; margin-bottom: 0.7rem; }
+  h4 { font-size: 1.1rem; color: var(--green); margin-top: 1.5rem; margin-bottom: 0.5rem; }
+  p, li { color: var(--text); margin-bottom: 0.5rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+  .example { background: #1e2433; border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 1.2rem; margin: 1rem 0; }
+  .example strong { color: var(--accent); }
+  .diagram-container { background: #fff; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+  th { background: var(--card); color: var(--accent); text-align: left; padding: 0.75rem 1rem; border: 1px solid var(--border); }
+  td { padding: 0.75rem 1rem; border: 1px solid var(--border); }
+  tr:nth-child(even) { background: rgba(26,29,39,0.5); }
+  code { background: #252836; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: var(--green); }
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-right: 4px; }
+  .tag-pk { background: rgba(108,140,255,0.2); color: var(--accent); }
+  .tag-fk { background: rgba(167,139,250,0.2); color: var(--accent2); }
+  .tag-idx { background: rgba(52,211,153,0.2); color: var(--green); }
+  .toc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 2rem; margin: 2rem 0; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc ul { list-style: none; padding-left: 0; }
+  .toc ul ul { padding-left: 1.2rem; }
+  .toc li { margin: 0.3rem 0; }
+  .badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+  .badge-sql { background: rgba(108,140,255,0.15); color: var(--accent); }
+  .badge-nosql { background: rgba(251,146,60,0.15); color: var(--orange); }
 </style>
 </head>
 <body>
 
-<h1>▶️ System Design: YouTube (Video Streaming Platform)</h1>
+<h1>📺 System Design: YouTube</h1>
+<p style="color:var(--muted); margin-bottom: 2rem;">A comprehensive design for a video-sharing platform supporting billions of users, video upload, transcoding, adaptive streaming, search, recommendations, and social engagement.</p>
 
-<div class="section">
-<h2>📋 Functional Requirements</h2>
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+<h3 style="margin-top:0;">Table of Contents</h3>
 <ul>
-  <li>Creators can upload videos in any format — system transcodes to multiple resolutions</li>
-  <li>Viewers can stream videos with adaptive bitrate (auto quality adjustment)</li>
-  <li>Users can search for videos by title, description, tags</li>
-  <li>Users can like, comment, subscribe, and view personalized recommendations</li>
+  <li><a href="#fr">1. Functional Requirements</a></li>
+  <li><a href="#nfr">2. Non-Functional Requirements</a></li>
+  <li><a href="#flow1">3. Flow 1 — Video Upload &amp; Processing</a></li>
+  <li><a href="#flow2">4. Flow 2 — Video Streaming / Watching</a></li>
+  <li><a href="#flow3">5. Flow 3 — Video Search</a></li>
+  <li><a href="#flow4">6. Flow 4 — Home Feed &amp; Recommendations</a></li>
+  <li><a href="#flow5">7. Flow 5 — Engagement (Like, Comment, Subscribe)</a></li>
+  <li><a href="#overall">8. Overall Combined Diagram</a></li>
+  <li><a href="#schema">9. Database Schema</a></li>
+  <li><a href="#cdn">10. CDN Deep Dive</a></li>
+  <li><a href="#cache">11. Cache Deep Dive</a></li>
+  <li><a href="#mq">12. Message Queue Deep Dive</a></li>
+  <li><a href="#scaling">13. Scaling Considerations</a></li>
+  <li><a href="#tradeoffs">14. Tradeoffs &amp; Deep Dives</a></li>
+  <li><a href="#alternatives">15. Alternative Approaches</a></li>
+  <li><a href="#additional">16. Additional Information</a></li>
+  <li><a href="#vendors">17. Vendor Section</a></li>
 </ul>
 </div>
 
-<div class="section">
-<h2>🔒 Non-Functional Requirements</h2>
-<ul>
-  <li><strong>Scale:</strong> 800M+ videos, 500 hours uploaded per minute, 1B hours watched per day</li>
-  <li><strong>Low latency streaming:</strong> Video playback starts in &lt;2s, rebuffering ratio &lt;0.5%</li>
-  <li><strong>High availability:</strong> 99.99% uptime globally</li>
-  <li><strong>Efficient storage:</strong> ~1PB of new video per day after transcoding</li>
-  <li><strong>Global distribution:</strong> CDN serving from edge locations worldwide</li>
-</ul>
-</div>
-
 <!-- ============================================================ -->
-<h2>🔄 Flow 1 — Video Upload & Processing Pipeline</h2>
+<h2 id="fr">1. Functional Requirements</h2>
 <!-- ============================================================ -->
-
-<div class="diagram-container">
-<svg viewBox="0 0 1200 420" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="170" width="110" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="75" y="198" text-anchor="middle" fill="white" font-size="13">Creator</text>
-  <text x="75" y="215" text-anchor="middle" fill="white" font-size="10">(Upload Client)</text>
-  <line x1="130" y1="200" x2="190" y2="200" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="200" y="170" width="130" height="60" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="265" y="195" text-anchor="middle" fill="white" font-size="12">Upload Service</text>
-  <text x="265" y="212" text-anchor="middle" fill="white" font-size="10">(Resumable / Chunked)</text>
-  <line x1="330" y1="200" x2="390" y2="200" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="400" y="170" width="130" height="60" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="465" y="195" text-anchor="middle" fill="white" font-size="12">Object Storage</text>
-  <text x="465" y="212" text-anchor="middle" fill="white" font-size="10">(GCS — Raw Video)</text>
-  <line x1="530" y1="200" x2="590" y2="200" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="600" y="170" width="140" height="60" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="670" y="195" text-anchor="middle" fill="white" font-size="12">Kafka / Pub-Sub</text>
-  <text x="670" y="212" text-anchor="middle" fill="white" font-size="10">(transcode-jobs)</text>
-  <line x1="740" y1="180" x2="810" y2="110" stroke="#aaa" marker-end="url(#ah1)"/>
-  <line x1="740" y1="200" x2="810" y2="200" stroke="#aaa" marker-end="url(#ah1)"/>
-  <line x1="740" y1="220" x2="810" y2="290" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="820" y="80" width="160" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="900" y="103" text-anchor="middle" fill="white" font-size="11">Transcoder Workers</text>
-  <text x="900" y="120" text-anchor="middle" fill="white" font-size="10">(FFmpeg — GPU Cluster)</text>
-  <rect x="820" y="175" width="160" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="900" y="198" text-anchor="middle" fill="white" font-size="11">Thumbnail Generator</text>
-  <text x="900" y="215" text-anchor="middle" fill="white" font-size="10">(ML Scene Detection)</text>
-  <rect x="820" y="270" width="160" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="900" y="293" text-anchor="middle" fill="white" font-size="11">Content Moderation</text>
-  <text x="900" y="310" text-anchor="middle" fill="white" font-size="10">(ML + Human Review)</text>
-  <line x1="980" y1="108" x2="1040" y2="200" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="1040" y="175" width="130" height="55" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="1105" y="198" text-anchor="middle" fill="white" font-size="11">CDN Origin</text>
-  <text x="1105" y="215" text-anchor="middle" fill="white" font-size="10">(Transcoded Segments)</text>
-</svg>
-</div>
-
-<div class="section">
-<h3>Step-by-Step</h3>
+<div class="card">
 <ol>
-  <li><strong>Creator initiates upload:</strong> <code>POST /api/v3/videos?uploadType=resumable</code> → returns upload URI. Client uploads video in 8MB chunks with progress tracking. Supports resume on network interruption</li>
-  <li><strong>Upload Service:</strong> Validates file type, size limit (256GB max), user quota. Stores raw video in Google Cloud Storage (GCS) with lifecycle policy. Generates video_id (Base62 encoded, 11 chars like <code>dQw4w9WgXcQ</code>)</li>
-  <li><strong>Metadata saved:</strong> Video record created in DB with status <code>processing</code>. Title, description, tags, channel_id stored</li>
-  <li><strong>Pub/Sub message:</strong> Transcode job message published: <code>{ video_id, raw_path, target_resolutions: [144p, 240p, 360p, 480p, 720p, 1080p, 1440p, 2160p] }</code></li>
-  <li><strong>Transcoder Workers (GPU):</strong> Each worker pulls a job → downloads raw video → FFmpeg transcodes to target resolution with H.264/H.265/VP9/AV1 codecs → segments into 2-6 second chunks → generates MPD/M3U8 manifest for DASH/HLS</li>
-  <li><strong>Thumbnail Generator:</strong> ML model selects 3 key frames (scene changes, faces, text) → generates thumbnails at multiple sizes → creator can choose or upload custom</li>
-  <li><strong>Content Moderation:</strong> ML classifiers check for: nudity (NSFW), violence, copyright (Content ID fingerprinting against reference library of 100M+ assets), hate speech in audio (speech-to-text + NLP)</li>
-  <li><strong>CDN distribution:</strong> Transcoded segments pushed to CDN origin → replicated to edge PoPs. Video status → <code>published</code></li>
+  <li><strong>Video Upload</strong> — Creators can upload videos (support for large files via resumable/chunked uploads).</li>
+  <li><strong>Video Processing / Transcoding</strong> — Uploaded videos are transcoded into multiple resolutions (144p, 360p, 480p, 720p, 1080p, 4K) and formats for adaptive bitrate streaming.</li>
+  <li><strong>Video Streaming / Watching</strong> — Users can stream videos with adaptive bitrate (ABR) using HLS or DASH. Support for seeking, pausing, and resuming playback.</li>
+  <li><strong>Video Search</strong> — Users can search for videos by title, description, tags, and channel name.</li>
+  <li><strong>Home Feed / Recommendations</strong> — Users see a personalized home feed of recommended videos based on watch history, subscriptions, and trending content.</li>
+  <li><strong>Likes / Dislikes</strong> — Users can like or dislike a video. Like/dislike counts are displayed.</li>
+  <li><strong>Comments</strong> — Users can post, edit, and delete comments on videos. Comments support threading (replies).</li>
+  <li><strong>Subscriptions</strong> — Users can subscribe to channels and see a subscription feed.</li>
+  <li><strong>View Counting</strong> — View counts are tracked and displayed on each video.</li>
+  <li><strong>Thumbnails</strong> — Thumbnails are auto-generated during transcoding or uploaded by the creator.</li>
 </ol>
-
-<div class="example">
-<strong>Example:</strong> Creator uploads 4K 30-minute vlog (8GB raw) → Upload Service: resumable upload completes in ~12 min on 100Mbps → Transcoder: 8 resolution variants × 3 codecs = 24 renditions → Total output: ~15GB across all variants → 900 segments (2s each × 30 min) per rendition → Content ID: no copyright match → Published in ~20 minutes → First viewer in US streams 1080p → CDN edge in Virginia serves pre-cached segments
-</div>
-</div>
-
-<div class="section">
-<h3>🔍 Component Deep Dives — Upload Flow</h3>
-
-<div class="subsection">
-<h4>Transcoding Pipeline</h4>
-<p><strong>Codec ladder:</strong></p>
-<table>
-<tr><th>Resolution</th><th>H.264 Bitrate</th><th>VP9 Bitrate</th><th>AV1 Bitrate</th></tr>
-<tr><td>2160p (4K)</td><td>20 Mbps</td><td>12 Mbps</td><td>8 Mbps</td></tr>
-<tr><td>1080p</td><td>8 Mbps</td><td>5 Mbps</td><td>3.5 Mbps</td></tr>
-<tr><td>720p</td><td>5 Mbps</td><td>3 Mbps</td><td>2 Mbps</td></tr>
-<tr><td>480p</td><td>2.5 Mbps</td><td>1.5 Mbps</td><td>1 Mbps</td></tr>
-<tr><td>360p</td><td>1 Mbps</td><td>0.7 Mbps</td><td>0.5 Mbps</td></tr>
-</table>
-<p><strong>Per-title encoding:</strong> Netflix-pioneered technique — analyze video complexity first (animation vs live action vs sports), then optimize bitrate ladder per video. A cartoon needs fewer bits than a fast-action sports clip at the same resolution.</p>
-<p><strong>Parallel transcoding:</strong> Split video into GOP-aligned segments, transcode segments in parallel across workers, merge. Reduces wall-clock time from hours to minutes for long videos.</p>
-</div>
-
-<div class="subsection">
-<h4>Content ID (Copyright Detection)</h4>
-<p><strong>How it works:</strong> Reference content owners upload their media → system generates audio/visual fingerprint. Every uploaded video is fingerprinted and compared against the reference database (~100M+ assets).</p>
-<p><strong>Fingerprinting:</strong> Audio: chromagram-based spectral fingerprint. Visual: perceptual hash of key frames. Both are robust to transcoding, cropping, speed changes.</p>
-<p><strong>Actions:</strong> Match found → content owner policy applies: (1) Block video, (2) Monetize (run ads, revenue to rights holder), (3) Track (just monitor). Most choose monetize.</p>
-</div>
-
-<div class="subsection">
-<h4>Resumable Upload Protocol</h4>
-<p><strong>Protocol:</strong> Google's Resumable Upload protocol over HTTPS</p>
-<p><strong>Flow:</strong> (1) Client POSTs metadata → gets upload URI, (2) Client PUTs video data in chunks, (3) If interrupted, client queries upload status → server reports last received byte, (4) Client resumes from that byte offset</p>
-<p><strong>Why:</strong> Video files are large (GBs). Without resumability, a network hiccup at 99% would require re-uploading everything. Critical for mobile uploads on unreliable connections.</p>
-</div>
 </div>
 
 <!-- ============================================================ -->
-<h2>🔄 Flow 2 — Video Streaming (Playback)</h2>
+<h2 id="nfr">2. Non-Functional Requirements</h2>
 <!-- ============================================================ -->
-
-<div class="diagram-container">
-<svg viewBox="0 0 1100 380" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="160" width="110" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="75" y="188" text-anchor="middle" fill="white" font-size="13">Viewer</text>
-  <text x="75" y="205" text-anchor="middle" fill="white" font-size="10">(Video Player)</text>
-  <line x1="130" y1="190" x2="200" y2="190" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="210" y="160" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="280" y="185" text-anchor="middle" fill="white" font-size="12">Video API</text>
-  <text x="280" y="202" text-anchor="middle" fill="white" font-size="10">(Metadata + Manifest)</text>
-  <line x1="350" y1="190" x2="420" y2="190" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="430" y="160" width="140" height="60" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="500" y="185" text-anchor="middle" fill="white" font-size="12">CDN Edge PoP</text>
-  <text x="500" y="202" text-anchor="middle" fill="white" font-size="10">(Nearest Location)</text>
-  <line x1="570" y1="175" x2="640" y2="120" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="570" y1="205" x2="640" y2="260" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="650" y="90" width="160" height="55" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
-  <text x="730" y="115" text-anchor="middle" fill="white" font-size="12">Cache HIT</text>
-  <text x="730" y="132" text-anchor="middle" fill="white" font-size="10">(Serve from Edge)</text>
-  <rect x="650" y="235" width="160" height="55" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
-  <text x="730" y="258" text-anchor="middle" fill="white" font-size="12">Cache MISS</text>
-  <text x="730" y="275" text-anchor="middle" fill="white" font-size="10">(Fetch from Origin)</text>
-  <line x1="810" y1="262" x2="880" y2="262" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="890" y="235" width="140" height="55" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="960" y="258" text-anchor="middle" fill="white" font-size="12">Origin (GCS)</text>
-  <text x="960" y="275" text-anchor="middle" fill="white" font-size="10">(Fill → Edge Cache)</text>
-</svg>
-</div>
-
-<div class="section">
-<h3>Step-by-Step</h3>
+<div class="card">
 <ol>
-  <li><strong>Player requests video:</strong> <code>GET /api/v3/videos/dQw4w9WgXcQ</code> → returns metadata (title, description, channel) + streaming manifest URL</li>
-  <li><strong>Manifest fetch:</strong> Player fetches DASH MPD or HLS M3U8 manifest from CDN. Manifest lists all available resolutions + segment URLs</li>
-  <li><strong>Adaptive Bitrate (ABR):</strong> Player's ABR algorithm selects initial resolution based on connection speed estimate. Starts with lower quality for fast start, ramps up</li>
-  <li><strong>Segment requests:</strong> Player requests 2-6 second video segments sequentially from CDN: <code>GET /v/dQw4w9WgXcQ/seg-0001-1080p.m4s</code></li>
-  <li><strong>CDN edge serve:</strong> If segment is cached at edge (cache HIT ~95% for popular videos) → serve directly. If MISS → fetch from regional cache → origin (GCS) → cache at edge for subsequent requests</li>
-  <li><strong>Quality switching:</strong> During playback, ABR continuously monitors buffer level + throughput. If bandwidth drops → switch to lower resolution on next segment boundary (seamless switch)</li>
-  <li><strong>View counted:</strong> After ~30 seconds of playback, view count event fired → Kafka → async increment</li>
+  <li><strong>High Availability</strong> — The system should be available 99.99% of the time. Users should always be able to watch videos.</li>
+  <li><strong>Low Latency Streaming</strong> — Video playback should start within 200ms for cached content. Target &lt; 2s for first frame globally.</li>
+  <li><strong>Scalability</strong> — Support 2+ billion monthly active users, 500+ hours of video uploaded per minute, and 1+ billion hours of video watched per day.</li>
+  <li><strong>Eventual Consistency</strong> — Like counts, view counts, and comment counts are acceptable to be eventually consistent (stale for a few seconds).</li>
+  <li><strong>Durability</strong> — Zero data loss for uploaded videos. All uploaded content must be durably stored with replication.</li>
+  <li><strong>Fault Tolerance</strong> — The system should gracefully degrade. If the recommendation engine is down, users should still see a default/trending feed.</li>
+  <li><strong>Resumable Uploads</strong> — Large video uploads should be resumable if the network drops mid-upload.</li>
+  <li><strong>Bandwidth Efficiency</strong> — Adaptive bitrate streaming adjusts quality to the user's network conditions to minimize buffering.</li>
+  <li><strong>Global Reach</strong> — Content must be served from edge locations close to users worldwide via CDN.</li>
+  <li><strong>Content Moderation</strong> — Uploaded videos should pass through automated content moderation before going live.</li>
 </ol>
-
-<div class="example">
-<strong>Example:</strong> Viewer clicks video → Player fetches manifest (50KB, cached at edge) → ABR: estimated 15Mbps connection → starts at 720p → first segment in 0.8s → buffer fills, switches to 1080p at segment 3 → viewer on subway: bandwidth drops to 2Mbps → ABR detects buffer draining → switches to 360p at segment 45 → bandwidth recovers → back to 720p seamlessly
-</div>
-</div>
-
-<div class="section">
-<h3>🔍 Component Deep Dives — Streaming Flow</h3>
-
-<div class="subsection">
-<h4>DASH vs HLS (Adaptive Streaming Protocols)</h4>
-<table>
-<tr><th>Feature</th><th>DASH (Dynamic Adaptive Streaming over HTTP)</th><th>HLS (HTTP Live Streaming)</th></tr>
-<tr><td>Manifest</td><td>MPD (XML)</td><td>M3U8 (plaintext playlist)</td></tr>
-<tr><td>Segment format</td><td>fMP4, WebM</td><td>fMP4, MPEG-TS</td></tr>
-<tr><td>Browser support</td><td>MSE-based (most browsers)</td><td>Native Safari, MSE others</td></tr>
-<tr><td>Codec support</td><td>Any (VP9, AV1, H.264, H.265)</td><td>H.264, H.265, limited AV1</td></tr>
-<tr><td>DRM</td><td>CENC (Widevine, PlayReady)</td><td>FairPlay (Apple)</td></tr>
-</table>
-<p><strong>YouTube uses DASH</strong> primarily (with HLS fallback for Apple devices). DASH allows more codec flexibility (YouTube is pushing AV1 adoption for bandwidth savings).</p>
-</div>
-
-<div class="subsection">
-<h4>ABR (Adaptive Bitrate) Algorithm</h4>
-<p><strong>Buffer-Based (BBA):</strong> YouTube uses a buffer-based approach — decisions based on current buffer level, not just throughput:</p>
-<ul>
-  <li>Buffer &lt; 5s → drop to lowest quality (avoid rebuffer at all costs)</li>
-  <li>Buffer 5-15s → choose quality matching recent throughput</li>
-  <li>Buffer &gt; 15s → try next higher quality</li>
-</ul>
-<p><strong>Why not throughput-based?</strong> Throughput estimation is noisy (varies wildly on mobile). Buffer level is a more stable signal of whether the player can sustain current quality.</p>
-</div>
-
-<div class="subsection">
-<h4>CDN Architecture (Multi-Tier)</h4>
-<p><strong>Tier 1 — Edge PoPs:</strong> Hundreds of locations worldwide. Cache hot content (videos viewed in last hour). ~95% cache hit rate for popular videos. SSD-backed</p>
-<p><strong>Tier 2 — Regional Caches:</strong> ~20 locations. Broader cache for less popular content. Edge misses go here before origin</p>
-<p><strong>Tier 3 — Origin (GCS):</strong> All transcoded segments stored permanently. Only accessed on cold content or initial cache fill</p>
-<p><strong>Long tail problem:</strong> ~80% of YouTube's videos are watched &lt;100 times total. These "long tail" videos are not cached at edge — served from regional/origin. Google's Peering CDN (Google Global Cache) is installed directly in ISP data centers for better performance.</p>
-</div>
 </div>
 
 <!-- ============================================================ -->
-<h2>🔄 Flow 3 — Video Search</h2>
+<h2 id="flow1">3. Flow 1 — Video Upload &amp; Processing</h2>
 <!-- ============================================================ -->
 
 <div class="diagram-container">
-<svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="120" width="110" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="75" y="155" text-anchor="middle" fill="white" font-size="14">User</text>
-  <line x1="130" y1="150" x2="200" y2="150" stroke="#aaa" marker-end="url(#ah3)"/>
-  <rect x="210" y="120" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="280" y="148" text-anchor="middle" fill="white" font-size="12">Search Service</text>
-  <text x="280" y="165" text-anchor="middle" fill="white" font-size="10">(Query Understanding)</text>
-  <line x1="350" y1="150" x2="420" y2="150" stroke="#aaa" marker-end="url(#ah3)"/>
-  <rect x="430" y="120" width="150" height="60" rx="10" fill="#8a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="505" y="148" text-anchor="middle" fill="white" font-size="12">Video Search Index</text>
-  <text x="505" y="165" text-anchor="middle" fill="white" font-size="10">(Inverted Index)</text>
-  <line x1="580" y1="150" x2="650" y2="150" stroke="#aaa" marker-end="url(#ah3)"/>
-  <rect x="660" y="120" width="150" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="735" y="148" text-anchor="middle" fill="white" font-size="12">Ranking Service</text>
-  <text x="735" y="165" text-anchor="middle" fill="white" font-size="10">(ML — CTR + Watch Time)</text>
-</svg>
-</div>
+<pre class="mermaid">
+graph LR
+    A["👤 Creator Client<br/>(Web/Mobile)"] -->|"① HTTP POST<br/>/api/v1/videos/upload<br/>(chunked)"| B["Upload Service"]
+    B -->|"② Store raw video"| C[("Object Storage<br/>(Raw Videos)")]
+    B -->|"③ Write metadata<br/>(status=processing)"| D[("Metadata DB<br/>(SQL)")]
+    B -->|"④ Enqueue<br/>transcode job"| E["Message Queue<br/>(Transcode Jobs)"]
+    E -->|"⑤ Dequeue job"| F["Transcoding<br/>Service"]
+    F -->|"⑥ Read raw video"| C
+    F -->|"⑦ Store transcoded<br/>segments + manifest"| G[("Object Storage<br/>(Transcoded Videos)")]
+    F -->|"⑧ Generate &amp; store<br/>thumbnails"| H[("Object Storage<br/>(Thumbnails)")]
+    F -->|"⑨ Update metadata<br/>(status=ready,<br/>resolutions, duration)"| D
+    F -->|"⑩ Enqueue<br/>moderation job"| I["Message Queue<br/>(Moderation Jobs)"]
+    I -->|"⑪ Dequeue"| J["Content<br/>Moderation Service"]
+    J -->|"⑫ Update status<br/>(published/flagged)"| D
 
-<div class="section">
-<h3>Step-by-Step</h3>
-<ol>
-  <li><strong>User searches:</strong> <code>GET /api/v3/search?q=python+tutorial+beginners&type=video</code></li>
-  <li><strong>Query Understanding:</strong> Spell correction, synonym expansion, entity detection ("python" → programming language, not snake), intent classification (tutorial-seeking)</li>
-  <li><strong>Index query:</strong> Inverted index lookup on tokenized title, description, tags, auto-generated captions. Initial retrieval: ~10K candidates</li>
-  <li><strong>Ranking:</strong> ML model scores candidates based on: query relevance (BM25 text match), predicted CTR (click-through rate), predicted watch time, video freshness, channel authority, user personalization (watch history, subscriptions)</li>
-  <li><strong>Return top 20:</strong> Paginated results with thumbnails, title, channel, view count, upload date, duration</li>
-</ol>
-
-<div class="example">
-<strong>Example:</strong> User searches "python tutorial beginners" → 15K candidate videos match text → Ranking model: "Automate the Boring Stuff" (high watch time completion), "Python for Beginners" (most views), "Learn Python in 1 Hour" (recent, high CTR) → User has Java tutorials in watch history → personalization boosts "Python for Java Developers" → Results returned in 150ms
-</div>
-</div>
-
-<!-- ============================================================ -->
-<h2>🏗️ Combined Architecture</h2>
-<!-- ============================================================ -->
-
-<div class="diagram-container">
-<svg viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ahc" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <!-- Clients -->
-  <rect x="20" y="60" width="120" height="45" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="80" y="87" text-anchor="middle" fill="white" font-size="12">Web Player</text>
-  <rect x="20" y="120" width="120" height="45" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="80" y="147" text-anchor="middle" fill="white" font-size="12">Mobile App</text>
-  <rect x="20" y="180" width="120" height="45" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="80" y="207" text-anchor="middle" fill="white" font-size="12">Smart TV</text>
-  <!-- LB -->
-  <line x1="140" y1="90" x2="220" y2="140" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="140" y1="142" x2="220" y2="142" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="140" y1="200" x2="220" y2="150" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="230" y="115" width="140" height="55" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="300" y="138" text-anchor="middle" fill="white" font-size="12">API Gateway / LB</text>
-  <text x="300" y="155" text-anchor="middle" fill="white" font-size="10">(Global L7)</text>
-  <!-- Services -->
-  <line x1="370" y1="125" x2="450" y2="60" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="370" y1="135" x2="450" y2="135" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="370" y1="145" x2="450" y2="210" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="370" y1="155" x2="450" y2="285" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="370" y1="160" x2="450" y2="360" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="460" y="35" width="140" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="530" y="65" text-anchor="middle" fill="white" font-size="11">Upload Service</text>
-  <rect x="460" y="110" width="140" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="530" y="140" text-anchor="middle" fill="white" font-size="11">Video API</text>
-  <rect x="460" y="185" width="140" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="530" y="215" text-anchor="middle" fill="white" font-size="11">Search Service</text>
-  <rect x="460" y="260" width="140" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="530" y="290" text-anchor="middle" fill="white" font-size="11">Recommendation</text>
-  <rect x="460" y="335" width="140" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="530" y="365" text-anchor="middle" fill="white" font-size="11">Comment Service</text>
-  <!-- Processing -->
-  <line x1="600" y1="60" x2="680" y2="60" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="690" y="35" width="150" height="50" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="765" y="55" text-anchor="middle" fill="white" font-size="11">Transcode Pipeline</text>
-  <text x="765" y="72" text-anchor="middle" fill="white" font-size="10">(Kafka + GPU Workers)</text>
-  <!-- Databases -->
-  <line x1="600" y1="135" x2="680" y2="135" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="600" y1="210" x2="680" y2="210" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="690" y="110" width="150" height="50" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
-  <text x="765" y="130" text-anchor="middle" fill="white" font-size="11">Vitess / MySQL</text>
-  <text x="765" y="147" text-anchor="middle" fill="white" font-size="10">(Video Metadata)</text>
-  <rect x="690" y="185" width="150" height="50" rx="10" fill="#8a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="765" y="205" text-anchor="middle" fill="white" font-size="11">Search Index</text>
-  <text x="765" y="222" text-anchor="middle" fill="white" font-size="10">(Inverted Index)</text>
-  <line x1="600" y1="285" x2="680" y2="280" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="690" y="260" width="150" height="50" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
-  <text x="765" y="280" text-anchor="middle" fill="white" font-size="11">Bigtable</text>
-  <text x="765" y="297" text-anchor="middle" fill="white" font-size="10">(Watch History, Recs)</text>
-  <line x1="600" y1="360" x2="680" y2="340" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="690" y="335" width="150" height="50" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
-  <text x="765" y="355" text-anchor="middle" fill="white" font-size="11">Redis</text>
-  <text x="765" y="372" text-anchor="middle" fill="white" font-size="10">(View Counts, Sessions)</text>
-  <!-- Storage -->
-  <line x1="840" y1="60" x2="920" y2="60" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="930" y="35" width="160" height="50" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="1010" y="55" text-anchor="middle" fill="white" font-size="11">GCS (Object Storage)</text>
-  <text x="1010" y="72" text-anchor="middle" fill="white" font-size="10">(Raw + Transcoded)</text>
-  <rect x="930" y="110" width="160" height="50" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="1010" y="130" text-anchor="middle" fill="white" font-size="11">CDN (Global Edge)</text>
-  <text x="1010" y="147" text-anchor="middle" fill="white" font-size="10">(Video Segments)</text>
-  <line x1="1010" y1="85" x2="1010" y2="105" stroke="#aaa" marker-end="url(#ahc)"/>
-</svg>
-</div>
-
-<div class="example">
-<strong>End-to-End:</strong> Creator uploads 4K video → Upload Service stores raw in GCS → Kafka triggers transcode pipeline → GPU workers produce 8 resolutions × 3 codecs → Content ID checks copyright → Published → CDN distributes → Viewer searches "tutorial" → Search Service ranks by relevance + personalization → Viewer clicks → Player fetches DASH manifest → ABR selects 1080p → CDN edge serves segments → View event → Kafka → async view count increment + recommendation update → Next viewer sees video in recommendations
-</div>
-
-<!-- ============================================================ -->
-<h2>🗄️ Database Schema</h2>
-<!-- ============================================================ -->
-
-<div class="section">
-<h3>Vitess/MySQL — Video Metadata</h3>
-
-<h4>videos</h4>
-<table>
-<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-<tr><td>id</td><td>VARCHAR(11)</td><td><span class="tag tag-pk">PK</span> Base62 encoded (dQw4w9WgXcQ)</td></tr>
-<tr><td>channel_id</td><td>VARCHAR(24)</td><td><span class="tag tag-fk">FK → channels</span><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>title</td><td>VARCHAR(100)</td><td></td></tr>
-<tr><td>description</td><td>TEXT</td><td></td></tr>
-<tr><td>duration_seconds</td><td>INTEGER</td><td></td></tr>
-<tr><td>view_count</td><td>BIGINT</td><td>Denormalized, updated async</td></tr>
-<tr><td>like_count</td><td>BIGINT</td><td>Denormalized</td></tr>
-<tr><td>category_id</td><td>INTEGER</td><td></td></tr>
-<tr><td>tags</td><td>JSON</td><td></td></tr>
-<tr><td>thumbnail_url</td><td>TEXT</td><td></td></tr>
-<tr><td>manifest_url</td><td>TEXT</td><td>DASH MPD path</td></tr>
-<tr><td>status</td><td>VARCHAR(20)</td><td>processing / published / blocked / private / unlisted</td></tr>
-<tr><td>privacy</td><td>VARCHAR(20)</td><td>public / unlisted / private</td></tr>
-<tr><td>upload_date</td><td>TIMESTAMPTZ</td><td><span class="tag tag-idx">INDEX</span></td></tr>
-</table>
-
-<h4>channels</h4>
-<table>
-<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-<tr><td>id</td><td>VARCHAR(24)</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>name</td><td>VARCHAR(100)</td><td></td></tr>
-<tr><td>owner_user_id</td><td>BIGINT</td><td><span class="tag tag-fk">FK → users</span></td></tr>
-<tr><td>subscriber_count</td><td>BIGINT</td><td>Denormalized</td></tr>
-<tr><td>total_views</td><td>BIGINT</td><td>Denormalized</td></tr>
-<tr><td>created_at</td><td>TIMESTAMPTZ</td><td></td></tr>
-</table>
-
-<h3>Bigtable — User Data (NoSQL)</h3>
-<pre>
-Table: user_watch_history
-Row Key: {user_id}#{reverse_timestamp}
-Column Family: video
-  - video:id = "dQw4w9WgXcQ"
-  - video:watch_pct = 0.85
-  - video:timestamp = 1707500000
-
-Table: video_comments
-Row Key: {video_id}#{timestamp}#{comment_id}
-Column Family: comment
-  - comment:user_id = "12345"
-  - comment:text = "Great tutorial!"
-  - comment:likes = 42
-  - comment:reply_to = null
+    style A fill:#4a90d9,stroke:#2c5f8a,color:#fff
+    style B fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style C fill:#f4a460,stroke:#c47a30,color:#333
+    style D fill:#f4a460,stroke:#c47a30,color:#333
+    style E fill:#9b59b6,stroke:#6c3483,color:#fff
+    style F fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style G fill:#f4a460,stroke:#c47a30,color:#333
+    style H fill:#f4a460,stroke:#c47a30,color:#333
+    style I fill:#9b59b6,stroke:#6c3483,color:#fff
+    style J fill:#5b9bd5,stroke:#3a6d9e,color:#fff
 </pre>
+</div>
 
-<h3>Sharding Strategy</h3>
-<p><strong>videos:</strong> Vitess (sharded MySQL) — shard by <code>video_id</code> hash. YouTube uses Vitess (which they created) for horizontal MySQL scaling <span class="tag tag-shard">HASH SHARD</span></p>
-<p><strong>user_watch_history:</strong> Bigtable — row key prefix is user_id, so all history for a user is on same tablet (Bigtable's shard unit) <span class="tag tag-shard">PREFIX SHARD</span></p>
-<p><strong>comments:</strong> Shard by <code>video_id</code> — all comments for a video co-located <span class="tag tag-shard">HASH SHARD</span></p>
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Successful Upload (Happy Path):</strong><br/>
+A creator named Alice opens the YouTube app on her laptop and selects a 500 MB video file to upload. The client splits the file into 5 MB chunks and sends each chunk via <code>HTTP POST /api/v1/videos/upload</code> (with a resumable upload token) to the <strong>Upload Service</strong>. The Upload Service reassembles the chunks and stores the raw video in <strong>Object Storage</strong>. It writes a metadata record to the <strong>Metadata DB</strong> with <code>status = "processing"</code> and enqueues a transcode job onto the <strong>Message Queue</strong>. The <strong>Transcoding Service</strong> picks up the job, reads the raw video from Object Storage, transcodes it into 6 resolutions (144p through 4K), generates HLS segments and a master manifest file (.m3u8), and stores them in Object Storage. It also generates 3 thumbnail candidates and stores them. The Transcoding Service updates the metadata record to <code>status = "ready"</code> with duration, resolution list, and thumbnail URLs. A moderation job is enqueued; the <strong>Content Moderation Service</strong> analyzes the video, determines it is safe, and updates the status to <code>"published"</code>. Alice sees her video go live within ~10 minutes.
+</div>
+
+<div class="example">
+<strong>Example 2 — Interrupted Upload (Resumable):</strong><br/>
+Bob starts uploading a 2 GB video from his phone on a train. After uploading 800 MB (160 chunks), the network drops. When connectivity resumes, the client calls <code>HTTP GET /api/v1/videos/upload/status?token=abc123</code> to check how many chunks the server received. The Upload Service replies that chunks 1–160 were received. The client resumes from chunk 161 and completes the upload. The rest of the flow proceeds identically to Example 1.
+</div>
+
+<div class="example">
+<strong>Example 3 — Moderation Rejection:</strong><br/>
+Carol uploads a video containing prohibited content. The Upload and Transcoding flows complete normally, but when the <strong>Content Moderation Service</strong> processes the moderation job, it flags the video. The status is set to <code>"flagged"</code> and the video is not made publicly visible. Carol receives a notification that her video violated community guidelines.
+</div>
+
+<h3>Component Deep Dive — Flow 1</h3>
+
+<div class="card">
+<h4>Upload Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> HTTP/1.1 and HTTP/2</li>
+  <li><strong>Endpoint:</strong> <code>POST /api/v1/videos/upload</code></li>
+  <li><strong>Input:</strong> Video binary data (chunked, multipart/form-data), upload token (for resumable uploads), video metadata (title, description, tags, privacy setting).</li>
+  <li><strong>Output:</strong> <code>{ video_id, upload_status, chunks_received }</code></li>
+  <li><strong>Resumable Upload Endpoint:</strong> <code>GET /api/v1/videos/upload/status?token={token}</code> — returns progress of in-flight upload.</li>
+  <li><strong>Responsibilities:</strong> Authenticates the creator, validates file type and size limits, reassembles chunks, stores raw video to Object Storage, writes initial metadata, and enqueues the transcode job. Generates a unique <code>video_id</code> (UUID or Snowflake ID).</li>
+  <li><strong>Stateless:</strong> The service itself is stateless; chunk progress is tracked in a temporary store (cache or DB) keyed by the upload token.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Object Storage (Raw Videos / Transcoded Videos / Thumbnails)</h4>
+<ul>
+  <li><strong>Type:</strong> Distributed Object Storage</li>
+  <li><strong>Stores:</strong> Raw uploaded videos, transcoded video segments (e.g., HLS .ts chunks or fMP4 segments), HLS/DASH manifest files, and thumbnail images.</li>
+  <li><strong>Replication:</strong> Data is replicated across 3+ data centers for durability.</li>
+  <li><strong>Access Pattern:</strong> Write-once-read-many (WORM) for video files. Raw videos are written once and read by the transcoding pipeline. Transcoded segments are written once and read by CDN/end-users millions of times.</li>
+  <li><strong>Separation:</strong> Raw videos and transcoded videos are stored in separate buckets/namespaces. Raw videos can be moved to cold storage after transcoding to save costs.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Message Queue (Transcode Jobs / Moderation Jobs)</h4>
+<ul>
+  <li><strong>Purpose:</strong> Decouples the upload path from the computationally expensive transcoding and moderation steps so the user is not waiting for transcoding to complete.</li>
+  <li><strong>Messages contain:</strong> <code>{ video_id, raw_video_path, requested_resolutions, callback_url }</code></li>
+  <li><strong>Guarantee:</strong> At-least-once delivery with consumer idempotency. If a transcode worker crashes, the job is re-delivered to another worker.</li>
+  <li><strong>Separate queues:</strong> One queue for transcode jobs, another for moderation jobs, to allow independent scaling.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Transcoding Service</h4>
+<ul>
+  <li><strong>Consumes from:</strong> Transcode Jobs Message Queue</li>
+  <li><strong>Responsibilities:</strong> Reads the raw video from Object Storage, transcodes into multiple resolutions and bitrates, generates HLS/DASH manifests (master + per-resolution playlists), generates thumbnail images at configurable intervals, and writes all artifacts to Object Storage.</li>
+  <li><strong>Output formats:</strong> HLS (.m3u8 manifests + .ts segments) and/or DASH (.mpd manifest + fMP4 segments).</li>
+  <li><strong>Parallelism:</strong> Each resolution can be transcoded in parallel by splitting the job into sub-tasks (e.g., transcode 720p, 1080p concurrently).</li>
+  <li><strong>After completion:</strong> Updates Metadata DB with <code>status="ready"</code>, list of available resolutions, video duration, and thumbnail URLs. Enqueues a moderation job.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Content Moderation Service</h4>
+<ul>
+  <li><strong>Consumes from:</strong> Moderation Jobs Message Queue</li>
+  <li><strong>Responsibilities:</strong> Runs automated ML-based analysis on the video (frame sampling, audio transcription, nudity detection, violence detection, copyright matching). Produces a safety score.</li>
+  <li><strong>Output:</strong> Updates the Metadata DB status to <code>"published"</code> (safe) or <code>"flagged"</code> (requires human review). May trigger a notification to the creator if flagged.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Metadata DB (SQL)</h4>
+<ul>
+  <li><strong>Type:</strong> SQL (relational database)</li>
+  <li><strong>Stores:</strong> Video metadata (title, description, status, resolutions, duration, thumbnail URLs, creator ID, timestamps).</li>
+  <li><strong>Why SQL:</strong> Video metadata is highly structured with well-defined relationships (video → creator). Transactions ensure consistent state transitions (processing → ready → published). Complex queries for admin dashboards.</li>
+  <li><strong>Written to during this flow:</strong> (a) When upload starts (status=processing), (b) When transcoding completes (status=ready), (c) When moderation completes (status=published/flagged).</li>
+</ul>
 </div>
 
 <!-- ============================================================ -->
-<h2>💾 Cache & CDN Deep Dive</h2>
+<h2 id="flow2">4. Flow 2 — Video Streaming / Watching</h2>
 <!-- ============================================================ -->
 
-<div class="section">
-<h3>CDN Caching Strategy</h3>
+<div class="diagram-container">
+<pre class="mermaid">
+graph LR
+    A["👤 Viewer Client<br/>(Web/Mobile)"] -->|"① HTTP GET<br/>/api/v1/videos/{id}"| B["Video Metadata<br/>Service"]
+    B -->|"② Read metadata"| C[("Cache<br/>(Metadata)")]
+    C -.->|"cache miss"| D[("Metadata DB<br/>(SQL)")]
+    B -->|"③ Return metadata<br/>+ manifest URL<br/>+ CDN-signed URL"| A
+    A -->|"④ HTTP GET<br/>manifest.m3u8<br/>(HLS) or .mpd (DASH)"| E["CDN Edge<br/>Server"]
+    E -->|"⑤ cache miss"| F[("Object Storage<br/>(Transcoded Videos)")]
+    E -->|"⑥ Return manifest"| A
+    A -->|"⑦ HTTP GET<br/>segment_N.ts<br/>(adaptive bitrate)"| E
+    E -->|"⑧ Return video<br/>segment"| A
+    A -->|"⑨ Async HTTP POST<br/>/api/v1/videos/{id}/view"| G["View Counting<br/>Service"]
+    G -->|"⑩ Increment"| H[("NoSQL<br/>(View Counts)")]
+
+    style A fill:#4a90d9,stroke:#2c5f8a,color:#fff
+    style B fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style C fill:#e74c3c,stroke:#c0392b,color:#fff
+    style D fill:#f4a460,stroke:#c47a30,color:#333
+    style E fill:#27ae60,stroke:#1e8449,color:#fff
+    style F fill:#f4a460,stroke:#c47a30,color:#333
+    style G fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style H fill:#f4a460,stroke:#c47a30,color:#333
+</pre>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Watching a Popular Video (CDN Cache Hit):</strong><br/>
+Dave opens YouTube and clicks on a trending music video. The client sends <code>HTTP GET /api/v1/videos/v123</code> to the <strong>Video Metadata Service</strong>, which checks the <strong>in-memory cache</strong> and finds the metadata (cache hit since the video is popular). It returns the video title, description, thumbnail URL, and a CDN-signed manifest URL. The client requests the HLS master manifest from the <strong>CDN edge server</strong> closest to Dave (determined by DNS-based routing). The CDN has the manifest and segments cached (popular video). The client's HLS player reads the manifest, detects Dave is on Wi-Fi, and starts fetching 1080p segments. As each segment is returned from the CDN edge in &lt; 50ms, playback begins almost immediately. After 30 seconds of watching, the client fires an async <code>HTTP POST /api/v1/videos/v123/view</code> to the <strong>View Counting Service</strong>, which increments the count in a <strong>NoSQL counter store</strong>.
+</div>
+
+<div class="example">
+<strong>Example 2 — Watching an Obscure Video (CDN Cache Miss):</strong><br/>
+Eve searches for a niche tutorial video with only 50 views. She clicks on it. The Metadata Service finds the metadata in the DB (cache miss, since the video is rarely accessed). The CDN edge does not have the segments cached. The CDN pulls the manifest and segments from the <strong>origin Object Storage</strong>, serves them to Eve, and caches them at the edge for subsequent requests. Playback starts with slightly higher latency (~1–2s) compared to a cache hit.
+</div>
+
+<div class="example">
+<strong>Example 3 — Adaptive Bitrate Switch:</strong><br/>
+Frank starts watching a video on 4G (720p). Midway through, he enters a subway and bandwidth drops. The HLS player on his client detects the throughput decrease and automatically switches from 720p segments to 360p segments without interrupting playback. The CDN serves the lower-resolution segments. When Frank exits the subway and bandwidth recovers, the player ramps back up to 720p.
+</div>
+
+<h3>Component Deep Dive — Flow 2</h3>
+
+<div class="card">
+<h4>Video Metadata Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> HTTP/2 (REST)</li>
+  <li><strong>Endpoint:</strong> <code>GET /api/v1/videos/{video_id}</code></li>
+  <li><strong>Input:</strong> <code>video_id</code> (path parameter), optional <code>user_id</code> (from auth token, to personalize: did user like this video?).</li>
+  <li><strong>Output:</strong> <code>{ video_id, title, description, channel_name, channel_id, duration, view_count, like_count, dislike_count, published_at, thumbnail_url, manifest_url (CDN-signed), available_resolutions[], user_reaction (like/dislike/none) }</code></li>
+  <li><strong>First checks the in-memory cache</strong> for the video metadata. On cache miss, reads from Metadata DB (SQL) and populates the cache.</li>
+  <li><strong>Generates CDN-signed URLs</strong> for the manifest file with a time-limited token (e.g., 6-hour expiry) to prevent unauthorized hotlinking.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>CDN (Content Delivery Network)</h4>
+<ul>
+  <li><strong>Role:</strong> Caches and serves video segments and manifests from edge servers geographically close to the viewer.</li>
+  <li><strong>Protocol:</strong> HTTP/1.1 and HTTP/2 (HTTPS for all content).</li>
+  <li><strong>Routing:</strong> DNS-based or Anycast routing to direct users to the nearest edge server.</li>
+  <li><strong>On cache miss:</strong> The edge server fetches from the origin (Object Storage), serves it to the client, and caches it.</li>
+  <li><strong>Cache key:</strong> The URL path (e.g., <code>/videos/v123/1080p/segment_42.ts</code>).</li>
+  <li><strong>See <a href="#cdn">Section 10 — CDN Deep Dive</a> for full details.</strong></li>
+</ul>
+</div>
+
+<div class="card">
+<h4>View Counting Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> HTTP/2 (REST)</li>
+  <li><strong>Endpoint:</strong> <code>POST /api/v1/videos/{video_id}/view</code></li>
+  <li><strong>Input:</strong> <code>video_id</code>, <code>user_id</code> (optional, for analytics), <code>watch_duration_seconds</code>.</li>
+  <li><strong>Output:</strong> <code>202 Accepted</code> (fire-and-forget from client perspective).</li>
+  <li><strong>Implementation:</strong> Uses a NoSQL counter store optimized for high write throughput. Batches increments in memory and flushes periodically (e.g., every 5 seconds) to reduce write amplification. De-duplication logic to avoid counting refreshes as new views (e.g., minimum 30 seconds of watch time to count as a view).</li>
+  <li><strong>Eventual consistency:</strong> View counts displayed to users may lag by a few seconds.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Adaptive Bitrate Streaming (HLS / DASH)</h4>
+<ul>
+  <li><strong>HLS (HTTP Live Streaming):</strong> Apple's protocol. The master manifest (.m3u8) lists available quality levels. Each quality level has its own playlist of segment URLs (.ts files, typically 2–10 seconds each). The client player measures download throughput and switches quality levels dynamically.</li>
+  <li><strong>DASH (Dynamic Adaptive Streaming over HTTP):</strong> Open standard (MPEG-DASH). Uses .mpd manifests and fMP4 segments. Similar adaptive logic.</li>
+  <li><strong>Why HLS/DASH over raw progressive download:</strong> Progressive download cannot adapt to bandwidth changes. HLS/DASH allow seamless quality switching, support DRM, and work well with CDNs (small, cacheable segments).</li>
+  <li><strong>Why not WebRTC/RTMP:</strong> WebRTC is designed for real-time peer-to-peer communication (video calls), not on-demand playback. RTMP requires persistent connections and specialized servers; HLS/DASH are HTTP-based and CDN-friendly.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="flow3">5. Flow 3 — Video Search</h2>
+<!-- ============================================================ -->
+
+<div class="diagram-container">
+<pre class="mermaid">
+graph LR
+    A["👤 User Client"] -->|"① HTTP GET<br/>/api/v1/search?q=cats"| B["API Gateway /<br/>Load Balancer"]
+    B -->|"② Route"| C["Search Service"]
+    C -->|"③ Query"| D[("Search Index<br/>(Inverted Index)")]
+    C -->|"④ Fetch metadata<br/>for top results"| E[("Cache<br/>(Metadata)")]
+    E -.->|"cache miss"| F[("Metadata DB<br/>(SQL)")]
+    C -->|"⑤ Return ranked<br/>results"| A
+
+    style A fill:#4a90d9,stroke:#2c5f8a,color:#fff
+    style B fill:#e67e22,stroke:#b35a00,color:#fff
+    style C fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style D fill:#f4a460,stroke:#c47a30,color:#333
+    style E fill:#e74c3c,stroke:#c0392b,color:#fff
+    style F fill:#f4a460,stroke:#c47a30,color:#333
+</pre>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Simple Keyword Search:</strong><br/>
+Grace types "how to bake sourdough bread" into the search bar. The client sends <code>HTTP GET /api/v1/search?q=how+to+bake+sourdough+bread&page=1&limit=20</code> to the <strong>API Gateway</strong>, which routes it to the <strong>Search Service</strong>. The Search Service tokenizes the query, queries the <strong>inverted index</strong> on the fields <code>title</code>, <code>description</code>, and <code>tags</code>. The index returns a ranked list of video IDs scored by relevance (TF-IDF/BM25), boosted by engagement signals (view count, like ratio, freshness). The Search Service fetches metadata for the top 20 results from the cache/DB and returns them to Grace, including titles, thumbnails, channel names, view counts, and durations.
+</div>
+
+<div class="example">
+<strong>Example 2 — Filtered Search:</strong><br/>
+Hank searches for "python tutorial" with filters: upload date = "this week", duration = "10-20 minutes". The Search Service applies these as post-filters (or pre-filters if indexed) on the inverted index results, returning only videos matching all criteria.
+</div>
+
+<div class="example">
+<strong>Example 3 — No Results:</strong><br/>
+Ivy searches for "xyzzy12345 tutorial". The inverted index returns 0 matches. The Search Service returns an empty result set with suggested corrections ("Did you mean...?") generated by a spell-check / fuzzy-matching module.
+</div>
+
+<h3>Component Deep Dive — Flow 3</h3>
+
+<div class="card">
+<h4>Search Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> HTTP/2 (REST)</li>
+  <li><strong>Endpoint:</strong> <code>GET /api/v1/search?q={query}&page={page}&limit={limit}&filters={...}</code></li>
+  <li><strong>Input:</strong> Query string, pagination parameters, optional filters (upload_date, duration, category, sort_by).</li>
+  <li><strong>Output:</strong> <code>{ results: [{ video_id, title, description, thumbnail_url, channel_name, view_count, duration, published_at }], total_count, page, has_next }</code></li>
+  <li><strong>Responsibilities:</strong> Tokenizes and normalizes the query (lowercasing, stemming, stop-word removal), queries the inverted index, applies ranking (BM25 + engagement boosting), applies filters, hydrates results with metadata from cache/DB.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Search Index (Inverted Index)</h4>
+<ul>
+  <li><strong>Type:</strong> Inverted index built over video <code>title</code>, <code>description</code>, <code>tags</code>, and <code>channel_name</code>.</li>
+  <li><strong>Structure:</strong> Maps each token → list of (video_id, field, position, score). Example: token "sourdough" → [(v456, title, pos=3, score=0.8), (v789, description, pos=12, score=0.4)].</li>
+  <li><strong>Updates:</strong> When a video is published, an indexing job adds its metadata to the search index. This can be event-driven (triggered by the "published" status update via a message queue) with a small delay (near-real-time, typically &lt; 30 seconds).</li>
+  <li><strong>Ranking signals:</strong> BM25 text relevance, view count (popularity), like ratio (quality), freshness (recency), and channel authority (subscriber count).</li>
+  <li><strong>Why inverted index:</strong> Inverted indexes are the standard for full-text search. They allow O(1) lookup per token and efficient intersection/union of posting lists for multi-term queries.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="flow4">6. Flow 4 — Home Feed &amp; Recommendations</h2>
+<!-- ============================================================ -->
+
+<div class="diagram-container">
+<pre class="mermaid">
+graph LR
+    A["👤 User Client"] -->|"① HTTP GET<br/>/api/v1/feed"| B["Feed Service"]
+    B -->|"② Check"| C[("Cache<br/>(Pre-computed<br/>Feed)")]
+    C -.->|"cache miss"| D["Recommendation<br/>Engine"]
+    D -->|"③ Read user<br/>history"| E[("NoSQL<br/>(Watch History)")]
+    D -->|"④ Read<br/>subscriptions"| F[("SQL<br/>(Subscriptions)")]
+    D -->|"⑤ Read trending /<br/>collaborative filtering"| G[("NoSQL<br/>(Video Stats)")]
+    D -->|"⑥ Score &amp;<br/>rank candidates"| D
+    D -->|"⑦ Return ranked<br/>video IDs"| B
+    B -->|"⑧ Hydrate with<br/>metadata"| H[("Cache<br/>(Metadata)")]
+    H -.->|"cache miss"| I[("Metadata DB<br/>(SQL)")]
+    B -->|"⑨ Return<br/>personalized feed"| A
+
+    style A fill:#4a90d9,stroke:#2c5f8a,color:#fff
+    style B fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style C fill:#e74c3c,stroke:#c0392b,color:#fff
+    style D fill:#8e44ad,stroke:#6c3483,color:#fff
+    style E fill:#f4a460,stroke:#c47a30,color:#333
+    style F fill:#f4a460,stroke:#c47a30,color:#333
+    style G fill:#f4a460,stroke:#c47a30,color:#333
+    style H fill:#e74c3c,stroke:#c0392b,color:#fff
+    style I fill:#f4a460,stroke:#c47a30,color:#333
+</pre>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Returning User with History (Cache Hit):</strong><br/>
+Jack opens the YouTube app. The client sends <code>HTTP GET /api/v1/feed?user_id=u100&page=1</code> to the <strong>Feed Service</strong>. The Feed Service checks the <strong>pre-computed feed cache</strong> and finds Jack's feed was pre-generated 10 minutes ago (cache hit). It returns a page of 20 video recommendations including: videos from channels Jack subscribes to, videos similar to what he recently watched (collaborative filtering), and trending videos in his region. Each result includes metadata (title, thumbnail, channel, view count).
+</div>
+
+<div class="example">
+<strong>Example 2 — New User with No History (Cold Start):</strong><br/>
+Kate just created an account and opens the home feed. The Feed Service finds no pre-computed feed and no watch history. The <strong>Recommendation Engine</strong> falls back to a cold-start strategy: it returns globally trending videos, popular videos in Kate's geographic region, and videos from popular categories. As Kate watches videos and interacts, her personalized recommendations improve over time.
+</div>
+
+<div class="example">
+<strong>Example 3 — Infinite Scroll (Pagination):</strong><br/>
+Jack scrolls past the first 20 results. The client requests <code>HTTP GET /api/v1/feed?user_id=u100&page=2</code>. The Feed Service returns the next 20 recommendations from the pre-computed list (or generates on demand if the cache has expired).
+</div>
+
+<h3>Component Deep Dive — Flow 4</h3>
+
+<div class="card">
+<h4>Feed Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> HTTP/2 (REST)</li>
+  <li><strong>Endpoint:</strong> <code>GET /api/v1/feed?page={page}&limit={limit}</code></li>
+  <li><strong>Input:</strong> <code>user_id</code> (from auth token), pagination parameters.</li>
+  <li><strong>Output:</strong> <code>{ videos: [{ video_id, title, thumbnail_url, channel_name, view_count, duration, published_at }], page, has_next }</code></li>
+  <li><strong>First checks the pre-computed feed cache.</strong> If a cache miss or cache expired, calls the Recommendation Engine to generate a fresh feed, then caches it.</li>
+  <li><strong>Hydrates video IDs</strong> with full metadata from the metadata cache/DB before returning.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Recommendation Engine</h4>
+<ul>
+  <li><strong>Type:</strong> Internal ML-based service</li>
+  <li><strong>Inputs:</strong> User's watch history (from NoSQL), subscription list (from SQL), video engagement stats (from NoSQL), user demographics/region.</li>
+  <li><strong>Algorithm pipeline:</strong>
+    <ol>
+      <li><strong>Candidate Generation:</strong> Pull candidate videos from subscriptions (recent uploads from subscribed channels), collaborative filtering (users similar to you watched X), content-based filtering (videos with similar tags/categories to your history), and trending/popular.</li>
+      <li><strong>Scoring/Ranking:</strong> ML model scores each candidate based on predicted watch time (not just click-through rate), considering features like video freshness, creator engagement rate, user affinity to category, etc.</li>
+      <li><strong>Re-ranking:</strong> Apply diversity rules (don't show 5 videos from same channel in a row), freshness boosting, and business rules.</li>
+    </ol>
+  </li>
+  <li><strong>Pre-computation:</strong> For active users, feeds can be pre-computed periodically (e.g., every 30 min) and stored in cache to reduce latency. For less active users, feeds are generated on demand.</li>
+  <li><strong>Fallback:</strong> If the engine is slow or down, the Feed Service returns a cached stale feed or a default trending feed (graceful degradation).</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="flow5">7. Flow 5 — Engagement (Like, Comment, Subscribe)</h2>
+<!-- ============================================================ -->
+
+<div class="diagram-container">
+<pre class="mermaid">
+graph LR
+    A["👤 User Client"] -->|"① HTTP POST<br/>/api/v1/videos/{id}/like"| B["Engagement<br/>Service"]
+    B -->|"② Write reaction"| C[("NoSQL<br/>(Reactions)")]
+    B -->|"③ Async increment<br/>like count"| D[("NoSQL<br/>(Video Stats)")]
+    B -->|"④ Invalidate<br/>cache"| E[("Cache<br/>(Metadata)")]
+
+    A2["👤 User Client"] -->|"⑤ HTTP POST<br/>/api/v1/videos/{id}/comments"| F["Comment<br/>Service"]
+    F -->|"⑥ Write comment"| G[("SQL<br/>(Comments DB)")]
+    F -->|"⑦ Enqueue<br/>notification"| H["Message Queue<br/>(Notifications)"]
+    H -->|"⑧ Process"| I["Notification<br/>Service"]
+
+    A3["👤 User Client"] -->|"⑨ HTTP POST<br/>/api/v1/channels/{id}/subscribe"| J["Subscription<br/>Service"]
+    J -->|"⑩ Write"| K[("SQL<br/>(Subscriptions DB)")]
+    J -->|"⑪ Increment<br/>subscriber count"| D
+
+    style A fill:#4a90d9,stroke:#2c5f8a,color:#fff
+    style A2 fill:#4a90d9,stroke:#2c5f8a,color:#fff
+    style A3 fill:#4a90d9,stroke:#2c5f8a,color:#fff
+    style B fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style C fill:#f4a460,stroke:#c47a30,color:#333
+    style D fill:#f4a460,stroke:#c47a30,color:#333
+    style E fill:#e74c3c,stroke:#c0392b,color:#fff
+    style F fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style G fill:#f4a460,stroke:#c47a30,color:#333
+    style H fill:#9b59b6,stroke:#6c3483,color:#fff
+    style I fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style J fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style K fill:#f4a460,stroke:#c47a30,color:#333
+</pre>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Liking a Video:</strong><br/>
+Leo is watching a comedy video and clicks the thumbs-up button. The client sends <code>HTTP POST /api/v1/videos/v456/like</code> with Leo's auth token. The <strong>Engagement Service</strong> writes a reaction record <code>{ user_id: u200, video_id: v456, type: "like" }</code> to the <strong>NoSQL Reactions store</strong> (upsert: if Leo already liked it, this is a no-op; if he previously disliked, it flips to like). It asynchronously increments the like count in the <strong>NoSQL Video Stats store</strong> and invalidates the cached metadata for video v456 so subsequent reads pick up the updated count. The client receives <code>200 OK</code> and the thumbs-up icon fills in.
+</div>
+
+<div class="example">
+<strong>Example 2 — Posting a Comment:</strong><br/>
+Mia watches a cooking video and posts "Great recipe! I'll try this tonight." The client sends <code>HTTP POST /api/v1/videos/v789/comments</code> with <code>{ content: "Great recipe! I'll try this tonight." }</code>. The <strong>Comment Service</strong> writes the comment to the <strong>SQL Comments DB</strong> and enqueues a notification job on the <strong>Message Queue</strong>. The <strong>Notification Service</strong> picks up the job and sends a notification to the video creator: "Mia commented on your video."
+</div>
+
+<div class="example">
+<strong>Example 3 — Replying to a Comment (Threading):</strong><br/>
+Noah sees Mia's comment and replies "I tried it, so good!" The client sends <code>HTTP POST /api/v1/videos/v789/comments</code> with <code>{ content: "I tried it, so good!", parent_comment_id: "c500" }</code>. The Comment Service writes this as a child of comment c500. Both Mia and the video creator receive notifications.
+</div>
+
+<div class="example">
+<strong>Example 4 — Subscribing to a Channel:</strong><br/>
+Olivia enjoys a tech channel and clicks "Subscribe." The client sends <code>HTTP POST /api/v1/channels/ch300/subscribe</code>. The <strong>Subscription Service</strong> writes a subscription record to the <strong>SQL Subscriptions DB</strong> and increments the channel's subscriber count in the <strong>NoSQL Video Stats store</strong>. Olivia's subscription feed will now include future uploads from ch300.
+</div>
+
+<div class="example">
+<strong>Example 5 — Unliking a Video:</strong><br/>
+Leo decides to remove his like. He clicks the thumbs-up button again (toggle off). The client sends <code>HTTP DELETE /api/v1/videos/v456/like</code>. The Engagement Service deletes the reaction record and decrements the like count. The cache is invalidated.
+</div>
+
+<h3>Component Deep Dive — Flow 5</h3>
+
+<div class="card">
+<h4>Engagement Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> HTTP/2 (REST)</li>
+  <li><strong>Endpoints:</strong>
+    <ul>
+      <li><code>POST /api/v1/videos/{video_id}/like</code> — Like a video. Input: auth token. Output: <code>200 OK</code>.</li>
+      <li><code>DELETE /api/v1/videos/{video_id}/like</code> — Unlike a video. Input: auth token. Output: <code>200 OK</code>.</li>
+      <li><code>POST /api/v1/videos/{video_id}/dislike</code> — Dislike a video.</li>
+    </ul>
+  </li>
+  <li><strong>Idempotent:</strong> Repeat requests are safe (upsert/no-op if already liked).</li>
+  <li><strong>Writes reaction to NoSQL Reactions store, increments/decrements counters in NoSQL Video Stats store, and invalidates metadata cache.</strong></li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Comment Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> HTTP/2 (REST)</li>
+  <li><strong>Endpoints:</strong>
+    <ul>
+      <li><code>POST /api/v1/videos/{video_id}/comments</code> — Create comment. Input: <code>{ content, parent_comment_id? }</code>. Output: <code>{ comment_id, content, created_at }</code>.</li>
+      <li><code>GET /api/v1/videos/{video_id}/comments?page={page}&sort={top|newest}</code> — List comments. Output: paginated comment list with author info, timestamps, reply counts.</li>
+      <li><code>PUT /api/v1/comments/{comment_id}</code> — Edit comment. Input: <code>{ content }</code>.</li>
+      <li><code>DELETE /api/v1/comments/{comment_id}</code> — Delete comment (soft delete).</li>
+    </ul>
+  </li>
+  <li><strong>Triggers notification</strong> to the video creator (and parent comment author for replies) via message queue.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Subscription Service</h4>
+<ul>
+  <li><strong>Protocol:</strong> HTTP/2 (REST)</li>
+  <li><strong>Endpoints:</strong>
+    <ul>
+      <li><code>POST /api/v1/channels/{channel_id}/subscribe</code> — Subscribe. Output: <code>200 OK</code>.</li>
+      <li><code>DELETE /api/v1/channels/{channel_id}/subscribe</code> — Unsubscribe. Output: <code>200 OK</code>.</li>
+      <li><code>GET /api/v1/subscriptions/feed?page={page}</code> — Get subscription feed (recent videos from subscribed channels).</li>
+    </ul>
+  </li>
+  <li><strong>Fan-out consideration:</strong> When a popular creator (10M subscribers) uploads a new video, the system does NOT fan-out-on-write to all 10M subscribers' feeds (too expensive). Instead, it uses a <strong>hybrid push/pull model</strong>: for creators with &gt; N subscribers, the subscription feed is generated on-the-fly at read time (pull). For small creators, new uploads can be pushed to subscriber feeds.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Notification Service</h4>
+<ul>
+  <li><strong>Consumes from:</strong> Notification Message Queue.</li>
+  <li><strong>Messages contain:</strong> <code>{ type: "comment"|"reply"|"upload", target_user_id, source_user_id, video_id, comment_id? }</code></li>
+  <li><strong>Responsibilities:</strong> Deduplicates notifications (e.g., 100 comments in 1 minute → batched into "100 people commented on your video"), stores notifications in a <strong>NoSQL Notifications store</strong>, and optionally pushes via mobile push notification (APNs for iOS, FCM for Android).</li>
+  <li><strong>Protocol:</strong> Internal: message queue consumer. External push: APNs (HTTP/2) and FCM (HTTP).</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="overall">8. Overall Combined Diagram</h2>
+<!-- ============================================================ -->
+
+<div class="diagram-container">
+<pre class="mermaid">
+graph TB
+    Client["👤 Client<br/>(Web / iOS / Android)"]
+
+    subgraph Gateway["API Gateway / Load Balancer"]
+        LB["Load Balancer<br/>(L7)"]
+    end
+
+    subgraph Services["Application Services"]
+        US["Upload<br/>Service"]
+        VMS["Video Metadata<br/>Service"]
+        SS["Search<br/>Service"]
+        FS["Feed<br/>Service"]
+        ES["Engagement<br/>Service"]
+        CS["Comment<br/>Service"]
+        SubS["Subscription<br/>Service"]
+        VCS["View Counting<br/>Service"]
+        NS["Notification<br/>Service"]
+    end
+
+    subgraph AsyncProcessing["Async Processing"]
+        MQ1["Message Queue<br/>(Transcode)"]
+        MQ2["Message Queue<br/>(Moderation)"]
+        MQ3["Message Queue<br/>(Notifications)"]
+        TS["Transcoding<br/>Service"]
+        CMS["Content<br/>Moderation"]
+        RE["Recommendation<br/>Engine"]
+    end
+
+    subgraph Storage["Data Stores"]
+        OBJ_RAW[("Object Storage<br/>(Raw Video)")]
+        OBJ_TRANS[("Object Storage<br/>(Transcoded)")]
+        OBJ_THUMB[("Object Storage<br/>(Thumbnails)")]
+        META_DB[("SQL DB<br/>(Metadata)")]
+        COMMENTS_DB[("SQL DB<br/>(Comments)")]
+        SUBS_DB[("SQL DB<br/>(Subscriptions)")]
+        STATS_DB[("NoSQL<br/>(Video Stats)")]
+        REACTIONS_DB[("NoSQL<br/>(Reactions)")]
+        HISTORY_DB[("NoSQL<br/>(Watch History)")]
+        SEARCH_IDX[("Search Index<br/>(Inverted Index)")]
+    end
+
+    subgraph Caching["Caching Layer"]
+        CACHE_META[("Cache<br/>(Metadata)")]
+        CACHE_FEED[("Cache<br/>(Feed)")]
+    end
+
+    CDN["CDN Edge<br/>Servers"]
+
+    Client -->|"All API calls"| LB
+    LB --> US
+    LB --> VMS
+    LB --> SS
+    LB --> FS
+    LB --> ES
+    LB --> CS
+    LB --> SubS
+    LB --> VCS
+
+    US --> OBJ_RAW
+    US --> META_DB
+    US --> MQ1
+
+    MQ1 --> TS
+    TS --> OBJ_RAW
+    TS --> OBJ_TRANS
+    TS --> OBJ_THUMB
+    TS --> META_DB
+    TS --> MQ2
+    MQ2 --> CMS
+    CMS --> META_DB
+
+    Client -->|"HLS/DASH segments"| CDN
+    CDN --> OBJ_TRANS
+
+    VMS --> CACHE_META
+    CACHE_META -.-> META_DB
+
+    SS --> SEARCH_IDX
+    SS --> CACHE_META
+
+    FS --> CACHE_FEED
+    CACHE_FEED -.-> RE
+    RE --> HISTORY_DB
+    RE --> SUBS_DB
+    RE --> STATS_DB
+    FS --> CACHE_META
+
+    ES --> REACTIONS_DB
+    ES --> STATS_DB
+    ES --> CACHE_META
+
+    CS --> COMMENTS_DB
+    CS --> MQ3
+    MQ3 --> NS
+
+    SubS --> SUBS_DB
+    SubS --> STATS_DB
+
+    VCS --> STATS_DB
+
+    style Client fill:#4a90d9,stroke:#2c5f8a,color:#fff
+    style LB fill:#e67e22,stroke:#b35a00,color:#fff
+    style CDN fill:#27ae60,stroke:#1e8449,color:#fff
+    style US fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style VMS fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style SS fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style FS fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style ES fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style CS fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style SubS fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style VCS fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style NS fill:#5b9bd5,stroke:#3a6d9e,color:#fff
+    style MQ1 fill:#9b59b6,stroke:#6c3483,color:#fff
+    style MQ2 fill:#9b59b6,stroke:#6c3483,color:#fff
+    style MQ3 fill:#9b59b6,stroke:#6c3483,color:#fff
+    style TS fill:#8e44ad,stroke:#6c3483,color:#fff
+    style CMS fill:#8e44ad,stroke:#6c3483,color:#fff
+    style RE fill:#8e44ad,stroke:#6c3483,color:#fff
+    style CACHE_META fill:#e74c3c,stroke:#c0392b,color:#fff
+    style CACHE_FEED fill:#e74c3c,stroke:#c0392b,color:#fff
+</pre>
+</div>
+
+<h3>Combined Flow Examples</h3>
+
+<div class="example">
+<strong>Example 1 — End-to-End: Creator Uploads, Viewer Watches, Viewer Engages:</strong><br/>
+<em>Step 1 (Upload):</em> Alice uploads a 10-minute cooking tutorial via the <strong>Upload Service</strong> through the <strong>Load Balancer</strong>. The raw video is stored in <strong>Object Storage (Raw)</strong>, metadata is written to <strong>SQL Metadata DB</strong> (status=processing), and a transcode job is enqueued on the <strong>Message Queue (Transcode)</strong>.<br/><br/>
+<em>Step 2 (Processing):</em> The <strong>Transcoding Service</strong> picks up the job, transcodes into 6 resolutions, generates HLS manifests and thumbnails, stores everything in <strong>Object Storage (Transcoded)</strong> and <strong>Object Storage (Thumbnails)</strong>, and updates the metadata to status=ready. A moderation job is enqueued. The <strong>Content Moderation Service</strong> approves the video (status=published). The video is also indexed in the <strong>Search Index</strong>.<br/><br/>
+<em>Step 3 (Discovery):</em> Bob opens the app. The <strong>Feed Service</strong> checks Bob's <strong>pre-computed feed cache</strong>. Since Bob subscribes to Alice's channel and the Recommendation Engine recently refreshed his feed, Alice's new video appears in the feed. Alternatively, Bob searches "sourdough recipe" via the <strong>Search Service</strong>, which queries the <strong>inverted index</strong> and returns Alice's video among the results.<br/><br/>
+<em>Step 4 (Watching):</em> Bob clicks the video. The <strong>Video Metadata Service</strong> returns metadata and a CDN-signed manifest URL. Bob's player fetches the HLS manifest and segments from the <strong>CDN</strong>. Since Alice's video is new but her channel is popular, the CDN edge may cache the segments on first access. The <strong>View Counting Service</strong> increments the view count in <strong>NoSQL (Video Stats)</strong>.<br/><br/>
+<em>Step 5 (Engagement):</em> Bob likes the video via the <strong>Engagement Service</strong>, which writes to <strong>NoSQL (Reactions)</strong>, increments the like count in <strong>NoSQL (Video Stats)</strong>, and invalidates the <strong>metadata cache</strong>. He also posts a comment via the <strong>Comment Service</strong>, which writes to <strong>SQL (Comments DB)</strong> and enqueues a notification. The <strong>Notification Service</strong> sends Alice a push notification: "Bob commented on your video."
+</div>
+
+<div class="example">
+<strong>Example 2 — Cold Start User Journey:</strong><br/>
+New user Kate signs up. She has no watch history or subscriptions. She opens the home feed — the <strong>Feed Service</strong> calls the <strong>Recommendation Engine</strong>, which falls back to trending/popular videos in Kate's region. Kate searches "beginner guitar lessons" — the <strong>Search Service</strong> returns results ranked by relevance and popularity. She watches 3 videos, likes 2, and subscribes to a channel. Her <strong>watch history</strong> is recorded in <strong>NoSQL (Watch History)</strong>. The next time she opens the feed, the Recommendation Engine uses her history to generate personalized suggestions.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="schema">9. Database Schema</h2>
+<!-- ============================================================ -->
+
+<h3>SQL Tables</h3>
+
+<div class="card">
+<h4>Table: <code>users</code> <span class="badge badge-sql">SQL</span></h4>
 <table>
-<tr><th>Content</th><th>Cache Location</th><th>TTL</th><th>Hit Rate</th></tr>
-<tr><td>Popular video segments</td><td>Edge PoP (L1)</td><td>24 hr</td><td>~95%</td></tr>
-<tr><td>Moderate video segments</td><td>Regional cache (L2)</td><td>7 days</td><td>~85%</td></tr>
-<tr><td>Long-tail videos</td><td>Origin (GCS)</td><td>Permanent</td><td>N/A</td></tr>
-<tr><td>Thumbnails</td><td>Edge PoP</td><td>30 days</td><td>~99%</td></tr>
-<tr><td>Manifests (MPD/M3U8)</td><td>Edge PoP</td><td>1 hr</td><td>~98%</td></tr>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">PRIMARY KEY</span></td><td>Snowflake ID</td></tr>
+<tr><td>username</td><td>VARCHAR(50)</td><td>UNIQUE, NOT NULL</td><td></td></tr>
+<tr><td>email</td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td><td></td></tr>
+<tr><td>password_hash</td><td>VARCHAR(255)</td><td>NOT NULL</td><td></td></tr>
+<tr><td>display_name</td><td>VARCHAR(100)</td><td></td><td></td></tr>
+<tr><td>profile_pic_url</td><td>VARCHAR(500)</td><td></td><td>Points to Object Storage</td></tr>
+<tr><td>subscriber_count</td><td>BIGINT</td><td>DEFAULT 0</td><td>Denormalized counter (see note below)</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+<tr><td>updated_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+</table>
+<p><strong>Why SQL:</strong> User data is highly structured, requires strong consistency (unique usernames/emails), and is read-heavy with predictable query patterns. ACID transactions ensure no duplicate registrations.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><span class="tag tag-idx">B-tree index</span> on <code>username</code> — for login lookups (<code>WHERE username = ?</code>). B-tree supports equality lookups efficiently.</li>
+  <li><span class="tag tag-idx">B-tree index</span> on <code>email</code> — for password reset and duplicate checks.</li>
+</ul>
+<p><strong>Denormalization note:</strong> <code>subscriber_count</code> is denormalized here (could be computed by <code>COUNT(*) FROM subscriptions WHERE channel_id = ?</code>, but that would be a slow aggregate on a massive table). The count is maintained by incrementing/decrementing when subscriptions change.</p>
+<p><strong>Read events:</strong> User login, profile page load, displaying channel info.</p>
+<p><strong>Write events:</strong> User registration, profile updates, subscriber count changes.</p>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code> (hash-based). User data is looked up by user_id in most flows (auth token resolves to user_id). Hash sharding distributes users evenly across shards. Cross-shard queries (e.g., by username) are handled via a global secondary index or a lookup table.</p>
+</div>
+
+<div class="card">
+<h4>Table: <code>videos</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td>video_id</td><td>BIGINT</td><td><span class="tag tag-pk">PRIMARY KEY</span></td><td>Snowflake ID</td></tr>
+<tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-fk">FOREIGN KEY → users</span>, NOT NULL</td><td>Creator</td></tr>
+<tr><td>title</td><td>VARCHAR(200)</td><td>NOT NULL</td><td></td></tr>
+<tr><td>description</td><td>TEXT</td><td></td><td></td></tr>
+<tr><td>status</td><td>ENUM('processing','ready','published','flagged','deleted')</td><td>NOT NULL</td><td></td></tr>
+<tr><td>duration_seconds</td><td>INT</td><td></td><td>Set after transcoding</td></tr>
+<tr><td>raw_video_path</td><td>VARCHAR(500)</td><td></td><td>Object Storage path</td></tr>
+<tr><td>manifest_path</td><td>VARCHAR(500)</td><td></td><td>HLS/DASH manifest path</td></tr>
+<tr><td>thumbnail_url</td><td>VARCHAR(500)</td><td></td><td></td></tr>
+<tr><td>resolutions</td><td>VARCHAR(100)</td><td></td><td>e.g., "144,360,480,720,1080,2160"</td></tr>
+<tr><td>category</td><td>VARCHAR(50)</td><td></td><td></td></tr>
+<tr><td>tags</td><td>VARCHAR(500)</td><td></td><td>Comma-separated or JSON</td></tr>
+<tr><td>privacy</td><td>ENUM('public','unlisted','private')</td><td>DEFAULT 'public'</td><td></td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+<tr><td>published_at</td><td>TIMESTAMP</td><td></td><td>When moderation passed</td></tr>
+<tr><td>updated_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+</table>
+<p><strong>Why SQL:</strong> Video metadata is structured and relational (video → creator). Strong consistency is needed for status transitions (processing → ready → published). Complex admin queries (find all flagged videos by a user).</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><span class="tag tag-idx">B-tree index</span> on <code>(user_id, published_at DESC)</code> — composite index for "get all published videos by user, newest first" (channel page). B-tree supports range scans on the second column.</li>
+  <li><span class="tag tag-idx">B-tree index</span> on <code>status</code> — for admin queries filtering by status.</li>
+  <li><span class="tag tag-idx">B-tree index</span> on <code>category</code> — for category-based browsing.</li>
+</ul>
+<p><strong>Read events:</strong> Video page load (metadata), search result hydration, feed hydration, channel page.</p>
+<p><strong>Write events:</strong> Video upload (insert), transcoding complete (update status, duration, resolutions), moderation complete (update status), creator edits title/description.</p>
+<p><strong>Sharding:</strong> Shard by <code>video_id</code> (hash-based). Most reads are by video_id (video page, metadata service). For queries by user_id (channel page), a secondary index or scatter-gather across shards is used — but this is acceptable because channel pages are less frequent than individual video pages and results are cached.</p>
+</div>
+
+<div class="card">
+<h4>Table: <code>comments</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td>comment_id</td><td>BIGINT</td><td><span class="tag tag-pk">PRIMARY KEY</span></td><td>Snowflake ID</td></tr>
+<tr><td>video_id</td><td>BIGINT</td><td><span class="tag tag-fk">FOREIGN KEY → videos</span>, NOT NULL</td><td></td></tr>
+<tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-fk">FOREIGN KEY → users</span>, NOT NULL</td><td></td></tr>
+<tr><td>parent_comment_id</td><td>BIGINT</td><td><span class="tag tag-fk">FOREIGN KEY → comments</span>, NULLABLE</td><td>NULL for top-level, set for replies</td></tr>
+<tr><td>content</td><td>TEXT</td><td>NOT NULL</td><td></td></tr>
+<tr><td>like_count</td><td>INT</td><td>DEFAULT 0</td><td>Denormalized</td></tr>
+<tr><td>is_deleted</td><td>BOOLEAN</td><td>DEFAULT false</td><td>Soft delete</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+<tr><td>updated_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+</table>
+<p><strong>Why SQL:</strong> Comments have a hierarchical relationship (parent/child threading) that benefits from relational modeling. Consistency is important (a comment should appear immediately after posting). Sorting by "top" or "newest" maps well to SQL ORDER BY.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><span class="tag tag-idx">B-tree index</span> on <code>(video_id, created_at DESC)</code> — for fetching comments on a video sorted by newest. This is the most common query pattern for the comments section.</li>
+  <li><span class="tag tag-idx">B-tree index</span> on <code>(parent_comment_id, created_at ASC)</code> — for fetching replies to a specific comment.</li>
+  <li><span class="tag tag-idx">B-tree index</span> on <code>(video_id, like_count DESC)</code> — for "top comments" sort order.</li>
+</ul>
+<p><strong>Read events:</strong> User opens comments section of a video, user expands replies on a comment.</p>
+<p><strong>Write events:</strong> User posts a comment, user edits a comment, user deletes a comment (soft delete), comment like count update.</p>
+<p><strong>Sharding:</strong> Shard by <code>video_id</code> (hash-based). All comments for a single video live on the same shard, so listing comments for a video is a single-shard query — no scatter-gather needed for the most common access pattern.</p>
+</div>
+
+<div class="card">
+<h4>Table: <code>subscriptions</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+<tr><td>subscription_id</td><td>BIGINT</td><td><span class="tag tag-pk">PRIMARY KEY</span></td><td></td></tr>
+<tr><td>subscriber_id</td><td>BIGINT</td><td><span class="tag tag-fk">FOREIGN KEY → users</span>, NOT NULL</td><td>The user subscribing</td></tr>
+<tr><td>channel_id</td><td>BIGINT</td><td><span class="tag tag-fk">FOREIGN KEY → users</span>, NOT NULL</td><td>The channel being subscribed to</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td></td></tr>
+</table>
+<p><strong>Unique constraint:</strong> <code>UNIQUE(subscriber_id, channel_id)</code> to prevent duplicate subscriptions.</p>
+<p><strong>Why SQL:</strong> Subscription relationships are inherently relational (many-to-many between users). The unique constraint prevents duplicates atomically. Queries need both directions: "who does user X subscribe to?" and "who subscribes to channel Y?"</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><span class="tag tag-idx">B-tree index</span> on <code>(subscriber_id, created_at DESC)</code> — for listing a user's subscriptions (subscription management page).</li>
+  <li><span class="tag tag-idx">B-tree index</span> on <code>(channel_id)</code> — for counting or listing subscribers of a channel.</li>
+</ul>
+<p><strong>Read events:</strong> User views subscription feed (need subscriber_id → channel_ids → recent videos), user views their subscription list, channel page (subscriber count).</p>
+<p><strong>Write events:</strong> User subscribes (insert), user unsubscribes (delete).</p>
+<p><strong>Sharding:</strong> Shard by <code>subscriber_id</code> (hash-based). The most common query is "which channels does this user subscribe to?" (for generating the subscription feed), which is a single-shard query. Queries by channel_id (counting subscribers) require scatter-gather but are less frequent and the result is cached/denormalized on the users table.</p>
+</div>
+
+<h3>NoSQL Tables</h3>
+
+<div class="card">
+<h4>Table: <code>video_stats</code> <span class="badge badge-nosql">NoSQL (Wide-Column)</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>video_id</td><td>BIGINT</td><td><span class="tag tag-pk">PARTITION KEY</span></td></tr>
+<tr><td>view_count</td><td>COUNTER / BIGINT</td><td>Atomic counter increment</td></tr>
+<tr><td>like_count</td><td>COUNTER / BIGINT</td><td></td></tr>
+<tr><td>dislike_count</td><td>COUNTER / BIGINT</td><td></td></tr>
+<tr><td>comment_count</td><td>COUNTER / BIGINT</td><td></td></tr>
+</table>
+<p><strong>Why NoSQL:</strong> Extremely high write throughput — view counts are incremented billions of times per day. A NoSQL wide-column store with native counter support handles this without the overhead of row-level locking in SQL. Eventual consistency is perfectly acceptable for view counts (being off by a few for a moment is fine).</p>
+<p><strong>Read events:</strong> Video page load (display counts), search result hydration, feed hydration.</p>
+<p><strong>Write events:</strong> Every video view (view_count++), every like/dislike (like_count++/dislike_count++), every comment posted (comment_count++).</p>
+<p><strong>Sharding:</strong> Partitioned by <code>video_id</code> (consistent hashing). Each video's counters are on one partition. Hot videos (viral) can create hot partitions — mitigated by using counter sharding (split the counter for a single video across N sub-counters and sum on read).</p>
+</div>
+
+<div class="card">
+<h4>Table: <code>reactions</code> <span class="badge badge-nosql">NoSQL (Key-Value / Wide-Column)</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>video_id</td><td>BIGINT</td><td><span class="tag tag-pk">PARTITION KEY</span></td></tr>
+<tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">SORT KEY</span></td></tr>
+<tr><td>reaction_type</td><td>ENUM('like','dislike')</td><td></td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td></tr>
+</table>
+<p><strong>Why NoSQL:</strong> Very high volume of writes (millions of likes per day). Simple access pattern — always queried by (video_id, user_id) pair to check "did this user react to this video?" No complex joins needed. Key-value/wide-column stores excel at this pattern.</p>
+<p><strong>Read events:</strong> Video page load — check if current user has liked/disliked this video (to render the thumbs-up/down state).</p>
+<p><strong>Write events:</strong> User likes or dislikes a video (upsert), user removes reaction (delete).</p>
+<p><strong>Sharding:</strong> Partitioned by <code>video_id</code>. All reactions for a video are co-located. The sort key on user_id allows efficient point lookups within a partition.</p>
+</div>
+
+<div class="card">
+<h4>Table: <code>watch_history</code> <span class="badge badge-nosql">NoSQL (Wide-Column)</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">PARTITION KEY</span></td></tr>
+<tr><td>watched_at</td><td>TIMESTAMP</td><td><span class="tag tag-pk">SORT KEY</span> (descending)</td></tr>
+<tr><td>video_id</td><td>BIGINT</td><td></td></tr>
+<tr><td>watch_duration_pct</td><td>FLOAT</td><td>0.0 to 1.0 (how much was watched)</td></tr>
+</table>
+<p><strong>Why NoSQL:</strong> Append-heavy workload — every video watch generates a history entry. Queried by user_id with time-range scans (show recent history, or feed the recommendation engine the last 100 videos a user watched). A wide-column store with sort keys handles time-ordered range scans efficiently. No relational joins needed.</p>
+<p><strong>Read events:</strong> User views their watch history page, Recommendation Engine reads user's recent history for feed generation.</p>
+<p><strong>Write events:</strong> Every video watch session (when a user watches ≥ 30 seconds, a history entry is written or updated).</p>
+<p><strong>Sharding:</strong> Partitioned by <code>user_id</code>. Each user's entire history is on one partition. The sort key allows efficient "latest N" queries without scanning the full partition.</p>
+<p><strong>TTL:</strong> Old watch history entries (> 2 years) can be automatically expired via TTL to control storage growth.</p>
+</div>
+
+<div class="card">
+<h4>Table: <code>notifications</code> <span class="badge badge-nosql">NoSQL (Wide-Column)</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>user_id</td><td>BIGINT</td><td><span class="tag tag-pk">PARTITION KEY</span></td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td><span class="tag tag-pk">SORT KEY</span> (descending)</td></tr>
+<tr><td>notification_id</td><td>BIGINT</td><td></td></tr>
+<tr><td>type</td><td>VARCHAR</td><td>"comment", "reply", "upload", "like_milestone"</td></tr>
+<tr><td>source_user_id</td><td>BIGINT</td><td>Who triggered the notification</td></tr>
+<tr><td>video_id</td><td>BIGINT</td><td></td></tr>
+<tr><td>message</td><td>TEXT</td><td>Pre-rendered notification text</td></tr>
+<tr><td>is_read</td><td>BOOLEAN</td><td></td></tr>
+</table>
+<p><strong>Why NoSQL:</strong> Notifications are append-heavy and read by user_id with time ordering. No joins needed. High write volume (a viral video generates millions of notifications). Wide-column store allows efficient time-ordered scans per user.</p>
+<p><strong>Read events:</strong> User opens notification feed.</p>
+<p><strong>Write events:</strong> Notification Service processes notification jobs from the message queue.</p>
+<p><strong>Sharding:</strong> Partitioned by <code>user_id</code>. Each user's notifications on one partition.</p>
+<p><strong>Denormalization note:</strong> The <code>message</code> field is pre-rendered (e.g., "Alice commented on your video: Great recipe!") to avoid joins at read time. This is denormalized — if Alice changes her display name, old notifications may show the old name. This is acceptable for notifications.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="cdn">10. CDN Deep Dive</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+<h3>Why a CDN Is Essential</h3>
+<p>YouTube serves over 1 billion hours of video daily to users worldwide. Without a CDN, every video segment request would travel to the origin data center, causing:</p>
+<ul>
+  <li><strong>Unacceptable latency</strong> — A user in Tokyo requesting a segment from a US origin would experience 150ms+ round-trip time per segment, causing buffering.</li>
+  <li><strong>Origin overload</strong> — Billions of segment requests per day would overwhelm origin storage bandwidth.</li>
+  <li><strong>Bandwidth costs</strong> — Serving video from a central location is far more expensive than serving from edge locations.</li>
+</ul>
+<p>A CDN is <strong>absolutely critical</strong> for a video streaming platform.</p>
+
+<h3>How It Works</h3>
+<ol>
+  <li>When a video is published, it is <strong>NOT</strong> proactively pushed to all CDN edges (that would be wasteful for the vast majority of videos that get few views).</li>
+  <li>When a user requests a video segment, DNS-based or Anycast routing directs them to the nearest CDN edge server.</li>
+  <li><strong>Cache Hit:</strong> If the edge has the segment cached, it is served directly (~10–50ms latency).</li>
+  <li><strong>Cache Miss:</strong> The edge fetches the segment from the origin Object Storage (or a mid-tier cache), serves it to the user, and caches it locally for future requests.</li>
+  <li>For <strong>extremely popular videos</strong> (viral), the system can optionally pre-warm the CDN by proactively pushing segments to top edge locations once a video crosses a popularity threshold.</li>
+</ol>
+
+<h3>Caching Strategy</h3>
+<ul>
+  <li><strong>Cache key:</strong> URL path (e.g., <code>/v/{video_id}/{resolution}/seg_{N}.ts</code>).</li>
+  <li><strong>Eviction Policy:</strong> <strong>LRU (Least Recently Used)</strong>. Video segments that haven't been requested recently are evicted first. LRU is chosen because video popularity follows a power-law distribution — a small fraction of videos account for the majority of views, so recently-accessed segments are very likely to be accessed again.</li>
+  <li><strong>Expiration (TTL):</strong> <strong>Long TTL (30 days+)</strong>. Video segments are immutable once transcoded — they never change. The only reason to expire them is to free up edge storage. A long TTL ensures popular content stays cached. If a video is deleted or taken down, the CDN is explicitly purged.</li>
+  <li><strong>Multi-tier caching:</strong> Edge → Regional mid-tier cache → Origin. If the edge misses, it checks the regional cache before going to origin. This reduces origin load for moderately popular content.</li>
+</ul>
+
+<h3>CDN-Signed URLs</h3>
+<p>To prevent unauthorized hotlinking, the Video Metadata Service generates time-limited signed URLs for the manifest and segments. The CDN validates the signature and expiry before serving content. Typical token expiry: 6 hours.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="cache">11. Cache Deep Dive</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+<h3>Why an In-Memory Cache Is Appropriate</h3>
+<p>Video metadata and counts are read far more often than written. A single popular video page might be loaded millions of times per day but its metadata changes rarely. An in-memory cache dramatically reduces load on the SQL/NoSQL databases and reduces response latency to &lt; 5ms.</p>
+
+<h3>Cache 1: Video Metadata Cache</h3>
+<table>
+<tr><th>Aspect</th><th>Detail</th></tr>
+<tr><td><strong>What is cached</strong></td><td>Serialized video metadata objects: title, description, thumbnail_url, manifest_url, duration, resolutions, channel_name, view_count, like_count, etc.</td></tr>
+<tr><td><strong>Cache key</strong></td><td><code>video:{video_id}</code></td></tr>
+<tr><td><strong>Caching strategy</strong></td><td><strong>Read-through (Cache-Aside)</strong>: The Video Metadata Service checks the cache first. On miss, it reads from the SQL DB, writes the result to the cache, and returns. This is preferred over write-through because metadata is read orders of magnitude more frequently than written, and many videos are never accessed again after upload.</td></tr>
+<tr><td><strong>Populated by</strong></td><td>Cache misses on metadata reads (lazy population). Optionally, trending/popular video metadata is pre-warmed.</td></tr>
+<tr><td><strong>Invalidation</strong></td><td>Explicit invalidation when metadata changes (title edit, transcoding complete, like count change). The service that writes to the DB also invalidates the cache key.</td></tr>
+<tr><td><strong>Eviction policy</strong></td><td><strong>LRU (Least Recently Used)</strong>. Unpopular video metadata is evicted when memory pressure increases. LRU works well because popular videos (which are read frequently) stay in cache, while the long tail of rarely-watched videos is evicted. This aligns with the power-law distribution of video views.</td></tr>
+<tr><td><strong>TTL (Expiration)</strong></td><td><strong>5 minutes</strong>. Even without explicit invalidation, stale entries expire within 5 minutes. This bounds the staleness of eventually-consistent data like view/like counts. 5 minutes is chosen because users don't notice if a view count is 5 minutes stale, and it prevents a thundering herd on popular videos if the cache entry expires and thousands of requests simultaneously hit the DB.</td></tr>
+<tr><td><strong>Why not write-through</strong></td><td>Write-through would write to cache on every metadata update, but many writes (e.g., view count increments happening hundreds of times per second for popular videos) would thrash the cache. Cache-aside with explicit invalidation is more efficient — the cache is populated only when read, and only invalidated when data relevant to the user-facing display changes.</td></tr>
 </table>
 
-<h3>Redis Caching</h3>
+<h3>Cache 2: Pre-computed Feed Cache</h3>
+<table>
+<tr><th>Aspect</th><th>Detail</th></tr>
+<tr><td><strong>What is cached</strong></td><td>List of recommended video IDs for a user's home feed.</td></tr>
+<tr><td><strong>Cache key</strong></td><td><code>feed:{user_id}</code></td></tr>
+<tr><td><strong>Caching strategy</strong></td><td><strong>Write-behind (Refresh-Ahead)</strong>: The Recommendation Engine periodically (every 30 min for active users) pre-computes feeds and writes them to the cache. When the Feed Service reads the cache, it gets a pre-computed list. This avoids the latency of computing recommendations on-demand.</td></tr>
+<tr><td><strong>Populated by</strong></td><td>Periodic batch job from Recommendation Engine (for active users) or on-demand generation on cache miss (for inactive users).</td></tr>
+<tr><td><strong>Eviction policy</strong></td><td><strong>LRU</strong>. Feeds for users who haven't opened the app recently are evicted.</td></tr>
+<tr><td><strong>TTL (Expiration)</strong></td><td><strong>30 minutes</strong>. Ensures feed freshness — after 30 minutes, the Recommendation Engine recomputes. Short enough to incorporate recent trends, long enough to avoid excessive computation.</td></tr>
+</table>
+
+<h3>Cache 3: Search Results Cache</h3>
+<table>
+<tr><th>Aspect</th><th>Detail</th></tr>
+<tr><td><strong>What is cached</strong></td><td>Search result sets for popular queries.</td></tr>
+<tr><td><strong>Cache key</strong></td><td><code>search:{normalized_query_hash}</code></td></tr>
+<tr><td><strong>Caching strategy</strong></td><td><strong>Cache-Aside</strong>: On cache miss, the Search Service queries the inverted index, caches the results, and returns.</td></tr>
+<tr><td><strong>Eviction policy</strong></td><td><strong>LRU</strong>.</td></tr>
+<tr><td><strong>TTL (Expiration)</strong></td><td><strong>10 minutes</strong>. Search results should reflect newly published videos reasonably quickly (within 10 min) but don't need to be real-time.</td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="mq">12. Message Queue Deep Dive</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+<h3>Why a Message Queue (vs. Alternatives)</h3>
+<p>Several operations in YouTube are <strong>asynchronous</strong> — the user should not wait for them to complete:</p>
 <ul>
-  <li><strong>View counts:</strong> <code>INCR views:{video_id}</code> — buffered in Redis, flushed to MySQL every minute. Prevents write amplification from billions of view events</li>
-  <li><strong>Session/auth:</strong> User session tokens cached in Redis (TTL 30 min)</li>
-  <li><strong>Rate limiting:</strong> Upload rate limits per user in Redis sliding window</li>
+  <li><strong>Transcoding</strong> takes minutes to hours. The upload should return immediately.</li>
+  <li><strong>Content moderation</strong> takes seconds to minutes.</li>
+  <li><strong>Notification delivery</strong> should not block the comment/like API response.</li>
+  <li><strong>Search indexing</strong> can lag behind by seconds.</li>
+</ul>
+<p>A message queue decouples producers from consumers, allowing them to scale independently and providing <strong>durability</strong> (if a consumer crashes, the message is not lost) and <strong>backpressure handling</strong> (if consumers are slow, messages queue up instead of failing).</p>
+
+<h4>Why not synchronous calls?</h4>
+<p>If the Upload Service called the Transcoding Service synchronously, the upload HTTP request would time out (transcoding takes minutes). The client would have to poll for status. A message queue is the standard pattern for long-running background jobs.</p>
+
+<h4>Why not pub/sub?</h4>
+<p>Pub/sub is best when multiple independent consumers need to react to the same event (fan-out). For transcoding, there is one consumer per job (one Transcoding Service worker processes one video). A message queue with <strong>competing consumers</strong> (work queue pattern) is more appropriate — multiple workers pull from the same queue, and each message is processed by exactly one worker. However, for the search indexing step (triggered by the "published" status), a pub/sub model could be layered on: publish a "video_published" event that both the Search Indexer and the Subscription Fan-out Service consume independently.</p>
+
+<h4>Why not polling?</h4>
+<p>The Transcoding Service could poll the DB for new "processing" videos, but this wastes resources when there are no jobs and introduces latency. A message queue provides instant delivery when a job is enqueued.</p>
+
+<h3>Message Queue Details</h3>
+
+<h4>Queue: Transcode Jobs</h4>
+<ul>
+  <li><strong>Producer:</strong> Upload Service (enqueues after raw video is stored).</li>
+  <li><strong>Consumer:</strong> Transcoding Service workers (competing consumers).</li>
+  <li><strong>Message format:</strong> <code>{ video_id, raw_video_path, requested_resolutions, priority }</code></li>
+  <li><strong>Delivery guarantee:</strong> At-least-once. If a worker crashes mid-transcode, the message is re-delivered (visibility timeout). The Transcoding Service is idempotent — re-transcoding an already-transcoded video is a no-op (checks if output exists).</li>
+  <li><strong>Ordering:</strong> Not required. Videos can be transcoded in any order.</li>
+  <li><strong>Retention:</strong> Messages retained for 7 days (in case of consumer outages).</li>
 </ul>
 
-<h3>Google Global Cache (GGC)</h3>
-<p>Google deploys cache servers directly inside ISP networks. ISP traffic to YouTube stays within their network — reduces transit costs for ISP, reduces latency for users. Over 1,000 ISPs worldwide have GGC deployments. This is why YouTube feels "fast" even on average internet connections.</p>
-</div>
-
-<!-- ============================================================ -->
-<h2>⚖️ Scaling Considerations</h2>
-<!-- ============================================================ -->
-
-<div class="section">
+<h4>Queue: Moderation Jobs</h4>
 <ul>
-  <li><strong>Transcoding:</strong> GPU clusters auto-scale based on upload queue depth. Spot/preemptible instances for cost savings (transcode jobs are restartable)</li>
-  <li><strong>View count hot spots:</strong> Viral videos get millions of INCR per second. Sharded Redis counters (split into 100 sub-counters, aggregate on read) prevent hot key problems</li>
-  <li><strong>Storage costs:</strong> ~1 exabyte total. Cold storage (Coldline) for rarely-watched videos. Per-title encoding optimizes bitrate → reduces storage by ~20%</li>
-  <li><strong>CDN capacity:</strong> Peak traffic during evening hours per timezone. CDN auto-scales at edge. Pre-warming: when a popular creator's video is detected (subscriber notification), pre-push segments to regional caches before traffic arrives</li>
-  <li><strong>Database:</strong> Vitess provides transparent sharding for MySQL. Add shards as data grows without application changes</li>
+  <li><strong>Producer:</strong> Transcoding Service (enqueues after transcoding completes).</li>
+  <li><strong>Consumer:</strong> Content Moderation Service workers.</li>
+  <li><strong>Message format:</strong> <code>{ video_id, transcoded_video_path, thumbnail_paths }</code></li>
+  <li><strong>Delivery guarantee:</strong> At-least-once.</li>
 </ul>
+
+<h4>Queue: Notifications</h4>
+<ul>
+  <li><strong>Producer:</strong> Comment Service, Subscription Service, Engagement Service (when events trigger notifications).</li>
+  <li><strong>Consumer:</strong> Notification Service.</li>
+  <li><strong>Message format:</strong> <code>{ type, target_user_id, source_user_id, video_id, comment_id?, channel_id? }</code></li>
+  <li><strong>Delivery guarantee:</strong> At-least-once. Notification Service deduplicates.</li>
+</ul>
+
+<h3>How Messages Are Enqueued and Dequeued</h3>
+<ol>
+  <li><strong>Enqueue:</strong> The producer service calls the message queue's API (e.g., <code>sendMessage(queue_name, message_body)</code>) over an internal RPC or HTTP call. The message queue durably persists the message to disk and acknowledges.</li>
+  <li><strong>Dequeue:</strong> Consumer workers long-poll or pull messages from the queue (<code>receiveMessage(queue_name, visibility_timeout)</code>). When a worker receives a message, it becomes invisible to other workers for the visibility timeout period.</li>
+  <li><strong>Acknowledgment:</strong> After successfully processing the message, the worker sends a <code>deleteMessage(receipt_handle)</code> call to permanently remove the message from the queue.</li>
+  <li><strong>Failure:</strong> If the worker crashes or the visibility timeout expires before acknowledgment, the message becomes visible again and is delivered to another worker.</li>
+</ol>
 </div>
 
 <!-- ============================================================ -->
-<h2>⚖️ Tradeoffs</h2>
+<h2 id="scaling">13. Scaling Considerations</h2>
 <!-- ============================================================ -->
 
-<div class="section">
-<div class="tradeoff-grid">
-  <div class="tradeoff-pro">
-    <h4>✅ Pre-transcoding All Resolutions</h4>
-    <p>Instant playback at any quality. No transcoding delay at view time. CDN can cache fixed segments</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Pre-transcoding All Resolutions</h4>
-    <p>Massive storage cost (8+ renditions per video). Most 144p/240p renditions rarely accessed. Alternative: just-in-time transcoding for low-demand resolutions</p>
-  </div>
-  <div class="tradeoff-pro">
-    <h4>✅ Segmented Streaming (DASH/HLS)</h4>
-    <p>Adaptive bitrate, works over HTTP (CDN-friendly), seekable, no special streaming server needed</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Segmented Streaming</h4>
-    <p>Higher latency than WebRTC (2-30s delay). Segment boundaries limit quality switch speed. Manifest overhead for short videos</p>
-  </div>
-  <div class="tradeoff-pro">
-    <h4>✅ AV1 Codec</h4>
-    <p>30-50% bitrate savings over H.264 at same quality → massive CDN bandwidth savings at YouTube's scale</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ AV1 Codec</h4>
-    <p>10x slower encoding (higher compute cost), limited hardware decoding support (newer devices only), H.264 still needed as fallback</p>
-  </div>
-</div>
+<div class="card">
+<h3>Load Balancers</h3>
+<p>Load balancers are essential at multiple points in the architecture:</p>
+
+<h4>1. External Load Balancer (L7 — Application Layer)</h4>
+<ul>
+  <li><strong>Position:</strong> Between clients and the API Gateway / application services.</li>
+  <li><strong>Protocol:</strong> HTTPS termination (TLS offloading) at the load balancer, then HTTP/2 to backend services.</li>
+  <li><strong>Algorithm:</strong> <strong>Least connections</strong> — routes each request to the backend server with the fewest active connections. This is preferred over round-robin because some requests (e.g., upload) take much longer than others (e.g., metadata fetch), so even distribution by connection count provides better load balancing.</li>
+  <li><strong>Health checks:</strong> Periodic HTTP health checks to backend instances. Unhealthy instances are removed from the pool.</li>
+  <li><strong>Capabilities:</strong> URL-based routing (route <code>/api/v1/videos/upload</code> to Upload Service instances, <code>/api/v1/search</code> to Search Service instances), rate limiting, request authentication.</li>
+  <li><strong>Scaling:</strong> Multiple load balancer instances behind DNS round-robin or Anycast for the load balancer tier itself.</li>
+</ul>
+
+<h4>2. Internal Load Balancers</h4>
+<ul>
+  <li><strong>Position:</strong> Between services (e.g., Feed Service → Recommendation Engine, Video Metadata Service → Metadata DB replicas).</li>
+  <li><strong>Purpose:</strong> Distribute internal traffic evenly across service replicas. Implemented as client-side load balancing (service mesh / sidecar proxy) or an internal L4 load balancer.</li>
+  <li><strong>Algorithm:</strong> Round-robin or weighted round-robin for homogeneous service instances.</li>
+</ul>
+
+<h3>Horizontal Scaling by Service</h3>
+<table>
+<tr><th>Service</th><th>Scaling Strategy</th><th>Notes</th></tr>
+<tr><td>Upload Service</td><td>Horizontal (stateless)</td><td>Scale based on upload traffic. Auto-scale on CPU/memory utilization.</td></tr>
+<tr><td>Transcoding Service</td><td>Horizontal (stateless workers)</td><td>Scale based on queue depth. Spin up more workers when the transcode queue grows. GPU-accelerated instances for faster transcoding.</td></tr>
+<tr><td>Video Metadata Service</td><td>Horizontal (stateless)</td><td>Scale based on request rate. Very high read volume; cache absorbs most reads.</td></tr>
+<tr><td>Search Service</td><td>Horizontal + search index sharding</td><td>Search index is sharded across multiple nodes. Add nodes to handle more queries. Replicate index shards for read throughput.</td></tr>
+<tr><td>Feed Service</td><td>Horizontal (stateless)</td><td>Scale based on request rate. Pre-computed feeds in cache reduce compute.</td></tr>
+<tr><td>Recommendation Engine</td><td>Horizontal (CPU/GPU intensive)</td><td>Scale batch pre-computation workers. On-demand inference scales horizontally behind internal LB.</td></tr>
+<tr><td>Engagement Service</td><td>Horizontal (stateless)</td><td>High write throughput. Scale based on like/dislike rate.</td></tr>
+<tr><td>Comment Service</td><td>Horizontal (stateless)</td><td>Scale based on comment volume.</td></tr>
+<tr><td>View Counting Service</td><td>Horizontal + batching</td><td>Highest write throughput in the system. Each instance batches increments in memory and flushes to NoSQL periodically.</td></tr>
+<tr><td>Notification Service</td><td>Horizontal (queue consumers)</td><td>Scale based on notification queue depth.</td></tr>
+</table>
+
+<h3>Database Scaling</h3>
+<ul>
+  <li><strong>SQL databases:</strong> Primary-replica replication for read scaling. Writes go to primary, reads distributed across replicas. For tables with very high volume (videos, comments), sharding as described in schema section.</li>
+  <li><strong>NoSQL databases:</strong> Natively horizontally scalable via consistent hashing and automatic partition rebalancing. Add nodes to increase capacity and throughput linearly.</li>
+  <li><strong>Object Storage:</strong> Horizontally scalable by design. Add storage nodes as video content grows.</li>
+  <li><strong>Cache:</strong> Cluster mode with consistent hashing for horizontal scaling. Add cache nodes to increase memory capacity and throughput.</li>
+</ul>
+
+<h3>CDN Scaling</h3>
+<ul>
+  <li>Deploy edge servers in more geographic locations to reduce latency.</li>
+  <li>Add capacity to existing PoPs (Points of Presence) during peak hours.</li>
+  <li>Multi-tier caching (edge → regional → origin) to absorb load at each layer.</li>
+</ul>
+
+<h3>Estimated Capacity</h3>
+<table>
+<tr><th>Metric</th><th>Estimate</th></tr>
+<tr><td>Monthly Active Users</td><td>~2 billion</td></tr>
+<tr><td>Videos uploaded per minute</td><td>~500 hours</td></tr>
+<tr><td>Storage per year (new content)</td><td>~250+ PB (raw + transcoded)</td></tr>
+<tr><td>Peak concurrent viewers</td><td>~100M+</td></tr>
+<tr><td>View count writes/second</td><td>~10M+ (globally)</td></tr>
+<tr><td>Search queries/second</td><td>~500K+</td></tr>
+</table>
 </div>
 
 <!-- ============================================================ -->
-<h2>🔄 Alternative Approaches</h2>
+<h2 id="tradeoffs">14. Tradeoffs &amp; Deep Dives</h2>
 <!-- ============================================================ -->
 
-<div class="section">
-<div class="subsection">
-<h4>Just-In-Time Transcoding</h4>
-<p>Only transcode on first view at that resolution. Saves storage for long-tail content that's rarely watched. Used by some smaller platforms. Tradeoff: first viewer experiences delay, requires fast transcoding infrastructure (GPU always warm).</p>
-</div>
-<div class="subsection">
-<h4>WebRTC for Low-Latency (Live Streaming)</h4>
-<p>YouTube Live uses WebRTC for ultra-low-latency streams (&lt;1s). Sub-second latency enables real-time interaction. But doesn't scale to millions of viewers without SFU cascading. DASH/HLS used for most live streams with 5-30s latency instead.</p>
-</div>
-<div class="subsection">
-<h4>P2P-Assisted CDN</h4>
-<p>Viewers share video segments with nearby peers (like BitTorrent). Reduces CDN cost by offloading bandwidth to viewers. Used by some Chinese platforms (Bilibili). Drawback: reliability depends on peer availability, privacy concerns, NAT traversal complexity.</p>
-</div>
+<div class="card">
+<h3>Tradeoff 1: Eventual Consistency vs. Strong Consistency</h3>
+<p><strong>Decision:</strong> Eventual consistency for view counts, like counts, and comment counts. Strong consistency for video status transitions and user authentication.</p>
+<p><strong>Reasoning:</strong> If a user sees "1,203 views" when the true count is "1,207," this is imperceptible. But if a video's status is incorrectly shown as "published" when it's still processing, the user would see an error when trying to watch it. Strong consistency where correctness matters; eventual consistency where throughput matters.</p>
+
+<h3>Tradeoff 2: Pre-computed Feeds vs. On-demand Computation</h3>
+<p><strong>Decision:</strong> Hybrid approach — pre-compute for active users, compute on-demand for inactive users.</p>
+<p><strong>Reasoning:</strong> Pre-computing feeds for all 2 billion users would be wasteful (most are not active at any given time). Pre-computing for the ~100M active users at any moment ensures low latency for the users who are actually using the app. On-demand computation for the remaining users introduces slightly higher latency (~200–500ms for recommendation inference) but saves enormous compute resources.</p>
+
+<h3>Tradeoff 3: Fan-out-on-Write vs. Fan-out-on-Read for Subscriptions</h3>
+<p><strong>Decision:</strong> Hybrid. Fan-out-on-write for small creators (< 100K subscribers); fan-out-on-read for large creators.</p>
+<p><strong>Reasoning:</strong> When a creator with 100M subscribers uploads a video, writing 100M feed entries is extremely expensive and slow (fan-out-on-write). Instead, the subscription feed for large creators is generated at read time — when a user opens their subscription feed, the system queries "which of my subscribed channels have new videos?" (fan-out-on-read). For small creators, fan-out-on-write is efficient and provides instant feed updates.</p>
+
+<h3>Tradeoff 4: Separate Services vs. Monolith</h3>
+<p><strong>Decision:</strong> Microservices architecture.</p>
+<p><strong>Reasoning:</strong> At YouTube's scale, different components have vastly different scaling characteristics. The Transcoding Service needs GPU instances and scales with upload volume. The View Counting Service needs high-throughput write-optimized instances. The Search Service needs memory-heavy instances for the inverted index. A monolith cannot be scaled granularly. The downside is operational complexity (service discovery, distributed tracing, inter-service latency).</p>
+
+<h3>Tradeoff 5: HLS vs. DASH</h3>
+<p><strong>Decision:</strong> Support both, with HLS as primary.</p>
+<p><strong>Reasoning:</strong> HLS is required for iOS/Safari (Apple mandates it). DASH is the open standard and preferred on Android/Chrome. Supporting both covers all platforms. The transcoding pipeline generates both HLS and DASH manifests from the same source segments (fMP4 segments can be shared between HLS and DASH with CMAF).</p>
+
+<h3>Tradeoff 6: Counter Sharding for Hot Partitions</h3>
+<p><strong>Deep Dive:</strong> A viral video can receive millions of view increments per second, creating a hot partition in the NoSQL store. Solution: <strong>counter sharding</strong> — instead of a single counter for <code>video_id=v123</code>, create N sub-counters (e.g., <code>v123:shard_0</code>, <code>v123:shard_1</code>, ..., <code>v123:shard_99</code>). Each increment is randomly assigned to a sub-counter. On read, sum all sub-counters. This distributes write load across N partitions. The tradeoff: reads are now N lookups instead of 1, and the count is slightly less precise during reads (ongoing writes to other shards). Mitigated by caching the sum with short TTL.</p>
+
+<h3>Tradeoff 7: Soft Deletes vs. Hard Deletes</h3>
+<p><strong>Decision:</strong> Soft deletes for comments and videos (set <code>is_deleted = true</code>).</p>
+<p><strong>Reasoning:</strong> Soft deletes allow undoing deletions, auditing, and legal compliance (retaining data for investigations). Hard deletes are irreversible. The tradeoff is slightly more storage usage, but storage is cheap compared to the risk of data loss.</p>
 </div>
 
 <!-- ============================================================ -->
-<h2>📚 Additional Information</h2>
+<h2 id="alternatives">15. Alternative Approaches</h2>
 <!-- ============================================================ -->
 
-<div class="section">
-<h3>Recommendation Engine</h3>
-<p>YouTube's recommendation drives 70%+ of watch time. Two-stage architecture: (1) Candidate generation — collaborative filtering from watch history (deep neural network with embedding layers), retrieves ~1000 candidates. (2) Ranking — predicts expected watch time using features: user history, video features (title, tags, freshness, channel), context (time of day, device). Optimizes for engagement metrics (watch time, not just clicks).</p>
+<div class="card">
+<h3>Alternative 1: Progressive Download Instead of HLS/DASH</h3>
+<p><strong>What:</strong> Serve video as a single file via HTTP progressive download.</p>
+<p><strong>Why not chosen:</strong> Progressive download cannot adapt to bandwidth changes — the client gets one quality level. If bandwidth drops, the user experiences buffering. Progressive download also doesn't work well with CDN caching (the entire file must be cached vs. small segments). HLS/DASH provides adaptive bitrate streaming, better CDN cacheability, and support for DRM.</p>
 
-<h3>Video ID Design</h3>
-<p>YouTube video IDs are 11 characters, Base64url encoded: [A-Za-z0-9_-]. This gives 64^11 = 73.8 quadrillion possible IDs. IDs are not sequential (security through obscurity — can't enumerate all videos). Generated randomly with collision check.</p>
+<h3>Alternative 2: WebSocket for Real-time View Count Updates</h3>
+<p><strong>What:</strong> Instead of displaying a cached view count, use a WebSocket connection to push real-time view count updates to all viewers watching the same video.</p>
+<p><strong>Why not chosen:</strong> Maintaining millions of concurrent WebSocket connections per popular video is extremely resource-intensive (memory, file descriptors, connection state). The benefit is minimal — users don't need real-time view counts. Showing a count that's a few seconds stale (from cache) is perfectly acceptable. The operational complexity and resource cost of WebSockets here is not justified. WebSockets are better suited for live chat (which YouTube does use for live streams, but not for on-demand video).</p>
 
-<h3>Monetization Infrastructure</h3>
-<p>Ad serving during video playback: pre-roll (before video), mid-roll (during, at natural breaks), post-roll. Ad decisions made in real-time by auction system (similar to Ad Click Aggregator design). Revenue split: 55% to creator, 45% to YouTube. Super Chat, Memberships, and Merchandise Shelf are additional revenue streams, each with their own microservices.</p>
+<h3>Alternative 3: Graph Database for Subscriptions and Social Features</h3>
+<p><strong>What:</strong> Store subscriptions, likes, and social relationships in a graph database instead of SQL + NoSQL.</p>
+<p><strong>Why not chosen:</strong> While subscriptions are inherently a graph (user → subscribes_to → channel), the query patterns are simple: "which channels does user X subscribe to?" and "who subscribes to channel Y?" These are straightforward lookups that SQL handles well. Graph databases shine for complex traversals ("find all users who subscribe to channels that my friends subscribe to"), which is not a core use case for YouTube. Graph databases also tend to have lower write throughput than purpose-built NoSQL stores for the volume of likes/views we need.</p>
+
+<h3>Alternative 4: Polling Instead of Message Queue for Transcoding</h3>
+<p><strong>What:</strong> Transcoding workers poll the database every few seconds for new videos with <code>status = 'processing'</code>.</p>
+<p><strong>Why not chosen:</strong> Polling creates unnecessary database load when there are no new uploads, introduces latency (up to the poll interval), and is harder to distribute work fairly among workers. A message queue provides instant job delivery, built-in work distribution, and failure handling (re-delivery on timeout).</p>
+
+<h3>Alternative 5: Push-Only Subscription Feed (Fan-out-on-Write for All)</h3>
+<p><strong>What:</strong> When any creator uploads a video, immediately write the video ID to the feed of every subscriber.</p>
+<p><strong>Why not chosen:</strong> Unworkable for popular creators. A creator with 100M subscribers would generate 100M writes per upload, taking hours and consuming massive write bandwidth. The hybrid push/pull approach (push for small creators, pull for large) balances write cost and read latency.</p>
+
+<h3>Alternative 6: Server-Sent Events (SSE) for Notifications</h3>
+<p><strong>What:</strong> Instead of mobile push notifications, use SSE to push notifications to the client in real-time.</p>
+<p><strong>Why not chosen:</strong> SSE only works while the app is open in the browser. Mobile users who have the app backgrounded or closed would not receive notifications. Mobile push (APNs/FCM) reaches users regardless of app state. SSE could complement push for users actively in the web app, but cannot replace it. The added complexity of maintaining SSE connections at YouTube's scale (billions of users) is significant.</p>
+
+<h3>Alternative 7: Single Database for Everything (SQL Only)</h3>
+<p><strong>What:</strong> Use a single SQL database for all data, including view counts, reactions, and watch history.</p>
+<p><strong>Why not chosen:</strong> SQL databases with ACID guarantees impose row-level locking on writes. At 10M+ view count increments per second, this creates severe write contention. NoSQL wide-column stores with native counter support handle this throughput with eventual consistency. Using the right database for the right workload is essential at this scale.</p>
 </div>
 
+<!-- ============================================================ -->
+<h2 id="additional">16. Additional Information</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+<h3>Resumable Upload Protocol</h3>
+<p>Large video uploads (potentially multiple GB) require a resumable protocol to handle network interruptions gracefully:</p>
+<ol>
+  <li>Client calls <code>POST /api/v1/videos/upload/init</code> with metadata → receives an <code>upload_token</code>.</li>
+  <li>Client splits the file into fixed-size chunks (e.g., 5 MB each) and uploads each via <code>PUT /api/v1/videos/upload/chunk?token={token}&chunk={N}</code>.</li>
+  <li>If the upload is interrupted, the client calls <code>GET /api/v1/videos/upload/status?token={token}</code> to learn which chunks were received.</li>
+  <li>Client resumes uploading from the first missing chunk.</li>
+  <li>After the last chunk, the client calls <code>POST /api/v1/videos/upload/complete?token={token}</code> to finalize.</li>
+</ol>
+<p>This is similar to the tus.io resumable upload protocol.</p>
+
+<h3>Video DRM (Digital Rights Management)</h3>
+<p>Premium/copyrighted content requires DRM encryption. HLS supports FairPlay (Apple) and DASH supports Widevine (Google) and PlayReady (Microsoft). The transcoding pipeline can encrypt segments with a DRM key. The client obtains a license from a DRM license server before decrypting and playing the segments.</p>
+
+<h3>Live Streaming (Brief Mention)</h3>
+<p>This design focuses on on-demand video. Live streaming would add:</p>
+<ul>
+  <li>An <strong>ingest server</strong> accepting RTMP or SRT streams from creators.</li>
+  <li><strong>Real-time transcoding</strong> to produce live HLS/DASH segments with low latency (LHLS, LL-DASH).</li>
+  <li><strong>Live chat</strong> using WebSockets (justified here due to the real-time interactive nature).</li>
+  <li><strong>DVR (rewind)</strong> by caching recent segments.</li>
+</ul>
+
+<h3>Analytics Pipeline</h3>
+<p>In parallel with the user-facing system, an analytics pipeline consumes events (views, likes, searches, watch time) via a message queue, processes them in batch/stream fashion, and stores aggregated analytics in a <strong>time-series database</strong> or data warehouse. This powers the Creator Studio analytics dashboard (views over time, audience demographics, revenue).</p>
+
+<h3>Abuse Prevention / Rate Limiting</h3>
+<ul>
+  <li>API rate limiting at the Load Balancer / API Gateway layer (e.g., max 100 requests/minute per IP for uploads, max 1000/min for search).</li>
+  <li>View count de-duplication: only count a view if the user watched ≥ 30 seconds, and no more than 1 view per user per video per session.</li>
+  <li>Comment spam detection via ML model in the Comment Service pipeline.</li>
+</ul>
+
+<h3>Geographical Multi-Region Deployment</h3>
+<p>For a global user base, the system should be deployed across multiple regions (e.g., US, EU, Asia-Pacific). Each region has a full stack (services, databases, caches). Cross-region replication for databases ensures availability if a region goes down. CDN edge servers are deployed globally (100+ PoPs). Users are routed to the nearest region via GeoDNS.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="vendors">17. Vendor Section</h2>
+<!-- ============================================================ -->
+
+<div class="card">
+<p>While the design above is vendor-agnostic, the following vendors would be strong choices for each component:</p>
+
+<table>
+<tr><th>Component</th><th>Potential Vendors</th><th>Rationale</th></tr>
+<tr><td><strong>SQL Database</strong></td><td>PostgreSQL, MySQL, CockroachDB, Google Cloud Spanner</td><td>PostgreSQL/MySQL are proven at scale with mature replication and sharding ecosystems (e.g., Vitess for MySQL). CockroachDB/Spanner provide distributed SQL with global consistency if needed.</td></tr>
+<tr><td><strong>NoSQL Database (Wide-Column)</strong></td><td>Apache Cassandra, ScyllaDB, Google Bigtable, Amazon DynamoDB</td><td>Cassandra/ScyllaDB offer native counter support, tunable consistency, and linear horizontal scaling. Bigtable/DynamoDB are managed alternatives with similar capabilities.</td></tr>
+<tr><td><strong>Object Storage</strong></td><td>Amazon S3, Google Cloud Storage, Azure Blob Storage, MinIO (self-hosted)</td><td>All provide high durability (11 nines), scalability, and lifecycle policies (move raw video to cold storage). S3 is the most widely adopted.</td></tr>
+<tr><td><strong>In-Memory Cache</strong></td><td>Redis, Memcached, Dragonfly</td><td>Redis offers rich data structures (hashes for metadata, sorted sets for leaderboards) and cluster mode. Memcached is simpler and slightly faster for pure key-value. Dragonfly is a modern drop-in Redis replacement with better memory efficiency.</td></tr>
+<tr><td><strong>Message Queue</strong></td><td>Apache Kafka, Amazon SQS, RabbitMQ, Apache Pulsar</td><td>Kafka excels at high-throughput, durable message streaming and can also serve as the event bus for the analytics pipeline. SQS is a managed option with less operational overhead. Pulsar combines queue and pub/sub semantics.</td></tr>
+<tr><td><strong>Search Index</strong></td><td>Elasticsearch, Apache Solr, Meilisearch</td><td>Elasticsearch is the industry standard for inverted index search with rich query capabilities, relevance tuning, and horizontal scaling via sharding.</td></tr>
+<tr><td><strong>CDN</strong></td><td>Cloudflare, Akamai, Amazon CloudFront, Fastly, Google Cloud CDN</td><td>At YouTube scale, a custom/private CDN (like Google's) is typical. For smaller scale, Cloudflare/Akamai provide global PoPs, edge caching, and DDoS protection out of the box.</td></tr>
+<tr><td><strong>Transcoding</strong></td><td>FFmpeg (open source), AWS Elastic Transcoder, Google Transcoder API</td><td>FFmpeg is the gold standard for video transcoding (open source, supports all codecs). Can be run on GPU-enabled instances for hardware-accelerated encoding (NVENC). Managed services reduce operational burden.</td></tr>
+<tr><td><strong>Container Orchestration</strong></td><td>Kubernetes</td><td>Standard for managing microservices at scale. Provides auto-scaling, rolling deployments, and service discovery. Essential for managing the diverse fleet of services in this architecture.</td></tr>
+<tr><td><strong>Time-Series DB (Analytics)</strong></td><td>InfluxDB, TimescaleDB, Apache Druid, ClickHouse</td><td>ClickHouse/Druid excel at real-time aggregation over large event datasets (billions of view events). TimescaleDB extends PostgreSQL for time-series if SQL familiarity is preferred.</td></tr>
+</table>
+</div>
+
+<script>
+mermaid.initialize({ 
+  startOnLoad: true, 
+  theme: 'default',
+  flowchart: { 
+    useMaxWidth: true, 
+    htmlLabels: true,
+    curve: 'basis'
+  }
+});
+</script>
 </body>
 </html>

@@ -4,367 +4,1301 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>System Design: Spotify</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true, theme:'neutral', securityLevel:'loose'});</script>
 <style>
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #e0e0e0; margin: 0; padding: 20px; line-height: 1.7; }
-  h1 { color: #1db954; font-size: 2.2em; border-bottom: 3px solid #1db954; padding-bottom: 10px; }
-  h2 { color: #1ed760; margin-top: 40px; }
-  h3 { color: #57e389; }
-  h4 { color: #8ff0b3; }
-  .section { background: #1a1a1a; padding: 25px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #1db954; }
-  .subsection { background: #222; padding: 15px; border-radius: 8px; margin: 15px 0; }
-  .diagram-container { background: #1e1e1e; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; overflow-x: auto; }
-  .tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.85em; margin: 2px 4px; }
-  .tag-pk { background: #4a9eff33; color: #4a9eff; border: 1px solid #4a9eff66; }
-  .tag-fk { background: #ff4a4a33; color: #ff4a4a; border: 1px solid #ff4a4a66; }
-  .tag-idx { background: #4aff4a33; color: #4aff4a; border: 1px solid #4aff4a66; }
-  .tag-shard { background: #ffa54a33; color: #ffa54a; border: 1px solid #ffa54a66; }
-  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-  th, td { padding: 12px; text-align: left; border: 1px solid #333; }
-  th { background: #2a2a2a; color: #1ed760; }
-  tr:nth-child(even) { background: #1a1a1a; }
-  code { background: #2a2a2a; padding: 2px 8px; border-radius: 4px; color: #57e389; font-family: 'Fira Code', monospace; }
-  pre { background: #1a1a1a; padding: 20px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; }
-  .example { background: #0d2818; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #4aff4a; }
-  .tradeoff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-  .tradeoff-pro { background: #0d2818; padding: 15px; border-radius: 8px; border-left: 3px solid #4aff4a; }
-  .tradeoff-con { background: #2d1018; padding: 15px; border-radius: 8px; border-left: 3px solid #ff4a4a; }
-  ul, ol { padding-left: 25px; }
-  li { margin: 6px 0; }
+  :root { --bg: #fff; --fg: #1a1a2e; --accent: #1DB954; --accent2: #191414; --border: #e0e0e0; --code-bg: #f5f5f5; --card-bg: #fafafa; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--fg); background: var(--bg); line-height: 1.7; max-width: 1100px; margin: 0 auto; padding: 2rem; }
+  h1 { font-size: 2.4rem; border-bottom: 4px solid var(--accent); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+  h2 { font-size: 1.8rem; margin-top: 2.5rem; margin-bottom: 1rem; border-left: 5px solid var(--accent); padding-left: 0.75rem; }
+  h3 { font-size: 1.35rem; margin-top: 1.8rem; margin-bottom: 0.7rem; color: var(--accent2); }
+  h4 { font-size: 1.1rem; margin-top: 1.2rem; margin-bottom: 0.5rem; }
+  p, li { margin-bottom: 0.5rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.95rem; }
+  th, td { border: 1px solid var(--border); padding: 0.6rem 0.8rem; text-align: left; }
+  th { background: var(--accent); color: #fff; font-weight: 600; }
+  tr:nth-child(even) { background: var(--card-bg); }
+  code { background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.92em; font-family: 'Fira Code', 'Consolas', monospace; }
+  .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; margin: 1rem 0; }
+  .example { background: #e8f5e9; border-left: 4px solid var(--accent); padding: 1rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+  .example strong { color: var(--accent2); }
+  .warning { background: #fff3e0; border-left: 4px solid #ff9800; padding: 1rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+  .info { background: #e3f2fd; border-left: 4px solid #2196f3; padding: 1rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+  .mermaid { margin: 1.5rem 0; text-align: center; }
+  .toc { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem 2rem; margin: 1.5rem 0; }
+  .toc a { color: var(--accent2); text-decoration: none; }
+  .toc a:hover { color: var(--accent); text-decoration: underline; }
+  .toc ul { list-style: none; padding-left: 1rem; }
+  .toc > ul { padding-left: 0; }
+  .toc li { margin-bottom: 0.3rem; }
+  .proto { display: inline-block; background: #e8eaf6; color: #283593; padding: 0.1rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.85em; }
+  .badge { display: inline-block; background: var(--accent); color: #fff; padding: 0.1rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.85em; }
 </style>
 </head>
 <body>
 
-<h1>🎵 System Design: Spotify (Music Streaming)</h1>
+<h1>🎵 System Design: Spotify</h1>
 
-<div class="section">
-<h2>📋 Functional Requirements</h2>
+<div class="toc">
+<strong>Table of Contents</strong>
 <ul>
-  <li>Users can search for and stream songs, albums, artists, and podcasts</li>
-  <li>Users can create playlists, follow artists, and save songs to library</li>
-  <li>Personalized recommendations: Discover Weekly, Daily Mix, Release Radar</li>
-  <li>Support offline downloads, cross-device sync, and social features (collaborative playlists)</li>
+  <li><a href="#fr">1. Functional Requirements</a></li>
+  <li><a href="#nfr">2. Non-Functional Requirements</a></li>
+  <li><a href="#flow1">3. Flow 1 — Song Upload</a></li>
+  <li><a href="#flow2">4. Flow 2 — Song Streaming / Playback</a></li>
+  <li><a href="#flow3">5. Flow 3 — Search</a></li>
+  <li><a href="#flow4">6. Flow 4 — Playlist Management</a></li>
+  <li><a href="#flow5">7. Flow 5 — Home Feed &amp; Recommendations</a></li>
+  <li><a href="#flow6">8. Flow 6 — Friend Activity (Real-Time)</a></li>
+  <li><a href="#overall">9. Overall Combined Diagram</a></li>
+  <li><a href="#schema">10. Database Schema</a></li>
+  <li><a href="#cdn">11. CDN Deep Dive</a></li>
+  <li><a href="#cache">12. Cache Deep Dive</a></li>
+  <li><a href="#mq">13. Message Queue Deep Dive</a></li>
+  <li><a href="#ws">14. WebSocket Deep Dive (Friend Activity)</a></li>
+  <li><a href="#scaling">15. Scaling Considerations &amp; Load Balancers</a></li>
+  <li><a href="#tradeoffs">16. Tradeoffs &amp; Deep Dives</a></li>
+  <li><a href="#alternatives">17. Alternative Approaches</a></li>
+  <li><a href="#additional">18. Additional Information</a></li>
+  <li><a href="#vendors">19. Vendor Section</a></li>
 </ul>
 </div>
 
-<div class="section">
-<h2>🔒 Non-Functional Requirements</h2>
+<!-- ============================== SECTION 1 ============================== -->
+<h2 id="fr">1. Functional Requirements</h2>
+<ol>
+  <li><strong>Song Upload:</strong> Artists/labels can upload audio files with metadata (title, album, genre, cover art).</li>
+  <li><strong>Song Streaming:</strong> Users can stream songs on-demand with adaptive bitrate quality.</li>
+  <li><strong>Search:</strong> Users can search for songs, artists, albums, and playlists by keyword.</li>
+  <li><strong>Playlist Management:</strong> Users can create, edit, delete, and share playlists; add/remove/reorder songs.</li>
+  <li><strong>Likes &amp; Library:</strong> Users can like/save songs, albums, and artists to their library.</li>
+  <li><strong>Home Feed &amp; Recommendations:</strong> Personalized content (daily mixes, discover weekly, release radar) based on listening history.</li>
+  <li><strong>Friend Activity:</strong> Users can see what friends are currently listening to in real time.</li>
+  <li><strong>Offline Download:</strong> Premium users can download songs for offline listening.</li>
+  <li><strong>Play History:</strong> Users can view their recently played songs/artists.</li>
+  <li><strong>User Authentication:</strong> Sign up, log in, manage subscription tiers (Free with ads, Premium).</li>
+</ol>
+
+<!-- ============================== SECTION 2 ============================== -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
+<ol>
+  <li><strong>Low Latency:</strong> Song playback should start within 200ms of pressing play. Search results should return within 300ms.</li>
+  <li><strong>High Availability:</strong> 99.99% uptime — music streaming is a real-time experience and downtime directly impacts user retention.</li>
+  <li><strong>Scalability:</strong> Support hundreds of millions of users with tens of millions concurrent streams.</li>
+  <li><strong>Durability:</strong> Uploaded audio files must never be lost (11 nines durability for object storage).</li>
+  <li><strong>Eventual Consistency:</strong> Acceptable for play counts, recommendations, and friend activity. Strong consistency required for playlist edits and subscription state.</li>
+  <li><strong>Bandwidth Efficiency:</strong> Adaptive bitrate streaming to optimize for varying network conditions (96 kbps – 320 kbps).</li>
+  <li><strong>Global Reach:</strong> Content served from edge locations worldwide via CDN.</li>
+  <li><strong>Fault Tolerance:</strong> Graceful degradation — if recommendations fail, still serve static popular content.</li>
+</ol>
+
+<!-- ============================== SECTION 3: FLOW 1 ============================== -->
+<h2 id="flow1">3. Flow 1 — Song Upload</h2>
+<p>This flow covers how an artist or label uploads a new song (audio file + metadata) to the platform.</p>
+
+<div class="mermaid">
+graph TD
+    A["🎤 Artist Client<br/>(Web/Desktop)"] -->|"HTTP POST /songs<br/>(multipart: audio + metadata)"| B["API Gateway /<br/>Load Balancer"]
+    B --> C["Upload Service"]
+    C -->|"Store raw audio"| D[("Object Storage<br/>(Raw Audio)")]
+    C -->|"Store metadata"| E["Song Metadata<br/>Service"]
+    E --> F[("SQL Database<br/>(Songs, Albums, Artists)")]
+    C -->|"Enqueue transcode job"| G["Message Queue<br/>(Transcode Jobs)"]
+    G --> H["Audio Processing<br/>Service"]
+    H -->|"Read raw audio"| D
+    H -->|"Store transcoded chunks<br/>(multiple bitrates)"| I[("Object Storage<br/>(Processed Audio)")]
+    H -->|"Update status to 'available'"| E
+    H -->|"Enqueue index job"| J["Message Queue<br/>(Search Index Jobs)"]
+    J --> K["Search Indexing<br/>Service"]
+    K --> L[("Search Index<br/>(Inverted Index)")]
+    I -.->|"CDN pull on first request"| M["CDN Edge Nodes"]
+
+    style A fill:#E8F5E9
+    style D fill:#FFF3E0
+    style I fill:#FFF3E0
+    style F fill:#E3F2FD
+    style L fill:#E3F2FD
+    style G fill:#FCE4EC
+    style J fill:#FCE4EC
+    style M fill:#F3E5F5
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Standard Upload:</strong><br/>
+An artist named "Luna Nova" opens the Spotify for Artists web portal and uploads a new track "Midnight Drive" in WAV format along with metadata (title, album "Night Rides", genre "Synthwave", cover art JPEG). The client sends an <code>HTTP POST /api/v1/songs</code> (multipart form-data) to the API Gateway. The Upload Service stores the raw WAV file in Object Storage and sends the metadata to the Song Metadata Service, which writes a new row to the <code>songs</code> table in the SQL Database with <code>status = 'processing'</code>. A transcode job message is enqueued. The Audio Processing Service picks it up, transcodes the WAV into OGG Vorbis at 96 kbps, 160 kbps, and 320 kbps, chunks each into ~5-second segments, and stores them in Processed Audio Object Storage. It then updates the song status to <code>'available'</code> and enqueues a search index job. The Search Indexing Service updates the inverted index so "Midnight Drive" and "Luna Nova" become searchable. The first user who streams this song triggers a CDN cache-fill from Object Storage.
+</div>
+
+<div class="example">
+<strong>Example 2 — Album Batch Upload:</strong><br/>
+A record label uploads 12 tracks for a new album simultaneously. Each track follows the same pipeline, but the Message Queue ensures the Audio Processing Service processes them asynchronously and in parallel across multiple worker instances, preventing upload timeouts. The label sees a progress dashboard as each song transitions from <code>'processing'</code> → <code>'available'</code>.
+</div>
+
+<div class="example">
+<strong>Example 3 — Failed Transcode:</strong><br/>
+An artist uploads a corrupted audio file. The Audio Processing Service fails to transcode it, marks the song status as <code>'failed'</code> in the SQL Database via the Song Metadata Service, and a notification is sent back to the artist client. The message is moved to a dead-letter queue for investigation.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>API Gateway / Load Balancer</h4>
+<p>Entry point for all client requests. Handles authentication (JWT token validation), rate limiting, SSL termination, and routes requests to the appropriate backend service. Distributes load across multiple instances of each service using round-robin or least-connections algorithms.</p>
+
+<h4>Upload Service</h4>
 <ul>
-  <li><strong>Scale:</strong> 600M+ users, 100M+ tracks, 5M+ podcasts, billions of streams/day</li>
-  <li><strong>Low latency:</strong> Song playback starts in &lt;200ms, gapless playback between tracks</li>
-  <li><strong>High availability:</strong> 99.99% — music must always play</li>
-  <li><strong>Audio quality:</strong> Multiple bitrates (96/160/320 kbps for Ogg Vorbis, lossless for Premium)</li>
-  <li><strong>Global CDN:</strong> Low-latency audio delivery worldwide</li>
+  <li><span class="proto">HTTP POST</span> <code>/api/v1/songs</code></li>
+  <li><strong>Input:</strong> Multipart form-data containing audio file (WAV/FLAC/MP3, up to 200MB) + JSON metadata (title, album_id, genre, release_date, cover_art).</li>
+  <li><strong>Output:</strong> <code>202 Accepted</code> with <code>{ song_id, status: "processing" }</code>.</li>
+  <li>Validates file format and size, generates a unique <code>song_id</code> (UUID), uploads the raw audio to Object Storage using a pre-signed URL, persists metadata via Song Metadata Service, and publishes a transcode job to the Message Queue.</li>
 </ul>
+
+<h4>Song Metadata Service</h4>
+<ul>
+  <li><span class="proto">Internal gRPC</span> (service-to-service communication for low-latency, strongly-typed contracts).</li>
+  <li><strong>Write:</strong> Receives metadata from Upload Service → inserts into SQL Database (<code>songs</code>, <code>albums</code>, <code>artists</code> tables).</li>
+  <li><strong>Read:</strong> Returns song metadata when requested by Streaming Service or Search Service.</li>
+</ul>
+
+<h4>Object Storage (Raw Audio &amp; Processed Audio)</h4>
+<p>Blob/object storage for audio files. Raw audio stores the original uploaded files. Processed audio stores the transcoded, chunked files at multiple bitrates. Provides 11-nines durability with cross-region replication. Two logical buckets are used to separate raw from processed content.</p>
+
+<h4>Audio Processing Service</h4>
+<ul>
+  <li>Consumes transcode jobs from the Message Queue.</li>
+  <li>Downloads raw audio from Object Storage, transcodes to OGG Vorbis (or AAC for iOS) at multiple quality tiers: 96 kbps (low/mobile), 160 kbps (normal), 320 kbps (high/premium).</li>
+  <li>Chunks audio into ~5-second segments for streaming. Each chunk is independently decodable.</li>
+  <li>Uploads processed chunks to Processed Audio Object Storage.</li>
+  <li>Updates song status to <code>'available'</code> via Song Metadata Service.</li>
+  <li>Publishes a search-index job to the Message Queue.</li>
+</ul>
+
+<h4>Search Indexing Service</h4>
+<ul>
+  <li>Consumes index jobs from the Message Queue.</li>
+  <li>Tokenizes song titles, artist names, album names, and genres.</li>
+  <li>Updates the inverted index (Search Index) so the new content becomes searchable within seconds.</li>
+</ul>
+
+<h4>Message Queue (Transcode Jobs &amp; Search Index Jobs)</h4>
+<p>Decouples the upload path from the compute-heavy transcoding and indexing operations. Provides durability (messages persisted to disk), at-least-once delivery, and dead-letter queues for failed messages. Two separate topics/queues are used: one for transcode jobs and one for search index updates.</p>
+
+<h4>CDN Edge Nodes</h4>
+<p>Audio chunks are served from CDN edge nodes close to the user. The CDN uses a <strong>pull-based (lazy-load)</strong> strategy: chunks are fetched from Object Storage on first request and then cached at the edge. Popular songs stay cached; long-tail content may require an origin fetch.</p>
+
+<!-- ============================== SECTION 4: FLOW 2 ============================== -->
+<h2 id="flow2">4. Flow 2 — Song Streaming / Playback</h2>
+<p>This flow covers what happens when a user presses play on a song.</p>
+
+<div class="mermaid">
+graph TD
+    A["📱 User Client<br/>(Mobile/Desktop/Web)"] -->|"HTTP GET /songs/{id}/stream"| B["API Gateway /<br/>Load Balancer"]
+    B --> C["Streaming Service"]
+    C -->|"Fetch song metadata<br/>+ file URLs"| D["Song Metadata<br/>Service"]
+    D --> E[("SQL Database<br/>(Songs)")]
+    C -->|"Validate subscription<br/>+ DRM rights"| F["Auth / Subscription<br/>Service"]
+    F --> G[("SQL Database<br/>(Users)")]
+    C -->|"Return manifest<br/>(CDN chunk URLs + bitrate options)"| A
+    A -->|"HTTP GET chunks<br/>directly from CDN"| H["CDN Edge Nodes"]
+    H -->|"Cache miss → origin fetch"| I[("Object Storage<br/>(Processed Audio)")]
+    A -->|"Async: report play event"| J["API Gateway /<br/>Load Balancer"]
+    J --> K["Analytics Service"]
+    K -->|"Enqueue play event"| L["Message Queue<br/>(Play Events)"]
+    L --> M["Play Count<br/>Aggregator"]
+    M --> N[("NoSQL Database<br/>(Play Counts)")]
+    L --> O["Listening History<br/>Writer"]
+    O --> P[("NoSQL Database<br/>(Listening History)")]
+
+    style A fill:#E8F5E9
+    style H fill:#F3E5F5
+    style I fill:#FFF3E0
+    style E fill:#E3F2FD
+    style G fill:#E3F2FD
+    style N fill:#E3F2FD
+    style P fill:#E3F2FD
+    style L fill:#FCE4EC
 </div>
 
-<h2>🔄 Flow 1 — Music Playback (Streaming)</h2>
+<h3>Examples</h3>
 
-<div class="diagram-container">
-<svg viewBox="0 0 1100 380" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="160" width="110" height="55" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="75" y="192" text-anchor="middle" fill="white" font-size="13">Spotify App</text>
-  <line x1="130" y1="187" x2="195" y2="187" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="205" y="160" width="130" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="270" y="183" text-anchor="middle" fill="white" font-size="12">Playback Service</text>
-  <text x="270" y="200" text-anchor="middle" fill="white" font-size="10">(Track Resolve)</text>
-  <line x1="335" y1="175" x2="400" y2="120" stroke="#aaa" marker-end="url(#ah1)"/>
-  <line x1="335" y1="195" x2="400" y2="250" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="410" y="95" width="140" height="50" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="480" y="118" text-anchor="middle" fill="white" font-size="11">DRM License</text>
-  <text x="480" y="133" text-anchor="middle" fill="white" font-size="10">(Widevine)</text>
-  <rect x="410" y="230" width="140" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="480" y="253" text-anchor="middle" fill="white" font-size="11">Audio CDN Router</text>
-  <text x="480" y="268" text-anchor="middle" fill="white" font-size="10">(Nearest Edge)</text>
-  <line x1="550" y1="255" x2="620" y2="255" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="630" y="230" width="140" height="50" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="700" y="253" text-anchor="middle" fill="white" font-size="11">CDN Edge (GCS/S3)</text>
-  <text x="700" y="268" text-anchor="middle" fill="white" font-size="10">(Audio Files)</text>
-  <line x1="770" y1="255" x2="840" y2="255" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="850" y="230" width="130" height="50" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="915" y="253" text-anchor="middle" fill="white" font-size="11">Audio Playback</text>
-  <text x="915" y="268" text-anchor="middle" fill="white" font-size="10">(Ogg Vorbis/AAC)</text>
-</svg>
+<div class="example">
+<strong>Example 1 — Premium User Streams a Popular Song:</strong><br/>
+User "Alice" (Premium subscriber) opens the Spotify mobile app and taps play on "Blinding Lights" by The Weeknd. The client sends <code>HTTP GET /api/v1/songs/abc123/stream</code> to the API Gateway. The Streaming Service calls the Song Metadata Service (via gRPC) to retrieve the song's chunk manifest and calls the Auth/Subscription Service to confirm Alice has a Premium subscription (eligible for 320 kbps). The Streaming Service returns a JSON manifest: <code>{ bitrates: [96, 160, 320], chunks: ["https://cdn.example.com/abc123/320/chunk_001.ogg", ...] }</code>. The client begins downloading chunks directly from the CDN starting at 320 kbps. Since "Blinding Lights" is extremely popular, all chunks are already cached at the edge — playback starts in &lt;100ms. After 30 seconds of listening (the threshold for a "counted play"), the client fires an async <code>HTTP POST /api/v1/events/play</code> to the Analytics Service, which enqueues the event. The Play Count Aggregator increments the count in the NoSQL Play Counts database, and the Listening History Writer appends the record to Alice's history.
 </div>
 
-<div class="section">
-<h3>Step-by-Step</h3>
+<div class="example">
+<strong>Example 2 — Free User with Adaptive Bitrate:</strong><br/>
+User "Bob" (Free tier) streams a song on a congested mobile network. The Streaming Service returns a manifest limited to 160 kbps max (free tier cap). The client starts at 160 kbps but detects increasing latency and drops to 96 kbps mid-song. The client seamlessly switches to lower-bitrate chunks at the next chunk boundary. An ad is inserted every few songs, served by a separate Ad Service (not shown in this core flow).
+</div>
+
+<div class="example">
+<strong>Example 3 — Cold Cache / Long-Tail Song:</strong><br/>
+User "Carlos" plays an obscure indie track that hasn't been streamed in months. The CDN edge node returns a cache miss for several chunks. The CDN fetches these chunks from the Object Storage origin, serves them to Carlos, and caches them at the edge. The first chunk has ~300ms additional latency due to the origin fetch, but the client's pre-buffer (it fetches 2-3 chunks ahead) masks this delay so playback still feels seamless.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Streaming Service</h4>
+<ul>
+  <li><span class="proto">HTTP GET</span> <code>/api/v1/songs/{song_id}/stream</code></li>
+  <li><strong>Input:</strong> <code>song_id</code> (path param), <code>Authorization</code> header (JWT), optional <code>preferred_bitrate</code> query param.</li>
+  <li><strong>Output:</strong> <code>200 OK</code> with JSON manifest: <code>{ song_id, duration_ms, bitrates: [96,160,320], chunks: [ {url, bitrate, start_ms, end_ms}, ... ] }</code>.</li>
+  <li>Orchestrates between Song Metadata Service and Auth/Subscription Service. Does <strong>not</strong> serve audio bytes directly — it returns CDN URLs so the client streams from the edge.</li>
+</ul>
+
+<h4>Auth / Subscription Service</h4>
+<ul>
+  <li><span class="proto">Internal gRPC</span></li>
+  <li>Validates JWT tokens, checks subscription tier (Free/Premium), enforces DRM rights and geographic licensing restrictions.</li>
+  <li>Returns: <code>{ user_id, tier: "premium", allowed_bitrates: [96,160,320], country: "US" }</code>.</li>
+</ul>
+
+<h4>Analytics Service</h4>
+<ul>
+  <li><span class="proto">HTTP POST</span> <code>/api/v1/events/play</code></li>
+  <li><strong>Input:</strong> <code>{ user_id, song_id, duration_listened_ms, timestamp, device_type }</code>.</li>
+  <li><strong>Output:</strong> <code>202 Accepted</code> (fire-and-forget from client perspective).</li>
+  <li>Publishes play events to the Message Queue. Events fan out to multiple consumers: Play Count Aggregator, Listening History Writer, and (later) the Recommendation Engine.</li>
+</ul>
+
+<h4>Play Count Aggregator</h4>
+<p>Consumes play events from the Message Queue and increments counters in the NoSQL Play Counts database. Uses batch/micro-batch aggregation (e.g., aggregate counts every 5 seconds) to reduce write amplification on hot keys (popular songs). A play is only counted after 30+ seconds of listening.</p>
+
+<h4>Listening History Writer</h4>
+<p>Consumes play events and appends them to the NoSQL Listening History database, partitioned by <code>user_id</code>. This data is used by the Recommendation Engine and the "Recently Played" UI.</p>
+
+<h4>CDN Edge Nodes</h4>
+<p>Serve audio chunks via HTTPS. The client makes standard <code>HTTP GET</code> requests for each chunk. Chunks are ~5 seconds of audio (~100-200 KB each at 320 kbps). The CDN handles TLS termination, geographic routing, and cache management.</p>
+
+<!-- ============================== SECTION 5: FLOW 3 ============================== -->
+<h2 id="flow3">5. Flow 3 — Search</h2>
+<p>This flow covers how a user searches for songs, artists, albums, or playlists.</p>
+
+<div class="mermaid">
+graph TD
+    A["📱 User Client"] -->|"HTTP GET /search?q=...&type=..."| B["API Gateway /<br/>Load Balancer"]
+    B --> C["Search Service"]
+    C -->|"Check cache"| D[("In-Memory Cache<br/>(Search Results)")]
+    D -->|"Cache hit"| C
+    C -->|"Cache miss → query index"| E[("Search Index<br/>(Inverted Index)")]
+    E -->|"Return matching doc IDs<br/>+ relevance scores"| C
+    C -->|"Hydrate results<br/>(fetch metadata)"| F["Song Metadata<br/>Service"]
+    F --> G[("SQL Database")]
+    C -->|"Return ranked results"| A
+
+    style A fill:#E8F5E9
+    style D fill:#FFEBEE
+    style E fill:#E3F2FD
+    style G fill:#E3F2FD
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Simple Keyword Search:</strong><br/>
+User "Diana" types "Shape of You" into the search bar. The client sends <code>HTTP GET /api/v1/search?q=shape+of+you&type=song,artist,album&limit=20</code>. The Search Service first checks the In-Memory Cache for this exact query. Cache miss. The Search Service queries the inverted index, which tokenizes the query and returns matching document IDs ranked by relevance (TF-IDF + popularity boosting). The top results include the song "Shape of You" by Ed Sheeran (exact match, high play count → highest relevance). The Search Service hydrates these IDs by fetching metadata (title, artist name, album art URL, duration) from the Song Metadata Service. The final ranked results are returned to the client and also written to the cache with a short TTL (60 seconds).
+</div>
+
+<div class="example">
+<strong>Example 2 — Fuzzy / Typo-Tolerant Search:</strong><br/>
+User "Eve" types "Bohemain Rapsody" (misspelled). The inverted index supports fuzzy matching (edit-distance ≤ 2). It correctly resolves this to "Bohemian Rhapsody" by Queen and returns it as the top result. The Search Service also returns the "Did you mean: Bohemian Rhapsody?" suggestion to the client.
+</div>
+
+<div class="example">
+<strong>Example 3 — Prefix Search (Autocomplete):</strong><br/>
+User "Frank" begins typing "Tay" and pauses. The client sends a prefix search <code>HTTP GET /api/v1/search?q=Tay&type=artist&prefix=true</code>. The Search Service uses a prefix trie or n-gram index to instantly return "Taylor Swift", "Tay-K", "Tayla Parx" as autocomplete suggestions. These are served from cache since autocomplete queries for popular prefixes are extremely frequent.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Search Service</h4>
+<ul>
+  <li><span class="proto">HTTP GET</span> <code>/api/v1/search?q={query}&type={types}&limit={n}&prefix={bool}</code></li>
+  <li><strong>Input:</strong> Query string, entity types to search (song/artist/album/playlist), result limit, prefix flag for autocomplete.</li>
+  <li><strong>Output:</strong> <code>200 OK</code> with <code>{ results: [ { type: "song", id: "abc", title: "...", artist: "...", album_art_url: "...", popularity: 95 }, ... ], suggestion: "Did you mean: ...?" }</code>.</li>
+  <li>Applies ranking that combines text relevance (TF-IDF), popularity score (play count), recency (newer releases boosted), and personalization (user's listening history).</li>
+</ul>
+
+<h4>Search Index (Inverted Index)</h4>
+<p>A full-text search engine storing an inverted index of all searchable content. Documents include songs, artists, albums, and playlists. Supports tokenization, stemming, fuzzy matching (Levenshtein distance), n-gram indexing for autocomplete, and field boosting (artist name matches ranked higher than song title matches). Updated near-real-time via the Search Indexing Service consuming from the Message Queue.</p>
+
+<h4>In-Memory Cache (Search Results)</h4>
+<p>Caches recent search query → result mappings. Short TTL (60 seconds) since search results can change (new songs added, popularity shifts). Uses LRU eviction. Dramatically reduces load on the Search Index for trending/repeated queries (e.g., when a new album drops and millions search for it simultaneously).</p>
+
+<!-- ============================== SECTION 6: FLOW 4 ============================== -->
+<h2 id="flow4">6. Flow 4 — Playlist Management</h2>
+<p>This flow covers creating, editing, and retrieving playlists.</p>
+
+<div class="mermaid">
+graph TD
+    A["📱 User Client"] -->|"HTTP POST /playlists<br/>HTTP PUT /playlists/{id}<br/>HTTP GET /playlists/{id}"| B["API Gateway /<br/>Load Balancer"]
+    B --> C["Playlist Service"]
+    C -->|"Read/Write"| D[("SQL Database<br/>(Playlists, PlaylistSongs)")]
+    C -->|"Check/Invalidate cache"| E[("In-Memory Cache<br/>(Playlist Data)")]
+    C -->|"Fetch song metadata<br/>for hydration"| F["Song Metadata<br/>Service"]
+    F --> G[("SQL Database<br/>(Songs)")]
+    C -->|"Enqueue index update"| H["Message Queue<br/>(Search Index Jobs)"]
+    H --> I["Search Indexing<br/>Service"]
+    I --> J[("Search Index")]
+
+    style A fill:#E8F5E9
+    style D fill:#E3F2FD
+    style G fill:#E3F2FD
+    style J fill:#E3F2FD
+    style E fill:#FFEBEE
+    style H fill:#FCE4EC
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Create a Playlist:</strong><br/>
+User "Grace" taps "Create Playlist" and names it "Road Trip Vibes". The client sends <code>HTTP POST /api/v1/playlists</code> with body <code>{ name: "Road Trip Vibes", description: "Songs for the open road", is_public: true }</code>. The Playlist Service inserts a new row into the <code>playlists</code> table and returns <code>201 Created</code> with <code>{ playlist_id: "pl_789", name: "Road Trip Vibes" }</code>. A search index job is enqueued so the playlist becomes searchable.
+</div>
+
+<div class="example">
+<strong>Example 2 — Add Songs to a Playlist:</strong><br/>
+Grace adds 5 songs to "Road Trip Vibes". The client sends <code>HTTP POST /api/v1/playlists/pl_789/songs</code> with body <code>{ song_ids: ["s1","s2","s3","s4","s5"] }</code>. The Playlist Service inserts 5 rows into the <code>playlist_songs</code> table with sequential <code>position</code> values (0-4). It invalidates the cache entry for <code>pl_789</code>. Returns <code>200 OK</code>.
+</div>
+
+<div class="example">
+<strong>Example 3 — Reorder Songs:</strong><br/>
+Grace drags song "s3" from position 2 to position 0. The client sends <code>HTTP PATCH /api/v1/playlists/pl_789/songs/reorder</code> with body <code>{ song_id: "s3", new_position: 0 }</code>. The Playlist Service updates the <code>position</code> column for affected rows. Cache invalidated.
+</div>
+
+<div class="example">
+<strong>Example 4 — Get a Large Playlist:</strong><br/>
+User "Hank" opens a playlist with 5,000 songs. The client sends <code>HTTP GET /api/v1/playlists/pl_789?offset=0&limit=50</code>. The Playlist Service checks the cache — cache hit returns the first 50 songs instantly. As Hank scrolls, subsequent pages are fetched with cursor-based pagination. The Playlist Service hydrates each song with metadata from the Song Metadata Service.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Playlist Service</h4>
+<ul>
+  <li><span class="proto">HTTP POST</span> <code>/api/v1/playlists</code> — Create playlist. Input: <code>{ name, description, is_public }</code>. Output: <code>201</code> with playlist object.</li>
+  <li><span class="proto">HTTP GET</span> <code>/api/v1/playlists/{id}?offset=&limit=</code> — Get playlist with paginated songs. Output: <code>{ playlist_id, name, songs: [...], total_songs, next_cursor }</code>.</li>
+  <li><span class="proto">HTTP PUT</span> <code>/api/v1/playlists/{id}</code> — Update playlist metadata. Input: <code>{ name, description }</code>.</li>
+  <li><span class="proto">HTTP DELETE</span> <code>/api/v1/playlists/{id}</code> — Delete playlist.</li>
+  <li><span class="proto">HTTP POST</span> <code>/api/v1/playlists/{id}/songs</code> — Add songs. Input: <code>{ song_ids: [...] }</code>.</li>
+  <li><span class="proto">HTTP DELETE</span> <code>/api/v1/playlists/{id}/songs/{song_id}</code> — Remove a song.</li>
+  <li><span class="proto">HTTP PATCH</span> <code>/api/v1/playlists/{id}/songs/reorder</code> — Reorder songs. Input: <code>{ song_id, new_position }</code>.</li>
+  <li>Requires strong consistency for writes (users expect to see their edit immediately), so writes go to the SQL primary and reads use the cache or SQL read replicas.</li>
+</ul>
+
+<!-- ============================== SECTION 7: FLOW 5 ============================== -->
+<h2 id="flow5">7. Flow 5 — Home Feed &amp; Recommendations</h2>
+<p>This flow covers the personalized home screen a user sees upon opening the app.</p>
+
+<div class="mermaid">
+graph TD
+    A["📱 User Client"] -->|"HTTP GET /feed"| B["API Gateway /<br/>Load Balancer"]
+    B --> C["Feed Service"]
+    C -->|"Check cache"| D[("In-Memory Cache<br/>(Pre-computed Feeds)")]
+    D -->|"Cache hit"| C
+    C -->|"Cache miss → request recs"| E["Recommendation<br/>Engine"]
+    E -->|"Read listening history"| F[("NoSQL Database<br/>(Listening History)")]
+    E -->|"Read user likes"| G[("SQL Database<br/>(UserLikedSongs)")]
+    E -->|"ML model inference<br/>(collaborative filtering,<br/>content-based)"| H["ML Model<br/>Serving"]
+    E -->|"Return rec song/playlist IDs"| C
+    C -->|"Hydrate metadata"| I["Song Metadata<br/>Service"]
+    I --> J[("SQL Database")]
+    C -->|"Return personalized feed"| A
+
+    style A fill:#E8F5E9
+    style D fill:#FFEBEE
+    style F fill:#E3F2FD
+    style G fill:#E3F2FD
+    style J fill:#E3F2FD
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Returning User with Warm Cache:</strong><br/>
+User "Ivy" opens the Spotify app. The client sends <code>HTTP GET /api/v1/feed</code>. The Feed Service checks the In-Memory Cache for Ivy's pre-computed feed (keyed by <code>user_id</code>). Cache hit — the feed was pre-computed by a batch job 2 hours ago and includes: "Daily Mix 1" (indie rock, based on recent listens), "Discover Weekly" (refreshed every Monday), "Release Radar" (new releases from followed artists), and "Because you listened to Radiohead..." row. The hydrated feed is returned in &lt;50ms.
+</div>
+
+<div class="example">
+<strong>Example 2 — New User (Cold Start):</strong><br/>
+User "Jack" just signed up and has no listening history. The Recommendation Engine falls back to a <strong>cold-start strategy</strong>: it uses Jack's stated genre preferences (chosen during onboarding), trending/popular content globally and in Jack's region, and editorial curated playlists (e.g., "Today's Top Hits"). The feed is generated on-the-fly since there's no pre-computed cache entry.
+</div>
+
+<div class="example">
+<strong>Example 3 — Cache Miss, Real-Time Computation:</strong><br/>
+User "Karen" opens the app right after the cache TTL expired. The Feed Service calls the Recommendation Engine, which reads Karen's last 500 listening history entries from the NoSQL database, her liked songs from SQL, and runs inference on the ML model (collaborative filtering + content-based hybrid). This takes ~200ms. The results are cached for next time and returned.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Feed Service</h4>
+<ul>
+  <li><span class="proto">HTTP GET</span> <code>/api/v1/feed</code></li>
+  <li><strong>Input:</strong> <code>Authorization</code> header (JWT with user_id).</li>
+  <li><strong>Output:</strong> <code>200 OK</code> with <code>{ sections: [ { title: "Daily Mix 1", type: "playlist", items: [...] }, { title: "Recently Played", type: "history", items: [...] }, ... ] }</code>.</li>
+  <li>Orchestrates between cache, Recommendation Engine, and Song Metadata Service. Acts as a composition layer.</li>
+</ul>
+
+<h4>Recommendation Engine</h4>
+<ul>
+  <li><span class="proto">Internal gRPC</span></li>
+  <li>Runs ML models combining: <strong>Collaborative filtering</strong> (users who listened to X also listened to Y), <strong>Content-based filtering</strong> (audio features like tempo, energy, danceability), and <strong>Context-aware signals</strong> (time of day, device type, recent mood).</li>
+  <li>Two modes: <strong>Batch</strong> (pre-computes daily/weekly mixes offline, writes to cache) and <strong>Real-time</strong> (on-demand for cache misses or new interactions).</li>
+</ul>
+
+<h4>ML Model Serving</h4>
+<p>Hosts trained recommendation models. Receives feature vectors (user listening history embeddings, song audio embeddings) and returns ranked lists of song/playlist IDs. Models are retrained periodically (daily) on the full listening history dataset and deployed via blue-green deployment.</p>
+
+<!-- ============================== SECTION 8: FLOW 6 ============================== -->
+<h2 id="flow6">8. Flow 6 — Friend Activity (Real-Time)</h2>
+<p>This flow covers how users see what their friends are currently listening to in the sidebar (desktop app feature).</p>
+
+<div class="mermaid">
+graph TD
+    A["🖥️ User Client<br/>(Desktop App)"] -->|"1. WebSocket UPGRADE<br/>/ws/friend-activity"| B["API Gateway /<br/>Load Balancer"]
+    B --> C["Friend Activity<br/>Service"]
+    C -->|"2. Lookup friends list"| D[("SQL Database<br/>(UserFollows)")]
+    C -->|"3. Subscribe to friends'<br/>activity channels"| E["Pub/Sub System"]
+
+    F["📱 Friend's Client"] -->|"4. Now playing event<br/>via existing WebSocket"| G["API Gateway"]
+    G --> H["Friend Activity<br/>Service"]
+    H -->|"5. Publish to<br/>user's channel"| E
+
+    E -->|"6. Push update<br/>to subscriber"| C
+    C -->|"7. Push via WebSocket"| A
+
+    C -->|"Store recent activity<br/>for reconnection"| I[("In-Memory Cache<br/>(Recent Activity)")]
+
+    style A fill:#E8F5E9
+    style F fill:#E8F5E9
+    style D fill:#E3F2FD
+    style E fill:#FCE4EC
+    style I fill:#FFEBEE
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Friend Starts Listening:</strong><br/>
+User "Liam" has the desktop app open with the Friend Activity sidebar visible. Upon app launch, the client established a WebSocket connection to <code>wss://api.example.com/ws/friend-activity</code>. The Friend Activity Service looked up Liam's friend list from the SQL Database and subscribed to Pub/Sub channels for each friend (e.g., <code>activity:user_mia</code>, <code>activity:user_noah</code>). Now, Liam's friend "Mia" starts playing "Anti-Hero" by Taylor Swift on her phone. Mia's client sends a "now playing" event through its WebSocket: <code>{ event: "now_playing", song_id: "ts_antihero", timestamp: ... }</code>. The Friend Activity Service publishes this to the <code>activity:user_mia</code> Pub/Sub channel. Since Liam's service instance is subscribed, it receives the event and pushes it to Liam's WebSocket. Liam sees "Mia — Anti-Hero · Taylor Swift" appear in the sidebar within ~200ms.
+</div>
+
+<div class="example">
+<strong>Example 2 — User Reconnects After Network Blip:</strong><br/>
+Liam's laptop briefly loses WiFi. The WebSocket disconnects. Upon reconnection, the client sends its last-seen timestamp. The Friend Activity Service retrieves the latest activity snapshot from the In-Memory Cache (which stores the last known "now playing" for each user) and sends Liam a batch of current friend states so the sidebar is immediately up-to-date.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<h4>Friend Activity Service</h4>
+<ul>
+  <li><span class="proto">WebSocket</span> <code>wss://api.example.com/ws/friend-activity</code></li>
+  <li><strong>Connection:</strong> Client initiates HTTP Upgrade → WebSocket. Server authenticates via JWT in the initial HTTP handshake.</li>
+  <li><strong>Inbound messages (from client):</strong> <code>{ event: "now_playing", song_id, timestamp }</code> — sent whenever a user starts a new song.</li>
+  <li><strong>Outbound messages (to client):</strong> <code>{ friend_id, friend_name, song_title, artist_name, album_art_url, timestamp }</code>.</li>
+  <li>Manages WebSocket connections in-memory. Each service instance holds a map of <code>user_id → WebSocket connection</code>.</li>
+</ul>
+
+<h4>Pub/Sub System</h4>
+<p>Used to fan out "now playing" events across service instances. Each user has a channel (e.g., <code>activity:user_123</code>). When user X plays a song, the event is published to <code>activity:user_X</code>. All Friend Activity Service instances that have friends of X subscribed will receive the event and push it to the relevant WebSocket connections. This is necessary because in a multi-instance deployment, a user's friends may be connected to different server instances.</p>
+
+<h4>In-Memory Cache (Recent Activity)</h4>
+<p>Stores the last-known "now playing" state for each active user. TTL of 30 minutes (if no update, the user is assumed inactive). Used for fast reconnection scenarios so the sidebar can be populated immediately without waiting for friends to send new events.</p>
+
+<!-- ============================== SECTION 9: OVERALL ============================== -->
+<h2 id="overall">9. Overall Combined Diagram</h2>
+<p>This diagram integrates all flows into a single unified architecture view.</p>
+
+<div class="mermaid">
+graph TD
+    subgraph Clients
+        UC["📱 User Client<br/>(Mobile/Desktop/Web)"]
+        AC["🎤 Artist Client<br/>(Web Portal)"]
+    end
+
+    subgraph Gateway
+        LB["API Gateway / Load Balancer"]
+    end
+
+    subgraph Core Services
+        US["Upload Service"]
+        SS["Streaming Service"]
+        SRC["Search Service"]
+        PS["Playlist Service"]
+        FS["Feed Service"]
+        FAS["Friend Activity Service"]
+        AS["Analytics Service"]
+        AUTH["Auth / Subscription Service"]
+    end
+
+    subgraph Processing
+        APS["Audio Processing Service"]
+        SIS["Search Indexing Service"]
+        PCA["Play Count Aggregator"]
+        LHW["Listening History Writer"]
+        RE["Recommendation Engine"]
+        MLS["ML Model Serving"]
+    end
+
+    subgraph Message Queues
+        MQ1["MQ: Transcode Jobs"]
+        MQ2["MQ: Search Index Jobs"]
+        MQ3["MQ: Play Events"]
+    end
+
+    subgraph Pub-Sub
+        PUBSUB["Pub/Sub<br/>(Friend Activity)"]
+    end
+
+    subgraph Data Stores
+        SQL1[("SQL Database<br/>(Users, Songs, Albums,<br/>Artists, Playlists)")]
+        NOSQL1[("NoSQL Database<br/>(Play Counts)")]
+        NOSQL2[("NoSQL Database<br/>(Listening History)")]
+        SEARCH[("Search Index<br/>(Inverted Index)")]
+        OBJ1[("Object Storage<br/>(Raw Audio)")]
+        OBJ2[("Object Storage<br/>(Processed Audio)")]
+    end
+
+    subgraph Caching
+        CACHE[("In-Memory Cache<br/>(Search, Playlists,<br/>Feeds, Activity)")]
+    end
+
+    subgraph CDN
+        CDNEDGE["CDN Edge Nodes"]
+    end
+
+    UC -->|"All HTTP/WS requests"| LB
+    AC -->|"Upload requests"| LB
+
+    LB --> US
+    LB --> SS
+    LB --> SRC
+    LB --> PS
+    LB --> FS
+    LB --> FAS
+    LB --> AS
+
+    US --> OBJ1
+    US --> MQ1
+    MQ1 --> APS
+    APS --> OBJ2
+    APS --> MQ2
+    MQ2 --> SIS
+    SIS --> SEARCH
+
+    SS --> AUTH
+    AUTH --> SQL1
+    SS --> SQL1
+    SS -.->|"Return CDN URLs"| UC
+    UC -->|"Stream chunks"| CDNEDGE
+    CDNEDGE --> OBJ2
+
+    SRC --> CACHE
+    SRC --> SEARCH
+    SRC --> SQL1
+
+    PS --> SQL1
+    PS --> CACHE
+
+    FS --> CACHE
+    FS --> RE
+    RE --> NOSQL2
+    RE --> SQL1
+    RE --> MLS
+
+    AS --> MQ3
+    MQ3 --> PCA
+    MQ3 --> LHW
+    PCA --> NOSQL1
+    LHW --> NOSQL2
+
+    FAS --> SQL1
+    FAS --> PUBSUB
+    FAS --> CACHE
+    FAS -.->|"WebSocket push"| UC
+
+    US --> SQL1
+
+    style UC fill:#E8F5E9
+    style AC fill:#E8F5E9
+    style LB fill:#FFF9C4
+    style CDNEDGE fill:#F3E5F5
+    style CACHE fill:#FFEBEE
+    style SQL1 fill:#E3F2FD
+    style NOSQL1 fill:#E3F2FD
+    style NOSQL2 fill:#E3F2FD
+    style SEARCH fill:#E3F2FD
+    style OBJ1 fill:#FFF3E0
+    style OBJ2 fill:#FFF3E0
+    style MQ1 fill:#FCE4EC
+    style MQ2 fill:#FCE4EC
+    style MQ3 fill:#FCE4EC
+    style PUBSUB fill:#FCE4EC
+</div>
+
+<h3>Overall Flow Examples</h3>
+
+<div class="example">
+<strong>End-to-End Example — Song Upload → Discovery → Streaming → Recommendation:</strong><br/>
 <ol>
-  <li><strong>User taps play:</strong> Client sends <code>POST /api/v1/play { track_id, context: "playlist:abc123", position: 0 }</code></li>
-  <li><strong>Playback Service:</strong> Resolves track_id to audio file URL. Checks: user subscription (free → 160kbps max, Premium → 320kbps/lossless), geographic licensing (track available in user's country?), selects codec (Ogg Vorbis for desktop/Android, AAC for iOS)</li>
-  <li><strong>DRM License:</strong> Issues playback license — encrypted key bound to session. Prevents downloading for offline piracy. Free tier: mandatory ads between tracks</li>
-  <li><strong>CDN routing:</strong> Audio CDN Router selects nearest edge PoP. Audio files pre-segmented into chunks (~128KB each, ~10s of audio at 128kbps)</li>
-  <li><strong>Prefetching:</strong> Client fetches first chunk of NEXT track while current track is still playing → enables gapless playback (crossfade). Also prefetches 2-3 tracks ahead in playlist</li>
-  <li><strong>Stream event:</strong> After 30 seconds of playback, a "stream" event is recorded → counts toward royalty payment to artist. Kafka → analytics pipeline</li>
+  <li><strong>Upload:</strong> Artist "Luna Nova" uploads "Midnight Drive" via the Artist Client → API Gateway → Upload Service → raw file to Object Storage, metadata to SQL, transcode job enqueued.</li>
+  <li><strong>Processing:</strong> Audio Processing Service transcodes to 3 bitrates, chunks the audio, stores in Processed Audio Object Storage, updates song status to 'available', enqueues search index job.</li>
+  <li><strong>Indexing:</strong> Search Indexing Service updates the inverted index with "Midnight Drive", "Luna Nova", "Synthwave".</li>
+  <li><strong>Discovery:</strong> User "Alice" searches "Luna Nova" → Search Service queries the inverted index → returns "Midnight Drive" as a result → Alice adds it to her "Road Trip Vibes" playlist via Playlist Service.</li>
+  <li><strong>Streaming:</strong> Alice taps play → Streaming Service returns CDN chunk URLs → client streams from CDN → play event sent to Analytics Service → enqueued → Play Count Aggregator increments count, Listening History Writer records it.</li>
+  <li><strong>Friend Activity:</strong> Alice's friend "Bob" has the desktop app open. Bob's Friend Activity Service instance receives the "now playing" event via Pub/Sub and pushes it to Bob's WebSocket. Bob sees "Alice — Midnight Drive · Luna Nova" in his sidebar.</li>
+  <li><strong>Recommendation:</strong> Next Monday, Alice opens the app → Feed Service checks cache (miss) → Recommendation Engine reads Alice's listening history (which now includes synthwave tracks) → ML model returns "Discover Weekly" with more synthwave → the feed is returned and cached.</li>
+</ol>
+</div>
+
+<!-- ============================== SECTION 10: SCHEMA ============================== -->
+<h2 id="schema">10. Database Schema</h2>
+
+<h3>SQL Tables</h3>
+<p>SQL is chosen for entities requiring strong consistency, ACID transactions, complex joins (e.g., joining playlists with songs), and well-defined relational schemas. Music metadata is highly relational: songs belong to albums, albums belong to artists, playlists contain songs.</p>
+
+<h4>users</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>user_id</td><td>UUID</td><td>🔑 PK</td><td>Unique user identifier</td></tr>
+<tr><td>username</td><td>VARCHAR(50)</td><td>UNIQUE</td><td>Display name</td></tr>
+<tr><td>email</td><td>VARCHAR(255)</td><td>UNIQUE</td><td>Login email</td></tr>
+<tr><td>password_hash</td><td>VARCHAR(255)</td><td></td><td>Bcrypt hashed password</td></tr>
+<tr><td>subscription_tier</td><td>ENUM('free','premium')</td><td></td><td>Current subscription</td></tr>
+<tr><td>country</td><td>VARCHAR(2)</td><td></td><td>ISO country code for licensing</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+<tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<ul>
+  <li><strong>Index:</strong> <code>email</code> — <strong>Hash index</strong> for O(1) lookups during login (exact match only).</li>
+  <li><strong>Index:</strong> <code>username</code> — <strong>B-tree index</strong> for range/prefix queries (e.g., autocomplete user search).</li>
+  <li><strong>Why SQL:</strong> User data is highly structured, requires ACID transactions (especially for subscription changes/payments), and needs strong consistency.</li>
+  <li><strong>Read:</strong> On every authenticated request (JWT validation → user lookup); on login.</li>
+  <li><strong>Write:</strong> On user registration; on subscription change; on profile update.</li>
+  <li><strong>Sharding:</strong> Shard by <code>user_id</code> (hash-based). User data is accessed per-user, so hash sharding distributes load evenly and all queries for a single user go to one shard. No cross-shard joins are needed for user-specific operations.</li>
+</ul>
+
+<h4>artists</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>artist_id</td><td>UUID</td><td>🔑 PK</td><td></td></tr>
+<tr><td>name</td><td>VARCHAR(255)</td><td></td><td>Artist/band name</td></tr>
+<tr><td>bio</td><td>TEXT</td><td></td><td></td></tr>
+<tr><td>profile_image_url</td><td>VARCHAR(512)</td><td></td><td>URL in Object Storage / CDN</td></tr>
+<tr><td>monthly_listeners</td><td>BIGINT</td><td></td><td>Denormalized counter, updated periodically</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<ul>
+  <li><strong>Index:</strong> <code>name</code> — <strong>B-tree index</strong> for range queries and prefix lookups (searching artists by name).</li>
+  <li><strong>Denormalization note:</strong> <code>monthly_listeners</code> is denormalized here (aggregated from play counts) to avoid an expensive aggregation query every time an artist profile is viewed. Updated by a periodic batch job (e.g., hourly).</li>
+  <li><strong>Why SQL:</strong> Artist data is relational (linked to songs, albums), low write volume, moderate read volume.</li>
+  <li><strong>Read:</strong> When viewing an artist page; when hydrating search results.</li>
+  <li><strong>Write:</strong> When a new artist registers; when profile is updated; when monthly_listeners is recalculated.</li>
+</ul>
+
+<h4>albums</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>album_id</td><td>UUID</td><td>🔑 PK</td><td></td></tr>
+<tr><td>title</td><td>VARCHAR(255)</td><td></td><td></td></tr>
+<tr><td>artist_id</td><td>UUID</td><td>🔗 FK → artists</td><td></td></tr>
+<tr><td>cover_image_url</td><td>VARCHAR(512)</td><td></td><td></td></tr>
+<tr><td>release_date</td><td>DATE</td><td></td><td></td></tr>
+<tr><td>total_tracks</td><td>INT</td><td></td><td>Denormalized count</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<ul>
+  <li><strong>Index:</strong> <code>artist_id</code> — <strong>B-tree index</strong> for efficiently fetching all albums by an artist (range scan on FK).</li>
+  <li><strong>Index:</strong> <code>release_date</code> — <strong>B-tree index</strong> for "Release Radar" feature (fetch recent releases in date order).</li>
+  <li><strong>Denormalization note:</strong> <code>total_tracks</code> is denormalized to avoid a COUNT query on the songs table when displaying album info.</li>
+  <li><strong>Why SQL:</strong> Albums are relational (belong to artists, contain songs), straightforward schema, moderate data volume.</li>
+  <li><strong>Read:</strong> When viewing an album page; when hydrating search results.</li>
+  <li><strong>Write:</strong> When a new album is created during upload.</li>
+</ul>
+
+<h4>songs</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>song_id</td><td>UUID</td><td>🔑 PK</td><td></td></tr>
+<tr><td>title</td><td>VARCHAR(255)</td><td></td><td></td></tr>
+<tr><td>artist_id</td><td>UUID</td><td>🔗 FK → artists</td><td></td></tr>
+<tr><td>album_id</td><td>UUID</td><td>🔗 FK → albums</td><td></td></tr>
+<tr><td>duration_ms</td><td>INT</td><td></td><td>Song duration in milliseconds</td></tr>
+<tr><td>genre</td><td>VARCHAR(50)</td><td></td><td></td></tr>
+<tr><td>release_date</td><td>DATE</td><td></td><td></td></tr>
+<tr><td>audio_manifest_url</td><td>VARCHAR(512)</td><td></td><td>URL to chunk manifest in Object Storage</td></tr>
+<tr><td>status</td><td>ENUM('processing','available','failed')</td><td></td><td></td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<ul>
+  <li><strong>Index:</strong> <code>artist_id</code> — <strong>B-tree index</strong> for fetching all songs by an artist.</li>
+  <li><strong>Index:</strong> <code>album_id</code> — <strong>B-tree index</strong> for fetching all songs in an album.</li>
+  <li><strong>Index:</strong> <code>(genre, release_date)</code> — <strong>Composite B-tree index</strong> for genre-filtered queries sorted by release date (used by recommendation engine).</li>
+  <li><strong>Why SQL:</strong> Songs have strong relational ties to artists and albums. The song table is the most queried table and benefits from SQL's rich querying, joins, and indexing capabilities.</li>
+  <li><strong>Read:</strong> On song playback (Streaming Service fetches metadata); on search result hydration; on playlist song hydration.</li>
+  <li><strong>Write:</strong> On song upload; on status change after transcoding.</li>
+  <li><strong>Sharding:</strong> Shard by <code>song_id</code> (hash-based). Most queries are point lookups by <code>song_id</code>. For queries by <code>artist_id</code> or <code>album_id</code>, a scatter-gather approach is used (acceptable since these are lower-frequency queries, and results are cached).</li>
+</ul>
+
+<h4>playlists</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>playlist_id</td><td>UUID</td><td>🔑 PK</td><td></td></tr>
+<tr><td>user_id</td><td>UUID</td><td>🔗 FK → users</td><td>Playlist owner</td></tr>
+<tr><td>name</td><td>VARCHAR(255)</td><td></td><td></td></tr>
+<tr><td>description</td><td>TEXT</td><td></td><td></td></tr>
+<tr><td>is_public</td><td>BOOLEAN</td><td></td><td></td></tr>
+<tr><td>cover_image_url</td><td>VARCHAR(512)</td><td></td><td></td></tr>
+<tr><td>total_songs</td><td>INT</td><td></td><td>Denormalized count</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+<tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<ul>
+  <li><strong>Index:</strong> <code>user_id</code> — <strong>B-tree index</strong> for fetching all playlists owned by a user ("Your Library" page).</li>
+  <li><strong>Denormalization note:</strong> <code>total_songs</code> is denormalized to avoid a COUNT query on <code>playlist_songs</code>. Incremented/decremented atomically when songs are added/removed.</li>
+  <li><strong>Why SQL:</strong> Playlist metadata is relational, needs ACID transactions (e.g., adding songs + updating count atomically), and benefits from joins with the songs table.</li>
+  <li><strong>Read:</strong> When a user opens a playlist; when hydrating search results for playlist searches.</li>
+  <li><strong>Write:</strong> When a user creates, updates, or deletes a playlist.</li>
+</ul>
+
+<h4>playlist_songs</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>playlist_id</td><td>UUID</td><td>🔑🔗 PK (part 1), FK → playlists</td><td></td></tr>
+<tr><td>song_id</td><td>UUID</td><td>🔑🔗 PK (part 2), FK → songs</td><td></td></tr>
+<tr><td>position</td><td>INT</td><td></td><td>Order within playlist</td></tr>
+<tr><td>added_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<ul>
+  <li><strong>Primary Key:</strong> Composite <code>(playlist_id, song_id)</code>.</li>
+  <li><strong>Index:</strong> <code>(playlist_id, position)</code> — <strong>Composite B-tree index</strong> for fetching songs in a playlist in order (the most common query pattern). This supports efficient paginated retrieval: <code>WHERE playlist_id = ? ORDER BY position LIMIT 50 OFFSET ?</code>.</li>
+  <li><strong>Why SQL:</strong> Join table linking playlists to songs. Requires transactional updates when reordering (multiple rows updated atomically).</li>
+  <li><strong>Read:</strong> When a user opens a playlist and scrolls through songs.</li>
+  <li><strong>Write:</strong> When songs are added, removed, or reordered in a playlist.</li>
+</ul>
+
+<h4>user_liked_songs</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>user_id</td><td>UUID</td><td>🔑🔗 PK (part 1), FK → users</td><td></td></tr>
+<tr><td>song_id</td><td>UUID</td><td>🔑🔗 PK (part 2), FK → songs</td><td></td></tr>
+<tr><td>liked_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<ul>
+  <li><strong>Primary Key:</strong> Composite <code>(user_id, song_id)</code>.</li>
+  <li><strong>Index:</strong> <code>(user_id, liked_at DESC)</code> — <strong>Composite B-tree index</strong> for fetching a user's liked songs in reverse chronological order ("Liked Songs" playlist view).</li>
+  <li><strong>Why SQL:</strong> Simple relational mapping, benefits from composite indexing, used by recommendation engine for joins.</li>
+  <li><strong>Read:</strong> When user opens "Liked Songs"; when the recommendation engine reads user preferences.</li>
+  <li><strong>Write:</strong> When a user likes or unlikes a song.</li>
+</ul>
+
+<h4>user_follows</h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>follower_id</td><td>UUID</td><td>🔑🔗 PK (part 1), FK → users</td><td></td></tr>
+<tr><td>followee_id</td><td>UUID</td><td>🔑🔗 PK (part 2), FK → users</td><td>Can be a user or artist</td></tr>
+<tr><td>followee_type</td><td>ENUM('user','artist')</td><td></td><td></td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<ul>
+  <li><strong>Primary Key:</strong> Composite <code>(follower_id, followee_id)</code>.</li>
+  <li><strong>Index:</strong> <code>followee_id</code> — <strong>B-tree index</strong> for reverse lookups ("who follows this artist/user?").</li>
+  <li><strong>Why SQL:</strong> Relational follow graph. Query patterns include "get all users I follow" (for friend activity) and "get all followers of artist X" (for release notifications). Both patterns are well-served by B-tree indexes.</li>
+  <li><strong>Read:</strong> When Friend Activity Service looks up a user's friends; when showing follower count on artist pages; by Recommendation Engine for "Release Radar".</li>
+  <li><strong>Write:</strong> When a user follows/unfollows a user or artist.</li>
+</ul>
+
+<h3>NoSQL Tables</h3>
+<p>NoSQL is chosen for entities with high write throughput, flexible schemas, time-series patterns, or key-value access patterns where relational joins are not needed.</p>
+
+<h4>play_counts <span class="badge">NoSQL — Key-Value</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>song_id</td><td>UUID</td><td>🔑 Partition Key</td><td></td></tr>
+<tr><td>total_plays</td><td>BIGINT</td><td></td><td>Atomic counter</td></tr>
+<tr><td>daily_plays</td><td>BIGINT</td><td></td><td>Reset daily for trending calculations</td></tr>
+<tr><td>weekly_plays</td><td>BIGINT</td><td></td><td>Reset weekly</td></tr>
+<tr><td>last_updated</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<ul>
+  <li><strong>Why NoSQL (Key-Value):</strong> Extremely high write throughput — millions of plays per second globally. Simple key-value access pattern (read/increment counter by <code>song_id</code>). No joins needed. Atomic counter operations. SQL would buckle under this write volume on hot keys (popular songs).</li>
+  <li><strong>Read:</strong> When displaying play counts on song/artist pages; by Recommendation Engine for popularity weighting; by Search Service for relevance boosting.</li>
+  <li><strong>Write:</strong> After a user listens to 30+ seconds of a song (the Play Count Aggregator micro-batches increments every 5 seconds to reduce write amplification).</li>
+  <li><strong>Sharding:</strong> Shard by <code>song_id</code> (hash-based). Hot-key mitigation: for extremely popular songs (top 1000), use <strong>write sharding</strong> — append a random suffix (0-9) to the key, distributing writes across 10 sub-keys, and sum on read. This prevents a single shard from becoming a bottleneck when a viral song is played millions of times per hour.</li>
+</ul>
+
+<h4>listening_history <span class="badge">NoSQL — Wide-Column / Time-Series</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>user_id</td><td>UUID</td><td>🔑 Partition Key</td><td></td></tr>
+<tr><td>timestamp</td><td>TIMESTAMP</td><td>🔑 Sort Key (DESC)</td><td></td></tr>
+<tr><td>song_id</td><td>UUID</td><td></td><td></td></tr>
+<tr><td>duration_listened_ms</td><td>INT</td><td></td><td></td></tr>
+<tr><td>device_type</td><td>VARCHAR(20)</td><td></td><td>mobile/desktop/web</td></tr>
+<tr><td>context</td><td>VARCHAR(50)</td><td></td><td>e.g., "playlist:pl_789", "album:alb_456"</td></tr>
+</table>
+<ul>
+  <li><strong>Why NoSQL (Wide-Column):</strong> Write-heavy (every song play generates a row), append-only (time-series pattern), no updates/deletes. Access pattern is always by <code>user_id</code> sorted by <code>timestamp</code> (most recent first). Wide-column stores excel at this partition-key + sort-key pattern. No joins needed — the song metadata is fetched separately when hydrating results.</li>
+  <li><strong>Read:</strong> When user views "Recently Played"; by Recommendation Engine to build user taste profiles; by Feed Service for "Because you listened to..." sections.</li>
+  <li><strong>Write:</strong> After each song play event (consumed from the Message Queue by the Listening History Writer).</li>
+  <li><strong>Sharding:</strong> Shard by <code>user_id</code> (hash-based). All listening history for a user is co-located on one shard for efficient range scans. TTL-based expiration: entries older than 1 year are automatically expired (for storage efficiency; the Recommendation Engine uses aggregated features from batch processing, not raw historical rows).</li>
+</ul>
+
+<h4>recommendation_cache <span class="badge">NoSQL — Key-Value</span></h4>
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Notes</th></tr>
+<tr><td>user_id</td><td>UUID</td><td>🔑 Partition Key</td><td></td></tr>
+<tr><td>feed_type</td><td>VARCHAR(50)</td><td>🔑 Sort Key</td><td>e.g., "daily_mix_1", "discover_weekly"</td></tr>
+<tr><td>song_ids</td><td>LIST&lt;UUID&gt;</td><td></td><td>Ordered list of recommended songs</td></tr>
+<tr><td>generated_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+<tr><td>expires_at</td><td>TIMESTAMP</td><td></td><td></td></tr>
+</table>
+<ul>
+  <li><strong>Why NoSQL (Key-Value):</strong> Simple access pattern (get by user_id + feed_type), write once per computation (batch or on-demand), high read throughput, no relational needs.</li>
+  <li><strong>Read:</strong> When user opens the app / home feed (Feed Service checks this before calling the Recommendation Engine).</li>
+  <li><strong>Write:</strong> By the Recommendation Engine after batch or real-time computation (e.g., "Discover Weekly" regenerated every Monday).</li>
+</ul>
+
+<!-- ============================== SECTION 11: CDN ============================== -->
+<h2 id="cdn">11. CDN Deep Dive</h2>
+
+<h3>Why a CDN Is Essential</h3>
+<p>A CDN is <strong>critical</strong> for Spotify because:</p>
+<ul>
+  <li><strong>Audio streaming is bandwidth-intensive:</strong> Each concurrent stream at 320 kbps consumes significant bandwidth. With millions of concurrent streams, serving from a single origin would require petabits of egress bandwidth.</li>
+  <li><strong>Latency matters:</strong> Users expect &lt;200ms playback start. A CDN edge node in the same city reduces round-trip time from hundreds of milliseconds (to a far-away origin) to &lt;20ms.</li>
+  <li><strong>Global user base:</strong> Users are worldwide. Without a CDN, a user in Tokyo streaming from a US-based origin would experience significant buffering.</li>
+  <li><strong>Cost efficiency:</strong> CDN edge caching reduces origin bandwidth costs by 90%+ for popular content.</li>
+</ul>
+
+<h3>CDN Strategy</h3>
+<ul>
+  <li><strong>Pull-Based (Lazy Loading):</strong> Chunks are cached at the edge on first request. The CDN automatically fetches from Object Storage (origin) on a cache miss. This is preferred over push-based because Spotify's catalog has ~100M+ songs, and pre-pushing all content to all edge locations would be prohibitively expensive.</li>
+  <li><strong>Tiered Caching:</strong> Multi-tier CDN architecture — L1 (edge, closest to user) → L2 (regional mid-tier) → Origin (Object Storage). This reduces origin load even further.</li>
+</ul>
+
+<h3>Caching Strategy</h3>
+<ul>
+  <li><strong>Cache key:</strong> <code>{song_id}/{bitrate}/chunk_{n}.ogg</code></li>
+  <li><strong>TTL (Expiration):</strong> 30 days for audio chunks. Audio files are immutable (a new version = new <code>song_id</code>), so long TTLs are safe. If a song is removed due to licensing, a cache purge API is called.</li>
+  <li><strong>Eviction Policy:</strong> <strong>LFU (Least Frequently Used)</strong> at the edge. Popular songs (top 1% of the catalog accounts for ~80% of streams — Pareto distribution) stay cached. Long-tail content is evicted when space is needed, with a fallback to the regional mid-tier or origin.</li>
+</ul>
+
+<h3>CDN Content</h3>
+<ul>
+  <li>Audio chunks (OGG/AAC at 96, 160, 320 kbps)</li>
+  <li>Album cover art images (multiple resolutions: thumbnail 64px, medium 300px, large 640px)</li>
+  <li>Artist profile images</li>
+  <li>Static web assets (JS bundles, CSS) for the web player</li>
+</ul>
+
+<!-- ============================== SECTION 12: CACHE ============================== -->
+<h2 id="cache">12. Cache Deep Dive</h2>
+
+<h3>Why an In-Memory Cache Is Appropriate</h3>
+<p>An in-memory cache is essential because:</p>
+<ul>
+  <li>Song metadata, playlist data, and search results are read-heavy (100:1 read-to-write ratio). Caching reduces SQL database load by orders of magnitude.</li>
+  <li>Sub-millisecond response times from cache vs. 5-20ms from SQL databases.</li>
+  <li>Protects backend databases from traffic spikes (e.g., when a new album drops and millions query the same data simultaneously).</li>
+</ul>
+
+<h3>Cache Instances &amp; What They Store</h3>
+
+<h4>1. Song Metadata Cache</h4>
+<table>
+<tr><th>Property</th><th>Value</th></tr>
+<tr><td>Key</td><td><code>song:{song_id}</code></td></tr>
+<tr><td>Value</td><td>Serialized song metadata (title, artist, album, duration, manifest URL)</td></tr>
+<tr><td>Caching Strategy</td><td><strong>Cache-Aside (Lazy Loading)</strong>: Application checks cache first. On miss, reads from SQL, writes to cache. On song metadata update, invalidate the cache key.</td></tr>
+<tr><td>Why Cache-Aside</td><td>Song metadata is read-heavy, writes are rare (only on upload or rare edits). Write-through would add latency to writes without benefit since most songs are never updated after creation.</td></tr>
+<tr><td>Eviction Policy</td><td><strong>LRU (Least Recently Used)</strong>: Evicts songs that haven't been accessed recently. Popular songs are naturally retained.</td></tr>
+<tr><td>Expiration (TTL)</td><td>24 hours. Song metadata rarely changes, but a 24-hour TTL ensures eventual consistency for the rare case of metadata corrections.</td></tr>
+<tr><td>Populated by</td><td>Cache miss during a read from the Streaming Service, Search Service, or Playlist Service.</td></tr>
+</table>
+
+<h4>2. Search Results Cache</h4>
+<table>
+<tr><th>Property</th><th>Value</th></tr>
+<tr><td>Key</td><td><code>search:{hash(query + type + limit)}</code></td></tr>
+<tr><td>Value</td><td>Serialized search results (list of IDs + metadata)</td></tr>
+<tr><td>Caching Strategy</td><td><strong>Cache-Aside</strong></td></tr>
+<tr><td>Why Cache-Aside</td><td>Search results are computed on-the-fly by the Search Index. Cache-aside avoids coupling the search index with the cache.</td></tr>
+<tr><td>Eviction Policy</td><td><strong>LRU</strong></td></tr>
+<tr><td>Expiration (TTL)</td><td><strong>60 seconds</strong>. Short TTL because search relevance changes frequently (new songs added, play counts change popularity rankings). We want fresh results but still absorb burst traffic for trending queries.</td></tr>
+<tr><td>Populated by</td><td>Cache miss during a search query.</td></tr>
+</table>
+
+<h4>3. Playlist Cache</h4>
+<table>
+<tr><th>Property</th><th>Value</th></tr>
+<tr><td>Key</td><td><code>playlist:{playlist_id}:page:{offset}</code></td></tr>
+<tr><td>Value</td><td>Serialized playlist page (song list for that offset)</td></tr>
+<tr><td>Caching Strategy</td><td><strong>Write-Through + Cache-Aside hybrid</strong>: On playlist writes (add/remove/reorder), the Playlist Service invalidates (deletes) all cache entries for that playlist. Subsequent reads re-populate via cache-aside.</td></tr>
+<tr><td>Why this strategy</td><td>Playlists require strong consistency — a user who adds a song must immediately see it. Invalidation-on-write ensures stale data is never served. Cache-aside for reads avoids pre-computing all pages.</td></tr>
+<tr><td>Eviction Policy</td><td><strong>LRU</strong></td></tr>
+<tr><td>Expiration (TTL)</td><td>2 hours. Playlists are moderately edited; a 2-hour TTL balances freshness with cache hit rate for popular public playlists (e.g., "Today's Top Hits" by Spotify editorial).</td></tr>
+<tr><td>Populated by</td><td>Cache miss when a user opens a playlist.</td></tr>
+</table>
+
+<h4>4. Feed / Recommendation Cache</h4>
+<table>
+<tr><th>Property</th><th>Value</th></tr>
+<tr><td>Key</td><td><code>feed:{user_id}</code></td></tr>
+<tr><td>Value</td><td>Serialized home feed (sections with song/playlist IDs)</td></tr>
+<tr><td>Caching Strategy</td><td><strong>Write-Behind (Refresh-Ahead)</strong>: Batch jobs (e.g., nightly "Discover Weekly" computation) pre-compute feeds and write them directly to the cache. On cache miss (new user or expired), the Feed Service triggers a real-time computation and writes the result to cache.</td></tr>
+<tr><td>Why Write-Behind</td><td>Recommendation computation is expensive (ML inference). Pre-computing in batch and caching the result ensures the home feed loads in &lt;50ms for most users.</td></tr>
+<tr><td>Eviction Policy</td><td><strong>LRU</strong></td></tr>
+<tr><td>Expiration (TTL)</td><td>Varies: "Discover Weekly" = 7 days (refreshed every Monday), "Daily Mix" = 24 hours, generic feed = 6 hours.</td></tr>
+<tr><td>Populated by</td><td>Batch Recommendation Engine jobs (primary) and real-time fallback on cache miss.</td></tr>
+</table>
+
+<h4>5. Friend Activity Cache</h4>
+<table>
+<tr><th>Property</th><th>Value</th></tr>
+<tr><td>Key</td><td><code>now_playing:{user_id}</code></td></tr>
+<tr><td>Value</td><td><code>{ song_id, song_title, artist_name, album_art_url, started_at }</code></td></tr>
+<tr><td>Caching Strategy</td><td><strong>Write-Through</strong>: Every "now playing" event is immediately written to cache. Reads on WebSocket reconnection read from cache.</td></tr>
+<tr><td>Why Write-Through</td><td>Friend activity must be as real-time as possible. Write-through ensures the cache always reflects the latest state.</td></tr>
+<tr><td>Eviction Policy</td><td><strong>TTL-based only</strong></td></tr>
+<tr><td>Expiration (TTL)</td><td>30 minutes. If no new "now playing" event within 30 minutes, the user is considered inactive.</td></tr>
+<tr><td>Populated by</td><td>"Now playing" events from the Friend Activity Service.</td></tr>
+</table>
+
+<!-- ============================== SECTION 13: MQ ============================== -->
+<h2 id="mq">13. Message Queue Deep Dive</h2>
+
+<h3>Why a Message Queue</h3>
+<p>Message queues are used to <strong>decouple</strong> time-sensitive request paths from heavy asynchronous processing:</p>
+<ul>
+  <li><strong>Upload → Transcode:</strong> Transcoding a song takes 30-120 seconds. Without a queue, the upload HTTP request would time out. The queue allows the Upload Service to return <code>202 Accepted</code> immediately.</li>
+  <li><strong>Play Events → Aggregation:</strong> Play events arrive at millions per second. Writing each directly to the database would overwhelm it. The queue acts as a buffer, and consumers can micro-batch.</li>
+  <li><strong>Reliability:</strong> If the Audio Processing Service is temporarily down, messages are durably stored in the queue and processed when the service recovers (no data loss).</li>
+</ul>
+
+<h3>Why Not Alternatives?</h3>
+<ul>
+  <li><strong>Why not synchronous HTTP calls?</strong> Transcoding is too slow for synchronous request/response. Play event aggregation requires buffering and batching that synchronous calls can't provide.</li>
+  <li><strong>Why not Pub/Sub?</strong> Pub/Sub is used for fan-out scenarios (friend activity). For transcode jobs and play events, we need <strong>exactly-once processing</strong> with consumer groups and message acknowledgment — a queue's strength. Pub/Sub doesn't guarantee that a message is processed by exactly one consumer.</li>
+  <li><strong>Why not polling?</strong> Polling from the database would be inefficient and add latency. A queue provides push-based consumption with backpressure.</li>
+</ul>
+
+<h3>Queue Details</h3>
+
+<h4>Transcode Jobs Queue</h4>
+<ul>
+  <li><strong>Producer:</strong> Upload Service (one message per uploaded song).</li>
+  <li><strong>Consumer:</strong> Audio Processing Service (consumer group with N workers).</li>
+  <li><strong>Message format:</strong> <code>{ song_id, raw_audio_url, metadata, target_bitrates: [96,160,320] }</code>.</li>
+  <li><strong>Delivery guarantee:</strong> At-least-once. Consumer acknowledges after successful transcoding + storage. If the worker crashes mid-transcode, the message is redelivered after a visibility timeout (5 minutes).</li>
+  <li><strong>Dead-letter queue:</strong> After 3 failed attempts, the message moves to a DLQ for manual investigation.</li>
+  <li><strong>Ordering:</strong> Not required (songs can be transcoded in any order).</li>
+</ul>
+
+<h4>Search Index Jobs Queue</h4>
+<ul>
+  <li><strong>Producer:</strong> Audio Processing Service (after successful transcode) and Playlist Service (on playlist create/update).</li>
+  <li><strong>Consumer:</strong> Search Indexing Service.</li>
+  <li><strong>Message format:</strong> <code>{ entity_type: "song"|"playlist", entity_id, action: "upsert"|"delete", metadata }</code>.</li>
+  <li><strong>Delivery guarantee:</strong> At-least-once. Idempotent consumer (upserting the same document is safe).</li>
+</ul>
+
+<h4>Play Events Queue</h4>
+<ul>
+  <li><strong>Producer:</strong> Analytics Service (one message per play event).</li>
+  <li><strong>Consumer Group 1:</strong> Play Count Aggregator (micro-batches every 5 seconds, aggregates counts per song, bulk-updates the NoSQL Play Counts database).</li>
+  <li><strong>Consumer Group 2:</strong> Listening History Writer (writes individual play records to the NoSQL Listening History database).</li>
+  <li><strong>Consumer Group 3:</strong> Recommendation Pipeline (consumes events for real-time feature updates).</li>
+  <li><strong>Message format:</strong> <code>{ user_id, song_id, duration_listened_ms, timestamp, device_type, context }</code>.</li>
+  <li><strong>Delivery guarantee:</strong> At-least-once. Play Count Aggregator is idempotent (counter increments are deduped using event IDs). Listening History Writer uses upsert.</li>
+  <li><strong>Partitioning:</strong> Messages partitioned by <code>song_id</code> for the Play Count Aggregator (all plays for a song go to the same consumer → single counter update) and by <code>user_id</code> for the Listening History Writer (all history for a user written by the same consumer → ordered writes).</li>
+</ul>
+
+<!-- ============================== SECTION 14: WEBSOCKET ============================== -->
+<h2 id="ws">14. WebSocket Deep Dive (Friend Activity)</h2>
+
+<h3>Why WebSockets</h3>
+<p>Friend Activity requires <strong>real-time, bidirectional, low-latency</strong> communication:</p>
+<ul>
+  <li>When a friend starts a new song, the update should appear within ~200ms.</li>
+  <li>Updates are <strong>frequent and small</strong> (~100 bytes per event). HTTP polling would waste bandwidth on headers and create unnecessary latency.</li>
+  <li>The connection is <strong>bidirectional</strong>: the server pushes friend updates to the client, and the client pushes "now playing" events to the server.</li>
+</ul>
+
+<h3>Why Not Alternatives?</h3>
+<ul>
+  <li><strong>Long Polling:</strong> Higher latency (must re-establish connection for each update), more HTTP overhead, more complex to manage. WebSocket is more efficient for frequent small updates.</li>
+  <li><strong>Server-Sent Events (SSE):</strong> SSE is unidirectional (server → client only). We need the client to also send "now playing" events. We could use SSE + HTTP POST, but this adds complexity. WebSocket handles both directions on one connection.</li>
+  <li><strong>Polling:</strong> Terrible for real-time use cases. At 5-second polling intervals, updates would feel delayed. At 1-second polling, the server handles millions of unnecessary requests per second.</li>
+</ul>
+
+<h3>Connection Lifecycle</h3>
+<ol>
+  <li><strong>Connection Establishment:</strong>
+    <ul>
+      <li>Client sends an HTTP GET with <code>Upgrade: websocket</code> header to <code>wss://api.example.com/ws/friend-activity</code>.</li>
+      <li>The API Gateway routes the request to a Friend Activity Service instance.</li>
+      <li>The service validates the JWT token from the initial HTTP handshake.</li>
+      <li>If valid, the connection is upgraded to WebSocket (101 Switching Protocols).</li>
+    </ul>
+  </li>
+  <li><strong>Subscription Setup:</strong>
+    <ul>
+      <li>The Friend Activity Service queries the SQL <code>user_follows</code> table to get the user's friend list (users with <code>followee_type = 'user'</code>).</li>
+      <li>It subscribes to Pub/Sub channels for each friend: <code>activity:user_{friend_id}</code>.</li>
+      <li>It sends the current "now playing" state for each friend from the In-Memory Cache (so the sidebar is populated immediately).</li>
+    </ul>
+  </li>
+  <li><strong>Ongoing Communication:</strong>
+    <ul>
+      <li><strong>Inbound (client → server):</strong> When the user starts a new song, the client sends <code>{ event: "now_playing", song_id, timestamp }</code> over the WebSocket.</li>
+      <li>The server publishes this to the Pub/Sub channel <code>activity:user_{user_id}</code> and updates the In-Memory Cache.</li>
+      <li><strong>Outbound (server → client):</strong> When a friend's "now playing" event arrives via Pub/Sub, the server pushes <code>{ friend_id, friend_name, song_title, artist_name, album_art_url, timestamp }</code> to the client.</li>
+    </ul>
+  </li>
+  <li><strong>Connection State:</strong>
+    <ul>
+      <li>Each Friend Activity Service instance maintains an in-memory map: <code>Map&lt;user_id, WebSocket connection&gt;</code>.</li>
+      <li>When a Pub/Sub message arrives for a friend, the service checks if any connected users follow that friend and pushes the update to their WebSocket.</li>
+    </ul>
+  </li>
+  <li><strong>Heartbeat:</strong> Ping/pong frames every 30 seconds to detect dead connections. If 3 pings go unanswered, the server closes the connection and unsubscribes from Pub/Sub channels.</li>
+  <li><strong>Disconnection &amp; Reconnection:</strong>
+    <ul>
+      <li>On disconnect, the server cleans up the in-memory map and Pub/Sub subscriptions.</li>
+      <li>On reconnect, the client sends its last-seen timestamp. The server sends a batch of current friend states from the In-Memory Cache (no events are lost because the cache stores the latest state, not a queue of events).</li>
+    </ul>
+  </li>
 </ol>
 
-<div class="example">
-<strong>Example:</strong> Premium user plays "Shape of You" from Discover Weekly playlist → Playback Service: Premium → 320kbps Ogg Vorbis → DRM license issued → CDN edge in Chicago (user is in IL) → First chunk delivered in 80ms → Playback starts → Client prefetches next song "Blinding Lights" → Gapless transition → 30s stream event fires → Ed Sheeran earns ~$0.004 per stream
-</div>
-</div>
+<h3>Scaling WebSocket Connections</h3>
+<p>A single server can hold ~50,000-100,000 concurrent WebSocket connections (limited by file descriptors and memory). With millions of desktop users, we need many Friend Activity Service instances. The <strong>Pub/Sub system bridges instances</strong>: User A on Instance 1 follows User B on Instance 2. When B plays a song, Instance 2 publishes to <code>activity:user_B</code>. Instance 1 (subscribed to that channel) receives the event and pushes to A's WebSocket.</p>
 
-<div class="section">
-<h3>🔍 Component Deep Dives — Playback</h3>
-<div class="subsection">
-<h4>Audio Encoding</h4>
-<table>
-<tr><th>Tier</th><th>Codec</th><th>Bitrate</th><th>Quality</th></tr>
-<tr><td>Free (Low)</td><td>Ogg Vorbis / AAC</td><td>96 kbps</td><td>~3.5 MB per song</td></tr>
-<tr><td>Free (Normal)</td><td>Ogg Vorbis / AAC</td><td>160 kbps</td><td>~5.5 MB per song</td></tr>
-<tr><td>Premium (High)</td><td>Ogg Vorbis / AAC</td><td>320 kbps</td><td>~10 MB per song</td></tr>
-<tr><td>Premium (Lossless)</td><td>FLAC</td><td>~1,411 kbps</td><td>~50 MB per song</td></tr>
-</table>
-<p>Each track stored in multiple quality variants. Client selects based on subscription tier + network conditions (mobile data → auto-switch to lower quality)</p>
-</div>
-<div class="subsection">
-<h4>Gapless Playback & Crossfade</h4>
-<p><strong>Gapless:</strong> Client decodes last chunk of current track and first chunk of next track simultaneously, seamlessly concatenating audio buffers. Critical for live albums and classical music where silence between tracks ruins the experience.</p>
-<p><strong>Crossfade:</strong> Optional feature — fades out current track while fading in next over 1-12 seconds. Implemented in client's audio engine by mixing two audio streams with opposing volume ramps.</p>
-</div>
-<div class="subsection">
-<h4>Offline Downloads</h4>
-<p>Premium users can download tracks for offline playback. Encrypted audio files stored on device with DRM license (expires after 30 days without connectivity). Device must connect to Spotify servers monthly to renew licenses — prevents account sharing abuse.</p>
-</div>
-</div>
+<!-- ============================== SECTION 15: SCALING ============================== -->
+<h2 id="scaling">15. Scaling Considerations &amp; Load Balancers</h2>
 
-<h2>🔄 Flow 2 — Search</h2>
+<h3>Load Balancers</h3>
 
-<div class="section">
-<h3>Step-by-Step</h3>
+<h4>Where Load Balancers Are Placed</h4>
 <ol>
-  <li><strong>User types query:</strong> <code>GET /api/v1/search?q=taylor+swift+shake&type=track,artist,album,playlist</code></li>
-  <li><strong>Autocomplete:</strong> As-you-type suggestions from prefix trie/n-gram index. Results appear after 2-3 characters</li>
-  <li><strong>Search Service:</strong> Elasticsearch multi-index query — searches tracks, artists, albums, playlists simultaneously. Custom scoring: exact title match > partial match > description match. Artist popularity boosts results</li>
-  <li><strong>Personalization:</strong> If user frequently listens to pop, boost pop results. If user has Taylor Swift in library, boost her results higher</li>
-  <li><strong>Return categorized results:</strong> Top Result (artist/track), Songs, Artists, Albums, Playlists, Podcasts</li>
-</ol>
-<div class="example">
-<strong>Example:</strong> User types "taylor swift shake" → Autocomplete: "Shake It Off - Taylor Swift" → Search returns: Top Result: Taylor Swift (artist), Songs: "Shake It Off", "Shake It Off (Remix)", Albums: "1989", Playlists: "Taylor Swift Radio" → All in &lt;150ms
-</div>
-</div>
-
-<h2>🔄 Flow 3 — Discover Weekly (Recommendation)</h2>
-
-<div class="diagram-container">
-<svg viewBox="0 0 1050 320" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="130" width="140" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="90" y="155" text-anchor="middle" fill="white" font-size="11">Listening History</text>
-  <text x="90" y="172" text-anchor="middle" fill="white" font-size="10">(User Taste Profile)</text>
-  <line x1="160" y1="157" x2="230" y2="157" stroke="#aaa" marker-end="url(#ah3)"/>
-  <rect x="240" y="130" width="150" height="55" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="315" y="155" text-anchor="middle" fill="white" font-size="11">Collaborative Filter</text>
-  <text x="315" y="172" text-anchor="middle" fill="white" font-size="10">(Matrix Factorization)</text>
-  <line x1="390" y1="157" x2="460" y2="157" stroke="#aaa" marker-end="url(#ah3)"/>
-  <rect x="470" y="130" width="150" height="55" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="545" y="155" text-anchor="middle" fill="white" font-size="11">Content-Based Filter</text>
-  <text x="545" y="172" text-anchor="middle" fill="white" font-size="10">(Audio Features / NLP)</text>
-  <line x1="620" y1="157" x2="690" y2="157" stroke="#aaa" marker-end="url(#ah3)"/>
-  <rect x="700" y="130" width="150" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="775" y="155" text-anchor="middle" fill="white" font-size="11">Playlist Assembler</text>
-  <text x="775" y="172" text-anchor="middle" fill="white" font-size="10">(30 tracks / Monday)</text>
-</svg>
-</div>
-
-<div class="section">
-<h3>Step-by-Step</h3>
-<ol>
-  <li><strong>User taste profile:</strong> Built from listening history — weighted by recency, skip rate, save/like actions. Represents user as vector in embedding space</li>
-  <li><strong>Collaborative Filtering:</strong> "Users who listen to similar music to you also listen to X." Matrix factorization (ALS algorithm) on user-track interaction matrix → discovers latent taste factors</li>
-  <li><strong>Content-Based Filtering:</strong> Audio analysis of tracks user likes — tempo, energy, danceability, key, valence (happiness). Raw audio features extracted by CNN. Also NLP on blog posts, reviews for cultural context</li>
-  <li><strong>Candidate generation:</strong> ~1000 candidate tracks from both approaches. Filter: remove tracks user already knows (listened >3 times), remove explicit content if user has filter on</li>
-  <li><strong>Ranking:</strong> Predict probability user will save/like each track. Select top 30. Ensure diversity: genre variety, mix of familiar-adjacent and discovery, balance popular and niche</li>
-  <li><strong>Delivery:</strong> Computed batch (Sunday night) for all 400M+ users. Playlist updated every Monday morning. Stored in Cassandra, cached in Redis</li>
+  <li><strong>Between Clients and API Gateway:</strong> An L7 (application-layer) load balancer distributes incoming HTTP/WebSocket requests across multiple API Gateway instances. This is the primary entry point.
+    <ul>
+      <li><strong>Algorithm:</strong> Round-robin for stateless HTTP requests. <strong>Sticky sessions (IP hash or cookie-based)</strong> for WebSocket connections — once a WebSocket is established, all frames must route to the same backend instance.</li>
+      <li><strong>Health checks:</strong> HTTP health check endpoint (<code>/healthz</code>) every 10 seconds. Unhealthy instances are removed from rotation.</li>
+      <li><strong>SSL termination:</strong> TLS is terminated at the load balancer to reduce CPU load on backend services.</li>
+    </ul>
+  </li>
+  <li><strong>Between API Gateway and Backend Services:</strong> Internal L4 (transport-layer) load balancers for service-to-service gRPC communication.
+    <ul>
+      <li><strong>Algorithm:</strong> Least-connections — routes to the instance with the fewest active requests, better for gRPC where request durations vary.</li>
+      <li><strong>Service discovery:</strong> Integrated with a service registry so new instances are automatically discovered.</li>
+    </ul>
+  </li>
+  <li><strong>Database Read Replicas:</strong> A load balancer (or connection pooler) distributes read queries across SQL read replicas.
+    <ul>
+      <li><strong>Algorithm:</strong> Round-robin among healthy replicas.</li>
+    </ul>
+  </li>
 </ol>
 
-<div class="example">
-<strong>Example:</strong> User listens to indie rock and synthwave → Collaborative: "Users like you also enjoy Tame Impala, MGMT" → Content-based: audio features suggest user likes mid-tempo, high-energy, atmospheric → Candidate pool: 1000 tracks → Ranked by predicted save rate → Final 30: mix of indie rock deep cuts + synthwave newcomers + one jazz-adjacent surprise → "Discover Weekly" updated Monday 5 AM
-</div>
-</div>
-
-<div class="section">
-<h3>🔍 Spotify's Three Recommendation Engines</h3>
-<div class="subsection">
-<h4>1. Collaborative Filtering (Implicit Matrix Factorization)</h4>
-<p>User-track matrix (600M users × 100M tracks). Decompose into User matrix (600M × 128) and Track matrix (100M × 128). Each user/track represented as 128-dimensional vector. Similar users → similar vectors. Trained with ALS (Alternating Least Squares) on Hadoop cluster.</p>
-</div>
-<div class="subsection">
-<h4>2. NLP (Cultural Context)</h4>
-<p>Crawl music blogs, reviews, social media for text about artists/tracks. Word2Vec-style embeddings → tracks mentioned in similar cultural contexts get similar embeddings. Captures "vibe" that audio analysis misses (e.g., "summer anthems", "study music").</p>
-</div>
-<div class="subsection">
-<h4>3. Audio Analysis (CNN)</h4>
-<p>Raw audio spectrogram → Convolutional Neural Network → audio feature vector. Enables cold-start recommendations: new track with zero listens can be recommended based on how it sounds. Features: tempo, key, mode, energy, danceability, speechiness, acousticness, instrumentalness, liveness, valence.</p>
-</div>
-</div>
-
-<h2>🏗️ Combined Architecture</h2>
-
-<div class="diagram-container">
-<svg viewBox="0 0 1050 500" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ahc" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="60" width="110" height="40" rx="8" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="75" y="85" text-anchor="middle" fill="white" font-size="11">Mobile / Desktop</text>
-  <line x1="130" y1="80" x2="200" y2="100" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="210" y="80" width="120" height="50" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="270" y="110" text-anchor="middle" fill="white" font-size="11">API Gateway</text>
-  <line x1="330" y1="95" x2="400" y2="55" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="330" y1="100" x2="400" y2="100" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="330" y1="110" x2="400" y2="145" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="330" y1="120" x2="400" y2="190" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="410" y="35" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="475" y="60" text-anchor="middle" fill="white" font-size="10">Playback Service</text>
-  <rect x="410" y="80" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="475" y="105" text-anchor="middle" fill="white" font-size="10">Search Service</text>
-  <rect x="410" y="125" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="475" y="150" text-anchor="middle" fill="white" font-size="10">Playlist Service</text>
-  <rect x="410" y="170" width="130" height="40" rx="8" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="475" y="195" text-anchor="middle" fill="white" font-size="10">Recommendation</text>
-  <line x1="540" y1="55" x2="620" y2="55" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="540" y1="100" x2="620" y2="100" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="540" y1="145" x2="620" y2="145" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="540" y1="190" x2="620" y2="190" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="630" y="35" width="130" height="40" rx="8" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="695" y="60" text-anchor="middle" fill="white" font-size="10">Audio CDN (GCS)</text>
-  <rect x="630" y="80" width="130" height="40" rx="8" fill="#8a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="695" y="105" text-anchor="middle" fill="white" font-size="10">Elasticsearch</text>
-  <rect x="630" y="125" width="130" height="40" rx="8" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
-  <text x="695" y="150" text-anchor="middle" fill="white" font-size="10">Cassandra</text>
-  <rect x="630" y="170" width="130" height="40" rx="8" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
-  <text x="695" y="195" text-anchor="middle" fill="white" font-size="10">Redis + Kafka</text>
-  <!-- Batch ML -->
-  <rect x="410" y="260" width="350" height="45" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="585" y="287" text-anchor="middle" fill="white" font-size="11">ML Pipeline (Hadoop/Spark — Batch Recommendations)</text>
-</svg>
-</div>
-
-<div class="example">
-<strong>End-to-End:</strong> User opens Spotify → Home shows personalized playlists (from Cassandra/Redis) → User plays "Discover Weekly" → Playback Service resolves track → CDN edge delivers 320kbps Ogg Vorbis → Client prefetches next 3 tracks → User skips track 5 after 8s (not counted as stream) → Listens to track 6 for 3 min (stream event → Kafka → royalty calculation) → Sunday: ML pipeline runs on Hadoop → generates new Discover Weekly for 400M users → stored in Cassandra
-</div>
-
-<h2>🗄️ Database Schema</h2>
-
-<div class="section">
-<h3>Cassandra — Music Catalog + User Data</h3>
-<pre>
-Table: tracks
-Partition Key: track_id
-  - track_id: UUID
-  - title: text
-  - artist_ids: list&lt;UUID&gt;
-  - album_id: UUID
-  - duration_ms: int
-  - popularity: int (0-100)
-  - audio_urls: map&lt;text, text&gt;  // {quality: cdn_url}
-  - audio_features: map&lt;text, float&gt;  // {energy: 0.8, tempo: 120}
-
-Table: playlists
-Partition Key: playlist_id
-  - playlist_id: UUID
-  - owner_id: UUID
-  - name: text
-  - description: text
-  - is_collaborative: boolean
-  - follower_count: int
-  - track_count: int
-
-Table: playlist_tracks
-Partition Key: playlist_id
-Clustering: position ASC
-  - playlist_id: UUID
-  - position: int
-  - track_id: UUID
-  - added_by: UUID
-  - added_at: timestamp
-
-Table: user_library
-Partition Key: user_id
-Clustering: saved_at DESC
-  - user_id: UUID
-  - saved_at: timestamp
-  - item_type: text (track / album / artist / playlist)
-  - item_id: UUID
-</pre>
-
-<h3>PostgreSQL — Account/Billing</h3>
+<h3>Horizontal Scaling</h3>
 <table>
-<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-<tr><td>user_id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>email</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">UNIQUE</span></td></tr>
-<tr><td>plan</td><td>VARCHAR(20)</td><td>free / premium / family / duo / student</td></tr>
-<tr><td>country</td><td>VARCHAR(3)</td><td>Content licensing</td></tr>
-<tr><td>payment_token</td><td>VARCHAR(64)</td><td></td></tr>
-<tr><td>billing_date</td><td>DATE</td><td></td></tr>
+<tr><th>Component</th><th>Scaling Strategy</th></tr>
+<tr><td>API Gateway</td><td>Horizontally scale stateless instances behind LB. Auto-scale based on request rate (target: 70% CPU utilization).</td></tr>
+<tr><td>Upload Service</td><td>Scale based on upload queue depth. Typically fewer instances needed (uploads are infrequent vs. streams).</td></tr>
+<tr><td>Streaming Service</td><td>Horizontally scale stateless instances. This is the hottest service — auto-scale aggressively based on concurrent requests.</td></tr>
+<tr><td>Audio Processing Service</td><td>Scale based on transcode queue depth. Use spot/preemptible instances for cost savings (jobs are retryable).</td></tr>
+<tr><td>Search Service</td><td>Horizontally scale. Search Index is replicated across multiple nodes for parallel query processing.</td></tr>
+<tr><td>Playlist Service</td><td>Horizontally scale stateless instances.</td></tr>
+<tr><td>Feed Service</td><td>Horizontally scale. Relies heavily on cache to absorb load.</td></tr>
+<tr><td>Friend Activity Service</td><td>Scale based on WebSocket connection count. Each instance holds ~50-100K connections. Stateful — use consistent hashing for connection routing.</td></tr>
+<tr><td>SQL Database</td><td>Vertical scaling (larger instances) + horizontal read replicas + sharding for largest tables (users, songs).</td></tr>
+<tr><td>NoSQL Database</td><td>Horizontal scaling with auto-sharding. Add nodes to increase throughput linearly.</td></tr>
+<tr><td>Message Queue</td><td>Add partitions to increase throughput. Add consumers to increase processing rate.</td></tr>
+<tr><td>In-Memory Cache</td><td>Cluster mode with hash-slot-based sharding. Add nodes to increase capacity.</td></tr>
+<tr><td>CDN</td><td>Inherently distributed. Add edge locations in underserved regions.</td></tr>
 </table>
 
-<h3>Sharding</h3>
-<p><strong>Cassandra:</strong> Consistent hashing on partition key. Playlist tracks partitioned by playlist_id — all tracks in a playlist on same node <span class="tag tag-shard">CONSISTENT HASH</span></p>
-<p><strong>Listening history:</strong> Partitioned by user_id. Time-series data with TTL for older entries (keep 2 years) <span class="tag tag-shard">HASH + TTL</span></p>
-</div>
-
-<h2>💾 Cache & CDN Deep Dive</h2>
-
-<div class="section">
+<h3>Estimated Scale Numbers</h3>
 <table>
-<tr><th>Cache</th><th>Key</th><th>TTL</th><th>Strategy</th></tr>
-<tr><td>Track metadata</td><td><code>track:{id}</code></td><td>1 hr</td><td>Read-through</td></tr>
-<tr><td>Playlist content</td><td><code>playlist:{id}:tracks</code></td><td>5 min</td><td>Write-invalidate on edit</td></tr>
-<tr><td>User home page</td><td><code>home:{user_id}</code></td><td>10 min</td><td>Pre-computed</td></tr>
-<tr><td>Discover Weekly</td><td><code>dw:{user_id}</code></td><td>7 days</td><td>Written by batch ML</td></tr>
-<tr><td>Audio segments</td><td>CDN edge</td><td>30 days</td><td>Pull-based CDN</td></tr>
+<tr><th>Metric</th><th>Estimate</th></tr>
+<tr><td>Total users</td><td>~500M</td></tr>
+<tr><td>Daily active users</td><td>~200M</td></tr>
+<tr><td>Concurrent streams (peak)</td><td>~30M</td></tr>
+<tr><td>Songs in catalog</td><td>~100M</td></tr>
+<tr><td>Streams per day</td><td>~1.5B</td></tr>
+<tr><td>Average song size (320 kbps, 3.5 min)</td><td>~8 MB</td></tr>
+<tr><td>Total audio storage</td><td>~100M songs × 3 bitrates × 8 MB = ~2.4 PB</td></tr>
+<tr><td>CDN egress per day</td><td>~1.5B streams × 8 MB = ~12 PB/day</td></tr>
+<tr><td>Play events per second (peak)</td><td>~50,000/sec</td></tr>
 </table>
-<p><strong>Audio CDN:</strong> Google Cloud CDN (Spotify migrated to GCP). Audio files stored in GCS, served from edge. Popular tracks (~top 1% = 1M tracks) account for ~80% of streams → very high cache hit rate. Long-tail tracks (99% of catalog) have lower hit rate → served from regional/origin.</p>
-<p><strong>Eviction:</strong> LRU at CDN edge. Audio files are small (~10MB) so edge caches hold millions of tracks.</p>
-</div>
 
-<h2>⚖️ Tradeoffs</h2>
+<!-- ============================== SECTION 16: TRADEOFFS ============================== -->
+<h2 id="tradeoffs">16. Tradeoffs &amp; Deep Dives</h2>
 
-<div class="section">
-<div class="tradeoff-grid">
-  <div class="tradeoff-pro">
-    <h4>✅ Three-Engine Recommendation</h4>
-    <p>Collaborative + Content + NLP captures user taste from multiple angles. Solves cold-start (audio analysis for new tracks)</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Three-Engine Recommendation</h4>
-    <p>Massive compute cost to generate personalized playlists for 600M users weekly. Complex pipeline with multiple ML models to maintain</p>
-  </div>
-  <div class="tradeoff-pro">
-    <h4>✅ Ogg Vorbis Codec</h4>
-    <p>Open-source (no licensing fees), good quality-to-size ratio, widely supported</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Ogg Vorbis Codec</h4>
-    <p>Not natively supported on iOS (requires custom decoder). AAC used as fallback for Apple devices</p>
-  </div>
-</div>
-</div>
+<h3>Consistency vs. Availability</h3>
+<ul>
+  <li><strong>Playlist edits:</strong> We chose <strong>strong consistency</strong> (write to primary, read-after-write guaranteed). Tradeoff: slightly higher write latency (~5-10ms), but users expect immediate feedback when they add a song to a playlist.</li>
+  <li><strong>Play counts:</strong> We chose <strong>eventual consistency</strong>. The count displayed may be a few seconds behind reality. Tradeoff: we gain massive write throughput (micro-batching). Users don't notice if a play count is 1,000,003 vs. 1,000,005.</li>
+  <li><strong>Search index:</strong> We chose <strong>near-real-time consistency</strong> (seconds-level lag). A newly uploaded song may take 5-10 seconds to appear in search. Tradeoff: decoupling indexing from upload keeps the upload path fast.</li>
+</ul>
 
-<h2>🔄 Alternative Approaches</h2>
+<h3>Pre-Computation vs. On-Demand Computation (Recommendations)</h3>
+<ul>
+  <li><strong>Choice:</strong> Hybrid — batch pre-computation for most users + real-time fallback for cache misses.</li>
+  <li><strong>Tradeoff:</strong> Pre-computation uses significant compute resources (running ML models for 500M users nightly). But it ensures &lt;50ms home feed load times. On-demand-only would save batch compute costs but increase P99 latency to ~500ms+ and put heavy load on ML model serving infrastructure.</li>
+</ul>
 
-<div class="section">
-<div class="subsection">
-<h4>P2P-Assisted Streaming (Original Spotify)</h4>
-<p>Early Spotify (2008-2014) used P2P to reduce CDN costs — desktop clients cached and shared audio chunks with nearby peers. Eliminated in 2014 as CDN costs dropped and mobile (which can't do P2P efficiently) became dominant.</p>
-</div>
-<div class="subsection">
-<h4>Real-Time ML Recommendations (vs Batch)</h4>
-<p>Instead of weekly batch, compute recommendations in real-time based on current session. "You just listened to 3 jazz tracks → here's a jazz recommendation." Spotify is moving toward session-based real-time recommendations (Daily Mix already adapts faster than Discover Weekly).</p>
-</div>
-</div>
+<h3>Chunked Streaming vs. Progressive Download</h3>
+<ul>
+  <li><strong>Choice:</strong> Chunked streaming (~5-second segments).</li>
+  <li><strong>Tradeoff:</strong> More CDN requests (one per chunk) vs. a single request for progressive download. But chunked streaming enables: adaptive bitrate switching mid-song, seek support (jump to any chunk without downloading the whole file), and better cache utilization (popular songs' first few chunks are cached even if the full file isn't).</li>
+</ul>
 
-<h2>📚 Additional Information</h2>
+<h3>Denormalized Counters vs. Computed Aggregates</h3>
+<ul>
+  <li><strong>Choice:</strong> Denormalized <code>total_songs</code> in playlists, <code>monthly_listeners</code> in artists, <code>total_tracks</code> in albums.</li>
+  <li><strong>Tradeoff:</strong> Slightly more complex write logic (must update counters on every add/remove), risk of count drift if a transaction partially fails. But the read path (which is 100x more frequent) becomes O(1) instead of an expensive <code>COUNT(*)</code> query. Counter drift is corrected by periodic reconciliation batch jobs.</li>
+</ul>
 
-<div class="section">
-<h3>Royalty Payment System</h3>
-<p>A "stream" counts after 30 seconds of playback. Revenue from subscriptions + ads pooled into a global pot. Each stream = proportional share of monthly pot. Average payout: ~$0.003-0.005 per stream. Artists with 1M monthly listeners earn ~$3,000-5,000/month. Rights split: ~70% to rights holders (label + songwriter + publisher), ~30% to Spotify.</p>
+<h3>SQL vs. NoSQL for Different Workloads</h3>
+<ul>
+  <li><strong>SQL for core entities (users, songs, playlists):</strong> Rich query patterns, need for joins, ACID transactions, moderate write volume. Tradeoff: limited horizontal scalability without sharding.</li>
+  <li><strong>NoSQL for high-throughput analytics (play counts, listening history):</strong> Simple access patterns, massive write throughput, time-series data. Tradeoff: no join support, eventual consistency, but these workloads don't need either.</li>
+</ul>
 
-<h3>Spotify Connect (Cross-Device)</h3>
-<p>Unique feature: control playback on any device from any other device. Architecture: all devices connected to Spotify's real-time service via WebSocket. When user switches playback device, command sent via server → target device starts streaming from current position. State synchronized in real-time across all logged-in devices.</p>
+<h3>WebSocket vs. Pub/Sub for Friend Activity</h3>
+<ul>
+  <li>We use <strong>both</strong>: WebSocket for client ↔ server communication, Pub/Sub for server ↔ server fan-out. The tradeoff of WebSockets is statefulness (complicates scaling, requires sticky sessions). But the real-time UX benefit justifies the operational complexity.</li>
+</ul>
 
-<h3>Audio Fingerprinting</h3>
-<p>Similar to YouTube's Content ID, Spotify uses audio fingerprinting to identify duplicate uploads, match cover versions, and detect copyright infringement. Chromaprint library generates compact fingerprint from audio spectrogram → compared against database of 100M+ tracks.</p>
-</div>
+<!-- ============================== SECTION 17: ALTERNATIVES ============================== -->
+<h2 id="alternatives">17. Alternative Approaches</h2>
+
+<h3>Alternative 1: Peer-to-Peer (P2P) Streaming</h3>
+<p><strong>Description:</strong> Instead of CDN-only, use a P2P protocol where clients share audio chunks with nearby peers (similar to BitTorrent).</p>
+<p><strong>Why not chosen:</strong> Spotify actually used P2P in its early days but phased it out. Reasons: (1) P2P drains mobile battery and uses user bandwidth, leading to complaints. (2) Requires complex NAT traversal. (3) Less reliable than CDN (peers go offline). (4) DRM and licensing complications. (5) CDN costs have dropped enough to make P2P unnecessary.</p>
+
+<h3>Alternative 2: GraphQL Instead of REST</h3>
+<p><strong>Description:</strong> Use GraphQL for all client-server APIs so clients can request exactly the fields they need.</p>
+<p><strong>Why not chosen:</strong> GraphQL adds complexity (schema management, N+1 query risks, harder caching at CDN/proxy level since all requests are POST to a single endpoint). REST with well-designed endpoints and JSON:API sparse fieldsets achieves similar flexibility with simpler caching and operational tooling. For mobile clients with bandwidth constraints, we use response field filtering instead.</p>
+
+<h3>Alternative 3: Single Monolithic Database</h3>
+<p><strong>Description:</strong> Use one large SQL database for everything (play counts, listening history, etc.).</p>
+<p><strong>Why not chosen:</strong> Play events generate ~50,000 writes/second at peak. A single SQL database cannot handle this write volume, even with connection pooling and batching. Play counts on hot songs would cause row-level lock contention. Separating into purpose-built datastores (SQL for relational, NoSQL for high-throughput) matches each workload's characteristics.</p>
+
+<h3>Alternative 4: Server-Side Rendering (SSR) for Web Player Instead of SPA</h3>
+<p><strong>Description:</strong> Render the web player on the server for faster initial page load.</p>
+<p><strong>Why not chosen:</strong> A music player is highly interactive (play/pause, seek, drag-and-drop playlists, real-time friend activity). An SPA (Single Page Application) provides smoother UX with uninterrupted audio playback during navigation. SSR would cause audio interruptions on page transitions. Hybrid approach: SSR for the initial shell (SEO-friendly landing pages), SPA for the player itself.</p>
+
+<h3>Alternative 5: gRPC for All Client APIs</h3>
+<p><strong>Description:</strong> Use gRPC instead of REST for client → server communication.</p>
+<p><strong>Why not chosen:</strong> gRPC requires HTTP/2, which is supported by native mobile apps but has limited support in older browsers. The web player would need a gRPC-Web proxy layer. REST is universally supported. We use gRPC for internal service-to-service calls where both sides are controlled and the performance benefits (binary serialization, multiplexing) matter. REST for external-facing APIs maintains maximum compatibility.</p>
+
+<h3>Alternative 6: Event Sourcing for Playlist State</h3>
+<p><strong>Description:</strong> Store playlists as a sequence of events (SongAdded, SongRemoved, SongReordered) instead of current state.</p>
+<p><strong>Why not chosen:</strong> Event sourcing is powerful for audit trails and undo/redo, but adds complexity. Reading the current state requires replaying events (or maintaining a materialized view). For playlists, current-state storage in SQL is simpler and sufficient. Collaborative playlists could benefit from event sourcing, but the added complexity isn't justified for the majority use case.</p>
+
+<!-- ============================== SECTION 18: ADDITIONAL ============================== -->
+<h2 id="additional">18. Additional Information</h2>
+
+<h3>Audio Encoding Details</h3>
+<ul>
+  <li><strong>Codec:</strong> OGG Vorbis for desktop/Android clients, AAC for iOS/web clients. Both are lossy but offer excellent quality-to-bitrate ratios.</li>
+  <li><strong>Quality tiers:</strong> 96 kbps (low — mobile data saver), 160 kbps (normal — default for Free tier), 320 kbps (high — Premium only).</li>
+  <li><strong>Chunk size:</strong> ~5-second segments. Each chunk is independently decodable to support seeking and adaptive bitrate switching.</li>
+  <li><strong>Gapless playback:</strong> Metadata for each track includes sample-accurate start/end offsets to eliminate silence between tracks in an album.</li>
+</ul>
+
+<h3>Offline Mode</h3>
+<ul>
+  <li>Premium users can download songs. The client stores encrypted chunks locally.</li>
+  <li>A DRM license token (time-limited, e.g., 30 days) is cached locally. The client can play downloaded songs offline as long as the token is valid.</li>
+  <li>On reconnection, the client syncs the download state and refreshes the DRM token.</li>
+</ul>
+
+<h3>Ad Insertion (Free Tier)</h3>
+<ul>
+  <li>Free users hear audio ads between songs. The Ad Service selects targeted ads based on user demographics and listening context.</li>
+  <li>Ad audio is served from the same CDN infrastructure as music.</li>
+  <li>The client inserts ad audio between song chunks seamlessly.</li>
+</ul>
+
+<h3>Rate Limiting &amp; Abuse Prevention</h3>
+<ul>
+  <li>The API Gateway enforces rate limits: 100 requests/minute for search, 1,000 requests/minute for streaming (per user).</li>
+  <li>Play count fraud detection: if a bot streams a song on repeat, the Play Count Aggregator uses heuristics (same user, same song, &lt;30 second intervals) to discard fraudulent plays.</li>
+</ul>
+
+<h3>Data Privacy &amp; GDPR</h3>
+<ul>
+  <li>Listening history and user data are subject to GDPR. Users can request data export or deletion.</li>
+  <li>Deletion cascades: deleting a user removes their playlists, liked songs, listening history, and recommendation cache entries.</li>
+</ul>
+
+<h3>Monitoring &amp; Observability</h3>
+<ul>
+  <li><strong>Metrics:</strong> Track P50/P99 latency for streaming start, search response time, cache hit rates, queue depth, WebSocket connection count.</li>
+  <li><strong>Alerts:</strong> Trigger on: cache hit rate &lt;80%, queue depth growing (consumers falling behind), error rate &gt;1%, WebSocket disconnection spike.</li>
+  <li><strong>Distributed tracing:</strong> Each request gets a trace ID that propagates through all services and queues for end-to-end debugging.</li>
+</ul>
+
+<!-- ============================== SECTION 19: VENDORS ============================== -->
+<h2 id="vendors">19. Vendor Section</h2>
+<p>The following are vendor suggestions for each infrastructure component. The architecture is designed to be vendor-agnostic; these are recommendations based on maturity, performance, and ecosystem fit.</p>
+
+<table>
+<tr><th>Component</th><th>Vendor Options</th><th>Rationale</th></tr>
+<tr>
+  <td>SQL Database</td>
+  <td>PostgreSQL, MySQL, CockroachDB (distributed SQL)</td>
+  <td>PostgreSQL is the most feature-rich open-source RDBMS with excellent JSON support, advanced indexing (GIN, GiST), and strong community. CockroachDB for globally distributed SQL with automatic sharding if multi-region consistency is needed.</td>
+</tr>
+<tr>
+  <td>NoSQL (Key-Value / Wide-Column)</td>
+  <td>Apache Cassandra, ScyllaDB, Amazon DynamoDB</td>
+  <td>Cassandra excels at high write throughput with tunable consistency, time-series data (listening history), and linear horizontal scaling. ScyllaDB is a drop-in Cassandra-compatible option with better performance (C++ vs. Java). DynamoDB for fully managed, auto-scaling key-value with built-in streams.</td>
+</tr>
+<tr>
+  <td>In-Memory Cache</td>
+  <td>Redis, Memcached, Dragonfly</td>
+  <td>Redis offers rich data structures (sorted sets for ranking, hashes for objects, pub/sub built in), persistence options, and cluster mode. Dragonfly is a Redis-compatible option with better multi-threaded performance.</td>
+</tr>
+<tr>
+  <td>Search Index</td>
+  <td>Elasticsearch, Apache Solr, Meilisearch</td>
+  <td>Elasticsearch is the industry standard for full-text search with fuzzy matching, autocomplete (n-gram tokenizer), relevance tuning, and horizontal scaling. Battle-tested at Spotify-scale.</td>
+</tr>
+<tr>
+  <td>Message Queue</td>
+  <td>Apache Kafka, Apache Pulsar, Amazon SQS + SNS</td>
+  <td>Kafka provides high-throughput, durable, partitioned message streaming with consumer groups — ideal for play event processing. Pulsar offers multi-tenancy and tiered storage. SQS for fully managed queues if operational simplicity is preferred.</td>
+</tr>
+<tr>
+  <td>Pub/Sub</td>
+  <td>Redis Pub/Sub, Apache Kafka, NATS</td>
+  <td>Redis Pub/Sub is lightweight and fast for real-time fan-out (friend activity). NATS is an alternative with better clustering and message persistence. Kafka can serve as both message queue and pub/sub.</td>
+</tr>
+<tr>
+  <td>Object Storage</td>
+  <td>Amazon S3, Google Cloud Storage, MinIO</td>
+  <td>S3 is the gold standard for durability (11 nines), scalability, and cost efficiency for large blob storage. MinIO for self-hosted S3-compatible storage.</td>
+</tr>
+<tr>
+  <td>CDN</td>
+  <td>Cloudflare, Akamai, Amazon CloudFront, Fastly</td>
+  <td>Cloudflare offers the largest edge network with DDoS protection. Akamai has the most edge locations globally. Fastly offers real-time purging and edge compute (VCL/Wasm). Choice depends on geographic coverage needs and pricing.</td>
+</tr>
+<tr>
+  <td>ML Model Serving</td>
+  <td>TensorFlow Serving, TorchServe, Triton Inference Server</td>
+  <td>Triton supports multiple frameworks (TensorFlow, PyTorch, ONNX) and provides dynamic batching, model versioning, and GPU inference — ideal for recommendation models.</td>
+</tr>
+</table>
+
+<hr>
+<p style="text-align:center; color:#999; margin-top:2rem;">System Design Document — Spotify | Generated 2026-02-13</p>
 
 </body>
 </html>
