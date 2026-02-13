@@ -1,248 +1,1242 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>System Design: TripAdvisor</title>
-<style>
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: #e0e0e0; line-height: 1.7; }
-h1 { color: #34e0a1; border-bottom: 3px solid #34e0a1; padding-bottom: 10px; font-size: 2.2em; }
-h2 { color: #50f0b8; margin-top: 40px; font-size: 1.6em; border-left: 4px solid #50f0b8; padding-left: 12px; }
-h3 { color: #80ffcc; font-size: 1.3em; }
-.section { background: #1a1a2e; border-radius: 10px; padding: 25px; margin: 20px 0; border: 1px solid #333; }
-.diagram-container { background: #0d1117; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center; overflow-x: auto; }
-.example { background: #1e293b; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
-.example strong { color: #f59e0b; }
-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-th { background: #2a2a4a; color: #50f0b8; padding: 12px; text-align: left; border: 1px solid #444; }
-td { padding: 10px 12px; border: 1px solid #333; }
-tr:nth-child(even) { background: #1a1a2e; }
-tr:nth-child(odd) { background: #151528; }
-code { background: #2d2d4d; padding: 2px 8px; border-radius: 4px; color: #ff79c6; font-size: 0.95em; }
-.tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
-.tag-pk { background: #4a1a6b; color: #d4a5ff; }
-.tag-fk { background: #1a4a3b; color: #a5ffd4; }
-.tag-idx { background: #4a3a1a; color: #ffd4a5; }
-ul { padding-left: 25px; }
-li { margin: 5px 0; }
-.tradeoff { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-.pro { background: #0a2a1a; border: 1px solid #2a5a3a; padding: 15px; border-radius: 8px; }
-.con { background: #2a0a1a; border: 1px solid #5a2a3a; padding: 15px; border-radius: 8px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TripAdvisor — System Design</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true, theme:'neutral', securityLevel:'loose'});</script>
+    <style>
+        :root { --bg: #fdfdfd; --fg: #1a1a1a; --accent: #00aa6c; --accent2: #34e0a1; --border: #ddd; --code-bg: #f4f4f4; --card-bg: #fff; --shadow: 0 2px 8px rgba(0,0,0,.08); }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.7; padding: 2rem; max-width: 1200px; margin: auto; }
+        h1 { font-size: 2.4rem; color: var(--accent); border-bottom: 4px solid var(--accent); padding-bottom: .5rem; margin-bottom: 1.5rem; }
+        h2 { font-size: 1.8rem; margin-top: 3rem; margin-bottom: 1rem; color: var(--accent); border-left: 5px solid var(--accent); padding-left: .75rem; }
+        h3 { font-size: 1.35rem; margin-top: 2rem; margin-bottom: .75rem; }
+        h4 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: .5rem; }
+        p, li { margin-bottom: .5rem; }
+        ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; }
+        th, td { border: 1px solid var(--border); padding: .55rem .75rem; text-align: left; }
+        th { background: var(--accent); color: #fff; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: .92em; }
+        pre { background: var(--code-bg); padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 1rem 0; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin: 1rem 0; box-shadow: var(--shadow); }
+        .example { background: #eafff5; border-left: 4px solid var(--accent); padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+        .warn { background: #fff8e1; border-left: 4px solid #ffc107; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+        .mermaid { margin: 1.5rem 0; text-align: center; }
+        .toc { background: #f0faf5; padding: 1.5rem 2rem; border-radius: 8px; margin-bottom: 2rem; }
+        .toc a { text-decoration: none; color: var(--accent); }
+        .toc a:hover { text-decoration: underline; }
+        .toc li { margin-bottom: .3rem; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: .8rem; font-weight: 600; }
+        .badge-sql { background: #e3f2fd; color: #1565c0; }
+        .badge-nosql { background: #fce4ec; color: #c62828; }
+        .badge-search { background: #fff3e0; color: #e65100; }
+    </style>
 </head>
 <body>
-<h1>System Design: TripAdvisor (Travel Review Platform)</h1>
 
-<div class="section">
-<h2>Functional Requirements</h2>
-<ul>
-<li>Search for hotels, restaurants, attractions by destination with rich filtering</li>
-<li>User-generated reviews and ratings (text, photos, 1-5 stars)</li>
-<li>Aggregated rating scores with breakdown (cleanliness, location, service, value)</li>
-<li>Price comparison across booking sites (meta-search: redirect to Expedia, Booking.com, etc.)</li>
-<li>Traveler forums and Q&A</li>
-<li>Personalized recommendations based on travel history and preferences</li>
-<li>"Near me" discovery using geolocation</li>
-</ul>
+<h1>🗺️ TripAdvisor — System Design</h1>
+
+<!-- ================================================================== -->
+<!-- TABLE OF CONTENTS -->
+<!-- ================================================================== -->
+<div class="toc">
+    <h3>Table of Contents</h3>
+    <ol>
+        <li><a href="#fr">Functional Requirements</a></li>
+        <li><a href="#nfr">Non-Functional Requirements</a></li>
+        <li><a href="#flow1">Flow 1 — Search Flow</a></li>
+        <li><a href="#flow2">Flow 2 — Listing Detail &amp; Review Reading Flow</a></li>
+        <li><a href="#flow3">Flow 3 — Review Submission Flow</a></li>
+        <li><a href="#flow4">Flow 4 — Booking Flow</a></li>
+        <li><a href="#combined">Combined Overall Flow Diagram</a></li>
+        <li><a href="#schema">Database Schema</a></li>
+        <li><a href="#cdn-cache">CDN &amp; Caching Deep Dive</a></li>
+        <li><a href="#mq">Message Queue Deep Dive</a></li>
+        <li><a href="#scaling">Scaling Considerations</a></li>
+        <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+        <li><a href="#alternatives">Alternative Approaches</a></li>
+        <li><a href="#additional">Additional Considerations</a></li>
+        <li><a href="#vendors">Vendor Section</a></li>
+    </ol>
 </div>
 
-<div class="section">
-<h2>Non-Functional Requirements</h2>
-<ul>
-<li><strong>Read-heavy:</strong> 100:1 read-to-write ratio (reviews are read far more than written)</li>
-<li><strong>Low Latency:</strong> Search results in &lt;500ms, place pages in &lt;200ms</li>
-<li><strong>SEO:</strong> Billions of indexed pages — SEO is critical for organic traffic</li>
-<li><strong>Scalability:</strong> Hundreds of millions of reviews, millions of places</li>
-<li><strong>Availability:</strong> 99.99% uptime</li>
-</ul>
-</div>
-
-<!-- Flow 1: Search & Discovery -->
-<div class="section">
-<h2>Flow 1: Search & Discovery</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1050 380" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#34e0a1"/></marker></defs>
-<rect x="20" y="150" width="110" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="185" text-anchor="middle" fill="white" font-size="13">User</text>
-<rect x="170" y="150" width="110" height="60" rx="10" fill="#888" stroke="#aaa" stroke-width="2"/><text x="225" y="185" text-anchor="middle" fill="white" font-size="12">CDN</text>
-<rect x="330" y="150" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="395" y="185" text-anchor="middle" fill="white" font-size="12">Search Service</text>
-<rect x="520" y="80" width="140" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="590" y="110" text-anchor="middle" fill="white" font-size="12">Elasticsearch</text>
-<rect x="520" y="180" width="140" height="50" rx="8" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="590" y="210" text-anchor="middle" fill="white" font-size="12">Place Cache</text>
-<rect x="520" y="280" width="140" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="590" y="308" text-anchor="middle" fill="white" font-size="11">Price Comparison</text>
-<rect x="740" y="80" width="130" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="805" y="110" text-anchor="middle" fill="white" font-size="11">Ranking / ML</text>
-<rect x="740" y="280" width="130" height="40" rx="8" fill="#1e6091" stroke="#3a8cbf" stroke-width="2"/><text x="805" y="305" text-anchor="middle" fill="white" font-size="10">Booking Partners</text>
-<line x1="130" y1="180" x2="168" y2="180" stroke="#34e0a1" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="280" y1="180" x2="328" y2="180" stroke="#34e0a1" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="460" y1="168" x2="518" y2="110" stroke="#34e0a1" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="460" y1="185" x2="518" y2="205" stroke="#34e0a1" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="460" y1="198" x2="518" y2="300" stroke="#34e0a1" stroke-width="1.5" marker-end="url(#arrow1)"/>
-<line x1="660" y1="105" x2="738" y2="105" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow1)"/>
-<line x1="660" y1="305" x2="738" y2="300" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow1)"/>
-<text x="520" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">TripAdvisor: Search & Discovery</text>
-</svg>
-</div>
-
-<h3>Step-by-Step</h3>
+<!-- ================================================================== -->
+<!-- 1. FUNCTIONAL REQUIREMENTS -->
+<!-- ================================================================== -->
+<h2 id="fr">1. Functional Requirements</h2>
+<div class="card">
 <ol>
-<li><strong>User searches</strong> "restaurants in Rome" → <code>GET /v1/search?type=restaurant&dest=rome&sort=rating</code></li>
-<li><strong>CDN:</strong> Static place pages for popular destinations may be cached. Search API results are dynamic (personalized)</li>
-<li><strong>Elasticsearch:</strong> Full-text search + geo-filtering + faceted search (cuisine type, price range, rating). Returns place IDs with scores</li>
-<li><strong>Place Cache (Redis):</strong> Hydrates place IDs with full details (name, address, photos, avg rating, review count)</li>
-<li><strong>Price Comparison:</strong> For hotels, queries booking partners (Expedia, Booking.com) for current prices. Returns cheapest options</li>
-<li><strong>Ranking ML:</strong> Personalizes order based on user history, popularity score (Bayesian average of ratings), freshness of reviews, photo quality</li>
+    <li><strong>Search &amp; Discovery</strong> — Users can search for hotels, restaurants, and attractions by location (city, address, or coordinates), date range, price range, rating, amenities, and category. Results are ranked by relevance.</li>
+    <li><strong>Listing Detail View</strong> — Users can view a detailed page for any listing that includes name, description, photos, location on a map, amenities, aggregate rating, price range, and paginated reviews.</li>
+    <li><strong>Reviews &amp; Ratings</strong> — Authenticated users can submit a review with a 1–5 star rating, title, body text, optional photos, travel type (business, family, solo, etc.), and visit date. Users can also mark reviews as "helpful."</li>
+    <li><strong>Photo Upload</strong> — Users can upload photos for listings (both standalone photo contributions and photos attached to reviews).</li>
+    <li><strong>Booking / Reservation</strong> — Users can check availability and book hotels or make restaurant reservations directly. Booking requires payment processing and availability verification.</li>
+    <li><strong>User Profiles</strong> — Users can create accounts, manage profiles, view their review history, and track bookings.</li>
+    <li><strong>Business Owner Management</strong> — Business owners can claim listings, update details, respond to reviews, and upload official photos.</li>
+    <li><strong>Notifications</strong> — Users receive notifications for booking confirmations, review replies from business owners, and price alerts.</li>
 </ol>
+</div>
+
+<!-- ================================================================== -->
+<!-- 2. NON-FUNCTIONAL REQUIREMENTS -->
+<!-- ================================================================== -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
+<div class="card">
+<table>
+    <tr><th>Requirement</th><th>Target</th><th>Rationale</th></tr>
+    <tr><td><strong>Availability</strong></td><td>99.99 % uptime</td><td>Users in every timezone; downtime directly impacts revenue.</td></tr>
+    <tr><td><strong>Read Latency</strong></td><td>&lt; 200 ms (p95) for search; &lt; 150 ms for listing detail</td><td>Speed directly impacts bounce rate and conversion.</td></tr>
+    <tr><td><strong>Write Latency</strong></td><td>&lt; 500 ms for review submission; &lt; 1 s for booking</td><td>Users expect quick confirmation; booking latency tolerance is higher due to payment processing.</td></tr>
+    <tr><td><strong>Consistency</strong></td><td>Strong consistency for bookings; eventual consistency for reviews/ratings</td><td>Double-booking is unacceptable; a slight delay in rating updates is tolerable.</td></tr>
+    <tr><td><strong>Scalability</strong></td><td>Support 500 M+ listings, 1 B+ reviews, 100 K+ concurrent users</td><td>TripAdvisor-scale platform with global traffic.</td></tr>
+    <tr><td><strong>Durability</strong></td><td>Zero data loss for bookings and reviews</td><td>User-generated content and financial transactions must not be lost.</td></tr>
+    <tr><td><strong>Global Reach</strong></td><td>Multi-region deployment with CDN</td><td>Users search for destinations worldwide; content must be served from nearby edge nodes.</td></tr>
+    <tr><td><strong>Extensibility</strong></td><td>Add new listing types (experiences, flights) without re-architecture</td><td>Product roadmap expansion.</td></tr>
+</table>
+</div>
+
+<!-- ================================================================== -->
+<!-- 3. FLOW 1 — SEARCH FLOW -->
+<!-- ================================================================== -->
+<h2 id="flow1">3. Flow 1 — Search Flow</h2>
+<p>This flow covers a user searching for hotels, restaurants, or attractions by location and applying filters.</p>
+
+<div class="mermaid">
+graph LR
+    subgraph Client
+        A["📱 Client App<br/>(Web / Mobile)"]
+    end
+    subgraph Infrastructure
+        B["⚖️ Load Balancer"]
+        C["🚪 API Gateway"]
+    end
+    subgraph Services
+        D["🔍 Search Service"]
+    end
+    subgraph Data
+        E[("🗄️ Cache<br/>(Search Results)")]
+        F[("🔎 Search Index")]
+        G[("📦 Listing DB")]
+    end
+
+    A -->|"HTTPS GET<br/>/api/v1/search"| B
+    B --> C
+    C -->|Auth + Rate Limit| D
+    D -->|"1. Check cache<br/>(query hash)"| E
+    D -->|"2. If cache miss,<br/>query index"| F
+    D -->|"3. Enrich summaries"| G
+    F -.->|"Async sync<br/>via Message Queue"| G
+    D -->|"4. Return results"| C
+    C --> B --> A
+</div>
+
+<h3>Examples</h3>
 
 <div class="example">
-<strong>Example:</strong> User searches "restaurants in Rome, Italian cuisine, $$". Elasticsearch returns 500 restaurants matching filters. Place Cache hydrates top 50 with details. ML Ranking considers: user visited high-end restaurants before → boosts upscale Italian places. "Roscioli" (4.7★, 3200 reviews) ranked #1. "Da Enzo" (4.6★, 2100 reviews) ranked #2. Response: 200ms.
+<strong>Example 1 — Basic City Search (Cache Miss):</strong><br/>
+User types "Hotels in Paris" and selects check-in Mar 10, check-out Mar 14, 2 guests. The client sends <code>HTTPS GET /api/v1/search?location=Paris&type=hotel&check_in=2026-03-10&check_out=2026-03-14&guests=2&page=1&page_size=20</code> to the Load Balancer. The Load Balancer forwards to the API Gateway, which validates the JWT token and applies rate limiting. The API Gateway routes to the Search Service. The Search Service computes a hash of the query parameters and checks the in-memory cache. On a cache miss, it queries the Search Index with a geo-spatial filter for Paris coordinates + radius, filtered by type=hotel, sorted by relevance (weighted score of avg_rating, review_count, and recency). The Search Index returns 20 listing IDs with scores. The Search Service then enriches each listing with summary data (name, thumbnail photo URL, price range, avg_rating) from the Listing DB (or its cache layer). The final response — a JSON array of 20 listing summaries with pagination metadata — is returned to the client and cached with the query hash as the key (TTL 10 minutes).
 </div>
-</div>
-
-<!-- Flow 2: Writing a Review -->
-<div class="section">
-<h2>Flow 2: Submitting a Review</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1000 320" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffaa00"/></marker></defs>
-<rect x="20" y="130" width="110" height="60" rx="10" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="75" y="165" text-anchor="middle" fill="white" font-size="13">User</text>
-<rect x="180" y="130" width="130" height="60" rx="10" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="245" y="165" text-anchor="middle" fill="white" font-size="12">Review Service</text>
-<rect x="370" y="70" width="130" height="50" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="435" y="100" text-anchor="middle" fill="white" font-size="11">Fraud Detector</text>
-<rect x="370" y="180" width="130" height="50" rx="8" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="435" y="210" text-anchor="middle" fill="white" font-size="12">Kafka</text>
-<rect x="570" y="70" width="130" height="50" rx="8" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="635" y="100" text-anchor="middle" fill="white" font-size="11">Rating Aggregator</text>
-<rect x="570" y="180" width="130" height="50" rx="8" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="635" y="210" text-anchor="middle" fill="white" font-size="11">Search Indexer</text>
-<rect x="570" y="260" width="130" height="40" rx="8" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="635" y="285" text-anchor="middle" fill="white" font-size="11">Notification Svc</text>
-<line x1="130" y1="160" x2="178" y2="160" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="310" y1="148" x2="368" y2="100" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="310" y1="175" x2="368" y2="205" stroke="#ffaa00" stroke-width="2" marker-end="url(#arrow2)"/>
-<line x1="500" y1="200" x2="568" y2="100" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
-<line x1="500" y1="205" x2="568" y2="205" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
-<line x1="500" y1="210" x2="568" y2="275" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow2)"/>
-<text x="490" y="20" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">TripAdvisor: Review Submission</text>
-</svg>
-</div>
-
-<h3>Step-by-Step</h3>
-<ol>
-<li><strong>User submits review:</strong> <code>POST /v1/reviews { place_id, rating: 5, subcategories: {food: 5, service: 4, atmosphere: 5}, text: "...", photos: [...] }</code></li>
-<li><strong>Fraud Detector (ML):</strong> Checks for fake reviews — linguistic analysis, reviewer history, IP/device patterns, timing patterns. Score < 0.3 = auto-reject, 0.3-0.7 = manual review queue</li>
-<li><strong>Review Service:</strong> Stores review in Review DB. Status: "published" or "pending_review"</li>
-<li><strong>Kafka event:</strong> "review.published" consumed by:
-    <ul>
-    <li><strong>Rating Aggregator:</strong> Recalculates place's average rating (Bayesian average), updates Place DB</li>
-    <li><strong>Search Indexer:</strong> Updates Elasticsearch document with new review count and rating</li>
-    <li><strong>Notification:</strong> Notifies place owner of new review</li>
-    </ul>
-</li>
-</ol>
 
 <div class="example">
-<strong>Example:</strong> User reviews "Roscioli" — 5 stars, "Best carbonara in Rome! Authentic and incredible pasta." + 3 photos. Fraud Detector: score 0.95 (legitimate — user has verified bookings, diverse review history, unique photo EXIF data). Published immediately. Rating Aggregator: old avg 4.68 from 3199 reviews → new avg 4.68 from 3200 reviews (minimal change). Elasticsearch updated: review_count: 3200. Notification sent to restaurant owner.
-</div>
-</div>
-
-<!-- Combined Architecture, DB Schema, etc. -->
-<div class="section">
-<h2>Combined Overall Architecture</h2>
-<div class="diagram-container">
-<svg viewBox="0 0 1050 450" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#34e0a1"/></marker></defs>
-<text x="525" y="25" text-anchor="middle" fill="#aaa" font-size="16" font-weight="bold">TripAdvisor: Combined Architecture</text>
-<rect x="20" y="190" width="90" height="50" rx="8" fill="#2a9d8f" stroke="#4ad4c0" stroke-width="2"/><text x="65" y="220" text-anchor="middle" fill="white" font-size="11">Clients</text>
-<rect x="140" y="130" width="90" height="35" rx="8" fill="#888" stroke="#aaa" stroke-width="2"/><text x="185" y="152" text-anchor="middle" fill="white" font-size="10">CDN</text>
-<rect x="140" y="200" width="90" height="35" rx="8" fill="#e76f51" stroke="#ff9a76" stroke-width="2"/><text x="185" y="222" text-anchor="middle" fill="white" font-size="10">API GW</text>
-<rect x="280" y="60" width="110" height="35" rx="6" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="335" y="82" text-anchor="middle" fill="white" font-size="10">Search Svc</text>
-<rect x="280" y="120" width="110" height="35" rx="6" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="335" y="142" text-anchor="middle" fill="white" font-size="10">Review Svc</text>
-<rect x="280" y="180" width="110" height="35" rx="6" fill="#457b9d" stroke="#6db5d9" stroke-width="2"/><text x="335" y="202" text-anchor="middle" fill="white" font-size="10">Place Svc</text>
-<rect x="280" y="240" width="110" height="35" rx="6" fill="#d4a017" stroke="#f0c040" stroke-width="2"/><text x="335" y="262" text-anchor="middle" fill="white" font-size="10">Price Compare</text>
-<rect x="280" y="300" width="110" height="35" rx="6" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="335" y="322" text-anchor="middle" fill="white" font-size="10">Recommendation</text>
-<rect x="280" y="360" width="110" height="35" rx="6" fill="#c77dba" stroke="#e0a5d8" stroke-width="2"/><text x="335" y="382" text-anchor="middle" fill="white" font-size="10">Fraud Detector</text>
-<rect x="460" y="60" width="100" height="35" rx="6" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="510" y="82" text-anchor="middle" fill="white" font-size="10">Elasticsearch</text>
-<rect x="460" y="120" width="100" height="35" rx="6" fill="#c0392b" stroke="#e74c3c" stroke-width="2"/><text x="510" y="142" text-anchor="middle" fill="white" font-size="10">Place Cache</text>
-<rect x="460" y="180" width="100" height="35" rx="6" fill="#8338ec" stroke="#b06efd" stroke-width="2"/><text x="510" y="202" text-anchor="middle" fill="white" font-size="10">Kafka</text>
-<ellipse cx="650" cy="78" rx="55" ry="20" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="650" y="83" text-anchor="middle" fill="white" font-size="9">Place DB</text>
-<ellipse cx="650" cy="142" rx="55" ry="20" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="650" y="147" text-anchor="middle" fill="white" font-size="9">Review DB</text>
-<ellipse cx="650" cy="205" rx="55" ry="20" fill="#6b2fa0" stroke="#9d5fd0" stroke-width="2"/><text x="650" y="210" text-anchor="middle" fill="white" font-size="9">User DB</text>
-<rect x="620" y="250" width="80" height="30" rx="6" fill="#888" stroke="#aaa" stroke-width="2"/><text x="660" y="270" text-anchor="middle" fill="white" font-size="9">S3 (Photos)</text>
-<line x1="110" y1="210" x2="138" y2="145" stroke="#34e0a1" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="110" y1="218" x2="138" y2="218" stroke="#34e0a1" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="230" y1="217" x2="278" y2="78" stroke="#34e0a1" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="230" y1="217" x2="278" y2="137" stroke="#34e0a1" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="230" y1="217" x2="278" y2="197" stroke="#34e0a1" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="390" y1="78" x2="458" y2="78" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="390" y1="140" x2="458" y2="140" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="390" y1="200" x2="458" y2="195" stroke="#ffaa00" stroke-width="1.5" marker-end="url(#arrow3)"/>
-<line x1="560" y1="78" x2="593" y2="78" stroke="#ff6b6b" stroke-width="1" marker-end="url(#arrow3)"/>
-<line x1="560" y1="140" x2="593" y2="142" stroke="#ff6b6b" stroke-width="1" marker-end="url(#arrow3)"/>
-</svg>
-</div>
+<strong>Example 2 — Filtered Search (Cache Hit):</strong><br/>
+Another user searches "Hotels in Paris" with the same dates and filters. The Search Service hashes the query parameters, finds a match in the cache (populated by the earlier request), and returns the cached results immediately without hitting the Search Index or Listing DB. Latency drops from ~180 ms to ~20 ms.
 </div>
 
-<!-- Database Schema -->
-<div class="section">
-<h2>Database Schema</h2>
-<h3>SQL — PostgreSQL (Places, Users)</h3>
-<table>
-<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
-<tr><td rowspan="8"><strong>places</strong></td><td>place_id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>name</td><td>VARCHAR(255)</td><td><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>type</td><td>ENUM</td><td>hotel, restaurant, attraction</td></tr>
-<tr><td>lat, lng</td><td>DOUBLE</td><td><span class="tag tag-idx">GiST spatial index</span></td></tr>
-<tr><td>city, country</td><td>VARCHAR</td><td><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>avg_rating</td><td>DECIMAL(3,2)</td><td>Denormalized Bayesian average</td></tr>
-<tr><td>review_count</td><td>INT</td><td>Denormalized</td></tr>
-<tr><td>price_level</td><td>ENUM</td><td>$, $$, $$$, $$$$</td></tr>
-</table>
+<div class="example">
+<strong>Example 3 — Geo-Radius Search:</strong><br/>
+User enables "Search near me" on their phone while standing near Times Square. The client sends <code>HTTPS GET /api/v1/search?lat=40.758&lng=-73.985&radius=5km&type=restaurant&min_rating=4&page=1</code>. The Search Service issues a geo-radius query against the Search Index, which uses its geo-spatial index to find restaurants within 5 km of the given coordinates that have avg_rating ≥ 4. Results are ranked by distance + rating and returned to the client.
+</div>
 
-<h3>NoSQL — Cassandra (Reviews)</h3>
-<table>
-<tr><th>Table</th><th>Column</th><th>Type</th><th>Details</th></tr>
-<tr><td rowspan="7"><strong>reviews</strong></td><td>place_id</td><td>BIGINT</td><td><span class="tag tag-pk">Partition Key</span></td></tr>
-<tr><td>review_id</td><td>TIMEUUID</td><td><span class="tag tag-pk">Clustering Key</span> DESC</td></tr>
-<tr><td>user_id</td><td>BIGINT</td><td></td></tr>
-<tr><td>overall_rating</td><td>INT</td><td>1-5</td></tr>
-<tr><td>subcategory_ratings</td><td>MAP&lt;TEXT,INT&gt;</td><td>{food: 5, service: 4, value: 4}</td></tr>
-<tr><td>review_text</td><td>TEXT</td><td></td></tr>
-<tr><td>photo_urls</td><td>LIST&lt;TEXT&gt;</td><td></td></tr>
-</table>
+<h3>Component Deep Dive</h3>
 
-<h4>Sharding & Indexes</h4>
+<div class="card">
+<h4>Client App (Web / Mobile)</h4>
+<p>A responsive web app (React/Next.js for SEO via server-side rendering) and native mobile apps (iOS / Android). The client sends search queries via HTTPS, renders paginated results with listing cards (thumbnail, name, rating stars, price), and implements infinite scroll or traditional pagination.</p>
+
+<h4>Load Balancer</h4>
+<p>An L7 (application-layer) load balancer that distributes incoming HTTPS requests across multiple API Gateway instances using round-robin or least-connections algorithms. It terminates TLS, performs health checks on downstream instances, and can do geographic routing for multi-region deployments. Operates over TCP (since HTTP runs on top of TCP for reliable delivery).</p>
+
+<h4>API Gateway</h4>
+<p>A centralized entry point that handles cross-cutting concerns:</p>
 <ul>
-<li><strong>places:</strong> Shard by <code>city</code> — all places in Rome on same shard. City-level searches are shard-local</li>
-<li><strong>reviews:</strong> Partition by <code>place_id</code> — all reviews for one place co-located. Clustering DESC for newest-first display</li>
-<li><strong>Bayesian average:</strong> <code>weighted_avg = (global_avg * C + sum_ratings) / (C + review_count)</code> where C = minimum reviews for statistical significance (~25). Prevents places with 1 review at 5★ from ranking above 4.5★ with 5000 reviews</li>
+    <li><strong>Authentication:</strong> Validates JWT tokens for every request.</li>
+    <li><strong>Rate Limiting:</strong> Token-bucket algorithm per user/IP to prevent abuse.</li>
+    <li><strong>Routing:</strong> Routes <code>/api/v1/search/*</code> to the Search Service, <code>/api/v1/listings/*</code> to the Listing Service, etc.</li>
+    <li><strong>Request/Response Transformation:</strong> Protocol translation if needed.</li>
+    <li><strong>Logging &amp; Metrics:</strong> Captures request metadata for observability.</li>
+</ul>
+
+<h4>Search Service</h4>
+<p><strong>Protocol:</strong> HTTP (internal REST). Receives requests from the API Gateway.</p>
+<ul>
+    <li><strong>Endpoint:</strong> <code>GET /api/v1/search</code></li>
+    <li><strong>Input:</strong> Query parameters — <code>location</code> (string) or <code>lat</code>/<code>lng</code>/<code>radius</code> (geo), <code>type</code> (hotel|restaurant|attraction), <code>check_in</code> / <code>check_out</code> (dates), <code>min_rating</code>, <code>price_range</code>, <code>amenities[]</code>, <code>sort_by</code> (relevance|rating|price), <code>page</code>, <code>page_size</code>.</li>
+    <li><strong>Output:</strong> JSON — <code>{ results: [{ listing_id, name, thumbnail_url, avg_rating, review_count, price_range, location_summary }], pagination: { page, page_size, total_results } }</code></li>
+    <li><strong>Logic:</strong> Hashes query params → checks cache → on miss, builds and executes a search query against the Search Index → enriches results with listing summaries → caches result → returns.</li>
+</ul>
+
+<h4>Cache (Search Results)</h4>
+<p>An in-memory key-value store holding recently executed search results. Keys are SHA-256 hashes of normalized query parameters. Values are serialized JSON result sets. Detailed caching strategy is in the <a href="#cdn-cache">CDN &amp; Caching</a> section.</p>
+
+<h4>Search Index</h4>
+<p>A distributed full-text and geo-spatial search engine (inverted index + geo-spatial index). Supports:</p>
+<ul>
+    <li><strong>Full-text search</strong> on listing name and description fields (inverted index with TF-IDF / BM25 scoring).</li>
+    <li><strong>Geo-spatial queries</strong> using an R-tree / geohash index on latitude/longitude for proximity and bounding-box searches.</li>
+    <li><strong>Faceted filtering</strong> on listing_type, price_range, amenities, and avg_rating.</li>
+    <li><strong>Relevance scoring</strong> combining text relevance, avg_rating, review_count, recency, and (optionally) sponsored boost.</li>
+</ul>
+<p>The Search Index is <em>not</em> the source of truth. It is asynchronously populated and updated from the Listing DB via a message queue (see <a href="#mq">Message Queue Deep Dive</a>). If the index goes down, the system degrades gracefully (search is unavailable but bookings and reviews still work).</p>
+
+<h4>Listing DB</h4>
+<p>The source of truth for all listing data. SQL relational database with strong consistency. Used by the Search Service to enrich listing summaries when they are not in cache. Full schema details in the <a href="#schema">Schema</a> section.</p>
+</div>
+
+<!-- ================================================================== -->
+<!-- 4. FLOW 2 — LISTING DETAIL & REVIEW READING FLOW -->
+<!-- ================================================================== -->
+<h2 id="flow2">4. Flow 2 — Listing Detail &amp; Review Reading Flow</h2>
+<p>This flow covers a user clicking on a listing from search results to view full details, photos, and reviews.</p>
+
+<div class="mermaid">
+graph LR
+    subgraph Client
+        A["📱 Client App"]
+    end
+    subgraph Infrastructure
+        B["⚖️ Load Balancer"]
+        C["🚪 API Gateway"]
+    end
+    subgraph Services
+        D["🏨 Listing Service"]
+        E["⭐ Review Service"]
+        H["📸 Media Service"]
+    end
+    subgraph Data
+        F[("🗄️ Cache<br/>(Listing + Reviews)")]
+        G[("📦 Listing DB")]
+        I[("📝 Review DB")]
+        J["🌐 CDN"]
+        K[("📂 Object Storage")]
+    end
+
+    A -->|"HTTPS GET<br/>/api/v1/listings/:id"| B
+    B --> C
+    C --> D
+    D -->|"1. Check cache"| F
+    D -->|"2. Fetch listing"| G
+    A -->|"HTTPS GET<br/>/api/v1/listings/:id/reviews"| B
+    C --> E
+    E -->|"3. Check cache"| F
+    E -->|"4. Fetch reviews"| I
+    A -->|"Load images"| J
+    J -->|"Origin pull<br/>on miss"| K
+    H --> K
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Viewing a Popular Hotel (Cache Hit for Listing, Partial Cache for Reviews):</strong><br/>
+User clicks on "Hôtel Plaza Athénée" from Paris search results. The client issues two parallel requests: (1) <code>HTTPS GET /api/v1/listings/L12345</code> and (2) <code>HTTPS GET /api/v1/listings/L12345/reviews?page=1&page_size=10&sort=recent</code>. For the listing request, the Listing Service checks the cache — it's a popular listing, so there's a cache hit. The full listing details (name, description, amenities, aggregate rating 4.7, review_count 8,432, price range, GPS coordinates, photo URLs) are returned in ~15 ms. For the reviews request, the Review Service checks the cache for page 1 of reviews — it's also cached. Ten reviews with ratings, titles, body text, user info, and photo URLs are returned. The client simultaneously loads listing photos and review photos from the CDN, which has them cached at the nearest edge node.
+</div>
+
+<div class="example">
+<strong>Example 2 — Viewing an Obscure Attraction (Cache Miss):</strong><br/>
+User clicks on a rarely-visited local museum. The Listing Service finds a cache miss and queries the Listing DB directly. The listing data is fetched, returned to the user, and written to the cache for future requests (cache-aside pattern). Review page 1 is similarly fetched from the Review DB (NoSQL document store, queried by <code>listing_id</code> partition key, sorted by <code>created_at</code> descending). Photos are served from the CDN; if the CDN doesn't have them cached (unlikely for an obscure listing), it performs an origin pull from Object Storage.
+</div>
+
+<div class="example">
+<strong>Example 3 — Paginating Through Reviews:</strong><br/>
+User scrolls down and the client fetches <code>HTTPS GET /api/v1/listings/L12345/reviews?page=3&page_size=10&sort=helpful</code>. Page 3 sorted by "helpful" is likely a cache miss (less popular access pattern), so the Review Service queries the Review DB using the listing_id partition key with a secondary index on <code>helpful_count</code> (descending) and applies offset/limit pagination (or cursor-based if supported). Results are returned and optionally cached with a shorter TTL.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<div class="card">
+<h4>Listing Service</h4>
+<p><strong>Protocol:</strong> HTTP (internal REST).</p>
+<ul>
+    <li><strong>Endpoint:</strong> <code>GET /api/v1/listings/{listing_id}</code></li>
+    <li><strong>Input:</strong> Path parameter <code>listing_id</code>.</li>
+    <li><strong>Output:</strong> JSON — <code>{ listing_id, name, description, listing_type, amenities[], photos[{url, thumbnail_url}], avg_rating, review_count, price_range, address, city, country, latitude, longitude, owner_id, created_at, updated_at }</code></li>
+    <li><strong>Logic:</strong> Check cache by listing_id → on miss, query Listing DB → populate cache → return.</li>
+</ul>
+<p>Also exposes endpoints for business owners:</p>
+<ul>
+    <li><code>PUT /api/v1/listings/{listing_id}</code> — Update listing details (authenticated, owner only). Triggers cache invalidation and search index update via message queue.</li>
+    <li><code>POST /api/v1/listings</code> — Create a new listing.</li>
+</ul>
+
+<h4>Review Service</h4>
+<p><strong>Protocol:</strong> HTTP (internal REST).</p>
+<ul>
+    <li><strong>Endpoint:</strong> <code>GET /api/v1/listings/{listing_id}/reviews</code></li>
+    <li><strong>Input:</strong> Path parameter <code>listing_id</code>; query parameters <code>page</code>, <code>page_size</code>, <code>sort</code> (recent|helpful|rating_high|rating_low).</li>
+    <li><strong>Output:</strong> JSON — <code>{ reviews: [{ review_id, user_id, username, user_avatar_url, rating, title, body, photos[], helpful_count, travel_type, visit_date, created_at, owner_response? }], pagination: { page, page_size, total_reviews } }</code></li>
+    <li><strong>Logic:</strong> Check cache (key = listing_id + page + sort) → on miss, query Review DB by partition key listing_id with sort → populate cache → return.</li>
+</ul>
+
+<h4>Media Service</h4>
+<p><strong>Protocol:</strong> HTTP (internal REST).</p>
+<ul>
+    <li><code>POST /api/v1/media/upload-url</code> — Returns a pre-signed upload URL for the client to upload directly to Object Storage. Input: <code>{ content_type, file_size }</code>. Output: <code>{ upload_url, media_id }</code>.</li>
+    <li><code>GET /api/v1/media/{media_id}</code> — Returns media metadata (URL, thumbnail URL, dimensions).</li>
+</ul>
+<p>After upload, Object Storage triggers a media processing pipeline (via message queue) that generates thumbnails, validates content (size, format), and runs automated content moderation.</p>
+
+<h4>CDN (Content Delivery Network)</h4>
+<p>A globally distributed network of edge servers that caches and serves static assets (listing photos, review photos, user avatars, JS/CSS bundles). When a user in Tokyo views a Paris hotel, photos are served from a nearby Asian edge node rather than the origin in the US/Europe. Detailed CDN strategy in <a href="#cdn-cache">CDN &amp; Caching Deep Dive</a>.</p>
+
+<h4>Object Storage</h4>
+<p>Highly durable, scalable blob storage for all user-uploaded media (photos, videos). Serves as the CDN origin. Files are organized by <code>/{media_type}/{listing_id}/{media_id}.{ext}</code>. Supports lifecycle policies for archiving rarely accessed old media.</p>
+</div>
+
+<!-- ================================================================== -->
+<!-- 5. FLOW 3 — REVIEW SUBMISSION FLOW -->
+<!-- ================================================================== -->
+<h2 id="flow3">5. Flow 3 — Review Submission Flow</h2>
+<p>This flow covers an authenticated user writing and submitting a review for a listing.</p>
+
+<div class="mermaid">
+graph LR
+    subgraph Client
+        A["📱 Client App"]
+    end
+    subgraph Infrastructure
+        B["⚖️ Load Balancer"]
+        C["🚪 API Gateway"]
+    end
+    subgraph Services
+        D["⭐ Review Service"]
+        M["📸 Media Service"]
+    end
+    subgraph Async
+        E["📨 Message Queue<br/>(review-created topic)"]
+    end
+    subgraph Workers
+        F["📊 Rating Aggregation<br/>Worker"]
+        G["🔎 Search Index<br/>Updater Worker"]
+        H["🛡️ Content Moderation<br/>Worker"]
+        I["🔔 Notification<br/>Worker"]
+    end
+    subgraph Data
+        J[("📝 Review DB")]
+        K[("📦 Listing DB")]
+        L[("🔎 Search Index")]
+        N[("🗄️ Cache")]
+        O[("📂 Object Storage")]
+    end
+
+    A -->|"1. Upload photos<br/>(pre-signed URL)"| O
+    A -->|"2. HTTPS POST<br/>/api/v1/listings/:id/reviews"| B
+    B --> C --> D
+    D -->|"3. Write review"| J
+    D -->|"4. Publish event"| E
+    D -->|"5. Invalidate cache"| N
+    E --> F
+    E --> G
+    E --> H
+    E --> I
+    F -->|"Update avg_rating<br/>& review_count"| K
+    F -->|"Update cache"| N
+    G -->|"Update index"| L
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Review With Photos:</strong><br/>
+User stays at "Hotel Marais" and wants to leave a 5-star review with 3 photos. First, the client calls <code>HTTPS POST /api/v1/media/upload-url</code> three times to get three pre-signed URLs. The client uploads the 3 photos directly to Object Storage using those URLs (bypassing our servers). Then the client sends <code>HTTPS POST /api/v1/listings/L67890/reviews</code> with body <code>{ rating: 5, title: "Absolutely stunning!", body: "The room was beautiful...", photos: ["media_id_1", "media_id_2", "media_id_3"], travel_type: "couple", visit_date: "2026-02-01" }</code>. The Review Service validates the input, writes the review to the Review DB, publishes a <code>review-created</code> event to the message queue (containing listing_id, review_id, rating), and invalidates the cached review pages for this listing. The response <code>201 Created</code> with the new review object is returned to the user. Asynchronously: the Rating Aggregation Worker recalculates avg_rating from (old_avg × old_count + 5) / (old_count + 1) and updates the Listing DB and cache. The Search Index Updater updates the listing's avg_rating in the search index. The Content Moderation Worker scans the review text and photos for policy violations. The Notification Worker sends a push notification to the listing owner: "New 5-star review on Hotel Marais!"
+</div>
+
+<div class="example">
+<strong>Example 2 — Review Without Photos (Flagged by Moderation):</strong><br/>
+User submits a 1-star review with profanity in the body. The Review Service writes it to the Review DB with status <code>pending_moderation</code> (visible only to the author initially). The Content Moderation Worker (consuming from the message queue) detects profanity, flags the review, and updates its status to <code>flagged</code>. The review remains hidden from public view until a human moderator approves or rejects it. The rating aggregation does NOT run until the review is approved, preventing fraudulent ratings from affecting listings.
+</div>
+
+<div class="example">
+<strong>Example 3 — Duplicate Review Prevention:</strong><br/>
+User tries to submit a second review for the same listing. The Review Service checks the Review DB for an existing review by this user_id + listing_id combination. If one exists, it returns <code>409 Conflict</code> with a message suggesting the user edit their existing review instead. This is enforced by a unique constraint on (listing_id, user_id) in the Review DB.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<div class="card">
+<h4>Review Service (Write Path)</h4>
+<p><strong>Protocol:</strong> HTTP (internal REST).</p>
+<ul>
+    <li><strong>Endpoint:</strong> <code>POST /api/v1/listings/{listing_id}/reviews</code></li>
+    <li><strong>Input:</strong> JSON body — <code>{ rating (1-5), title (string, max 200 chars), body (string, max 10,000 chars), photos (array of media_ids, max 10), travel_type (enum), visit_date (date) }</code>. Auth: JWT with user_id.</li>
+    <li><strong>Output:</strong> <code>201 Created</code> — <code>{ review_id, listing_id, user_id, rating, title, body, photos[], status, created_at }</code></li>
+    <li><strong>Logic:</strong> Validate input → check for duplicate (user_id + listing_id) → write to Review DB → publish event to message queue → invalidate review cache pages → return.</li>
+</ul>
+
+<h4>Message Queue (review-created topic)</h4>
+<p>When a review is created, the Review Service publishes a message to the <code>review-created</code> topic. The message payload is: <code>{ event: "review_created", review_id, listing_id, user_id, rating, timestamp }</code>. Four consumer groups subscribe to this topic (detailed in <a href="#mq">Message Queue Deep Dive</a>).</p>
+
+<h4>Rating Aggregation Worker</h4>
+<p>Consumes <code>review-created</code> (and <code>review-updated</code>, <code>review-deleted</code>) events. Recalculates the listing's <code>avg_rating</code> and <code>review_count</code> using an incremental formula (avoids re-reading all reviews). Updates the Listing DB and invalidates/updates the listing cache entry. This denormalized data on the listings table avoids expensive aggregation queries on every listing view.</p>
+
+<h4>Search Index Updater Worker</h4>
+<p>Consumes events and updates the corresponding document in the Search Index. For a review event, it updates the listing's <code>avg_rating</code> and <code>review_count</code> fields in the index so future search results reflect the latest data.</p>
+
+<h4>Content Moderation Worker</h4>
+<p>Consumes review events and runs automated checks: profanity detection, spam detection (repeated text, suspicious patterns), photo NSFW classification, and sentiment analysis. Reviews that fail moderation are flagged and hidden. Reviews that pass are set to <code>approved</code> status, triggering the rating aggregation.</p>
+
+<h4>Notification Worker</h4>
+<p>Consumes review events and sends notifications to the listing owner via push notification and/or email. Uses a notification service internally that manages notification preferences, templates, and delivery channels.</p>
+</div>
+
+<!-- ================================================================== -->
+<!-- 6. FLOW 4 — BOOKING FLOW -->
+<!-- ================================================================== -->
+<h2 id="flow4">6. Flow 4 — Booking Flow</h2>
+<p>This flow covers a user checking availability and booking a hotel room or restaurant table.</p>
+
+<div class="mermaid">
+graph LR
+    subgraph Client
+        A["📱 Client App"]
+    end
+    subgraph Infrastructure
+        B["⚖️ Load Balancer"]
+        C["🚪 API Gateway"]
+    end
+    subgraph Services
+        D["📅 Booking Service"]
+        E["💳 Payment Service"]
+    end
+    subgraph Async
+        F["📨 Message Queue<br/>(booking-confirmed topic)"]
+    end
+    subgraph Workers
+        G["🔔 Notification<br/>Worker"]
+    end
+    subgraph Data
+        H[("📅 Booking DB")]
+        I[("🗄️ Cache<br/>(Availability)")]
+    end
+
+    A -->|"1. HTTPS GET<br/>/api/v1/listings/:id/availability"| B
+    B --> C --> D
+    D -->|"Check rooms"| H
+    D -->|"Check cache"| I
+    D -->|"Return availability"| A
+
+    A -->|"2. HTTPS POST<br/>/api/v1/bookings"| B
+    D -->|"3. Reserve<br/>(optimistic lock)"| H
+    D -->|"4. Charge"| E
+    D -->|"5. Confirm<br/>booking"| H
+    D -->|"6. Publish event"| F
+    D -->|"7. Invalidate<br/>availability cache"| I
+    F --> G
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Successful Hotel Booking:</strong><br/>
+User views "Hotel Marais" and clicks "Check Availability" for Mar 10–14. The client sends <code>HTTPS GET /api/v1/listings/L67890/availability?check_in=2026-03-10&check_out=2026-03-14&guests=2</code>. The Booking Service checks the availability cache, and on a miss queries the Booking DB for overlapping bookings in that date range. It finds 3 of 50 rooms still available and returns <code>{ available: true, rooms: [{ room_type: "Deluxe", price_per_night: 250, total: 1000, currency: "EUR" }, ...] }</code>. The user selects the Deluxe room and clicks "Book Now." The client sends <code>HTTPS POST /api/v1/bookings</code> with body <code>{ listing_id: "L67890", room_type: "Deluxe", check_in: "2026-03-10", check_out: "2026-03-14", guests: 2, payment_token: "tok_xxx" }</code>. The Booking Service uses <strong>optimistic locking</strong> (version column) to reserve the room — it reads the current availability row, decrements the count, and writes back with the old version number. If another concurrent booking changed the version, the write fails and the service retries. Once the room is reserved, the Payment Service processes the charge. If payment succeeds, the booking status is set to <code>confirmed</code>. If payment fails, the reservation is rolled back. A <code>booking-confirmed</code> event is published to the message queue, and the Notification Worker sends a confirmation email and push notification to the user.
+</div>
+
+<div class="example">
+<strong>Example 2 — Race Condition (Last Room):</strong><br/>
+Two users simultaneously try to book the last Deluxe room. User A's Booking Service reads version=7, decrements availability to 0, and writes version=8 — succeeds. User B's Booking Service also read version=7, tries to decrement to 0, and writes with version=7 — fails (version mismatch). User B's service retries, reads the updated state (0 rooms), and returns <code>409 Conflict: Room no longer available</code>. The client shows a "Sorry, this room was just booked" message and suggests alternative room types.
+</div>
+
+<div class="example">
+<strong>Example 3 — Booking Cancellation:</strong><br/>
+User decides to cancel. The client sends <code>HTTPS PATCH /api/v1/bookings/B99999</code> with body <code>{ status: "cancelled" }</code>. The Booking Service updates the booking status, increments room availability, initiates a refund through the Payment Service (based on cancellation policy), publishes a <code>booking-cancelled</code> event, and invalidates the availability cache.
+</div>
+
+<h3>Component Deep Dive</h3>
+
+<div class="card">
+<h4>Booking Service</h4>
+<p><strong>Protocol:</strong> HTTP (internal REST).</p>
+<ul>
+    <li><code>GET /api/v1/listings/{listing_id}/availability</code>
+        <ul>
+            <li><strong>Input:</strong> <code>check_in</code>, <code>check_out</code>, <code>guests</code></li>
+            <li><strong>Output:</strong> <code>{ available: bool, rooms: [{ room_type, price_per_night, total, currency }] }</code></li>
+        </ul>
+    </li>
+    <li><code>POST /api/v1/bookings</code>
+        <ul>
+            <li><strong>Input:</strong> <code>{ listing_id, room_type, check_in, check_out, guests, payment_token }</code></li>
+            <li><strong>Output:</strong> <code>201 Created</code> — <code>{ booking_id, status: "confirmed", confirmation_code, ... }</code></li>
+        </ul>
+    </li>
+    <li><code>PATCH /api/v1/bookings/{booking_id}</code>
+        <ul>
+            <li><strong>Input:</strong> <code>{ status: "cancelled" }</code></li>
+            <li><strong>Output:</strong> <code>200 OK</code> — <code>{ booking_id, status: "cancelled", refund_amount }</code></li>
+        </ul>
+    </li>
+</ul>
+<p>Uses <strong>optimistic locking</strong> with a version column on availability rows to prevent double-booking without distributed locks. All booking operations are wrapped in <strong>ACID transactions</strong> in the SQL Booking DB.</p>
+
+<h4>Payment Service</h4>
+<p><strong>Protocol:</strong> HTTP (internal REST). Interfaces with third-party payment processors. Handles charge, refund, and payment status callbacks. Stores payment records with booking references. Uses idempotency keys to prevent duplicate charges (e.g., if a retry occurs after a network timeout, the same idempotency key ensures the charge is only processed once).</p>
+
+<h4>Cache (Availability)</h4>
+<p>An in-memory cache that stores room availability for popular date ranges per listing. This avoids hitting the Booking DB for every availability check. Invalidated whenever a booking is confirmed or cancelled. Short TTL (2–5 minutes) because availability changes frequently.</p>
+</div>
+
+<!-- ================================================================== -->
+<!-- 7. COMBINED OVERALL FLOW DIAGRAM -->
+<!-- ================================================================== -->
+<h2 id="combined">7. Combined Overall Flow Diagram</h2>
+<p>This diagram integrates all four flows into a single architecture view showing every component and their connections.</p>
+
+<div class="mermaid">
+graph TB
+    subgraph Clients
+        WEB["🌐 Web App<br/>(SSR)"]
+        MOB["📱 Mobile App"]
+    end
+
+    subgraph Edge
+        CDN["🌐 CDN<br/>(Static Assets + Photos)"]
+        LB["⚖️ Load Balancer"]
+    end
+
+    subgraph Gateway
+        AG["🚪 API Gateway<br/>(Auth, Rate Limit, Routing)"]
+    end
+
+    subgraph Core Services
+        SS["🔍 Search<br/>Service"]
+        LS["🏨 Listing<br/>Service"]
+        RS["⭐ Review<br/>Service"]
+        BS["📅 Booking<br/>Service"]
+        PS["💳 Payment<br/>Service"]
+        MS["📸 Media<br/>Service"]
+        US["👤 User<br/>Service"]
+        NS["🔔 Notification<br/>Service"]
+    end
+
+    subgraph Async Layer
+        MQ["📨 Message Queue<br/>(Topics: review-created,<br/>booking-confirmed,<br/>listing-updated,<br/>media-uploaded)"]
+    end
+
+    subgraph Workers
+        RAW["📊 Rating Aggregation<br/>Worker"]
+        SIU["🔎 Search Index<br/>Updater"]
+        CMW["🛡️ Content Moderation<br/>Worker"]
+        NW["🔔 Notification<br/>Worker"]
+        MPW["🖼️ Media Processing<br/>Worker"]
+    end
+
+    subgraph Data Stores
+        CACHE[("🗄️ In-Memory Cache")]
+        SI[("🔎 Search Index<br/>(Full-text + Geo)")]
+        LDB[("📦 Listing DB<br/>(SQL)")]
+        RDB[("📝 Review DB<br/>(NoSQL Document)")]
+        BDB[("📅 Booking DB<br/>(SQL)")]
+        UDB[("👤 User DB<br/>(SQL)")]
+        OBJ[("📂 Object Storage")]
+    end
+
+    WEB & MOB --> CDN
+    WEB & MOB --> LB
+    LB --> AG
+    AG --> SS & LS & RS & BS & MS & US
+
+    SS --> CACHE
+    SS --> SI
+    LS --> CACHE
+    LS --> LDB
+    RS --> CACHE
+    RS --> RDB
+    BS --> BDB
+    BS --> CACHE
+    BS --> PS
+    US --> UDB
+    MS --> OBJ
+
+    RS -->|"Publish events"| MQ
+    BS -->|"Publish events"| MQ
+    LS -->|"Publish events"| MQ
+    MS -->|"Publish events"| MQ
+
+    MQ --> RAW & SIU & CMW & NW & MPW
+
+    RAW --> LDB
+    RAW --> CACHE
+    SIU --> SI
+    NW --> NS
+    MPW --> OBJ
+    CDN -.->|"Origin pull"| OBJ
+</div>
+
+<h3>Examples (End-to-End User Journey)</h3>
+
+<div class="example">
+<strong>Example 1 — Complete Trip Planning Flow:</strong><br/>
+<strong>Step 1 (Search):</strong> Sarah opens the TripAdvisor web app and types "Restaurants in Rome." The request flows from her browser → CDN (serves the static JS/CSS) → Load Balancer → API Gateway (validates her JWT) → Search Service → checks in-memory cache (miss) → queries Search Index with geo-filter for Rome + type=restaurant → enriches top 20 results from Listing DB/cache → returns paginated results with thumbnails (served via CDN).<br/><br/>
+<strong>Step 2 (Listing Detail):</strong> Sarah clicks on "Trattoria Da Luigi." Two parallel requests go through LB → AG: one to Listing Service (fetches full listing details from cache) and one to Review Service (fetches page 1 reviews from Review DB). Photos load from the CDN. She sees 4.6 stars, 2,100 reviews, and photos of pasta dishes.<br/><br/>
+<strong>Step 3 (Booking):</strong> Sarah clicks "Make a Reservation." The client calls Booking Service to check availability for tonight at 8 PM, 2 guests. Availability is confirmed. She submits the reservation — Booking Service reserves the slot via optimistic locking, no payment needed for restaurant reservations — and publishes a <code>booking-confirmed</code> event. The Notification Worker sends her a confirmation email with the restaurant address and reservation time.<br/><br/>
+<strong>Step 4 (Review):</strong> After dinner, Sarah writes a 5-star review with 2 food photos. She uploads the photos via pre-signed URLs to Object Storage, then submits the review via POST to Review Service. The review is written to the Review DB, and a <code>review-created</code> event is published. The Rating Aggregation Worker updates Da Luigi's avg_rating from 4.600 to 4.6002, the Search Index Updater reflects this, the Content Moderation Worker approves the review, and the Notification Worker notifies the restaurant owner.
+</div>
+
+<div class="example">
+<strong>Example 2 — Business Owner Interaction:</strong><br/>
+<strong>Step 1:</strong> Marco, the owner of "Trattoria Da Luigi," logs in and navigates to his business dashboard. His client calls <code>GET /api/v1/listings/L55555</code> and <code>GET /api/v1/listings/L55555/reviews?sort=recent&page=1</code> to see his listing and latest reviews.<br/><br/>
+<strong>Step 2:</strong> He sees Sarah's new 5-star review and replies via <code>POST /api/v1/reviews/R11111/responses</code> with body <code>{ body: "Grazie mille, Sarah! We're glad you loved the carbonara." }</code>. This writes the response to the Review DB and publishes a <code>review-response-created</code> event. The Notification Worker sends Sarah a push notification: "The owner of Trattoria Da Luigi responded to your review!"<br/><br/>
+<strong>Step 3:</strong> Marco updates his listing hours via <code>PUT /api/v1/listings/L55555</code>. The Listing Service updates the Listing DB, invalidates the listing cache entry, and publishes a <code>listing-updated</code> event. The Search Index Updater refreshes the search index document.
+</div>
+
+
+<!-- ================================================================== -->
+<!-- 8. DATABASE SCHEMA -->
+<!-- ================================================================== -->
+<h2 id="schema">8. Database Schema</h2>
+
+<!-- =================== SQL TABLES =================== -->
+<h3>SQL Tables</h3>
+
+<h4>8.1 — <code>users</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><strong>user_id</strong></td><td>UUID</td><td>PRIMARY KEY</td><td>Unique user identifier.</td></tr>
+    <tr><td>username</td><td>VARCHAR(50)</td><td>UNIQUE, NOT NULL</td><td>Display name.</td></tr>
+    <tr><td>email</td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td><td>Login email.</td></tr>
+    <tr><td>password_hash</td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Bcrypt-hashed password.</td></tr>
+    <tr><td>avatar_url</td><td>TEXT</td><td>NULLABLE</td><td>CDN URL for profile photo.</td></tr>
+    <tr><td>is_business_owner</td><td>BOOLEAN</td><td>DEFAULT false</td><td>Whether user owns business listings.</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Account creation time.</td></tr>
+    <tr><td>updated_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last update time.</td></tr>
+</table>
+<p><strong>Why SQL:</strong> User data is highly relational (users connect to reviews, bookings, listings). ACID transactions are needed for account creation and updates. Schema is stable and well-defined.</p>
+<p><strong>Read:</strong> On user login (authentication), on profile view, when displaying usernames on reviews.</p>
+<p><strong>Write:</strong> On account registration, profile updates.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>Hash index on <code>email</code></strong> — O(1) lookup for login authentication. Hash index is ideal because email lookups are always exact-match equality checks, never range queries.</li>
+    <li><strong>Hash index on <code>username</code></strong> — O(1) lookup for profile pages. Same rationale as email.</li>
+</ul>
+<p><strong>Sharding:</strong> Shard by <code>user_id</code> (hash-based partitioning). User data is accessed independently per user, so hash-based sharding distributes load evenly with no hot spots. This strategy ensures that reads/writes for a single user always hit the same shard.</p>
+
+<hr/>
+
+<h4>8.2 — <code>listings</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><strong>listing_id</strong></td><td>UUID</td><td>PRIMARY KEY</td><td>Unique listing identifier.</td></tr>
+    <tr><td>owner_id</td><td>UUID</td><td>FOREIGN KEY → users(user_id)</td><td>Business owner who manages this listing.</td></tr>
+    <tr><td>listing_type</td><td>ENUM('hotel','restaurant','attraction')</td><td>NOT NULL</td><td>Category of listing.</td></tr>
+    <tr><td>name</td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Listing name.</td></tr>
+    <tr><td>description</td><td>TEXT</td><td>NULLABLE</td><td>Full description.</td></tr>
+    <tr><td>address</td><td>VARCHAR(500)</td><td>NOT NULL</td><td>Street address.</td></tr>
+    <tr><td>city</td><td>VARCHAR(100)</td><td>NOT NULL</td><td>City name (normalized).</td></tr>
+    <tr><td>country</td><td>VARCHAR(100)</td><td>NOT NULL</td><td>Country name (normalized).</td></tr>
+    <tr><td>latitude</td><td>DECIMAL(10,7)</td><td>NOT NULL</td><td>GPS latitude.</td></tr>
+    <tr><td>longitude</td><td>DECIMAL(10,7)</td><td>NOT NULL</td><td>GPS longitude.</td></tr>
+    <tr><td>avg_rating ⚠️</td><td>DECIMAL(3,2)</td><td>DEFAULT 0.00</td><td><strong>DENORMALIZED</strong> — Pre-computed average rating.</td></tr>
+    <tr><td>review_count ⚠️</td><td>INTEGER</td><td>DEFAULT 0</td><td><strong>DENORMALIZED</strong> — Pre-computed review count.</td></tr>
+    <tr><td>price_range</td><td>ENUM('$','$$','$$$','$$$$')</td><td>NULLABLE</td><td>Price tier.</td></tr>
+    <tr><td>phone</td><td>VARCHAR(20)</td><td>NULLABLE</td><td>Contact phone number.</td></tr>
+    <tr><td>website</td><td>TEXT</td><td>NULLABLE</td><td>Official website URL.</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Listing creation time.</td></tr>
+    <tr><td>updated_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last update time.</td></tr>
+</table>
+
+<p><strong>Why SQL:</strong> Listing data has a well-defined, stable schema with relational connections (owner FK to users, amenities join table). ACID guarantees are valuable for listing updates. Complex queries (joins with amenities, filtering) work well with SQL's query planner.</p>
+<p><strong>Read:</strong> On listing detail view, on search result enrichment, on booking availability check.</p>
+<p><strong>Write:</strong> On listing creation by business owner, on listing update, on rating aggregation update (async, by worker).</p>
+
+<div class="warn">
+<strong>Denormalization Explanation:</strong> <code>avg_rating</code> and <code>review_count</code> are denormalized from the reviews collection onto the listings table. Without denormalization, every listing detail view or search result would require a JOIN + aggregation across potentially millions of reviews — an O(n) operation that would be unacceptable at scale. Instead, these values are pre-computed and updated asynchronously by the Rating Aggregation Worker whenever a review is created, updated, or deleted. <strong>Tradeoff:</strong> The rating display may be a few seconds stale (eventual consistency), but read performance improves from O(n) to O(1). Given that TripAdvisor is massively read-heavy (100:1 read:write ratio for ratings), this tradeoff is well worth it.
+</div>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>B-tree composite index on <code>(city, listing_type)</code></strong> — Supports the most common search pattern: "Hotels in Paris." B-tree enables efficient range/equality queries and the composite key avoids scanning all listings when both city and type are specified. City comes first because it's the higher-cardinality filter.</li>
+    <li><strong>R-tree (spatial) index on <code>(latitude, longitude)</code></strong> — Supports geo-radius queries ("restaurants near me"). R-tree indexes are specifically designed for multi-dimensional spatial data and enable efficient bounding-box and nearest-neighbor queries.</li>
+    <li><strong>B-tree index on <code>owner_id</code></strong> — Supports business dashboard queries ("show me all my listings"). B-tree allows efficient equality lookup on the FK.</li>
+    <li><strong>B-tree index on <code>avg_rating</code></strong> — Supports sorting search results by rating. B-tree maintains sorted order for efficient ORDER BY queries.</li>
+</ul>
+
+<p><strong>Sharding:</strong> Shard by <code>city</code> (range-based / directory-based partitioning by geographic region). Most queries filter by location first, so co-locating all listings in the same city on one shard keeps queries single-shard. Potential hot spots for mega-cities (Paris, New York, Tokyo) can be mitigated by further sub-sharding popular cities by listing_type or by distributing across multiple shards for the same city. An alternative approach is geohash-based sharding, which naturally distributes nearby listings to the same shard.</p>
+
+<hr/>
+
+<h4>8.3 — <code>amenities</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><strong>amenity_id</strong></td><td>INTEGER</td><td>PRIMARY KEY, AUTO_INCREMENT</td><td>Unique amenity ID.</td></tr>
+    <tr><td>name</td><td>VARCHAR(100)</td><td>UNIQUE, NOT NULL</td><td>e.g., "Free WiFi", "Pool", "Parking".</td></tr>
+    <tr><td>category</td><td>VARCHAR(50)</td><td>NOT NULL</td><td>e.g., "Connectivity", "Recreation".</td></tr>
+</table>
+
+<h4>8.4 — <code>listing_amenities</code> (Join Table) <span class="badge badge-sql">SQL</span></h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><strong>listing_id</strong></td><td>UUID</td><td>PK (composite), FK → listings(listing_id)</td><td>Listing reference.</td></tr>
+    <tr><td><strong>amenity_id</strong></td><td>INTEGER</td><td>PK (composite), FK → amenities(amenity_id)</td><td>Amenity reference.</td></tr>
+</table>
+<p><strong>Why SQL &amp; normalized:</strong> Amenities are a many-to-many relationship (many listings have "Free WiFi," and each listing can have many amenities). Normalizing into a join table avoids data duplication and ensures referential integrity. The join table is small (just two integer/UUID columns) and frequently JOINed — SQL excels at this.</p>
+<p><strong>Read:</strong> On listing detail view (JOIN with amenities to show amenity list).</p>
+<p><strong>Write:</strong> On listing creation/update when amenities are added or removed.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li>Composite primary key <code>(listing_id, amenity_id)</code> serves as a B-tree index, supporting fast lookups both by listing (get all amenities for a listing) and by amenity (get all listings with a specific amenity).</li>
+    <li><strong>B-tree index on <code>amenity_id</code></strong> — reverse lookup for "all listings with Pool" (used for search filtering).</li>
+</ul>
+
+<hr/>
+
+<h4>8.5 — <code>bookings</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><strong>booking_id</strong></td><td>UUID</td><td>PRIMARY KEY</td><td>Unique booking identifier.</td></tr>
+    <tr><td>user_id</td><td>UUID</td><td>FOREIGN KEY → users(user_id), NOT NULL</td><td>Who made the booking.</td></tr>
+    <tr><td>listing_id</td><td>UUID</td><td>FOREIGN KEY → listings(listing_id), NOT NULL</td><td>Where the booking is for.</td></tr>
+    <tr><td>room_type</td><td>VARCHAR(100)</td><td>NULLABLE</td><td>For hotels: specific room type booked.</td></tr>
+    <tr><td>check_in</td><td>DATE</td><td>NOT NULL</td><td>Arrival date / reservation date.</td></tr>
+    <tr><td>check_out</td><td>DATE</td><td>NULLABLE</td><td>Departure date (NULL for restaurants).</td></tr>
+    <tr><td>num_guests</td><td>INTEGER</td><td>NOT NULL</td><td>Number of guests.</td></tr>
+    <tr><td>total_price</td><td>DECIMAL(10,2)</td><td>NULLABLE</td><td>Total amount charged.</td></tr>
+    <tr><td>currency</td><td>VARCHAR(3)</td><td>DEFAULT 'USD'</td><td>ISO 4217 currency code.</td></tr>
+    <tr><td>status</td><td>ENUM('pending','confirmed','cancelled','completed')</td><td>NOT NULL</td><td>Booking lifecycle state.</td></tr>
+    <tr><td>confirmation_code</td><td>VARCHAR(20)</td><td>UNIQUE</td><td>Human-readable confirmation code.</td></tr>
+    <tr><td>payment_id</td><td>VARCHAR(255)</td><td>NULLABLE</td><td>Reference to payment processor transaction.</td></tr>
+    <tr><td>version</td><td>INTEGER</td><td>DEFAULT 1</td><td>Optimistic locking version for concurrency control.</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Booking creation time.</td></tr>
+    <tr><td>updated_at</td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last update time.</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Bookings <em>require</em> ACID transactions. A booking must atomically reserve availability, process payment, and confirm the booking. SQL provides the transactional guarantees needed to prevent double-booking and ensure data integrity. Financial data demands strong consistency.</p>
+<p><strong>Read:</strong> On availability check (query overlapping date ranges), on user's "My Bookings" page, on booking detail view.</p>
+<p><strong>Write:</strong> On booking creation, on booking cancellation, on booking status update.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>B-tree composite index on <code>(listing_id, check_in, check_out)</code></strong> — This is the most critical index. Availability checks need to find all bookings for a given listing that overlap a date range: <code>WHERE listing_id = ? AND check_in &lt; ? AND check_out &gt; ?</code>. The composite B-tree on these three columns makes this a highly efficient range scan.</li>
+    <li><strong>B-tree index on <code>user_id</code></strong> — Supports "My Bookings" queries. B-tree allows efficient equality lookup.</li>
+    <li><strong>Hash index on <code>confirmation_code</code></strong> — O(1) lookup when users provide their confirmation code. Always exact-match.</li>
+</ul>
+<p><strong>Sharding:</strong> Shard by <code>listing_id</code> (hash-based). Availability checks and booking creation are always scoped to a single listing, so all bookings for one listing live on the same shard, enabling single-shard transactions. The "My Bookings" query (by user_id) becomes a scatter-gather across shards, but this is infrequent and tolerable. Alternatively, maintain a secondary lookup table (user_id → booking_ids) to avoid the scatter.</p>
+
+<hr/>
+
+<h4>8.6 — <code>room_inventory</code> <span class="badge badge-sql">SQL</span></h4>
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><strong>listing_id</strong></td><td>UUID</td><td>PK (composite), FK → listings(listing_id)</td><td>Hotel listing reference.</td></tr>
+    <tr><td><strong>room_type</strong></td><td>VARCHAR(100)</td><td>PK (composite)</td><td>e.g., "Standard", "Deluxe", "Suite".</td></tr>
+    <tr><td><strong>date</strong></td><td>DATE</td><td>PK (composite)</td><td>Specific date.</td></tr>
+    <tr><td>total_rooms</td><td>INTEGER</td><td>NOT NULL</td><td>Total inventory for this room type.</td></tr>
+    <tr><td>booked_rooms</td><td>INTEGER</td><td>DEFAULT 0</td><td>Number currently booked.</td></tr>
+    <tr><td>price</td><td>DECIMAL(10,2)</td><td>NOT NULL</td><td>Price per night for this date.</td></tr>
+    <tr><td>version</td><td>INTEGER</td><td>DEFAULT 1</td><td>Optimistic locking.</td></tr>
+</table>
+<p><strong>Why SQL:</strong> Room inventory requires ACID transactions to prevent overbooking. The version column enables optimistic concurrency control.</p>
+<p><strong>Read:</strong> On availability check.</p>
+<p><strong>Write:</strong> On booking confirmation (increment booked_rooms), on cancellation (decrement booked_rooms), on hotel owner updating inventory/pricing.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li>Composite primary key <code>(listing_id, room_type, date)</code> serves as a B-tree index — availability lookups always specify all three dimensions.</li>
+</ul>
+
+<hr/>
+
+<!-- =================== NoSQL TABLES =================== -->
+<h3>NoSQL Tables</h3>
+
+<h4>8.7 — <code>reviews</code> <span class="badge badge-nosql">NoSQL — Document Store</span></h4>
+<table>
+    <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td><strong>review_id</strong></td><td>UUID</td><td>Sort Key</td><td>Unique review identifier.</td></tr>
+    <tr><td><strong>listing_id</strong></td><td>UUID</td><td>Partition Key</td><td>Listing this review belongs to.</td></tr>
+    <tr><td>user_id</td><td>UUID</td><td></td><td>Author of the review.</td></tr>
+    <tr><td>username</td><td>String</td><td></td><td><strong>DENORMALIZED</strong> — Author's display name (avoids JOIN with users table).</td></tr>
+    <tr><td>user_avatar_url</td><td>String</td><td></td><td><strong>DENORMALIZED</strong> — Author's avatar URL.</td></tr>
+    <tr><td>rating</td><td>Integer (1–5)</td><td></td><td>Star rating.</td></tr>
+    <tr><td>title</td><td>String</td><td></td><td>Review headline.</td></tr>
+    <tr><td>body</td><td>String</td><td></td><td>Review text (up to 10,000 chars).</td></tr>
+    <tr><td>photos</td><td>Array of Objects</td><td></td><td>[ { media_id, url, thumbnail_url } ]</td></tr>
+    <tr><td>helpful_count</td><td>Integer</td><td></td><td>Number of "helpful" votes.</td></tr>
+    <tr><td>travel_type</td><td>String</td><td></td><td>"business", "family", "solo", "couple", "friends".</td></tr>
+    <tr><td>visit_date</td><td>String (YYYY-MM)</td><td></td><td>When the user visited.</td></tr>
+    <tr><td>status</td><td>String</td><td></td><td>"pending_moderation", "approved", "flagged", "removed".</td></tr>
+    <tr><td>owner_response</td><td>Object</td><td></td><td>{ body, responded_at } — Optional owner reply.</td></tr>
+    <tr><td>created_at</td><td>Timestamp</td><td></td><td>When review was submitted.</td></tr>
+    <tr><td>updated_at</td><td>Timestamp</td><td></td><td>Last modification time.</td></tr>
+</table>
+
+<p><strong>Why NoSQL (Document Store):</strong></p>
+<ul>
+    <li><strong>Flexible schema:</strong> Reviews can have optional fields (photos array, owner_response, varying travel_type values). Document stores handle this naturally without schema migrations.</li>
+    <li><strong>Write volume:</strong> A platform with 500M+ listings and 1B+ reviews generates enormous write throughput. NoSQL document stores offer better horizontal write scalability than SQL.</li>
+    <li><strong>Access pattern:</strong> Reviews are almost always accessed by <code>listing_id</code> (partition key), making the partition-based access model of NoSQL ideal. We never need complex JOINs on reviews — they're always fetched for a specific listing.</li>
+    <li><strong>Denormalization is acceptable:</strong> We denormalize <code>username</code> and <code>user_avatar_url</code> onto each review document. This avoids a cross-database JOIN (Review DB is NoSQL, User DB is SQL) on every review list fetch. The tradeoff: if a user changes their username, we need to asynchronously update all their reviews — but this is extremely rare and worth the read performance gain (reviews are read 1000× more often than usernames change).</li>
+</ul>
+<p><strong>Read:</strong> On listing detail page (paginated reviews by listing_id, sorted by created_at or helpful_count).</p>
+<p><strong>Write:</strong> On review submission, on owner response, on helpful vote, on moderation status change.</p>
+<p><strong>Indexes:</strong></p>
+<ul>
+    <li><strong>Partition key: <code>listing_id</code></strong> — All reviews for a listing are co-located in the same partition for efficient retrieval.</li>
+    <li><strong>Sort key: <code>review_id</code></strong> (with <code>created_at</code> encoded via ULID or similar) — Enables range queries to paginate reviews chronologically.</li>
+    <li><strong>Local secondary index on <code>helpful_count</code></strong> — Supports "Sort by Most Helpful" without a full table scan. Local secondary index keeps data co-located within the partition.</li>
+    <li><strong>Global secondary index on <code>user_id</code></strong> — Supports "My Reviews" page (all reviews by a specific user across all listings). This is a cross-partition query, hence a global secondary index.</li>
+    <li><strong>Unique constraint on <code>(listing_id, user_id)</code></strong> — Prevents duplicate reviews. Enforced at the application level or via a conditional write.</li>
+</ul>
+<p><strong>Sharding:</strong> Inherently sharded by <code>listing_id</code> (the partition key). The NoSQL document store automatically distributes partitions across nodes. Hot partitions (viral listings with millions of reviews) can be mitigated with partition splitting or by introducing a synthetic shard suffix (e.g., <code>listing_id#shard_0</code>).</p>
+
+<hr/>
+
+<h4>8.8 — <code>notifications</code> <span class="badge badge-nosql">NoSQL — Document Store</span></h4>
+<table>
+    <tr><th>Field</th><th>Type</th><th>Key</th><th>Description</th></tr>
+    <tr><td><strong>notification_id</strong></td><td>UUID</td><td>Sort Key</td><td>Unique notification identifier.</td></tr>
+    <tr><td><strong>user_id</strong></td><td>UUID</td><td>Partition Key</td><td>Recipient user.</td></tr>
+    <tr><td>type</td><td>String</td><td></td><td>"booking_confirmed", "review_reply", "price_alert".</td></tr>
+    <tr><td>title</td><td>String</td><td></td><td>Notification headline.</td></tr>
+    <tr><td>body</td><td>String</td><td></td><td>Notification body.</td></tr>
+    <tr><td>metadata</td><td>Object</td><td></td><td>{ listing_id?, booking_id?, review_id? }</td></tr>
+    <tr><td>is_read</td><td>Boolean</td><td></td><td>Whether the user has seen it.</td></tr>
+    <tr><td>created_at</td><td>Timestamp</td><td></td><td>When notification was created.</td></tr>
+</table>
+<p><strong>Why NoSQL:</strong> Notifications are write-heavy (every event generates notifications), always queried by <code>user_id</code>, and have a flexible schema (different notification types carry different metadata). Perfect fit for a partition-based document store.</p>
+<p><strong>Read:</strong> On user opening the notification feed (<code>GET /api/v1/notifications?page=1</code>).</p>
+<p><strong>Write:</strong> By the Notification Worker when events are consumed from the message queue.</p>
+
+<hr/>
+
+<!-- =================== SEARCH INDEX =================== -->
+<h3>Search Index</h3>
+
+<h4>8.9 — Search Index Documents <span class="badge badge-search">Full-Text + Geo Search Engine</span></h4>
+<table>
+    <tr><th>Field</th><th>Type</th><th>Indexed</th><th>Description</th></tr>
+    <tr><td>listing_id</td><td>Keyword</td><td>Yes (hash)</td><td>Unique document ID.</td></tr>
+    <tr><td>name</td><td>Text</td><td>Yes (inverted index, analyzed)</td><td>Full-text searchable listing name.</td></tr>
+    <tr><td>description</td><td>Text</td><td>Yes (inverted index, analyzed)</td><td>Full-text searchable description.</td></tr>
+    <tr><td>listing_type</td><td>Keyword</td><td>Yes (inverted index)</td><td>Facet filter.</td></tr>
+    <tr><td>city</td><td>Keyword</td><td>Yes (inverted index)</td><td>Facet filter.</td></tr>
+    <tr><td>country</td><td>Keyword</td><td>Yes (inverted index)</td><td>Facet filter.</td></tr>
+    <tr><td>location</td><td>Geo-point</td><td>Yes (R-tree / geohash)</td><td>For geo-radius and bounding-box queries.</td></tr>
+    <tr><td>avg_rating</td><td>Float</td><td>Yes (B-tree)</td><td>For filtering (≥ 4 stars) and sorting.</td></tr>
+    <tr><td>review_count</td><td>Integer</td><td>Yes (B-tree)</td><td>For relevance scoring.</td></tr>
+    <tr><td>price_range</td><td>Keyword</td><td>Yes (inverted index)</td><td>Facet filter ($, $$, $$$, $$$$).</td></tr>
+    <tr><td>amenities</td><td>Keyword[]</td><td>Yes (inverted index)</td><td>Array of amenity names for faceted filtering.</td></tr>
+    <tr><td>thumbnail_url</td><td>Keyword</td><td>No</td><td>Stored but not indexed (for result display).</td></tr>
+</table>
+<p><strong>Why a dedicated Search Index (not just SQL):</strong> Full-text search with relevance scoring, geo-spatial queries, and faceted filtering across 500M+ documents cannot be efficiently served by a standard SQL database. A purpose-built full-text search engine with inverted indexes, BM25 scoring, and R-tree geo indexes provides sub-200ms search latency at scale.</p>
+<p><strong>Populated:</strong> Asynchronously from the Listing DB via the Message Queue. The Search Index Updater Worker listens for <code>listing-created</code>, <code>listing-updated</code>, and <code>review-created</code> (to update avg_rating) events and upserts the corresponding document in the index.</p>
+
+<!-- ================================================================== -->
+<!-- 9. CDN & CACHING DEEP DIVE -->
+<!-- ================================================================== -->
+<h2 id="cdn-cache">9. CDN &amp; Caching Deep Dive</h2>
+
+<h3>CDN</h3>
+<div class="card">
+<p><strong>Why a CDN is critical for TripAdvisor:</strong></p>
+<ul>
+    <li><strong>Image-heavy platform:</strong> Every listing has 10–100+ photos. Every review may have photos. Serving these from a single origin would create enormous bandwidth costs and high latency for users far from the origin.</li>
+    <li><strong>Global audience:</strong> A user in Japan viewing a hotel in Brazil needs photos served from a nearby edge, not from a data center in Virginia.</li>
+    <li><strong>Static assets:</strong> JS bundles, CSS, fonts, and the web app shell are also served from CDN.</li>
+</ul>
+<p><strong>What the CDN caches:</strong></p>
+<ul>
+    <li>Listing photos and thumbnails</li>
+    <li>Review photos</li>
+    <li>User avatars</li>
+    <li>Web app static assets (JS, CSS, fonts, images)</li>
+</ul>
+<p><strong>Caching Strategy:</strong> Pull-based (origin pull). When a user requests a photo, the CDN edge checks its local cache. On a miss, it pulls from Object Storage (the origin), caches it, and serves it. Subsequent requests for the same photo from nearby users hit the edge cache.</p>
+<p><strong>Expiration Policy:</strong> Long TTL (30 days) for photos — photos rarely change. When a photo is updated or deleted, the CDN cache is purged via an invalidation API call from the Media Service.</p>
+<p><strong>Eviction Policy:</strong> LRU (Least Recently Used). Rarely viewed photos of obscure listings are evicted first, keeping popular listing photos in cache.</p>
+</div>
+
+<h3>In-Memory Cache</h3>
+<div class="card">
+<p><strong>Why an in-memory cache is critical:</strong> TripAdvisor is massively read-heavy. Popular listings (e.g., top hotels in Paris) are viewed thousands of times per second. Without caching, every view would hit the database, creating unsustainable load.</p>
+
+<h4>Cache 1: Listing Detail Cache</h4>
+<table>
+    <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+    <tr><td>Key</td><td><code>listing:{listing_id}</code></td><td>One cache entry per listing.</td></tr>
+    <tr><td>Value</td><td>Serialized listing JSON (all detail fields)</td><td>Full listing data for cache-hit serving.</td></tr>
+    <tr><td>Caching Strategy</td><td><strong>Cache-Aside (Lazy Loading)</strong></td><td>On read: check cache → miss → read DB → populate cache → return. This ensures the cache is only populated with actually-requested data, avoiding wasting memory on listings nobody visits.</td></tr>
+    <tr><td>TTL (Expiration)</td><td>1 hour</td><td>Listing data changes infrequently (owner updates). 1-hour TTL provides a safety net even if cache invalidation fails.</td></tr>
+    <tr><td>Invalidation</td><td>Explicit invalidation on listing update or rating aggregation update</td><td>When a listing is updated or when avg_rating changes, the cache entry is deleted so the next read fetches fresh data.</td></tr>
+    <tr><td>Eviction Policy</td><td><strong>LRU (Least Recently Used)</strong></td><td>Popular listings stay cached; unpopular ones are evicted when memory is full. This aligns with the Pareto principle — a small percentage of listings account for most views.</td></tr>
+    <tr><td>Populated by</td><td>Listing Service (on cache miss) and Rating Aggregation Worker (on rating update)</td><td>Two write paths: lazy load on read, and proactive update on rating change.</td></tr>
+</table>
+
+<h4>Cache 2: Search Results Cache</h4>
+<table>
+    <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+    <tr><td>Key</td><td><code>search:{sha256(normalized_query_params)}</code></td><td>Hash of the full query (location, type, dates, filters, sort, page) ensures unique keys for distinct searches.</td></tr>
+    <tr><td>Value</td><td>Serialized search result JSON (listing summaries + pagination)</td><td>Complete response ready to return without any further processing.</td></tr>
+    <tr><td>Caching Strategy</td><td><strong>Cache-Aside (Lazy Loading)</strong></td><td>Only popular/repeated searches are cached. Obscure one-off searches don't waste memory.</td></tr>
+    <tr><td>TTL (Expiration)</td><td>10 minutes</td><td>Search results must stay reasonably fresh — new listings, price changes, and rating updates should appear within minutes. 10 min TTL balances freshness with performance.</td></tr>
+    <tr><td>Eviction Policy</td><td><strong>LRU (Least Recently Used)</strong></td><td>Popular search queries (e.g., "Hotels in Paris") stay cached; niche queries are evicted first.</td></tr>
+    <tr><td>Populated by</td><td>Search Service on cache miss</td><td>Single write path: after executing a search and getting results, populate the cache.</td></tr>
+</table>
+
+<h4>Cache 3: Review Pages Cache</h4>
+<table>
+    <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+    <tr><td>Key</td><td><code>reviews:{listing_id}:{sort}:{page}</code></td><td>Unique per listing, sort order, and page number.</td></tr>
+    <tr><td>Value</td><td>Serialized review page JSON</td><td>Pre-built review page.</td></tr>
+    <tr><td>Caching Strategy</td><td><strong>Cache-Aside (Lazy Loading)</strong></td><td>Only cache review pages that are actually requested. Page 1 of popular listings will naturally stay hot.</td></tr>
+    <tr><td>TTL (Expiration)</td><td>15 minutes</td><td>Reviews change less frequently than search results but more than listing details.</td></tr>
+    <tr><td>Invalidation</td><td>Explicit invalidation when a new review is created for this listing</td><td>The Review Service invalidates all cached review pages for the listing (all pages, all sorts) on review creation.</td></tr>
+    <tr><td>Eviction Policy</td><td><strong>LRU</strong></td><td>Page 1 of popular listings stays in cache; page 47 of obscure listings gets evicted.</td></tr>
+</table>
+
+<h4>Cache 4: Availability Cache</h4>
+<table>
+    <tr><th>Property</th><th>Value</th><th>Rationale</th></tr>
+    <tr><td>Key</td><td><code>avail:{listing_id}:{check_in}:{check_out}</code></td><td>Specific to listing and date range.</td></tr>
+    <tr><td>Value</td><td>Serialized availability JSON (rooms, prices)</td><td>Avoid repeated DB hits for the same availability query.</td></tr>
+    <tr><td>Caching Strategy</td><td><strong>Cache-Aside</strong></td><td>Only cache queries that are made. Popular hotels on popular dates will be cached.</td></tr>
+    <tr><td>TTL (Expiration)</td><td>2 minutes</td><td>Very short TTL because availability changes rapidly (bookings happen constantly for popular hotels). Stale availability data leads to frustrating user experiences.</td></tr>
+    <tr><td>Invalidation</td><td>Explicit invalidation on booking confirmation or cancellation</td><td>When a booking changes availability, affected cache entries are purged immediately.</td></tr>
+    <tr><td>Eviction Policy</td><td><strong>LRU</strong></td><td>Popular hotel+date combos stay cached.</td></tr>
+</table>
+
+<div class="warn">
+<strong>Why Cache-Aside everywhere (not Write-Through)?</strong> Cache-Aside was chosen as the primary strategy because TripAdvisor's data has a long-tail distribution — millions of listings but only thousands are frequently accessed. Write-Through would populate the cache on every write (including writes for rarely-viewed listings), wasting memory. Cache-Aside ensures only hot data lives in cache. The one exception is the Rating Aggregation Worker, which proactively updates the listing cache on rating changes — this is a targeted write-through for a specific high-value field (avg_rating) that would otherwise cause every listing detail cache miss to see stale ratings until the TTL expires.
+</div>
+
+</div>
+
+<!-- ================================================================== -->
+<!-- 10. MESSAGE QUEUE DEEP DIVE -->
+<!-- ================================================================== -->
+<h2 id="mq">10. Message Queue Deep Dive</h2>
+
+<div class="card">
+<h3>Why a Message Queue?</h3>
+<p>Several operations in TripAdvisor should NOT be performed synchronously in the request path:</p>
+<ul>
+    <li><strong>Rating recalculation</strong> — Updating avg_rating and review_count in the Listing DB, cache, and search index after every review would add ~100–200ms to every review submission and create a tight coupling between services.</li>
+    <li><strong>Search index updates</strong> — Updating the search index synchronously would make listing/review writes dependent on the search engine's availability.</li>
+    <li><strong>Notification delivery</strong> — Sending emails and push notifications can take seconds; blocking the user is unacceptable.</li>
+    <li><strong>Content moderation</strong> — Running ML models for spam/profanity/NSFW detection takes time.</li>
+    <li><strong>Media processing</strong> — Generating thumbnails, validating formats, and running image moderation.</li>
+</ul>
+
+<h3>How It Works</h3>
+<p>The message queue uses a <strong>topic-based pub/sub model</strong> with consumer groups:</p>
+
+<h4>Topics</h4>
+<table>
+    <tr><th>Topic</th><th>Publisher(s)</th><th>Consumer Groups</th><th>Message Payload</th></tr>
+    <tr>
+        <td><code>review-created</code></td>
+        <td>Review Service</td>
+        <td>Rating Aggregation Worker, Search Index Updater, Content Moderation Worker, Notification Worker</td>
+        <td><code>{ event, review_id, listing_id, user_id, rating, timestamp }</code></td>
+    </tr>
+    <tr>
+        <td><code>review-updated</code></td>
+        <td>Review Service</td>
+        <td>Rating Aggregation Worker, Search Index Updater, Content Moderation Worker</td>
+        <td><code>{ event, review_id, listing_id, old_rating, new_rating, timestamp }</code></td>
+    </tr>
+    <tr>
+        <td><code>listing-updated</code></td>
+        <td>Listing Service</td>
+        <td>Search Index Updater</td>
+        <td><code>{ event, listing_id, changed_fields[], timestamp }</code></td>
+    </tr>
+    <tr>
+        <td><code>booking-confirmed</code></td>
+        <td>Booking Service</td>
+        <td>Notification Worker</td>
+        <td><code>{ event, booking_id, user_id, listing_id, check_in, check_out, confirmation_code }</code></td>
+    </tr>
+    <tr>
+        <td><code>booking-cancelled</code></td>
+        <td>Booking Service</td>
+        <td>Notification Worker</td>
+        <td><code>{ event, booking_id, user_id, listing_id, refund_amount }</code></td>
+    </tr>
+    <tr>
+        <td><code>media-uploaded</code></td>
+        <td>Media Service</td>
+        <td>Media Processing Worker, Content Moderation Worker</td>
+        <td><code>{ event, media_id, listing_id, user_id, object_storage_path, content_type }</code></td>
+    </tr>
+</table>
+
+<h4>How Messages Are Enqueued</h4>
+<p>After the service completes its primary write operation (e.g., Review Service writes to Review DB), it publishes a message to the relevant topic. This is done within the same logical operation but <em>after</em> the DB write succeeds. If the queue publish fails, the service can retry (idempotent messages using message IDs) or use an outbox pattern (write the event to an "outbox" table in the same DB transaction, and a background poller publishes unprocessed outbox entries to the queue).</p>
+
+<h4>How Messages Are Consumed</h4>
+<p>Each consumer group maintains its own offset/cursor in the topic. When a consumer instance processes a message, it acknowledges it (commit the offset). If processing fails, the message is retried (with exponential backoff). After a configurable number of retries, failed messages are sent to a <strong>dead-letter queue (DLQ)</strong> for manual investigation. Consumer groups scale horizontally by adding more instances, with partitions assigned to instances to ensure ordered processing within a partition.</p>
+
+<h4>Delivery Guarantee</h4>
+<p><strong>At-least-once delivery.</strong> Messages may be delivered more than once (e.g., if a consumer crashes after processing but before acknowledging). All consumers are designed to be <strong>idempotent</strong> — processing the same message twice produces the same result. For example, the Rating Aggregation Worker uses the review_id to check if the rating was already incorporated before recalculating.</p>
+
+<h3>Why Not Alternatives?</h3>
+<ul>
+    <li><strong>Why not synchronous HTTP calls between services?</strong> Tight coupling. If the Search Index is temporarily down, review submission would fail. The message queue provides temporal decoupling — the message is durably stored and processed when the consumer is ready.</li>
+    <li><strong>Why not WebSockets?</strong> There is no need for real-time bidirectional communication in TripAdvisor's core flows. Users don't need live-updating search results or real-time review feeds. Standard HTTP request-response is sufficient for all user-facing interactions. Notifications are delivered via push notifications (mobile) and email, not WebSocket connections.</li>
+    <li><strong>Why not long polling?</strong> Same reasoning as WebSockets — no real-time updates needed. The notification feed is fetched via standard HTTP GET when the user opens it.</li>
+    <li><strong>Why topic-based pub/sub (not simple point-to-point queue)?</strong> A single event like <code>review-created</code> needs to be consumed by 4 different services. With a point-to-point queue, the publisher would need to send the same message to 4 different queues. With pub/sub topics, the publisher sends once and each consumer group independently reads from the topic.</li>
 </ul>
 </div>
 
-<div class="section">
-<h2>Cache & CDN Deep Dive</h2>
+<!-- ================================================================== -->
+<!-- 11. SCALING CONSIDERATIONS -->
+<!-- ================================================================== -->
+<h2 id="scaling">11. Scaling Considerations</h2>
+
+<div class="card">
+<h3>Traffic Profile</h3>
+<p>TripAdvisor is <strong>extremely read-heavy</strong>. Estimated ratios:</p>
+<ul>
+    <li>Search queries: ~50,000 req/sec at peak</li>
+    <li>Listing detail views: ~30,000 req/sec at peak</li>
+    <li>Review reads: ~20,000 req/sec at peak</li>
+    <li>Review writes: ~500 req/sec at peak</li>
+    <li>Booking writes: ~200 req/sec at peak</li>
+</ul>
+<p>This ~200:1 read:write ratio means caching and read-replica strategies dominate the scaling approach.</p>
+
+<h3>Horizontal Scaling per Component</h3>
+
+<h4>Load Balancers</h4>
+<p>Load balancers should be placed at three tiers:</p>
+<ol>
+    <li><strong>External LB (L7)</strong> — Between clients and the API Gateway. Handles TLS termination, geographic routing (routing European users to EU data centers), and distributes traffic across API Gateway instances. Uses round-robin with health checks. Can be deployed as an active-passive pair for high availability.</li>
+    <li><strong>Internal LB (L4/L7)</strong> — Between the API Gateway and each microservice. The API Gateway uses service discovery (e.g., DNS-based or sidecar proxy) to route to specific services, with load balancing across instances of each service. Least-connections algorithm is preferred here since request processing times vary (a search may take 150ms while a listing cache-hit takes 10ms).</li>
+    <li><strong>Worker LB</strong> — The message queue naturally load-balances across consumer instances by assigning partitions to different workers. No additional LB needed for workers.</li>
+</ol>
+<div class="warn">
+<strong>Load Balancer Deep Dive:</strong> The external L7 load balancer inspects HTTP headers to make routing decisions (e.g., <code>/api/v1/search</code> might be weighted more heavily toward regions with more search capacity). It performs health checks (HTTP GET to <code>/health</code> on each instance every 10 seconds). Unhealthy instances are removed from the rotation. The LB itself is made redundant via DNS failover or floating IP (active-passive pair). For global traffic, DNS-based geographic load balancing routes users to the nearest regional cluster (e.g., US-East, EU-West, Asia-Pacific) before the L7 LB within each region distributes across instances.
+</div>
+
+<h4>Stateless Services (Search, Listing, Review, Booking, Media, User)</h4>
+<p>All services are stateless — they store no session data locally. This enables effortless horizontal scaling: simply add more instances behind the load balancer. Auto-scaling based on CPU/memory utilization and request queue depth.</p>
+<ul>
+    <li><strong>Search Service:</strong> Most CPU-intensive due to query parsing and result enrichment. Scale to 20–50 instances at peak. Auto-scale based on request latency (p95 > 200ms → add instances).</li>
+    <li><strong>Listing Service:</strong> Lightweight with high cache hit rate. 10–20 instances suffice.</li>
+    <li><strong>Review Service:</strong> Read-heavy. 10–20 instances.</li>
+    <li><strong>Booking Service:</strong> Lower traffic but requires higher reliability. 5–10 instances with strict health checks.</li>
+</ul>
+
+<h4>Databases</h4>
+<ul>
+    <li><strong>SQL databases (Listing DB, Booking DB, User DB):</strong> Vertical scaling (larger instances) + read replicas for read-heavy queries. The Listing DB can have 3–5 read replicas serving listing detail reads, while the primary handles writes. The Booking DB uses read replicas for availability queries (with acceptable slight staleness) and the primary for booking writes (strong consistency). Sharding (described in schema section) provides horizontal write scalability.</li>
+    <li><strong>NoSQL (Review DB, Notifications DB):</strong> Horizontally scalable by design through automatic partitioning. Add nodes to the cluster as data volume grows. The document store handles partition splitting and rebalancing automatically.</li>
+    <li><strong>Search Index:</strong> Scaled by adding data nodes and increasing the number of shards per index. Search queries are distributed across shards. Replicas of each shard provide read throughput and fault tolerance.</li>
+</ul>
+
+<h4>Cache</h4>
+<p>The in-memory cache cluster is scaled by adding nodes. Data is distributed via consistent hashing, minimizing cache misses during scaling events (only ~1/n keys need to be remapped when adding a node to an n-node cluster).</p>
+
+<h4>Message Queue</h4>
+<p>Scaled by adding partitions to topics (increases parallelism) and adding consumer instances (up to the number of partitions per consumer group).</p>
+
+<h3>Multi-Region Deployment</h3>
+<p>For global availability and low latency:</p>
+<ul>
+    <li><strong>Active-Active in 3 regions</strong> (US-East, EU-West, Asia-Pacific). Each region has the full service stack.</li>
+    <li><strong>Data Replication:</strong> Listing and review data is replicated across regions (eventual consistency). Booking data uses single-leader replication (primary in one region) to maintain strong consistency for reservations.</li>
+    <li><strong>DNS-based routing</strong> sends users to the nearest region.</li>
+    <li><strong>CDN POPs</strong> in 100+ locations serve static assets globally.</li>
+</ul>
+
+<h3>Seasonal Traffic Patterns</h3>
+<p>Travel has strong seasonal patterns (summer surge, holiday spikes). Pre-scale before known peaks (e.g., scale up 2× in May before summer travel season). Auto-scaling handles unexpected spikes within minutes.</p>
+</div>
+
+<!-- ================================================================== -->
+<!-- 12. TRADEOFFS & DEEP DIVES -->
+<!-- ================================================================== -->
+<h2 id="tradeoffs">12. Tradeoffs &amp; Deep Dives</h2>
+
+<div class="card">
+<h4>1. Eventual Consistency for Ratings vs. Strong Consistency</h4>
+<p><strong>Decision:</strong> avg_rating and review_count are eventually consistent (updated asynchronously via message queue).</p>
+<p><strong>Tradeoff:</strong> A user who submits a review may not see the updated rating for a few seconds. However, this avoids synchronous cross-service calls that would increase review submission latency by 100–200ms and create tight coupling between the Review Service and Listing DB.</p>
+<p><strong>Mitigation:</strong> The client can optimistically display the updated rating locally (compute new avg on the client side) while the backend catches up.</p>
+
+<h4>2. SQL for Listings vs. NoSQL for Reviews</h4>
+<p><strong>Decision:</strong> Mixed database approach — SQL for structured, relational data (listings, bookings, users); NoSQL for high-volume, flexible-schema data (reviews, notifications).</p>
+<p><strong>Tradeoff:</strong> Increased operational complexity (two database systems to manage). However, each database is used for its strength: SQL for ACID transactions (critical for bookings) and complex queries (listing filters, joins with amenities); NoSQL for horizontal write scalability and flexible documents.</p>
+
+<h4>3. Denormalized Username on Reviews vs. JOINs</h4>
+<p><strong>Decision:</strong> Store username and avatar_url directly on each review document.</p>
+<p><strong>Tradeoff:</strong> If a user changes their username, all their reviews need to be updated (lazy update or async batch update). But usernames change extremely rarely (~0.01% of users per year), while reviews are displayed millions of times per day. The read performance gain vastly outweighs the rare write cost.</p>
+
+<h4>4. Pre-Signed Upload URLs vs. Server-Side Upload</h4>
+<p><strong>Decision:</strong> Clients upload photos directly to Object Storage via pre-signed URLs.</p>
+<p><strong>Tradeoff:</strong> Slightly more complex client-side logic (two steps: get URL, then upload). However, this offloads potentially gigabytes of photo data from our application servers, which would otherwise become bandwidth bottlenecks. Application servers handle only small JSON payloads.</p>
+
+<h4>5. Optimistic Locking for Bookings vs. Pessimistic Locking</h4>
+<p><strong>Decision:</strong> Use optimistic locking (version column) instead of pessimistic locking (SELECT FOR UPDATE).</p>
+<p><strong>Tradeoff:</strong> Under high contention (many users booking the last room simultaneously), optimistic locking causes retries. However, for most bookings contention is low, and optimistic locking avoids holding database locks that reduce throughput. For the rare last-room scenario, 1–2 retries add minimal latency.</p>
+
+<h4>6. Separate Search Index vs. Querying the SQL Database Directly</h4>
+<p><strong>Decision:</strong> Maintain a separate search index synchronized via message queue.</p>
+<p><strong>Tradeoff:</strong> Additional infrastructure and eventual consistency between the listing DB and the search index (new listings may take seconds to appear in search). But the search index provides capabilities that SQL cannot efficiently offer at scale: full-text search with relevance scoring, geo-spatial queries, and faceted filtering across 500M+ documents in &lt;200ms. SQL LIKE queries or even full-text extensions cannot match this performance.</p>
+
+<h4>7. HTTP/REST for Inter-Service Communication vs. gRPC</h4>
+<p><strong>Decision:</strong> HTTP/REST for all inter-service communication.</p>
+<p><strong>Tradeoff:</strong> gRPC would offer better performance (binary protocol, smaller payloads, HTTP/2 multiplexing) and type safety (protobuf schema). However, REST is simpler to debug (human-readable JSON), requires less tooling, and works with standard monitoring/logging infrastructure. For TripAdvisor's latency requirements (not ultra-low-latency like a trading system), REST's overhead is acceptable. gRPC could be adopted later for performance-critical internal paths (e.g., Search Service → cache) without changing the overall architecture.</p>
+
+<h4>8. TCP (Not UDP) for All Communication</h4>
+<p><strong>Decision:</strong> All communication uses TCP (via HTTP/HTTPS).</p>
+<p><strong>Rationale:</strong> TripAdvisor has no real-time streaming or latency-sensitive media delivery that would benefit from UDP. Every interaction (search, listing view, review, booking) requires reliable, ordered delivery of data — which TCP guarantees. UDP is appropriate for live video/audio streaming or gaming, which are not applicable here.</p>
+</div>
+
+<!-- ================================================================== -->
+<!-- 13. ALTERNATIVE APPROACHES -->
+<!-- ================================================================== -->
+<h2 id="alternatives">13. Alternative Approaches</h2>
+
+<div class="card">
+<h4>Alternative 1: Monolithic Architecture</h4>
+<p><strong>Approach:</strong> Build TripAdvisor as a single monolithic application with all services (search, listing, review, booking) in one deployable unit.</p>
+<p><strong>Why not chosen:</strong> While simpler to develop initially, a monolith becomes untenable at TripAdvisor's scale. Independent scaling is impossible — the search component needs 5× the resources of the booking component, but they'd scale together. A bug in the review module could take down the entire system, including bookings. Deployment velocity decreases as the codebase grows. Microservices allow teams to independently develop, deploy, and scale their components.</p>
+
+<h4>Alternative 2: NoSQL for Everything (Including Listings and Bookings)</h4>
+<p><strong>Approach:</strong> Use a NoSQL document store for all data, including listings and bookings.</p>
+<p><strong>Why not chosen:</strong> Bookings require ACID transactions (atomic reservation + payment + confirmation). While some NoSQL stores offer limited transaction support, it's bolted on rather than native. The listing data model benefits from relational features: normalized amenities (many-to-many), foreign keys to users, and complex filtered queries. Forcing everything into a document model would lead to excessive denormalization and data inconsistency issues for transactional operations.</p>
+
+<h4>Alternative 3: SQL for Reviews</h4>
+<p><strong>Approach:</strong> Store reviews in the same SQL database as listings.</p>
+<p><strong>Why not chosen:</strong> At 1B+ reviews with variable-length text bodies and optional nested objects (photos array, owner_response), SQL would struggle with write throughput and schema flexibility. Reviews are accessed by a single key (listing_id) without complex JOINs, making them a perfect fit for NoSQL's partition-based access model. Also, co-locating reviews with listings would create a single massive database that's harder to scale independently.</p>
+
+<h4>Alternative 4: Graph Database for Listings + Reviews + Users</h4>
+<p><strong>Approach:</strong> Model the entire system as a graph: users → reviewed → listings, listings → has → amenities, users → booked → listings.</p>
+<p><strong>Why not chosen:</strong> Graph databases excel when the core value is in traversing relationships (social networks, recommendation engines). TripAdvisor's primary access patterns are simple: "get listing by ID," "get reviews by listing_id," "search listings by location." These are point lookups and range queries, not graph traversals. A graph database would add operational complexity without significant benefit for the dominant access patterns. However, a graph DB could complement the architecture for a future "travelers who liked X also liked Y" recommendation engine.</p>
+
+<h4>Alternative 5: Synchronous Rating Updates (No Message Queue)</h4>
+<p><strong>Approach:</strong> When a review is submitted, synchronously update the avg_rating in the Listing DB and Search Index before returning the response.</p>
+<p><strong>Why not chosen:</strong> This adds 100–200ms to every review submission (DB write + index update + cache invalidation). It also creates tight coupling: if the Search Index is briefly unavailable, review submissions fail. The message queue decouples these operations, allowing the review to be accepted immediately while downstream updates happen asynchronously. The 2–5 second delay in rating updates is imperceptible to users.</p>
+
+<h4>Alternative 6: WebSockets for Real-Time Notifications</h4>
+<p><strong>Approach:</strong> Maintain persistent WebSocket connections for real-time in-app notifications.</p>
+<p><strong>Why not chosen:</strong> TripAdvisor is not a real-time collaborative platform. Users typically receive 0–2 notifications per session (booking confirmation, review reply). Maintaining millions of persistent WebSocket connections for such infrequent messaging is resource-intensive (each connection consumes memory and a file descriptor on the server). Instead, push notifications (APNs for iOS, FCM for Android) and email handle async notifications efficiently. For the web, standard polling when the user opens the notification feed is sufficient. If real-time notifications become a requirement in the future, Server-Sent Events (SSE) would be a simpler alternative to WebSockets since notifications are unidirectional (server → client).</p>
+
+<h4>Alternative 7: Server-Side Rendering (SSR) Only vs. SPA + SSR Hybrid</h4>
+<p><strong>Approach:</strong> Render all pages on the server (traditional web app) instead of using a hybrid SPA.</p>
+<p><strong>Why not chosen (pure SSR):</strong> While SSR is critical for SEO (search engines need to crawl listing and review pages), a pure SSR approach causes full page reloads on every navigation, degrading user experience. A hybrid approach — SSR for the initial page load (SEO + fast first paint) transitioning to client-side SPA navigation (smooth transitions, no reloads) — provides the best of both worlds. The listing detail page is server-rendered for SEO; subsequent tab switches (Reviews, Photos, Map) happen client-side.</p>
+</div>
+
+<!-- ================================================================== -->
+<!-- 14. ADDITIONAL CONSIDERATIONS -->
+<!-- ================================================================== -->
+<h2 id="additional">14. Additional Considerations</h2>
+
+<div class="card">
+<h4>SEO (Search Engine Optimization)</h4>
+<p>TripAdvisor depends heavily on organic search traffic from Google. Every listing page, review page, and city guide must be crawlable and indexable. Server-side rendering (SSR) ensures that search engine bots see fully rendered HTML with structured data (Schema.org markup for hotels, restaurants, reviews, ratings). Dynamic <code>&lt;meta&gt;</code> tags for Open Graph and Twitter Cards ensure rich previews when listing links are shared on social media.</p>
+
+<h4>Content Moderation &amp; Fraud Detection</h4>
+<p>Fake reviews are a significant threat. The Content Moderation pipeline includes:</p>
+<ul>
+    <li><strong>Automated filters:</strong> Profanity detection, spam patterns, duplicate text detection.</li>
+    <li><strong>ML-based fraud detection:</strong> Detecting review farms (many reviews from the same IP range, similar language patterns, coordinated timing), incentivized reviews, and competitor sabotage.</li>
+    <li><strong>Photo moderation:</strong> NSFW detection, irrelevant photo detection.</li>
+    <li><strong>Human moderation queue:</strong> Flagged content goes to human reviewers for final judgment.</li>
+</ul>
+
+<h4>Internationalization (i18n)</h4>
+<p>TripAdvisor serves users in 40+ languages. Listings and reviews are stored in their original language. An auto-translation service (accessible via a "Translate" button) provides on-demand machine translation of reviews. UI strings are externalized into locale-specific resource bundles.</p>
+
+<h4>Accessibility (a11y)</h4>
+<p>The web and mobile apps must comply with WCAG 2.1 AA standards: screen reader compatibility, keyboard navigation, sufficient color contrast, alt text for all images, and ARIA labels on interactive elements.</p>
+
+<h4>Analytics &amp; Monitoring</h4>
+<ul>
+    <li><strong>Business analytics:</strong> Track search-to-click-through rates, listing view-to-booking conversion rates, review engagement (helpful votes), and popular destinations.</li>
+    <li><strong>System monitoring:</strong> Distributed tracing across microservices (correlating a single user request as it traverses API Gateway → Search Service → Cache → Search Index). Dashboards for request latency (p50, p95, p99), error rates, cache hit ratios, queue depth, and consumer lag.</li>
+    <li><strong>Alerting:</strong> PagerDuty-style alerts for SLA violations (p95 latency > 500ms, error rate > 1%, consumer lag > 10,000 messages).</li>
+</ul>
+
+<h4>Rate Limiting &amp; Abuse Prevention</h4>
+<p>Beyond API Gateway rate limiting, additional protections include:</p>
+<ul>
+    <li><strong>Review rate limiting:</strong> Users can submit at most 5 reviews per day.</li>
+    <li><strong>Booking rate limiting:</strong> Prevents bots from holding room inventory.</li>
+    <li><strong>CAPTCHA:</strong> Triggered on suspicious activity (rapid-fire requests, unusual patterns).</li>
+</ul>
+
+<h4>Data Privacy &amp; GDPR Compliance</h4>
+<p>Users can request deletion of their data (right to be forgotten). This triggers a cascade: delete user record, anonymize reviews (keep review text but replace user info with "Anonymous"), cancel active bookings, delete notification history, remove uploaded photos.</p>
+
+<h4>Disaster Recovery</h4>
+<p>All databases are replicated across availability zones within each region. Daily backups with point-in-time recovery. Object Storage has built-in cross-region replication. The message queue provides durability guarantees — messages are persisted to disk and replicated before acknowledging the publisher.</p>
+
+<h4>API Versioning</h4>
+<p>All APIs are versioned via URL path (<code>/api/v1/...</code>). This allows backward-compatible evolution without breaking existing clients. Deprecated API versions are maintained for a minimum of 6 months before removal.</p>
+</div>
+
+<!-- ================================================================== -->
+<!-- 15. VENDOR SECTION -->
+<!-- ================================================================== -->
+<h2 id="vendors">15. Vendor Section</h2>
+
+<div class="card">
+<p>The architecture above is vendor-agnostic. Below are potential vendor choices for each component with rationale:</p>
+
 <table>
-<tr><th>Cache</th><th>Strategy</th><th>TTL</th><th>Purpose</th></tr>
-<tr><td>Place Details (Redis)</td><td>Read-through</td><td>1 hr</td><td>Place pages load fast</td></tr>
-<tr><td>Review Summary (Redis)</td><td>Write-behind (on new review)</td><td>30 min</td><td>Rating breakdown, review count</td></tr>
-<tr><td>CDN — Place Pages</td><td>Pull-based</td><td>1 hr</td><td>SEO: pre-rendered HTML pages for crawlers</td></tr>
-<tr><td>CDN — Photos</td><td>Pull-based</td><td>365 days</td><td>User-uploaded review photos</td></tr>
+    <tr><th>Component</th><th>Vendor Option(s)</th><th>Rationale</th></tr>
+    <tr>
+        <td><strong>SQL Database</strong></td>
+        <td>PostgreSQL, MySQL, Amazon Aurora, Google Cloud Spanner</td>
+        <td>PostgreSQL offers excellent spatial index support (PostGIS) for geo-queries on the listings table. Aurora provides managed PostgreSQL-compatible with automatic scaling and multi-AZ. Cloud Spanner offers globally distributed SQL with strong consistency (ideal for bookings at global scale).</td>
+    </tr>
+    <tr>
+        <td><strong>NoSQL Document Store</strong></td>
+        <td>Amazon DynamoDB, Apache Cassandra, MongoDB</td>
+        <td>DynamoDB offers managed, serverless scaling with single-digit-ms latency — ideal for the high-throughput review and notification workloads. Cassandra is a strong option for multi-region deployments with tunable consistency. MongoDB provides a flexible document model with rich querying capabilities.</td>
+    </tr>
+    <tr>
+        <td><strong>Search Index</strong></td>
+        <td>Elasticsearch, Apache Solr, Typesense, Meilisearch</td>
+        <td>Elasticsearch is the most mature option for full-text + geo-spatial search at scale. It natively supports BM25 scoring, geo_distance queries, and faceted aggregations. Solr is a comparable alternative. Typesense/Meilisearch are lighter-weight options for smaller scale.</td>
+    </tr>
+    <tr>
+        <td><strong>In-Memory Cache</strong></td>
+        <td>Redis, Memcached, KeyDB</td>
+        <td>Redis is the most popular choice — supports diverse data structures (strings for listing cache, sorted sets for potential leaderboards), built-in TTL, and cluster mode for horizontal scaling. Memcached is simpler and faster for pure key-value caching if advanced data structures aren't needed.</td>
+    </tr>
+    <tr>
+        <td><strong>Message Queue / Pub-Sub</strong></td>
+        <td>Apache Kafka, Amazon SQS + SNS, RabbitMQ, Apache Pulsar</td>
+        <td>Kafka excels at high-throughput, topic-based pub/sub with durable message retention and multiple consumer groups — exactly what we need. SQS+SNS is a managed AWS alternative. RabbitMQ is better for complex routing but has lower throughput. Pulsar offers multi-tenancy and tiered storage.</td>
+    </tr>
+    <tr>
+        <td><strong>Object Storage</strong></td>
+        <td>Amazon S3, Google Cloud Storage, Azure Blob Storage</td>
+        <td>S3 is the industry standard for blob storage — 99.999999999% (11 nines) durability, lifecycle policies, cross-region replication, and pre-signed URL support. GCS and Azure Blob are equivalent alternatives in their respective clouds.</td>
+    </tr>
+    <tr>
+        <td><strong>CDN</strong></td>
+        <td>Cloudflare, Amazon CloudFront, Fastly, Akamai</td>
+        <td>Cloudflare offers the largest global network (300+ POPs) with DDoS protection included. CloudFront integrates tightly with S3 for origin pulls. Fastly provides real-time configurability and edge computing. Akamai is the most established enterprise CDN.</td>
+    </tr>
+    <tr>
+        <td><strong>Load Balancer</strong></td>
+        <td>AWS ALB/NLB, Google Cloud Load Balancing, Nginx, HAProxy, Envoy</td>
+        <td>Cloud-native LBs (ALB/NLB) offer seamless auto-scaling integration. Nginx/HAProxy are proven open-source L7/L4 LBs. Envoy is excellent as a sidecar proxy in a service mesh (Istio) for internal inter-service load balancing.</td>
+    </tr>
+    <tr>
+        <td><strong>Container Orchestration</strong></td>
+        <td>Kubernetes (EKS, GKE, AKS), Docker Swarm, AWS ECS</td>
+        <td>Kubernetes is the standard for orchestrating microservice deployments at scale — auto-scaling, rolling deployments, service discovery, and health management. Managed offerings (EKS/GKE/AKS) reduce operational overhead.</td>
+    </tr>
 </table>
-<p><strong>SEO strategy:</strong> Server-side rendered HTML for place pages. CDN caches rendered HTML for Googlebot. Dynamic content (prices, availability) loaded client-side via JavaScript.</p>
 </div>
 
-<div class="section">
-<h2>Tradeoffs & Alternatives</h2>
-<div class="tradeoff">
-<div class="pro"><h4>✅ Meta-search (Price Comparison)</h4><ul><li>Users get best price without visiting each booking site</li><li>Revenue via CPC (cost-per-click) when users click through to booking partner</li><li>TripAdvisor doesn't handle booking complexity</li></ul></div>
-<div class="con"><h4>❌ Meta-search Downsides</h4><ul><li>No control over booking experience (user leaves TripAdvisor)</li><li>Price accuracy: displayed price may differ on partner site</li><li>Revenue dependent on partner willingness to pay CPC</li></ul></div>
-</div>
-<ul>
-<li><strong>Alternative — Direct booking:</strong> TripAdvisor could handle bookings directly (like Booking.com). Higher revenue per transaction but massive operational complexity (payments, cancellations, customer support)</li>
-<li><strong>Alternative — Embedding-based search:</strong> Instead of keyword search, semantic search using BERT embeddings. "Romantic dinner spot with view" finds relevant restaurants even without those exact keywords</li>
-</ul>
-</div>
+<hr/>
+<p style="text-align:center; color:#888; margin-top:3rem;">TripAdvisor System Design — End of Document</p>
 
-<div class="section">
-<h2>Additional Information</h2>
-<ul>
-<li><strong>Review fraud detection:</strong> ML model features: reviewer's review velocity, text similarity to other reviews, device/IP clustering, rating distribution anomaly. Paid fake review farms create distinct patterns</li>
-<li><strong>Traveler types:</strong> Business, family, solo, couple. Different ranking weights per type: families → kid-friendly, business → WiFi + work desk, couples → romantic</li>
-<li><strong>Photo quality scoring:</strong> ML model ranks user photos by quality (lighting, composition, relevance). Best photos shown first on place page</li>
-</ul>
-</div>
 </body>
 </html>
