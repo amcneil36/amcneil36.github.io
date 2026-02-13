@@ -1,556 +1,1118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>System Design: PayPal</title>
-<style>
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #e0e0e0; margin: 0; padding: 20px; line-height: 1.7; }
-  h1 { color: #003087; font-size: 2.2em; border-bottom: 3px solid #003087; padding-bottom: 10px; }
-  h2 { color: #0070ba; margin-top: 40px; }
-  h3 { color: #00a0df; }
-  h4 { color: #55c3f0; }
-  .section { background: #1a1a1a; padding: 25px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #0070ba; }
-  .subsection { background: #222; padding: 15px; border-radius: 8px; margin: 15px 0; }
-  .diagram-container { background: #1e1e1e; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; overflow-x: auto; }
-  .tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.85em; margin: 2px 4px; }
-  .tag-pk { background: #4a9eff33; color: #4a9eff; border: 1px solid #4a9eff66; }
-  .tag-fk { background: #ff4a4a33; color: #ff4a4a; border: 1px solid #ff4a4a66; }
-  .tag-idx { background: #4aff4a33; color: #4aff4a; border: 1px solid #4aff4a66; }
-  .tag-shard { background: #ffa54a33; color: #ffa54a; border: 1px solid #ffa54a66; }
-  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-  th, td { padding: 12px; text-align: left; border: 1px solid #333; }
-  th { background: #2a2a2a; color: #0070ba; }
-  tr:nth-child(even) { background: #1a1a1a; }
-  code { background: #2a2a2a; padding: 2px 8px; border-radius: 4px; color: #55c3f0; font-family: 'Fira Code', monospace; }
-  pre { background: #1a1a1a; padding: 20px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; }
-  .example { background: #0d2818; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #4aff4a; }
-  .tradeoff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-  .tradeoff-pro { background: #0d2818; padding: 15px; border-radius: 8px; border-left: 3px solid #4aff4a; }
-  .tradeoff-con { background: #2d1018; padding: 15px; border-radius: 8px; border-left: 3px solid #ff4a4a; }
-  ul, ol { padding-left: 25px; }
-  li { margin: 6px 0; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design: PayPal</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true, theme:'neutral', securityLevel:'loose'});</script>
+    <style>
+        :root { --accent: #003087; --accent2: #009cde; --bg: #f8f9fa; --card: #ffffff; --text: #222; --border: #dde; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px 30px 60px; }
+        h1 { color: var(--accent); font-size: 2.2em; border-bottom: 4px solid var(--accent2); padding-bottom: 10px; margin-bottom: 10px; }
+        h2 { color: var(--accent); font-size: 1.6em; margin-top: 48px; margin-bottom: 16px; border-left: 5px solid var(--accent2); padding-left: 14px; }
+        h3 { color: #444; font-size: 1.25em; margin-top: 28px; margin-bottom: 10px; }
+        h4 { color: #555; font-size: 1.05em; margin-top: 20px; margin-bottom: 8px; }
+        p, li { font-size: 1em; }
+        ul, ol { margin-left: 24px; margin-bottom: 14px; }
+        li { margin-bottom: 5px; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 22px 26px; margin: 18px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .diagram-card { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin: 20px 0; text-align: center; overflow-x: auto; }
+        .example { background: #eef6ff; border-left: 4px solid var(--accent2); padding: 16px 20px; margin: 14px 0; border-radius: 0 8px 8px 0; }
+        .example strong { color: var(--accent); }
+        table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.95em; }
+        th { background: var(--accent); color: #fff; padding: 10px 14px; text-align: left; }
+        td { padding: 9px 14px; border: 1px solid #ddd; }
+        tr:nth-child(even) { background: #f4f7fa; }
+        code { background: #e8edf3; padding: 2px 6px; border-radius: 4px; font-size: 0.92em; }
+        .tag { display: inline-block; background: var(--accent2); color: #fff; padding: 2px 10px; border-radius: 12px; font-size: 0.82em; margin-right: 4px; }
+        .toc { background: #f0f4fa; border: 1px solid var(--border); border-radius: 10px; padding: 20px 28px; margin: 20px 0; }
+        .toc a { text-decoration: none; color: var(--accent); }
+        .toc a:hover { text-decoration: underline; }
+        .toc ol { margin-left: 20px; }
+        .toc li { margin-bottom: 4px; }
+        .warn { background: #fff8e1; border-left: 4px solid #f5a623; padding: 12px 18px; margin: 14px 0; border-radius: 0 8px 8px 0; }
+        .mermaid { font-size: 14px; }
+        .subtitle { color: #666; font-size: 1.05em; margin-bottom: 28px; }
+    </style>
 </head>
 <body>
+<div class="container">
 
-<h1>💰 System Design: PayPal (Digital Payment Platform)</h1>
+<h1>System Design: PayPal</h1>
+<p class="subtitle">A peer-to-peer &amp; merchant payment platform handling money transfers, merchant checkout, bank deposits/withdrawals, and transaction history.</p>
 
-<div class="section">
-<h2>📋 Functional Requirements</h2>
-<ul>
-  <li>Users can send money to other users (P2P payments) via email/phone</li>
-  <li>Users can pay merchants for goods/services (checkout integration)</li>
-  <li>Users can link bank accounts, cards, and manage a PayPal balance</li>
-  <li>Support for multi-currency transactions with real-time exchange rates</li>
-</ul>
-</div>
-
-<div class="section">
-<h2>🔒 Non-Functional Requirements</h2>
-<ul>
-  <li><strong>Strong consistency:</strong> Financial transactions must be ACID — no double-spending, no lost money</li>
-  <li><strong>Idempotency:</strong> Every payment request must be safely retryable without duplicate charges</li>
-  <li><strong>PCI-DSS compliance:</strong> Card data tokenized, encrypted at rest (AES-256), HSM for key management</li>
-  <li><strong>High availability:</strong> 99.99% uptime — payment failures directly impact revenue</li>
-  <li><strong>Low latency:</strong> &lt;2s end-to-end for payment processing</li>
-  <li><strong>Fraud prevention:</strong> Real-time ML fraud detection on every transaction</li>
-  <li><strong>Scale:</strong> ~40M transactions/day, $1.5T annual payment volume</li>
-</ul>
-</div>
-
-<!-- ============================================================ -->
-<h2>🔄 Flow 1 — P2P Payment (Send Money)</h2>
-<!-- ============================================================ -->
-
-<div class="diagram-container">
-<svg viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="160" width="110" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="75" y="195" text-anchor="middle" fill="white" font-size="14">Sender App</text>
-  <line x1="130" y1="190" x2="190" y2="190" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="200" y="160" width="130" height="60" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="265" y="188" text-anchor="middle" fill="white" font-size="13">API Gateway</text>
-  <text x="265" y="205" text-anchor="middle" fill="white" font-size="10">(Auth + Idempotency)</text>
-  <line x1="330" y1="190" x2="390" y2="190" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="400" y="160" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="470" y="185" text-anchor="middle" fill="white" font-size="13">Payment</text>
-  <text x="470" y="202" text-anchor="middle" fill="white" font-size="10">Orchestrator</text>
-  <line x1="540" y1="175" x2="610" y2="110" stroke="#aaa" marker-end="url(#ah1)"/>
-  <line x1="540" y1="190" x2="610" y2="190" stroke="#aaa" marker-end="url(#ah1)"/>
-  <line x1="540" y1="205" x2="610" y2="270" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="620" y="80" width="150" height="55" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="695" y="105" text-anchor="middle" fill="white" font-size="12">Risk / Fraud Engine</text>
-  <text x="695" y="122" text-anchor="middle" fill="white" font-size="10">(ML Real-time)</text>
-  <rect x="620" y="165" width="150" height="55" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
-  <text x="695" y="188" text-anchor="middle" fill="white" font-size="12">Ledger Service</text>
-  <text x="695" y="205" text-anchor="middle" fill="white" font-size="10">(Double-Entry)</text>
-  <rect x="620" y="245" width="150" height="55" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="695" y="268" text-anchor="middle" fill="white" font-size="12">Wallet Service</text>
-  <text x="695" y="285" text-anchor="middle" fill="white" font-size="10">(Balance Mgmt)</text>
-  <line x1="770" y1="192" x2="840" y2="192" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="850" y="165" width="150" height="55" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
-  <text x="925" y="188" text-anchor="middle" fill="white" font-size="12">PostgreSQL</text>
-  <text x="925" y="205" text-anchor="middle" fill="white" font-size="10">(Ledger DB)</text>
-  <line x1="770" y1="272" x2="840" y2="330" stroke="#aaa" marker-end="url(#ah1)"/>
-  <rect x="850" y="305" width="150" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="925" y="328" text-anchor="middle" fill="white" font-size="12">Funding Source</text>
-  <text x="925" y="345" text-anchor="middle" fill="white" font-size="10">(Bank/Card ACH)</text>
-</svg>
-</div>
-
-<div class="section">
-<h3>Step-by-Step</h3>
+<!-- ================================================================== -->
+<!-- TABLE OF CONTENTS -->
+<!-- ================================================================== -->
+<div class="toc">
+<strong>Table of Contents</strong>
 <ol>
-  <li><strong>Client initiates:</strong> <code>POST /api/v2/payments/send</code> with <code>{ "recipient": "friend@email.com", "amount": 50.00, "currency": "USD", "idempotency_key": "uuid-abc123", "note": "Dinner split" }</code></li>
-  <li><strong>API Gateway:</strong> Authenticates via OAuth2 token, checks <code>idempotency_key</code> in Redis — if exists, return cached response (prevents duplicate payments on retry)</li>
-  <li><strong>Payment Orchestrator:</strong> Creates a <code>payment_intent</code> record with status <code>initiated</code>. Resolves recipient (email → PayPal account lookup)</li>
-  <li><strong>Risk Engine (sync):</strong> Real-time fraud check — evaluates sender device fingerprint, transaction velocity, amount anomaly, recipient risk profile. Returns: approve / deny / step-up-auth</li>
-  <li><strong>Wallet Service:</strong> Determines funding source priority: (1) PayPal balance, (2) linked bank account (ACH), (3) linked card. If balance sufficient → debit sender balance immediately</li>
-  <li><strong>Ledger Service (atomic):</strong> Double-entry booking: <code>DEBIT sender_wallet $50.00</code> + <code>CREDIT receiver_wallet $50.00</code> in a single DB transaction. Payment status → <code>completed</code></li>
-  <li><strong>Notify recipient:</strong> Push notification + email — "You received $50.00 from John"</li>
-  <li><strong>Idempotency key cached:</strong> Store response in Redis with TTL 24hr keyed by idempotency_key</li>
+    <li><a href="#fr">Functional Requirements</a></li>
+    <li><a href="#nfr">Non-Functional Requirements</a></li>
+    <li><a href="#flow1">Flow 1 — Send Money (P2P Transfer)</a></li>
+    <li><a href="#flow2">Flow 2 — Merchant Payment (Checkout)</a></li>
+    <li><a href="#flow3">Flow 3 — Bank Transfers (Deposit &amp; Withdraw)</a></li>
+    <li><a href="#flow4">Flow 4 — View Transaction History</a></li>
+    <li><a href="#combined">Combined Overall Diagram</a></li>
+    <li><a href="#schema">Database Schema</a></li>
+    <li><a href="#cache">CDN &amp; Caching Deep Dive</a></li>
+    <li><a href="#mq">Message Queue Deep Dive</a></li>
+    <li><a href="#scaling">Scaling Considerations</a></li>
+    <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+    <li><a href="#alternatives">Alternative Approaches</a></li>
+    <li><a href="#additional">Additional Considerations</a></li>
+    <li><a href="#vendors">Vendor Section</a></li>
 </ol>
+</div>
+
+<!-- ================================================================== -->
+<!-- 1. FUNCTIONAL REQUIREMENTS -->
+<!-- ================================================================== -->
+<h2 id="fr">1. Functional Requirements</h2>
+<div class="card">
+<ol>
+    <li><strong>User Registration &amp; Authentication</strong> — Users can sign up with an email/phone, set a password, and log in securely (with MFA support).</li>
+    <li><strong>Link Payment Methods</strong> — Users can link bank accounts, debit cards, and credit cards to their PayPal wallet.</li>
+    <li><strong>Send Money (P2P)</strong> — A user can send money to another user by email, phone number, or PayPal username. The sender specifies the amount and currency.</li>
+    <li><strong>Receive Money</strong> — A user receives money into their PayPal wallet balance and is notified.</li>
+    <li><strong>Merchant Payment (Checkout)</strong> — A user can pay a merchant through PayPal's checkout flow embedded on the merchant's site. The merchant creates an order, the user approves it, and the merchant captures the funds.</li>
+    <li><strong>Deposit Funds</strong> — A user can add money from a linked bank account or card into their PayPal wallet.</li>
+    <li><strong>Withdraw Funds</strong> — A user can transfer money from their PayPal wallet to a linked bank account.</li>
+    <li><strong>View Transaction History</strong> — Users can view a paginated, filterable list of all their past transactions (sent, received, deposits, withdrawals, merchant payments).</li>
+    <li><strong>Notifications</strong> — Users receive real-time push notifications and emails for payment events (money sent, money received, payment captured, etc.).</li>
+    <li><strong>Multi-Currency Support</strong> — Users can hold balances in multiple currencies and convert between them at current exchange rates.</li>
+    <li><strong>Refunds</strong> — Merchants can issue full or partial refunds. P2P senders cannot unilaterally reverse a completed transfer.</li>
+</ol>
+</div>
+
+<!-- ================================================================== -->
+<!-- 2. NON-FUNCTIONAL REQUIREMENTS -->
+<!-- ================================================================== -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
+<div class="card">
+<ol>
+    <li><strong>Strong Consistency</strong> — Financial data (balances, ledger entries, transactions) must be strongly consistent. No double-spending, no phantom balances. ACID compliance is mandatory for all monetary operations.</li>
+    <li><strong>High Availability</strong> — Target 99.999% uptime. Downtime directly equates to lost revenue and user trust.</li>
+    <li><strong>Idempotency</strong> — Every payment request must be idempotent. Network retries or duplicate submissions must never result in double charges. Achieved via client-generated idempotency keys.</li>
+    <li><strong>Low Latency</strong> — P2P payments should complete in &lt; 2 seconds end-to-end. Transaction history queries should return in &lt; 200ms.</li>
+    <li><strong>Scalability</strong> — Must handle hundreds of millions of users and tens of thousands of transactions per second at peak (e.g., Black Friday).</li>
+    <li><strong>Security</strong> — All data encrypted in transit (TLS 1.3) and at rest (AES-256). PCI-DSS compliance for card data. Fraud detection on every transaction.</li>
+    <li><strong>Auditability</strong> — Every monetary movement must produce an immutable, append-only ledger entry using double-entry bookkeeping. Full audit trail for regulators.</li>
+    <li><strong>Fault Tolerance</strong> — Graceful degradation under partial failures. Compensating transactions (Saga pattern) to handle distributed failures.</li>
+    <li><strong>Regulatory Compliance</strong> — PCI-DSS, PSD2 (EU), KYC/AML, SOX, and regional financial regulations.</li>
+</ol>
+</div>
+
+<!-- ================================================================== -->
+<!-- 3. FLOW 1 — SEND MONEY (P2P) -->
+<!-- ================================================================== -->
+<h2 id="flow1">3. Flow 1 — Send Money (P2P Transfer)</h2>
+
+<div class="diagram-card">
+<div class="mermaid">
+graph TD
+    A["👤 Sender Client<br/>(Mobile/Web)"] -->|"HTTPS POST<br/>/v1/payments/send"| B["API Gateway<br/>(Rate Limit + Auth)"]
+    B --> C["Payment Service"]
+    C -->|"Sync call"| D["Fraud Detection<br/>Service"]
+    D -->|"Allow / Block"| C
+    C -->|"Check &amp; debit sender"| E["Wallet Service"]
+    E --> F[("Wallet DB<br/>(SQL)")]
+    E -->|"Credit receiver"| F
+    C -->|"Record entries"| G["Ledger Service"]
+    G --> H[("Ledger DB<br/>(SQL)")]
+    C -->|"Write txn record"| I[("Transaction DB<br/>(SQL)")]
+    C -->|"Enqueue notification"| J["Message Queue"]
+    J --> K["Notification Service"]
+    K -->|"Push / Email / SMS"| L["👤 Receiver"]
+</div>
+</div>
+
+<h3>Examples</h3>
 
 <div class="example">
-<strong>Example:</strong> Alice sends $50 to Bob → Risk Engine: score 0.02 (low risk, approved) → Alice has $120 PayPal balance → Debit Alice $50, Credit Bob $50 → Ledger: two entries in same TX → Bob sees $50 in balance instantly → If Alice retries (network timeout), idempotency_key returns cached "success" — no double charge
+<strong>Example 1 — Happy Path:</strong> Alice wants to send $50 to Bob. She opens the PayPal app, taps "Send Money," enters Bob's email, types $50, and taps "Send." The client generates an idempotency key (<code>idem-abc-123</code>) and sends an <code>HTTPS POST /v1/payments/send</code> to the API Gateway with the payload <code>{recipient: "bob@email.com", amount: 50.00, currency: "USD", idempotency_key: "idem-abc-123"}</code>. The API Gateway authenticates Alice's JWT token, rate-limits, and forwards the request to the Payment Service. The Payment Service calls the Fraud Detection Service synchronously, which checks Alice's velocity (3 transactions today, under the 20/day threshold), her geolocation (same city as usual), and the amount ($50 is under the $10,000 review threshold) — the transaction is <strong>ALLOWED</strong>. The Payment Service then calls the Wallet Service, which begins a database transaction: it debits Alice's wallet by $50 (balance goes from $200 → $150) and credits Bob's wallet by $50 (balance goes from $30 → $80), writing both rows atomically. The Ledger Service records two immutable double-entry rows: a DEBIT of $50 on Alice's wallet and a CREDIT of $50 on Bob's wallet. The transaction record is written to the Transaction DB with status <code>COMPLETED</code>. Finally, a message is enqueued onto the Message Queue for the Notification Service. Bob receives a push notification: "You received $50.00 from Alice." Alice sees a confirmation screen: "Payment sent!"
+</div>
+
+<div class="example">
+<strong>Example 2 — Insufficient Balance:</strong> Charlie tries to send $500 to Dana, but Charlie's wallet only has $120. The flow proceeds identically through the API Gateway and Fraud Detection (which passes). When the Wallet Service attempts to debit Charlie's wallet, the SQL constraint <code>CHECK(balance >= 0)</code> prevents the debit. The Wallet Service returns an error. The Payment Service writes the transaction record with status <code>FAILED</code> and reason <code>INSUFFICIENT_FUNDS</code>, and returns an HTTP 400 to Charlie's client: "Insufficient balance. Please add funds and try again." No ledger entries are written, no notification is sent to Dana.
+</div>
+
+<div class="example">
+<strong>Example 3 — Fraud Blocked:</strong> Eve tries to send $9,500 to a brand-new account from an unusual IP address at 3 AM. The Fraud Detection Service flags this: high amount + new recipient + unusual hour + unusual IP. The transaction is <strong>BLOCKED</strong>. The Payment Service writes the transaction with status <code>BLOCKED_FRAUD</code> and returns HTTP 403 to Eve's client: "This transaction has been flagged for review. Please contact support." Eve receives an email asking her to verify the transaction.
+</div>
+
+<div class="example">
+<strong>Example 4 — Duplicate Request (Idempotency):</strong> Alice sends $50 to Bob. Due to a network timeout, her client retries the same request with the same idempotency key <code>idem-abc-123</code>. The Payment Service looks up <code>idem-abc-123</code> in the Transaction DB, finds it already completed, and returns the original success response. Bob is NOT charged twice. Alice sees the same confirmation.
+</div>
+
+<h3>Component Deep Dive — Flow 1</h3>
+
+<div class="card">
+<h4>API Gateway</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTPS (TLS 1.3)</li>
+    <li><strong>Responsibilities:</strong> TLS termination, JWT-based authentication, rate limiting (token bucket per user), request validation, routing to downstream microservices.</li>
+    <li><strong>Input:</strong> Raw HTTPS requests from clients.</li>
+    <li><strong>Output:</strong> Authenticated, validated requests forwarded to internal services via HTTP/2 or gRPC.</li>
+</ul>
+
+<h4>Payment Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP/2 (internal gRPC also supported)</li>
+    <li><strong>Endpoint:</strong> <code>POST /v1/payments/send</code></li>
+    <li><strong>Input:</strong> <code>{sender_id, recipient_identifier, amount, currency, idempotency_key, note (optional)}</code></li>
+    <li><strong>Output:</strong> <code>{transaction_id, status: "COMPLETED" | "FAILED" | "BLOCKED_FRAUD", timestamp}</code></li>
+    <li><strong>Responsibilities:</strong> Orchestrates the entire payment flow. Resolves recipient identifier (email/phone) to a user_id via the User Service. Checks idempotency key. Calls Fraud Detection, Wallet Service, and Ledger Service. Writes the transaction record. Enqueues notifications. Implements the Saga pattern — if crediting the receiver fails after debiting the sender, it issues a compensating credit back to the sender.</li>
+</ul>
+
+<h4>Fraud Detection Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> gRPC (low-latency internal service)</li>
+    <li><strong>Input:</strong> <code>{sender_id, recipient_id, amount, currency, device_fingerprint, ip_address, geo_location}</code></li>
+    <li><strong>Output:</strong> <code>{decision: "ALLOW" | "BLOCK" | "REVIEW", risk_score: 0.0–1.0, reasons: [...]}</code></li>
+    <li><strong>Responsibilities:</strong> Runs rule-based checks (velocity limits, amount thresholds, geo-anomaly) and ML-based anomaly scoring. Must respond within 100ms for synchronous blocking decisions. High-risk transactions are sent to a human review queue asynchronously.</li>
+</ul>
+
+<h4>Wallet Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> gRPC</li>
+    <li><strong>Input:</strong> <code>{debit_wallet_id, credit_wallet_id, amount, currency, transaction_id}</code></li>
+    <li><strong>Output:</strong> <code>{success: boolean, sender_new_balance, receiver_new_balance}</code></li>
+    <li><strong>Responsibilities:</strong> Manages wallet balances. Executes debit/credit operations within a single database transaction (ACID). Enforces <code>CHECK(balance >= 0)</code> constraints. If the sender and receiver are on different database shards, uses a two-phase commit or Saga with compensating transactions.</li>
+</ul>
+
+<h4>Ledger Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> gRPC</li>
+    <li><strong>Input:</strong> <code>{transaction_id, entries: [{wallet_id, type: "DEBIT"|"CREDIT", amount, currency}]}</code></li>
+    <li><strong>Output:</strong> <code>{ledger_entry_ids: [...]}</code></li>
+    <li><strong>Responsibilities:</strong> Writes immutable, append-only double-entry bookkeeping records. Every transaction produces at least one DEBIT and one CREDIT entry that sum to zero. This is the authoritative financial record for auditors and regulators. Entries are never updated or deleted.</li>
+</ul>
+
+<h4>Message Queue</h4>
+<ul>
+    <li><strong>Purpose:</strong> Decouples the critical payment path from non-critical notification delivery. Ensures at-least-once delivery for notification messages.</li>
+    <li><strong>Further details in the <a href="#mq">Message Queue Deep Dive</a> section.</strong></li>
+</ul>
+
+<h4>Notification Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> Consumes from message queue; sends via HTTPS to push notification gateways (APNs, FCM), SMTP for email, SMS gateways.</li>
+    <li><strong>Input:</strong> Message from queue: <code>{user_id, type: "PAYMENT_RECEIVED", payload: {sender_name, amount, currency}}</code></li>
+    <li><strong>Output:</strong> Push notification, email, and/or SMS delivered to the recipient.</li>
+    <li><strong>Responsibilities:</strong> Formats and delivers notifications based on user preferences (push, email, SMS). Handles retries with exponential backoff for failed deliveries.</li>
+</ul>
+</div>
+
+<!-- ================================================================== -->
+<!-- 4. FLOW 2 — MERCHANT PAYMENT (CHECKOUT) -->
+<!-- ================================================================== -->
+<h2 id="flow2">4. Flow 2 — Merchant Payment (Checkout)</h2>
+
+<div class="diagram-card">
+<div class="mermaid">
+graph TD
+    A["👤 User on<br/>Merchant Website"] -->|"1. Click Pay with PayPal"| B["Merchant Server"]
+    B -->|"2. HTTPS POST<br/>/v2/checkout/orders<br/>(create order)"| C["API Gateway"]
+    C --> D["Order Service"]
+    D --> E[("Order DB<br/>(SQL)")]
+    D -->|"3. Return order_id<br/>+ approval_url"| B
+    B -->|"4. Redirect user<br/>to approval_url"| F["PayPal Approval<br/>Page (Web/App)"]
+    F -->|"5. User approves"| C
+    C --> G["Payment Service"]
+    G -->|"Sync"| H["Fraud Detection<br/>Service"]
+    H -->|"Allow"| G
+    G --> I["Wallet Service"]
+    I --> J[("Wallet DB<br/>(SQL)")]
+    G --> K["Ledger Service"]
+    K --> L[("Ledger DB<br/>(SQL)")]
+    G -->|"6. Mark order APPROVED"| D
+    B -->|"7. HTTPS POST<br/>/v2/checkout/orders/{id}/capture"| C
+    C --> G
+    G -->|"Debit user, credit merchant"| I
+    G -->|"Enqueue"| M["Message Queue"]
+    M --> N["Notification Service"]
+    N -->|"Push / Email"| A
+    M --> O["Webhook Delivery<br/>Service"]
+    O -->|"8. HTTPS POST<br/>webhook to merchant"| B
 </div>
 </div>
 
-<div class="section">
-<h3>🔍 Component Deep Dives — P2P Payment</h3>
+<h3>Examples</h3>
 
-<div class="subsection">
-<h4>Double-Entry Ledger</h4>
-<p><strong>Principle:</strong> Every financial movement creates exactly two entries — a DEBIT and a CREDIT — that sum to zero. This ensures money is never created or destroyed in the system.</p>
+<div class="example">
+<strong>Example 1 — Happy Path:</strong> User Jane is buying a $75 pair of shoes on ShoeStore.com. She clicks "Pay with PayPal." ShoeStore's server calls <code>HTTPS POST /v2/checkout/orders</code> with <code>{items: [{name: "Running Shoes", amount: 75.00}], currency: "USD"}</code>. The Order Service creates an order record with status <code>CREATED</code> and returns an <code>order_id</code> and an <code>approval_url</code>. Jane is redirected to the PayPal approval page where she sees "ShoeStore.com is requesting $75.00." She logs into PayPal (if not already), reviews the amount, and clicks "Approve." PayPal's API Gateway routes the approval to the Payment Service, which runs fraud detection (passes), and marks the order as <code>APPROVED</code>. ShoeStore's server then calls <code>HTTPS POST /v2/checkout/orders/{order_id}/capture</code>. The Payment Service debits Jane's wallet by $75, credits ShoeStore's merchant wallet by $75 (minus a 2.9% + $0.30 fee = $72.53 net), creates ledger entries, writes the transaction record as <code>COMPLETED</code>. Jane receives a push notification: "You paid $75.00 to ShoeStore.com." ShoeStore receives a webhook: <code>{event: "PAYMENT.CAPTURE.COMPLETED", order_id, amount: 72.53}</code> and fulfills the order.
+</div>
+
+<div class="example">
+<strong>Example 2 — User Abandons Approval:</strong> User Mark clicks "Pay with PayPal" on a merchant site but closes the PayPal approval page without approving. The order remains in <code>CREATED</code> status. No funds are moved. The order expires after 3 hours (configurable TTL). The merchant can check the order status via <code>GET /v2/checkout/orders/{order_id}</code> and see <code>status: "EXPIRED"</code>. No webhook is sent for abandoned orders.
+</div>
+
+<div class="example">
+<strong>Example 3 — Merchant Refund:</strong> After ShoeStore ships the wrong size, they issue a refund. ShoeStore's server calls <code>HTTPS POST /v2/payments/captures/{capture_id}/refund</code> with <code>{amount: 75.00}</code>. The Payment Service debits ShoeStore's merchant wallet by $75, credits Jane's wallet by $75, creates reverse ledger entries, and writes a new transaction with type <code>REFUND</code>. Jane receives a notification: "ShoeStore.com refunded $75.00." ShoeStore receives a webhook: <code>{event: "PAYMENT.CAPTURE.REFUNDED"}</code>.
+</div>
+
+<h3>Component Deep Dive — Flow 2</h3>
+
+<div class="card">
+<h4>Order Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP/2</li>
+    <li><strong>Endpoints:</strong>
+        <ul>
+            <li><code>POST /v2/checkout/orders</code> — Create an order</li>
+            <li><code>GET /v2/checkout/orders/{order_id}</code> — Get order status</li>
+            <li><code>POST /v2/checkout/orders/{order_id}/capture</code> — Capture (charge) an approved order</li>
+        </ul>
+    </li>
+    <li><strong>Input (create):</strong> <code>{merchant_id, items: [{name, amount}], currency, return_url, cancel_url}</code></li>
+    <li><strong>Output (create):</strong> <code>{order_id, status: "CREATED", approval_url, created_at}</code></li>
+    <li><strong>Responsibilities:</strong> Manages the lifecycle of merchant orders (CREATED → APPROVED → COMPLETED / EXPIRED). Stores order details in the Order DB. Validates merchant credentials. Enforces order TTLs. Delegates actual payment execution to the Payment Service upon capture.</li>
+</ul>
+
+<h4>Webhook Delivery Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTPS POST to merchant-registered callback URLs</li>
+    <li><strong>Input:</strong> Message from queue: <code>{merchant_id, event_type, payload}</code></li>
+    <li><strong>Output:</strong> HTTPS POST to merchant's webhook URL with event payload; expects 2xx response.</li>
+    <li><strong>Responsibilities:</strong> Reliably delivers event notifications to merchants. Implements retry with exponential backoff (1s, 2s, 4s, 8s... up to 24 hours). Logs all delivery attempts. If the merchant's endpoint is consistently down, events are stored and can be replayed. Uses HMAC-SHA256 signatures so merchants can verify authenticity.</li>
+</ul>
+
+<p><em>The API Gateway, Payment Service, Fraud Detection Service, Wallet Service, Ledger Service, Message Queue, and Notification Service are the same as described in Flow 1.</em></p>
+</div>
+
+<!-- ================================================================== -->
+<!-- 5. FLOW 3 — BANK TRANSFERS -->
+<!-- ================================================================== -->
+<h2 id="flow3">5. Flow 3 — Bank Transfers (Deposit &amp; Withdraw)</h2>
+
+<div class="diagram-card">
+<div class="mermaid">
+graph TD
+    A["👤 User Client"] -->|"HTTPS POST<br/>/v1/wallet/deposit<br/>or /v1/wallet/withdraw"| B["API Gateway"]
+    B --> C["Wallet Service"]
+    C -->|"Validate linked<br/>payment method"| D[("Payment Method DB<br/>(SQL)")]
+    C -->|"Create pending txn"| E[("Transaction DB<br/>(SQL)")]
+    C -->|"Initiate ACH/wire<br/>transfer request"| F["External Payment<br/>Processor Gateway"]
+    F -->|"Submit to bank<br/>network (ACH)"| G["🏦 Bank"]
+    G -.->|"Async callback<br/>(1-3 business days)"| F
+    F -->|"Webhook callback<br/>to our system"| H["Bank Callback<br/>Handler"]
+    H -->|"Enqueue result"| I["Message Queue"]
+    I --> J["Wallet Service<br/>(Worker)"]
+    J -->|"Credit or debit<br/>wallet balance"| K[("Wallet DB<br/>(SQL)")]
+    J -->|"Record entries"| L["Ledger Service"]
+    L --> M[("Ledger DB<br/>(SQL)")]
+    J -->|"Update txn status<br/>to COMPLETED"| E
+    I --> N["Notification Service"]
+    N -->|"Push / Email"| A
+</div>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — Deposit (Happy Path):</strong> User Tom wants to add $500 from his Chase checking account to his PayPal wallet. He opens the app, taps "Add Money," selects his linked Chase account, enters $500, and taps "Add." His client sends <code>HTTPS POST /v1/wallet/deposit {payment_method_id: "pm-chase-123", amount: 500.00, currency: "USD"}</code>. The Wallet Service validates that <code>pm-chase-123</code> is an active, verified bank account belonging to Tom. It creates a transaction record with status <code>PENDING</code> and calls the External Payment Processor Gateway to initiate an ACH debit of $500 from Tom's Chase account. The External Payment Processor submits the ACH request to the bank network. Tom immediately sees "Deposit pending — $500.00" in his transaction history. Two business days later, Chase confirms the ACH debit succeeded. The External Payment Processor sends a webhook callback to our Bank Callback Handler. The handler enqueues a message on the Message Queue. The Wallet Service Worker picks up the message, credits Tom's wallet by $500, writes ledger entries (DEBIT on the bank-settlement account, CREDIT on Tom's wallet), and updates the transaction status to <code>COMPLETED</code>. Tom receives a push notification: "Your $500.00 deposit has been completed."
+</div>
+
+<div class="example">
+<strong>Example 2 — Withdrawal (Happy Path):</strong> User Sara wants to withdraw $200 from her PayPal wallet to her Bank of America savings account. She sends <code>HTTPS POST /v1/wallet/withdraw {payment_method_id: "pm-boa-456", amount: 200.00, currency: "USD"}</code>. The Wallet Service verifies Sara has $200+ in her wallet. It immediately debits her wallet by $200 (balance goes from $350 → $150) and creates a <code>PENDING</code> transaction. This immediate debit prevents Sara from spending the same $200 elsewhere while the bank transfer is in flight. The External Payment Processor initiates an ACH credit of $200 to Sara's bank account. Two business days later, the bank confirms. The transaction is updated to <code>COMPLETED</code>. Sara gets a notification: "Your $200.00 withdrawal to Bank of America has been completed."
+</div>
+
+<div class="example">
+<strong>Example 3 — Bank Rejects Deposit:</strong> User Tom's Chase account has insufficient funds for the $500 ACH debit. Two business days later, Chase returns an ACH rejection code <code>R01 (Insufficient Funds)</code>. The Bank Callback Handler receives this, enqueues the failure. The Wallet Service Worker updates the transaction to <code>FAILED</code> with reason <code>BANK_INSUFFICIENT_FUNDS</code>. Since Tom's PayPal wallet was never credited (deposits only credit on confirmation), no reversal is needed. Tom receives a notification: "Your $500.00 deposit failed — insufficient funds in your bank account."
+</div>
+
+<div class="example">
+<strong>Example 4 — Bank Rejects Withdrawal:</strong> Sara's bank rejects the ACH credit (e.g., account closed). The Bank Callback Handler receives the rejection. The Wallet Service Worker issues a compensating credit of $200 back to Sara's wallet (balance goes from $150 → $350) and writes reverse ledger entries. The transaction is updated to <code>FAILED</code>. Sara receives a notification: "Your $200.00 withdrawal failed. Funds have been returned to your PayPal balance."
+</div>
+
+<h3>Component Deep Dive — Flow 3</h3>
+
+<div class="card">
+<h4>External Payment Processor Gateway</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTPS with mutual TLS (mTLS) to bank networks</li>
+    <li><strong>Input:</strong> <code>{user_bank_account_token, amount, currency, direction: "DEBIT"|"CREDIT", reference_id}</code></li>
+    <li><strong>Output:</strong> <code>{processor_reference_id, status: "SUBMITTED"}</code> (synchronous), then async callback with final result.</li>
+    <li><strong>Responsibilities:</strong> Abstracts away the complexity of ACH, wire transfers, and card network APIs. Tokenizes bank account details (never stores raw account numbers). Submits transfer requests and handles async callbacks from bank networks. Retries failed submissions. Manages settlement batching.</li>
+</ul>
+
+<h4>Bank Callback Handler</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTPS (receives webhooks from External Payment Processor)</li>
+    <li><strong>Input:</strong> <code>{processor_reference_id, status: "SUCCESS"|"FAILED", failure_reason_code, timestamp}</code></li>
+    <li><strong>Output:</strong> Enqueues a message on the Message Queue for the Wallet Service Worker to process.</li>
+    <li><strong>Responsibilities:</strong> Receives and validates incoming webhook callbacks (verifies signatures). Deduplicates callbacks (same processor_reference_id). Enqueues the result for async processing. Acts as a thin, highly available ingestion layer.</li>
+</ul>
+
+<h4>Wallet Service (Worker Mode)</h4>
+<ul>
+    <li><strong>Responsibilities:</strong> Consumes messages from the Message Queue for bank transfer results. Credits or debits wallets based on the result. Issues compensating transactions on failures. Updates transaction status. Writes ledger entries.</li>
+</ul>
+</div>
+
+<!-- ================================================================== -->
+<!-- 6. FLOW 4 — VIEW TRANSACTION HISTORY -->
+<!-- ================================================================== -->
+<h2 id="flow4">6. Flow 4 — View Transaction History</h2>
+
+<div class="diagram-card">
+<div class="mermaid">
+graph TD
+    A["👤 User Client"] -->|"HTTPS GET<br/>/v1/transactions?page=1&limit=20"| B["API Gateway"]
+    B --> C["Transaction Service"]
+    C -->|"1. Check cache"| D["In-Memory Cache<br/>(Recent Transactions)"]
+    D -->|"Cache HIT"| C
+    D -->|"Cache MISS"| E[("Transaction DB<br/>(SQL - Read Replica)")]
+    E -->|"Query results"| C
+    C -->|"2. Populate cache"| D
+    C -->|"3. Return paginated<br/>results"| B
+    B --> A
+</div>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example 1 — First Page Load (Cache Miss):</strong> User Alice opens the PayPal app and taps "Activity." Her client sends <code>HTTPS GET /v1/transactions?page=1&limit=20</code>. The API Gateway authenticates Alice and routes to the Transaction Service. The Transaction Service checks the in-memory cache for key <code>txn:alice_id:page1</code> — <strong>cache miss</strong>. It queries the Transaction DB read replica: <code>SELECT * FROM transactions WHERE sender_wallet_id = ? OR receiver_wallet_id = ? ORDER BY created_at DESC LIMIT 20 OFFSET 0</code>. The results are returned, cached with key <code>txn:alice_id:page1</code> and a TTL of 30 seconds, and sent back to Alice. She sees her 20 most recent transactions including "Sent $50 to Bob — 2 min ago."
+</div>
+
+<div class="example">
+<strong>Example 2 — Subsequent Load (Cache Hit):</strong> Alice switches tabs and comes back to Activity within 30 seconds. Her client sends the same GET request. The Transaction Service finds <code>txn:alice_id:page1</code> in the cache — <strong>cache hit</strong>. The cached result is returned instantly without touching the database. Latency is ~5ms instead of ~50ms.
+</div>
+
+<div class="example">
+<strong>Example 3 — Filtered History:</strong> Alice wants to see only her received payments from the last month. Her client sends <code>HTTPS GET /v1/transactions?type=RECEIVED&start_date=2025-01-01&end_date=2025-01-31&page=1&limit=20</code>. The Transaction Service does not cache filtered queries (too many permutations). It queries the Transaction DB directly with the appropriate WHERE clauses and returns the results.
+</div>
+
+<h3>Component Deep Dive — Flow 4</h3>
+
+<div class="card">
+<h4>Transaction Service</h4>
+<ul>
+    <li><strong>Protocol:</strong> HTTP/2</li>
+    <li><strong>Endpoint:</strong> <code>GET /v1/transactions</code></li>
+    <li><strong>Input (query params):</strong> <code>page, limit, type (optional), start_date (optional), end_date (optional), currency (optional)</code></li>
+    <li><strong>Output:</strong> <code>{transactions: [{transaction_id, type, amount, currency, counterparty_name, status, created_at}], pagination: {page, limit, total_count, has_next}}</code></li>
+    <li><strong>Responsibilities:</strong> Retrieves and returns paginated transaction history. Reads from read replicas to offload the primary database. Uses cursor-based pagination internally (keyset pagination on <code>(created_at, transaction_id)</code>) for performance, even though the API exposes page numbers externally. Leverages the in-memory cache for the most recent (first page) unfiltered queries.</li>
+</ul>
+</div>
+
+<!-- ================================================================== -->
+<!-- 7. COMBINED OVERALL DIAGRAM -->
+<!-- ================================================================== -->
+<h2 id="combined">7. Combined Overall Diagram</h2>
+
+<div class="diagram-card">
+<div class="mermaid">
+graph TD
+    subgraph Clients
+        U1["👤 User<br/>(Mobile/Web)"]
+        M1["🏪 Merchant<br/>Server"]
+    end
+
+    subgraph Gateway Layer
+        LB["Load Balancer"]
+        AG["API Gateway<br/>(Auth, Rate Limit, Routing)"]
+    end
+
+    subgraph Core Services
+        PS["Payment Service"]
+        OS["Order Service"]
+        WS["Wallet Service"]
+        TS["Transaction Service"]
+        LS["Ledger Service"]
+        FD["Fraud Detection<br/>Service"]
+        NS["Notification Service"]
+        WH["Webhook Delivery<br/>Service"]
+        BCH["Bank Callback<br/>Handler"]
+    end
+
+    subgraph Data Stores
+        WDB[("Wallet DB<br/>(SQL)")]
+        TDB[("Transaction DB<br/>(SQL + Read Replicas)")]
+        LDB[("Ledger DB<br/>(SQL - Append Only)")]
+        ODB[("Order DB<br/>(SQL)")]
+        PMDB[("Payment Method DB<br/>(SQL)")]
+    end
+
+    subgraph Async Layer
+        MQ["Message Queue"]
+        CACHE["In-Memory Cache"]
+    end
+
+    subgraph External
+        EPG["External Payment<br/>Processor Gateway"]
+        BANK["🏦 Bank Networks<br/>(ACH / Wire)"]
+    end
+
+    U1 -->|"HTTPS"| LB
+    M1 -->|"HTTPS"| LB
+    LB --> AG
+
+    AG --> PS
+    AG --> OS
+    AG --> TS
+
+    PS --> FD
+    PS --> WS
+    PS --> LS
+    PS --> MQ
+    PS --> TDB
+
+    OS --> ODB
+    OS --> PS
+
+    WS --> WDB
+    WS --> PMDB
+    WS --> EPG
+
+    LS --> LDB
+
+    TS --> CACHE
+    CACHE -.-> TDB
+    TS --> TDB
+
+    EPG --> BANK
+    BANK -.->|"Async callback"| BCH
+    BCH --> MQ
+
+    MQ --> NS
+    MQ --> WH
+    MQ --> WS
+
+    NS -->|"Push/Email/SMS"| U1
+    WH -->|"HTTPS POST webhook"| M1
+</div>
+</div>
+
+<h3>Examples</h3>
+
+<div class="example">
+<strong>Example — Full P2P Flow Through Combined System:</strong> Alice opens the PayPal app and sends $50 to Bob. Her HTTPS request hits the <strong>Load Balancer</strong>, which distributes it to a healthy <strong>API Gateway</strong> instance. The API Gateway authenticates her JWT, rate-checks, and routes to the <strong>Payment Service</strong>. The Payment Service calls the <strong>Fraud Detection Service</strong> (passes), then the <strong>Wallet Service</strong> (debits Alice's wallet in the <strong>Wallet DB</strong>, credits Bob's wallet), then the <strong>Ledger Service</strong> (writes double-entry rows to the <strong>Ledger DB</strong>), and writes the transaction to the <strong>Transaction DB</strong>. The Payment Service enqueues a notification on the <strong>Message Queue</strong>. The <strong>Notification Service</strong> consumes the message and sends Bob a push notification. When Bob opens his Activity tab, the request flows through the Load Balancer → API Gateway → <strong>Transaction Service</strong>, which checks the <strong>In-Memory Cache</strong> (miss on first load), queries the <strong>Transaction DB Read Replica</strong>, caches the result, and returns Bob's paginated transaction list showing "Received $50 from Alice."
+</div>
+
+<div class="example">
+<strong>Example — Full Merchant Checkout Flow Through Combined System:</strong> Jane is on ShoeStore.com and clicks "Pay with PayPal." ShoeStore's server (the Merchant Server) calls the <strong>API Gateway</strong> via the <strong>Load Balancer</strong> to create an order (<strong>Order Service</strong> → <strong>Order DB</strong>). Jane is redirected to PayPal's approval page, approves, and the approval flows through the Gateway → <strong>Payment Service</strong> → <strong>Fraud Detection Service</strong>. ShoeStore then calls capture, which flows through Gateway → <strong>Order Service</strong> → <strong>Payment Service</strong> → <strong>Wallet Service</strong> (debit Jane, credit ShoeStore in the <strong>Wallet DB</strong>) → <strong>Ledger Service</strong> (write entries to <strong>Ledger DB</strong>) → <strong>Transaction DB</strong>. Two messages are enqueued to the <strong>Message Queue</strong>: one for the <strong>Notification Service</strong> (push notification to Jane) and one for the <strong>Webhook Delivery Service</strong> (HTTPS POST to ShoeStore's callback URL).
+</div>
+
+<div class="example">
+<strong>Example — Full Bank Deposit Flow Through Combined System:</strong> Tom adds $500 from his bank. The request flows through <strong>Load Balancer</strong> → <strong>API Gateway</strong> → <strong>Wallet Service</strong> (validates payment method in <strong>Payment Method DB</strong>, creates a PENDING transaction in <strong>Transaction DB</strong>) → <strong>External Payment Processor Gateway</strong> → <strong>Bank Network (ACH)</strong>. Two days later, the bank confirms. The callback hits the <strong>Bank Callback Handler</strong>, which enqueues the result on the <strong>Message Queue</strong>. The <strong>Wallet Service Worker</strong> picks it up, credits Tom's wallet in the <strong>Wallet DB</strong>, writes to the <strong>Ledger DB</strong> via the <strong>Ledger Service</strong>, and updates the transaction status. The <strong>Notification Service</strong> sends Tom a push notification.
+</div>
+
+<!-- ================================================================== -->
+<!-- 8. DATABASE SCHEMA -->
+<!-- ================================================================== -->
+<h2 id="schema">8. Database Schema</h2>
+
+<!-- USERS TABLE -->
+<h3>8.1 — <code>users</code> (SQL)</h3>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><strong>PRIMARY KEY</strong></td><td>Unique identifier for the user</td></tr>
+    <tr><td><code>email</code></td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td><td>User's email address</td></tr>
+    <tr><td><code>phone</code></td><td>VARCHAR(20)</td><td>UNIQUE</td><td>User's phone number</td></tr>
+    <tr><td><code>full_name</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>User's display name</td></tr>
+    <tr><td><code>password_hash</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Bcrypt/Argon2 hashed password</td></tr>
+    <tr><td><code>status</code></td><td>ENUM</td><td>NOT NULL</td><td>ACTIVE, SUSPENDED, CLOSED</td></tr>
+    <tr><td><code>kyc_verified</code></td><td>BOOLEAN</td><td>DEFAULT FALSE</td><td>Whether KYC verification is complete</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Account creation time</td></tr>
+    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last update time</td></tr>
+</table>
+
+<h4>Why SQL?</h4>
+<p>User data requires strong consistency — we cannot have a user exist in one query and not in another. Relational integrity is needed since users are referenced by wallets, transactions, and payment methods via foreign keys. SQL provides ACID transactions for operations like updating user status atomically with related records.</p>
+
+<h4>Indexes</h4>
+<ul>
+    <li><strong><code>email</code> — Hash Index:</strong> Used for login lookups and recipient resolution (<code>WHERE email = ?</code>). Hash index provides O(1) exact-match lookups, which is the only access pattern for email (no range queries needed).</li>
+    <li><strong><code>phone</code> — Hash Index:</strong> Same rationale as email — used for exact-match recipient resolution.</li>
+</ul>
+
+<h4>Sharding Strategy</h4>
+<p>Shard by <code>user_id</code> (hash-based). User lookups are always by <code>user_id</code> after authentication. Email/phone lookups for recipient resolution use a lightweight <strong>lookup table</strong> (email → user_id, phone → user_id) that maps to the correct shard. This lookup table is small enough to be replicated across all shards or stored in the cache.</p>
+
+<h4>Read/Write Events</h4>
+<ul>
+    <li><strong>Written to:</strong> User registration, profile updates, KYC verification, account status changes.</li>
+    <li><strong>Read from:</strong> Login/authentication, recipient resolution (send money flow), profile display.</li>
+</ul>
+</div>
+
+<!-- WALLETS TABLE -->
+<h3>8.2 — <code>wallets</code> (SQL)</h3>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><code>wallet_id</code></td><td>UUID</td><td><strong>PRIMARY KEY</strong></td><td>Unique wallet identifier</td></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → users.user_id</strong>, NOT NULL</td><td>Owner of the wallet</td></tr>
+    <tr><td><code>currency</code></td><td>CHAR(3)</td><td>NOT NULL</td><td>ISO 4217 currency code (USD, EUR, etc.)</td></tr>
+    <tr><td><code>balance</code></td><td>DECIMAL(19,4)</td><td>NOT NULL, CHECK(balance >= 0)</td><td>Current balance (19,4 to avoid floating-point issues)</td></tr>
+    <tr><td><code>status</code></td><td>ENUM</td><td>NOT NULL</td><td>ACTIVE, FROZEN, CLOSED</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Wallet creation time</td></tr>
+    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last balance update time</td></tr>
+</table>
+
+<h4>Why SQL?</h4>
+<p>Wallet balances are the single most critical data in the system. Every debit/credit must be ACID-compliant — we cannot tolerate eventual consistency on money. The <code>CHECK(balance >= 0)</code> constraint prevents overdrafts at the database level as a safety net. SQL transactions allow us to atomically debit one wallet and credit another within the same shard.</p>
+
+<h4>Denormalization Note</h4>
+<p>The <code>balance</code> column is technically a denormalized, cached value — the authoritative balance can always be recomputed from the Ledger (<code>SUM of all CREDIT entries - SUM of all DEBIT entries</code> for a given wallet). We denormalize the balance into the wallets table for performance: checking a user's balance is an O(1) read instead of an O(n) aggregation over potentially millions of ledger entries. The balance is always updated in the same database transaction as the corresponding ledger entries, so it stays consistent.</p>
+
+<h4>Indexes</h4>
+<ul>
+    <li><strong><code>user_id</code> — Hash Index:</strong> Every wallet operation begins with "find the wallet for this user and currency." Hash index gives O(1) lookups for <code>WHERE user_id = ? AND currency = ?</code>.</li>
+    <li><strong><code>(user_id, currency)</code> — Composite Unique Index:</strong> Enforces that a user can have at most one wallet per currency.</li>
+</ul>
+
+<h4>Sharding Strategy</h4>
+<p>Shard by <code>user_id</code> (hash-based), co-located with the <code>users</code> table shard. This ensures that looking up a user's wallets never crosses shard boundaries. For P2P transfers where sender and receiver are on different shards, the Saga pattern with compensating transactions is used.</p>
+
+<h4>Read/Write Events</h4>
+<ul>
+    <li><strong>Written to:</strong> Every P2P payment (debit sender + credit receiver), every merchant payment (debit user + credit merchant), every deposit completion (credit user), every withdrawal initiation (debit user), refunds.</li>
+    <li><strong>Read from:</strong> Balance check before payments, balance display in the app, withdrawal validation.</li>
+</ul>
+</div>
+
+<!-- PAYMENT METHODS TABLE -->
+<h3>8.3 — <code>payment_methods</code> (SQL)</h3>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><code>payment_method_id</code></td><td>UUID</td><td><strong>PRIMARY KEY</strong></td><td>Unique identifier</td></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → users.user_id</strong>, NOT NULL</td><td>Owner</td></tr>
+    <tr><td><code>type</code></td><td>ENUM</td><td>NOT NULL</td><td>BANK_ACCOUNT, DEBIT_CARD, CREDIT_CARD</td></tr>
+    <tr><td><code>token</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Tokenized reference from external payment processor (never store raw card/account numbers)</td></tr>
+    <tr><td><code>display_name</code></td><td>VARCHAR(100)</td><td></td><td>"Chase ****1234"</td></tr>
+    <tr><td><code>status</code></td><td>ENUM</td><td>NOT NULL</td><td>ACTIVE, REMOVED, VERIFICATION_PENDING</td></tr>
+    <tr><td><code>is_default</code></td><td>BOOLEAN</td><td>DEFAULT FALSE</td><td>Whether this is the default payment method</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>When the method was linked</td></tr>
+</table>
+
+<h4>Why SQL?</h4>
+<p>Payment methods are relational (belong to a user), require PCI-DSS compliance with strict access controls, and need consistency guarantees when validating during payment flows.</p>
+
+<h4>Indexes</h4>
+<ul>
+    <li><strong><code>user_id</code> — Hash Index:</strong> All queries are "get payment methods for user X" — <code>WHERE user_id = ?</code>.</li>
+</ul>
+
+<h4>Sharding</h4>
+<p>Co-sharded with <code>users</code> by <code>user_id</code>.</p>
+
+<h4>Read/Write Events</h4>
+<ul>
+    <li><strong>Written to:</strong> User links a new bank account or card, user removes a payment method, verification status updates.</li>
+    <li><strong>Read from:</strong> Deposit/withdrawal flows (validate the payment method), payment method list display in the app.</li>
+</ul>
+</div>
+
+<!-- TRANSACTIONS TABLE -->
+<h3>8.4 — <code>transactions</code> (SQL)</h3>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><code>transaction_id</code></td><td>UUID</td><td><strong>PRIMARY KEY</strong></td><td>Unique transaction identifier</td></tr>
+    <tr><td><code>idempotency_key</code></td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td><td>Client-generated key to prevent double processing</td></tr>
+    <tr><td><code>type</code></td><td>ENUM</td><td>NOT NULL</td><td>P2P_SEND, P2P_RECEIVE, MERCHANT_PAYMENT, DEPOSIT, WITHDRAWAL, REFUND</td></tr>
+    <tr><td><code>sender_wallet_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → wallets.wallet_id</strong></td><td>Source wallet (NULL for deposits)</td></tr>
+    <tr><td><code>receiver_wallet_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → wallets.wallet_id</strong></td><td>Destination wallet (NULL for withdrawals)</td></tr>
+    <tr><td><code>amount</code></td><td>DECIMAL(19,4)</td><td>NOT NULL</td><td>Transaction amount</td></tr>
+    <tr><td><code>currency</code></td><td>CHAR(3)</td><td>NOT NULL</td><td>ISO 4217 currency code</td></tr>
+    <tr><td><code>fee_amount</code></td><td>DECIMAL(19,4)</td><td>DEFAULT 0</td><td>Fee charged (for merchant payments)</td></tr>
+    <tr><td><code>status</code></td><td>ENUM</td><td>NOT NULL</td><td>INITIATED, PENDING, COMPLETED, FAILED, BLOCKED_FRAUD, REVERSED</td></tr>
+    <tr><td><code>failure_reason</code></td><td>VARCHAR(255)</td><td></td><td>Reason if FAILED (e.g., INSUFFICIENT_FUNDS)</td></tr>
+    <tr><td><code>note</code></td><td>VARCHAR(500)</td><td></td><td>Optional user note ("Happy Birthday!")</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Transaction creation time</td></tr>
+    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last status update time</td></tr>
+</table>
+
+<h4>Why SQL?</h4>
+<p>Transactions are the core financial records. They must be ACID-compliant — a transaction must either be fully created or not at all. They reference wallets via foreign keys. Status transitions must be atomic (e.g., INITIATED → COMPLETED cannot be partially applied). Financial regulators require transactional integrity for audit trails.</p>
+
+<h4>Indexes</h4>
+<ul>
+    <li><strong><code>idempotency_key</code> — Hash Index:</strong> Used for O(1) deduplication lookups. Every incoming payment request first checks <code>WHERE idempotency_key = ?</code>. Hash index is ideal since this is always an exact-match lookup.</li>
+    <li><strong><code>(sender_wallet_id, created_at)</code> — B-Tree Composite Index:</strong> Supports the transaction history query for sent transactions: <code>WHERE sender_wallet_id = ? ORDER BY created_at DESC</code>. B-Tree is chosen over Hash because we need range scans (ordered by date) and the B-Tree supports both equality and range predicates.</li>
+    <li><strong><code>(receiver_wallet_id, created_at)</code> — B-Tree Composite Index:</strong> Same rationale — supports the transaction history query for received transactions.</li>
+</ul>
+
+<h4>Sharding Strategy</h4>
+<p>Shard by <code>transaction_id</code> (hash-based). This distributes writes evenly. However, transaction history queries need all transactions for a given wallet, which may span multiple shards. To solve this, we maintain a <strong>secondary index shard</strong> (or use a scatter-gather approach): a lightweight <code>wallet_transactions</code> mapping table sharded by <code>wallet_id</code> that stores <code>(wallet_id, transaction_id, created_at)</code>. This allows the Transaction Service to find all transaction_ids for a wallet on a single shard, then fetch full transaction details from the primary shards. This is a form of denormalization done for performance — it avoids broadcasting every history query to all shards.</p>
+
+<h4>Read/Write Events</h4>
+<ul>
+    <li><strong>Written to:</strong> Every payment event (P2P, merchant, deposit, withdrawal, refund). Created on initiation, updated on completion/failure.</li>
+    <li><strong>Read from:</strong> Transaction history (Flow 4), idempotency check on every incoming payment, order status checks.</li>
+</ul>
+</div>
+
+<!-- LEDGER ENTRIES TABLE -->
+<h3>8.5 — <code>ledger_entries</code> (SQL)</h3>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><code>entry_id</code></td><td>BIGINT (auto-increment)</td><td><strong>PRIMARY KEY</strong></td><td>Sequential entry ID (never gaps for audit)</td></tr>
+    <tr><td><code>transaction_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → transactions.transaction_id</strong>, NOT NULL</td><td>The transaction this entry belongs to</td></tr>
+    <tr><td><code>wallet_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → wallets.wallet_id</strong>, NOT NULL</td><td>The wallet affected</td></tr>
+    <tr><td><code>entry_type</code></td><td>ENUM</td><td>NOT NULL</td><td>DEBIT or CREDIT</td></tr>
+    <tr><td><code>amount</code></td><td>DECIMAL(19,4)</td><td>NOT NULL</td><td>Entry amount</td></tr>
+    <tr><td><code>currency</code></td><td>CHAR(3)</td><td>NOT NULL</td><td>ISO 4217 currency code</td></tr>
+    <tr><td><code>balance_after</code></td><td>DECIMAL(19,4)</td><td>NOT NULL</td><td>Wallet balance after this entry (snapshot)</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Entry creation time</td></tr>
+</table>
+
+<h4>Why SQL?</h4>
+<p>The ledger is the authoritative financial record. Double-entry bookkeeping requires that every transaction has exactly matching DEBIT and CREDIT entries. This invariant must be enforced transactionally — both entries are written in the same DB transaction. SQL's ACID guarantees make this possible. Entries are <strong>append-only</strong> (immutable) — there are no UPDATEs or DELETEs on this table, only INSERTs. This is critical for regulatory compliance and audit trails.</p>
+
+<h4>Indexes</h4>
+<ul>
+    <li><strong><code>(wallet_id, created_at)</code> — B-Tree Composite Index:</strong> Supports balance recalculation queries: <code>SELECT SUM(CASE WHEN entry_type = 'CREDIT' THEN amount ELSE -amount END) FROM ledger_entries WHERE wallet_id = ?</code>. Also supports generating account statements ordered by date.</li>
+    <li><strong><code>transaction_id</code> — Hash Index:</strong> Supports looking up all ledger entries for a given transaction (for audit and debugging).</li>
+</ul>
+
+<h4>Sharding Strategy</h4>
+<p>Shard by <code>wallet_id</code> (hash-based). This co-locates all ledger entries for a given wallet on the same shard, making balance recalculations local. For a given transaction involving two wallets on different shards, the two ledger entries will be on different shards — but since they are only written (append-only) and the transaction integrity is managed by the Payment Service's Saga pattern, this is acceptable.</p>
+
+<h4>Read/Write Events</h4>
+<ul>
+    <li><strong>Written to:</strong> Every completed payment, deposit, withdrawal, refund. Always written in pairs (DEBIT + CREDIT).</li>
+    <li><strong>Read from:</strong> Balance reconciliation (batch jobs), regulatory audits, dispute resolution, account statements.</li>
+</ul>
+</div>
+
+<!-- ORDERS TABLE -->
+<h3>8.6 — <code>orders</code> (SQL)</h3>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><code>order_id</code></td><td>UUID</td><td><strong>PRIMARY KEY</strong></td><td>Unique order identifier</td></tr>
+    <tr><td><code>merchant_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → users.user_id</strong>, NOT NULL</td><td>The merchant who created the order</td></tr>
+    <tr><td><code>payer_id</code></td><td>UUID</td><td>FOREIGN KEY → users.user_id</td><td>The user who is paying (set on approval)</td></tr>
+    <tr><td><code>amount</code></td><td>DECIMAL(19,4)</td><td>NOT NULL</td><td>Total order amount</td></tr>
+    <tr><td><code>currency</code></td><td>CHAR(3)</td><td>NOT NULL</td><td>ISO 4217 currency code</td></tr>
+    <tr><td><code>status</code></td><td>ENUM</td><td>NOT NULL</td><td>CREATED, APPROVED, COMPLETED, EXPIRED, CANCELLED</td></tr>
+    <tr><td><code>return_url</code></td><td>VARCHAR(2048)</td><td></td><td>Merchant's return URL after approval</td></tr>
+    <tr><td><code>cancel_url</code></td><td>VARCHAR(2048)</td><td></td><td>Merchant's cancel URL</td></tr>
+    <tr><td><code>transaction_id</code></td><td>UUID</td><td>FOREIGN KEY → transactions.transaction_id</td><td>Linked transaction (set on capture)</td></tr>
+    <tr><td><code>expires_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Order expiration time (default: creation + 3 hours)</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Order creation time</td></tr>
+    <tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last status update</td></tr>
+</table>
+
+<h4>Why SQL?</h4>
+<p>Orders involve state transitions (CREATED → APPROVED → COMPLETED) that must be atomic. They reference both merchants and payers via foreign keys. Consistency is important — we cannot have an order marked COMPLETED without the corresponding transaction existing.</p>
+
+<h4>Indexes</h4>
+<ul>
+    <li><strong><code>merchant_id</code> — Hash Index:</strong> Merchants query their orders by <code>WHERE merchant_id = ?</code>.</li>
+    <li><strong><code>(status, expires_at)</code> — B-Tree Composite Index:</strong> A background job periodically marks expired orders: <code>WHERE status = 'CREATED' AND expires_at < NOW()</code>. The B-Tree supports this range scan efficiently.</li>
+</ul>
+
+<h4>Sharding</h4>
+<p>Shard by <code>merchant_id</code> (hash-based). Merchants query their own orders far more often than individual users, and this keeps all of a merchant's orders on the same shard.</p>
+
+<h4>Read/Write Events</h4>
+<ul>
+    <li><strong>Written to:</strong> Merchant creates an order (POST /checkout/orders), user approves, merchant captures, order expiration job.</li>
+    <li><strong>Read from:</strong> Order status checks (GET /checkout/orders/{id}), approval flow, capture flow.</li>
+</ul>
+</div>
+
+<!-- NOTIFICATIONS TABLE -->
+<h3>8.7 — <code>notifications</code> (NoSQL — Document Store)</h3>
+<div class="card">
+<table>
+    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+    <tr><td><code>notification_id</code></td><td>UUID</td><td><strong>Primary Key</strong></td></tr>
+    <tr><td><code>user_id</code></td><td>UUID</td><td><strong>Partition Key</strong> — all notifications for a user on the same partition</td></tr>
+    <tr><td><code>type</code></td><td>STRING</td><td>PAYMENT_RECEIVED, PAYMENT_SENT, DEPOSIT_COMPLETED, etc.</td></tr>
+    <tr><td><code>title</code></td><td>STRING</td><td>"You received $50.00 from Alice"</td></tr>
+    <tr><td><code>body</code></td><td>STRING</td><td>Extended notification text</td></tr>
+    <tr><td><code>metadata</code></td><td>MAP</td><td>Flexible: {transaction_id, sender_name, amount, etc.}</td></tr>
+    <tr><td><code>is_read</code></td><td>BOOLEAN</td><td>Whether the user has read this notification</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td><strong>Sort Key</strong> — sorted by time within a user's partition</td></tr>
+</table>
+
+<h4>Why NoSQL (Document Store)?</h4>
+<p>Notifications are high-volume, write-heavy, and tolerant of eventual consistency. The schema is flexible (different notification types have different metadata). Access patterns are simple: "get all notifications for user X, sorted by time" — a perfect fit for a partition key + sort key model. There are no complex joins or relational queries. NoSQL scales horizontally with ease for this workload.</p>
+
+<h4>Read/Write Events</h4>
+<ul>
+    <li><strong>Written to:</strong> Every payment event triggers a notification write (via the Notification Service consuming from the Message Queue).</li>
+    <li><strong>Read from:</strong> User opens their notification feed in the app.</li>
+</ul>
+</div>
+
+<!-- WALLET_TRANSACTIONS mapping table -->
+<h3>8.8 — <code>wallet_transactions</code> (SQL — Denormalized Mapping Table)</h3>
+<div class="card">
+<table>
+    <tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+    <tr><td><code>wallet_id</code></td><td>UUID</td><td><strong>COMPOSITE PRIMARY KEY (part 1)</strong></td><td>The wallet</td></tr>
+    <tr><td><code>created_at</code></td><td>TIMESTAMP</td><td><strong>COMPOSITE PRIMARY KEY (part 2)</strong></td><td>Transaction creation time</td></tr>
+    <tr><td><code>transaction_id</code></td><td>UUID</td><td>NOT NULL</td><td>Reference to the full transaction record</td></tr>
+    <tr><td><code>type</code></td><td>ENUM</td><td>NOT NULL</td><td>P2P_SEND, P2P_RECEIVE, MERCHANT_PAYMENT, etc.</td></tr>
+    <tr><td><code>amount</code></td><td>DECIMAL(19,4)</td><td>NOT NULL</td><td>Amount (denormalized for display without joining)</td></tr>
+    <tr><td><code>counterparty_name</code></td><td>VARCHAR(255)</td><td></td><td>Name of the other party (denormalized)</td></tr>
+</table>
+
+<h4>Why Denormalized?</h4>
+<p>This table exists purely for performance. The <code>transactions</code> table is sharded by <code>transaction_id</code>, meaning a "get all transactions for wallet X" query would scatter across all shards. By maintaining this mapping table sharded by <code>wallet_id</code>, we can fetch a user's transaction history from a single shard in O(1) with a range scan on <code>created_at</code>. The <code>amount</code> and <code>counterparty_name</code> are denormalized so the Activity feed can be rendered without joining back to the <code>transactions</code> table for most use cases. The tradeoff is slightly more write overhead (one extra row per transaction per involved wallet) in exchange for dramatically faster reads on the most common query in the app.</p>
+
+<h4>Indexes</h4>
+<ul>
+    <li>The composite primary key <code>(wallet_id, created_at)</code> is itself a <strong>B-Tree clustered index</strong>, which is perfectly suited for <code>WHERE wallet_id = ? ORDER BY created_at DESC LIMIT 20</code>.</li>
+</ul>
+
+<h4>Sharding</h4>
+<p>Sharded by <code>wallet_id</code>, co-located with the <code>wallets</code> table.</p>
+
+<h4>Read/Write Events</h4>
+<ul>
+    <li><strong>Written to:</strong> Every completed transaction writes one row per involved wallet (sender gets a row, receiver gets a row).</li>
+    <li><strong>Read from:</strong> Transaction history (Flow 4) — this is the primary table queried by the Transaction Service for the Activity feed.</li>
+</ul>
+</div>
+
+<!-- ================================================================== -->
+<!-- 9. CDN & CACHING DEEP DIVE -->
+<!-- ================================================================== -->
+<h2 id="cache">9. CDN &amp; Caching Deep Dive</h2>
+
+<h3>9.1 — CDN</h3>
+<div class="card">
+<p><strong>Appropriate?</strong> <strong>Limited applicability.</strong> PayPal's core product is a financial API — not a media-heavy application. CDNs are appropriate for:</p>
+<ul>
+    <li><strong>Static web assets:</strong> The PayPal website and checkout page's JavaScript bundles, CSS, images, and fonts should be served via a CDN for low-latency global delivery.</li>
+    <li><strong>Checkout SDK:</strong> The PayPal JavaScript SDK that merchants embed on their sites (<code>paypal-sdk.js</code>) should absolutely be served from a CDN — it's loaded on millions of merchant websites globally.</li>
+</ul>
+<p>CDNs are <strong>NOT appropriate</strong> for the core financial APIs (payments, transactions, balances). These involve personalized, authenticated, non-cacheable data that must hit origin servers.</p>
+</div>
+
+<h3>9.2 — In-Memory Cache</h3>
+<div class="card">
+<h4>What is Cached?</h4>
+<table>
+    <tr><th>Cache Key Pattern</th><th>Data</th><th>TTL</th><th>Rationale</th></tr>
+    <tr><td><code>user:{user_id}</code></td><td>User profile (name, email, status)</td><td>5 minutes</td><td>User profile data is read-heavy (every payment displays sender/receiver names) and changes infrequently.</td></tr>
+    <tr><td><code>txn_history:{wallet_id}:page1</code></td><td>First page of unfiltered transaction history</td><td>30 seconds</td><td>The most common query in the app (opening Activity tab). Short TTL because new transactions should appear quickly.</td></tr>
+    <tr><td><code>exchange_rates</code></td><td>Currency exchange rate matrix</td><td>60 seconds</td><td>Exchange rates change slowly (minute-level). Caching avoids hitting the exchange rate provider API on every multi-currency transaction.</td></tr>
+    <tr><td><code>idempotency:{key}</code></td><td>Transaction result for a given idempotency key</td><td>24 hours</td><td>Fast deduplication of retried payment requests without hitting the database. 24-hour TTL matches the idempotency key validity window.</td></tr>
+</table>
+
+<h4>What is NOT Cached?</h4>
+<ul>
+    <li><strong>Wallet balances:</strong> Never cached. Balances must always be read from the source-of-truth SQL database to prevent stale reads that could allow overdrafts or show incorrect balances. The cost of a DB read for balance checks is acceptable given the criticality of accuracy.</li>
+    <li><strong>Filtered transaction history:</strong> Too many permutations of filters to cache effectively (type × date range × currency × pagination). Cache hit rate would be too low.</li>
+    <li><strong>Ledger entries:</strong> Never cached. Append-only and read only during audits/reconciliation — not a hot read path.</li>
+</ul>
+
+<h4>Caching Strategy: Cache-Aside (Lazy Loading)</h4>
+<p>We use <strong>Cache-Aside</strong>:</p>
+<ol>
+    <li>Application checks the cache first.</li>
+    <li>On cache miss, query the database, write the result to the cache, return to the client.</li>
+    <li>On cache hit, return the cached result directly.</li>
+</ol>
+<p><strong>Why Cache-Aside over Write-Through?</strong> Write-Through caching would update the cache on every write, but most of our cached data (user profiles, exchange rates) is written infrequently and read frequently. Cache-Aside avoids caching data that is never read. Write-Through would add latency to every write (must wait for cache write to complete) without proportional benefit.</p>
+<p><strong>Why not Write-Behind?</strong> Write-Behind (write to cache first, async persist to DB) is dangerous for financial data. If the cache fails before the DB write, we lose transactions. Unacceptable.</p>
+
+<h4>Eviction Policy: LRU (Least Recently Used)</h4>
+<p>When the cache reaches memory capacity, the <strong>least recently used</strong> entries are evicted first. This is appropriate because:</p>
+<ul>
+    <li>Recently active users are the most likely to make subsequent requests (temporal locality).</li>
+    <li>Users who haven't opened the app recently have low probability of imminent cache hits.</li>
+    <li>LRU is simple, well-understood, and performs well for this access pattern.</li>
+</ul>
+
+<h4>Expiration Policy: TTL-Based</h4>
+<p>Every cache entry has a <strong>Time-To-Live (TTL)</strong> set based on the staleness tolerance of the data type (see table above). This ensures:</p>
+<ul>
+    <li>Stale data is automatically expired even if never evicted by LRU.</li>
+    <li>Short TTLs (30s for transaction history) balance freshness with database load reduction.</li>
+    <li>Longer TTLs (5 min for user profiles) are safe because profile changes are rare and non-critical if slightly stale.</li>
+</ul>
+
+<h4>Cache Invalidation</h4>
+<p>In addition to TTL expiration, we actively invalidate certain cache keys when the underlying data changes:</p>
+<ul>
+    <li>When a new transaction is completed for a user, we invalidate <code>txn_history:{wallet_id}:page1</code> so the next request fetches fresh data.</li>
+    <li>When a user updates their profile, we invalidate <code>user:{user_id}</code>.</li>
+</ul>
+</div>
+
+<!-- ================================================================== -->
+<!-- 10. MESSAGE QUEUE DEEP DIVE -->
+<!-- ================================================================== -->
+<h2 id="mq">10. Message Queue Deep Dive</h2>
+<div class="card">
+<h4>Why a Message Queue?</h4>
+<p>The critical payment path (debit → credit → ledger → transaction record) must be as fast and reliable as possible. Non-critical side effects like sending notifications and delivering webhooks should not block or slow down the payment response. A message queue decouples these concerns:</p>
+<ul>
+    <li><strong>Notification delivery</strong> (push, email, SMS) can take hundreds of milliseconds and may fail — this should never slow down a payment.</li>
+    <li><strong>Webhook delivery</strong> to merchants may encounter slow/down merchant servers — should not affect our payment latency.</li>
+    <li><strong>Bank transfer result processing</strong> is inherently asynchronous (callbacks arrive hours/days later).</li>
+</ul>
+
+<h4>Why Not WebSockets?</h4>
+<p>WebSockets maintain persistent connections between client and server. This is unnecessary for PayPal because:</p>
+<ul>
+    <li>Most payment operations are request-response (not streaming).</li>
+    <li>Users don't need real-time sub-second updates — push notifications (delivered via APNs/FCM) are sufficient.</li>
+    <li>Maintaining millions of persistent WebSocket connections would be resource-intensive for marginal benefit.</li>
+    <li>Mobile apps frequently background/kill connections, making WebSockets unreliable.</li>
+</ul>
+
+<h4>Why Not Polling?</h4>
+<p>Long-polling or short-polling for notifications would waste server resources. Push notifications are more efficient — the server sends data only when there's something to send.</p>
+
+<h4>Why Not Pub/Sub?</h4>
+<p>Pub/sub could work for the notification fan-out, but a message queue is preferred here because:</p>
+<ul>
+    <li>We need <strong>at-least-once delivery guarantees</strong> with acknowledgment — if the Notification Service crashes mid-processing, the message must be retried.</li>
+    <li>We need <strong>per-message ordering within a partition</strong> (notifications for a user should be processed in order).</li>
+    <li>We need <strong>dead-letter queues</strong> for failed messages after max retries.</li>
+    <li>Pure pub/sub (fire-and-forget) lacks these guarantees. Our message queue provides durable, acknowledged, ordered delivery.</li>
+</ul>
+
+<h4>How Messages Are Produced</h4>
+<p>After the Payment Service completes the critical path (wallet debit/credit, ledger write, transaction write), it publishes a message to the message queue:</p>
 <pre>
--- Single atomic transaction
-BEGIN;
-INSERT INTO ledger_entries (account_id, amount, type, payment_id, created_at)
-  VALUES ('alice_wallet', -50.00, 'DEBIT', 'pay_123', NOW());
-INSERT INTO ledger_entries (account_id, amount, type, payment_id, created_at)
-  VALUES ('bob_wallet', 50.00, 'CREDIT', 'pay_123', NOW());
-UPDATE wallets SET balance = balance - 50.00 WHERE account_id = 'alice_wallet' AND balance >= 50.00;
-UPDATE wallets SET balance = balance + 50.00 WHERE account_id = 'bob_wallet';
-COMMIT;
+{
+  "message_id": "msg-uuid-123",
+  "topic": "payment_events",
+  "partition_key": "user_id_of_receiver",   // ensures ordering per user
+  "payload": {
+    "event_type": "PAYMENT_COMPLETED",
+    "transaction_id": "txn-uuid-456",
+    "sender_id": "alice-uuid",
+    "receiver_id": "bob-uuid",
+    "amount": 50.00,
+    "currency": "USD",
+    "timestamp": "2025-02-13T15:30:00Z"
+  }
+}
 </pre>
-<p><strong>Key:</strong> The <code>WHERE balance >= 50.00</code> check prevents overdraft. If UPDATE affects 0 rows → insufficient funds → ROLLBACK entire TX.</p>
-</div>
+<p>The Payment Service publishes the message <em>after</em> the database transaction commits (not inside the DB transaction) to avoid holding the transaction open during the queue write. If the queue write fails, the payment is still completed — the notification is lost but can be recovered via a reconciliation job that scans recent transactions and ensures all have corresponding notifications.</p>
 
-<div class="subsection">
-<h4>Idempotency Implementation</h4>
-<p><strong>Protocol:</strong> Client generates UUID v4 idempotency_key, sends in header <code>Idempotency-Key: uuid-abc123</code></p>
-<p><strong>Storage:</strong> Redis <code>SET idempotency:{key} {response_json} EX 86400 NX</code> — NX ensures only first request proceeds</p>
-<p><strong>Flow:</strong> (1) Check Redis for key → miss → proceed with payment → store result. (2) Check Redis → hit → return cached response immediately</p>
-<p><strong>Edge case:</strong> If payment is in-flight (key exists but no response yet), return 409 Conflict telling client to retry after delay</p>
-</div>
-
-<div class="subsection">
-<h4>Risk / Fraud Engine</h4>
-<p><strong>Protocol:</strong> gRPC sync call from Payment Orchestrator (must complete in &lt;100ms)</p>
-<p><strong>Features:</strong> Device fingerprint, IP geolocation, transaction velocity (count/sum in last hour), recipient risk score, historical pattern, time-of-day anomaly</p>
-<p><strong>Decisions:</strong> APPROVE (score &lt; 0.3), STEP_UP_AUTH (0.3-0.7 → require 2FA/SMS), DENY (score &gt; 0.7)</p>
-<p><strong>Model:</strong> Gradient Boosted Trees (XGBoost) with ~500 features, retrained daily on labeled fraud data</p>
-</div>
-</div>
-
-<!-- ============================================================ -->
-<h2>🔄 Flow 2 — Merchant Checkout Payment</h2>
-<!-- ============================================================ -->
-
-<div class="diagram-container">
-<svg viewBox="0 0 1200 420" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="160" width="110" height="60" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="75" y="195" text-anchor="middle" fill="white" font-size="14">Buyer</text>
-  <line x1="130" y1="190" x2="190" y2="190" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="200" y="160" width="130" height="60" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="265" y="188" text-anchor="middle" fill="white" font-size="13">Merchant Site</text>
-  <text x="265" y="205" text-anchor="middle" fill="white" font-size="10">(PayPal JS SDK)</text>
-  <line x1="330" y1="190" x2="390" y2="190" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="400" y="160" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="470" y="185" text-anchor="middle" fill="white" font-size="12">Checkout Service</text>
-  <text x="470" y="202" text-anchor="middle" fill="white" font-size="10">(Order Creation)</text>
-  <line x1="540" y1="175" x2="610" y2="100" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="540" y1="190" x2="610" y2="190" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="540" y1="210" x2="610" y2="290" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="620" y="70" width="150" height="55" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="695" y="93" text-anchor="middle" fill="white" font-size="12">Token Vault</text>
-  <text x="695" y="110" text-anchor="middle" fill="white" font-size="10">(PCI — Card Data)</text>
-  <rect x="620" y="165" width="150" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="695" y="188" text-anchor="middle" fill="white" font-size="12">Payment Processor</text>
-  <text x="695" y="205" text-anchor="middle" fill="white" font-size="10">(Card Networks)</text>
-  <rect x="620" y="265" width="150" height="55" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
-  <text x="695" y="288" text-anchor="middle" fill="white" font-size="12">Ledger + Escrow</text>
-  <text x="695" y="305" text-anchor="middle" fill="white" font-size="10">(Hold → Capture)</text>
-  <line x1="770" y1="192" x2="850" y2="130" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="770" y1="192" x2="850" y2="250" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="860" y="100" width="150" height="55" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="935" y="123" text-anchor="middle" fill="white" font-size="12">Visa / Mastercard</text>
-  <text x="935" y="140" text-anchor="middle" fill="white" font-size="10">(ISO 8583)</text>
-  <rect x="860" y="225" width="150" height="55" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="935" y="248" text-anchor="middle" fill="white" font-size="12">ACH / Bank</text>
-  <text x="935" y="265" text-anchor="middle" fill="white" font-size="10">(Wire Network)</text>
-  <line x1="1010" y1="128" x2="1080" y2="180" stroke="#aaa" marker-end="url(#ah2)"/>
-  <line x1="1010" y1="252" x2="1080" y2="195" stroke="#aaa" marker-end="url(#ah2)"/>
-  <rect x="1080" y="165" width="100" height="50" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="1130" y="195" text-anchor="middle" fill="white" font-size="12">Merchant</text>
-</svg>
-</div>
-
-<div class="section">
-<h3>Step-by-Step</h3>
-<ol>
-  <li><strong>Merchant creates order:</strong> <code>POST /v2/checkout/orders</code> with <code>{ "intent": "CAPTURE", "purchase_units": [{ "amount": { "currency_code": "USD", "value": "99.99" } }] }</code></li>
-  <li><strong>Buyer approves:</strong> PayPal modal/redirect → buyer logs in, selects funding source (balance, card, bank), confirms</li>
-  <li><strong>Authorization:</strong> Payment Processor performs authorization — for cards: sends ISO 8583 authorization request to card network → issuing bank approves → auth_code returned. Funds are held (not captured yet)</li>
-  <li><strong>Merchant captures:</strong> <code>POST /v2/checkout/orders/{id}/capture</code> — triggers actual fund movement</li>
-  <li><strong>Capture execution:</strong> Card network capture message sent, or ACH debit initiated. Ledger records double-entry: DEBIT buyer → CREDIT PayPal escrow → CREDIT merchant (minus fees)</li>
-  <li><strong>Settlement:</strong> Funds available in merchant's PayPal account. Merchant can withdraw to bank (1-3 business days for ACH)</li>
-</ol>
-
-<div class="example">
-<strong>Example:</strong> Buyer on e-commerce site clicks "Pay with PayPal" for $99.99 order → PayPal modal opens → Buyer selects Visa card → Authorization: Visa approves hold of $99.99 → Merchant ships item → Merchant calls Capture API → PayPal captures $99.99 from Visa → Ledger: buyer -$99.99, merchant +$97.10 (after 2.9% + $0.30 fee), PayPal revenue +$2.89
-</div>
-</div>
-
-<div class="section">
-<h3>🔍 Component Deep Dives — Checkout Payment</h3>
-
-<div class="subsection">
-<h4>Two-Phase Payment (Auth + Capture)</h4>
-<p><strong>Why separate?</strong> Merchant may not want to charge until shipment. Authorization holds funds for 3-29 days (varies by card network). If merchant doesn't capture, auth expires and hold is released.</p>
-<p><strong>Void:</strong> If order is cancelled before capture, send void request to release the hold immediately</p>
-<p><strong>Partial Capture:</strong> Merchant can capture less than authorized amount (e.g., item out of stock → partial shipment)</p>
-</div>
-
-<div class="subsection">
-<h4>PCI-DSS Token Vault</h4>
-<p><strong>Card data never touches PayPal application servers.</strong> Flow: buyer enters card in secure iframe (hosted field) → card data sent directly to Token Vault (isolated PCI-certified environment) → returns opaque token <code>tok_abc123</code> → all subsequent API calls use token, not card numbers</p>
-<p><strong>Encryption:</strong> AES-256-GCM at rest, HSM (Hardware Security Module) for key management. Card numbers stored encrypted with per-card unique DEK (Data Encryption Key), DEK encrypted with KEK (Key Encryption Key) in HSM</p>
-</div>
-
-<div class="subsection">
-<h4>ISO 8583 — Card Network Protocol</h4>
-<p><strong>Protocol:</strong> Binary message format used by Visa/Mastercard networks over TCP/IP</p>
-<p><strong>Message types:</strong> 0100 (Authorization Request), 0110 (Authorization Response), 0200 (Financial Request/Capture), 0400 (Reversal)</p>
-<p><strong>Fields:</strong> PAN (Primary Account Number), expiry date, amount, currency code, merchant category code (MCC), terminal ID</p>
-<p><strong>Response codes:</strong> 00 (Approved), 05 (Do Not Honor), 51 (Insufficient Funds), 54 (Expired Card)</p>
-</div>
-</div>
-
-<!-- ============================================================ -->
-<h2>🔄 Flow 3 — Refund Processing</h2>
-<!-- ============================================================ -->
-
-<div class="diagram-container">
-<svg viewBox="0 0 1000 320" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ah3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="130" width="120" height="60" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="80" y="165" text-anchor="middle" fill="white" font-size="13">Merchant /</text>
-  <text x="80" y="180" text-anchor="middle" fill="white" font-size="13">Buyer Dispute</text>
-  <line x1="140" y1="160" x2="210" y2="160" stroke="#aaa" marker-end="url(#ah3)"/>
-  <rect x="220" y="130" width="140" height="60" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="290" y="158" text-anchor="middle" fill="white" font-size="13">Refund Service</text>
-  <text x="290" y="175" text-anchor="middle" fill="white" font-size="10">(Validation)</text>
-  <line x1="360" y1="160" x2="430" y2="110" stroke="#aaa" marker-end="url(#ah3)"/>
-  <line x1="360" y1="160" x2="430" y2="210" stroke="#aaa" marker-end="url(#ah3)"/>
-  <rect x="440" y="85" width="150" height="55" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
-  <text x="515" y="108" text-anchor="middle" fill="white" font-size="12">Ledger (Reverse)</text>
-  <text x="515" y="125" text-anchor="middle" fill="white" font-size="10">(Compensating TX)</text>
-  <rect x="440" y="185" width="150" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="515" y="208" text-anchor="middle" fill="white" font-size="12">Payment Processor</text>
-  <text x="515" y="225" text-anchor="middle" fill="white" font-size="10">(Reverse Charge)</text>
-  <line x1="590" y1="112" x2="660" y2="160" stroke="#aaa" marker-end="url(#ah3)"/>
-  <line x1="590" y1="212" x2="660" y2="165" stroke="#aaa" marker-end="url(#ah3)"/>
-  <rect x="670" y="135" width="140" height="55" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="740" y="158" text-anchor="middle" fill="white" font-size="12">Notification</text>
-  <text x="740" y="175" text-anchor="middle" fill="white" font-size="10">(Buyer + Merchant)</text>
-</svg>
-</div>
-
-<div class="section">
-<h3>Step-by-Step</h3>
-<ol>
-  <li><strong>Refund initiated:</strong> Merchant calls <code>POST /v2/payments/captures/{capture_id}/refund</code> with <code>{ "amount": { "value": "99.99", "currency_code": "USD" } }</code></li>
-  <li><strong>Refund Service validates:</strong> Original payment exists, is captured, refund amount ≤ remaining capturable amount, refund window not expired (180 days)</li>
-  <li><strong>Ledger reverse entries:</strong> Compensating transaction — DEBIT merchant account, CREDIT buyer account. This doesn't delete original entries — it creates new reversal entries for audit trail</li>
-  <li><strong>Payment Processor:</strong> If funded by card → send ISO 8583 reversal (0400) to card network → issuing bank credits buyer's card (3-10 business days). If funded by balance → instant credit to buyer PayPal balance</li>
-  <li><strong>Notifications:</strong> Buyer gets email "Refund of $99.99 processed" + merchant gets confirmation</li>
-</ol>
-
-<div class="example">
-<strong>Example:</strong> Buyer received wrong item → Merchant issues full refund of $99.99 → Ledger creates reverse entries: merchant -$99.99, buyer +$99.99. PayPal's fee ($2.89) is NOT refunded to merchant (PayPal keeps processing fee). Card network processes reversal → buyer sees credit on Visa statement in 5-7 days.
-</div>
-</div>
-
-<!-- ============================================================ -->
-<h2>🏗️ Combined Architecture</h2>
-<!-- ============================================================ -->
-
-<div class="diagram-container">
-<svg viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
-  <defs><marker id="ahc" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/></marker></defs>
-  <rect x="20" y="80" width="130" height="50" rx="10" fill="#2d7a3a" stroke="#4aff4a" stroke-width="2"/>
-  <text x="85" y="110" text-anchor="middle" fill="white" font-size="13">Buyer App</text>
-  <rect x="20" y="150" width="130" height="50" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="85" y="180" text-anchor="middle" fill="white" font-size="13">Merchant SDK</text>
-  <line x1="150" y1="105" x2="230" y2="155" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="150" y1="175" x2="230" y2="160" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="240" y="130" width="140" height="60" rx="10" fill="#c97a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="310" y="158" text-anchor="middle" fill="white" font-size="13">API Gateway</text>
-  <text x="310" y="175" text-anchor="middle" fill="white" font-size="10">(L7 LB + Auth)</text>
-  <!-- Services -->
-  <line x1="380" y1="145" x2="460" y2="80" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="380" y1="155" x2="460" y2="155" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="380" y1="165" x2="460" y2="230" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="380" y1="175" x2="460" y2="310" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="470" y="55" width="140" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="540" y="85" text-anchor="middle" fill="white" font-size="12">Payment Orchestrator</text>
-  <rect x="470" y="130" width="140" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="540" y="160" text-anchor="middle" fill="white" font-size="12">Checkout Service</text>
-  <rect x="470" y="210" width="140" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="540" y="240" text-anchor="middle" fill="white" font-size="12">Wallet Service</text>
-  <rect x="470" y="290" width="140" height="50" rx="10" fill="#1a5a8a" stroke="#4a9eff" stroke-width="2"/>
-  <text x="540" y="320" text-anchor="middle" fill="white" font-size="12">Refund Service</text>
-  <!-- Middle Layer -->
-  <line x1="610" y1="80" x2="700" y2="80" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="610" y1="155" x2="700" y2="155" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="610" y1="235" x2="700" y2="235" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="710" y="55" width="150" height="50" rx="10" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="785" y="85" text-anchor="middle" fill="white" font-size="12">Risk Engine (ML)</text>
-  <rect x="710" y="130" width="150" height="50" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
-  <text x="785" y="160" text-anchor="middle" fill="white" font-size="12">Ledger Service</text>
-  <rect x="710" y="210" width="150" height="50" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="785" y="240" text-anchor="middle" fill="white" font-size="12">Token Vault (PCI)</text>
-  <!-- Databases -->
-  <line x1="860" y1="155" x2="940" y2="155" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="950" y="55" width="160" height="50" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
-  <text x="1030" y="85" text-anchor="middle" fill="white" font-size="11">PostgreSQL (Ledger)</text>
-  <rect x="950" y="130" width="160" height="50" rx="10" fill="#5a3a1a" stroke="#c97a1a" stroke-width="2"/>
-  <text x="1030" y="160" text-anchor="middle" fill="white" font-size="11">PostgreSQL (Accounts)</text>
-  <rect x="950" y="210" width="160" height="50" rx="10" fill="#1a8a7a" stroke="#4afff0" stroke-width="2"/>
-  <text x="1030" y="240" text-anchor="middle" fill="white" font-size="11">Redis (Idempotency)</text>
-  <line x1="860" y1="80" x2="940" y2="80" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="860" y1="235" x2="940" y2="235" stroke="#aaa" marker-end="url(#ahc)"/>
-  <!-- Kafka -->
-  <rect x="470" y="400" width="140" height="50" rx="10" fill="#6a1a8a" stroke="#d94aff" stroke-width="2"/>
-  <text x="540" y="430" text-anchor="middle" fill="white" font-size="12">Apache Kafka</text>
-  <line x1="540" y1="340" x2="540" y2="395" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="610" y1="425" x2="700" y2="400" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="610" y1="425" x2="700" y2="455" stroke="#aaa" marker-end="url(#ahc)"/>
-  <rect x="710" y="375" width="150" height="45" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="785" y="402" text-anchor="middle" fill="white" font-size="11">Notification Service</text>
-  <rect x="710" y="435" width="150" height="45" rx="8" fill="#8a4a1a" stroke="#ffa54a" stroke-width="2"/>
-  <text x="785" y="462" text-anchor="middle" fill="white" font-size="11">Analytics / Reporting</text>
-  <!-- External -->
-  <rect x="950" y="375" width="160" height="50" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="1030" y="405" text-anchor="middle" fill="white" font-size="11">Card Networks (Visa/MC)</text>
-  <rect x="950" y="440" width="160" height="50" rx="10" fill="#4a4a4a" stroke="#999" stroke-width="2"/>
-  <text x="1030" y="470" text-anchor="middle" fill="white" font-size="11">ACH / Bank Network</text>
-  <line x1="860" y1="235" x2="940" y2="400" stroke="#aaa" marker-end="url(#ahc)"/>
-  <line x1="860" y1="235" x2="940" y2="465" stroke="#aaa" marker-end="url(#ahc)"/>
-</svg>
-</div>
-
-<div class="example">
-<strong>End-to-End Example:</strong> Buyer on merchant site clicks "Pay with PayPal" → PayPal JS SDK opens checkout modal → Buyer selects saved Visa → Token Vault retrieves encrypted card → Risk Engine approves (score 0.05) → Auth request to Visa via ISO 8583 → Approved → Merchant captures payment → Ledger: buyer debited, PayPal escrow, merchant credited (minus 2.9% + $0.30 fee) → Kafka event → Notification Service emails buyer receipt → Analytics records transaction metrics
-</div>
-
-<!-- ============================================================ -->
-<h2>🗄️ Database Schema</h2>
-<!-- ============================================================ -->
-
-<div class="section">
-<h3>PostgreSQL — Ledger Database (ACID Critical)</h3>
-
-<h4>accounts</h4>
-<table>
-<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-<tr><td>id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>user_id</td><td>UUID</td><td><span class="tag tag-fk">FK → users</span><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>account_type</td><td>VARCHAR(20)</td><td>wallet / merchant / escrow / fee_revenue</td></tr>
-<tr><td>currency</td><td>VARCHAR(3)</td><td>USD, EUR, GBP, etc.</td></tr>
-<tr><td>balance</td><td>DECIMAL(19,4)</td><td>Current balance (denormalized from ledger sum)</td></tr>
-<tr><td>available_balance</td><td>DECIMAL(19,4)</td><td>Balance minus holds/pending</td></tr>
-<tr><td>status</td><td>VARCHAR(20)</td><td>active / frozen / closed</td></tr>
-<tr><td>created_at</td><td>TIMESTAMPTZ</td><td></td></tr>
-</table>
-
-<h4>ledger_entries</h4>
-<table>
-<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-<tr><td>id</td><td>BIGINT</td><td><span class="tag tag-pk">PK</span> (Snowflake ID — time-ordered)</td></tr>
-<tr><td>account_id</td><td>UUID</td><td><span class="tag tag-fk">FK → accounts</span><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>payment_id</td><td>UUID</td><td><span class="tag tag-fk">FK → payments</span><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>type</td><td>VARCHAR(10)</td><td>DEBIT / CREDIT</td></tr>
-<tr><td>amount</td><td>DECIMAL(19,4)</td><td>Always positive; type indicates direction</td></tr>
-<tr><td>currency</td><td>VARCHAR(3)</td><td></td></tr>
-<tr><td>description</td><td>TEXT</td><td></td></tr>
-<tr><td>created_at</td><td>TIMESTAMPTZ</td><td><span class="tag tag-idx">INDEX</span></td></tr>
-</table>
-<p><strong>Constraint:</strong> For any payment_id, SUM(CREDIT amounts) = SUM(DEBIT amounts). Enforced by application-level invariant + periodic reconciliation job.</p>
-
-<h4>payments</h4>
-<table>
-<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-<tr><td>id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>idempotency_key</td><td>VARCHAR(64)</td><td><span class="tag tag-idx">UNIQUE INDEX</span></td></tr>
-<tr><td>sender_account_id</td><td>UUID</td><td><span class="tag tag-fk">FK → accounts</span></td></tr>
-<tr><td>receiver_account_id</td><td>UUID</td><td><span class="tag tag-fk">FK → accounts</span></td></tr>
-<tr><td>amount</td><td>DECIMAL(19,4)</td><td></td></tr>
-<tr><td>currency</td><td>VARCHAR(3)</td><td></td></tr>
-<tr><td>fee_amount</td><td>DECIMAL(19,4)</td><td></td></tr>
-<tr><td>payment_type</td><td>VARCHAR(20)</td><td>p2p / checkout / refund / withdrawal</td></tr>
-<tr><td>status</td><td>VARCHAR(20)</td><td>initiated / authorized / captured / completed / failed / refunded</td></tr>
-<tr><td>funding_source</td><td>VARCHAR(20)</td><td>balance / card / bank</td></tr>
-<tr><td>risk_score</td><td>DECIMAL(5,4)</td><td></td></tr>
-<tr><td>auth_code</td><td>VARCHAR(20)</td><td>From card network (if card funded)</td></tr>
-<tr><td>created_at</td><td>TIMESTAMPTZ</td><td><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>updated_at</td><td>TIMESTAMPTZ</td><td></td></tr>
-</table>
-
-<h4>funding_sources</h4>
-<table>
-<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
-<tr><td>id</td><td>UUID</td><td><span class="tag tag-pk">PK</span></td></tr>
-<tr><td>user_id</td><td>UUID</td><td><span class="tag tag-fk">FK → users</span><span class="tag tag-idx">INDEX</span></td></tr>
-<tr><td>type</td><td>VARCHAR(20)</td><td>card / bank_account</td></tr>
-<tr><td>token</td><td>VARCHAR(64)</td><td>Reference to Token Vault (never raw card number)</td></tr>
-<tr><td>last_four</td><td>VARCHAR(4)</td><td>Display purposes</td></tr>
-<tr><td>brand</td><td>VARCHAR(20)</td><td>visa / mastercard / amex</td></tr>
-<tr><td>expiry_month</td><td>SMALLINT</td><td></td></tr>
-<tr><td>expiry_year</td><td>SMALLINT</td><td></td></tr>
-<tr><td>is_default</td><td>BOOLEAN</td><td></td></tr>
-<tr><td>status</td><td>VARCHAR(20)</td><td>active / expired / removed</td></tr>
-<tr><td>created_at</td><td>TIMESTAMPTZ</td><td></td></tr>
-</table>
-
-<h3>Sharding Strategy</h3>
-<p><strong>accounts + ledger_entries:</strong> Shard by <code>account_id</code> — keeps all entries for an account on same shard. Cross-shard transactions (sender and receiver on different shards) handled by 2-Phase Commit or Saga pattern <span class="tag tag-shard">HASH SHARD</span></p>
-<p><strong>payments:</strong> Shard by <code>payment_id</code> hash — uniform distribution. Secondary index on sender/receiver for lookup <span class="tag tag-shard">HASH SHARD</span></p>
-
-<h3>DECIMAL(19,4) for Money</h3>
-<p><strong>NEVER use FLOAT for money.</strong> IEEE 754 floating point cannot represent 0.10 exactly (0.1000000000000000055511151231257827021181583404541015625). Use DECIMAL/NUMERIC with fixed precision. 19 digits allows values up to 999,999,999,999,999.9999 — sufficient for any single transaction.</p>
-
-<h3>Reconciliation</h3>
-<p>Daily batch job sums all ledger_entries per account and compares to <code>accounts.balance</code>. Any discrepancy triggers an alert and investigation. This catches bugs in the double-entry system. Also reconciles PayPal's internal ledger against card network settlement files and bank statements.</p>
-</div>
-
-<!-- ============================================================ -->
-<h2>💾 Cache & CDN Deep Dive</h2>
-<!-- ============================================================ -->
-
-<div class="section">
-<h3>Redis Caching Strategy</h3>
-<table>
-<tr><th>Cache</th><th>Key Pattern</th><th>TTL</th><th>Strategy</th></tr>
-<tr><td>Idempotency</td><td><code>idemp:{key}</code></td><td>24 hr</td><td>Write-through (SET NX)</td></tr>
-<tr><td>Rate Limits</td><td><code>rate:{user_id}:{endpoint}</code></td><td>1 min window</td><td>Sliding window counter</td></tr>
-<tr><td>Session / Auth</td><td><code>session:{token}</code></td><td>30 min</td><td>Write-through</td></tr>
-<tr><td>Exchange Rates</td><td><code>fx:{from}:{to}</code></td><td>5 min</td><td>Pull from rate provider</td></tr>
-<tr><td>Account Balance</td><td><code>balance:{account_id}</code></td><td>None (invalidate on write)</td><td>Read-through, write-invalidate</td></tr>
-</table>
-
-<p><strong>⚠️ No caching of financial data for reads that affect decisions.</strong> Balance checks for payment processing ALWAYS read from PostgreSQL primary (not replica, not cache) to prevent stale-balance attacks. Cache is only for display purposes (e.g., showing balance on home screen).</p>
-
-<h3>CDN Strategy</h3>
-<p><strong>Static only:</strong> JS SDK, logos, marketing pages. API responses are NEVER cached on CDN — all payment APIs require real-time auth and are user-specific.</p>
-<p><strong>SDK caching:</strong> PayPal JS SDK (<code>paypal-js</code>) cached on CDN with versioned URLs. Merchants include <code>&lt;script src="https://www.paypal.com/sdk/js?client-id=..."&gt;</code></p>
-</div>
-
-<!-- ============================================================ -->
-<h2>⚖️ Scaling Considerations</h2>
-<!-- ============================================================ -->
-
-<div class="section">
+<h4>How Messages Are Consumed</h4>
+<p>Consumer services (Notification Service, Webhook Delivery Service, Wallet Service Workers) each subscribe to relevant topics:</p>
 <ul>
-  <li><strong>Ledger DB scaling:</strong> Shard by account_id. Cross-shard P2P payments use Saga pattern with compensating transactions. Ledger is append-only (immutable entries), enabling high write throughput</li>
-  <li><strong>Connection pooling:</strong> PgBouncer with transaction-mode pooling — critical for high-concurrency payment processing</li>
-  <li><strong>Geo-distributed:</strong> Multi-region deployment (US, EU, APAC) with regional PostgreSQL primaries. Cross-region payments routed to sender's region's primary</li>
-  <li><strong>Rate limiting:</strong> Token bucket per user per endpoint. Strict limits on payment initiation (100/hour), lenient on balance checks (1000/hour)</li>
-  <li><strong>Circuit breaker:</strong> Card network connections have circuit breakers — if Visa is down, route to backup processor or fail gracefully with retry logic</li>
-  <li><strong>Hot account problem:</strong> Popular merchants (e.g., Amazon's PayPal account) receive millions of credits/day → row-level lock contention on balance UPDATE. Solution: sub-accounts — split merchant balance into 100 sub-accounts, round-robin credits, aggregate balance for display</li>
+    <li>The <strong>Notification Service</strong> consumes from <code>payment_events</code>, formats a push notification, delivers it, and <strong>acknowledges</strong> the message. If delivery fails, the message is <strong>not</strong> acknowledged and will be redelivered after a visibility timeout.</li>
+    <li>The <strong>Webhook Delivery Service</strong> consumes from <code>merchant_events</code> and POSTs to the merchant's URL. On non-2xx response, retries with exponential backoff. After 15 failed retries, the message is moved to a <strong>dead-letter queue</strong> for manual investigation.</li>
+    <li>The <strong>Wallet Service Worker</strong> consumes from <code>bank_transfer_results</code> to process deposit/withdrawal confirmations.</li>
+</ul>
+
+<h4>Delivery Guarantees</h4>
+<p><strong>At-least-once delivery.</strong> Consumers must be idempotent — processing the same message twice must not have side effects (e.g., sending a duplicate notification is annoying but not catastrophic; the Wallet Service Worker uses the <code>transaction_id</code> as an idempotency key to prevent double-crediting).</p>
+</div>
+
+<!-- ================================================================== -->
+<!-- 11. SCALING CONSIDERATIONS -->
+<!-- ================================================================== -->
+<h2 id="scaling">11. Scaling Considerations</h2>
+<div class="card">
+
+<h4>11.1 — Load Balancers</h4>
+<p>Load balancers are placed at two levels:</p>
+<ol>
+    <li><strong>External Load Balancer (L7)</strong> — Sits in front of the API Gateway cluster. Distributes incoming HTTPS requests from clients and merchant servers across multiple API Gateway instances. Uses <strong>round-robin</strong> with health checks. Handles TLS termination at scale. This is the first line of defense for DDoS mitigation (rate limiting at the IP level). Also provides geographic routing — users in Europe hit European API Gateway instances, users in the US hit US instances.</li>
+    <li><strong>Internal Load Balancers (L4/L7)</strong> — Between the API Gateway and each microservice. Each service (Payment Service, Wallet Service, etc.) runs as a cluster of stateless instances behind an internal load balancer. Uses <strong>least-connections</strong> algorithm to distribute load based on each instance's current load. Health checks remove unhealthy instances from the rotation.</li>
+</ol>
+<p>Load balancers are critical because all services are stateless and horizontally scalable — adding more instances behind a load balancer linearly increases throughput.</p>
+
+<h4>11.2 — Horizontal Scaling of Services</h4>
+<ul>
+    <li>All services (Payment, Wallet, Ledger, Order, Transaction, Notification, Fraud Detection) are <strong>stateless</strong>. Any instance can handle any request. This allows auto-scaling based on CPU/memory/request-count metrics.</li>
+    <li><strong>Payment Service:</strong> Most CPU-intensive (orchestrates entire flow). Scale based on transactions per second (TPS). Target: 100K+ TPS at peak.</li>
+    <li><strong>Fraud Detection Service:</strong> Latency-sensitive (synchronous in the payment path). Scale based on p99 latency — add instances when p99 exceeds 80ms.</li>
+    <li><strong>Notification Service:</strong> Throughput-sensitive (must keep up with message queue). Scale based on queue depth.</li>
+</ul>
+
+<h4>11.3 — Database Scaling</h4>
+<ul>
+    <li><strong>Read Replicas:</strong> The Transaction DB and User DB use read replicas to offload read-heavy queries (transaction history, user profile lookups). Writes go to the primary, reads go to replicas. Replication lag is acceptable for transaction history (30-second TTL cache masks it) but NOT for balance reads (always read from primary).</li>
+    <li><strong>Sharding:</strong> All major tables are sharded as described in the schema section. Sharding provides horizontal write scalability — the most critical concern for a payments platform at scale.</li>
+    <li><strong>Connection Pooling:</strong> Each service instance maintains a connection pool to the database to avoid the overhead of establishing new connections per request.</li>
+</ul>
+
+<h4>11.4 — Message Queue Scaling</h4>
+<ul>
+    <li>The message queue is partitioned by <code>user_id</code> to maintain per-user ordering. Adding more partitions allows more parallel consumers.</li>
+    <li>Consumer groups (e.g., Notification Service consumer group) can have multiple consumers reading from different partitions in parallel.</li>
+</ul>
+
+<h4>11.5 — Cache Scaling</h4>
+<ul>
+    <li>The in-memory cache is deployed as a distributed cluster with consistent hashing. Adding nodes redistributes only a fraction of keys (minimal cache invalidation on scale-out).</li>
+    <li>Cache nodes are replicated for high availability (if one node dies, its replica takes over).</li>
+</ul>
+
+<h4>11.6 — Peak Traffic Handling (Black Friday)</h4>
+<ul>
+    <li>Pre-scale all services and databases ahead of known traffic spikes based on historical data.</li>
+    <li>Circuit breakers on all inter-service calls to prevent cascading failures.</li>
+    <li>Graceful degradation: if the Notification Service is overwhelmed, payments still succeed — notifications are delayed but not lost (messages are durable in the queue).</li>
+    <li>Rate limiting per user and per merchant to prevent abuse from consuming capacity meant for legitimate users.</li>
 </ul>
 </div>
 
-<!-- ============================================================ -->
-<h2>⚖️ Tradeoffs</h2>
-<!-- ============================================================ -->
+<!-- ================================================================== -->
+<!-- 12. TRADEOFFS & DEEP DIVES -->
+<!-- ================================================================== -->
+<h2 id="tradeoffs">12. Tradeoffs &amp; Deep Dives</h2>
+<div class="card">
 
-<div class="section">
-<div class="tradeoff-grid">
-  <div class="tradeoff-pro">
-    <h4>✅ Double-Entry Ledger</h4>
-    <p>Complete audit trail, mathematical invariant (debits = credits), regulatory compliance, easy reconciliation</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Double-Entry Ledger</h4>
-    <p>2x write amplification (every transaction = 2+ rows), cross-shard transactions complex, harder to scale than event-sourcing</p>
-  </div>
-  <div class="tradeoff-pro">
-    <h4>✅ Idempotency Keys</h4>
-    <p>Safe retries — eliminates duplicate payment problem entirely, essential for unreliable networks</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Idempotency Keys</h4>
-    <p>Extra storage (Redis), client must generate unique keys, 24hr TTL means very late retries may create duplicates</p>
-  </div>
-  <div class="tradeoff-pro">
-    <h4>✅ Sync Risk Check</h4>
-    <p>Blocks fraud before money moves — prevents financial loss in real-time</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Sync Risk Check</h4>
-    <p>Adds latency to every payment (~50-100ms), single point of failure if risk engine is down (must have fallback policy)</p>
-  </div>
-  <div class="tradeoff-pro">
-    <h4>✅ Auth + Capture (Two-Phase)</h4>
-    <p>Merchants only charge when they ship, reduces chargebacks, supports partial captures</p>
-  </div>
-  <div class="tradeoff-con">
-    <h4>❌ Auth + Capture (Two-Phase)</h4>
-    <p>Complexity in tracking auth expiry (29 days for Visa, 7 for MC), held funds unavailable to buyer, failed captures after auth expiry</p>
-  </div>
-</div>
+<h4>12.1 — Consistency vs. Availability</h4>
+<p>Per the CAP theorem, we prioritize <strong>consistency over availability</strong> for financial data. If a database partition becomes unreachable, we return an error to the user rather than serving stale or potentially incorrect balance data. For non-financial data (notifications, user profiles), we lean toward availability with eventual consistency.</p>
+
+<h4>12.2 — Synchronous Fraud Detection vs. Asynchronous</h4>
+<p><strong>Tradeoff:</strong> Running fraud detection synchronously in the payment path adds ~50-100ms latency to every transaction. Running it asynchronously would make payments faster but would allow fraudulent transactions to complete before being caught.</p>
+<p><strong>Decision:</strong> Synchronous for real-time blocking decisions (rule-based checks + fast ML scoring). Asynchronous for deeper analysis — after the transaction completes, a more thorough ML model runs and can flag the transaction for review or initiate a reversal. This gives us the best of both worlds: fast blocking of obviously fraudulent transactions and deeper analysis without impacting latency.</p>
+
+<h4>12.3 — Saga Pattern vs. Two-Phase Commit (2PC)</h4>
+<p><strong>Tradeoff:</strong> 2PC provides atomic distributed transactions but requires all participants to be available and imposes significant latency (coordinator + all participants must respond). Sagas are eventually consistent but more available and performant.</p>
+<p><strong>Decision:</strong> Saga pattern. In a payments system spanning multiple microservices and potentially multiple database shards, 2PC would be a bottleneck. The Saga pattern with compensating transactions handles failures gracefully — if crediting the receiver fails after debiting the sender, a compensating credit is issued to the sender. The brief window of inconsistency (sender debited, receiver not yet credited) is acceptable because the entire Saga completes in milliseconds, and the transaction status reflects the intermediate state.</p>
+
+<h4>12.4 — Double-Entry Bookkeeping</h4>
+<p>Every monetary operation produces at least two ledger entries (DEBIT and CREDIT) that sum to zero. This is not optional for a financial system — it's a regulatory requirement and the only way to ensure books balance. The overhead is: 2 ledger writes per transaction (vs. 1 if we only tracked balances). This is a worthwhile tradeoff for auditability, reconciliation, and regulatory compliance.</p>
+
+<h4>12.5 — Idempotency Keys: Client-Generated vs. Server-Generated</h4>
+<p><strong>Decision:</strong> Client-generated. The client creates a UUID before sending the request. If the client retries due to a network timeout, it sends the same UUID. The server detects the duplicate and returns the original result. Server-generated keys wouldn't help with retries because the client wouldn't know the server's key if the response was lost.</p>
+
+<h4>12.6 — Balance as Denormalized Field vs. Computed from Ledger</h4>
+<p><strong>Tradeoff:</strong> Storing the balance directly is fast for reads (O(1)) but risks inconsistency if the balance and ledger entries diverge. Computing the balance from ledger entries is always consistent but slow (O(n) over all entries for a wallet).</p>
+<p><strong>Decision:</strong> Denormalized balance in the <code>wallets</code> table, updated in the same database transaction as the ledger entries. A periodic reconciliation batch job verifies that every wallet's balance equals the sum of its ledger entries. If a discrepancy is found, an alert fires and the balance is corrected from the ledger (the ledger is the source of truth).</p>
+
+<h4>12.7 — Decimal Precision for Money</h4>
+<p>We use <code>DECIMAL(19,4)</code> instead of floating-point types. Floating-point arithmetic introduces rounding errors (e.g., 0.1 + 0.2 ≠ 0.3 in IEEE 754). For financial calculations, exact decimal arithmetic is mandatory. The 4 decimal places handle sub-cent calculations needed for fee computations and currency conversions.</p>
 </div>
 
-<!-- ============================================================ -->
-<h2>🔄 Alternative Approaches</h2>
-<!-- ============================================================ -->
+<!-- ================================================================== -->
+<!-- 13. ALTERNATIVE APPROACHES -->
+<!-- ================================================================== -->
+<h2 id="alternatives">13. Alternative Approaches</h2>
+<div class="card">
 
-<div class="section">
-<div class="subsection">
-<h4>Event Sourcing Instead of Double-Entry Ledger</h4>
-<p>Store all financial events as immutable event stream (Kafka). Current balance derived by replaying events. Advantages: natural audit trail, easy to replay/debug, scales better horizontally. Disadvantage: calculating current balance requires reading full event history (mitigated by snapshots). Used by some modern fintech (e.g., Nubank).</p>
-</div>
-<div class="subsection">
-<h4>CQRS for Transaction History</h4>
-<p>Separate write model (ledger DB — optimized for ACID writes) from read model (Elasticsearch or materialized views — optimized for transaction history queries, search, filtering). Write path: PostgreSQL. Read path: CDC → Elasticsearch with rich search capabilities (date range, amount range, merchant name search).</p>
-</div>
-<div class="subsection">
-<h4>Blockchain / DLT for Settlement</h4>
-<p>Use distributed ledger for cross-border settlements (like Ripple/XRP). Eliminates intermediary banks for international transfers, reduces settlement from days to seconds. Drawback: regulatory uncertainty, throughput limitations, energy cost for proof-of-work chains.</p>
-</div>
-</div>
+<h4>13.1 — Monolithic Architecture Instead of Microservices</h4>
+<p><strong>Alternative:</strong> Build PayPal as a single monolithic application with all logic in one codebase and one database.</p>
+<p><strong>Why not chosen:</strong> PayPal's scale (hundreds of millions of users, tens of thousands of TPS) requires independent scaling of components. The Fraud Detection Service needs GPU-heavy ML instances; the Notification Service needs high I/O capacity; the Wallet Service needs the highest database IOPS. A monolith would force uniform scaling, wasting resources. Additionally, independent deployment allows the fraud team to update rules without risking the payment path. The monolith may be appropriate for an early-stage startup, but not for PayPal's scale.</p>
 
-<!-- ============================================================ -->
-<h2>📚 Additional Information</h2>
-<!-- ============================================================ -->
+<h4>13.2 — Event Sourcing Instead of Mutable Transaction Records + Ledger</h4>
+<p><strong>Alternative:</strong> Instead of mutable <code>status</code> fields on transactions and a separate ledger, use an event-sourced architecture where the state of every entity is derived from an append-only event log. The ledger effectively IS the event log.</p>
+<p><strong>Why not chosen:</strong> Event sourcing is elegant and provides a perfect audit trail. However, it significantly increases complexity: rebuilding current state from events requires event replay or snapshots; queries like "what is the current balance?" become expensive without materialized views; and debugging production issues is harder when state is implicit. Our approach captures the key benefit of event sourcing (the immutable ledger) while keeping transaction state explicit and queryable. The ledger serves as our append-only audit trail, and the <code>wallets</code> table serves as our materialized view. This is a pragmatic hybrid.</p>
 
-<div class="section">
-<h3>Multi-Currency & FX</h3>
-<p>PayPal supports 25+ currencies. When sender's currency differs from receiver's, FX conversion happens at PayPal's rate (which includes a ~3-4% markup over mid-market rate). Exchange rates cached in Redis (5-min TTL) from upstream FX providers. Rate locked at time of payment initiation for 10 minutes.</p>
+<h4>13.3 — NoSQL for Transactions Instead of SQL</h4>
+<p><strong>Alternative:</strong> Use a NoSQL database for the transactions table to take advantage of horizontal scalability.</p>
+<p><strong>Why not chosen:</strong> Financial transactions require ACID guarantees. NoSQL databases (especially wide-column stores) typically offer eventual consistency and limited transaction support. The SQL database with proper sharding provides both ACID compliance and horizontal scalability. The slight operational complexity of managing sharded SQL is justified by the consistency guarantees required for financial data.</p>
 
-<h3>Dispute Resolution (Chargebacks)</h3>
-<p>Buyer Protection: buyers can open disputes within 180 days. Process: (1) Buyer opens case, (2) Merchant has 10 days to respond with evidence, (3) PayPal arbitrates. If merchant loses → forced refund (chargeback). Merchant accounts with high chargeback rates get account restrictions or termination.</p>
+<h4>13.4 — Synchronous Webhooks Instead of Async Queue</h4>
+<p><strong>Alternative:</strong> Call the merchant's webhook URL synchronously during the payment flow.</p>
+<p><strong>Why not chosen:</strong> Merchant webhook endpoints have unpredictable latency and availability. A slow or down merchant server would block or fail our payment processing. By enqueuing webhooks and delivering asynchronously, we decouple merchant reliability from our payment latency. The Webhook Delivery Service handles retries independently.</p>
 
-<h3>ACH Processing</h3>
-<p>Bank transfers via ACH (Automated Clearing House) are batch-processed. PayPal submits ACH files to the Federal Reserve in batches (multiple times/day). Settlement takes 1-3 business days. Provisional credit given to recipient immediately (PayPal takes the risk). ACH returns (insufficient funds) handled as negative balance on sender's account.</p>
+<h4>13.5 — Blockchain/Cryptocurrency for Transfers</h4>
+<p><strong>Alternative:</strong> Use a blockchain or distributed ledger for P2P transfers instead of a centralized ledger.</p>
+<p><strong>Why not chosen:</strong> Blockchain provides decentralization and immutability but at the cost of significant latency (minutes for confirmations), limited throughput (~7 TPS for Bitcoin, ~30 TPS for Ethereum vs. our requirement of 100K+ TPS), and high energy costs. PayPal is a centralized trusted party — users already trust PayPal, so the decentralization benefit of blockchain doesn't justify the performance tradeoffs.</p>
 
-<h3>Compliance & KYC</h3>
-<p>Know Your Customer (KYC): users must verify identity for higher limits. Progressive KYC: basic account ($500/month limit) → verified (SSN/ID check → unlimited). Anti-Money Laundering (AML): suspicious transaction reporting to FinCEN. OFAC screening: every payment checked against sanctions list in real-time.</p>
+<h4>13.6 — gRPC Everywhere Instead of HTTP/2 + gRPC Mix</h4>
+<p><strong>Alternative:</strong> Use gRPC for all communication, including client-to-gateway.</p>
+<p><strong>Why not chosen:</strong> gRPC is excellent for internal service-to-service communication (strong typing via Protobuf, efficient binary serialization, built-in streaming). However, for client-to-gateway communication, REST over HTTPS is more pragmatic: it's universally supported by browsers, mobile clients, and merchant integrations without requiring Protobuf tooling. Our hybrid approach uses REST for external APIs and gRPC for internal inter-service communication.</p>
 </div>
 
+<!-- ================================================================== -->
+<!-- 14. ADDITIONAL CONSIDERATIONS -->
+<!-- ================================================================== -->
+<h2 id="additional">14. Additional Considerations</h2>
+<div class="card">
+
+<h4>14.1 — Multi-Currency and Exchange Rates</h4>
+<p>When Alice (USD wallet) sends money to Fumiko (JPY wallet), the Payment Service fetches the current USD→JPY exchange rate from the cached exchange rate table, computes the converted amount, debits Alice's USD wallet, and credits Fumiko's JPY wallet. The exchange rate used is locked in at the time of the transaction and stored in the transaction record for auditability. PayPal applies a currency conversion fee (e.g., 3%) on top of the mid-market rate.</p>
+
+<h4>14.2 — PCI-DSS Compliance</h4>
+<p>Credit card numbers and bank account details are <strong>never stored directly</strong> in our databases. They are tokenized by the External Payment Processor at the moment of linking. Our system only stores opaque tokens. The Payment Method DB's <code>token</code> field is a reference that only the External Payment Processor can resolve to actual financial details. This dramatically reduces our PCI-DSS scope.</p>
+
+<h4>14.3 — Dispute Resolution</h4>
+<p>Users can open disputes on transactions. A Dispute Service (not shown in the core flow diagrams for simplicity) manages the dispute lifecycle: user opens dispute → merchant responds → PayPal adjudicates → funds are held/released. During a dispute, the disputed amount is placed in a <code>HELD</code> state in the merchant's wallet (effectively a separate hold balance). The ledger records the hold and eventual resolution.</p>
+
+<h4>14.4 — Rate Limiting Strategy</h4>
+<p>Rate limiting is applied at multiple levels:</p>
+<ul>
+    <li><strong>Per-IP:</strong> At the external load balancer to prevent DDoS.</li>
+    <li><strong>Per-User:</strong> At the API Gateway using a token bucket algorithm (e.g., 100 requests/minute for general APIs, 10 payment requests/minute).</li>
+    <li><strong>Per-Merchant:</strong> API key-based rate limits for merchant checkout APIs.</li>
+</ul>
+
+<h4>14.5 — Observability</h4>
+<p>Every service emits structured logs, metrics, and distributed traces. A transaction can be traced end-to-end from client request through API Gateway → Payment Service → Fraud Detection → Wallet Service → Ledger Service → Message Queue → Notification Service using a correlation ID propagated via HTTP headers. This is essential for debugging production issues in a microservices architecture.</p>
+
+<h4>14.6 — Data Retention and Archival</h4>
+<p>Transaction records and ledger entries are retained for 7+ years (regulatory requirement). Old data is archived from hot storage (sharded SQL) to cold storage (columnar/analytical database) via periodic batch jobs. The Transaction Service transparently queries both hot and cold storage for historical requests beyond the retention window of hot storage.</p>
+
+<h4>14.7 — Disaster Recovery</h4>
+<p>All databases are deployed in a primary-standby configuration across multiple data centers (active-passive for writes). If the primary data center fails, the standby is promoted. RPO (Recovery Point Objective) is near-zero via synchronous replication for financial data. RTO (Recovery Time Objective) is under 60 seconds via automated failover.</p>
+
+<h4>14.8 — Fee Computation</h4>
+<p>PayPal charges merchants a fee on each transaction (e.g., 2.9% + $0.30 for US transactions). The fee is computed by the Payment Service during the capture step and recorded as a separate ledger entry: the full amount is debited from the user, the net amount (minus fee) is credited to the merchant, and the fee is credited to PayPal's revenue wallet. The triple-entry ensures the books balance.</p>
+</div>
+
+<!-- ================================================================== -->
+<!-- 15. VENDOR SECTION -->
+<!-- ================================================================== -->
+<h2 id="vendors">15. Vendor Section</h2>
+<div class="card">
+<p>The following are vendor suggestions for the vendor-agnostic components. Each can be swapped for alternatives without changing the architecture.</p>
+
+<table>
+    <tr><th>Component</th><th>Potential Vendors</th><th>Rationale</th></tr>
+    <tr>
+        <td><strong>SQL Database</strong></td>
+        <td>PostgreSQL, CockroachDB, Google Spanner, TiDB</td>
+        <td><strong>PostgreSQL</strong> is the industry standard for financial applications — mature, battle-tested, with excellent ACID compliance and JSON support. <strong>CockroachDB</strong> and <strong>Google Spanner</strong> provide globally distributed SQL with strong consistency, which is ideal for multi-region deployments. <strong>TiDB</strong> offers MySQL compatibility with horizontal scalability.</td>
+    </tr>
+    <tr>
+        <td><strong>NoSQL Database (Notifications)</strong></td>
+        <td>Amazon DynamoDB, Apache Cassandra, ScyllaDB</td>
+        <td><strong>DynamoDB</strong> provides managed partition key + sort key access patterns that perfectly match our notification schema. <strong>Cassandra/ScyllaDB</strong> offer similar partition-key-based access with higher write throughput for self-managed deployments.</td>
+    </tr>
+    <tr>
+        <td><strong>In-Memory Cache</strong></td>
+        <td>Redis, Memcached, Dragonfly</td>
+        <td><strong>Redis</strong> supports rich data structures (hash, sorted sets), TTL-based expiration, and cluster mode with consistent hashing. <strong>Memcached</strong> is simpler and faster for pure key-value caching. <strong>Dragonfly</strong> is a Redis-compatible drop-in replacement with better multi-threaded performance.</td>
+    </tr>
+    <tr>
+        <td><strong>Message Queue</strong></td>
+        <td>Apache Kafka, Amazon SQS/SNS, Apache Pulsar, RabbitMQ</td>
+        <td><strong>Kafka</strong> provides durable, partitioned, ordered message delivery with exactly-once semantics — ideal for financial event processing. <strong>Apache Pulsar</strong> offers similar capabilities with built-in multi-tenancy. <strong>RabbitMQ</strong> is simpler for lower-scale deployments. <strong>SQS/SNS</strong> for managed, serverless queue/pub-sub.</td>
+    </tr>
+    <tr>
+        <td><strong>Object Storage (for static assets / CDN origin)</strong></td>
+        <td>Amazon S3, Google Cloud Storage, Azure Blob Storage</td>
+        <td>All three provide durable, highly available object storage suitable as a CDN origin for static assets like the PayPal checkout SDK JavaScript bundles.</td>
+    </tr>
+    <tr>
+        <td><strong>CDN</strong></td>
+        <td>Cloudflare, Amazon CloudFront, Akamai, Fastly</td>
+        <td><strong>Cloudflare</strong> offers global edge caching with built-in DDoS protection. <strong>Akamai</strong> has the largest global edge network. <strong>CloudFront</strong> integrates tightly with AWS. <strong>Fastly</strong> provides edge computing (VCL/Wasm) for custom logic at the edge.</td>
+    </tr>
+    <tr>
+        <td><strong>External Payment Processor</strong></td>
+        <td>Stripe (for card processing), Plaid (for bank account linking/ACH), Dwolla (ACH), Marqeta</td>
+        <td><strong>Plaid</strong> specializes in bank account linking and ACH initiation. <strong>Stripe</strong> provides card processing with tokenization. <strong>Dwolla</strong> focuses on ACH transfers. In practice, PayPal has its own payment processing infrastructure, but for a startup building a PayPal clone, these vendors would be used.</td>
+    </tr>
+    <tr>
+        <td><strong>Push Notification Gateways</strong></td>
+        <td>Apple Push Notification Service (APNs), Firebase Cloud Messaging (FCM)</td>
+        <td>These are the only options for delivering push notifications to iOS (APNs) and Android (FCM) devices respectively. They are vendor-locked by platform.</td>
+    </tr>
+</table>
+</div>
+
+</div><!-- end container -->
 </body>
 </html>

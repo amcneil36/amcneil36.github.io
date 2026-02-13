@@ -3,467 +3,1294 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Design Reddit</title>
+<title>System Design: Reddit</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true, theme:'neutral', securityLevel:'loose'});</script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0f0f0f;color:#e0e0e0;line-height:1.7;padding:2rem}h1{font-size:2.5rem;text-align:center;background:linear-gradient(135deg,#FF4500,#FF8717);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}h2{color:#FF4500;font-size:1.8rem;margin:2rem 0 1rem;border-bottom:2px solid #FF4500;padding-bottom:.5rem}h3{color:#FF8717;font-size:1.3rem;margin:1.5rem 0 .8rem}h4{color:#FFD635;margin:1rem 0 .5rem}.container{max-width:1400px;margin:0 auto}.card{background:#1a1a2e;border-radius:12px;padding:1.5rem;margin:1rem 0;border:1px solid #333}.diagram-box{background:#0d1117;border-radius:12px;padding:1.5rem;margin:1rem 0;text-align:center;overflow-x:auto}.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}.tag-pk{background:#E53935;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-fk{background:#1E88E5;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-idx{background:#43A047;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tag-shard{background:#F4511E;color:#fff;padding:2px 8px;border-radius:4px;font-size:.75rem}.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}.tradeoff-card{background:#1a1a2e;border-radius:8px;padding:1rem;border-left:4px solid}.tradeoff-card.pro{border-color:#FF4500}.tradeoff-card.con{border-color:#7193FF}code{background:#2d2d2d;padding:2px 6px;border-radius:4px;font-family:'Fira Code',monospace;font-size:.85rem}pre{background:#1e1e2e;padding:1rem;border-radius:8px;overflow-x:auto;margin:.5rem 0}ul,ol{padding-left:1.5rem;margin:.5rem 0}table{width:100%;border-collapse:collapse;margin:1rem 0}th,td{padding:.75rem;border:1px solid #333;text-align:left}th{background:#1a1a2e}svg text{font-family:'Segoe UI',system-ui,sans-serif}
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 1200px; margin: 0 auto; padding: 40px; background: #fafafa; color: #222; line-height: 1.7; }
+  h1 { color: #ff4500; border-bottom: 3px solid #ff4500; padding-bottom: 12px; font-size: 2.2em; }
+  h2 { color: #1a1a2e; border-bottom: 2px solid #ddd; padding-bottom: 8px; margin-top: 50px; font-size: 1.6em; }
+  h3 { color: #333; margin-top: 30px; font-size: 1.3em; }
+  h4 { color: #555; margin-top: 20px; font-size: 1.1em; }
+  .mermaid { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0; overflow-x: auto; }
+  .example-box { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 16px 20px; margin: 16px 0; border-radius: 0 8px 8px 0; }
+  .example-box strong { color: #2e7d32; }
+  .deep-dive { background: #e3f2fd; border-left: 4px solid #2196f3; padding: 16px 20px; margin: 16px 0; border-radius: 0 8px 8px 0; }
+  .deep-dive strong { color: #1565c0; }
+  .warning-box { background: #fff3e0; border-left: 4px solid #ff9800; padding: 16px 20px; margin: 16px 0; border-radius: 0 8px 8px 0; }
+  .warning-box strong { color: #e65100; }
+  .alt-box { background: #fce4ec; border-left: 4px solid #e91e63; padding: 16px 20px; margin: 16px 0; border-radius: 0 8px 8px 0; }
+  .alt-box strong { color: #880e4f; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  th { background: #1a1a2e; color: #fff; padding: 12px 16px; text-align: left; font-weight: 600; }
+  td { padding: 10px 16px; border-bottom: 1px solid #eee; }
+  tr:hover td { background: #f5f5f5; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-size: 0.92em; }
+  pre { background: #1a1a2e; color: #e0e0e0; padding: 16px; border-radius: 8px; overflow-x: auto; }
+  ul, ol { padding-left: 24px; }
+  li { margin-bottom: 6px; }
+  .section-divider { border: none; border-top: 2px dashed #ccc; margin: 40px 0; }
+  .toc { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px 30px; margin: 30px 0; }
+  .toc a { color: #ff4500; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc li { margin-bottom: 4px; }
 </style>
 </head>
 <body>
-<div class="container">
-<h1>🤖 Design Reddit</h1>
-<p style="text-align:center;color:#aaa;margin-bottom:2rem;">Social news aggregation with nested comment trees, subreddit communities, voting system — 1.7B+ MAU, 100K+ active subreddits</p>
 
-<h2>1. Functional Requirements</h2>
-<div class="card">
+<h1>🔴 System Design: Reddit</h1>
+
+<div class="toc">
+<h3>Table of Contents</h3>
+<ol>
+  <li><a href="#fr">Functional Requirements</a></li>
+  <li><a href="#nfr">Non-Functional Requirements</a></li>
+  <li><a href="#flow1">Flow 1 — Post Creation</a></li>
+  <li><a href="#flow2">Flow 2 — Voting (Upvote / Downvote)</a></li>
+  <li><a href="#flow3">Flow 3 — Commenting</a></li>
+  <li><a href="#flow4">Flow 4 — Feed Generation</a></li>
+  <li><a href="#flow5">Flow 5 — Search</a></li>
+  <li><a href="#combined">Combined Overall Diagram</a></li>
+  <li><a href="#schema">Database Schema</a></li>
+  <li><a href="#cache">CDN &amp; Cache Deep Dive</a></li>
+  <li><a href="#mq">Message Queue Deep Dive</a></li>
+  <li><a href="#scaling">Scaling Considerations</a></li>
+  <li><a href="#tradeoffs">Tradeoffs &amp; Deep Dives</a></li>
+  <li><a href="#alternatives">Alternative Approaches</a></li>
+  <li><a href="#additional">Additional Considerations</a></li>
+  <li><a href="#vendors">Vendor Recommendations</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="fr">1. Functional Requirements</h2>
+<!-- ============================================================ -->
+
+<ol>
+  <li><strong>Post Creation</strong> — Users can create posts in subreddits. Posts may contain text, images, links, or videos.</li>
+  <li><strong>Voting</strong> — Users can upvote or downvote posts and comments. Each user gets one vote per entity; voting again toggles or switches the vote.</li>
+  <li><strong>Commenting</strong> — Users can add threaded (nested) comments to posts. Comments can be replies to other comments (tree structure).</li>
+  <li><strong>Feed Generation</strong> — Users can view a personalized home feed (aggregated from subscribed subreddits) and a subreddit-specific feed. Feeds support multiple sort modes: Hot, New, Top (time-windowed), and Controversial.</li>
+  <li><strong>Subreddit Management</strong> — Users can create subreddits, subscribe/unsubscribe, and set subreddit rules and metadata.</li>
+  <li><strong>Search</strong> — Users can search for posts, subreddits, and users by keyword.</li>
+  <li><strong>User Profiles</strong> — Users can register, log in, view their post/comment history, and see their karma (aggregate vote score).</li>
+  <li><strong>Moderation</strong> — Moderators can remove posts/comments, ban users from subreddits, and pin posts.</li>
+</ol>
+
+<!-- ============================================================ -->
+<h2 id="nfr">2. Non-Functional Requirements</h2>
+<!-- ============================================================ -->
+
+<ol>
+  <li><strong>High Availability</strong> — The system should target 99.99% uptime. Feed reads and post views must remain available even if internal services degrade.</li>
+  <li><strong>Low Latency</strong> — Home feed and subreddit feed pages should load in &lt;200 ms (P99). Post and comment writes should acknowledge in &lt;300 ms.</li>
+  <li><strong>Eventual Consistency</strong> — Vote counts and feed updates may be eventually consistent (a few seconds of lag is acceptable). Comment ordering can tolerate brief staleness.</li>
+  <li><strong>Scalability</strong> — Support ~50 million daily active users, ~1.5 billion posts, ~10 billion comments, and peak traffic of ~500K concurrent users. Read-heavy workload (read:write ratio ~100:1).</li>
+  <li><strong>Durability</strong> — No data loss for posts, comments, or votes. Media files stored with redundancy.</li>
+  <li><strong>Partition Tolerance</strong> — System must function across multiple data centers / regions.</li>
+  <li><strong>Content Delivery</strong> — Media (images, videos) should be served via geographically distributed edge nodes for low-latency delivery worldwide.</li>
+</ol>
+
+<!-- ============================================================ -->
+<h2 id="flow1">3. Flow 1 — Post Creation</h2>
+<!-- ============================================================ -->
+
+<div class="mermaid">
+graph LR
+    Client["📱 Client<br/>(Web / Mobile)"]
+    LB["⚖️ Load Balancer"]
+    APIGW["🔀 API Gateway"]
+    PS["📝 Post Service"]
+    OS["💾 Object Storage"]
+    PostDB[("📀 Post DB<br/>(NoSQL)")]
+    MQ["📨 Message Queue"]
+    FC["📋 Feed Consumer"]
+    SC["🔍 Search Index<br/>Consumer"]
+    FeedCache[("⚡ Feed Cache")]
+    SearchIdx[("🔎 Search Index")]
+
+    Client -->|"HTTP POST /api/v1/posts"| LB
+    LB --> APIGW
+    APIGW -->|"Auth + Rate Limit"| PS
+    PS -->|"Upload media"| OS
+    PS -->|"Store post metadata"| PostDB
+    PS -->|"Publish new_post event"| MQ
+    MQ --> FC
+    MQ --> SC
+    FC -->|"Update subreddit feeds"| FeedCache
+    SC -->|"Index post"| SearchIdx
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Text Post:</strong> User "alice" navigates to r/programming and clicks "Create Post." She enters the title "Why Rust ownership matters" and a text body. The client sends an <code>HTTP POST /api/v1/posts</code> with the payload <code>{subreddit_id, title, content_type: "text", body}</code>. The request hits the Load Balancer, which forwards it to the API Gateway. The API Gateway validates Alice's JWT token and applies rate limiting (e.g., max 5 posts per minute). The Post Service validates the subreddit exists, that Alice has posting permissions, then writes the post metadata to the Post DB (NoSQL). The Post Service publishes a <code>new_post</code> event onto the Message Queue. The Feed Consumer picks up the event and inserts the post into the r/programming subreddit feed cache sorted sets (hot, new, top). The Search Index Consumer also picks up the event and indexes the post title and body into the Search Index. Alice receives a <code>201 Created</code> response with the new post ID.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Image Post:</strong> User "bob" creates an image post in r/pics. The client first uploads the image to Object Storage via a pre-signed URL provided by the Post Service (<code>HTTP GET /api/v1/media/upload-url</code>), which returns a signed URL. Bob's client uploads the image directly to Object Storage. Once the upload completes, the client sends <code>HTTP POST /api/v1/posts</code> with <code>{subreddit_id, title, content_type: "image", media_url: "object-storage-key"}</code>. The Post Service stores the metadata (including the Object Storage reference) in the Post DB and publishes the <code>new_post</code> event. A separate Media Processing Consumer (also subscribed to the message queue) generates thumbnails in multiple resolutions and stores them back in Object Storage. The CDN later serves these images to viewers.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Video Post:</strong> User "carol" uploads a video to r/videos. Similar to the image flow, the client obtains a pre-signed upload URL, uploads the raw video to Object Storage, then calls <code>HTTP POST /api/v1/posts</code>. The Post Service stores the metadata and publishes a <code>new_post</code> event. A Media Processing Consumer transcodes the video into multiple bitrates and formats (for HLS/DASH adaptive streaming), stores the transcoded segments in Object Storage, and updates the post record with the streaming manifest URL. Viewers will later stream the video via CDN-backed HLS/DASH endpoints.
+</div>
+
+<h3>Component Deep Dives</h3>
+
+<div class="deep-dive">
+<strong>Client (Web / Mobile):</strong> The Reddit web app (React SPA) or mobile apps (iOS/Android). Communicates with the backend exclusively over HTTPS. For media uploads, the client uploads directly to Object Storage via pre-signed URLs to avoid funneling large files through the application servers.
+</div>
+
+<div class="deep-dive">
+<strong>Load Balancer:</strong> Distributes incoming traffic across multiple API Gateway instances using round-robin or least-connections algorithms. Performs TLS termination. Health checks backend instances and removes unhealthy ones. Operates at Layer 7 (HTTP-aware) to support sticky sessions if needed and to route based on URL paths.
+</div>
+
+<div class="deep-dive">
+<strong>API Gateway:</strong> A single entry point for all client requests. Responsibilities: (1) Authentication — verifies JWT tokens, (2) Rate limiting — per-user and per-IP limits, (3) Request routing — forwards to the appropriate downstream service, (4) Request/response transformation, (5) Logging and metrics. Communicates downstream to microservices via internal HTTP or gRPC.
+</div>
+
+<div class="deep-dive">
+<strong>Post Service:</strong><br/>
+<em>Protocol:</em> HTTP REST<br/>
+<em>Endpoints:</em>
 <ul>
-<li><strong>Post Submission:</strong> Submit text, link, image, video, poll posts to subreddits</li>
-<li><strong>Voting:</strong> Upvote/downvote posts and comments; karma aggregation per user</li>
-<li><strong>Nested Comments:</strong> Threaded comment trees with collapsible branches, sorted by best/top/new/controversial</li>
-<li><strong>Subreddits:</strong> Create/join communities with custom rules, flairs, automod, moderator tools</li>
-<li><strong>Feed Generation:</strong> Home feed (subscribed subs), Popular, All, per-subreddit feeds with sorting (hot/new/top/rising)</li>
-<li><strong>Search:</strong> Full-text search across posts, comments, subreddits, users</li>
-<li><strong>Awards &amp; Premium:</strong> Give awards (Gold, Silver, etc.), Reddit Premium features</li>
-<li><strong>Moderation:</strong> Subreddit moderator tools (remove, ban, AutoModerator rules, mod queue)</li>
-<li><strong>Real-Time:</strong> Live comment updates, typing indicators (new Reddit), chat</li>
+  <li><code>POST /api/v1/posts</code> — Create a new post<br/>
+    <em>Input:</em> <code>{subreddit_id, title, content_type, body?, media_url?}</code><br/>
+    <em>Output:</em> <code>{post_id, created_at}</code> — 201 Created</li>
+  <li><code>GET /api/v1/posts/{post_id}</code> — Retrieve a single post<br/>
+    <em>Input:</em> post_id (path param), user_id (from auth token for vote status)<br/>
+    <em>Output:</em> <code>{post_id, title, body, author, subreddit, upvotes, downvotes, comment_count, user_vote, created_at, media_urls[]}</code></li>
+  <li><code>DELETE /api/v1/posts/{post_id}</code> — Delete a post (author or moderator only)<br/>
+    <em>Input:</em> post_id (path param)<br/>
+    <em>Output:</em> <code>204 No Content</code></li>
+  <li><code>GET /api/v1/media/upload-url</code> — Get a pre-signed upload URL<br/>
+    <em>Input:</em> <code>{file_type, file_size}</code><br/>
+    <em>Output:</em> <code>{upload_url, object_key, expires_at}</code></li>
+</ul>
+After persisting the post, the service publishes a <code>new_post</code> event to the Message Queue containing <code>{post_id, subreddit_id, author_id, title, content_type, created_at}</code>.
+</div>
+
+<div class="deep-dive">
+<strong>Object Storage:</strong> Stores binary media files (images, videos, thumbnails, transcoded video segments). Accessed via pre-signed URLs for uploads and CDN for reads. Objects are stored with redundancy across availability zones. Each object is identified by a unique key (e.g., <code>media/{post_id}/{uuid}.{ext}</code>).
+</div>
+
+<div class="deep-dive">
+<strong>Post DB (NoSQL):</strong> A wide-column NoSQL database that stores all post metadata. Partitioned by <code>subreddit_id</code> with a sort key on <code>created_at</code> for efficient subreddit-level queries. A secondary index exists on <code>post_id</code> for direct lookups and on <code>author_id</code> for user profile pages. Chosen for its write scalability and flexible schema (different post types have different fields).
+</div>
+
+<div class="deep-dive">
+<strong>Message Queue:</strong> An ordered, persistent message queue used for decoupling write-path operations from downstream consumers. The <code>new_post</code> event is placed on a topic/queue and consumed by multiple independent consumers (Feed Consumer, Search Index Consumer, Media Processing Consumer). Messages are partitioned by <code>subreddit_id</code> to maintain ordering within a subreddit. Consumer groups ensure each consumer type processes every message exactly once. Failed messages are retried with exponential backoff and eventually moved to a dead-letter queue. See the dedicated <a href="#mq">Message Queue Deep Dive</a> for more details.
+</div>
+
+<div class="deep-dive">
+<strong>Feed Consumer:</strong> A background worker that consumes <code>new_post</code> events from the Message Queue and inserts the post into the appropriate subreddit's feed cache. It calculates the initial "hot" score (based on creation time and initial score of 1) and inserts the post_id into sorted sets keyed by <code>subreddit:{subreddit_id}:hot</code>, <code>subreddit:{subreddit_id}:new</code>, and <code>subreddit:{subreddit_id}:top:{time_window}</code>.
+</div>
+
+<div class="deep-dive">
+<strong>Search Index Consumer:</strong> Consumes <code>new_post</code> events and indexes the post's title, body (if text), subreddit name, and author into a full-text search index (inverted index). This allows keyword-based search queries.
+</div>
+
+<div class="deep-dive">
+<strong>Feed Cache:</strong> An in-memory data store holding sorted sets of post IDs for each subreddit feed (hot, new, top, controversial). Each sorted set uses the ranking score as the sort value. This enables O(log N) insertion and O(log N + K) range queries for pagination. See <a href="#cache">Cache Deep Dive</a> for strategies.
+</div>
+
+<div class="deep-dive">
+<strong>Search Index:</strong> A search engine backed by an inverted index. Stores tokenized post titles, bodies, subreddit names, and usernames. Supports full-text search with relevance scoring (BM25 or TF-IDF). Updated asynchronously from the Message Queue.
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<h2 id="flow2">4. Flow 2 — Voting (Upvote / Downvote)</h2>
+<!-- ============================================================ -->
+
+<div class="mermaid">
+graph LR
+    Client["📱 Client"]
+    LB["⚖️ Load Balancer"]
+    APIGW["🔀 API Gateway"]
+    VS["👍 Vote Service"]
+    VoteDB[("📀 Vote DB<br/>(NoSQL)")]
+    VoteCache[("⚡ Vote Count<br/>Cache")]
+    MQ["📨 Message Queue"]
+    ScoreConsumer["📊 Score<br/>Consumer"]
+    PostDB[("📀 Post DB")]
+    FeedCache[("⚡ Feed Cache")]
+
+    Client -->|"HTTP POST /api/v1/votes"| LB
+    LB --> APIGW
+    APIGW --> VS
+    VS -->|"Read/Write vote"| VoteDB
+    VS -->|"Increment/Decrement"| VoteCache
+    VS -->|"Publish vote_event"| MQ
+    MQ --> ScoreConsumer
+    ScoreConsumer -->|"Update post score"| PostDB
+    ScoreConsumer -->|"Update sort order"| FeedCache
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — New Upvote:</strong> User "dave" sees a post in r/funny and clicks the upvote arrow. The client sends <code>HTTP POST /api/v1/votes</code> with <code>{entity_id: "post_123", entity_type: "post", vote_type: 1}</code>. The Vote Service looks up the Vote DB to check if Dave has previously voted on this post. Finding no existing vote, it writes a new record <code>{entity_id: "post_123", user_id: "dave", vote_type: 1}</code> to the Vote DB. It then atomically increments the upvote counter for <code>post_123</code> in the Vote Count Cache. The service publishes a <code>vote_event</code> to the Message Queue. The Score Consumer picks up the event, recalculates the hot score for the post (factoring in the new upvote count and post age), updates the score in the Post DB, and adjusts the post's position in the Feed Cache sorted sets. Dave's client receives <code>200 OK</code> with the updated vote counts <code>{upvotes: 1542, downvotes: 87, user_vote: 1}</code>.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Switching Vote (Downvote → Upvote):</strong> User "eve" previously downvoted a post but now clicks the upvote button. The Vote Service finds Eve's existing vote record <code>{vote_type: -1}</code> in the Vote DB. It updates the record to <code>{vote_type: 1}</code>. In the Vote Count Cache, it decrements the downvote counter by 1 and increments the upvote counter by 1 (a net change of +2 to the score). A <code>vote_event</code> is published with <code>{delta: +2}</code>. The Score Consumer updates the post's hot score accordingly.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Toggling Off (Upvote → Neutral):</strong> User "frank" previously upvoted a comment and clicks the upvote button again to un-vote. The Vote Service finds the existing <code>{vote_type: 1}</code> record and deletes it from the Vote DB. It decrements the upvote counter in the Vote Count Cache. A <code>vote_event</code> with <code>{delta: -1}</code> is published.
+</div>
+
+<div class="example-box">
+<strong>Example 4 — Voting on a Comment:</strong> User "grace" downvotes a comment. The flow is identical to post voting, but <code>entity_type</code> is <code>"comment"</code>. The Vote Service writes to the same Vote DB (partitioned by entity_id). The Score Consumer updates the comment's score in the Post DB's comments collection but does <em>not</em> update the subreddit Feed Cache (comment votes don't affect post feed ranking directly — they affect comment sort order within a post's comment tree).
+</div>
+
+<h3>Component Deep Dives</h3>
+
+<div class="deep-dive">
+<strong>Vote Service:</strong><br/>
+<em>Protocol:</em> HTTP REST<br/>
+<em>Endpoints:</em>
+<ul>
+  <li><code>POST /api/v1/votes</code> — Cast, switch, or toggle a vote<br/>
+    <em>Input:</em> <code>{entity_id, entity_type ("post"|"comment"), vote_type (1 or -1)}</code><br/>
+    <em>Output:</em> <code>{upvotes, downvotes, user_vote}</code> — 200 OK</li>
+  <li><code>GET /api/v1/votes?entity_ids=id1,id2,...&entity_type=post</code> — Batch-fetch the current user's votes for multiple entities (used when rendering a feed page)<br/>
+    <em>Input:</em> entity_ids (query param), entity_type (query param)<br/>
+    <em>Output:</em> <code>{votes: [{entity_id, vote_type}]}</code></li>
+</ul>
+<em>Logic:</em>
+<ol>
+  <li>Read existing vote from Vote DB for (user_id, entity_id).</li>
+  <li>If no existing vote → insert new vote, increment appropriate counter in cache.</li>
+  <li>If existing vote matches request → delete vote (toggle off), decrement counter.</li>
+  <li>If existing vote is opposite → update vote record, adjust both counters.</li>
+  <li>Publish <code>vote_event</code> to Message Queue with <code>{entity_id, entity_type, delta, new_upvotes, new_downvotes}</code>.</li>
+</ol>
+</div>
+
+<div class="deep-dive">
+<strong>Vote DB (NoSQL):</strong> Stores individual vote records. Partition key: <code>entity_id</code>, sort key: <code>user_id</code>. This allows O(1) lookups for "has user X voted on entity Y?" and efficient batch reads per entity. Extremely high write volume (potentially hundreds of thousands of votes per second site-wide). NoSQL chosen for its horizontal scalability and simple key-value access pattern.
+</div>
+
+<div class="deep-dive">
+<strong>Vote Count Cache:</strong> An in-memory cache that maintains atomic counters for each entity's upvote and downvote counts. Keys are like <code>votes:{entity_id}:up</code> and <code>votes:{entity_id}:down</code>. Supports atomic increment/decrement operations. This avoids hitting the database on every vote count read (which would be on every post/comment render). See <a href="#cache">Cache Deep Dive</a>.
+</div>
+
+<div class="deep-dive">
+<strong>Score Consumer:</strong> Consumes <code>vote_event</code> messages. For post votes, it recalculates the "hot" score using the formula:<br/>
+<code>hot_score = log10(max(|upvotes - downvotes|, 1)) + sign(upvotes - downvotes) × (created_at_epoch - reference_epoch) / 45000</code><br/>
+This is Reddit's actual hot ranking algorithm. The consumer updates the score in the Post DB and adjusts the post's score in the Feed Cache sorted sets (so feed ordering stays current). For high-traffic posts, the consumer may batch updates (e.g., recalculate every N votes or every T seconds) to avoid excessive cache writes.
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<h2 id="flow3">5. Flow 3 — Commenting</h2>
+<!-- ============================================================ -->
+
+<div class="mermaid">
+graph LR
+    Client["📱 Client"]
+    LB["⚖️ Load Balancer"]
+    APIGW["🔀 API Gateway"]
+    CS["💬 Comment<br/>Service"]
+    CommentDB[("📀 Comment DB<br/>(NoSQL)")]
+    PostDB[("📀 Post DB")]
+    MQ["📨 Message Queue"]
+    NC["🔔 Notification<br/>Consumer"]
+    NotifDB[("📀 Notification DB")]
+
+    Client -->|"HTTP POST<br/>/api/v1/posts/{id}/comments"| LB
+    LB --> APIGW
+    APIGW --> CS
+    CS -->|"Store comment"| CommentDB
+    CS -->|"Increment comment_count"| PostDB
+    CS -->|"Publish new_comment event"| MQ
+    MQ --> NC
+    NC -->|"Store notification"| NotifDB
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Top-Level Comment:</strong> User "heidi" opens a post in r/askreddit and types a comment. The client sends <code>HTTP POST /api/v1/posts/post_456/comments</code> with <code>{body: "Great question! Here's my take..."}</code>. The Comment Service generates a comment_id, assigns <code>parent_id: null</code> (top-level), <code>depth: 0</code>, and a materialized path of <code>/comment_789</code>. It writes the comment to the Comment DB (partitioned by post_id). It atomically increments the <code>comment_count</code> on the post in the Post DB. It publishes a <code>new_comment</code> event to the Message Queue. The Notification Consumer picks it up and creates a notification for the post's author: "heidi commented on your post in r/askreddit." Heidi receives <code>201 Created</code> with the new comment data.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Nested Reply:</strong> User "ivan" replies to heidi's comment. The client sends <code>HTTP POST /api/v1/posts/post_456/comments</code> with <code>{body: "I disagree because...", parent_id: "comment_789"}</code>. The Comment Service looks up the parent comment to get its path (<code>/comment_789</code>) and depth (0). It creates the new comment with path <code>/comment_789/comment_890</code> and <code>depth: 1</code>. A notification is created for heidi: "ivan replied to your comment." The post's <code>comment_count</code> is incremented.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Deeply Nested Comment (Depth Limit):</strong> A comment thread is 10 levels deep. User "judy" tries to reply at depth 11. The Comment Service checks the depth and, since it exceeds the configured maximum (e.g., 10), rejects the request with <code>400 Bad Request: Maximum comment depth reached</code>. The client displays a "Continue this thread" link instead.
+</div>
+
+<div class="example-box">
+<strong>Example 4 — Loading Comment Tree:</strong> User "kevin" opens a post with 5,000 comments. The client sends <code>HTTP GET /api/v1/posts/post_456/comments?sort=best&limit=200</code>. The Comment Service queries the Comment DB for the top 200 comments by score, sorted by their materialized path to maintain tree structure. Comments beyond the limit are replaced with "Load more comments (4800)" placeholder nodes. The tree is returned as a nested JSON structure.
+</div>
+
+<h3>Component Deep Dives</h3>
+
+<div class="deep-dive">
+<strong>Comment Service:</strong><br/>
+<em>Protocol:</em> HTTP REST<br/>
+<em>Endpoints:</em>
+<ul>
+  <li><code>POST /api/v1/posts/{post_id}/comments</code> — Create a comment<br/>
+    <em>Input:</em> <code>{body, parent_id?}</code><br/>
+    <em>Output:</em> <code>{comment_id, body, author, depth, path, created_at}</code> — 201 Created</li>
+  <li><code>GET /api/v1/posts/{post_id}/comments</code> — Retrieve comment tree<br/>
+    <em>Input:</em> post_id (path), <code>sort</code> (query: "best", "new", "top", "controversial"), <code>limit</code> (query), <code>parent_id</code> (query, optional for loading sub-threads)<br/>
+    <em>Output:</em> <code>{comments: [{comment_id, body, author, depth, upvotes, downvotes, children: [...], user_vote}], total_count}</code></li>
+  <li><code>DELETE /api/v1/posts/{post_id}/comments/{comment_id}</code> — Delete a comment (soft delete: body replaced with "[deleted]")<br/>
+    <em>Input:</em> comment_id (path)<br/>
+    <em>Output:</em> <code>204 No Content</code></li>
 </ul>
 </div>
 
-<h2>2. Non-Functional Requirements</h2>
-<div class="card">
+<div class="deep-dive">
+<strong>Comment DB (NoSQL):</strong> Stores all comments. Partition key: <code>post_id</code>, sort key: <code>path</code> (materialized path). This allows efficient retrieval of all comments for a post, sorted in tree order. The materialized path enables: (1) reconstructing the tree structure, (2) querying all descendants of a given comment (prefix query on path), (3) determining depth from path length. NoSQL chosen for high write volume and the need for flexible, hierarchical data.
+</div>
+
+<div class="deep-dive">
+<strong>Notification Consumer:</strong> Consumes <code>new_comment</code> events. Determines who should be notified (post author for top-level comments, parent comment author for replies). Creates a notification record in the Notification DB with fields <code>{user_id, type: "comment_reply", reference_id, message, is_read: false, created_at}</code>. Does <em>not</em> send push notifications in real-time here (that would be a separate push notification service consuming from the Notification DB or another queue).
+</div>
+
+<div class="deep-dive">
+<strong>Notification DB (NoSQL):</strong> Stores user notifications. Partition key: <code>user_id</code>, sort key: <code>created_at</code> (descending). Allows efficient retrieval of a user's recent notifications. High write volume (many actions generate notifications). TTL-based expiration for old notifications (e.g., 90 days).
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<h2 id="flow4">6. Flow 4 — Feed Generation</h2>
+<!-- ============================================================ -->
+
+<div class="mermaid">
+graph LR
+    Client["📱 Client"]
+    LB["⚖️ Load Balancer"]
+    APIGW["🔀 API Gateway"]
+    FS["📰 Feed Service"]
+    SubDB[("📀 Subscription DB<br/>(NoSQL)")]
+    FeedCache[("⚡ Feed Cache")]
+    PostDB[("📀 Post DB")]
+    VoteCache[("⚡ Vote Count<br/>Cache")]
+    VS["👍 Vote Service"]
+
+    Client -->|"HTTP GET<br/>/api/v1/feed?sort=hot"| LB
+    LB --> APIGW
+    APIGW --> FS
+    FS -->|"Get user subscriptions"| SubDB
+    FS -->|"Fetch ranked post IDs"| FeedCache
+    FS -->|"Fetch post details"| PostDB
+    FS -->|"Fetch vote counts"| VoteCache
+    FS -->|"Batch-fetch user votes"| VS
+</div>
+
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Home Feed (Hot Sort):</strong> User "laura" opens the Reddit app. The client sends <code>HTTP GET /api/v1/feed?sort=hot&limit=25&cursor=null</code>. The Feed Service fetches Laura's subscription list from the Subscription DB — she's subscribed to r/programming, r/cooking, r/news, and 15 other subreddits. For each subreddit, the service fetches the top post IDs from the Feed Cache sorted set <code>subreddit:{id}:hot</code>. It merges these post IDs using a min-heap (priority queue) ranked by hot score, selecting the top 25 across all subreddits. It then batch-fetches the post details from the Post DB and the current vote counts from the Vote Count Cache. It also calls the Vote Service's batch endpoint to get Laura's personal votes for these 25 posts. The final response is returned: <code>{posts: [{post_id, title, subreddit, author, upvotes, downvotes, comment_count, user_vote, thumbnail_url, created_at}, ...], next_cursor: "eyJ..."}</code>.
+</div>
+
+<div class="example-box">
+<strong>Example 2 — Subreddit Feed (New Sort):</strong> User "mike" navigates to r/gaming and sorts by "New." The client sends <code>HTTP GET /api/v1/subreddits/r_gaming/feed?sort=new&limit=25</code>. The Feed Service skips the subscription lookup (single subreddit) and directly queries the Feed Cache sorted set <code>subreddit:r_gaming:new</code> (sorted by created_at descending). It fetches the top 25 post IDs, enriches them with post details and vote counts, and returns the result.
+</div>
+
+<div class="example-box">
+<strong>Example 3 — Feed Cache Miss:</strong> A newly created subreddit r/obscure_hobby has no cached feed data. The Feed Service queries the Feed Cache and gets an empty result. It falls back to querying the Post DB directly: <code>SELECT * FROM posts WHERE subreddit_id = 'r_obscure_hobby' ORDER BY created_at DESC LIMIT 25</code>. It populates the Feed Cache with the results for future requests (read-through caching).
+</div>
+
+<div class="example-box">
+<strong>Example 4 — Cursor-Based Pagination:</strong> Laura scrolls down and wants the next page. The client sends <code>HTTP GET /api/v1/feed?sort=hot&limit=25&cursor=eyJ...</code>. The cursor encodes the last-seen hot score and post_id. The Feed Service resumes the merge from where it left off, skipping posts already shown.
+</div>
+
+<h3>Component Deep Dives</h3>
+
+<div class="deep-dive">
+<strong>Feed Service:</strong><br/>
+<em>Protocol:</em> HTTP REST<br/>
+<em>Endpoints:</em>
 <ul>
-<li><strong>Scale:</strong> 1.7B+ MAU, 13B+ posts+comments total, 50M+ daily active users</li>
-<li><strong>Latency:</strong> Feed generation p50 &lt;200ms, vote processing &lt;50ms, comment tree rendering &lt;300ms</li>
-<li><strong>Availability:</strong> 99.9% uptime (Reddit has historically had uptime challenges)</li>
-<li><strong>Consistency:</strong> Eventual consistency for vote counts and karma; strong for moderation actions</li>
-<li><strong>Viral Content:</strong> Handle massive spikes (trending post can get 100K+ votes in hours)</li>
-<li><strong>Storage:</strong> Petabytes of content including images/videos hosted on Reddit's media platform</li>
+  <li><code>GET /api/v1/feed</code> — Retrieve personalized home feed<br/>
+    <em>Input:</em> <code>sort</code> (query: "hot", "new", "top", "controversial"), <code>time_window</code> (query: "day", "week", "month", "year", "all" — for "top" sort), <code>limit</code> (query), <code>cursor</code> (query)<br/>
+    <em>Output:</em> <code>{posts: [...], next_cursor}</code></li>
+  <li><code>GET /api/v1/subreddits/{name}/feed</code> — Retrieve subreddit feed<br/>
+    <em>Input:</em> same query params as above<br/>
+    <em>Output:</em> <code>{posts: [...], next_cursor}</code></li>
 </ul>
-</div>
-
-<h2>3. Flow 1 — Post Submission &amp; Feed Generation</h2>
-<div class="diagram-box">
-<svg viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="a1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FF4500"/></marker></defs>
-<rect x="20" y="160" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="190" text-anchor="middle" fill="#fff" font-size="13">Author</text><text x="75" y="205" text-anchor="middle" fill="#fff" font-size="11">submits post</text>
-<rect x="180" y="160" width="120" height="60" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="240" y="190" text-anchor="middle" fill="#fff" font-size="13">API Gateway</text>
-<rect x="350" y="60" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="415" y="90" text-anchor="middle" fill="#fff" font-size="13">Post Service</text>
-<rect x="350" y="160" width="130" height="60" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="415" y="185" text-anchor="middle" fill="#fff" font-size="13">Kafka</text><text x="415" y="200" text-anchor="middle" fill="#fff" font-size="11">post-events</text>
-<rect x="350" y="270" width="130" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="415" y="295" text-anchor="middle" fill="#fff" font-size="13">AutoModerator</text><text x="415" y="312" text-anchor="middle" fill="#fff" font-size="11">spam/rules check</text>
-<rect x="540" y="60" width="140" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="610" y="90" text-anchor="middle" fill="#fff" font-size="13">PostgreSQL</text><text x="610" y="105" text-anchor="middle" fill="#fff" font-size="11">(posts table)</text>
-<rect x="540" y="160" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="610" y="185" text-anchor="middle" fill="#fff" font-size="13">Feed Generator</text><text x="610" y="202" text-anchor="middle" fill="#fff" font-size="11">(hot/new/top rank)</text>
-<rect x="540" y="270" width="140" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="610" y="295" text-anchor="middle" fill="#fff" font-size="13">Feed Cache</text><text x="610" y="312" text-anchor="middle" fill="#fff" font-size="11">(Memcached)</text>
-<rect x="740" y="160" width="130" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="805" y="185" text-anchor="middle" fill="#fff" font-size="13">Redis</text><text x="805" y="202" text-anchor="middle" fill="#fff" font-size="11">(sorted sets)</text>
-<rect x="930" y="160" width="120" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="990" y="190" text-anchor="middle" fill="#fff" font-size="13">Reader</text><text x="990" y="205" text-anchor="middle" fill="#fff" font-size="11">views feed</text>
-<line x1="130" y1="190" x2="178" y2="190" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="300" y1="175" x2="348" y2="95" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="300" y1="190" x2="348" y2="190" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="300" y1="205" x2="348" y2="295" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="480" y1="90" x2="538" y2="90" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="480" y1="190" x2="538" y2="190" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="680" y1="190" x2="738" y2="190" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="680" y1="295" x2="738" y2="200" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="870" y1="190" x2="928" y2="190" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
-<line x1="610" y1="222" x2="610" y2="268" stroke="#FF4500" stroke-width="2" marker-end="url(#a1)"/>
-</svg>
-</div>
-
-<h3>Flow Steps</h3>
-<div class="card">
+<em>Feed Generation Strategy (Hybrid Pull):</em>
 <ol>
-<li><strong>Author submits post</strong> → POST <code>/api/v1/subreddits/{sub}/submit</code> with title, body/URL, flair, NSFW flag</li>
-<li><strong>AutoModerator</strong> checks subreddit rules (regex patterns, account age requirements, karma threshold, banned domains)</li>
-<li><strong>Spam detection:</strong> ML model scores post for spam probability; high-confidence spam auto-removed, borderline sent to mod queue</li>
-<li><strong>Post Service</strong> persists to PostgreSQL, generates post ID (base36 encoded, e.g., <code>t3_abc123</code>)</li>
-<li><strong>Kafka event</strong> triggers async processing: media transcoding, link preview extraction, search indexing, notification to subscribers</li>
-<li><strong>Feed Generator</strong> computes scores and inserts post into relevant sorted sets in Redis (per-subreddit: hot, new, top; global: r/all, r/popular)</li>
-<li><strong>Hot ranking formula:</strong> <code>score = log10(max(|ups - downs|, 1)) + sign(ups - downs) × (post_age / 45000)</code> — Wilson score interval variant. Newer posts with same votes rank higher.</li>
-<li><strong>Feed Cache</strong> (Memcached) stores pre-rendered feed pages; invalidated on score changes or new posts</li>
+  <li>Subreddit-level feeds are <strong>pre-computed and cached</strong> in sorted sets (push model: updated when posts are created or scores change).</li>
+  <li>Home feeds are <strong>computed on read</strong> (pull model) by merging subreddit feeds. This avoids the fanout-on-write problem for subreddits with millions of subscribers.</li>
+  <li>The generated home feed page is then cached with a short TTL (~30-60 seconds) to avoid recomputing for rapid successive page loads.</li>
 </ol>
 </div>
 
-<h3>Example</h3>
-<div class="card" style="background:#1e1e2e">
-<p><strong>Scenario:</strong> User posts "TIL the Sun is actually white, not yellow" to r/todayilearned (30M subscribers)</p>
-<p><strong>AutoMod:</strong> Checks: account age &gt;30 days ✅, karma &gt;100 ✅, title starts with "TIL" ✅, not a repost (URL not seen in last 6 months) ✅ → approved</p>
-<p><strong>Stored:</strong> post_id=t3_xyz789, score=1 (author's auto-upvote), created_utc=now</p>
-<p><strong>Hot rank:</strong> <code>log10(1) + 1 × (now/45000) = 0 + 37.5 = 37.5</code> → inserted into r/todayilearned sorted set in Redis</p>
-<p><strong>After 1 hour (5000 upvotes):</strong> <code>log10(5000) + 1 × ((now+3600)/45000) = 3.7 + 37.58 = 41.28</code> → climbs to page 1 of r/todayilearned, appears on r/all</p>
-<p><strong>After 24 hours (50K upvotes):</strong> <code>log10(50000) + 1 × ((now+86400)/45000) = 4.7 + 39.42 = 44.12</code> → still high but newer posts gaining</p>
+<div class="deep-dive">
+<strong>Subscription DB (NoSQL):</strong> Stores user-to-subreddit subscription mappings. Partition key: <code>user_id</code>, sort key: <code>subreddit_id</code>. Allows efficient lookup of all subreddits a user is subscribed to. A secondary index (partition key: <code>subreddit_id</code>, sort key: <code>user_id</code>) supports queries like "how many subscribers does r/X have" and "notify all subscribers of r/X." NoSQL chosen for the massive cardinality (~billions of subscription records) and simple key-value access patterns.
 </div>
 
-<h3>Deep Dives</h3>
-<div class="info-grid">
-<div class="card">
-<h4>Hot Ranking Algorithm</h4>
-<p>Reddit's hot ranking is time-decay based: <code>hot(ups, downs, date) = log10(max(|ups-downs|, 1)) × sign + seconds_since_epoch/45000</code>. The <code>log10</code> means the first 10 votes matter as much as the next 100, which matter as much as the next 1000 — diminishing returns. The <code>/45000</code> time component means every ~12.5 hours, a post needs 10x more votes to maintain the same rank. <strong>Controversial</strong> sort: <code>min(ups, downs) / max(ups, downs) × max(ups, downs)</code> — posts with nearly equal up/down votes rank highest. <strong>Best (Wilson)</strong> sort for comments: lower bound of Wilson score interval (95% confidence) — better than simple ups/downs ratio for low-vote items.</p>
-</div>
-<div class="card">
-<h4>Feed Architecture (Pull Model)</h4>
-<p>Reddit uses a <strong>pull model</strong> (fan-out-on-read) for feeds. No pre-materialized per-user feeds. On feed request: fetch user's subscribed subreddits → for each sub, pull top-N posts from Redis sorted set → merge-sort across all subs → return paginated results. This works because: (1) users subscribe to ~20-50 subs on average, (2) per-sub sorted sets are small and cached, (3) merge is cheap. <strong>r/all</strong> and <strong>r/popular</strong> are special: single global sorted set, no per-user merging needed. Pagination via <code>after=t3_xyz</code> cursor (score-based, not offset-based).</p>
-</div>
-<div class="card">
-<h4>AutoModerator</h4>
-<p>Rule engine that runs before post/comment is visible. Written in YAML by subreddit moderators. Checks: regex on title/body, account age, karma thresholds, domain blacklists, flair requirements, rate limits. Actions: remove, report to mod queue, flair, lock, sticky comment. Reddit's <strong>Safety team</strong> adds platform-wide rules (sitewide ban evasion detection, CSAM detection, spam ML models). AutoMod processes ~50M+ actions/day across all subreddits.</p>
-</div>
-<div class="card">
-<h4>Media Processing Pipeline</h4>
-<p>Reddit hosts images/videos on <code>i.redd.it</code> and <code>v.redd.it</code>. Upload flow: client → API → S3 → async transcoding via media pipeline. Images: stored in original + multiple resolutions (thumbnail, preview, full). Videos: transcoded to HLS (multiple bitrates: 240p, 360p, 480p, 720p, 1080p) using FFmpeg workers. GIFs: transcoded to MP4 (10-20x smaller). All media served via CDN (Fastly). NSFW content blurred by default, requires opt-in to view.</p>
-</div>
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<h2 id="flow5">7. Flow 5 — Search</h2>
+<!-- ============================================================ -->
+
+<div class="mermaid">
+graph LR
+    Client["📱 Client"]
+    LB["⚖️ Load Balancer"]
+    APIGW["🔀 API Gateway"]
+    SS["🔍 Search Service"]
+    SearchIdx[("🔎 Search Index<br/>(Inverted Index)")]
+    PostDB[("📀 Post DB")]
+    SubredditDB[("📀 Subreddit DB<br/>(SQL)")]
+    VoteCache[("⚡ Vote Count<br/>Cache")]
+
+    Client -->|"HTTP GET<br/>/api/v1/search?q=rust+programming"| LB
+    LB --> APIGW
+    APIGW --> SS
+    SS -->|"Full-text query"| SearchIdx
+    SS -->|"Enrich results"| PostDB
+    SS -->|"Subreddit matches"| SubredditDB
+    SS -->|"Vote counts"| VoteCache
 </div>
 
-<h2>4. Flow 2 — Voting System</h2>
-<div class="diagram-box">
-<svg viewBox="0 0 950 300" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="a2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FF8717"/></marker></defs>
-<rect x="20" y="120" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="150" text-anchor="middle" fill="#fff" font-size="13">Voter</text>
-<rect x="180" y="120" width="120" height="60" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="240" y="150" text-anchor="middle" fill="#fff" font-size="13">Vote Service</text>
-<rect x="350" y="30" width="130" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="415" y="60" text-anchor="middle" fill="#fff" font-size="13">Redis</text><text x="415" y="75" text-anchor="middle" fill="#fff" font-size="11">(vote dedup)</text>
-<rect x="350" y="120" width="130" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="415" y="150" text-anchor="middle" fill="#fff" font-size="13">PostgreSQL</text><text x="415" y="165" text-anchor="middle" fill="#fff" font-size="11">(votes table)</text>
-<rect x="350" y="210" width="130" height="60" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="415" y="240" text-anchor="middle" fill="#fff" font-size="13">Kafka</text><text x="415" y="255" text-anchor="middle" fill="#fff" font-size="11">vote-events</text>
-<rect x="540" y="30" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="610" y="60" text-anchor="middle" fill="#fff" font-size="13">Score Updater</text><text x="610" y="75" text-anchor="middle" fill="#fff" font-size="11">(async batch)</text>
-<rect x="540" y="120" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="610" y="150" text-anchor="middle" fill="#fff" font-size="13">Karma Service</text>
-<rect x="540" y="210" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="610" y="240" text-anchor="middle" fill="#fff" font-size="13">Rank Recalc</text><text x="610" y="255" text-anchor="middle" fill="#fff" font-size="11">(hot/top update)</text>
-<line x1="130" y1="150" x2="178" y2="150" stroke="#FF8717" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="300" y1="135" x2="348" y2="65" stroke="#FF8717" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="300" y1="150" x2="348" y2="150" stroke="#FF8717" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="300" y1="165" x2="348" y2="235" stroke="#FF8717" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="480" y1="55" x2="538" y2="55" stroke="#FF8717" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="480" y1="240" x2="538" y2="150" stroke="#FF8717" stroke-width="2" marker-end="url(#a2)"/>
-<line x1="480" y1="240" x2="538" y2="240" stroke="#FF8717" stroke-width="2" marker-end="url(#a2)"/>
-</svg>
+<h3>Examples</h3>
+
+<div class="example-box">
+<strong>Example 1 — Post Search:</strong> User "nina" types "rust programming" into the search bar and selects the "Posts" tab. The client sends <code>HTTP GET /api/v1/search?q=rust+programming&type=posts&sort=relevance&limit=25</code>. The Search Service sends a full-text query to the Search Index, which uses BM25 scoring to rank matching posts by relevance. The index returns a ranked list of post_ids. The Search Service enriches these with post details from the Post DB and current vote counts from the Vote Count Cache. Nina sees results ranked by relevance, with posts containing "rust" and "programming" in their title or body scoring highest.
 </div>
 
-<h3>Flow Steps</h3>
-<div class="card">
-<ol>
-<li><strong>User votes</strong> → POST <code>/api/vote</code> with <code>{thing_id: "t3_abc123", dir: 1}</code> (1=up, -1=down, 0=unvote)</li>
-<li><strong>Vote dedup check:</strong> Redis lookup <code>vote:{user_id}:{thing_id}</code> → if same direction already exists, no-op. If changing vote (up→down), net change = -2</li>
-<li><strong>Persist vote:</strong> UPSERT into PostgreSQL votes table with (user_id, thing_id, direction)</li>
-<li><strong>Kafka event:</strong> <code>{thing_id, voter_id, direction, net_change, timestamp}</code></li>
-<li><strong>Score Updater</strong> (async consumer): batches vote events per post, atomically increments <code>posts.score</code> in PostgreSQL and Redis sorted set score</li>
-<li><strong>Karma Service:</strong> Updates author's karma (async, non-critical). Karma ≠ exact vote count (Reddit applies fuzzing + diminishing returns from single post)</li>
-<li><strong>Rank Recalc:</strong> Recomputes hot rank score in Redis sorted set for the post's subreddit and r/all</li>
-</ol>
+<div class="example-box">
+<strong>Example 2 — Subreddit Search:</strong> User "oscar" searches for "cooking" with the "Communities" tab. The client sends <code>HTTP GET /api/v1/search?q=cooking&type=subreddits&limit=25</code>. The Search Service queries both the Search Index and the Subreddit DB (prefix match on name). Results include r/cooking, r/cookingforbeginners, r/AskCulinary — ranked by subscriber count and name relevance.
 </div>
 
-<h3>Example</h3>
-<div class="card" style="background:#1e1e2e">
-<p><strong>Scenario:</strong> Viral post receiving 1000 votes/minute during peak</p>
-<p><strong>Vote dedup:</strong> Redis SET <code>vote:u123:t3_abc</code> = 1 with TTL 30 days (prevents re-voting from the same account)</p>
-<p><strong>Batching:</strong> Score Updater consumes Kafka in microbatches (every 100ms). 1000 votes → single batch UPDATE <code>SET score = score + 980</code> (after netting ups and downs)</p>
-<p><strong>Vote fuzzing:</strong> Reddit displays "approximately" vote counts. For posts with 10K+ votes, displayed count varies by ±5%. Prevents vote manipulation detection. Actual score stored precisely for ranking; displayed score is fuzzed.</p>
-<p><strong>Redis sorted set update:</strong> <code>ZADD r/todayilearned:hot 44.12 t3_abc123</code> → post rank updated in sorted set</p>
+<div class="example-box">
+<strong>Example 3 — Search Within Subreddit:</strong> User "pat" is in r/python and uses the subreddit search. The client sends <code>HTTP GET /api/v1/search?q=async+await&type=posts&subreddit=r_python&limit=25</code>. The Search Service adds a filter clause for <code>subreddit_id</code> to the full-text query, restricting results to posts in r/python only.
 </div>
 
-<h3>Deep Dives</h3>
-<div class="info-grid">
-<div class="card">
-<h4>Vote Fuzzing &amp; Anti-Manipulation</h4>
-<p>Reddit intentionally fuzzes displayed vote counts to prevent manipulation. True score stored for ranking. Fuzzing: add random noise proportional to total votes. Also: <strong>vote weight</strong> — votes from new/suspicious accounts count less. <strong>Brigading detection</strong>: if a post suddenly receives abnormal vote patterns (many votes from accounts that share subreddit overlap, or from same IP ranges), those votes are discounted. <strong>Shadow banning</strong>: banned users' votes appear to work from their perspective but don't actually count.</p>
-</div>
-<div class="card">
-<h4>Karma Calculation</h4>
-<p>Karma ≠ total upvotes. Reddit applies diminishing returns: first ~10 upvotes give ~1 karma each; after that, the ratio decreases. A post with 50K upvotes might give ~5K karma. Comment karma and post karma are tracked separately. Karma serves as: spam prevention (minimum karma to post in many subs), social proof, and vanity metric. Karma is NOT recalculated if a post's votes change weeks later — it's mostly computed at the time of peak activity.</p>
-</div>
-</div>
+<h3>Component Deep Dives</h3>
 
-<h2>5. Flow 3 — Nested Comment Trees</h2>
-<div class="diagram-box">
-<svg viewBox="0 0 950 350" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="a3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FFD635"/></marker></defs>
-<rect x="20" y="140" width="110" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="75" y="170" text-anchor="middle" fill="#fff" font-size="13">User</text><text x="75" y="185" text-anchor="middle" fill="#fff" font-size="11">views post</text>
-<rect x="180" y="140" width="120" height="60" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="240" y="170" text-anchor="middle" fill="#fff" font-size="13">Comment Service</text>
-<rect x="350" y="40" width="140" height="60" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="420" y="70" text-anchor="middle" fill="#fff" font-size="13">PostgreSQL</text><text x="420" y="85" text-anchor="middle" fill="#fff" font-size="11">(comments table)</text>
-<rect x="350" y="140" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="420" y="165" text-anchor="middle" fill="#fff" font-size="13">Tree Builder</text><text x="420" y="182" text-anchor="middle" fill="#fff" font-size="11">(adjacency → tree)</text>
-<rect x="350" y="240" width="140" height="60" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="420" y="265" text-anchor="middle" fill="#fff" font-size="13">Comment Cache</text><text x="420" y="282" text-anchor="middle" fill="#fff" font-size="11">(Memcached)</text>
-<rect x="560" y="140" width="140" height="60" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="630" y="165" text-anchor="middle" fill="#fff" font-size="13">Sorter</text><text x="630" y="182" text-anchor="middle" fill="#fff" font-size="11">(best/top/new)</text>
-<rect x="760" y="140" width="120" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="820" y="170" text-anchor="middle" fill="#fff" font-size="13">Rendered</text><text x="820" y="185" text-anchor="middle" fill="#fff" font-size="11">Comment Tree</text>
-<line x1="130" y1="170" x2="178" y2="170" stroke="#FFD635" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="300" y1="155" x2="348" y2="75" stroke="#FFD635" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="300" y1="170" x2="348" y2="170" stroke="#FFD635" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="300" y1="185" x2="348" y2="265" stroke="#FFD635" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="490" y1="170" x2="558" y2="170" stroke="#FFD635" stroke-width="2" marker-end="url(#a3)"/>
-<line x1="700" y1="170" x2="758" y2="170" stroke="#FFD635" stroke-width="2" marker-end="url(#a3)"/>
-</svg>
+<div class="deep-dive">
+<strong>Search Service:</strong><br/>
+<em>Protocol:</em> HTTP REST<br/>
+<em>Endpoints:</em>
+<ul>
+  <li><code>GET /api/v1/search</code> — Search for posts, subreddits, or users<br/>
+    <em>Input:</em> <code>q</code> (query string), <code>type</code> ("posts", "subreddits", "users"), <code>sort</code> ("relevance", "hot", "new", "top"), <code>subreddit</code> (optional filter), <code>time_window</code> (optional), <code>limit</code>, <code>cursor</code><br/>
+    <em>Output:</em> <code>{results: [...], total_count, next_cursor}</code></li>
+</ul>
+The Search Service is a stateless service that translates API parameters into search index queries, then enriches results with live data (vote counts, user vote status).
 </div>
 
-<h3>Flow Steps</h3>
-<div class="card">
-<ol>
-<li><strong>User opens post</strong> → GET <code>/comments/t3_abc123?sort=best&limit=200&depth=10</code></li>
-<li><strong>Cache check:</strong> Memcached lookup for this post's comment tree (keyed by post_id + sort + depth)</li>
-<li><strong>Cache miss → DB query:</strong> Fetch all comments for post from PostgreSQL using <code>parent_id</code> adjacency list model</li>
-<li><strong>Tree Builder:</strong> Reconstructs tree from flat list using parent_id references. Uses hash map: <code>{comment_id → comment_node}</code>, then link children to parents. O(n) construction.</li>
-<li><strong>Sorter:</strong> At each level of the tree, sort sibling comments by selected algorithm (best=Wilson, top=score, new=timestamp, controversial=min/max ratio)</li>
-<li><strong>Truncation:</strong> If comment tree exceeds limits (e.g., 200 comments, depth 10), insert "load more comments" placeholders with continuation tokens</li>
-<li><strong>Cache store:</strong> Cache the rendered tree in Memcached with short TTL (1-5 minutes) for hot posts</li>
-</ol>
+<div class="deep-dive">
+<strong>Search Index (Inverted Index):</strong> An inverted index that maps terms to document IDs. Documents include post titles, post bodies, subreddit names/descriptions, and usernames. The index supports:<br/>
+<ul>
+  <li><strong>Tokenization</strong> — text is tokenized, lowercased, stop-words removed, and stemmed.</li>
+  <li><strong>Scoring</strong> — BM25 relevance scoring for ranking results.</li>
+  <li><strong>Filtering</strong> — filter by subreddit, time range, content type.</li>
+  <li><strong>Faceting</strong> — count results by subreddit, time bucket, etc.</li>
+</ul>
+The index is populated asynchronously by the Search Index Consumer, which subscribes to <code>new_post</code>, <code>post_updated</code>, and <code>post_deleted</code> events from the Message Queue. Index sharding is done by document ID for even distribution. Replication factor of 2-3 for availability.
 </div>
 
-<h3>Example</h3>
-<div class="card" style="background:#1e1e2e">
-<p><strong>Post with 5000 comments, sorted by "best":</strong></p>
-<pre>
-Root (post t3_abc123)
-├── Comment A (score: 3500, Wilson: 0.95) ← top-level, best score
-│   ├── Comment A1 (score: 800)
-│   │   ├── Comment A1a (score: 200)
-│   │   └── Comment A1b (score: 50)
-│   └── Comment A2 (score: 1200) ← higher than A1 at this level
-│       └── [load more: 15 children]
-├── Comment B (score: 2100, Wilson: 0.92)
-│   └── Comment B1 (score: 500)
-├── Comment C (score: 1800, Wilson: 0.90)
-│   └── [load more: 45 children]
-└── [load more: 180 top-level comments]
-</pre>
-<p><strong>Wilson score for Comment A:</strong> 3500 upvotes, 200 downvotes → Wilson lower bound at 95% CI = 0.945 → ranks higher than B (2100 up, 100 down, Wilson=0.942)</p>
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<h2 id="combined">8. Combined Overall Diagram</h2>
+<!-- ============================================================ -->
+
+<div class="mermaid">
+graph TB
+    Client["📱 Client<br/>(Web / Mobile)"]
+    CDN["🌐 CDN"]
+    LB["⚖️ Load Balancer"]
+    APIGW["🔀 API Gateway<br/>(Auth, Rate Limit, Routing)"]
+
+    PS["📝 Post Service"]
+    VS["👍 Vote Service"]
+    CS["💬 Comment Service"]
+    FS["📰 Feed Service"]
+    SS["🔍 Search Service"]
+    SubS["🏠 Subreddit Service"]
+
+    OS["💾 Object Storage"]
+    MQ["📨 Message Queue"]
+
+    PostDB[("📀 Post DB<br/>(NoSQL)")]
+    VoteDB[("📀 Vote DB<br/>(NoSQL)")]
+    CommentDB[("📀 Comment DB<br/>(NoSQL)")]
+    SubDB[("📀 Subscription DB<br/>(NoSQL)")]
+    SubredditDB[("📀 Subreddit DB<br/>(SQL)")]
+    UserDB[("📀 User DB<br/>(SQL)")]
+    NotifDB[("📀 Notification DB<br/>(NoSQL)")]
+
+    FeedCache[("⚡ Feed Cache")]
+    VoteCache[("⚡ Vote Count Cache")]
+    SearchIdx[("🔎 Search Index")]
+
+    FC["📋 Feed Consumer"]
+    ScoreC["📊 Score Consumer"]
+    SearchC["🔍 Search Consumer"]
+    NotifC["🔔 Notification Consumer"]
+    MediaC["🎬 Media Processing<br/>Consumer"]
+
+    Client -->|"Static assets"| CDN
+    CDN -->|"Cache miss"| OS
+    Client --> LB
+    LB --> APIGW
+
+    APIGW --> PS
+    APIGW --> VS
+    APIGW --> CS
+    APIGW --> FS
+    APIGW --> SS
+    APIGW --> SubS
+
+    PS --> PostDB
+    PS --> OS
+    PS --> MQ
+
+    VS --> VoteDB
+    VS --> VoteCache
+    VS --> MQ
+
+    CS --> CommentDB
+    CS --> PostDB
+    CS --> MQ
+
+    FS --> SubDB
+    FS --> FeedCache
+    FS --> PostDB
+    FS --> VoteCache
+    FS --> VS
+
+    SS --> SearchIdx
+    SS --> PostDB
+    SS --> SubredditDB
+    SS --> VoteCache
+
+    SubS --> SubredditDB
+    SubS --> UserDB
+    SubS --> SubDB
+
+    MQ --> FC
+    MQ --> ScoreC
+    MQ --> SearchC
+    MQ --> NotifC
+    MQ --> MediaC
+
+    FC --> FeedCache
+    ScoreC --> PostDB
+    ScoreC --> FeedCache
+    SearchC --> SearchIdx
+    NotifC --> NotifDB
+    MediaC --> OS
 </div>
 
-<h3>Deep Dives</h3>
-<div class="info-grid">
-<div class="card">
-<h4>Comment Storage: Adjacency List</h4>
-<p>Reddit stores comments as a flat table with <code>parent_id</code> references (adjacency list model). Query: <code>SELECT * FROM comments WHERE post_id = ? ORDER BY created_at</code> → fetch all comments for a post in one query. Tree reconstruction done in application layer. Alternative models considered: <strong>Nested Sets</strong> (fast reads, slow writes — bad for Reddit's write-heavy pattern), <strong>Materialized Path</strong> (path string like "A/A1/A1a" — good for subtree queries but path length limits). Adjacency list wins for Reddit because: writes are simple INSERTs, reads fetch all at once and build tree in memory.</p>
-</div>
-<div class="card">
-<h4>Wilson Score Confidence (Best Sort)</h4>
-<p>Reddit's "Best" sort uses the <strong>lower bound of the Wilson score confidence interval</strong>. For a comment with <code>p = upvotes / total_votes</code> and <code>n = total_votes</code>, the Wilson lower bound is: <code>(p + z²/2n - z√(p(1-p)/n + z²/4n²)) / (1 + z²/n)</code> where z=1.96 for 95% confidence. This naturally handles the "1 upvote / 1 total" vs "100 upvotes / 200 total" problem — the former ranks lower because low confidence. This was famously proposed by Randall Munroe (xkcd) and adopted by Reddit.</p>
-</div>
-</div>
+<h3>Combined Flow Examples</h3>
 
-<h2>6. Combined Architecture</h2>
-<div class="diagram-box">
-<svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg">
-<defs><marker id="a4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FF4500"/></marker></defs>
-<rect x="10" y="220" width="100" height="60" rx="8" fill="#2e7d32" stroke="#4caf50" stroke-width="2"/><text x="60" y="250" text-anchor="middle" fill="#fff" font-size="12">Users</text><text x="60" y="265" text-anchor="middle" fill="#fff" font-size="10">1.7B+ MAU</text>
-<rect x="150" y="160" width="110" height="50" rx="8" fill="#546e7a" stroke="#90a4ae" stroke-width="2"/><text x="205" y="190" text-anchor="middle" fill="#fff" font-size="12">CDN (Fastly)</text>
-<rect x="150" y="225" width="110" height="50" rx="8" fill="#e65100" stroke="#ff9800" stroke-width="2"/><text x="205" y="255" text-anchor="middle" fill="#fff" font-size="12">API / GraphQL</text>
-<rect x="310" y="50" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="76" text-anchor="middle" fill="#fff" font-size="11">Post Service</text>
-<rect x="310" y="105" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="131" text-anchor="middle" fill="#fff" font-size="11">Comment Service</text>
-<rect x="310" y="160" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="186" text-anchor="middle" fill="#fff" font-size="11">Vote Service</text>
-<rect x="310" y="215" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="241" text-anchor="middle" fill="#fff" font-size="11">Feed Service</text>
-<rect x="310" y="270" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="296" text-anchor="middle" fill="#fff" font-size="11">User Service</text>
-<rect x="310" y="325" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="351" text-anchor="middle" fill="#fff" font-size="11">Search Service</text>
-<rect x="310" y="380" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="406" text-anchor="middle" fill="#fff" font-size="11">Moderation</text>
-<rect x="310" y="435" width="120" height="42" rx="8" fill="#1565c0" stroke="#42a5f5" stroke-width="2"/><text x="370" y="461" text-anchor="middle" fill="#fff" font-size="11">Notifications</text>
-<rect x="490" y="120" width="120" height="42" rx="8" fill="#6a1b9a" stroke="#ab47bc" stroke-width="2"/><text x="550" y="146" text-anchor="middle" fill="#fff" font-size="11">Kafka</text>
-<rect x="670" y="60" width="120" height="42" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="730" y="86" text-anchor="middle" fill="#fff" font-size="11">PostgreSQL</text>
-<rect x="670" y="115" width="120" height="42" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="730" y="141" text-anchor="middle" fill="#fff" font-size="11">Redis</text>
-<rect x="670" y="170" width="120" height="42" rx="8" fill="#00838f" stroke="#26c6da" stroke-width="2"/><text x="730" y="196" text-anchor="middle" fill="#fff" font-size="11">Memcached</text>
-<rect x="670" y="225" width="120" height="42" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="730" y="251" text-anchor="middle" fill="#fff" font-size="11">Elasticsearch</text>
-<rect x="670" y="280" width="120" height="42" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="730" y="306" text-anchor="middle" fill="#fff" font-size="11">S3 (media)</text>
-<rect x="670" y="335" width="120" height="42" rx="8" fill="#4e342e" stroke="#8d6e63" stroke-width="2"/><text x="730" y="361" text-anchor="middle" fill="#fff" font-size="11">Cassandra (legacy)</text>
-<line x1="110" y1="245" x2="148" y2="185" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="110" y1="250" x2="148" y2="250" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="260" y1="245" x2="308" y2="75" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="430" y1="75" x2="668" y2="80" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="430" y1="185" x2="668" y2="135" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="430" y1="240" x2="668" y2="190" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="430" y1="350" x2="668" y2="240" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
-<line x1="430" y1="130" x2="488" y2="140" stroke="#FF4500" stroke-width="2" marker-end="url(#a4)"/>
-</svg>
+<div class="example-box">
+<strong>End-to-End Example — Post Lifecycle:</strong><br/><br/>
+1. <strong>Create:</strong> Alice creates an image post in r/aww. Her image uploads directly to Object Storage via a pre-signed URL. The Post Service writes the post metadata to the Post DB and publishes a <code>new_post</code> event to the Message Queue. The Media Processing Consumer generates thumbnails. The Feed Consumer adds the post to r/aww's hot/new/top feed caches. The Search Index Consumer indexes the post.<br/><br/>
+2. <strong>Vote:</strong> Bob sees the post in his home feed and upvotes it. The Vote Service records the vote, increments the cache counter, and publishes a <code>vote_event</code>. The Score Consumer recalculates the hot score and updates the Feed Cache, causing Alice's post to rise in r/aww's hot feed.<br/><br/>
+3. <strong>Comment:</strong> Carol opens the post and leaves a comment. The Comment Service stores the comment and publishes a <code>new_comment</code> event. The Notification Consumer creates a notification for Alice. The post's <code>comment_count</code> is incremented.<br/><br/>
+4. <strong>Feed:</strong> Dave, who is subscribed to r/aww, opens the app. The Feed Service fetches his subscriptions, pulls the top posts from each subreddit's Feed Cache, merges them by hot score, enriches with post details and vote counts, and returns the feed. Alice's post appears prominently because of its high upvote count and recency.<br/><br/>
+5. <strong>Search:</strong> Eve searches for "cute puppy." The Search Service queries the inverted index and returns posts (including Alice's, if it matches) ranked by relevance. Results are enriched with live vote counts and Eve's personal vote status.
 </div>
 
-<h2>7. Database Schema</h2>
-<div class="card">
-<h3>Posts (PostgreSQL — sharded by subreddit_id)</h3>
-<pre>
-Table: posts  <span class="tag-shard">SHARD: hash(subreddit_id)</span>
-- post_id: varchar(10)         <span class="tag-pk">PK</span> (base36, e.g., "abc123")
-- fullname: varchar(15)        <span class="tag-idx">IDX</span> ("t3_abc123")
-- subreddit_id: int            <span class="tag-fk">FK → subreddits</span> <span class="tag-idx">IDX</span>
-- author_id: int               <span class="tag-fk">FK → users</span> <span class="tag-idx">IDX</span>
-- title: varchar(300)          <span class="tag-idx">IDX: full-text</span>
-- body: text                   // self-text (markdown)
-- url: varchar(2048)           // for link posts
-- post_type: enum('self','link','image','video','poll','crosspost')
-- score: int                   <span class="tag-idx">IDX</span> (denormalized ups - downs)
-- ups: int
-- downs: int
-- num_comments: int
-- flair_id: int
-- nsfw: boolean
-- spoiler: boolean
-- locked: boolean
-- stickied: boolean
-- removed: boolean
-- created_utc: timestamp       <span class="tag-idx">IDX</span>
-- edited_utc: timestamp
-</pre>
-
-<h3>Comments (PostgreSQL — sharded by post_id)</h3>
-<pre>
-Table: comments  <span class="tag-shard">SHARD: hash(post_id)</span>
-- comment_id: varchar(10)      <span class="tag-pk">PK</span>
-- fullname: varchar(15)        ("t1_xyz789")
-- post_id: varchar(10)         <span class="tag-fk">FK → posts</span> <span class="tag-idx">IDX</span>
-- parent_id: varchar(15)       <span class="tag-fk">FK → comments or posts (fullname)</span> <span class="tag-idx">IDX</span>
-- author_id: int               <span class="tag-fk">FK → users</span>
-- body: text (markdown)
-- score: int                   <span class="tag-idx">IDX</span>
-- ups: int
-- downs: int
-- depth: smallint              // 0 = top-level reply to post
-- removed: boolean
-- created_utc: timestamp
-- edited_utc: timestamp
-</pre>
-
-<h3>Votes (PostgreSQL — sharded by thing_id)</h3>
-<pre>
-Table: votes  <span class="tag-shard">SHARD: hash(thing_id)</span>
-- user_id: int                 <span class="tag-pk">PK (composite)</span>
-- thing_id: varchar(15)        <span class="tag-pk">PK (composite)</span> (post or comment fullname)
-- direction: smallint          // 1=up, -1=down, 0=unvote
-- created_utc: timestamp
-Unique constraint: (user_id, thing_id)
-</pre>
-
-<h3>Subreddits (PostgreSQL)</h3>
-<pre>
-Table: subreddits
-- subreddit_id: int            <span class="tag-pk">PK</span>
-- name: varchar(21)            <span class="tag-idx">IDX: unique</span>
-- title: varchar(100)
-- description: text
-- sidebar: text (markdown)
-- subscribers: int             (denormalized count)
-- type: enum('public','private','restricted','premium_only')
-- nsfw: boolean
-- created_utc: timestamp
-</pre>
-
-<h3>Redis Sorted Sets (Feed Rankings)</h3>
-<pre>
-Key: feed:{subreddit_name}:{sort}  // e.g., feed:todayilearned:hot
-Type: ZSET
-Members: post fullnames (t3_abc123)
-Scores: ranking score (hot formula output)
-
-Key: feed:all:{sort}  // r/all
-Key: feed:popular:{sort}  // r/popular
-
-// Personal home feed computed on-the-fly by merging per-sub sorted sets
-</pre>
+<div class="example-box">
+<strong>End-to-End Example — New User Onboarding:</strong><br/><br/>
+1. User "frank" registers. The API Gateway routes to the Subreddit Service, which creates a user record in the User DB (SQL).<br/><br/>
+2. Frank subscribes to 5 subreddits. The Subreddit Service writes 5 records to the Subscription DB and increments each subreddit's <code>subscriber_count</code> in the Subreddit DB.<br/><br/>
+3. Frank opens the home feed. The Feed Service queries the Subscription DB for Frank's 5 subreddits, fetches top posts from the Feed Cache for each, merges them, and returns the feed.<br/><br/>
+4. Frank upvotes a post, and the Vote flow executes as described above. Frank comments on a post, and the Comment flow executes as described above.
 </div>
 
-<h2>8. Cache &amp; CDN Deep Dive</h2>
-<div class="card">
-<h3>Caching Layers</h3>
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<h2 id="schema">9. Database Schema</h2>
+<!-- ============================================================ -->
+
+<h3>SQL Tables</h3>
+
+<h4>9.1 — <code>users</code> (SQL — Relational Database)</h4>
+
 <table>
-<tr><th>Layer</th><th>Technology</th><th>What</th><th>TTL</th><th>Notes</th></tr>
-<tr><td>CDN</td><td>Fastly (Varnish)</td><td>Media (images, videos, thumbnails), static assets</td><td>1yr (content-addressed)</td><td>~200 edge PoPs, custom VCL rules</td></tr>
-<tr><td>Page Cache</td><td>Memcached</td><td>Pre-rendered subreddit listings (hot/new/top pages)</td><td>60-300 seconds</td><td>Keyed by sub + sort + page</td></tr>
-<tr><td>Comment Tree Cache</td><td>Memcached</td><td>Rendered comment trees per post</td><td>60 seconds (hot), 5min (cold)</td><td>Invalidated on new comment/vote</td></tr>
-<tr><td>Vote Dedup</td><td>Redis</td><td>User vote state per thing</td><td>30 days</td><td>Prevents duplicate votes</td></tr>
-<tr><td>Feed Rankings</td><td>Redis (ZSET)</td><td>Sorted post IDs per subreddit per sort type</td><td>Continuously updated</td><td>Core data structure for feeds</td></tr>
-<tr><td>Session</td><td>Redis</td><td>Auth sessions, rate limit counters</td><td>Hours</td><td>Per-user rate limits tracked here</td></tr>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td><strong>PRIMARY KEY</strong></td><td>Unique user identifier</td></tr>
+<tr><td><code>username</code></td><td>VARCHAR(30)</td><td>UNIQUE, NOT NULL</td><td>Display name, used in URLs</td></tr>
+<tr><td><code>email</code></td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td><td>Login email</td></tr>
+<tr><td><code>password_hash</code></td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Bcrypt hash of password</td></tr>
+<tr><td><code>post_karma</code></td><td>BIGINT</td><td>DEFAULT 0</td><td>Aggregate karma from posts (denormalized)</td></tr>
+<tr><td><code>comment_karma</code></td><td>BIGINT</td><td>DEFAULT 0</td><td>Aggregate karma from comments (denormalized)</td></tr>
+<tr><td><code>avatar_url</code></td><td>VARCHAR(512)</td><td>NULLABLE</td><td>Object Storage reference for avatar</td></tr>
+<tr><td><code>bio</code></td><td>TEXT</td><td>NULLABLE</td><td>User bio / description</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Registration timestamp</td></tr>
+<tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Last profile update</td></tr>
 </table>
 
-<h3>CDN (Fastly) Details</h3>
-<p>Reddit uses <strong>Fastly</strong> (Varnish-based CDN) for all static and media content. Custom VCL (Varnish Configuration Language) rules handle: cache keying (vary by logged-in state for personalized vs anonymous views), stale-while-revalidate (serve stale content while fetching fresh in background), geographic routing, NSFW content filtering at edge (for certain regions), and bot detection. Reddit's "Reddit is fun" moments (site goes down) have historically been caused by cache stampedes — many users requesting the same hot post simultaneously, all hitting origin when cache expires. Mitigated by: request coalescing, stale-while-revalidate, and origin shielding.</p>
-</div>
+<p><strong>Why SQL:</strong> User data is inherently relational (references from posts, comments, votes, subscriptions). Account operations (registration, login, email changes) require ACID transactions. The dataset is moderate in size (~50-100M rows) and fits comfortably in a vertically-scaled SQL instance with read replicas.</p>
 
-<h2>9. Scaling Considerations</h2>
-<div class="card">
-<h3>Reddit's Infrastructure Evolution</h3>
+<p><strong>Indexes:</strong></p>
 <ul>
-<li><strong>Original stack (2005):</strong> Single Python/Pylons server, single PostgreSQL instance, memcached</li>
-<li><strong>2010s:</strong> Moved to Cassandra for some data, rabbitmq for queues, still primarily Python</li>
-<li><strong>2020s:</strong> Kubernetes on AWS, migrated to Go microservices, GraphQL federation, Kafka for event streaming</li>
-<li><strong>Current:</strong> 500+ microservices, multi-region AWS deployment, ~1500 engineers</li>
+  <li><code>username</code> — <strong>Hash index</strong> for O(1) exact-match lookups during login and profile URL resolution.</li>
+  <li><code>email</code> — <strong>Hash index</strong> for O(1) exact-match lookups during login and "forgot password" flows.</li>
 </ul>
 
-<h3>Handling Viral Content</h3>
+<p><strong>Denormalization:</strong> <code>post_karma</code> and <code>comment_karma</code> are denormalized aggregates of all vote scores received. This avoids an expensive aggregation query every time a profile is viewed. These are updated asynchronously by a Karma Consumer that listens to <code>vote_event</code> messages from the Message Queue.</p>
+
+<p><strong>Read/Write Events:</strong></p>
 <ul>
-<li><strong>"Reddit hug of death":</strong> When a linked site goes down from Reddit traffic. Reddit itself handles internal viral posts via Redis sorted sets (O(log n) score updates) + aggressive Memcached caching</li>
-<li><strong>Hot partition problem:</strong> A viral post's comment thread can become a hot partition. Mitigation: comment cache with short TTL, write-behind for vote counts, async comment count updates</li>
-<li><strong>r/all:</strong> Single global sorted set serving all users. Cached aggressively. Score updates batched to avoid Redis write contention</li>
+  <li><strong>Write:</strong> User registration, profile update, karma update (async from votes).</li>
+  <li><strong>Read:</strong> Login (by email or username), profile page view, author info when rendering posts/comments.</li>
 </ul>
 
-<h3>Load Balancing</h3>
-<ul>
-<li><strong>DNS:</strong> Route53 with latency-based routing to nearest AWS region</li>
-<li><strong>L7:</strong> AWS ALB → Kubernetes ingress (envoy) → service pods</li>
-<li><strong>Rate limiting:</strong> Per-user (60 req/min API), per-IP (100 req/min), per-subreddit (posting limits)</li>
-</ul>
-</div>
+<h4>9.2 — <code>subreddits</code> (SQL — Relational Database)</h4>
 
-<h2>10. Tradeoffs</h2>
-<div class="tradeoff-grid">
-<div class="tradeoff-card pro">
-<h4>✅ Pull-Based Feed (Fan-Out-On-Read)</h4>
-<p>No write amplification when posting. Works great for Reddit's model where users subscribe to subreddits, not individuals. Subreddit sorted sets are shared across all users — very cache-friendly.</p>
-</div>
-<div class="tradeoff-card con">
-<h4>❌ Pull-Based Read Latency</h4>
-<p>Home feed requires merging sorted sets from ~20-50 subscribed subreddits at read time. Can be slow for users with many subscriptions. Mitigated by caching merged feed for short TTL.</p>
-</div>
-<div class="tradeoff-card pro">
-<h4>✅ Adjacency List for Comments</h4>
-<p>Simple INSERT for new comments (no tree rebalancing). All comments fetched in single query. Tree built in-memory cheaply (O(n)). Flexible: any sort algorithm can be applied at read time.</p>
-</div>
-<div class="tradeoff-card con">
-<h4>❌ Full Comment Fetch</h4>
-<p>Must fetch ALL comments for a post to build the tree (even if only showing top 200). For posts with 50K+ comments, this is expensive. Partial tree loading requires "load more" with separate API calls.</p>
-</div>
-<div class="tradeoff-card pro">
-<h4>✅ Vote Fuzzing</h4>
-<p>Prevents manipulation detection (can't A/B test vote bots). Discourages obsessive vote tracking. Adds uncertainty that makes gaming harder.</p>
-</div>
-<div class="tradeoff-card con">
-<h4>❌ User Trust</h4>
-<p>Users frustrated by inaccurate vote counts. "Why does my post show different numbers on refresh?" Undermines perceived transparency. Some power users distrust the platform due to opaque fuzzing.</p>
-</div>
-</div>
-
-<h2>11. Alternative Approaches</h2>
-<div class="info-grid">
-<div class="card">
-<h4>Materialized Path for Comments</h4>
-<p>Store path string (e.g., "001/003/007") instead of parent_id. Enables subtree queries with LIKE prefix. Used by some forum software. Tradeoff: path length limits depth, harder to reorder, but enables partial tree loading without fetching all comments.</p>
-</div>
-<div class="card">
-<h4>Push-Based Home Feed</h4>
-<p>Pre-compute home feed per user (like Twitter/LinkedIn). Eliminates read-time merging. But Reddit has 100K+ active subreddits with frequent posts — write amplification would be enormous (post to r/funny with 50M subscribers → 50M feed writes).</p>
-</div>
-<div class="card">
-<h4>CRDT-Based Voting</h4>
-<p>Use CRDTs (Conflict-free Replicated Data Types) for vote counters — enables multi-region writes without coordination. Eventually consistent but always converges. Would simplify multi-DC voting at the cost of temporary count inaccuracies (which Reddit already tolerates via fuzzing).</p>
-</div>
-<div class="card">
-<h4>GraphQL Federation</h4>
-<p>Reddit has moved toward GraphQL for their API. Federation: each microservice exposes a GraphQL subgraph, gateway stitches them together. Reduces over-fetching (mobile client can request exactly needed fields). Tradeoff: complex query planning, potential N+1 problems, harder to cache than REST.</p>
-</div>
-</div>
-
-<h2>12. Additional Information</h2>
-<div class="card">
-<h3>Reddit's Thing System</h3>
-<p>Every entity in Reddit has a "fullname" with type prefix: <code>t1_</code> = comment, <code>t2_</code> = account, <code>t3_</code> = post (link), <code>t4_</code> = message, <code>t5_</code> = subreddit, <code>t6_</code> = award. This polymorphic ID system allows the voting API to work on both posts and comments with a single endpoint.</p>
-
-<h3>Tech Stack</h3>
-<ul>
-<li><strong>Backend:</strong> Go (new services), Python (legacy, still significant), Thrift/gRPC for service communication</li>
-<li><strong>Frontend:</strong> React (new Reddit), jQuery (old Reddit still maintained)</li>
-<li><strong>Infrastructure:</strong> AWS (EC2, S3, ElastiCache), Kubernetes, Terraform</li>
-<li><strong>Data stores:</strong> PostgreSQL (primary), Redis (caching/ranking), Memcached (page cache), Elasticsearch (search), Cassandra (some legacy data)</li>
-<li><strong>Streaming:</strong> Kafka for event pipeline, Flink for stream processing</li>
-<li><strong>CDN:</strong> Fastly (custom VCL, edge computing)</li>
-</ul>
-
-<h3>Key Numbers</h3>
 <table>
-<tr><td>Monthly Active Users</td><td>1.7B+</td></tr>
-<tr><td>Daily Active Users</td><td>50M+</td></tr>
-<tr><td>Total posts + comments</td><td>13B+</td></tr>
-<tr><td>Active subreddits</td><td>100K+</td></tr>
-<tr><td>Page views per day</td><td>1.5B+</td></tr>
-<tr><td>Votes per day</td><td>~500M</td></tr>
-<tr><td>Comments per day</td><td>~50M</td></tr>
+<tr><th>Column</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+<tr><td><code>subreddit_id</code></td><td>UUID</td><td><strong>PRIMARY KEY</strong></td><td>Unique subreddit identifier</td></tr>
+<tr><td><code>name</code></td><td>VARCHAR(50)</td><td>UNIQUE, NOT NULL</td><td>Subreddit name (e.g., "programming")</td></tr>
+<tr><td><code>description</code></td><td>TEXT</td><td>NULLABLE</td><td>Subreddit description / sidebar text</td></tr>
+<tr><td><code>creator_id</code></td><td>UUID</td><td><strong>FOREIGN KEY → users.user_id</strong></td><td>Who created the subreddit</td></tr>
+<tr><td><code>subscriber_count</code></td><td>BIGINT</td><td>DEFAULT 0</td><td>Number of subscribers (denormalized)</td></tr>
+<tr><td><code>rules</code></td><td>JSON</td><td>NULLABLE</td><td>Array of community rules</td></tr>
+<tr><td><code>banner_url</code></td><td>VARCHAR(512)</td><td>NULLABLE</td><td>Object Storage reference for banner image</td></tr>
+<tr><td><code>icon_url</code></td><td>VARCHAR(512)</td><td>NULLABLE</td><td>Object Storage reference for icon</td></tr>
+<tr><td><code>is_nsfw</code></td><td>BOOLEAN</td><td>DEFAULT FALSE</td><td>Whether the subreddit is marked NSFW</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>NOT NULL</td><td>Creation timestamp</td></tr>
 </table>
+
+<p><strong>Why SQL:</strong> Subreddit metadata is relational (foreign key to creator). The dataset is small (~1-5M rows). Subreddit creation requires transactional integrity (uniqueness check + insert must be atomic). Complex queries for moderation dashboards benefit from SQL joins.</p>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><code>name</code> — <strong>Hash index</strong> for O(1) exact-match lookups when navigating to r/{name}.</li>
+  <li><code>creator_id</code> — <strong>B-tree index</strong> for looking up subreddits created by a specific user.</li>
+  <li><code>subscriber_count</code> — <strong>B-tree index</strong> for sorting subreddits by popularity (e.g., "trending communities" page).</li>
+</ul>
+
+<p><strong>Denormalization:</strong> <code>subscriber_count</code> is denormalized to avoid counting the Subscription DB every time a subreddit page is loaded. It is updated atomically when users subscribe/unsubscribe.</p>
+
+<p><strong>Read/Write Events:</strong></p>
+<ul>
+  <li><strong>Write:</strong> Subreddit creation, metadata/rules update, subscriber count increment/decrement on subscribe/unsubscribe.</li>
+  <li><strong>Read:</strong> Navigating to a subreddit page, subreddit search, displaying subreddit info on post cards.</li>
+</ul>
+
+<hr>
+
+<h3>NoSQL Tables</h3>
+
+<h4>9.3 — <code>posts</code> (NoSQL — Wide-Column Store)</h4>
+
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+<tr><td><code>post_id</code></td><td>UUID</td><td></td><td>Unique post identifier</td></tr>
+<tr><td><code>subreddit_id</code></td><td>UUID</td><td><strong>PARTITION KEY</strong></td><td>Which subreddit this belongs to</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td><strong>SORT KEY</strong></td><td>When the post was created</td></tr>
+<tr><td><code>author_id</code></td><td>UUID</td><td></td><td>Who created the post</td></tr>
+<tr><td><code>title</code></td><td>VARCHAR(300)</td><td></td><td>Post title</td></tr>
+<tr><td><code>content_type</code></td><td>ENUM</td><td></td><td>"text", "image", "link", "video"</td></tr>
+<tr><td><code>body</code></td><td>TEXT</td><td></td><td>Text body (for text posts)</td></tr>
+<tr><td><code>url</code></td><td>VARCHAR(2048)</td><td></td><td>External URL (for link posts)</td></tr>
+<tr><td><code>media_urls</code></td><td>LIST&lt;VARCHAR&gt;</td><td></td><td>Object Storage keys for images/video</td></tr>
+<tr><td><code>thumbnail_url</code></td><td>VARCHAR(512)</td><td></td><td>Thumbnail reference</td></tr>
+<tr><td><code>upvote_count</code></td><td>BIGINT</td><td></td><td>Denormalized upvote count</td></tr>
+<tr><td><code>downvote_count</code></td><td>BIGINT</td><td></td><td>Denormalized downvote count</td></tr>
+<tr><td><code>score</code></td><td>BIGINT</td><td></td><td>upvotes - downvotes</td></tr>
+<tr><td><code>hot_score</code></td><td>DOUBLE</td><td></td><td>Computed hot ranking score</td></tr>
+<tr><td><code>comment_count</code></td><td>BIGINT</td><td></td><td>Denormalized comment count</td></tr>
+<tr><td><code>is_pinned</code></td><td>BOOLEAN</td><td></td><td>Whether pinned by moderator</td></tr>
+<tr><td><code>is_deleted</code></td><td>BOOLEAN</td><td></td><td>Soft delete flag</td></tr>
+<tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td></td><td>Last update timestamp</td></tr>
+</table>
+
+<p><strong>Why NoSQL:</strong> Posts are high-volume (~100M+ new posts/year), the schema varies by content type (text posts have body, link posts have url, media posts have media_urls), and the primary access patterns are partition-based (all posts in a subreddit, single post by ID). Horizontal scalability is critical for both writes and reads.</p>
+
+<p><strong>Secondary Indexes:</strong></p>
+<ul>
+  <li><strong>Global Secondary Index on <code>post_id</code></strong> — Hash index for O(1) direct post lookups (when a user opens a specific post URL like reddit.com/r/programming/comments/abc123).</li>
+  <li><strong>Global Secondary Index on <code>author_id</code></strong> with sort key <code>created_at</code> — B-tree for fetching a user's post history (profile page).</li>
+</ul>
+
+<p><strong>Denormalization:</strong> <code>upvote_count</code>, <code>downvote_count</code>, <code>score</code>, <code>hot_score</code>, and <code>comment_count</code> are all denormalized to avoid joins or secondary lookups when rendering post cards. They are updated asynchronously by the Score Consumer and Comment Service.</p>
+
+<p><strong>Sharding Strategy:</strong> Partition by <code>subreddit_id</code>. This co-locates all posts for a subreddit on the same partition, enabling efficient subreddit feed queries. <strong>Risk:</strong> Mega-subreddits (r/askreddit with 40M+ subscribers) create hot partitions. <strong>Mitigation:</strong> For the top ~100 subreddits, use composite partitioning: <code>subreddit_id + date_bucket</code> (e.g., "askreddit_2024-01-15") to spread load across partitions while still supporting time-bounded queries.</p>
+
+<p><strong>Read/Write Events:</strong></p>
+<ul>
+  <li><strong>Write:</strong> Post creation, vote count updates (async), comment count increment (async), moderation actions (pin, delete).</li>
+  <li><strong>Read:</strong> Subreddit feed rendering, single post page, user profile (post history), feed enrichment.</li>
+</ul>
+
+<h4>9.4 — <code>comments</code> (NoSQL — Wide-Column Store)</h4>
+
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+<tr><td><code>post_id</code></td><td>UUID</td><td><strong>PARTITION KEY</strong></td><td>Which post this comment belongs to</td></tr>
+<tr><td><code>path</code></td><td>VARCHAR(2048)</td><td><strong>SORT KEY</strong></td><td>Materialized path (e.g., "/c1/c2/c3")</td></tr>
+<tr><td><code>comment_id</code></td><td>UUID</td><td></td><td>Unique comment identifier</td></tr>
+<tr><td><code>parent_id</code></td><td>UUID</td><td></td><td>Parent comment ID (null for top-level)</td></tr>
+<tr><td><code>author_id</code></td><td>UUID</td><td></td><td>Comment author</td></tr>
+<tr><td><code>body</code></td><td>TEXT</td><td></td><td>Comment text (Markdown)</td></tr>
+<tr><td><code>depth</code></td><td>INT</td><td></td><td>Nesting depth (0 for top-level)</td></tr>
+<tr><td><code>upvote_count</code></td><td>BIGINT</td><td></td><td>Denormalized upvote count</td></tr>
+<tr><td><code>downvote_count</code></td><td>BIGINT</td><td></td><td>Denormalized downvote count</td></tr>
+<tr><td><code>score</code></td><td>BIGINT</td><td></td><td>upvotes - downvotes</td></tr>
+<tr><td><code>is_deleted</code></td><td>BOOLEAN</td><td></td><td>Soft delete flag (body → "[deleted]")</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td></td><td>Creation timestamp</td></tr>
+<tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td></td><td>Last edit timestamp</td></tr>
+</table>
+
+<p><strong>Why NoSQL:</strong> Comments are extremely high volume (~10B+ total). The primary access pattern is fetching all comments for a post (partition query). The materialized path as sort key keeps comments in tree order for efficient retrieval. The schema is uniform but the volume and partition-based access pattern favor NoSQL.</p>
+
+<p><strong>Materialized Path Strategy:</strong> The <code>path</code> field stores the full ancestry of a comment. For example, the path <code>/c1/c2/c5</code> means this comment is a reply to <code>c2</code>, which is a reply to <code>c1</code>. Sorting by path produces the correct tree traversal order (depth-first). <strong>Why materialized path over adjacency list:</strong> Adjacency list requires recursive queries or application-level tree construction. Materialized path allows the database to return comments in display order with a single range query, and supports prefix queries to load sub-threads (e.g., "all replies under c1" → query where path starts with "/c1/").</p>
+
+<p><strong>Indexes:</strong></p>
+<ul>
+  <li><strong>Global Secondary Index on <code>comment_id</code></strong> — Hash index for direct comment lookups (e.g., permalink to a specific comment).</li>
+  <li><strong>Global Secondary Index on <code>author_id</code></strong> with sort key <code>created_at</code> — For user profile (comment history).</li>
+</ul>
+
+<p><strong>Sharding Strategy:</strong> Partition by <code>post_id</code>. All comments for a post live on the same shard, ensuring the comment tree can be fetched in a single partition query. Popular posts (e.g., AMAs with 50K+ comments) may create hot partitions, but this is acceptable because: (1) the hotness is temporary (posts cool off after hours/days), and (2) the read load is mitigated by caching the comment tree for popular posts.</p>
+
+<p><strong>Read/Write Events:</strong></p>
+<ul>
+  <li><strong>Write:</strong> User posts a comment, vote count updates (async), moderation actions (delete, edit).</li>
+  <li><strong>Read:</strong> Opening a post page (fetches comment tree), loading more comments, user profile (comment history).</li>
+</ul>
+
+<h4>9.5 — <code>votes</code> (NoSQL — Wide-Column Store)</h4>
+
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+<tr><td><code>entity_id</code></td><td>UUID</td><td><strong>PARTITION KEY</strong></td><td>Post ID or Comment ID being voted on</td></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td><strong>SORT KEY</strong></td><td>Who cast the vote</td></tr>
+<tr><td><code>entity_type</code></td><td>ENUM</td><td></td><td>"post" or "comment"</td></tr>
+<tr><td><code>vote_type</code></td><td>TINYINT</td><td></td><td>1 (upvote) or -1 (downvote)</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td></td><td>When the vote was cast</td></tr>
+</table>
+
+<p><strong>Why NoSQL:</strong> Votes are the highest-volume writes in the system (potentially millions per minute). The access pattern is simple key-value: "has user X voted on entity Y?" and "what is user X's vote on entity Y?" No joins or complex queries needed. Horizontal scalability is paramount.</p>
+
+<p><strong>Sharding Strategy:</strong> Partition by <code>entity_id</code>. This groups all votes for a given post or comment together, which is useful for counting (though counts are denormalized). The user_id sort key ensures one vote per user per entity (upsert semantics). <strong>Note:</strong> We do <em>not</em> need to query "all votes by user X" frequently (it's not a core feature), so partitioning by entity_id is optimal.</p>
+
+<p><strong>Read/Write Events:</strong></p>
+<ul>
+  <li><strong>Write:</strong> User clicks upvote/downvote button.</li>
+  <li><strong>Read:</strong> Rendering a feed page (batch-read user's votes for all visible posts), rendering a post page (read user's vote on post + all visible comments).</li>
+</ul>
+
+<h4>9.6 — <code>subscriptions</code> (NoSQL — Wide-Column Store)</h4>
+
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td><strong>PARTITION KEY</strong></td><td>Subscriber</td></tr>
+<tr><td><code>subreddit_id</code></td><td>UUID</td><td><strong>SORT KEY</strong></td><td>Subscribed subreddit</td></tr>
+<tr><td><code>subscribed_at</code></td><td>TIMESTAMP</td><td></td><td>When the subscription was created</td></tr>
+</table>
+
+<p><strong>Why NoSQL:</strong> Billions of subscription records (50M users × average 20-50 subscriptions = 1-2.5B rows). The primary query is "get all subreddits for user X" (home feed generation), which is a partition query. Simple key-value pattern with no complex joins.</p>
+
+<p><strong>Secondary Index:</strong> Global Secondary Index with <code>subreddit_id</code> as partition key, <code>user_id</code> as sort key — supports "get all subscribers of subreddit X" for subscriber count validation and broadcast notifications.</p>
+
+<p><strong>Sharding Strategy:</strong> Partition by <code>user_id</code>. All subscriptions for a user are co-located on the same shard, enabling the Feed Service to fetch all subscriptions in a single partition query.</p>
+
+<p><strong>Read/Write Events:</strong></p>
+<ul>
+  <li><strong>Write:</strong> User subscribes or unsubscribes from a subreddit.</li>
+  <li><strong>Read:</strong> Home feed generation (fetch all subscribed subreddit_ids), profile page (show subscribed communities).</li>
+</ul>
+
+<h4>9.7 — <code>notifications</code> (NoSQL — Wide-Column Store)</h4>
+
+<table>
+<tr><th>Column</th><th>Type</th><th>Key</th><th>Description</th></tr>
+<tr><td><code>user_id</code></td><td>UUID</td><td><strong>PARTITION KEY</strong></td><td>Notification recipient</td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td><strong>SORT KEY (DESC)</strong></td><td>When the notification was created</td></tr>
+<tr><td><code>notification_id</code></td><td>UUID</td><td></td><td>Unique notification identifier</td></tr>
+<tr><td><code>type</code></td><td>ENUM</td><td></td><td>"comment_reply", "post_comment", "mention", etc.</td></tr>
+<tr><td><code>reference_id</code></td><td>UUID</td><td></td><td>ID of the post/comment that triggered it</td></tr>
+<tr><td><code>actor_id</code></td><td>UUID</td><td></td><td>User who performed the action</td></tr>
+<tr><td><code>message</code></td><td>VARCHAR(500)</td><td></td><td>Human-readable notification text</td></tr>
+<tr><td><code>is_read</code></td><td>BOOLEAN</td><td></td><td>Whether the user has seen it</td></tr>
+</table>
+
+<p><strong>Why NoSQL:</strong> High write volume (many user actions generate notifications). Simple access pattern: "get latest N notifications for user X." TTL-based auto-expiration of old notifications (e.g., 90 days). No complex queries or joins needed.</p>
+
+<p><strong>Read/Write Events:</strong></p>
+<ul>
+  <li><strong>Write:</strong> When someone replies to a user's post or comment, mentions a user, etc. (asynchronous via Notification Consumer).</li>
+  <li><strong>Read:</strong> User clicks the notification bell icon → <code>GET /api/v1/notifications?limit=20</code>.</li>
+</ul>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<h2 id="cache">10. CDN &amp; Cache Deep Dive</h2>
+<!-- ============================================================ -->
+
+<h3>10.1 — CDN (Content Delivery Network)</h3>
+
+<div class="deep-dive">
+<strong>Why a CDN is appropriate:</strong> Reddit serves enormous volumes of static and media content:
+<ul>
+  <li><strong>Static assets</strong> (JavaScript bundles, CSS, fonts, favicon) — Served to every page load. CDN caching reduces origin load by 99%+ for these assets.</li>
+  <li><strong>User-uploaded images</strong> — Post images and thumbnails are immutable once created. CDN edge caching provides sub-50ms delivery worldwide.</li>
+  <li><strong>Video content</strong> — HLS/DASH video segments are served via CDN for adaptive bitrate streaming. Without CDN, the origin (Object Storage) would be overwhelmed.</li>
+  <li><strong>Subreddit icons and banners</strong> — Frequently accessed, rarely changed. Perfect CDN candidates.</li>
+</ul>
+<strong>CDN Configuration:</strong>
+<ul>
+  <li>Origin: Object Storage (for media) and the web server (for static assets).</li>
+  <li>Cache-Control: <code>public, max-age=31536000, immutable</code> for content-hashed static assets. <code>public, max-age=86400</code> for media files.</li>
+  <li>Cache key: Full URL path including content hash (for cache busting on deployments).</li>
+  <li>Geographic distribution: Edge nodes in all major metro areas worldwide.</li>
+</ul>
 </div>
+
+<h3>10.2 — Feed Cache (In-Memory Cache)</h3>
+
+<div class="deep-dive">
+<strong>What it stores:</strong> Sorted sets of post IDs for each subreddit feed. Each subreddit has multiple sorted sets:
+<ul>
+  <li><code>subreddit:{id}:hot</code> — sorted by hot_score</li>
+  <li><code>subreddit:{id}:new</code> — sorted by created_at</li>
+  <li><code>subreddit:{id}:top:day</code>, <code>:week</code>, <code>:month</code>, <code>:year</code>, <code>:all</code> — sorted by score</li>
+  <li><code>subreddit:{id}:controversial</code> — sorted by controversy score</li>
+</ul>
+
+<strong>Caching Strategy: Write-Behind (Write-Back)</strong><br/>
+When a new post is created or a vote changes a post's score, the Feed Consumer/Score Consumer updates the Feed Cache immediately (for low-latency reads). The Post DB is updated asynchronously by the consumers. This means the cache is the source of truth for feed ordering, with the Post DB serving as durable backup.
+<br/><br/>
+<strong>Why Write-Behind:</strong> Feed ordering is read-heavy and latency-sensitive. Updating the cache first ensures feed reads always reflect the latest ranking. The slight risk of cache data loss (before DB write) is acceptable because scores can be recomputed from the Vote DB.
+<br/><br/>
+<strong>Eviction Policy: LRU (Least Recently Used)</strong><br/>
+Inactive subreddits (not accessed recently) are evicted to free memory for active ones. LRU is chosen because Reddit's traffic follows a power-law distribution: a small number of subreddits (r/askreddit, r/funny, etc.) account for most traffic. These "hot" subreddits will remain in cache indefinitely while obscure ones are evicted and re-populated on demand.
+<br/><br/>
+<strong>Expiration Policy: TTL of 5 minutes for hot feeds, 1 hour for top feeds</strong><br/>
+Even for active subreddits, the cache is periodically refreshed to prevent stale rankings. Hot feeds (which change rapidly with new posts and votes) expire after 5 minutes. Top feeds (which change more slowly) expire after 1 hour. On expiry, the next read triggers a re-computation from the Post DB (read-through behavior on miss).
+<br/><br/>
+<strong>Population:</strong> The cache is populated via two paths:
+<ol>
+  <li><strong>Push (primary):</strong> Feed Consumer inserts new post IDs on <code>new_post</code> events. Score Consumer updates scores on <code>vote_event</code> events.</li>
+  <li><strong>Pull (fallback):</strong> On cache miss, the Feed Service queries the Post DB and populates the cache (read-through).</li>
+</ol>
 </div>
+
+<h3>10.3 — Vote Count Cache (In-Memory Cache)</h3>
+
+<div class="deep-dive">
+<strong>What it stores:</strong> Atomic integer counters for upvote and downvote counts per entity:
+<ul>
+  <li><code>votes:{entity_id}:up</code> — upvote count</li>
+  <li><code>votes:{entity_id}:down</code> — downvote count</li>
+</ul>
+
+<strong>Caching Strategy: Write-Through</strong><br/>
+Every vote writes to both the cache (atomic increment/decrement) and the Vote DB simultaneously. The Vote Service waits for the cache write to succeed before responding to the client. The DB write is done as part of the same operation.
+<br/><br/>
+<strong>Why Write-Through:</strong> Vote counts must be accurate and consistent. Write-through ensures the cache and DB are always in sync. Unlike the Feed Cache (where eventual consistency is fine), vote counts displayed to the user who just voted should reflect their action immediately. The write overhead is acceptable because vote count updates are simple atomic counter operations (~1ms).
+<br/><br/>
+<strong>Eviction Policy: LRU</strong><br/>
+Posts and comments that haven't been accessed recently are evicted. On cache miss (e.g., viewing a very old post), the Vote Service queries the Vote DB to count votes and populates the cache.
+<br/><br/>
+<strong>Expiration Policy: TTL of 1 hour</strong><br/>
+Ensures periodic reconciliation with the Vote DB. If the cache and DB ever drift (e.g., due to a failed write), the TTL ensures correction within an hour.
+<br/><br/>
+<strong>Population:</strong>
+<ol>
+  <li><strong>Write-through:</strong> Populated/updated on every vote.</li>
+  <li><strong>Read-through:</strong> On cache miss, count is computed from Vote DB and cached.</li>
+</ol>
+</div>
+
+<h3>10.4 — Comment Tree Cache (In-Memory Cache)</h3>
+
+<div class="deep-dive">
+<strong>What it stores:</strong> Pre-serialized comment trees for popular posts. Key: <code>comments:{post_id}:best</code> (or <code>:new</code>, <code>:top</code>, etc.). Value: the top ~200 comments in tree order, serialized as JSON.
+<br/><br/>
+<strong>Caching Strategy: Read-Through with TTL</strong><br/>
+On cache miss, the Comment Service fetches comments from the Comment DB, builds the tree, caches it, and returns it. Subsequent requests within the TTL are served from cache.
+<br/><br/>
+<strong>Why Read-Through:</strong> Comment trees are expensive to construct (sorting, tree building, depth limiting). Caching the result amortizes this cost across many readers. Most post pages are read many more times than they're commented on.
+<br/><br/>
+<strong>Eviction Policy: LRU</strong><br/>
+Old/inactive post comment trees are evicted.
+<br/><br/>
+<strong>Expiration Policy: TTL of 30 seconds for active posts, 5 minutes for older posts</strong><br/>
+Active posts (created within the last 24 hours) have shorter TTLs because new comments arrive frequently. Older posts have longer TTLs because comment activity slows.
+<br/><br/>
+<strong>Invalidation:</strong> The TTL handles cache freshness. No explicit invalidation is needed. A new comment may take up to 30 seconds to appear in the cached tree for active posts, which is acceptable.
+</div>
+
+<h3>10.5 — Home Feed Cache (In-Memory Cache)</h3>
+
+<div class="deep-dive">
+<strong>What it stores:</strong> Pre-computed home feed pages for active users. Key: <code>homefeed:{user_id}:{sort}:{page}</code>. Value: serialized list of post summaries for a single page.
+<br/><br/>
+<strong>Caching Strategy: Cache-Aside (Lazy Loading)</strong><br/>
+The Feed Service first checks the cache. On miss, it computes the feed (merge subreddit feeds), stores it, and returns it. On hit, it returns the cached result.
+<br/><br/>
+<strong>Why Cache-Aside:</strong> Home feeds are personalized (different for each user) and expensive to compute (merge across multiple subreddits). Caching avoids redundant computation when a user refreshes the page multiple times. Cache-aside is chosen (rather than read-through) because the Feed Service has complex business logic for feed construction that doesn't fit cleanly into a cache library's read-through callback.
+<br/><br/>
+<strong>Eviction Policy: LRU</strong><br/>
+Inactive users' feed caches are evicted.
+<br/><br/>
+<strong>Expiration Policy: TTL of 30–60 seconds</strong><br/>
+Short TTL ensures the feed stays fresh (new posts, score changes). Users pulling to refresh will get a fresh feed after TTL expiry.
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<h2 id="mq">11. Message Queue Deep Dive</h2>
+<!-- ============================================================ -->
+
+<div class="deep-dive">
+<strong>Why a Message Queue:</strong>
+<ul>
+  <li><strong>Decoupling:</strong> The Post Service should not directly call the Feed Service, Search Service, and Notification Service. This would create tight coupling and make the post creation API slow (it would have to wait for all downstream services). The message queue decouples producers from consumers.</li>
+  <li><strong>Reliability:</strong> If the Search Index is temporarily down, messages accumulate in the queue and are processed when it recovers. No data loss.</li>
+  <li><strong>Scalability:</strong> Consumers can be independently scaled. If vote processing is backlogged, we add more Score Consumer instances without affecting the Vote Service.</li>
+  <li><strong>Peak Handling:</strong> During traffic spikes (e.g., a viral post), the queue absorbs the burst and consumers process at their own pace.</li>
+</ul>
+
+<strong>Why NOT alternatives:</strong>
+<ul>
+  <li><strong>vs. Synchronous HTTP calls:</strong> Would make the write path slow (post creation would need to wait for feed update, search indexing, and notification). Also, if any downstream service is slow, it blocks the API response.</li>
+  <li><strong>vs. WebSockets:</strong> WebSockets are for real-time bidirectional client-server communication. This is server-to-server async processing — a fundamentally different use case.</li>
+  <li><strong>vs. Polling:</strong> Consumers polling a "pending tasks" table would be inefficient (wasted queries when no work), have higher latency (polling interval), and be harder to scale.</li>
+  <li><strong>vs. Pure Pub/Sub (without persistence):</strong> Pure pub/sub doesn't guarantee delivery if a subscriber is down. The message queue provides persistence, acknowledgment, and retry semantics.</li>
+</ul>
+
+<strong>How Messages are Produced:</strong>
+<ol>
+  <li>A service (e.g., Post Service) serializes an event (e.g., <code>{event_type: "new_post", post_id: "abc", subreddit_id: "xyz", ...}</code>) as JSON.</li>
+  <li>The service publishes the message to a specific topic (e.g., "post-events", "vote-events").</li>
+  <li>Messages are partitioned by a key (e.g., <code>subreddit_id</code> for post events, <code>entity_id</code> for vote events) to ensure ordering within a partition.</li>
+  <li>The message queue acknowledges receipt, and the producing service continues.</li>
+</ol>
+
+<strong>How Messages are Consumed:</strong>
+<ol>
+  <li>Consumers are organized into <strong>consumer groups</strong>. Each consumer group receives every message (fan-out across groups), but within a group, each message is delivered to exactly one consumer (load balancing within a group).</li>
+  <li>For example, the "post-events" topic has three consumer groups: Feed Consumers, Search Consumers, and Media Processing Consumers. Each group independently processes every new_post event.</li>
+  <li>A consumer reads a batch of messages, processes them, and <strong>acknowledges</strong> (commits the offset) only after successful processing.</li>
+  <li>If a consumer crashes mid-processing, the message is <strong>redelivered</strong> to another consumer in the group (at-least-once delivery). Consumers must be <strong>idempotent</strong> to handle duplicates.</li>
+  <li>Failed messages (after N retries) are moved to a <strong>dead-letter queue (DLQ)</strong> for manual inspection and resolution.</li>
+</ol>
+
+<strong>Topics and Partitioning:</strong>
+<table>
+<tr><th>Topic</th><th>Partition Key</th><th>Consumer Groups</th><th>Events</th></tr>
+<tr><td><code>post-events</code></td><td>subreddit_id</td><td>Feed Consumer, Search Consumer, Media Consumer</td><td>new_post, post_updated, post_deleted</td></tr>
+<tr><td><code>vote-events</code></td><td>entity_id</td><td>Score Consumer, Karma Consumer</td><td>vote_cast, vote_changed, vote_removed</td></tr>
+<tr><td><code>comment-events</code></td><td>post_id</td><td>Notification Consumer, Search Consumer</td><td>new_comment, comment_deleted</td></tr>
+</table>
+
+<strong>Ordering Guarantee:</strong> Messages within the same partition are processed in order. Since we partition by subreddit_id (for posts) and entity_id (for votes), all events for the same entity are processed sequentially, preventing race conditions (e.g., two votes arriving out of order for the same post).
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<h2 id="scaling">12. Scaling Considerations</h2>
+<!-- ============================================================ -->
+
+<h3>12.1 — Load Balancers</h3>
+
+<div class="deep-dive">
+<strong>Where load balancers are needed:</strong>
+<ol>
+  <li><strong>External Load Balancer (Client → API Gateway):</strong> Sits between the internet and the API Gateway fleet. Handles TLS termination, distributes requests across API Gateway instances, absorbs DDoS attacks. Uses <strong>Layer 7 (HTTP-aware)</strong> balancing with <strong>round-robin</strong> algorithm (all API Gateway instances are stateless and equivalent). Health checks via <code>/health</code> endpoint every 10 seconds; unhealthy instances are removed within 30 seconds.</li>
+  <li><strong>Internal Load Balancers (API Gateway → Services):</strong> Each microservice (Post Service, Vote Service, Comment Service, Feed Service, Search Service, Subreddit Service) sits behind an internal load balancer. These use <strong>least-connections</strong> algorithm to handle the varying request latencies across services (e.g., a Feed Service request may be slower than a Vote Service request). Service discovery is integrated so new instances automatically register.</li>
+  <li><strong>Consumer Load Balancing:</strong> Message queue consumer groups inherently load-balance: partitions are assigned to consumers within a group. Adding more consumer instances automatically rebalances partitions. No external load balancer needed here.</li>
+</ol>
+
+<strong>Scaling the Load Balancers:</strong> External load balancers are horizontally scaled behind DNS-based load balancing (multiple IP addresses returned for the domain, with geographic DNS routing to direct users to the nearest region).
+</div>
+
+<h3>12.2 — Horizontal Scaling of Services</h3>
+
+<ul>
+  <li><strong>All services are stateless:</strong> Post Service, Vote Service, Comment Service, Feed Service, Search Service, Subreddit Service. They can be horizontally scaled by adding more instances behind their load balancers.</li>
+  <li><strong>Auto-scaling:</strong> Scale based on CPU utilization (target: 60-70%) and request queue depth. The Feed Service may additionally scale based on cache miss rate.</li>
+  <li><strong>Per-service scaling:</strong> Services scale independently. The Vote Service may need 5x more instances than the Post Service due to the higher vote volume.</li>
+</ul>
+
+<h3>12.3 — Database Scaling</h3>
+
+<ul>
+  <li><strong>SQL (Users, Subreddits):</strong> Primary with multiple read replicas. Write traffic is moderate (only account creation, profile updates, subreddit creation). Read traffic is served by replicas. If write volume ever becomes a bottleneck, vertical scaling of the primary is sufficient given the dataset size.</li>
+  <li><strong>NoSQL (Posts, Comments, Votes, Subscriptions, Notifications):</strong> Horizontally sharded across many nodes. Each table's sharding strategy is described in the Schema section. New shards are added as data volume grows. Replication factor of 3 for durability.</li>
+  <li><strong>Search Index:</strong> Horizontally sharded by document ID. Each shard is replicated 2-3x. New shards added as index size grows.</li>
+</ul>
+
+<h3>12.4 — Cache Scaling</h3>
+
+<ul>
+  <li><strong>In-memory cache cluster:</strong> Horizontally scaled by adding more nodes. Data is distributed via consistent hashing. When a node fails, its keys are redistributed to neighboring nodes (with a brief spike in cache misses).</li>
+  <li><strong>Hot key mitigation:</strong> For extremely popular posts (front-page posts with millions of views), the cache key is replicated across multiple nodes (read replicas within the cache cluster) to prevent a single node from being overwhelmed.</li>
+</ul>
+
+<h3>12.5 — Message Queue Scaling</h3>
+
+<ul>
+  <li>Topics are partitioned across multiple broker nodes. Adding more partitions increases throughput.</li>
+  <li>Consumer groups scale by adding more consumer instances (up to the number of partitions per topic).</li>
+  <li>During peak traffic (e.g., Super Bowl, elections), pre-scale the vote-events topic with additional partitions and consumer instances.</li>
+</ul>
+
+<h3>12.6 — Geographic Scaling (Multi-Region)</h3>
+
+<ul>
+  <li><strong>CDN:</strong> Already globally distributed.</li>
+  <li><strong>Services and Databases:</strong> Deploy in multiple regions (e.g., US-East, US-West, EU, Asia). Use a global load balancer with geographic routing.</li>
+  <li><strong>Consistency:</strong> User data (SQL) uses synchronous replication to one secondary region. NoSQL data uses asynchronous cross-region replication with eventual consistency. A user in Asia reading a post created in the US may see a delay of ~1-2 seconds for the post to appear.</li>
+</ul>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<h2 id="tradeoffs">13. Tradeoffs &amp; Deep Dives</h2>
+<!-- ============================================================ -->
+
+<h3>13.1 — Pull-Based vs. Push-Based Home Feed</h3>
+
+<div class="warning-box">
+<strong>Tradeoff:</strong> We chose a <strong>pull-based (fanout-on-read)</strong> approach for home feeds, where the Feed Service merges subreddit feeds at read time. The alternative is a <strong>push-based (fanout-on-write)</strong> approach, where every new post is pushed to every subscriber's precomputed feed.
+<br/><br/>
+<strong>Why pull-based:</strong>
+<ul>
+  <li>Reddit has subreddits with 40M+ subscribers. Pushing a single post to 40M feed entries is expensive and slow (~minutes to complete the fanout).</li>
+  <li>Most subscribers never read their feed frequently. Push wastes write I/O for users who won't see the post soon.</li>
+  <li>Users switch between sort modes (hot, new, top). Precomputing feeds for every sort mode per user is prohibitively expensive.</li>
+</ul>
+<strong>Downside of pull-based:</strong> Home feed generation is slower at read time (~50-100ms to merge across 20-50 subreddits) compared to O(1) for a precomputed feed. This is mitigated by the Home Feed Cache (30-60 second TTL).
+</div>
+
+<h3>13.2 — Vote Count: Approximate vs. Exact</h3>
+
+<div class="warning-box">
+<strong>Tradeoff:</strong> Reddit famously "fuzzes" vote counts (displays approximate numbers). Our design stores exact counts in the Vote DB and approximate (eventually consistent) counts in the Vote Count Cache.
+<br/><br/>
+<strong>Why this works:</strong> The cache provides fast reads with write-through consistency. Even if the displayed count is off by a few votes during high-traffic periods (due to race conditions in concurrent increments), it's acceptable because: (1) Reddit intentionally fuzzes counts for anti-spam, (2) the error is bounded and self-correcting via TTL-based cache refresh.
+</div>
+
+<h3>13.3 — Materialized Path vs. Adjacency List for Comments</h3>
+
+<div class="warning-box">
+<strong>Tradeoff:</strong> We use materialized paths for the comment tree. The alternative is a simple adjacency list (each comment stores only <code>parent_id</code>).
+<br/><br/>
+<strong>Why materialized path:</strong>
+<ul>
+  <li>A single range query on the <code>path</code> sort key returns comments in correct tree order.</li>
+  <li>Sub-tree queries (load replies under a specific comment) are efficient prefix queries.</li>
+  <li>Depth is derivable from path length.</li>
+</ul>
+<strong>Downside:</strong> Path length grows with depth. Moving a comment (re-parenting) requires updating all descendant paths. However, Reddit doesn't support re-parenting, so this is not a concern.
+</div>
+
+<h3>13.4 — Eventual Consistency for Feeds and Votes</h3>
+
+<div class="warning-box">
+<strong>Tradeoff:</strong> Feed rankings and vote counts are eventually consistent. A newly created post may take 1-5 seconds to appear in the subreddit feed. A vote may take a few seconds to be reflected in the hot score ranking.
+<br/><br/>
+<strong>Why this is acceptable:</strong> Users don't notice multi-second delays in feed updates. The user who created the post sees a <code>201 Created</code> response immediately (they can navigate to their post directly). The user who voted sees their vote reflected instantly (via the optimistic UI update and the synchronous cache counter increment). The only delay is for <em>other</em> users viewing the feed, which is imperceptible.
+</div>
+
+<h3>13.5 — Denormalization Throughout</h3>
+
+<div class="warning-box">
+<strong>Tradeoff:</strong> We denormalize heavily: <code>upvote_count</code>, <code>downvote_count</code>, <code>score</code>, <code>comment_count</code> on posts; <code>subscriber_count</code> on subreddits; <code>post_karma</code> and <code>comment_karma</code> on users.
+<br/><br/>
+<strong>Why denormalize:</strong> Reddit is overwhelmingly read-heavy (~100:1 read:write ratio). Every post card rendering needs these counts. Computing them from the Vote DB or Comment DB on every read would require expensive aggregation queries across millions of records. Denormalization trades write complexity (maintaining counters) for read performance.
+<br/><br/>
+<strong>Consistency risk:</strong> If a counter update fails (e.g., the Score Consumer crashes after updating the Vote DB but before updating the Post DB), counts can drift. <strong>Mitigation:</strong> Periodic reconciliation jobs compare actual counts (from Vote DB) with denormalized counts (in Post DB) and correct discrepancies.
+</div>
+
+<h3>13.6 — NoSQL vs. SQL for Posts</h3>
+
+<div class="warning-box">
+<strong>Tradeoff:</strong> Posts use NoSQL instead of SQL.
+<br/><br/>
+<strong>Why NoSQL:</strong>
+<ul>
+  <li>Posts vary by type (text, image, link, video) — flexible schema avoids sparse columns.</li>
+  <li>Write volume is high and growing — horizontal sharding is native in NoSQL.</li>
+  <li>Primary access patterns are partition-based (subreddit feeds, direct post lookup) — no complex joins needed.</li>
+</ul>
+<strong>Downside:</strong> Ad-hoc analytical queries (e.g., "find all posts with >10K upvotes in the last month across all subreddits") are harder in NoSQL. <strong>Mitigation:</strong> Export data to an analytical data warehouse for such queries.
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<h2 id="alternatives">14. Alternative Approaches</h2>
+<!-- ============================================================ -->
+
+<div class="alt-box">
+<strong>Alternative 1 — Graph Database for Comment Trees:</strong><br/>
+Store comments in a graph database where each comment is a node and parent-child relationships are edges. This allows elegant tree traversal queries.<br/>
+<strong>Why not chosen:</strong> Graph databases have higher operational complexity. The comment tree access pattern (fetch all comments for a post, sorted) is well-served by a wide-column NoSQL store with materialized paths. Graph databases would be overkill for a tree with a single traversal pattern and would introduce a new database technology to manage.
+</div>
+
+<div class="alt-box">
+<strong>Alternative 2 — Fanout-on-Write for Home Feed:</strong><br/>
+Precompute each user's home feed by pushing new posts to their feed timeline (like Twitter's original approach).<br/>
+<strong>Why not chosen:</strong> Mega-subreddits (r/askreddit: 40M+ subscribers) make write fanout prohibitively expensive. Twitter moved away from pure push for celebrity tweets (same problem with high-follower accounts). Reddit's subreddit structure means the "follower" counts are even more extreme. The hybrid pull approach is more cost-effective.
+</div>
+
+<div class="alt-box">
+<strong>Alternative 3 — SQL for Everything:</strong><br/>
+Use a single SQL database with proper normalization for all data (posts, comments, votes, subscriptions).<br/>
+<strong>Why not chosen:</strong> At Reddit's scale (~10B+ comments, billions of votes), a single SQL database (even with read replicas) cannot handle the write throughput or storage requirements. Sharding SQL is possible but complex and loses many SQL benefits (cross-shard joins, global indexes). NoSQL databases handle horizontal sharding natively with better write performance.
+</div>
+
+<div class="alt-box">
+<strong>Alternative 4 — WebSockets for Real-Time Vote Counts:</strong><br/>
+Establish WebSocket connections to push real-time vote count updates to all users viewing a post.<br/>
+<strong>Why not chosen:</strong> This would require maintaining millions of concurrent WebSocket connections (one per active user). The server would need a connection registry (mapping post_id → set of connected sockets) and a pub/sub system to fan out updates. For vote counts that change every few seconds, polling with a 5-10 second interval (or simply refreshing on user interaction) is simpler and sufficient. The complexity-to-value ratio of WebSockets for this use case is poor. However, WebSockets could be added as an enhancement for live threads (e.g., sports game threads, AMA events).
+</div>
+
+<div class="alt-box">
+<strong>Alternative 5 — CQRS (Command Query Responsibility Segregation):</strong><br/>
+Fully separate the write model from the read model. All writes go to an event store; reads are served from materialized views updated from the event stream.<br/>
+<strong>Why not chosen:</strong> Full CQRS adds significant complexity (event sourcing, projection management, eventual consistency everywhere). Our design already incorporates CQRS-like principles (writes go to the DB + message queue, reads come from caches and read-optimized stores), but without the full event-sourcing framework. The partial approach gives us 80% of the benefits with 20% of the complexity.
+</div>
+
+<div class="alt-box">
+<strong>Alternative 6 — Single Monolithic Service:</strong><br/>
+Instead of microservices, deploy a single monolithic application handling all features.<br/>
+<strong>Why not chosen:</strong> Reddit's different features have vastly different scaling profiles. Votes need 10x more capacity than post creation. A monolith forces uniform scaling. Microservices allow independent scaling, independent deployment, and team autonomy (different teams own different services). The operational overhead of microservices is justified at Reddit's scale.
+</div>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<h2 id="additional">15. Additional Considerations</h2>
+<!-- ============================================================ -->
+
+<h3>15.1 — Rate Limiting &amp; Spam Prevention</h3>
+<ul>
+  <li>The API Gateway enforces per-user rate limits: post creation (5/hour), comments (30/minute), votes (60/minute).</li>
+  <li>A token bucket algorithm is used, with counters stored in the in-memory cache (keyed by user_id).</li>
+  <li>IP-based rate limiting for unauthenticated requests (e.g., search, feed browsing).</li>
+  <li>CAPTCHA challenges for suspicious patterns (e.g., rapid voting on many posts in the same subreddit).</li>
+</ul>
+
+<h3>15.2 — Content Moderation</h3>
+<ul>
+  <li>Automated: ML-based content classification runs asynchronously on new posts/comments (via a Moderation Consumer on the message queue). Flags potential violations for review.</li>
+  <li>Manual: Moderators use a moderation dashboard (separate internal API) to review flagged content, remove posts, and ban users.</li>
+  <li>User reports: Users can report posts/comments. Reports are stored in a Reports table and surfaced to moderators.</li>
+</ul>
+
+<h3>15.3 — Media Processing Pipeline</h3>
+<ul>
+  <li>Images: Generate thumbnails in 3 sizes (small: 100px, medium: 320px, large: 640px) for responsive display.</li>
+  <li>Videos: Transcode into multiple bitrates (360p, 720p, 1080p) and segment for HLS/DASH adaptive streaming. Generate a preview GIF/thumbnail from the first few seconds.</li>
+  <li>Processing is asynchronous via the Media Processing Consumer. The post is visible immediately with a "processing" indicator; media becomes available once processing completes (typically 10-60 seconds for images, 1-5 minutes for videos).</li>
+</ul>
+
+<h3>15.4 — Hot Post / Trending Detection</h3>
+<ul>
+  <li>A background job periodically (every 5 minutes) computes the "r/all" and "r/popular" feeds by sampling top posts from all subreddits weighted by activity velocity (votes per minute, comments per minute).</li>
+  <li>Trending subreddits are detected by measuring subscriber growth rate and post activity spikes compared to the subreddit's historical baseline.</li>
+</ul>
+
+<h3>15.5 — Analytics &amp; Metrics</h3>
+<ul>
+  <li>All services emit structured logs and metrics to a time-series database for monitoring (request latency, error rates, throughput).</li>
+  <li>User behavior analytics (page views, session duration, click-through rates) are collected via a separate event tracking pipeline (not on the critical path) for product analytics.</li>
+</ul>
+
+<h3>15.6 — Security</h3>
+<ul>
+  <li>All client-server communication over TLS 1.3.</li>
+  <li>Passwords hashed with bcrypt (cost factor 12).</li>
+  <li>JWT tokens for authentication with short expiry (15 minutes) and refresh tokens (30 days).</li>
+  <li>CSRF protection for state-changing requests.</li>
+  <li>Input sanitization for Markdown rendering (prevent XSS in comment bodies).</li>
+</ul>
+
+<h3>15.7 — Disaster Recovery</h3>
+<ul>
+  <li>SQL databases: Automated daily backups + continuous WAL (Write-Ahead Log) archiving for point-in-time recovery.</li>
+  <li>NoSQL databases: Continuous replication across 3 nodes. Cross-region replication for disaster recovery.</li>
+  <li>Message queue: Replicated across 3 brokers. Messages are persisted to disk.</li>
+  <li>Object Storage: Built-in cross-AZ replication. Cross-region replication for media durability.</li>
+  <li>RTO (Recovery Time Objective): &lt;30 minutes for full service restoration. RPO (Recovery Point Objective): Near-zero for databases (continuous replication), &lt;1 hour for analytics data.</li>
+</ul>
+
+<hr class="section-divider">
+
+<!-- ============================================================ -->
+<h2 id="vendors">16. Vendor Recommendations</h2>
+<!-- ============================================================ -->
+
+<table>
+<tr><th>Component</th><th>Recommended Vendors</th><th>Rationale</th></tr>
+<tr>
+  <td>SQL Database</td>
+  <td>PostgreSQL, MySQL, CockroachDB</td>
+  <td>PostgreSQL is the most feature-rich open-source SQL database with excellent JSON support and full-text search capabilities. CockroachDB adds distributed SQL if multi-region strong consistency is needed. MySQL is simpler and well-tested at scale (used by many large platforms).</td>
+</tr>
+<tr>
+  <td>NoSQL Database (Wide-Column)</td>
+  <td>Apache Cassandra, ScyllaDB, Amazon DynamoDB, Google Cloud Bigtable</td>
+  <td>Cassandra and ScyllaDB offer tunable consistency, linear horizontal scalability, and proven track record at Reddit-scale write volumes. DynamoDB provides a managed option with automatic scaling. Bigtable excels for sorted range scans (useful for feed and comment queries).</td>
+</tr>
+<tr>
+  <td>In-Memory Cache</td>
+  <td>Redis, Memcached, Dragonfly</td>
+  <td>Redis is the standard choice: supports sorted sets (perfect for feed ranking), atomic counters (perfect for vote counts), and complex data structures. Dragonfly is a modern, multi-threaded Redis-compatible alternative with better performance on multi-core machines. Memcached is simpler but lacks sorted sets.</td>
+</tr>
+<tr>
+  <td>Message Queue</td>
+  <td>Apache Kafka, Apache Pulsar, Amazon SQS/SNS, NATS JetStream</td>
+  <td>Kafka is the gold standard for high-throughput event streaming with consumer groups, ordering guarantees, and replay capability. Pulsar adds multi-tenancy and tiered storage. SQS/SNS is a managed alternative for teams that prefer not to operate their own queue infrastructure.</td>
+</tr>
+<tr>
+  <td>Search Index</td>
+  <td>Elasticsearch, OpenSearch, Apache Solr, Meilisearch</td>
+  <td>Elasticsearch/OpenSearch are the most widely adopted full-text search engines with excellent relevance scoring, faceting, and near-real-time indexing. Solr is a mature alternative. Meilisearch is simpler and faster for basic search use cases.</td>
+</tr>
+<tr>
+  <td>Object Storage</td>
+  <td>Amazon S3, Google Cloud Storage, MinIO, Azure Blob Storage</td>
+  <td>S3 and GCS are industry standards for scalable, durable object storage with CDN integration. MinIO provides an S3-compatible self-hosted option.</td>
+</tr>
+<tr>
+  <td>CDN</td>
+  <td>Cloudflare, Amazon CloudFront, Fastly, Akamai</td>
+  <td>Cloudflare offers the best price/performance with a global edge network and built-in DDoS protection. Fastly provides programmable edge computing (VCL/Wasm). CloudFront integrates tightly with AWS. Akamai has the largest network of edge servers.</td>
+</tr>
+<tr>
+  <td>Load Balancer</td>
+  <td>Nginx, HAProxy, Envoy, AWS ALB/NLB</td>
+  <td>Nginx and HAProxy are battle-tested, high-performance L7 load balancers. Envoy adds advanced observability and is ideal in service mesh architectures. AWS ALB/NLB are managed options with auto-scaling.</td>
+</tr>
+<tr>
+  <td>API Gateway</td>
+  <td>Kong, AWS API Gateway, Envoy, Traefik</td>
+  <td>Kong is a high-performance, plugin-extensible API gateway built on Nginx. Envoy can serve as both a sidecar proxy and API gateway. AWS API Gateway is a fully managed option with built-in throttling and auth.</td>
+</tr>
+</table>
+
+<hr class="section-divider">
+
+<p style="text-align: center; color: #888; margin-top: 60px;">
+  <em>System Design Document — Reddit — Generated February 2026</em>
+</p>
+
 </body>
 </html>
