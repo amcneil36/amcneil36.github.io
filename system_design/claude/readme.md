@@ -64,6 +64,7 @@ System design content created by claude AI
 1. https://amcneil36.github.io/system_design/claude/weather_com
 1. https://amcneil36.github.io/system_design/claude/web_crawler
 1. https://amcneil36.github.io/system_design/claude/whatsapp
+1. https://amcneil36.github.io/system_design/claude/whatsapp_pub_sub
 1. https://amcneil36.github.io/system_design/claude/wikipedia
 1. https://amcneil36.github.io/system_design/claude/yelp
 1. https://amcneil36.github.io/system_design/claude/youtube
