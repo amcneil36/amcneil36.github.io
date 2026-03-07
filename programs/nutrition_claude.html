@@ -80,6 +80,11 @@
   .goals-summary-text strong { color: var(--text); }
   .solver-result { margin-top: 10px; padding: 10px; background: var(--surface2); border-radius: 8px; font-size: 14px; color: var(--text); line-height: 1.6; }
   .solver-result strong { color: var(--accent); }
+  th.sortable { cursor: pointer; user-select: none; position: relative; padding-right: 18px; }
+  th.sortable:hover { color: var(--text); }
+  th.sortable::after { content: '⇅'; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); font-size: 10px; opacity: 0.4; }
+  th.sortable.asc::after { content: '↑'; opacity: 1; }
+  th.sortable.desc::after { content: '↓'; opacity: 1; }
   .btn-row { display: flex; gap: 8px; margin-top: 10px; }
   .btn-row .btn { flex: 1; }
   @media (max-width: 400px) { .form-grid, .form-grid-3 { grid-template-columns: 1fr 1fr; } }
@@ -148,6 +153,7 @@
         Nothing logged yet. Add some food above!
       </div>
       <button class="btn btn-outline" id="copy-log-btn" style="margin-top:10px;">📋 Copy Log to Clipboard</button>
+      <button class="btn btn-outline" id="clear-log-btn" style="margin-top:8px;color:var(--danger);border-color:var(--danger);">🗑 Clear All Entries</button>
     </div>
   </div>
 
@@ -184,6 +190,55 @@
       <ul class="food-list" id="food-list"></ul>
       <div class="empty-state" id="foods-empty"><span class="emoji">📝</span>No foods yet. Add one above!</div>
       <button class="btn btn-outline" id="copy-foods-btn" style="margin-top:10px;">📋 Copy All Nutrition Facts</button>
+      <button class="btn btn-outline" id="export-foods-btn" style="margin-top:8px;">📤 Export as JSON</button>
+      <button class="btn btn-outline" id="show-import-btn" style="margin-top:8px;">📥 Import from JSON</button>
+      <div id="import-wrap" style="display:none;margin-top:10px;">
+        <div class="form-row"><label for="import-json">Paste JSON</label><textarea id="import-json" rows="4" placeholder='Paste exported JSON here...'></textarea></div>
+        <button class="btn btn-primary" id="import-foods-btn">Import</button>
+      </div>
+      <button class="btn btn-outline" id="delete-all-foods-btn" style="margin-top:8px;color:var(--danger);border-color:var(--danger);">🗑 Delete All Foods</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Nutrition per 100 Calories</div>
+      <div class="table-wrap">
+        <table id="percal-table">
+          <thead>
+            <tr>
+              <th class="sortable" data-col="name">Food</th>
+              <th class="sortable" data-col="grams">Grams</th>
+              <th class="sortable" data-col="protein">Protein</th>
+              <th class="sortable" data-col="fat">Fat</th>
+              <th class="sortable" data-col="carbs">Carbs</th>
+              <th class="sortable" data-col="sugar">Sugar</th>
+              <th class="sortable" data-col="fiber">Fiber</th>
+              <th class="sortable" data-col="sodium">Sodium</th>
+            </tr>
+          </thead>
+          <tbody id="percal-body"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="percal-empty"><span class="emoji">📊</span>No foods yet.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Nutrition per 100g</div>
+      <div class="table-wrap">
+        <table id="per100-table">
+          <thead>
+            <tr>
+              <th class="sortable" data-col="name">Food</th>
+              <th class="sortable" data-col="cal">Cal</th>
+              <th class="sortable" data-col="protein">Protein</th>
+              <th class="sortable" data-col="fat">Fat</th>
+              <th class="sortable" data-col="carbs">Carbs</th>
+              <th class="sortable" data-col="sugar">Sugar</th>
+              <th class="sortable" data-col="fiber">Fiber</th>
+              <th class="sortable" data-col="sodium">Sodium</th>
+            </tr>
+          </thead>
+          <tbody id="per100-body"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="per100-empty"><span class="emoji">📊</span>No foods yet.</div>
     </div>
   </div>
 
@@ -393,6 +448,77 @@
     document.querySelectorAll('.delete-food-btn').forEach(b => b.addEventListener('click', () => deleteFood(b.dataset.id)));
   }
 
+  // PER-100G TABLE
+  let per100Sort = { col: 'name', dir: 'asc' };
+  function renderPer100() {
+    const foods = loadFoods();
+    const $body = $('per100-body'), $empty = $('per100-empty'), $table = $('per100-table');
+    $body.innerHTML = ''; $empty.style.display = foods.length ? 'none' : ''; $table.style.display = foods.length ? '' : 'none';
+    if (!foods.length) return;
+    const rows = foods.map(f => {
+      const s = f.servingSize || 1, m = 100 / s;
+      return { name: f.name, cal: f.cal*m, protein: f.protein*m, fat: f.fat*m, carbs: f.carbs*m, sugar: f.sugar*m, fiber: f.fiber*m, sodium: f.sodium*m };
+    });
+    rows.sort((a, b) => {
+      const av = a[per100Sort.col], bv = b[per100Sort.col];
+      let cmp = typeof av === 'string' ? av.localeCompare(bv) : av - bv;
+      return per100Sort.dir === 'desc' ? -cmp : cmp;
+    });
+    rows.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${esc(row.name)}</td><td>${r(row.cal)}</td><td>${r(row.protein)}g</td><td>${r(row.fat)}g</td><td>${r(row.carbs)}g</td><td>${r(row.sugar)}g</td><td>${r(row.fiber)}g</td><td>${r(row.sodium)}mg</td>`;
+      $body.appendChild(tr);
+    });
+    // update header arrows
+    $('per100-table').querySelectorAll('th.sortable').forEach(th => {
+      th.classList.remove('asc', 'desc');
+      if (th.dataset.col === per100Sort.col) th.classList.add(per100Sort.dir);
+    });
+  }
+  $('per100-table').querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (per100Sort.col === col) { per100Sort.dir = per100Sort.dir === 'asc' ? 'desc' : 'asc'; }
+      else { per100Sort.col = col; per100Sort.dir = col === 'name' ? 'asc' : 'desc'; }
+      renderPer100(); renderPerCal();
+    });
+  });
+
+  // PER-100-CALORIE TABLE
+  let perCalSort = { col: 'name', dir: 'asc' };
+  function renderPerCal() {
+    const foods = loadFoods();
+    const $body = $('percal-body'), $empty = $('percal-empty'), $table = $('percal-table');
+    $body.innerHTML = ''; $empty.style.display = foods.length ? 'none' : ''; $table.style.display = foods.length ? '' : 'none';
+    if (!foods.length) return;
+    const rows = foods.filter(f => f.cal > 0).map(f => {
+      const s = f.servingSize || 1, m = 100 / f.cal * s;
+      return { name: f.name, grams: (100 / f.cal) * s, protein: f.protein/f.cal*100, fat: f.fat/f.cal*100, carbs: f.carbs/f.cal*100, sugar: f.sugar/f.cal*100, fiber: f.fiber/f.cal*100, sodium: f.sodium/f.cal*100 };
+    });
+    rows.sort((a, b) => {
+      const av = a[perCalSort.col], bv = b[perCalSort.col];
+      let cmp = typeof av === 'string' ? av.localeCompare(bv) : av - bv;
+      return perCalSort.dir === 'desc' ? -cmp : cmp;
+    });
+    rows.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${esc(row.name)}</td><td>${r(row.grams)}</td><td>${r(row.protein)}g</td><td>${r(row.fat)}g</td><td>${r(row.carbs)}g</td><td>${r(row.sugar)}g</td><td>${r(row.fiber)}g</td><td>${r(row.sodium)}mg</td>`;
+      $body.appendChild(tr);
+    });
+    $('percal-table').querySelectorAll('th.sortable').forEach(th => {
+      th.classList.remove('asc', 'desc');
+      if (th.dataset.col === perCalSort.col) th.classList.add(perCalSort.dir);
+    });
+  }
+  $('percal-table').querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (perCalSort.col === col) { perCalSort.dir = perCalSort.dir === 'asc' ? 'desc' : 'asc'; }
+      else { perCalSort.col = col; perCalSort.dir = col === 'name' ? 'asc' : 'desc'; }
+      renderPerCal();
+    });
+  });
+
   // SAVE FOOD
   $saveFoodBtn.addEventListener('click', () => {
     const name = $foodName.value.trim(); if (!name) { showToast('Enter a food name'); return; }
@@ -402,14 +528,14 @@
       protein: parseFloat($foodProtein.value)||0, sugar: parseFloat($foodSugar.value)||0, fiber: parseFloat($foodFiber.value)||0, sodium: parseFloat($foodSodium.value)||0 };
     const foods = loadFoods(); foods.push(food); saveFoods(foods);
     [$foodName, $foodDesc, $foodServing, $foodCal, $foodFat, $foodCarbs, $foodProtein, $foodSugar, $foodFiber, $foodSodium].forEach(el => el.value = '');
-    renderFoodLibrary(); renderFoodSelect(); showToast(`${food.name} saved!`); window.scrollTo({ top: 0, behavior: 'smooth' });
+    renderFoodLibrary(); renderPer100(); renderPerCal(); renderFoodSelect(); showToast(`${food.name} saved!`); window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   // DELETE FOOD
   function deleteFood(id) {
     if (!confirm('Delete this food?')) return;
     let foods = loadFoods(); const rm = foods.find(f => f.id === id); foods = foods.filter(f => f.id !== id); saveFoods(foods);
-    renderFoodLibrary(); renderFoodSelect(); if (rm) showToast(`${rm.name} deleted`);
+    renderFoodLibrary(); renderPer100(); renderPerCal(); renderFoodSelect(); if (rm) showToast(`${rm.name} deleted`);
   }
 
   // EDIT MODAL
@@ -429,7 +555,7 @@
     foods[idx] = { ...foods[idx], name, description: $editDesc.value.trim(), servingSize: parseFloat($editServing.value)||0,
       cal: parseFloat($editCal.value)||0, fat: parseFloat($editFat.value)||0, carbs: parseFloat($editCarbs.value)||0,
       protein: parseFloat($editProtein.value)||0, sugar: parseFloat($editSugar.value)||0, fiber: parseFloat($editFiber.value)||0, sodium: parseFloat($editSodium.value)||0 };
-    saveFoods(foods); $editModal.classList.remove('active'); renderFoodLibrary(); renderFoodSelect(); renderLog(); showToast(`${name} updated!`);
+    saveFoods(foods); $editModal.classList.remove('active'); renderFoodLibrary(); renderPer100(); renderPerCal(); renderFoodSelect(); renderLog(); showToast(`${name} updated!`);
   });
 
   // LOG FOOD
@@ -506,6 +632,59 @@
       return line;
     });
     navigator.clipboard.writeText(lines.join('\n\n')).then(() => showToast('Nutrition facts copied!')).catch(() => showToast('Copy failed'));
+  });
+
+  // CLEAR ALL LOG ENTRIES
+  $('clear-log-btn').addEventListener('click', () => {
+    const entries = loadLog();
+    if (!entries.length) { showToast('Log is already empty'); return; }
+    if (!confirm('Are you sure you want to delete all log entries? This cannot be undone.')) return;
+    saveLog([]); renderLog(); showToast('Log cleared');
+  });
+
+  // DELETE ALL FOODS
+  $('delete-all-foods-btn').addEventListener('click', () => {
+    const foods = loadFoods();
+    if (!foods.length) { showToast('No foods to delete'); return; }
+    if (!confirm('Are you sure you want to delete all foods? This cannot be undone.')) return;
+    saveFoods([]); renderFoodLibrary(); renderPer100(); renderPerCal(); renderFoodSelect(); showToast('All foods deleted');
+  });
+
+  // EXPORT FOODS AS JSON
+  $('export-foods-btn').addEventListener('click', () => {
+    const foods = loadFoods();
+    if (!foods.length) { showToast('No foods to export'); return; }
+    const json = JSON.stringify(foods, null, 2);
+    navigator.clipboard.writeText(json).then(() => showToast('JSON copied to clipboard!')).catch(() => showToast('Copy failed'));
+  });
+
+  // IMPORT FOODS FROM JSON
+  $('show-import-btn').addEventListener('click', () => {
+    const wrap = $('import-wrap');
+    wrap.style.display = wrap.style.display === 'none' ? '' : 'none';
+  });
+
+  $('import-foods-btn').addEventListener('click', () => {
+    const raw = $('import-json').value.trim();
+    if (!raw) { showToast('Paste JSON first'); return; }
+    let imported;
+    try { imported = JSON.parse(raw); } catch { showToast('Invalid JSON'); return; }
+    if (!Array.isArray(imported)) { showToast('JSON must be an array of foods'); return; }
+    const foods = loadFoods();
+    const existingNames = new Set(foods.map(f => f.name.toLowerCase()));
+    let added = 0;
+    imported.forEach(f => {
+      if (!f.name) return;
+      if (existingNames.has(f.name.toLowerCase())) return;
+      foods.push({ id: generateId(), name: f.name, description: f.description || '', servingSize: f.servingSize || 0,
+        cal: f.cal || 0, fat: f.fat || 0, carbs: f.carbs || 0, protein: f.protein || 0,
+        sugar: f.sugar || 0, fiber: f.fiber || 0, sodium: f.sodium || 0 });
+      existingNames.add(f.name.toLowerCase());
+      added++;
+    });
+    saveFoods(foods); renderFoodLibrary(); renderPer100(); renderPerCal(); renderFoodSelect();
+    $('import-json').value = ''; $('import-wrap').style.display = 'none';
+    showToast(added > 0 ? `${added} food${added > 1 ? 's' : ''} imported` : 'No new foods to import (all duplicates)');
   });
 
   // GOALS
@@ -643,6 +822,7 @@
   // INIT
   renderFoodSelect();
   renderFoodLibrary();
+  renderPer100(); renderPerCal();
   renderGoalsForm();
   renderLog();
   init2x2Labels();
