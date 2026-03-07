@@ -183,6 +183,10 @@
         <div class="form-row"><label for="food-fiber">Fiber (g)</label><input type="number" id="food-fiber" placeholder="0" inputmode="decimal" min="0" step="any"></div>
       </div>
       <div class="form-row"><label for="food-sodium">Sodium (mg)</label><input type="number" id="food-sodium" placeholder="0" inputmode="decimal" min="0" step="any"></div>
+      <div class="form-grid">
+        <div class="form-row"><label for="food-servings-per">Servings per Container</label><input type="number" id="food-servings-per" placeholder="optional" inputmode="decimal" min="0" step="any"></div>
+        <div class="form-row"><label for="food-cost">Total Cost ($)</label><input type="number" id="food-cost" placeholder="optional" inputmode="decimal" min="0" step="any"></div>
+      </div>
       <button class="btn btn-primary" id="save-food-btn">Save Food</button>
     </div>
     <div class="card">
@@ -239,6 +243,28 @@
         </table>
       </div>
       <div class="empty-state" id="per100-empty"><span class="emoji">📊</span>No foods yet.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Nutrition per $1</div>
+      <div class="table-wrap">
+        <table id="perdollar-table">
+          <thead>
+            <tr>
+              <th class="sortable" data-col="name">Food</th>
+              <th class="sortable" data-col="grams">Grams</th>
+              <th class="sortable" data-col="cal">Cal</th>
+              <th class="sortable" data-col="protein">Protein</th>
+              <th class="sortable" data-col="fat">Fat</th>
+              <th class="sortable" data-col="carbs">Carbs</th>
+              <th class="sortable" data-col="sugar">Sugar</th>
+              <th class="sortable" data-col="fiber">Fiber</th>
+              <th class="sortable" data-col="sodium">Sodium</th>
+            </tr>
+          </thead>
+          <tbody id="perdollar-body"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="perdollar-empty"><span class="emoji">💰</span>No foods with cost data yet.</div>
     </div>
   </div>
 
@@ -331,6 +357,10 @@
       <div class="form-row"><label for="edit-food-fiber">Fiber (g)</label><input type="number" id="edit-food-fiber" inputmode="decimal" min="0" step="any"></div>
     </div>
     <div class="form-row"><label for="edit-food-sodium">Sodium (mg)</label><input type="number" id="edit-food-sodium" inputmode="decimal" min="0" step="any"></div>
+    <div class="form-grid">
+      <div class="form-row"><label for="edit-food-servings-per">Servings per Container</label><input type="number" id="edit-food-servings-per" inputmode="decimal" min="0" step="any"></div>
+      <div class="form-row"><label for="edit-food-cost">Total Cost ($)</label><input type="number" id="edit-food-cost" inputmode="decimal" min="0" step="any"></div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-outline" id="edit-cancel-btn">Cancel</button>
       <button class="btn btn-primary" id="edit-save-btn">Save</button>
@@ -384,11 +414,13 @@
   const $foodName = $('food-name'), $foodDesc = $('food-desc'), $foodServing = $('food-serving-size');
   const $foodCal = $('food-cal'), $foodFat = $('food-fat'), $foodCarbs = $('food-carbs');
   const $foodProtein = $('food-protein'), $foodSugar = $('food-sugar'), $foodFiber = $('food-fiber'), $foodSodium = $('food-sodium');
+  const $foodServingsPer = $('food-servings-per'), $foodCost = $('food-cost');
   const $saveFoodBtn = $('save-food-btn'), $foodList = $('food-list'), $foodsEmpty = $('foods-empty');
   const $editModal = $('edit-modal'), $editId = $('edit-food-id'), $editName = $('edit-food-name'), $editDesc = $('edit-food-desc');
   const $editServing = $('edit-food-serving-size');
   const $editCal = $('edit-food-cal'), $editFat = $('edit-food-fat'), $editCarbs = $('edit-food-carbs');
   const $editProtein = $('edit-food-protein'), $editSugar = $('edit-food-sugar'), $editFiber = $('edit-food-fiber'), $editSodium = $('edit-food-sodium');
+  const $editServingsPer = $('edit-food-servings-per'), $editCost = $('edit-food-cost');
   const $editCancel = $('edit-cancel-btn'), $editSave = $('edit-save-btn');
   const $toast = $('toast');
   const $goalWeight = $('goal-weight'), $goalCalories = $('goal-calories'), $goalProteinLb = $('goal-protein-per-lb'), $goalFatPct = $('goal-fat-pct');
@@ -480,7 +512,7 @@
       const col = th.dataset.col;
       if (per100Sort.col === col) { per100Sort.dir = per100Sort.dir === 'asc' ? 'desc' : 'asc'; }
       else { per100Sort.col = col; per100Sort.dir = col === 'name' ? 'asc' : 'desc'; }
-      renderPer100(); renderPerCal();
+      renderPer100(); renderPerCal(); renderPerDollar();
     });
   });
 
@@ -515,7 +547,49 @@
       const col = th.dataset.col;
       if (perCalSort.col === col) { perCalSort.dir = perCalSort.dir === 'asc' ? 'desc' : 'asc'; }
       else { perCalSort.col = col; perCalSort.dir = col === 'name' ? 'asc' : 'desc'; }
-      renderPerCal();
+      renderPerCal(); renderPerDollar();
+    });
+  });
+
+  // PER-$1 TABLE
+  let perDollarSort = { col: 'name', dir: 'asc' };
+  function renderPerDollar() {
+    const foods = loadFoods();
+    const $body = $('perdollar-body'), $empty = $('perdollar-empty'), $table = $('perdollar-table');
+    $body.innerHTML = '';
+    // only foods with cost and servingsPer set
+    const valid = foods.filter(f => f.cost > 0 && f.servingsPer > 0);
+    $empty.style.display = valid.length ? 'none' : ''; $table.style.display = valid.length ? '' : 'none';
+    if (!valid.length) return;
+    const rows = valid.map(f => {
+      const totalGrams = (f.servingSize || 1) * f.servingsPer;
+      const gramsPerDollar = totalGrams / f.cost;
+      const servingsPerDollar = f.servingsPer / f.cost;
+      return { name: f.name, grams: gramsPerDollar, cal: f.cal * servingsPerDollar, protein: f.protein * servingsPerDollar,
+        fat: f.fat * servingsPerDollar, carbs: f.carbs * servingsPerDollar, sugar: f.sugar * servingsPerDollar,
+        fiber: f.fiber * servingsPerDollar, sodium: f.sodium * servingsPerDollar };
+    });
+    rows.sort((a, b) => {
+      const av = a[perDollarSort.col], bv = b[perDollarSort.col];
+      let cmp = typeof av === 'string' ? av.localeCompare(bv) : av - bv;
+      return perDollarSort.dir === 'desc' ? -cmp : cmp;
+    });
+    rows.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${esc(row.name)}</td><td>${r(row.grams)}</td><td>${r(row.cal)}</td><td>${r(row.protein)}g</td><td>${r(row.fat)}g</td><td>${r(row.carbs)}g</td><td>${r(row.sugar)}g</td><td>${r(row.fiber)}g</td><td>${r(row.sodium)}mg</td>`;
+      $body.appendChild(tr);
+    });
+    $('perdollar-table').querySelectorAll('th.sortable').forEach(th => {
+      th.classList.remove('asc', 'desc');
+      if (th.dataset.col === perDollarSort.col) th.classList.add(perDollarSort.dir);
+    });
+  }
+  $('perdollar-table').querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (perDollarSort.col === col) { perDollarSort.dir = perDollarSort.dir === 'asc' ? 'desc' : 'asc'; }
+      else { perDollarSort.col = col; perDollarSort.dir = col === 'name' ? 'asc' : 'desc'; }
+      renderPerDollar();
     });
   });
 
@@ -525,17 +599,18 @@
     const servingSize = parseFloat($foodServing.value) || 0; if (servingSize <= 0) { showToast('Enter a serving size'); return; }
     const food = { id: generateId(), name, description: $foodDesc.value.trim(), servingSize,
       cal: parseFloat($foodCal.value)||0, fat: parseFloat($foodFat.value)||0, carbs: parseFloat($foodCarbs.value)||0,
-      protein: parseFloat($foodProtein.value)||0, sugar: parseFloat($foodSugar.value)||0, fiber: parseFloat($foodFiber.value)||0, sodium: parseFloat($foodSodium.value)||0 };
+      protein: parseFloat($foodProtein.value)||0, sugar: parseFloat($foodSugar.value)||0, fiber: parseFloat($foodFiber.value)||0, sodium: parseFloat($foodSodium.value)||0,
+      servingsPer: parseFloat($foodServingsPer.value)||0, cost: parseFloat($foodCost.value)||0 };
     const foods = loadFoods(); foods.push(food); saveFoods(foods);
-    [$foodName, $foodDesc, $foodServing, $foodCal, $foodFat, $foodCarbs, $foodProtein, $foodSugar, $foodFiber, $foodSodium].forEach(el => el.value = '');
-    renderFoodLibrary(); renderPer100(); renderPerCal(); renderFoodSelect(); showToast(`${food.name} saved!`); window.scrollTo({ top: 0, behavior: 'smooth' });
+    [$foodName, $foodDesc, $foodServing, $foodCal, $foodFat, $foodCarbs, $foodProtein, $foodSugar, $foodFiber, $foodSodium, $foodServingsPer, $foodCost].forEach(el => el.value = '');
+    renderFoodLibrary(); renderPer100(); renderPerCal(); renderPerDollar(); renderFoodSelect(); showToast(`${food.name} saved!`); window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   // DELETE FOOD
   function deleteFood(id) {
     if (!confirm('Delete this food?')) return;
     let foods = loadFoods(); const rm = foods.find(f => f.id === id); foods = foods.filter(f => f.id !== id); saveFoods(foods);
-    renderFoodLibrary(); renderPer100(); renderPerCal(); renderFoodSelect(); if (rm) showToast(`${rm.name} deleted`);
+    renderFoodLibrary(); renderPer100(); renderPerCal(); renderPerDollar(); renderFoodSelect(); if (rm) showToast(`${rm.name} deleted`);
   }
 
   // EDIT MODAL
@@ -545,6 +620,7 @@
     $editServing.value = food.servingSize || ''; $editCal.value = food.cal || ''; $editFat.value = food.fat || '';
     $editCarbs.value = food.carbs || ''; $editProtein.value = food.protein || '';
     $editSugar.value = food.sugar || ''; $editFiber.value = food.fiber || ''; $editSodium.value = food.sodium || '';
+    $editServingsPer.value = food.servingsPer || ''; $editCost.value = food.cost || '';
     $editModal.classList.add('active');
   }
   $editCancel.addEventListener('click', () => $editModal.classList.remove('active'));
@@ -554,8 +630,9 @@
     const foods = loadFoods(); const idx = foods.findIndex(f => f.id === id); if (idx === -1) return;
     foods[idx] = { ...foods[idx], name, description: $editDesc.value.trim(), servingSize: parseFloat($editServing.value)||0,
       cal: parseFloat($editCal.value)||0, fat: parseFloat($editFat.value)||0, carbs: parseFloat($editCarbs.value)||0,
-      protein: parseFloat($editProtein.value)||0, sugar: parseFloat($editSugar.value)||0, fiber: parseFloat($editFiber.value)||0, sodium: parseFloat($editSodium.value)||0 };
-    saveFoods(foods); $editModal.classList.remove('active'); renderFoodLibrary(); renderPer100(); renderPerCal(); renderFoodSelect(); renderLog(); showToast(`${name} updated!`);
+      protein: parseFloat($editProtein.value)||0, sugar: parseFloat($editSugar.value)||0, fiber: parseFloat($editFiber.value)||0, sodium: parseFloat($editSodium.value)||0,
+      servingsPer: parseFloat($editServingsPer.value)||0, cost: parseFloat($editCost.value)||0 };
+    saveFoods(foods); $editModal.classList.remove('active'); renderFoodLibrary(); renderPer100(); renderPerCal(); renderPerDollar(); renderFoodSelect(); renderLog(); showToast(`${name} updated!`);
   });
 
   // LOG FOOD
@@ -647,7 +724,7 @@
     const foods = loadFoods();
     if (!foods.length) { showToast('No foods to delete'); return; }
     if (!confirm('Are you sure you want to delete all foods? This cannot be undone.')) return;
-    saveFoods([]); renderFoodLibrary(); renderPer100(); renderPerCal(); renderFoodSelect(); showToast('All foods deleted');
+    saveFoods([]); renderFoodLibrary(); renderPer100(); renderPerCal(); renderPerDollar(); renderFoodSelect(); showToast('All foods deleted');
   });
 
   // EXPORT FOODS AS JSON
@@ -682,7 +759,7 @@
       existingNames.add(f.name.toLowerCase());
       added++;
     });
-    saveFoods(foods); renderFoodLibrary(); renderPer100(); renderPerCal(); renderFoodSelect();
+    saveFoods(foods); renderFoodLibrary(); renderPer100(); renderPerCal(); renderPerDollar(); renderFoodSelect();
     $('import-json').value = ''; $('import-wrap').style.display = 'none';
     showToast(added > 0 ? `${added} food${added > 1 ? 's' : ''} imported` : 'No new foods to import (all duplicates)');
   });
@@ -822,7 +899,7 @@
   // INIT
   renderFoodSelect();
   renderFoodLibrary();
-  renderPer100(); renderPerCal();
+  renderPer100(); renderPerCal(); renderPerDollar();
   renderGoalsForm();
   renderLog();
   init2x2Labels();
