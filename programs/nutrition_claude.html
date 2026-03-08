@@ -143,6 +143,7 @@
               <th>Sugar</th>
               <th>Fiber</th>
               <th>Sodium</th>
+              <th>Cost</th>
             </tr>
           </thead>
           <tbody id="log-body"></tbody>
@@ -653,28 +654,29 @@
     const entries = loadLog(), foods = loadFoods(), goals = getComputedGoals();
     $logBody.innerHTML = ''; $logEmpty.style.display = entries.length ? 'none' : ''; $logTable.style.display = entries.length ? '' : 'none';
     if (!entries.length) return;
-    const totals = { cal:0, fat:0, carbs:0, protein:0, sugar:0, fiber:0, sodium:0, grams:0 };
+    const totals = { cal:0, fat:0, carbs:0, protein:0, sugar:0, fiber:0, sodium:0, grams:0, cost:0 };
     entries.forEach(entry => {
       const food = foods.find(f => f.id === entry.foodId), servSize = food ? (food.servingSize||1) : 1, mult = entry.grams / servSize;
       const cal = food?food.cal*mult:0, fat = food?food.fat*mult:0, carbs = food?food.carbs*mult:0;
       const protein = food?food.protein*mult:0, sugar = food?food.sugar*mult:0, fiber = food?food.fiber*mult:0, sodium = food?food.sodium*mult:0;
-      totals.grams+=entry.grams; totals.cal+=cal; totals.fat+=fat; totals.carbs+=carbs; totals.protein+=protein; totals.sugar+=sugar; totals.fiber+=fiber; totals.sodium+=sodium;
+      const cost = (food && food.cost > 0 && food.servingsPer > 0) ? (food.cost / food.servingsPer) * mult : 0;
+      totals.grams+=entry.grams; totals.cal+=cal; totals.fat+=fat; totals.carbs+=carbs; totals.protein+=protein; totals.sugar+=sugar; totals.fiber+=fiber; totals.sodium+=sodium; totals.cost+=cost;
       const tr = document.createElement('tr');
       tr.innerHTML = `<td><button class="delete-log-btn" data-id="${entry.id}" title="Remove">✕</button></td>
         <td>${esc(entry.foodName)}</td><td>${r(entry.grams)}</td><td>${r(cal)}</td><td>${r(protein)}g</td><td>${r(fat)}g</td>
-        <td>${r(carbs)}g</td><td>${r(sugar)}g</td><td>${r(fiber)}g</td><td>${r(sodium)}mg</td>`;
+        <td>${r(carbs)}g</td><td>${r(sugar)}g</td><td>${r(fiber)}g</td><td>${r(sodium)}mg</td><td>$${cost.toFixed(2)}</td>`;
       $logBody.appendChild(tr);
     });
     const totalRow = document.createElement('tr'); totalRow.className = 'total-row';
     totalRow.innerHTML = `<td></td><td>Total</td><td>${r(totals.grams)}</td><td>${r(totals.cal)}</td><td>${r(totals.protein)}g</td><td>${r(totals.fat)}g</td>
-      <td>${r(totals.carbs)}g</td><td>${r(totals.sugar)}g</td><td>${r(totals.fiber)}g</td><td>${r(totals.sodium)}mg</td>`;
+      <td>${r(totals.carbs)}g</td><td>${r(totals.sugar)}g</td><td>${r(totals.fiber)}g</td><td>${r(totals.sodium)}mg</td><td>$${totals.cost.toFixed(2)}</td>`;
     $logBody.appendChild(totalRow);
     if (goals) {
       const goalRow = document.createElement('tr'); goalRow.className = 'goal-row';
       const cp = goals.calories>0 ? Math.round(totals.cal/goals.calories*100) : '—';
       const pp = goals.protein>0 ? Math.round(totals.protein/goals.protein*100) : '—';
       const fp = goals.fat>0 ? Math.round(totals.fat/goals.fat*100) : '—';
-      goalRow.innerHTML = `<td></td><td>Goal</td><td></td><td>${cp}% of ${r(goals.calories)}</td><td>${pp}% of ${r(goals.protein)}g</td><td>${fp}% of ${r(goals.fat)}g</td><td></td><td></td><td></td><td></td>`;
+      goalRow.innerHTML = `<td></td><td>Goal</td><td></td><td>${cp}% of ${r(goals.calories)}</td><td>${pp}% of ${r(goals.protein)}g</td><td>${fp}% of ${r(goals.fat)}g</td><td></td><td></td><td></td><td></td><td></td>`;
       $logBody.appendChild(goalRow);
     }
     document.querySelectorAll('.delete-log-btn').forEach(btn => btn.addEventListener('click', () => {
@@ -686,17 +688,18 @@
   $copyLogBtn.addEventListener('click', () => {
     const entries = loadLog(), foods = loadFoods();
     if (!entries.length) { showToast('Nothing to copy'); return; }
-    const lines = []; const totals = { cal:0, protein:0, fat:0, carbs:0, sugar:0, fiber:0, sodium:0, grams:0 };
+    const lines = []; const totals = { cal:0, protein:0, fat:0, carbs:0, sugar:0, fiber:0, sodium:0, grams:0, cost:0 };
     entries.forEach(e => {
       const f = foods.find(x => x.id === e.foodId), s = f?(f.servingSize||1):1, m = e.grams/s;
       const cal=f?f.cal*m:0, prot=f?f.protein*m:0, fat=f?f.fat*m:0, carbs=f?f.carbs*m:0, sugar=f?f.sugar*m:0, fiber=f?f.fiber*m:0, sodium=f?f.sodium*m:0;
-      totals.cal+=cal; totals.protein+=prot; totals.fat+=fat; totals.carbs+=carbs; totals.sugar+=sugar; totals.fiber+=fiber; totals.sodium+=sodium; totals.grams+=e.grams;
+      const cost = (f && f.cost > 0 && f.servingsPer > 0) ? (f.cost / f.servingsPer) * m : 0;
+      totals.cal+=cal; totals.protein+=prot; totals.fat+=fat; totals.carbs+=carbs; totals.sugar+=sugar; totals.fiber+=fiber; totals.sodium+=sodium; totals.grams+=e.grams; totals.cost+=cost;
       let line = e.foodName;
       if (f && f.description) line += ` (${f.description})`;
-      line += ` — ${r(e.grams)}g | ${r(cal)} cal | ${r(prot)}g protein | ${r(fat)}g fat | ${r(carbs)}g carbs | ${r(sugar)}g sugar | ${r(fiber)}g fiber | ${r(sodium)}mg sodium`;
+      line += ` — ${r(e.grams)}g | ${r(cal)} cal | ${r(prot)}g protein | ${r(fat)}g fat | ${r(carbs)}g carbs | ${r(sugar)}g sugar | ${r(fiber)}g fiber | ${r(sodium)}mg sodium | $${cost.toFixed(2)}`;
       lines.push(line);
     });
-    lines.push(''); lines.push(`Total — ${r(totals.grams)}g | ${r(totals.cal)} cal | ${r(totals.protein)}g protein | ${r(totals.fat)}g fat | ${r(totals.carbs)}g carbs | ${r(totals.sugar)}g sugar | ${r(totals.fiber)}g fiber | ${r(totals.sodium)}mg sodium`);
+    lines.push(''); lines.push(`Total — ${r(totals.grams)}g | ${r(totals.cal)} cal | ${r(totals.protein)}g protein | ${r(totals.fat)}g fat | ${r(totals.carbs)}g carbs | ${r(totals.sugar)}g sugar | ${r(totals.fiber)}g fiber | ${r(totals.sodium)}mg sodium | $${totals.cost.toFixed(2)}`);
     navigator.clipboard.writeText(lines.join('\n')).then(() => showToast('Log copied!')).catch(() => showToast('Copy failed'));
   });
 
