@@ -103,6 +103,66 @@
   }
   .clause-row select:focus, .clause-row input[type="text"]:focus { border-color: #555; }
   .clause-row .op-sel { width: 80px; flex: none; }
+  .val-wrap {
+    flex: 1; position: relative; min-width: 0;
+  }
+  .val-wrap input[type="text"] {
+    width: 100%; padding: 5px 6px;
+    border-radius: 5px; border: 1px solid #333;
+    background: #1e1e22; color: #ccc;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    outline: none;
+  }
+  .val-wrap input[type="text"]:focus { border-color: #555; }
+  .in-tags-wrap {
+    flex: 1; min-width: 0; position: relative;
+  }
+  .in-tags-box {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    padding: 4px 5px;
+    border-radius: 5px; border: 1px solid #333;
+    background: #1e1e22;
+    min-height: 26px; align-items: center;
+    cursor: text;
+  }
+  .in-tags-box:focus-within { border-color: #555; }
+  .in-tag {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 1px 6px; border-radius: 3px;
+    background: #c4f470; color: #111;
+    font-size: 10px; font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+  .in-tag button {
+    background: none; border: none; color: #333;
+    font-size: 12px; cursor: pointer; padding: 0;
+    line-height: 1; display: flex; align-items: center;
+  }
+  .in-tag button:hover { color: #900; }
+  .in-tags-input {
+    border: none; outline: none; background: transparent;
+    color: #ccc; font-size: 11px; flex: 1; min-width: 40px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 1px 0;
+  }
+  .typeahead {
+    position: absolute; top: 100%; left: 0; right: 0;
+    max-height: 150px; overflow-y: auto;
+    background: #1e1e22; border: 1px solid #444;
+    border-top: none; border-radius: 0 0 5px 5px;
+    z-index: 10;
+  }
+  .typeahead div {
+    padding: 4px 6px; font-size: 11px; color: #ccc;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .typeahead div:hover, .typeahead div.ta-active {
+    background: #2a2a2d; color: #c4f470;
+  }
   .rm-btn {
     width: 22px; height: 22px; border-radius: 4px;
     border: 1px solid #333; background: transparent;
@@ -123,6 +183,7 @@
     padding: 12px 16px;
     border-top: 1px solid #2a2a2d;
     background: #18181b;
+    position: relative;
   }
   .submit-btn {
     width: 100%; padding: 10px 0;
@@ -144,14 +205,21 @@
   }
   .limit-input:focus { border-color: #555; }
 
-  .error-box {
-    margin: 0 16px 12px; padding: 8px 10px;
-    background: rgba(255,80,80,0.1);
-    border: 1px solid rgba(255,80,80,0.25);
+  .error-toast {
+    position: absolute;
+    bottom: 100%; left: 12px; right: 12px;
+    margin-bottom: 6px;
+    padding: 8px 10px;
+    background: rgba(40,10,10,0.95);
+    border: 1px solid rgba(255,80,80,0.3);
     border-radius: 6px; color: #ff6b6b;
-    font-size: 12px; flex-shrink: 0;
+    font-size: 12px;
     font-family: 'JetBrains Mono', monospace;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
   }
+  .error-toast.fading { opacity: 0; }
 
   .main {
     flex: 1; overflow: hidden;
@@ -262,10 +330,10 @@
     </div>
 
     <div id="submitWrap" class="submit-wrap" data-hidden="true">
+      <div id="errorBox" class="error-toast" data-hidden="true"></div>
       <button class="submit-btn" id="submitBtn">Run Query</button>
     </div>
 
-    <div id="errorBox" class="error-box" data-hidden="true"></div>
   </div>
 
   <div class="main">
@@ -295,7 +363,7 @@
 // ── State ──
 let csvData = null;
 let selectedColumns = [];
-let whereClauses = [{ column: '', operator: '=', value: '' }];
+let whereClauses = [{ column: '', operator: '=', value: '', inValues: [] }];
 let orderByClauses = [{ column: '', direction: 'ASC' }];
 let tableSort = { column: null, direction: 'ASC' }; // for click-to-sort on headers
 let queryResult = null;
@@ -327,8 +395,22 @@ const tableBody = $('tableBody');
 
 function show(el) { el.setAttribute('data-hidden', 'false'); }
 function hide(el) { el.setAttribute('data-hidden', 'true'); }
-function showError(msg) { errorBox.textContent = msg; show(errorBox); }
-function clearError() { hide(errorBox); }
+let errorTimer = null;
+function showError(msg) {
+  if (errorTimer) clearTimeout(errorTimer);
+  errorBox.textContent = msg;
+  errorBox.classList.remove('fading');
+  show(errorBox);
+  errorTimer = setTimeout(() => {
+    errorBox.classList.add('fading');
+    setTimeout(() => { hide(errorBox); errorBox.classList.remove('fading'); }, 500);
+  }, 3000);
+}
+function clearError() {
+  if (errorTimer) clearTimeout(errorTimer);
+  hide(errorBox);
+  errorBox.classList.remove('fading');
+}
 
 // ── CSV Parser ──
 function parseCSV(text) {
@@ -369,6 +451,15 @@ function executeQuery(data, q) {
         case '<':  return num ? nC < nV  : cell < val;
         case '>=': return num ? nC >= nV : cell >= val;
         case '<=': return num ? nC <= nV : cell <= val;
+        case 'in': {
+          const items = (c.inValues && c.inValues.length) ? c.inValues : val.split(',').map(s => s.trim());
+          return items.some(item => {
+            const itemLower = item.toLowerCase();
+            const nC2 = Number(cell), nI = Number(item);
+            const num2 = !isNaN(nC2) && !isNaN(nI) && cell.trim() !== '' && item !== '';
+            return num2 ? nC2 === nI : cell.toLowerCase() === itemLower;
+          });
+        }
         case 'contains':    return cell.toLowerCase().includes(val.toLowerCase());
         case 'starts with': return cell.toLowerCase().startsWith(val.toLowerCase());
         case 'ends with':   return cell.toLowerCase().endsWith(val.toLowerCase());
@@ -510,38 +601,253 @@ toggleAllBtn.addEventListener('click', () => {
 function buildWhereClauses() {
   whereContainer.innerHTML = '';
   whereClauses.forEach((c, i) => {
+    // Ensure inValues array exists
+    if (!c.inValues) c.inValues = [];
+
     const div = document.createElement('div');
     div.className = 'clause-row';
+    div.style.flexWrap = 'wrap';
+
+    const topRow = document.createElement('div');
+    topRow.style.cssText = 'display:flex;gap:6px;align-items:center;width:100%';
 
     const colSel = document.createElement('select');
     colSel.innerHTML = colOpts(c.column);
-    colSel.onchange = () => { whereClauses[i].column = colSel.value; };
+    colSel.onchange = () => { whereClauses[i].column = colSel.value; buildWhereClauses(); };
 
     const opSel = document.createElement('select');
     opSel.className = 'op-sel';
-    ['=','!=','>','<','>=','<=','contains','starts with','ends with'].forEach(op => {
+    ['=','!=','>','<','>=','<=','in','contains','starts with','ends with'].forEach(op => {
       const o = document.createElement('option');
       o.value = op; o.textContent = op; if (op === c.operator) o.selected = true;
       opSel.appendChild(o);
     });
-    opSel.onchange = () => { whereClauses[i].operator = opSel.value; };
-
-    const inp = document.createElement('input');
-    inp.type = 'text'; inp.placeholder = 'Value'; inp.value = c.value;
-    inp.oninput = () => { whereClauses[i].value = inp.value; };
+    opSel.onchange = () => { whereClauses[i].operator = opSel.value; buildWhereClauses(); };
 
     const rm = document.createElement('button');
     rm.className = 'rm-btn'; rm.innerHTML = '&times;';
     rm.onclick = () => {
-      if (whereClauses.length === 1) whereClauses = [{ column: '', operator: '=', value: '' }];
+      if (whereClauses.length === 1) whereClauses = [{ column: '', operator: '=', value: '', inValues: [] }];
       else whereClauses.splice(i, 1);
       buildWhereClauses();
     };
 
-    div.appendChild(colSel);
-    div.appendChild(opSel);
-    div.appendChild(inp);
-    div.appendChild(rm);
+    topRow.appendChild(colSel);
+    topRow.appendChild(opSel);
+
+    if (c.operator === 'in') {
+      // Spacer to push remove button to the right
+      const spacer = document.createElement('div');
+      spacer.style.flex = '1';
+      topRow.appendChild(spacer);
+      topRow.appendChild(rm);
+      div.appendChild(topRow);
+
+      // Tag box below
+      const tagsWrap = document.createElement('div');
+      tagsWrap.className = 'in-tags-wrap';
+      tagsWrap.style.cssText = 'width:100%;margin-top:6px';
+
+      const tagsBox = document.createElement('div');
+      tagsBox.className = 'in-tags-box';
+
+      function renderTags() {
+        tagsBox.querySelectorAll('.in-tag').forEach(t => t.remove());
+        const inputEl = tagsBox.querySelector('.in-tags-input');
+        c.inValues.forEach((v, vi) => {
+          const tag = document.createElement('span');
+          tag.className = 'in-tag';
+          tag.textContent = v;
+          const x = document.createElement('button');
+          x.innerHTML = '&times;';
+          x.onclick = () => {
+            c.inValues.splice(vi, 1);
+            c.value = c.inValues.join(',');
+            renderTags();
+          };
+          tag.appendChild(x);
+          tagsBox.insertBefore(tag, inputEl);
+        });
+      }
+
+      const tagInput = document.createElement('input');
+      tagInput.type = 'text';
+      tagInput.className = 'in-tags-input';
+      tagInput.placeholder = c.inValues.length ? '' : 'Type a value...';
+
+      const taList = document.createElement('div');
+      taList.className = 'typeahead'; taList.style.display = 'none';
+      let taIdx = -1;
+
+      function getUniqueVals(col, filter) {
+        const ci = csvData.headers.indexOf(col);
+        if (ci === -1) return [];
+        const seen = new Set(c.inValues.map(v => v.toLowerCase()));
+        const results = [];
+        for (const row of csvData.rows) {
+          const v = row[ci] || '';
+          if (v === '' || seen.has(v.toLowerCase())) continue;
+          if (filter && !v.toLowerCase().includes(filter.toLowerCase())) continue;
+          seen.add(v.toLowerCase());
+          results.push(v);
+          if (results.length >= 50) break;
+        }
+        return results.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+      }
+
+      function addValue(v) {
+        const trimmed = v.trim();
+        if (!trimmed || c.inValues.includes(trimmed)) return;
+        c.inValues.push(trimmed);
+        c.value = c.inValues.join(',');
+        tagInput.value = '';
+        tagInput.placeholder = '';
+        renderTags();
+        showTA();
+      }
+
+      function showTA() {
+        const col = whereClauses[i].column;
+        if (!col) { taList.style.display = 'none'; return; }
+        const vals = getUniqueVals(col, tagInput.value);
+        taList.innerHTML = '';
+        if (!vals.length) { taList.style.display = 'none'; return; }
+        vals.forEach(v => {
+          const d = document.createElement('div');
+          d.textContent = v;
+          d.onmousedown = (e) => { e.preventDefault(); addValue(v); };
+          taList.appendChild(d);
+        });
+        taIdx = -1;
+        taList.style.display = 'block';
+      }
+
+      tagInput.oninput = () => { showTA(); };
+      tagInput.onfocus = () => { showTA(); };
+      tagInput.onblur = () => { setTimeout(() => { taList.style.display = 'none'; }, 150); };
+      tagInput.onkeydown = (e) => {
+        if (e.key === 'Backspace' && tagInput.value === '' && c.inValues.length) {
+          c.inValues.pop();
+          c.value = c.inValues.join(',');
+          tagInput.placeholder = c.inValues.length ? '' : 'Type a value...';
+          renderTags();
+          showTA();
+          return;
+        }
+        const items = taList.querySelectorAll('div');
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (taIdx >= 0 && taIdx < items.length) {
+            addValue(items[taIdx].textContent);
+          } else if (tagInput.value.trim()) {
+            addValue(tagInput.value);
+          }
+          return;
+        }
+        if (!items.length || taList.style.display === 'none') return;
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          taIdx = Math.min(taIdx + 1, items.length - 1);
+          items.forEach((it, j) => it.classList.toggle('ta-active', j === taIdx));
+          items[taIdx].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          taIdx = Math.max(taIdx - 1, 0);
+          items.forEach((it, j) => it.classList.toggle('ta-active', j === taIdx));
+          items[taIdx].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Escape') {
+          taList.style.display = 'none';
+        }
+      };
+
+      tagsBox.onclick = () => tagInput.focus();
+      tagsBox.appendChild(tagInput);
+      renderTags();
+
+      tagsWrap.appendChild(tagsBox);
+      tagsWrap.appendChild(taList);
+      div.appendChild(tagsWrap);
+
+    } else {
+      // Standard single-value input with typeahead
+      const valWrap = document.createElement('div');
+      valWrap.className = 'val-wrap';
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.placeholder = 'Value'; inp.value = c.value;
+      const taList = document.createElement('div');
+      taList.className = 'typeahead'; taList.style.display = 'none';
+      let taIdx = -1;
+
+      function getUniqueVals(col, filter) {
+        const ci = csvData.headers.indexOf(col);
+        if (ci === -1) return [];
+        const seen = new Set();
+        const results = [];
+        for (const row of csvData.rows) {
+          const v = row[ci] || '';
+          if (v === '' || seen.has(v)) continue;
+          if (filter && !v.toLowerCase().includes(filter.toLowerCase())) continue;
+          seen.add(v);
+          results.push(v);
+          if (results.length >= 50) break;
+        }
+        return results.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+      }
+
+      function showTA() {
+        const col = whereClauses[i].column;
+        if (!col) { taList.style.display = 'none'; return; }
+        const vals = getUniqueVals(col, inp.value);
+        taList.innerHTML = '';
+        if (!vals.length) { taList.style.display = 'none'; return; }
+        vals.forEach(v => {
+          const d = document.createElement('div');
+          d.textContent = v;
+          d.onmousedown = (e) => {
+            e.preventDefault();
+            inp.value = v; whereClauses[i].value = v;
+            taList.style.display = 'none';
+          };
+          taList.appendChild(d);
+        });
+        taIdx = -1;
+        taList.style.display = 'block';
+      }
+
+      inp.oninput = () => { whereClauses[i].value = inp.value; showTA(); };
+      inp.onfocus = () => { showTA(); };
+      inp.onblur = () => { setTimeout(() => { taList.style.display = 'none'; }, 150); };
+      inp.onkeydown = (e) => {
+        const items = taList.querySelectorAll('div');
+        if (!items.length || taList.style.display === 'none') return;
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          taIdx = Math.min(taIdx + 1, items.length - 1);
+          items.forEach((it, j) => it.classList.toggle('ta-active', j === taIdx));
+          items[taIdx].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          taIdx = Math.max(taIdx - 1, 0);
+          items.forEach((it, j) => it.classList.toggle('ta-active', j === taIdx));
+          items[taIdx].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Enter' && taIdx >= 0 && taIdx < items.length) {
+          e.preventDefault();
+          inp.value = items[taIdx].textContent;
+          whereClauses[i].value = inp.value;
+          taList.style.display = 'none';
+        } else if (e.key === 'Escape') {
+          taList.style.display = 'none';
+        }
+      };
+
+      valWrap.appendChild(inp);
+      valWrap.appendChild(taList);
+
+      topRow.appendChild(valWrap);
+      topRow.appendChild(rm);
+      div.appendChild(topRow);
+    }
+
     whereContainer.appendChild(div);
   });
 }
@@ -590,8 +896,8 @@ function loadFile(file) {
       if (!parsed.headers.length) { showError('No data found in file.'); return; }
       csvData = parsed;
       queryResult = null;
-      selectedColumns = [...csvData.headers];
-      whereClauses = [{ column: '', operator: '=', value: '' }];
+      selectedColumns = [];
+      whereClauses = [{ column: '', operator: '=', value: '', inValues: [] }];
       orderByClauses = [{ column: '', direction: 'ASC' }];
       tableSort = { column: null, direction: 'ASC' };
       clearError();
@@ -628,7 +934,7 @@ fileInput.addEventListener('change', (e) => { loadFile(e.target.files[0]); });
 
 resetBtn.addEventListener('click', () => {
   csvData = null; queryResult = null;
-  selectedColumns = []; whereClauses = [{ column: '', operator: '=', value: '' }];
+  selectedColumns = []; whereClauses = [{ column: '', operator: '=', value: '', inValues: [] }];
   orderByClauses = [{ column: '', direction: 'ASC' }];
   tableSort = { column: null, direction: 'ASC' };
   clearError();
@@ -638,7 +944,7 @@ resetBtn.addEventListener('click', () => {
 });
 
 addWhereBtn.addEventListener('click', () => {
-  whereClauses.push({ column: '', operator: '=', value: '' });
+  whereClauses.push({ column: '', operator: '=', value: '', inValues: [] });
   buildWhereClauses();
 });
 addOrderByBtn.addEventListener('click', () => {
@@ -647,6 +953,10 @@ addOrderByBtn.addEventListener('click', () => {
 });
 submitBtn.addEventListener('click', () => {
   try {
+    if (selectedColumns.length === 0) {
+      showError('Select at least one column before running a query.');
+      return;
+    }
     tableSort = { column: null, direction: 'ASC' };
     queryResult = executeQuery(csvData, { selectedColumns, whereClauses, orderByClauses, limit: parseInt(limitInput.value) || 100 });
     hide(emptyState);
