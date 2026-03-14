@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSV Reader</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; width: 100%; overflow: hidden; }
+  body { font-family: 'DM Sans', sans-serif; background: #111113; color: #e0e0e0; }
+
+  #app {
+    display: flex;
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  }
+
+  .sidebar {
+    width: 320px; min-width: 320px;
+    background: #18181b;
+    border-right: 1px solid #2a2a2d;
+    display: flex; flex-direction: column;
+    height: 100%;
+  }
+  .logo-area {
+    display: flex; align-items: center; gap: 10px;
+    padding: 16px 18px; flex-shrink: 0;
+    border-bottom: 1px solid #2a2a2d;
+  }
+  .logo-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700; font-size: 15px;
+    letter-spacing: -0.02em; color: #e8e8e8;
+  }
+
+  .drop-zone {
+    margin: 16px; flex: 1;
+    border: 2px dashed #333; border-radius: 10px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .drop-zone.drag-active { border-color: #c4f470; background: rgba(196,244,112,0.04); }
+  .drop-zone span { color: #888; font-size: 13px; }
+
+  .query-panel {
+    flex: 1; overflow-y: auto;
+    padding: 12px 16px;
+    min-height: 0;
+  }
+  .file-tag {
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 10px 12px; background: #1e1e22;
+    border-radius: 8px; margin-bottom: 14px;
+    border: 1px solid #2a2a2d;
+  }
+  .file-tag .fname {
+    font-size: 11px; color: #c4f470;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .file-tag .fmeta { font-size: 11px; color: #666; }
+  .reset-btn {
+    margin-top: 4px; background: none;
+    border: 1px solid #333; color: #888;
+    font-size: 11px; padding: 3px 8px;
+    border-radius: 4px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    align-self: flex-start;
+  }
+  .reset-btn:hover { border-color: #555; color: #bbb; }
+
+  .section { margin-bottom: 16px; }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em; color: #666;
+    margin-bottom: 8px; text-transform: uppercase;
+  }
+  .chip-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip {
+    padding: 4px 10px; border-radius: 5px;
+    border: 1px solid #333; background: #1e1e22;
+    color: #aaa; font-size: 12px; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    transition: all 0.15s;
+  }
+  .chip:hover { border-color: #555; }
+  .chip.sel-active { background: #c4f470; color: #111; border-color: #c4f470; font-weight: 600; }
+  .hint { font-size: 11px; color: #555; margin-top: 6px; font-style: italic; }
+
+  .clause-row {
+    display: flex; gap: 6px;
+    align-items: center; margin-bottom: 6px;
+  }
+  .clause-row select, .clause-row input[type="text"] {
+    flex: 1; padding: 5px 6px;
+    border-radius: 5px; border: 1px solid #333;
+    background: #1e1e22; color: #ccc;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    outline: none; min-width: 0;
+  }
+  .clause-row select:focus, .clause-row input[type="text"]:focus { border-color: #555; }
+  .clause-row .op-sel { width: 80px; flex: none; }
+  .rm-btn {
+    width: 22px; height: 22px; border-radius: 4px;
+    border: 1px solid #333; background: transparent;
+    color: #666; cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; line-height: 1; padding: 0;
+  }
+  .rm-btn:hover { border-color: #555; color: #aaa; }
+  .add-btn {
+    margin-top: 6px; background: none; border: none;
+    color: #666; font-size: 11px; cursor: pointer;
+    padding: 2px 0; font-family: 'DM Sans', sans-serif;
+  }
+  .add-btn:hover { color: #aaa; }
+
+  .submit-wrap {
+    flex-shrink: 0;
+    padding: 12px 16px;
+    border-top: 1px solid #2a2a2d;
+    background: #18181b;
+  }
+  .submit-btn {
+    width: 100%; padding: 10px 0;
+    border-radius: 8px; border: none;
+    background: #c4f470; color: #111;
+    font-weight: 700; font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer; letter-spacing: 0.02em;
+    transition: opacity 0.15s;
+  }
+  .submit-btn:hover { opacity: 0.85; }
+  .limit-input {
+    width: 80px; padding: 5px 6px;
+    border-radius: 5px; border: 1px solid #333;
+    background: #1e1e22; color: #ccc;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    outline: none;
+  }
+  .limit-input:focus { border-color: #555; }
+
+  .error-box {
+    margin: 0 16px 12px; padding: 8px 10px;
+    background: rgba(255,80,80,0.1);
+    border: 1px solid rgba(255,80,80,0.25);
+    border-radius: 6px; color: #ff6b6b;
+    font-size: 12px; flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .main {
+    flex: 1; overflow: hidden;
+    display: flex; flex-direction: column;
+    min-width: 0;
+  }
+  .empty-state {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .empty-state div { color: #555; font-size: 14px; margin-top: 12px; }
+  .table-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .result-tag {
+    padding: 8px 20px; font-size: 12px; color: #888;
+    font-family: 'JetBrains Mono', monospace;
+    border-bottom: 1px solid #2a2a2d; background: #18181b;
+    flex-shrink: 0;
+  }
+  .table-scroll { flex: 1; overflow: auto; }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  th {
+    text-align: left; padding: 10px 14px;
+    border-bottom: 2px solid #2a2a2d;
+    color: #c4f470; font-weight: 600;
+    font-size: 11px; letter-spacing: 0.04em;
+    text-transform: uppercase;
+    position: sticky; top: 0;
+    background: #111113; white-space: nowrap; z-index: 1;
+    cursor: pointer; user-select: none;
+    transition: color 0.15s;
+  }
+  th:hover { color: #d8ff8a; }
+  th.rn { width: 44px; color: #444; text-align: right; padding-right: 10px; cursor: default; }
+  th.rn:hover { color: #444; }
+  th .sort-arrow { margin-left: 4px; font-size: 10px; opacity: 0.4; }
+  th .sort-arrow.active { opacity: 1; color: #fff; }
+  td {
+    padding: 7px 14px;
+    border-bottom: 1px solid #1e1e22;
+    color: #ccc; white-space: nowrap;
+  }
+  td.rn { color: #444; text-align: right; padding-right: 10px; font-size: 11px; }
+  tr.alt { background: rgba(255,255,255,0.015); }
+
+  [data-hidden="true"] { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="sidebar">
+    <div class="logo-area">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <rect x="1" y="1" width="7" height="7" rx="1" stroke="#c4f470" stroke-width="1.5" fill="none"/>
+        <rect x="12" y="1" width="7" height="7" rx="1" stroke="#c4f470" stroke-width="1.5" fill="none"/>
+        <rect x="1" y="12" width="7" height="7" rx="1" stroke="#c4f470" stroke-width="1.5" fill="none"/>
+        <rect x="12" y="12" width="7" height="7" rx="1" stroke="#c4f470" stroke-width="1.5" fill="none"/>
+      </svg>
+      <span class="logo-text">CSV Reader</span>
+    </div>
+
+    <div id="dropZone" class="drop-zone">
+      <input type="file" id="fileInput" accept=".csv" style="display:none">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="margin-bottom:8px">
+        <path d="M16 4v18m0 0l-6-6m6 6l6-6" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M4 24v2a2 2 0 002 2h20a2 2 0 002-2v-2" stroke="#666" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span>Drop a .csv or click to browse</span>
+    </div>
+
+    <div id="queryPanel" class="query-panel" data-hidden="true">
+      <div class="file-tag">
+        <span class="fname" id="fileName"></span>
+        <span class="fmeta" id="fileMeta"></span>
+        <button class="reset-btn" id="resetBtn">New file</button>
+      </div>
+
+      <div class="section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="section-label" style="margin-bottom:0">SELECT</div>
+          <button class="add-btn" id="toggleAllBtn" style="margin-top:0">Select all</button>
+        </div>
+        <div class="chip-grid" id="selectChips"></div>
+        <div class="hint" id="selectHint">All columns selected</div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">WHERE</div>
+        <div id="whereClauses"></div>
+        <button class="add-btn" id="addWhereBtn">+ Add condition</button>
+      </div>
+
+      <div class="section">
+        <div class="section-label">ORDER BY</div>
+        <div id="orderByClauses"></div>
+        <button class="add-btn" id="addOrderByBtn">+ Add sort</button>
+      </div>
+
+      <div class="section">
+        <div class="section-label">LIMIT</div>
+        <input type="number" id="limitInput" value="100" min="1" class="limit-input">
+      </div>
+
+    </div>
+
+    <div id="submitWrap" class="submit-wrap" data-hidden="true">
+      <button class="submit-btn" id="submitBtn">Run Query</button>
+    </div>
+
+    <div id="errorBox" class="error-box" data-hidden="true"></div>
+  </div>
+
+  <div class="main">
+    <div id="emptyState" class="empty-state">
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style="opacity:0.3">
+        <rect x="4" y="8" width="40" height="32" rx="3" stroke="#555" stroke-width="2"/>
+        <line x1="4" y1="16" x2="44" y2="16" stroke="#555" stroke-width="2"/>
+        <line x1="18" y1="8" x2="18" y2="40" stroke="#555" stroke-width="1.5"/>
+        <line x1="32" y1="8" x2="32" y2="40" stroke="#555" stroke-width="1.5"/>
+      </svg>
+      <div>Upload a CSV to get started</div>
+    </div>
+    <div id="tableWrap" class="table-wrap" data-hidden="true">
+      <div id="resultTag" class="result-tag" data-hidden="true"></div>
+      <div class="table-scroll">
+        <table>
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── State ──
+let csvData = null;
+let selectedColumns = [];
+let whereClauses = [{ column: '', operator: '=', value: '' }];
+let orderByClauses = [{ column: '', direction: 'ASC' }];
+let tableSort = { column: null, direction: 'ASC' }; // for click-to-sort on headers
+let queryResult = null;
+
+// ── DOM refs ──
+const $ = id => document.getElementById(id);
+const dropZone = $('dropZone');
+const fileInput = $('fileInput');
+const queryPanel = $('queryPanel');
+const fileNameEl = $('fileName');
+const fileMetaEl = $('fileMeta');
+const resetBtn = $('resetBtn');
+const selectChips = $('selectChips');
+const selectHint = $('selectHint');
+const toggleAllBtn = $('toggleAllBtn');
+const whereContainer = $('whereClauses');
+const addWhereBtn = $('addWhereBtn');
+const orderByContainer = $('orderByClauses');
+const addOrderByBtn = $('addOrderByBtn');
+const limitInput = $('limitInput');
+const submitBtn = $('submitBtn');
+const submitWrap = $('submitWrap');
+const errorBox = $('errorBox');
+const emptyState = $('emptyState');
+const tableWrap = $('tableWrap');
+const resultTag = $('resultTag');
+const tableHead = $('tableHead');
+const tableBody = $('tableBody');
+
+function show(el) { el.setAttribute('data-hidden', 'false'); }
+function hide(el) { el.setAttribute('data-hidden', 'true'); }
+function showError(msg) { errorBox.textContent = msg; show(errorBox); }
+function clearError() { hide(errorBox); }
+
+// ── CSV Parser ──
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (!lines.length) return { headers: [], rows: [] };
+  const parseLine = (line) => {
+    const result = []; let current = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQ && line[i+1] === '"') { current += '"'; i++; }
+        else inQ = !inQ;
+      } else if (ch === ',' && !inQ) { result.push(current.trim()); current = ''; }
+      else current += ch;
+    }
+    result.push(current.trim());
+    return result;
+  };
+  return { headers: parseLine(lines[0]), rows: lines.slice(1).filter(l => l.trim()).map(parseLine) };
+}
+
+// ── Query Engine ──
+function executeQuery(data, q) {
+  const { headers, rows } = data;
+
+  let filtered = rows.filter(row => {
+    return q.whereClauses.every(c => {
+      if (!c.column || !c.operator || c.value === '') return true;
+      const idx = headers.indexOf(c.column);
+      if (idx === -1) return true;
+      const cell = row[idx] || '', val = c.value;
+      const nC = Number(cell), nV = Number(val);
+      const num = !isNaN(nC) && !isNaN(nV) && cell.trim() !== '' && val.trim() !== '';
+      switch (c.operator) {
+        case '=':  return num ? nC === nV : cell.toLowerCase() === val.toLowerCase();
+        case '!=': return num ? nC !== nV : cell.toLowerCase() !== val.toLowerCase();
+        case '>':  return num ? nC > nV  : cell > val;
+        case '<':  return num ? nC < nV  : cell < val;
+        case '>=': return num ? nC >= nV : cell >= val;
+        case '<=': return num ? nC <= nV : cell <= val;
+        case 'contains':    return cell.toLowerCase().includes(val.toLowerCase());
+        case 'starts with': return cell.toLowerCase().startsWith(val.toLowerCase());
+        case 'ends with':   return cell.toLowerCase().endsWith(val.toLowerCase());
+        default: return true;
+      }
+    });
+  });
+
+  const cols = q.selectedColumns.length > 0 ? q.selectedColumns : headers;
+  const idxs = cols.map(c => headers.indexOf(c)).filter(i => i !== -1);
+  const rHeaders = idxs.map(i => headers[i]);
+  let rRows = filtered.map(row => idxs.map(i => row[i] || ''));
+
+  // ORDER BY
+  if (q.orderByClauses && q.orderByClauses.length > 0) {
+    const sorts = q.orderByClauses.filter(s => s.column);
+    if (sorts.length > 0) {
+      rRows.sort((a, b) => {
+        for (const s of sorts) {
+          const ci = rHeaders.indexOf(s.column);
+          if (ci === -1) continue;
+          const av = a[ci], bv = b[ci];
+          const nA = Number(av), nB = Number(bv);
+          const numeric = !isNaN(nA) && !isNaN(nB) && av.trim() !== '' && bv.trim() !== '';
+          let cmp = 0;
+          if (numeric) cmp = nA - nB;
+          else cmp = av.localeCompare(bv, undefined, { sensitivity: 'base' });
+          if (cmp !== 0) return s.direction === 'DESC' ? -cmp : cmp;
+        }
+        return 0;
+      });
+    }
+  }
+
+  // LIMIT
+  if (q.limit && q.limit > 0) {
+    rRows = rRows.slice(0, q.limit);
+  }
+
+  return { headers: rHeaders, rows: rRows };
+}
+
+// ── Render helpers ──
+function sortDisplayData(colIdx, direction) {
+  const data = currentDisplayData;
+  if (!data) return;
+  data.rows.sort((a, b) => {
+    const av = a[colIdx], bv = b[colIdx];
+    const nA = Number(av), nB = Number(bv);
+    const numeric = !isNaN(nA) && !isNaN(nB) && av.trim() !== '' && bv.trim() !== '';
+    let cmp = 0;
+    if (numeric) cmp = nA - nB;
+    else cmp = (av || '').localeCompare(bv || '', undefined, { sensitivity: 'base' });
+    return direction === 'DESC' ? -cmp : cmp;
+  });
+  renderTable(data);
+}
+
+let currentDisplayData = null;
+
+function renderTable(data) {
+  tableHead.innerHTML = ''; tableBody.innerHTML = '';
+  currentDisplayData = data;
+  if (!data) return;
+
+  const tr = document.createElement('tr');
+  const rnTh = document.createElement('th');
+  rnTh.className = 'rn'; rnTh.textContent = '#';
+  tr.appendChild(rnTh);
+
+  data.headers.forEach((h, ci) => {
+    const th = document.createElement('th');
+    const label = document.createTextNode(esc(h) + ' ');
+    th.innerHTML = esc(h);
+    const arrow = document.createElement('span');
+    arrow.className = 'sort-arrow';
+    if (tableSort.column === h) {
+      arrow.classList.add('active');
+      arrow.textContent = tableSort.direction === 'ASC' ? '▲' : '▼';
+    } else {
+      arrow.textContent = '▲';
+    }
+    th.appendChild(arrow);
+    th.onclick = () => {
+      if (tableSort.column === h) {
+        tableSort.direction = tableSort.direction === 'ASC' ? 'DESC' : 'ASC';
+      } else {
+        tableSort.column = h;
+        tableSort.direction = 'ASC';
+      }
+      sortDisplayData(ci, tableSort.direction);
+    };
+    tr.appendChild(th);
+  });
+  tableHead.appendChild(tr);
+
+  let html = '';
+  data.rows.forEach((row, ri) => {
+    html += '<tr' + (ri % 2 !== 0 ? ' class="alt"' : '') + '><td class="rn">' + (ri+1) + '</td>';
+    row.forEach(cell => { html += '<td>' + esc(cell) + '</td>'; });
+    html += '</tr>';
+  });
+  tableBody.innerHTML = html;
+}
+
+function esc(s) {
+  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+
+function colOpts(selected) {
+  let h = '<option value="">Column</option>';
+  csvData.headers.forEach(c => { h += '<option value="' + esc(c) + '"' + (c === selected ? ' selected' : '') + '>' + esc(c) + '</option>'; });
+  return h;
+}
+
+function buildSelectChips() {
+  selectChips.innerHTML = '';
+  csvData.headers.forEach(h => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (selectedColumns.includes(h) ? ' sel-active' : '');
+    b.textContent = h;
+    b.onclick = () => {
+      if (selectedColumns.includes(h)) selectedColumns = selectedColumns.filter(c => c !== h);
+      else selectedColumns.push(h);
+      buildSelectChips();
+    };
+    selectChips.appendChild(b);
+  });
+  selectHint.style.display = selectedColumns.length === 0 ? 'block' : 'none';
+  toggleAllBtn.textContent = selectedColumns.length === csvData.headers.length ? 'Deselect all' : 'Select all';
+}
+
+toggleAllBtn.addEventListener('click', () => {
+  if (selectedColumns.length === csvData.headers.length) selectedColumns = [];
+  else selectedColumns = [...csvData.headers];
+  buildSelectChips();
+});
+
+function buildWhereClauses() {
+  whereContainer.innerHTML = '';
+  whereClauses.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'clause-row';
+
+    const colSel = document.createElement('select');
+    colSel.innerHTML = colOpts(c.column);
+    colSel.onchange = () => { whereClauses[i].column = colSel.value; };
+
+    const opSel = document.createElement('select');
+    opSel.className = 'op-sel';
+    ['=','!=','>','<','>=','<=','contains','starts with','ends with'].forEach(op => {
+      const o = document.createElement('option');
+      o.value = op; o.textContent = op; if (op === c.operator) o.selected = true;
+      opSel.appendChild(o);
+    });
+    opSel.onchange = () => { whereClauses[i].operator = opSel.value; };
+
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.placeholder = 'Value'; inp.value = c.value;
+    inp.oninput = () => { whereClauses[i].value = inp.value; };
+
+    const rm = document.createElement('button');
+    rm.className = 'rm-btn'; rm.innerHTML = '&times;';
+    rm.onclick = () => {
+      if (whereClauses.length === 1) whereClauses = [{ column: '', operator: '=', value: '' }];
+      else whereClauses.splice(i, 1);
+      buildWhereClauses();
+    };
+
+    div.appendChild(colSel);
+    div.appendChild(opSel);
+    div.appendChild(inp);
+    div.appendChild(rm);
+    whereContainer.appendChild(div);
+  });
+}
+
+function buildOrderByClauses() {
+  orderByContainer.innerHTML = '';
+  orderByClauses.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'clause-row';
+
+    const colSel = document.createElement('select');
+    colSel.innerHTML = colOpts(c.column);
+    colSel.onchange = () => { orderByClauses[i].column = colSel.value; };
+
+    const dirSel = document.createElement('select');
+    dirSel.className = 'op-sel';
+    ['ASC', 'DESC'].forEach(d => {
+      const o = document.createElement('option');
+      o.value = d; o.textContent = d; if (d === c.direction) o.selected = true;
+      dirSel.appendChild(o);
+    });
+    dirSel.onchange = () => { orderByClauses[i].direction = dirSel.value; };
+
+    const rm = document.createElement('button');
+    rm.className = 'rm-btn'; rm.innerHTML = '&times;';
+    rm.onclick = () => {
+      if (orderByClauses.length === 1) orderByClauses = [{ column: '', direction: 'ASC' }];
+      else orderByClauses.splice(i, 1);
+      buildOrderByClauses();
+    };
+
+    div.appendChild(colSel);
+    div.appendChild(dirSel);
+    div.appendChild(rm);
+    orderByContainer.appendChild(div);
+  });
+}
+
+// ── File handling ──
+function loadFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const parsed = parseCSV(e.target.result);
+      if (!parsed.headers.length) { showError('No data found in file.'); return; }
+      csvData = parsed;
+      queryResult = null;
+      selectedColumns = [...csvData.headers];
+      whereClauses = [{ column: '', operator: '=', value: '' }];
+      orderByClauses = [{ column: '', direction: 'ASC' }];
+      tableSort = { column: null, direction: 'ASC' };
+      clearError();
+
+      fileNameEl.textContent = file.name;
+      fileMetaEl.textContent = csvData.rows.length + ' rows \u00b7 ' + csvData.headers.length + ' cols';
+      hide(dropZone);
+      show(queryPanel);
+      show(submitWrap);
+      hide(tableWrap);
+      hide(resultTag);
+
+      buildSelectChips();
+      buildWhereClauses();
+      buildOrderByClauses();
+    } catch (err) {
+      showError('Failed to parse CSV: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ── Events ──
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-active'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-active'));
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault(); dropZone.classList.remove('drag-active');
+  const file = e.dataTransfer.files[0];
+  if (file && (file.name.endsWith('.csv') || file.type === 'text/csv')) loadFile(file);
+  else showError('Please drop a .csv file.');
+});
+fileInput.addEventListener('change', (e) => { loadFile(e.target.files[0]); });
+
+resetBtn.addEventListener('click', () => {
+  csvData = null; queryResult = null;
+  selectedColumns = []; whereClauses = [{ column: '', operator: '=', value: '' }];
+  orderByClauses = [{ column: '', direction: 'ASC' }];
+  tableSort = { column: null, direction: 'ASC' };
+  clearError();
+  show(dropZone); hide(queryPanel); hide(submitWrap);
+  show(emptyState); hide(tableWrap);
+  fileInput.value = '';
+});
+
+addWhereBtn.addEventListener('click', () => {
+  whereClauses.push({ column: '', operator: '=', value: '' });
+  buildWhereClauses();
+});
+addOrderByBtn.addEventListener('click', () => {
+  orderByClauses.push({ column: '', direction: 'ASC' });
+  buildOrderByClauses();
+});
+submitBtn.addEventListener('click', () => {
+  try {
+    tableSort = { column: null, direction: 'ASC' };
+    queryResult = executeQuery(csvData, { selectedColumns, whereClauses, orderByClauses, limit: parseInt(limitInput.value) || 100 });
+    hide(emptyState);
+    show(tableWrap);
+    renderTable(queryResult);
+    resultTag.textContent = queryResult.rows.length + ' result' + (queryResult.rows.length !== 1 ? 's' : '');
+    show(resultTag);
+    clearError();
+  } catch (err) {
+    showError('Query error: ' + err.message);
+  }
+});
+</script>
+</body>
+</html>
