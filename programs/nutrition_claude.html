@@ -280,7 +280,7 @@
       <div class="form-row"><label for="goal-weight">Your Weight (lbs)</label><input type="number" id="goal-weight" placeholder="e.g. 135" inputmode="decimal" min="0" step="any"></div>
       <div class="form-row"><label for="goal-calories">Calorie Goal</label><input type="number" id="goal-calories" placeholder="e.g. 2200" inputmode="decimal" min="0" step="any"></div>
       <div class="form-row"><label for="goal-protein-per-lb">Protein (g per lb of body weight)</label><input type="number" id="goal-protein-per-lb" placeholder="e.g. 0.8" inputmode="decimal" min="0" step="any"></div>
-      <div class="form-row"><label for="goal-fat-pct">Fat (% of total calories)</label><input type="number" id="goal-fat-pct" placeholder="e.g. 25" inputmode="decimal" min="0" max="100" step="any"></div>
+      <div class="form-row"><label for="goal-fat-grams">Fat (g)</label><input type="number" id="goal-fat-grams" placeholder="e.g. 50" inputmode="decimal" min="0" step="any"></div>
       <button class="btn btn-primary" id="save-goals-btn">Save Goals</button>
       <div class="goals-summary-text" id="goals-summary" style="display:none;"></div>
     </div>
@@ -377,7 +377,17 @@
   function saveFoods(f) { localStorage.setItem(FOODS_KEY, JSON.stringify(f)); }
   function loadLog() { try { return JSON.parse(localStorage.getItem(LOG_KEY)) || []; } catch { return []; } }
   function saveLog(e) { localStorage.setItem(LOG_KEY, JSON.stringify(e)); }
-  function loadGoals() { try { return JSON.parse(localStorage.getItem(GOALS_KEY)) || null; } catch { return null; } }
+  function loadGoals() {
+    try {
+      const g = JSON.parse(localStorage.getItem(GOALS_KEY)) || null;
+      // Migrate older saved goals that stored fat as % of calories
+      if (g && g.fatGrams === undefined) {
+        g.fatGrams = g.fatPct ? Math.round((g.calories || 0) * (g.fatPct / 100) / 9) : 0;
+        delete g.fatPct;
+      }
+      return g;
+    } catch { return null; }
+  }
   function saveGoals(g) { localStorage.setItem(GOALS_KEY, JSON.stringify(g)); }
   function generateId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
@@ -453,7 +463,7 @@
 
   function getComputedGoals() {
     const g = loadGoals(); if (!g) return null;
-    return { calories: g.calories || 0, protein: (g.proteinPerLb || 0) * (g.weight || 0), fat: (g.calories || 0) * ((g.fatPct || 0) / 100) / 9 };
+    return { calories: g.calories || 0, protein: (g.proteinPerLb || 0) * (g.weight || 0), fat: g.fatGrams || 0 };
   }
 
   function getRemaining() {
@@ -494,7 +504,7 @@
   const $editServingsPer = $('edit-food-servings-per'), $editCost = $('edit-food-cost');
   const $editCancel = $('edit-cancel-btn'), $editSave = $('edit-save-btn');
   const $toast = $('toast');
-  const $goalWeight = $('goal-weight'), $goalCalories = $('goal-calories'), $goalProteinLb = $('goal-protein-per-lb'), $goalFatPct = $('goal-fat-pct');
+  const $goalWeight = $('goal-weight'), $goalCalories = $('goal-calories'), $goalProteinLb = $('goal-protein-per-lb'), $goalFatGrams = $('goal-fat-grams');
   const $saveGoalsBtn = $('save-goals-btn'), $goalsSummary = $('goals-summary');
   const $copyLogBtn = $('copy-log-btn'), $copyFoodsBtn = $('copy-foods-btn');
 
@@ -797,19 +807,19 @@
   // GOALS
   function renderGoalsForm() {
     const g = loadGoals(); if (!g) return;
-    $goalWeight.value = g.weight||''; $goalCalories.value = g.calories||''; $goalProteinLb.value = g.proteinPerLb||''; $goalFatPct.value = g.fatPct||'';
+    $goalWeight.value = g.weight||''; $goalCalories.value = g.calories||''; $goalProteinLb.value = g.proteinPerLb||''; $goalFatGrams.value = g.fatGrams||'';
     renderGoalsSummary(g);
   }
   function renderGoalsSummary(g) {
     if (!g) { $goalsSummary.style.display = 'none'; return; }
-    const pG = (g.proteinPerLb||0)*(g.weight||0), fG = (g.calories||0)*((g.fatPct||0)/100)/9;
+    const pG = (g.proteinPerLb||0)*(g.weight||0), fG = g.fatGrams||0;
     $goalsSummary.style.display = '';
-    $goalsSummary.innerHTML = `<strong>Your daily targets:</strong><br>Calories: <strong>${r(g.calories||0)}</strong><br>Protein: <strong>${r(pG)}g</strong> (${r(g.proteinPerLb||0)}g &times; ${r(g.weight||0)} lbs)<br>Fat: <strong>${r(fG)}g</strong> (${r(g.fatPct||0)}% of ${r(g.calories||0)} cal)`;
+    $goalsSummary.innerHTML = `<strong>Your daily targets:</strong><br>Calories: <strong>${r(g.calories||0)}</strong><br>Protein: <strong>${r(pG)}g</strong> (${r(g.proteinPerLb||0)}g &times; ${r(g.weight||0)} lbs)<br>Fat: <strong>${r(fG)}g</strong>`;
   }
   $saveGoalsBtn.addEventListener('click', () => {
-    const w = parseFloat($goalWeight.value)||0, c = parseFloat($goalCalories.value)||0, p = parseFloat($goalProteinLb.value)||0, f = parseFloat($goalFatPct.value)||0;
+    const w = parseFloat($goalWeight.value)||0, c = parseFloat($goalCalories.value)||0, p = parseFloat($goalProteinLb.value)||0, f = parseFloat($goalFatGrams.value)||0;
     if (w <= 0) { showToast('Enter your weight'); return; } if (c <= 0) { showToast('Enter a calorie goal'); return; }
-    const goals = { weight:w, calories:c, proteinPerLb:p, fatPct:f }; saveGoals(goals); renderGoalsSummary(goals); renderLog(); showToast('Goals saved!');
+    const goals = { weight:w, calories:c, proteinPerLb:p, fatGrams:f }; saveGoals(goals); renderGoalsSummary(goals); renderLog(); showToast('Goals saved!');
   });
 
   // ========== SOLVERS ==========
